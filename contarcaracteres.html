@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Contador de caracteres</title>
+<style>
+  /* Base styles */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f7fa;
+    margin: 0;
+    padding: 40px;
+    box-sizing: border-box;
+    color: #333;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  header {
+    max-width: 900px;
+    margin: 0 auto 40px auto;
+    text-align: center;
+  }
+  header p {
+    font-size: 1.2rem;
+    color: #444;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: 0 auto;
+    user-select: none;
+  }
+  main {
+    display: flex;
+    gap: 30px;
+    max-width: 900px;
+    margin: 0 auto;
+    height: 70vh;
+  }
+  .container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    padding: 20px 25px 25px 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  h2 {
+    margin: 0 0 15px 0;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #2c3e50;
+    user-select: none;
+    transition: color 0.3s ease;
+  }
+  textarea {
+    flex: 1;
+    resize: none;
+    border: 2px solid #d0d7de;
+    border-radius: 10px;
+    padding: 15px 18px;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+    outline-offset: 2px;
+    color: #2c3e50;
+    background: #fafafa;
+  }
+  textarea:focus {
+    border-color: #3b82f6;
+    background: #fff;
+  }
+  .counter-area {
+    margin-top: 15px;
+    text-align: right;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 25px; /* Increased horizontal gap for counters */
+    justify-content: flex-end;
+    align-items: center; /* Vertically align items in the counter area */
+    font-weight: 700;
+    font-size: 1rem;
+    color: #3b82f6;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+    transition: color 0.3s ease;
+  }
+  .counter-area .counter-item {
+    font-size: 1.2rem;
+    white-space: nowrap;
+  }
+  .counter-area .limit-group { /* New style to group label and input */
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Gap between "Limit:" label and the input field */
+  }
+  .counter-area input[type="number"] {
+    width: 80px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid #d0d7de;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    background: #fafafa;
+    transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+  }
+  .counter-area input[type="number"]:focus {
+    border-color: #3b82f6;
+    background: #fff;
+  }
+  .counter-area .limit-exceeded {
+    color: #f44336; /* Red for limit exceeded */
+  }
+
+  .button-container {
+    margin-top: 20px; /* Increased margin-top for separation */
+    padding: 10px 15px; /* Adjusted padding to make it feel like a bar and accommodate smaller buttons */
+    background: #f0f3f7; /* Subtle background for the button bar */
+    border-radius: 8px; /* Rounded corners for the button bar */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Reduced gap between buttons to make them closer */
+    justify-content: center; /* Centered buttons */
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); /* Subtle inner shadow */
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  button.action-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px; /* Adjusted padding for icons/emojis */
+    font-size: 1.2rem; /* Larger font size for emojis */
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.15s ease;
+    user-select: none;
+    display: flex; /* For icon/emoji centering */
+    align-items: center; /* For icon/emoji centering */
+    justify-content: center; /* For icon/emoji centering */
+  }
+  button.action-btn svg {
+    width: 20px; /* Icon size */
+    height: 20px; /* Icon size */
+    fill: currentColor; /* Inherit color from button text color */
+  }
+  .settings-buttons button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.15s ease;
+    user-select: none;
+  }
+  button.action-btn:hover, .settings-buttons button:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+  }
+  button.action-btn:active, .settings-buttons button:active {
+    transform: scale(0.95);
+  }
+  button.action-btn.copied {
+    background: #10b981;
+  }
+  button.action-btn.pasted {
+    background: #059669;
+  }
+  button.action-btn.cleared {
+    background: #ff9800; /* Orange for cleared */
+  }
+  .settings-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+
+
+  /* Dark mode styles */
+  body.dark-mode {
+    background: #282c34;
+    color: #f0f0f0;
+  }
+  body.dark-mode header p {
+    color: #bbb;
+  }
+  body.dark-mode .container {
+    background: #3a3f47;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+  body.dark-mode h2 {
+    color: #e0e0e0;
+  }
+  body.dark-mode textarea {
+    background: #4a4f57;
+    border-color: #5a5f67;
+    color: #f0f0f0;
+  }
+  body.dark-mode textarea:focus {
+    border-color: #6a9dfa;
+    background: #5a5f67;
+  }
+  body.dark-mode .counter-area {
+    color: #8ab4f8;
+  }
+  body.dark-mode .counter-area input[type="number"] {
+    background: #4a4f57;
+    border-color: #5a5f67;
+    color: #f0f0f0;
+  }
+  body.dark-mode .counter-area input[type="number"]:focus {
+    border-color: #6a9dfa;
+    background: #5a5f67;
+  }
+  body.dark-mode .counter-area .limit-exceeded {
+    color: #ff7961; /* Lighter red for dark mode */
+  }
+  body.dark-mode .button-container { /* Dark mode specific background for button bar */
+    background: #30343a;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+  }
+  body.dark-mode button.action-btn, body.dark-mode .settings-buttons button {
+    background: #6a9dfa;
+  }
+  body.dark-mode button.action-btn:hover, body.dark-mode .settings-buttons button:hover {
+    background: #4d8df6;
+  }
+  body.dark-mode button.action-btn.copied {
+    background: #4CAF50; /* A slightly darker green for dark mode */
+  }
+  body.dark-mode button.action-btn.pasted {
+    background: #388E3C; /* A slightly darker green for dark mode */
+  }
+  body.dark-mode button.action-btn.cleared {
+    background: #FFB300; /* Lighter orange for dark mode */
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    body {
+      padding: 20px;
+    }
+    main {
+      flex-direction: column;
+      height: auto; /* Allow content to dictate height */
+    }
+    .container {
+      margin-bottom: 20px;
+    }
+    header {
+      margin-bottom: 20px;
+    }
+    .settings-buttons {
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 20px;
+    }
+    .button-container {
+      flex-direction: row; /* Keep buttons in a row for small screens, allow wrap */
+      justify-content: center; /* Center buttons horizontally */
+      gap: 8px; /* Keep consistent gap */
+    }
+    .counter-area {
+      justify-content: flex-start; /* Align counters to the left on small screens */
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p id="app-description"></p>
+  <div class="settings-buttons">
+    <button id="modeToggle"></button>
+    <button id="languageToggle"></button>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <h2 id="text1-title"></h2>
+    <textarea id="pasteArea"></textarea>
+    <div class="counter-area">
+      <span class="counter-item" id="pasteCharCount"></span>
+      <span class="counter-item" id="pasteWordCount"></span>
+      <div class="counter-item limit-group">
+        <label for="pasteLimitInput" id="pasteLimitLabel"></label>
+        <input type="number" id="pasteLimitInput" min="0" placeholder="0">
+      </div>
+      <span class="counter-item" id="pasteRemainingCount"></span>
+    </div>
+    <div class="button-container">
+      <button class="action-btn" id="pasteBtn" title="Pegar">📋</button>
+      <button class="action-btn" id="copyPaste" title="Copiar">C</button>
+      <button class="action-btn" id="clearPaste" title="Borrar">🔄️</button>
+      <button class="action-btn" id="upperPaste" title="Convertir a MAYÚSCULAS">🔠</button>
+      <button class="action-btn" id="lowerPaste" title="Convertir a minúsculas">🔡</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2 id="text2-title"></h2>
+    <textarea id="writeArea"></textarea>
+    <div class="counter-area">
+      <span class="counter-item" id="writeCharCount"></span>
+      <span class="counter-item" id="writeWordCount"></span>
+      <div class="counter-item limit-group">
+        <label for="writeLimitInput" id="writeLimitLabel"></label>
+        <input type="number" id="writeLimitInput" min="0" placeholder="0">
+      </div>
+      <span class="counter-item" id="writeRemainingCount"></span>
+    </div>
+    <div class="button-container">
+      <button class="action-btn" id="pasteWrite" title="Pegar">📋</button>
+      <button class="action-btn" id="copyWrite" title="Copiar">C</button>
+      <button class="action-btn" id="clearWrite" title="Borrar">🔄️</button>
+      <button class="action-btn" id="upperWrite" title="Convertir a MAYÚSCULAS">🔠</button>
+      <button class="action-btn" id="lowerWrite" title="Convertir a minúsculas">🔡</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Get DOM elements
+  const pasteArea = document.getElementById('pasteArea');
+  const writeArea = document.getElementById('writeArea');
+
+  const pasteCharCount = document.getElementById('pasteCharCount');
+  const pasteWordCount = document.getElementById('pasteWordCount');
+  const pasteLimitInput = document.getElementById('pasteLimitInput');
+  const pasteLimitLabel = document.getElementById('pasteLimitLabel');
+  const pasteRemainingCount = document.getElementById('pasteRemainingCount');
+
+  const writeCharCount = document.getElementById('writeCharCount');
+  const writeWordCount = document.getElementById('writeWordCount');
+  const writeLimitInput = document.getElementById('writeLimitInput');
+  const writeLimitLabel = document.getElementById('writeLimitLabel');
+  const writeRemainingCount = document.getElementById('writeRemainingCount');
+
+  const copyPasteBtn = document.getElementById('copyPaste');
+  const copyWriteBtn = document.getElementById('copyWrite');
+  const pasteBtn = document.getElementById('pasteBtn');
+  const pasteWriteBtn = document.getElementById('pasteWrite'); // New paste button for write area
+  const clearPasteBtn = document.getElementById('clearPaste');
+  const clearWriteBtn = document.getElementById('clearWrite');
+  const upperPasteBtn = document.getElementById('upperPaste');
+  const lowerPasteBtn = document.getElementById('lowerPaste');
+  const upperWriteBtn = document.getElementById('upperWrite');
+  const lowerWriteBtn = document.getElementById('lowerWrite');
+
+  const modeToggleBtn = document.getElementById('modeToggle');
+  const languageToggleBtn = document.getElementById('languageToggle');
+
+  // Elements to translate
+  const appDescription = document.getElementById('app-description');
+  const text1Title = document.getElementById('text1-title');
+  const text2Title = document.getElementById('text2-title');
+
+  // Translation object
+  const translations = {
+    es: {
+      appDescription: 'Esta es una aplicación sencilla para contar caracteres. Tienes dos campos por si necesitas comparar dos textos. Que la disfrutes.',
+      modeToggleDark: 'Modo oscuro',   // Text for button when in LIGHT mode
+      modeToggleLight: 'Modo claro',  // Text for button when in DARK mode
+      languageToggle: 'English',
+      text1Title: 'Texto 1',
+      text2Title: 'Texto 2',
+      pastePlaceholder: 'Pega tu texto aquí...',
+      writePlaceholder: 'Escribe tu texto aquí...',
+      characters: 'Caracteres',
+      words: 'Palabras',
+      limit: 'Límite',
+      remaining: 'Restantes',
+      copyButtonLetter: 'C',
+      pasteButtonTooltip: 'Pegar',
+      copyButtonTooltip: 'Copiar',
+      clearButtonTooltip: 'Borrar',
+      uppercaseButtonTooltip: 'Convertir a MAYÚSCULAS',
+      lowercaseButtonTooltip: 'Convertir a minúsculas',
+      copied: '¡Copiado!',
+      pasted: '¡Pegado!',
+      cleared: '¡Borrado!',
+      copyError: 'Error al copiar. Intenta de nuevo.',
+      pasteError: 'No se pudo pegar el texto. Por favor, permite el acceso al portapapeles.',
+      limitExceeded: 'Límite de caracteres excedido'
+    },
+    en: {
+      appDescription: 'This is a simple character counting application. There are two fields in case you need to compare texts. Enjoy!',
+      modeToggleDark: 'Dark mode',   // Text for button when in LIGHT mode
+      modeToggleLight: 'Light mode',  // Text for button when in DARK mode
+      languageToggle: 'Español',
+      text1Title: 'Text 1',
+      text2Title: 'Text 2',
+      pastePlaceholder: 'Paste your text here...',
+      writePlaceholder: 'Write your text here...',
+      characters: 'Characters',
+      words: 'Words',
+      limit: 'Limit',
+      remaining: 'Remaining',
+      copyButtonLetter: 'C',
+      pasteButtonTooltip: 'Paste',
+      copyButtonTooltip: 'Copy',
+      clearButtonTooltip: 'Clear',
+      uppercaseButtonTooltip: 'Convert to UPPERCASE',
+      lowercaseButtonTooltip: 'Convert to lowercase',
+      copied: 'Copied!',
+      pasted: 'Pasted!',
+      cleared: 'Cleared!',
+      copyError: 'Error copying. Please try again.',
+      pasteError: 'Could not paste text. Please allow clipboard access.',
+      limitExceeded: 'Character limit exceeded'
+    }
+  };
+
+  let currentLanguage = localStorage.getItem('language') || 'es'; // Default to Spanish
+
+  // Function to update character and word count, and remaining characters
+  function updateCounts(textarea, charCounter, wordCounter, limitInput, remainingCounter) {
+    const text = textarea.value;
+    const charLength = text.length;
+    // Regex to split by whitespace and filter out empty strings for accurate word count
+    const words = text.split(/\s+/).filter(word => word.length > 0).length;
+    const limit = parseInt(limitInput.value, 10);
+
+    charCounter.textContent = `${translations[currentLanguage].characters}: ${charLength}`;
+    wordCounter.textContent = `${translations[currentLanguage].words}: ${words}`;
+
+    if (!isNaN(limit) && limit > 0) {
+      const remaining = limit - charLength;
+      remainingCounter.textContent = `${translations[currentLanguage].remaining}: ${remaining}`;
+      if (remaining < 0) {
+        remainingCounter.classList.add('limit-exceeded');
+        charCounter.classList.add('limit-exceeded');
+      } else {
+        remainingCounter.classList.remove('limit-exceeded');
+        charCounter.classList.remove('limit-exceeded');
+      }
+    } else {
+      remainingCounter.textContent = ''; // Clear remaining count if no valid limit
+      charCounter.classList.remove('limit-exceeded');
+    }
+  }
+
+  // Function to set the language
+  function setLanguage(lang) {
+    currentLanguage = lang;
+    localStorage.setItem('language', lang);
+
+    appDescription.textContent = translations[lang].appDescription;
+    languageToggleBtn.textContent = translations[lang].languageToggle;
+    text1Title.textContent = translations[lang].text1Title;
+    text2Title.textContent = translations[lang].text2Title;
+    pasteArea.placeholder = translations[lang].pastePlaceholder;
+    writeArea.placeholder = translations[lang].writePlaceholder;
+    pasteLimitLabel.textContent = translations[lang].limit + ':';
+    writeLimitLabel.textContent = translations[lang].limit + ':';
+
+    // Update action button text and tooltips
+    copyPasteBtn.textContent = translations[lang].copyButtonLetter;
+    copyPasteBtn.title = translations[lang].copyButtonTooltip;
+    clearPasteBtn.title = translations[lang].clearButtonTooltip;
+    upperPasteBtn.title = translations[lang].uppercaseButtonTooltip;
+    lowerPasteBtn.title = translations[lang].lowercaseButtonTooltip;
+    pasteBtn.title = translations[lang].pasteButtonTooltip;
+
+
+    copyWriteBtn.textContent = translations[lang].copyButtonLetter;
+    copyWriteBtn.title = translations[lang].copyButtonTooltip;
+    clearWriteBtn.title = translations[lang].clearButtonTooltip;
+    upperWriteBtn.title = translations[lang].uppercaseButtonTooltip;
+    lowerWriteBtn.title = translations[lang].lowercaseButtonTooltip;
+    pasteWriteBtn.title = translations[lang].pasteButtonTooltip;
+
+
+    // Update mode toggle button text based on current dark mode state
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
+
+    updateAllCounts();
+  }
+
+  // Helper to update all counts for both text areas
+  function updateAllCounts() {
+    updateCounts(pasteArea, pasteCharCount, pasteWordCount, pasteLimitInput, pasteRemainingCount);
+    updateCounts(writeArea, writeCharCount, writeWordCount, writeLimitInput, writeRemainingCount);
+  }
+
+  // Function to handle copy text
+  function copyText(textarea, button) {
+    if (textarea.value.length === 0) return;
+    navigator.clipboard.writeText(textarea.value).then(() => {
+      button.classList.add('copied');
+      setTimeout(() => {
+        button.classList.remove('copied');
+      }, 1800);
+    }).catch(() => {
+      showMessage(translations[currentLanguage].copyError, 'error');
+    });
+  }
+
+  // Function to handle paste text
+  async function pasteText(textarea, button) {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.length === 0) return;
+      textarea.value = text;
+      updateAllCounts();
+      button.classList.add('pasted');
+      setTimeout(() => {
+        button.classList.remove('pasted');
+      }, 1800);
+    } catch (err) {
+      showMessage(translations[currentLanguage].pasteError, 'error');
+    }
+  }
+
+  // Function to clear text
+  function clearText(textarea, button) {
+    textarea.value = '';
+    updateAllCounts();
+    button.classList.add('cleared');
+    setTimeout(() => {
+      button.classList.remove('cleared');
+    }, 1800);
+  }
+
+  // Function to transform text (uppercase/lowercase)
+  function transformText(textarea, type) {
+    if (textarea.value.length === 0) return;
+    if (type === 'upper') {
+      textarea.value = textarea.value.toUpperCase();
+    } else if (type === 'lower') {
+      textarea.value = textarea.value.toLowerCase();
+    }
+    updateAllCounts();
+  }
+
+  // Event Listeners for textareas and limit inputs
+  pasteArea.addEventListener('input', updateAllCounts);
+  writeArea.addEventListener('input', updateAllCounts);
+  pasteLimitInput.addEventListener('input', updateAllCounts);
+  writeLimitInput.addEventListener('input', updateAllCounts);
+
+  // Initial count update
+  updateAllCounts();
+
+  // Event Listeners for action buttons
+  copyPasteBtn.addEventListener('click', () => copyText(pasteArea, copyPasteBtn));
+  copyWriteBtn.addEventListener('click', () => copyText(writeArea, copyWriteBtn));
+  pasteBtn.addEventListener('click', () => pasteText(pasteArea, pasteBtn));
+  pasteWriteBtn.addEventListener('click', () => pasteText(writeArea, pasteWriteBtn));
+  clearPasteBtn.addEventListener('click', () => clearText(pasteArea, clearPasteBtn));
+  clearWriteBtn.addEventListener('click', () => clearText(writeArea, clearWriteBtn));
+  upperPasteBtn.addEventListener('click', () => transformText(pasteArea, 'upper'));
+  lowerPasteBtn.addEventListener('click', () => transformText(pasteArea, 'lower'));
+  upperWriteBtn.addEventListener('click', () => transformText(writeArea, 'upper'));
+  lowerWriteBtn.addEventListener('click', () => transformText(writeArea, 'lower'));
+
+  // Mode Toggle functionality
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    // Update button text based on the NEW state
+    modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
+    localStorage.setItem('darkMode', isDarkMode);
+  }
+
+  // Language Toggle functionality
+  languageToggleBtn.addEventListener('click', () => {
+    if (currentLanguage === 'es') {
+      setLanguage('en');
+    } else {
+      setLanguage('es');
+    }
+    // setLanguage already updates the modeToggleBtn text, no need to call again here
+  });
+
+  modeToggleBtn.addEventListener('click', toggleDarkMode);
+
+  // Load saved preferences on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    // Set language first to ensure translations are available for mode button text
+    setLanguage(localStorage.getItem('language') || 'es');
+
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode === 'true') {
+      document.body.classList.add('dark-mode');
+    }
+    // Ensure the mode toggle button text is correct based on the loaded dark mode state
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
+  });
+
+  // Custom message box function (replaces alert)
+  function showMessage(message, type = 'info') {
+    const messageBox = document.createElement('div');
+    messageBox.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: ${type === 'error' ? '#f44336' : '#4CAF50'};
+      color: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    `;
+    messageBox.textContent = message;
+    document.body.appendChild(messageBox);
+
+    setTimeout(() => {
+      messageBox.style.opacity = '1';
+    }, 100);
+
+    setTimeout(() => {
+      messageBox.style.opacity = '0';
+      messageBox.addEventListener('transitionend', () => messageBox.remove());
+    }, 3000);
+  }
+</script>
+
+</body>
+</html>

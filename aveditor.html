@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="appTitle">Herramienta de Transcripción Mejorada</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome para iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Estilos base, serán sobrescritos por la aplicación de temas JS */
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden; /* Evita el desplazamiento del cuerpo debido al redimensionamiento */
+    }
+    #left, #right {
+      overflow: auto; /* Habilita el desplazamiento para el contenido dentro de los paneles */
+    }
+    /* Oculta la barra de desplazamiento para un aspecto más limpio */
+    #left::-webkit-scrollbar, #right::-webkit-scrollbar { 
+      width: 0px;
+      background: transparent;
+    }
+    #left::-webkit-scrollbar-thumb, #right::-webkit-scrollbar-thumb { 
+      background: transparent;
+    }
+    /* Color de la marca de tiempo dinámico gestionado por JS */
+    .timestamp {
+      color: #93c5fd !important; /* Predeterminado para modo oscuro */
+      text-decoration: underline !important;
+      cursor: pointer;
+      background: none !important;
+    }
+    /* Asegura que el elemento de video se ajuste */
+    #video {
+        width: 100%; /* El video ocupa todo el ancho de su contenedor */
+        height: 100%; /* El video ocupa todo el alto de su contenedor */
+        object-fit: contain; /* Asegura que el video sea completamente visible */
+    }
+    /* Estilos de la ventana modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-content {
+        background-color: #f3f4f6;
+        color: #1f2937;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+    }
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    /* Estilo específico para la visualización del TCR */
+    #tcrDisplay {
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Estilo de resaltado para buscar/reemplazar */
+    .highlighted-match {
+      background-color: yellow;
+      color: black;
+    }
+    .current-match {
+      background-color: orange;
+      color: black;
+    }
+
+    /* Estilos del editor revertidos a un área de texto simple */
+    #editor { 
+      min-height: 200px; 
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap; 
+    }
+
+    /* Estilos personalizados para la entrada de rango horizontal */
+    #volumeSlider {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+        cursor: pointer;
+        width: 100%; /* Hace que ocupe todo el ancho de su contenedor */
+        height: 8px; /* Grosor de la pista */
+    }
+
+    /* Estilos de la pista */
+    #volumeSlider::-webkit-slider-runnable-track {
+        background: #ccc; /* Pista clara */
+        border-radius: 5px;
+        height: 8px; /* Grosor de la pista */
+    }
+    #volumeSlider::-moz-range-track {
+        background: #ccc;
+        border-radius: 5px;
+        height: 8px;
+    }
+
+    /* Estilos del pulgar */
+    #volumeSlider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007bff; /* Pulgar azul */
+        border: 1px solid #0056b3;
+        margin-top: -4px; /* Centra el pulgar verticalmente en la pista */
+    }
+    #volumeSlider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007bff;
+        border: 1px solid #0056b3;
+    }
+
+    /* Ajustes del modo oscuro para el control deslizante */
+    body.dark #volumeSlider::-webkit-slider-runnable-track {
+        background: #555;
+    }
+    body.dark #volumeSlider::-webkit-slider-thumb {
+        background: #63b3ed;
+        border-color: #4299e1;
+    }
+    body.dark #volumeSlider::-moz-range-track {
+        background: #555;
+    }
+    body.dark #volumeSlider::-moz-range-thumb {
+        background: #63b3ed;
+        border-color: #4299e1;
+    }
+  </style>
+</head>
+<body class="flex flex-col md:flex-row h-screen">
+
+  <!-- Panel Izquierdo -->
+  <div id="left" class="md:w-2/5 p-4 md:border-r-2 min-w-[320px] flex flex-col relative overflow-y-auto">
+    <!-- Contenedor externo para el aspecto 16:9 del reproductor de vídeo -->
+    <div class="relative w-full overflow-hidden rounded-lg mb-2 shadow-md" style="padding-top: 56.25%;">
+        <div id="videoDisplayContainer" class="absolute inset-0 bg-black flex items-center justify-center">
+            <video id="video" controls class="w-full h-full object-contain hidden"></video> 
+            <div id="emptyPlayerOverlay" class="absolute inset-0 flex flex-col justify-center items-center bg-black text-gray-400">
+                <span class="text-6xl mb-2">🎬</span> 
+                <span class="text-xl font-bold">AVEditor</span>
+            </div>
+        </div>
+    </div>
+    <p id="noMediaMessage" class="text-sm text-center italic mb-4 hidden" data-i18n="noMediaMessage">No hay archivo multimedia cargado.</p>
+    
+    <!-- Controles de Reproducción Minimalistas -->
+    <div class="playback-controls flex flex-col gap-2 mb-4">
+      <!-- Primera fila de botones -->
+      <div class="flex flex-wrap justify-center items-center gap-2 w-full">
+        <!-- Importación de Video/Audio actualizada - Movido aquí -->
+        <input type="file" id="videoFileInput" accept="video/*,audio/*" class="hidden" />
+        <button id="importVideoAudioBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out w-auto" data-i18n="openMediaFile" data-i18n-title="openMediaFileTitle"><i class="fas fa-file-video mr-2"></i>Abrir archivo de vídeo/audio</button>
+        <!-- play/pause button below. close media button removed -->
+
+        <button id="playPauseBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="playPauseTitle"><i class="fas fa-play"></i></button>
+        <button id="speedDownBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="slowDownTitle">-0.25x</button>
+        <span id="speedDisplay" class="text-sm font-semibold flex items-center px-2">1.0x</span>
+        <button id="speedUpBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="speedUpTitle">+0.25x</button>
+        
+        <!-- Control deslizante de volumen - Ahora horizontal de nuevo, dentro de un elemento flex -->
+        <div class="flex-grow max-w-[75px] px-2"> <!-- Limita el ancho máximo para el control deslizante de volumen -->
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1"
+                class="w-full h-2 rounded-lg appearance-none cursor-pointer range-lg"
+                data-i18n-title="volumeControlTitle" />
+        </div>
+        <button id="muteBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="muteUnmuteTitle"><i class="fas fa-volume-up"></i></button>
+      </div>
+      
+      <!-- Segunda fila de botones -->
+      <div class="flex flex-wrap justify-center items-center gap-2 w-full mt-2"> <!-- Se añadió mt-2 para el espaciado -->
+        <button onclick="seekMedia(-5)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind5sTitle">-5s</button>
+        <button onclick="seekMedia(-3)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind3sTitle">-3s</button>
+        <button onclick="seekMedia(-1)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind1sTitle">-1s</button>
+        <button onclick="seekMedia(1)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward1sTitle">+1s</button>
+        <button onclick="seekMedia(3)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward3sTitle">+3s</button>
+        <button onclick="seekMedia(5)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward5sTitle">+5s</button>
+      </div>
+    </div>
+    
+    <!-- Campo de Visualización de TCR Grande -->
+    <div id="tcrDisplay" class="font-mono text-4xl p-4 text-center rounded-lg mb-4 shadow-md w-full">
+      --:--:--,---
+    </div>
+
+    <!-- Botones relacionados con TCR movidos aquí, incluyendo Establecer TCR Inicial -->
+    <div class="flex flex-wrap gap-2 mb-4 w-full">
+      <button onclick="insertTimestamp()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="insertTimecode"><i class="fas fa-clock mr-2"></i>Insertar Código de Tiempo</button>
+      <button onclick="showTCRFormatSelection()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="timecodeFormat"><i class="fas fa-gear mr-2"></i>Formato de Código de Tiempo</button>
+      <button onclick="showSetInitialTCRModal()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="setInitialTimecode"><i class="fas fa-play mr-2"></i>Establecer Código de Tiempo Inicial</button>
+    </div>
+    
+    <div id="charFields" class="mt-4 mb-6 w-full">
+      <h4 class="text-lg font-semibold mb-3 border-b pb-2" data-i18n="charactersHeader">Personajes (Alt + 1-8 para insertar)</h4>
+      <div class="flex flex-wrap gap-2 justify-center mb-2">
+        <input type="text" id="char1" data-char-index="0" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="1" placeholder="Personaje 1" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char2" data-char-index="1" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="2" placeholder="Personaje 2" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char3" data-char-index="2" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="3" placeholder="Personaje 3" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char4" data-char-index="3" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="4" placeholder="Personaje 4" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div class="flex flex-wrap gap-2 justify-center">
+        <input type="text" id="char5" data-char-index="4" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="5" placeholder="Personaje 5" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char6" data-char-index="5" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="6" placeholder="Personaje 6" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char7" data-char-index="6" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="7" placeholder="Personaje 7" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char8" data-char-index="7" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="8" placeholder="Personaje 8" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+    </div>
+
+    <!-- El div de atajos está oculto desde aquí, su contenido se usará en el modal -->
+    <div id="shortcuts" class="hidden">
+      <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Atajos de Teclado:</h4>
+      <ul class="list-disc list-inside space-y-1">
+        <li data-i18n="shortcut1"><strong>Alt+Q</strong>: Insertar Código de Tiempo</li>
+        <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Espacio</strong>: Reproducir/Pausar</li>
+        <li data-i18n="shortcut3"><strong>Shift + Flecha Izquierda</strong>: Retroceder 5 segundos</li>
+        <li data-i18n="shortcut4"><strong>Shift + Flecha Derecha</strong>: Avanzar 5 segundos</li>
+        <li data-i18n="shortcut5"><strong>Alt/Opción + Flecha Izquierda</strong>: Retroceder 1 fotograma (aprox.)</li>
+        <li data-i18n="shortcut6"><strong>Alt/Opción + Flecha Derecha</strong>: Avanzar 1 fotograma (aprox.)</li>
+        <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Flecha Izquierda</strong>: Retroceder 1 segundo</li>
+        <li data-i18n="shortcut8"><strong>Ctrl/Cmd + Flecha Derecha</strong>: Avanzar 1 segundo</li>
+        <li data-i19n="shortcut9"><strong>Alt/Opción + 1 a 8</strong>: Insertar nombre del personaje</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Panel Derecho -->
+  <div id="right" class="md:w-3/5 p-4 min-w-[320px] flex flex-col overflow-y-auto">
+    <div id="controls" class="mb-4 flex flex-wrap items-center gap-3">
+      <!-- Importación de Texto Actualizada -->
+      <input type="file" id="textFileInput" accept=".txt" class="hidden" />
+      <button id="importTextBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="importText"><i class="fas fa-file-alt mr-2"></i>Importar .txt</button>
+      
+      <!-- Botones de Negrita y Cursiva con iconos -->
+      <button onclick="applyStyle('bold')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="bold"><i class="fas fa-bold mr-2"></i>Negrita</button>
+      <button onclick="applyStyle('italic')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="italic"><i class="fas fa-italic mr-2"></i>Cursiva</button>
+      
+      <!-- Nuevos botones de Buscar y Reemplazar -->
+      <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="findButton"><i class="fas fa-search mr-2"></i>Buscar</button>
+      <button id="replaceBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="replaceButton"><i class="fas fa-exchange-alt mr-2"></i>Reemplazar</button>
+
+      <!-- Botón para alternar el tema -->
+      <button onclick="toggleTheme()" id="themeToggleButton" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><span id="themeText" data-i18n="darkMode">Modo Oscuro</span></button>
+      
+      <!-- Botón para alternar el idioma (ahora abre un modal) -->
+      <button onclick="showLanguageSelectionModal()" id="languageToggleButton" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm">
+        <span id="languageText" data-i18n="changeLanguageButton">Cambiar Idioma</span>
+      </button>
+
+      <!-- Botón para abrir el modal de atajos -->
+      <button onclick="showShortcutsModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="shortcutsButton"><i class="fas fa-keyboard mr-2"></i>Atajos de Teclado</button>
+      <!-- Botón de exportar (ahora abre un modal para elegir el formato y el nombre del archivo) -->
+      <button onclick="showExportFormatModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="export"><i class="fas fa-download mr-2"></i>Exportar</button>
+    </div>
+
+    <!-- Elemento del editor -->
+    <div id="editor" contenteditable="true" spellcheck="true" aria-label="Editor de texto" class="flex-1 rounded-lg p-4 font-mono text-sm overflow-y-auto outline-none shadow-inner min-h-[200px]">
+      <p class="italic" data-i18n="editorPlaceholder">Empieza a transcribir aquí, o importa un archivo de texto. Carga un vídeo/audio en el panel izquierdo para empezar.</p>
+    </div>
+  </div>
+
+  <!-- Modal Personalizado para Alertas/Confirmaciones/Formato TCR/TCR Inicial/Auto-Guardado -->
+  <div id="customModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 id="modalTitle" class="text-xl font-bold mb-4"></h3>
+      <p id="modalMessage" class="mb-4"></p>
+      <div id="modalBody" class="mb-4"></div> <!-- Nuevo div para contenido dinámico como botones de radio -->
+      <div id="modalButtons" class="modal-buttons">
+        <!-- Los botones se inyectarán aquí -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Variables globales de Firebase accesibles por otros scripts
+    window.firebaseApp = null;
+    window.db = null;
+    window.auth = null;
+    window.userId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        if (Object.keys(firebaseConfig).length > 0) {
+            window.firebaseApp = initializeApp(firebaseConfig);
+            window.db = getFirestore(window.firebaseApp);
+            window.auth = getAuth(window.firebaseApp);
+
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            if (initialAuthToken) {
+                await signInWithCustomToken(window.auth, initialAuthToken);
+            } else {
+                await signInAnonymously(window.auth);
+            }
+
+            onAuthStateChanged(window.auth, async (user) => {
+                if (user) {
+                    window.userId = user.uid;
+                    console.log("Firebase authenticated. User ID:", window.userId);
+                } else {
+                    console.log("Firebase: No user logged in.");
+                    window.userId = null;
+                }
+            });
+        } else {
+            console.warn("Firebase config not found. Persistence features are disabled.");
+        }
+      } catch (error) {
+        console.error("Error initializing Firebase:", error);
+      }
+    });
+  </script>
+  <script>
+    const video = document.getElementById('video');
+    const videoFileInput = document.getElementById('videoFileInput');
+    const importVideoAudioBtn = document.getElementById('importVideoAudioBtn');
+    const textFileInput = document.getElementById('textFileInput');
+    const importTextBtn = document.getElementById('importTextBtn');
+    const editor = document.getElementById('editor');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const speedDownBtn = document.getElementById('speedDownBtn');
+    const speedUpBtn = document.getElementById('speedUpBtn');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const muteBtn = document.getElementById('muteBtn');
+    // Actualiza la selección de charInputs para seleccionar los 8 campos
+    const charInputs = Array.from(document.querySelectorAll('#charFields input[type="text"]'));
+    const noMediaMessage = document.getElementById('noMediaMessage');
+    const tcrDisplay = document.getElementById('tcrDisplay');
+    const themeToggleButton = document.getElementById('themeToggleButton');
+    const themeText = document.getElementById('themeText');
+    const languageToggleButton = document.getElementById('languageToggleButton');
+    const languageText = document.getElementById('languageText');
+    const shortcutsDiv = document.getElementById('shortcuts');
+    const emptyPlayerOverlay = document.getElementById('emptyPlayerOverlay');
+    // Renombrado de videoDisplayContainer a videoDisplayInnerContainer para el 16:9
+    const videoDisplayInnerContainer = document.getElementById('videoDisplayContainer'); 
+    
+    const findBtn = document.getElementById('findBtn');
+    const replaceBtn = document.getElementById('replaceBtn');
+
+    const DEFAULT_FRAMERATE = 30;
+    let tcrOffsetSeconds = 0;
+    let lastVolume = 1;
+
+    // Estado de Buscar/Reemplazar
+    let findReplaceState = {
+        query: '',
+        replacement: '',
+        caseSensitive: false,
+        matches: [], 
+        currentIndex: -1, 
+        isFinding: false 
+    };
+
+    // Estado del tema - por defecto modo claro
+    let isDarkMode = false; 
+
+    // Estado del idioma - por defecto inglés
+    let currentLanguage = 'en';
+
+    // Contenido HTML de los atajos (se traducirá dinámicamente)
+    const shortcutsHtmlContent = shortcutsDiv.innerHTML;
+
+    // --- Objeto de Traducciones ---
+    const translations = {
+      en: {
+        appTitle: "Improved Transcription Tool",
+        openMediaFile: "Open Video/Audio File",
+        openMediaFileTitle: "Open video or audio file",
+        noMediaMessage: "No media file loaded.",
+        playPauseTitle: "Play/Pause Video/Audio",
+        slowDownTitle: "Slow down video by -0.25x",
+        speedUpTitle: "Speed up video by +0.25x",
+        volumeControlTitle: "Volume Control",
+        muteUnmuteTitle: "Mute/Unmute Audio",
+        rewind5sTitle: "Rewind 5 seconds",
+        rewind3sTitle: "Rewind 3 seconds",
+        rewind1sTitle: "Rewind 1 second",
+        forward1sTitle: "Forward 1 second",
+        forward3sTitle: "Forward 3 seconds",
+        forward5sTitle: "Forward 5 seconds",
+        editorZoomLabel: "Editor Zoom:", 
+        charactersHeader: "Characters (Alt/Option + 1-8 to insert)", // Updated shortcut message
+        characterLabel: "Character {0}", 
+        characterPlaceholder: "Character {0}", // Removed "Name"
+        insertTimecode: "Insert Timecode",
+        timecodeFormat: "Timecode Format",
+        setInitialTimecode: "Set Initial Timecode",
+        importText: "Import .txt",
+        bold: "Bold",
+        italic: "Italic",
+        findButton: "Find",
+        replaceButton: "Replace",
+        darkMode: "Dark Mode",
+        lightMode: "Light Mode",
+        keyboardShortcuts: "Keyboard Shortcuts", 
+        shortcutsButton: "Keyboard Shortcuts", 
+        export: "Export", 
+        editorPlaceholder: "Start transcribing here, or import a text file. Load a video/audio in the left panel to begin.",
+        
+        modalAttention: "Attention",
+        modalConfirmAction: "Confirm Action",
+        modalAccept: "Accept",
+        modalCancel: "Cancel",
+        modalConfirm: "Confirm",
+        modalClose: "Close",
+
+        tcrFormatModalTitle: "Select Timecode Format",
+        tcrFormatModalMessage: "Choose the format you want to display the timecode in:",
+        tcrFormatModalSave: "Save", 
+        
+        setInitialTCRModalTitle: "Set Initial Timecode",
+        setInitialTCRModalMessage: "Enter the timecode from which you want the TCR to start counting:",
+        setInitialTCRModalPlaceholder: "Ex: 00:00:00,000 or 00:00:00:00",
+        setInitialTCRModalSet: "Set",
+        setTCRSuccess: "Initial timecode set to {0}.",
+        invalidTCRFormat: "Invalid timecode format. Use HH:MM:SS,MMM or HH:MM:SS:FF (e.g., 00:00:00,000 or 00:00:00:00).",
+        
+        mediaLoadError: "Error loading media file. Ensure it's a compatible format (e.g., MP3, MP4, M4A). MP4 files with AAC audio are generally well-supported, but some specific codecs or browser versions might cause issues when loading directly from a 'file://' path due to security restrictions. Try a different format or use a local server.",
+        mediaLoadErrorWithFileProtocolHint: "Error loading media file. Browser reported: 'Empty src attribute'. It could also be an unsupported audio/video codec by your browser.", // Simplified
+        noMediaWarning: "Load a video or audio first to {0}.", 
+        navigationError: "No video/audio loaded or timecode format is invalid for navigation.",
+        insertTimecodeError: "Load a video or audio first to insert a timecode.",
+        exportError: "Export format not supported. Only .txt is available.", 
+        textLoadError: "Error loading text file.",
+
+        findModalTitle: "Find Text",
+        findQueryLabel: "Text to find:",
+        caseSensitiveLabel: "Match case",
+        findPrevious: "Find Previous",
+        findNext: "Next",
+        noMatchesFound: "No matches found.",
+        searchEndReached: "End of search. Wrapping around to the beginning.",
+        searchStartReached: "Start of search. Wrapping around to the end.",
+
+        replaceModalTitle: "Replace Text",
+        replaceWithLabel: "Replace with:",
+        replaceButtonInModal: "Replace",
+        replaceAllButton: "Replace All",
+        noMatchSelectedForReplace: "No match selected for replacement.",
+        replacementCompleteNoMoreMatches: "Replacement complete. No more matches found.",
+        replacementComplete: "All occurrences of \"{0}\" have been replaced.",
+        enterTextToFind: "Please enter text to find.",
+
+        changeLanguageButton: "Change Language",
+        chooseLanguageMessage: "Choose a language:",
+        exportFileModalTitle: "Export File",
+        exportFileMessage: "Enter the desired filename:",
+        exportFilenamePlaceholder: "transcription", 
+        exportFormatLabel: "Select format:",
+        exportFormatTxt: "Plain Text (.txt)",
+        exportFormatHtml: "Formatted Text (.html)",
+        exportButton: "Export", 
+
+        // Descripciones de atajos para la traducción
+        shortcut1: "Insert Timecode",
+        shortcut2: "Play/Pause",
+        shortcut3: "Rewind 5 seconds",
+        shortcut4: "Forward 5 seconds",
+        shortcut5: "Rewind 1 frame (approx.)",
+        shortcut6: "Forward 1 frame (approx.)",
+        shortcut7: "Rewind 1 second",
+        shortcut8: "Forward 1 second",
+        shortcut9: "Alt/Option + 1 to 8: Insert character name", // Updated shortcut description
+
+        languageEnglish: "English",
+        languageSpanish: "Spanish"
+      },
+      es: {
+        appTitle: "Herramienta de Transcripción Mejorada",
+        openMediaFile: "Abrir archivo de vídeo/audio",
+        openMediaFileTitle: "Abrir archivo de vídeo o audio",
+        noMediaMessage: "Ningún archivo multimedia cargado.",
+        playPauseTitle: "Reproducir/Pausar vídeo/audio",
+        slowDownTitle: "Ralentizar vídeo en -0.25x",
+        speedUpTitle: "Acelerar el vídeo en +0.25x",
+        volumeControlTitle: "Control de volumen",
+        muteUnmuteTitle: "Silenciar/Reactivar audio",
+        rewind5sTitle: "Retroceder 5 segundos",
+        rewind3sTitle: "Retroceder 3 segundos",
+        rewind1sTitle: "Retroceder 1 segundo",
+        forward1sTitle: "Avanzar 1 segundo",
+        forward3sTitle: "Avanzar 3 segundos",
+        forward5sTitle: "Avanzar 5 segundos",
+        editorZoomLabel: "Zoom Editor:",
+        charactersHeader: "Personajes (Alt/Opción + 1-8 para insertar)", // Updated shortcut message
+        characterLabel: "Personaje {0}",
+        characterPlaceholder: "Personaje {0}", // Removed "Nombre"
+        insertTimecode: "Insertar TCR",
+        timecodeFormat: "Formato TCR",
+        setInitialTimecode: "Establecer TCR Inicial",
+        importText: "Importar .txt",
+        bold: "Negrita",
+        italic: "Cursiva",
+        findButton: "Buscar",
+        replaceButton: "Reemplazar",
+        darkMode: "Modo oscuro",
+        lightMode: "Modo claro",
+        keyboardShortcuts: "Atajos de teclado",
+        shortcutsButton: "Atajos de teclado",
+        export: "Exportar", 
+        editorPlaceholder: "Comienza a transcribir aquí, o importa un archivo de texto. Carga un vídeo/audio en el panel izquierdo para empezar.",
+
+        modalAttention: "Atención",
+        modalConfirmAction: "Confirmar Acción",
+        modalAccept: "Aceptar",
+        modalCancel: "Cancelar",
+        modalConfirm: "Confirmar",
+        modalClose: "Cerrar",
+
+        tcrFormatModalTitle: "Seleccionar Formato de Código de Tiempo",
+        tcrFormatModalMessage: "Elige el formato en el que deseas visualizar el código de tiempo:",
+        tcrFormatModalSave: "Guardar", 
+
+        setInitialTCRModalTitle: "Establecer Código de Tiempo Inicial",
+        setInitialTCRModalMessage: "Introduce el código de tiempo desde el que quieres que empiece a contar el TCR:",
+        setInitialTCRModalPlaceholder: "Ej: 00:00:00,000 o 00:00:00:00",
+        setInitialTCRModalSet: "Establecer",
+        setTCRSuccess: "El código de tiempo inicial se ha establecido en {0}.",
+        invalidTCRFormat: "Formato de código de tiempo no válido. Usa HH:MM:SS,MMM o HH:MM:SS:FF (ej. 00:00:00,000 o 00:00:00:00).",
+
+        mediaLoadError: "Error al cargar el archivo multimedia. Asegúrate de que sea un formato compatible (ej. MP3, MP4, M4A). Los archivos MP4 con audio AAC suelen ser bien soportados, pero algunos códecs específicos o versiones de navegador podrían causar problemas al cargar directamente desde una ruta 'file://' debido a restricciones de seguridad. Intenta con un formato diferente o usa un servidor local.",
+        mediaLoadErrorWithFileProtocolHint: "Error al cargar el archivo multimedia. El navegador reportó: 'Empty src attribute'. También podría ser un códec de audio/vídeo no compatible con tu navegador.", // Simplified
+        noMediaWarning: "Carga un vídeo o audio primero para {0}.",
+        navigationError: "No hay vídeo/audio cargado o el formato del código de tiempo es inválido para navegar.",
+        insertTimecodeError: "Carga un vídeo o audio primero para insertar un código de tiempo.",
+        exportError: "Formato de exportación no soportado.", 
+        textLoadError: "Error al cargar el archivo de texto.",
+
+        findModalTitle: "Buscar Texto",
+        findQueryLabel: "Texto a buscar:",
+        caseSensitiveLabel: "Distinguir mayúsculas y minúsculas",
+        findPrevious: "Buscar Anterior",
+        findNext: "Siguiente",
+        noMatchesFound: "No se encontraron coincidencias.",
+        searchEndReached: "Fin de la búsqueda. Volviendo al inicio.",
+        searchStartReached: "Inicio de la búsqueda. Volviendo al final.",
+
+        replaceModalTitle: "Reemplazar Texto",
+        replaceWithLabel: "Reemplazar con:",
+        replaceButtonInModal: "Reemplazar",
+        replaceAllButton: "Reemplazar Todo",
+        noMatchSelectedForReplace: "No hay una coincidencia seleccionada para reemplazar.",
+        replacementCompleteNoMoreMatches: "Reemplazo completado. No hay más coincidencias.",
+        replacementComplete: "Todas las coincidencias de \"{0}\" han sido reemplazadas.",
+        enterTextToFind: "Por favor, introduce el texto a buscar.",
+
+        changeLanguageButton: "Cambiar Idioma",
+        chooseLanguageMessage: "Elige un idioma:",
+        exportFileModalTitle: "Exportar Archivo",
+        exportFileMessage: "Introduce el nombre deseado para el archivo:",
+        exportFilenamePlaceholder: "transcripcion",
+        exportFormatLabel: "Seleccionar formato:",
+        exportFormatTxt: "Texto Plano (.txt)",
+        exportFormatHtml: "Texto con formato (.html)",
+        exportButton: "Exportar", 
+
+        // Descripciones de atajos para la traducción
+        shortcut1: "Insertar código de tiempo",
+        shortcut2: "Reproducir/Pausar",
+        shortcut3: "Retroceder 5 segundos",
+        shortcut4: "Avanzar 5 segundos",
+        shortcut5: "Retroceder 1 fotograma (aprox.)",
+        shortcut6: "Avanzar 1 fotograma (aprox.)",
+        shortcut7: "Retroceder 1 segundo",
+        shortcut8: "Avanzar 1 segundo",
+        shortcut9: "Alt/Opción + 1 a 8: Insertar nombre de personaje", // Updated shortcut description
+
+        languageEnglish: "Inglés",
+        languageSpanish: "Español"
+      }
+    };
+
+    function translateElement(element, key, args = []) {
+      if (!element) return;
+      let text = translations[currentLanguage][key];
+      if (text && args.length > 0) {
+        args.forEach((arg, index) => {
+          text = text.replace(`{${index}}`, arg);
+        });
+      }
+      element.textContent = text || '';
+    }
+
+    function translateAttribute(element, attr, key, args = []) {
+      if (!element) return;
+      let text = translations[currentLanguage][key];
+      if (text && args.length > 0) {
+        args.forEach((arg, index) => {
+          text = text.replace(`{${index}}`, arg);
+        });
+      }
+      element.setAttribute(attr, text || '');
+    }
+
+    function applyLanguage(lang) {
+      currentLanguage = lang;
+      document.documentElement.lang = lang; // Establece el atributo lang del HTML
+
+      // Actualiza el contenido de texto estático
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const argsAttr = el.getAttribute('data-i18n-args');
+        const args = argsAttr ? argsAttr.split(',') : [];
+        translateElement(el, key, args);
+      });
+
+      // Actualiza los títulos
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        translateAttribute(el, 'title', key);
+      });
+
+      // Actualiza los marcadores de posición
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        const argsAttr = el.getAttribute('data-i18n-placeholder-args');
+        const args = argsAttr ? argsAttr.split(',') : [];
+        translateAttribute(el, 'placeholder', key, args);
+      });
+
+      // Actualiza el texto del botón de alternar tema
+      if (themeText) {
+          themeText.textContent = isDarkMode ? translations[currentLanguage].lightMode : translations[currentLanguage].darkMode;
+      }
+      // Actualiza el texto del botón de alternar idioma (ahora "Cambiar Idioma")
+      if (languageText) {
+          languageText.textContent = translations[currentLanguage].changeLanguageButton;
+      }
+      
+      // Vuelve a aplicar el tema para los resaltados y colores
+      applyTheme(isDarkMode ? 'dark' : 'light');
+
+      // updateFileProtocolWarning(); // Removed call
+    }
+
+    // Nueva función para el modal de selección de idioma
+    function showLanguageSelectionModal() {
+        let optionsHtml = '<div class="space-y-2">';
+        Object.keys(translations).forEach(langCode => {
+            const langName = translations[langCode][`language${langCode === 'en' ? 'English' : 'Spanish'}`];
+            const isChecked = langCode === currentLanguage ? 'checked' : '';
+            optionsHtml += `
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="radio" name="languageSelect" value="${langCode}" class="form-radio h-4 w-4 text-blue-600" ${isChecked}>
+                    <span class="ml-2">${langName}</span>
+                </label><br>
+            `;
+        });
+        optionsHtml += '</div>';
+
+        showModal(
+            translations[currentLanguage].changeLanguageButton,
+            translations[currentLanguage].chooseLanguageMessage,
+            [
+                { text: translations[currentLanguage].modalAccept, handler: () => {
+                    const selectedLang = document.querySelector('input[name="languageSelect"]:checked');
+                    if (selectedLang) {
+                        applyLanguage(selectedLang.value);
+                        localStorage.setItem('language', selectedLang.value);
+                    }
+                }, type: 'primary' },
+                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
+            ],
+            optionsHtml
+        );
+    }
+
+    // Establece el tema inicial al cargar el script
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme !== null) { // Check if a theme preference exists
+            isDarkMode = (savedTheme === 'dark');
+        } else { // If no theme is saved, default to light mode
+            isDarkMode = false; // Explicitly set to false for light mode default
+        }
+        applyTheme(isDarkMode ? 'dark' : 'light');
+
+        const savedLanguage = localStorage.getItem('language');
+        if (savedLanguage) {
+            currentLanguage = savedLanguage;
+        } else { // Por defecto, inglés si no hay idioma guardado
+            currentLanguage = 'en';
+        }
+        applyLanguage(currentLanguage); // Aplica el idioma después del tema para que los colores iniciales sean correctos
+
+        updateEmptyPlayerState(); // Llama a esto inicialmente para establecer la vista del reproductor vacío
+    });
+
+    // --- Gestión de Temas ---
+    const themeClasses = {
+      dark: {
+        bodyBg: 'bg-gray-950', bodyText: 'text-gray-200', 
+        panelBg: 'bg-gray-800',
+        border: 'border-gray-700',
+        inputBg: 'bg-gray-700', inputBorder: 'border-gray-600', inputText: 'text-gray-200',
+        fileButtonBg: 'bg-gray-600', fileButtonText: 'text-gray-100', fileButtonHoverBg: 'bg-gray-500',
+        editorBg: 'bg-[#F3F4F6]', editorBorder: 'border-gray-700', editorText: 'text-black', /* Updated */
+        timestampColor: '#93c5fd', 
+        modalBg: 'bg-gray-800', modalText: 'text-gray-200',
+        btnPrimary: 'bg-black hover:bg-gray-700 text-white', 
+        btnDanger: 'bg-black hover:bg-gray-700 text-white',
+        btnNeutral: 'bg-black hover:bg-gray-700 text-white',
+        cbtnWarning: 'bg-black hover:bg-gray-700 text-white',
+        btnTheme: 'bg-black hover:bg-gray-700 text-white',
+        textColorPrimary: 'text-gray-300', textColorSecondary: 'text-gray-400',
+      },
+      light: {
+        bodyBg: 'bg-gray-50', bodyText: 'text-gray-900',
+        panelBg: 'bg-white',
+        border: 'border-gray-300',
+        inputBg: 'bg-gray-200', inputBorder: 'border-gray-300', inputText: 'text-gray-800',
+        fileButtonBg: 'bg-gray-100', fileButtonText: 'text-gray-700', fileButtonHoverBg: 'bg-gray-300',
+        editorBg: 'bg-[#F3F4F6]', editorBorder: 'border-gray-300', editorText: 'text-black', /* Updated */
+        timestampColor: '#1d4ed8', 
+        modalBg: 'bg-gray-100', modalText: 'text-gray-900',
+        // Changes for light mode buttons and TCR field background
+        btnPrimary: 'bg-gray-300 hover:bg-gray-400 text-black', 
+        btnDanger: 'bg-gray-300 hover:bg-gray-400 text-black',
+        btnNeutral: 'bg-gray-300 hover:bg-gray-400 text-black',
+        btnWarning: 'bg-gray-300 hover:bg-gray-400 text-black',
+        btnTheme: 'bg-gray-300 hover:bg-gray-400 text-black',
+        textColorPrimary: 'text-gray-700', textColorSecondary: 'text-gray-500',
+      }
+    };
+
+    function applyTheme(theme) {
+      const currentTheme = themeClasses[theme];
+
+      document.body.className = `${currentTheme.bodyBg} ${currentTheme.bodyText} flex flex-col md:flex-row h-screen overflow-hidden`;
+      document.getElementById('left').className = `md:w-2/5 p-4 md:border-r-2 ${currentTheme.border} ${currentTheme.panelBg} min-w-[320px] flex flex-col relative overflow-y-auto`;
+      document.getElementById('right').className = `md:w-3/5 p-4 ${currentTheme.panelBg} min-w-[320px] flex flex-col overflow-y-auto`;
+
+      videoFileInput.className = `hidden`;
+      textFileInput.className = `hidden`;
+
+      document.querySelectorAll('input[type="text"]').forEach(input => {
+        // Updated character input classes
+        if (input.closest('#charFields')) {
+            input.className = `flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
+        } else {
+            input.className = `w-full p-2 mb-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
+        }
+      });
+      // Estilos para el control deslizante de volumen
+      document.getElementById('volumeSlider').className = `w-full h-2 rounded-lg appearance-none cursor-pointer range-lg`;
+
+
+      document.querySelectorAll('label, h4, ul, p').forEach(el => {
+        if (el.id === 'noMediaMessage') {
+            el.className = `${currentTheme.textColorSecondary} text-sm text-center italic mb-4 hidden`;
+        } else if (el.matches('#editor p.italic')) { 
+            el.className = `${currentTheme.textColorSecondary} italic`;
+        } else {
+             el.classList.forEach(cls => {
+                if (cls.startsWith('text-gray-')) {
+                    el.classList.remove(cls);
+                }
+            });
+            el.classList.add(currentTheme.textColorPrimary);
+        }
+      });
+      document.querySelectorAll('h4').forEach(h4 => {
+          h4.classList.remove(...Array.from(h4.classList).filter(cls => cls.startsWith('border-gray-')));
+          h4.classList.add(currentTheme.border);
+      });
+      document.querySelector('#shortcuts').classList.remove(...Array.from(document.querySelector('#shortcuts').classList).filter(cls => cls.startsWith('border-gray-')));
+      document.querySelector('#shortcuts').classList.add(currentTheme.border);
+
+      // Apply editor specific styles
+      editor.classList.remove(...Array.from(editor.classList).filter(cls => cls.startsWith('bg-') || cls.startsWith('shadow-') || cls.startsWith('text-')));
+      editor.classList.add('flex-1', 'rounded-lg', 'p-4', 'font-mono', 'text-sm', 'overflow-y-auto', 'outline-none', 'shadow-inner'); 
+      editor.classList.add(currentTheme.editorBg, currentTheme.editorBorder, currentTheme.editorText); 
+      // Ensure the text color is always black for editor content
+      editor.style.color = '#000000'; 
+
+      // Apply TCR display specific styles
+      const tcrDisplayElement = document.getElementById('tcrDisplay');
+      if (tcrDisplayElement) {
+          // Remove existing background and text classes
+          tcrDisplayElement.classList.remove('bg-black', 'text-white', 'bg-gray-200', 'text-black'); 
+          // Apply new theme-specific styles
+          if (theme === 'dark') {
+              tcrDisplayElement.classList.add('bg-black', 'text-white');
+          } else { // light mode
+              tcrDisplayElement.classList.add('bg-gray-200', 'text-black'); 
+          }
+      }
+
+      document.querySelectorAll('button.font-bold').forEach(btn => {
+        let baseClass = 'font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm';
+        let specificClass = currentTheme.btnPrimary;
+
+        // Aplica flex items-center justify-center w-auto a los botones relevantes
+        const flexButtons = ['playPauseBtn', 'speedDownBtn', 'speedUpBtn', 'muteBtn', 'importVideoAudioBtn', 'importTextBtn', 'findBtn', 'replaceBtn']; 
+        if (flexButtons.includes(btn.id) || (btn.onclick && btn.onclick.toString().includes('seekMedia('))) {
+            baseClass += ' flex items-center justify-center w-auto';
+        }
+        // Clase específica para los botones de tema e idioma (ahora sin iconos)
+        if (btn.id === 'themeToggleButton' || btn.id === 'languageToggleButton') {
+            specificClass = currentTheme.btnTheme;
+        } else if (btn.onclick && (btn.onclick.toString().includes('insertTimestamp()') || btn.onclick.toString().includes('showTCRFormatSelection()') || btn.onclick.toString().includes('showSetInitialTCRModal()'))) {
+            baseClass += ' flex-1';
+        }
+        btn.className = `${baseClass} ${specificClass}`;
+      });
+      
+      const styleEl = document.querySelector('style');
+      let styleContent = styleEl.innerHTML; 
+      styleContent = styleContent.replace(/(\.timestamp \{\s*color:\s*)#[a-fA-F0-9]+\s*!important;/, `$1${currentTheme.timestampColor} !important;`);
+      styleEl.innerHTML = styleContent;
+
+
+      document.getElementById('customModal').querySelector('.modal-content').className = `modal-content ${currentTheme.modalBg} ${currentTheme.modalText}`;
+      document.querySelectorAll('#modalButtons button').forEach(btn => {
+          let btnType = 'primary';
+          if (btn.textContent === translations[currentLanguage].modalCancel || btn.textContent === translations[currentLanguage].modalClose) btnType = 'neutral';
+          if (btn.textContent === translations[currentLanguage].modalConfirm || btn.textContent === translations[currentLanguage].replaceAllButton || btn.textContent === translations[currentLanguage].exportButton) btnType = 'primary'; 
+          if (btn.textContent === translations[currentLanguage].replaceAllButton) btnType = 'danger'; 
+          btn.className = `${currentTheme[`btn${btnType.charAt(0).toUpperCase() + btnType.slice(1)}`]} font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out`;
+          if (btn.textContent === translations[currentLanguage].setInitialTCRModalSet) btn.classList.add('w-full');
+      });
+
+      document.querySelectorAll('#modalBody label span').forEach(span => {
+          span.classList.remove(...Array.from(span.classList).filter(cls => cls.startsWith('text-gray-')));
+          span.classList.add(currentTheme.modalText);
+      });
+      document.querySelectorAll('#modalBody h4').forEach(h4 => {
+          h4.classList.remove(...Array.from(h4.classList).filter(cls => cls.startsWith('border-gray-')));
+          h4.classList.add(currentTheme.border);
+          h4.classList.add(currentTheme.textColorPrimary);
+      });
+      document.querySelectorAll('#modalBody input[type="radio"]').forEach(input => {
+          input.classList.add('text-blue-600');
+      });
+
+      // Vuelve a aplicar los resaltados para buscar/reemplazar para asegurar los colores correctos
+      if (findReplaceState.isFinding && findReplaceState.query) {
+        highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
+        if (findReplaceState.currentIndex !== -1) {
+            goToMatch(findReplaceState.currentIndex); 
+        }
+      }
+    }
+
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      const theme = isDarkMode ? 'dark' : 'light';
+      applyTheme(theme);
+      localStorage.setItem('theme', theme);
+    }
+
+    // --- Funciones de la Ventana Modal ---
+    function showModal(title, message, buttons, bodyContent = '') {
+      modalTitle.textContent = title;
+      modalMessage.innerHTML = message; // Usar innerHTML para enlaces en el mensaje
+      modalBody.innerHTML = bodyContent;
+      modalButtons.innerHTML = '';
+
+      buttons.forEach(buttonConfig => {
+        const button = document.createElement('button');
+        button.textContent = buttonConfig.text;
+        let btnType = buttonConfig.type || 'primary';
+        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        button.className = `${currentTheme[`btn${btnType.charAt(0).toUpperCase() + btnType.slice(1)}`]} font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out`;
+        
+        button.onclick = () => {
+          hideModal();
+          if (buttonConfig.handler) {
+            buttonConfig.handler();
+          }
+        };
+        modalButtons.appendChild(button);
+      });
+
+      applyTheme(isDarkMode ? 'dark' : 'light'); 
+      customModal.classList.add('show');
+    }
+
+    function hideModal() {
+      customModal.classList.remove('show');
+      // Cuando se cierra el modal, borra los resaltados
+      if (findReplaceState.isFinding) {
+          clearHighlights();
+          findReplaceState.isFinding = false;
+      }
+    }
+
+    function customAlert(messageKey, titleKey = 'modalAttention', messageArgs = []) {
+      let message = translations[currentLanguage][messageKey];
+      if (message && messageArgs.length > 0) {
+        messageArgs.forEach((arg, index) => {
+          message = message.replace(`{${index}}`, arg);
+        });
+      }
+      showModal(translations[currentLanguage][titleKey], message, [{ text: translations[currentLanguage].modalAccept, type: 'primary' }]);
+    }
+
+    function customConfirm(messageKey, onConfirm, onCancel, titleKey = 'modalConfirmAction', messageArgs = []) {
+      let message = translations[currentLanguage][messageKey];
+      if (message && messageArgs.length > 0) {
+        messageArgs.forEach((arg, index) => {
+          message = message.replace(`{${index}}`, arg);
+        });
+      }
+      showModal(translations[currentLanguage][titleKey], message, [
+        { text: translations[currentLanguage].modalCancel, handler: onCancel, type: 'neutral' },
+        { text: translations[currentLanguage].modalConfirm, handler: onConfirm, type: 'danger' }
+      ]);
+    }
+
+    function showTCRFormatSelection() {
+        let optionsHtml = '<div class="space-y-2">';
+        tcrFormats.forEach((format, index) => {
+            const isChecked = index === currentTCRFormatIndex ? 'checked' : '';
+            optionsHtml += `
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="radio" name="tcrFormat" value="${index}" class="form-radio h-4 w-4 text-blue-600" ${isChecked}>
+                    <span class="ml-2">${format.name}</span>
+                </label><br>
+            `;
+        });
+        optionsHtml += '</div>';
+
+        showModal(
+            translations[currentLanguage].tcrFormatModalTitle,
+            translations[currentLanguage].tcrFormatModalMessage,
+            [
+                { text: translations[currentLanguage].tcrFormatModalSave, handler: () => { 
+                    const selectedFormat = document.querySelector('input[name="tcrFormat"]:checked');
+                    if (selectedFormat) {
+                        currentTCRFormatIndex = parseInt(selectedFormat.value);
+                        updateTCRDisplay();
+                    }
+                }, type: 'primary' },
+                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
+            ],
+            optionsHtml
+        );
+    }
+
+    function showShortcutsModal() {
+        // Vuelve a generar el contenido para asegurar que esté en el idioma actual
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `
+            <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Atajos de Teclado:</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li data-i18n="shortcut1"><strong>Alt+Q</strong>: ${translations[currentLanguage].shortcut1}</li>
+                <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Espacio</strong>: ${translations[currentLanguage].shortcut2}</li>
+                <li data-i18n="shortcut3"><strong>Shift + Flecha Izquierda</strong>: ${translations[currentLanguage].shortcut3}</li>
+                <li data-i18n="shortcut4"><strong>Shift + Flecha Derecha</strong>: ${translations[currentLanguage].shortcut4}</li>
+                <li data-i18n="shortcut5"><strong>Alt/Opción + Flecha Izquierda</strong>: ${translations[currentLanguage].shortcut5}</li>
+                <li data-i18n="shortcut6"><strong>Alt/Opción + Flecha Derecha</strong>: ${translations[currentLanguage].shortcut6}</li>
+                <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Flecha Izquierda</strong>: ${translations[currentLanguage].shortcut7}</li>
+                <li data-i19n="shortcut8"><strong>Ctrl/Cmd + Flecha Derecha</strong>: ${translations[currentLanguage].shortcut8}</li>
+                <li data-i19n="shortcut9"><strong>Alt/Opción + 1 a 8</strong>: ${translations[currentLanguage].shortcut9}</li>
+            </ul>
+        `;
+        
+        showModal(
+            translations[currentLanguage].keyboardShortcuts,
+            '',
+            [{ text: translations[currentLanguage].modalClose, type: 'neutral' }],
+            tempDiv.innerHTML
+        );
+    }
+
+    function showSetInitialTCRModal() {
+        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
+        
+        let initialTCRHtml = `
+            <div id="modalInitialTCRContent">
+                <label for="modalInitialTCRInput" class="text-sm font-medium mb-1 block">TCR (HH:MM:SS,MMM o HH:MM:SS:FF)</label>
+                <input type="text" id="modalInitialTCRInput" placeholder="${translations[currentLanguage].setInitialTCRModalPlaceholder}" class="${modalInputClasses}" />
+            </div>
+        `;
+
+        showModal(
+            translations[currentLanguage].setInitialTCRModalTitle,
+            translations[currentLanguage].setInitialTCRModalMessage,
+            [
+                { text: translations[currentLanguage].setInitialTCRModalSet, handler: () => {
+                    const modalInitialTCRInput = document.getElementById('modalInitialTCRInput');
+                    if (modalInitialTCRInput) {
+                        const timeCodeString = modalInitialTCRInput.value.trim();
+                        setInitialTCR(timeCodeString); 
+                    }
+                }, type: 'primary' },
+                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
+            ],
+            initialTCRHtml
+        );
+        if (video.src) {
+            const modalInitialTCRInput = document.getElementById('modalInitialTCRInput');
+            if (modalInitialTCRInput) {
+                modalInitialTCRInput.value = tcrFormats[0].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE); 
+            }
+        }
+    }
+
+    // Función para gestionar el estado del reproductor de video (visibilidad del video vs. superposición)
+    function updateEmptyPlayerState() {
+        if (!video.src) {
+            emptyPlayerOverlay.classList.remove('hidden'); 
+            noMediaMessage.classList.remove('hidden'); 
+            video.classList.add('hidden'); 
+            
+            tcrDisplay.textContent = '--:--:--,---'; 
+        } else {
+            emptyPlayerOverlay.classList.add('hidden'); 
+            noMediaMessage.classList.add('hidden'); 
+            video.classList.remove('hidden'); 
+        }
+    }
+
+    // Función para mostrar/ocultar la advertencia de protocolo de archivo (Removed)
+    // function updateFileProtocolWarning() {
+    //     if (window.location.protocol === 'file:') {
+    //         fileProtocolWarning.classList.remove('hidden');
+    //     } else {
+    //         fileProtocolWarning.classList.add('hidden');
+    //     }
+    // }
+
+    // Oyente de eventos para el botón importVideoAudioBtn
+    importVideoAudioBtn.addEventListener('click', () => {
+        videoFileInput.click(); 
+    });
+
+    videoFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+
+      if (!file) {
+        video.src = ''; 
+        updateEmptyPlayerState(); 
+        return;
+      }
+      
+      console.log("Archivo seleccionado:", file.name, "Tipo:", file.type, "Tamaño:", file.size, "bytes");
+
+      let url;
+      try {
+        url = URL.createObjectURL(file);
+        video.src = url;
+        console.log("URL de objeto creada y asignada a video.src:", video.src);
+      } catch (error) {
+        console.error("Error al crear URL de objeto o asignar a video.src:", error);
+        customAlert('mediaLoadErrorWithFileProtocolHint', 'Error al cargar el medio');
+        video.src = ''; // Clear src on error
+        updateEmptyPlayerState();
+        return;
+      }
+      
+      // Oculta la superposición del reproductor vacío y muestra el video
+      emptyPlayerOverlay.classList.add('hidden');
+      video.classList.remove('hidden'); 
+      
+      noMediaMessage.classList.add('hidden'); 
+
+      video.load(); 
+
+      video.onloadedmetadata = async () => { 
+        console.log("Video metadata loaded successfully. Duration:", video.duration, "seconds."); 
+        updateEmptyPlayerState(); 
+        
+        tcrOffsetSeconds = 0;
+        updateTCRDisplay(); 
+        video.playbackRate = 1.0; 
+        speedDisplay.textContent = '1.0x';
+        video.volume = 1.0;
+        volumeSlider.value = 1.0;
+        video.muted = false;
+        muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+      };
+
+      video.onerror = (errorEvent) => {
+          console.error("Detalles del error del elemento de video:", video.error);
+          if (video.error) {
+              console.error(`Código de error: ${video.error.code}, Mensaje de error: ${video.error.message}`);
+          }
+          console.error("Video element current src when onerror fired:", video.src);
+          
+          if (video.src === '') { 
+              console.log("Fuente de vídeo vaciada intencionadamente, se suprime la alerta de error repetida.");
+              return; 
+          }
+
+          if (video.error && video.error.code === MediaError.MEDIA_ERR_ABORTED) {
+              console.warn("La carga del medio fue abortada (posiblemente por el usuario o al cerrar el medio).");
+              return;
+          }
+
+          console.error("Error al cargar el vídeo/audio desde la entrada de archivo. Causa probable: seguridad del navegador o formato no compatible.");
+          customAlert('mediaLoadErrorWithFileProtocolHint'); 
+          video.src = ''; 
+          updateEmptyPlayerState();
+      };
+    });
+
+
+    // closeMediaBtnNew.addEventListener('click', () => { // Removed listener
+    //   video.pause();
+    //   const originalOnError = video.onerror;
+    //   video.onerror = null; 
+
+    //   video.src = ''; 
+
+    //   video.onerror = originalOnError; 
+
+    //   tcrOffsetSeconds = 0;
+    //   playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+    //   updateEmptyPlayerState(); 
+    // });
+
+    // Oyentes de eventos para los nuevos controles de reproducción
+    playPauseBtn.addEventListener('click', () => {
+        if (!video.src) {
+            customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].playPauseTitle.toLowerCase()]);
+            return;
+        }
+        if (video.paused) {
+            video.play();
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        } else {
+            video.pause();
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        }
+    });
+    
+    video.addEventListener('play', () => {
+        video.playbackRate = parseFloat(speedDisplay.textContent); // Asegura que se aplique la velocidad actual
+    });
+
+    video.addEventListener('pause', () => {
+        // No se necesita lógica específica de pausa aquí
+    });
+
+    video.addEventListener('timeupdate', () => {
+        updateTCRDisplay(); 
+    });
+
+
+    speedUpBtn.addEventListener('click', () => {
+        if (!video.src) return;
+        video.playbackRate = Math.min(4.0, video.playbackRate + 0.25);
+        speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`;
+    });
+
+    speedDownBtn.addEventListener('click', () => {
+        if (!video.src) return;
+        video.playbackRate = Math.max(0.5, video.playbackRate - 0.25);
+        speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`;
+    });
+
+    volumeSlider.addEventListener('input', () => {
+        if (!video.src) return;
+        video.volume = volumeSlider.value;
+        if (video.volume === 0) {
+            muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            video.muted = true;
+        } else {
+            muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            video.muted = false;
+            lastVolume = video.volume;
+        }
+    });
+
+    muteBtn.addEventListener('click', () => {
+        if (!video.src) return;
+        if (video.muted) {
+            video.muted = false;
+            video.volume = lastVolume > 0 ? lastVolume : 0.5;
+            volumeSlider.value = video.volume;
+            muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        } else {
+            lastVolume = video.volume;
+            video.muted = true;
+            video.volume = 0;
+            volumeSlider.value = 0;
+            muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        }
+    });
+
+    function seekMedia(seconds) {
+        if (!video.src) {
+            customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].seekMedia || translations[currentLanguage].playPauseTitle.toLowerCase()]); 
+            return;
+        }
+        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+    }
+
+    // --- Funciones del Editor ---
+    function insertTimestamp() {
+      if (!video.src) {
+        customAlert('insertTimecodeError', 'Error');
+        return;
+      }
+      if (isNaN(video.currentTime)) {
+          console.error("La hora actual del video es NaN, no se puede insertar la marca de tiempo.");
+          customAlert('navigationError', 'Error');
+          return;
+      }
+      const timeCode = tcrFormats[currentTCRFormatIndex].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE); 
+      insertHtmlAtCursor(`<span class="timestamp">[${timeCode}]</span>`);
+    }
+
+    function insertHtmlAtCursor(html) {
+      editor.focus(); 
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html; 
+
+      const frag = document.createDocumentFragment();
+      while (tempDiv.firstChild) {
+          frag.appendChild(tempDiv.firstChild);
+      }
+
+      const lastInsertedNode = frag.lastChild;
+
+      range.insertNode(frag);
+
+      // Añade un espacio normal para asegurar que el cursor esté fuera del span y listo para texto plano
+      const spaceNode = document.createTextNode(' '); 
+      range.setStartAfter(lastInsertedNode); 
+      range.collapse(false); 
+      range.insertNode(spaceNode); 
+      
+      const finalRange = document.createRange();
+      finalRange.setStart(spaceNode, 1); 
+      finalRange.setEnd(spaceNode, 1);   
+      
+      sel.removeAllRanges();
+      sel.addRange(finalRange);
+    }
+
+    function applyStyle(command) {
+        editor.focus(); 
+        document.execCommand(command, false, null);
+    }
+
+    const pad = (num, length = 2) => String(num).padStart(length, '0');
+
+    const tcrFormats = [
+        {
+            name: "HH:MM:SS,MMM",
+            format: (timeInSeconds) => {
+                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
+                    return '--:--:--,---';
+                }
+                const h = Math.floor(timeInSeconds / 3600);
+                const m = Math.floor((timeInSeconds % 3600) / 60);
+                const s = Math.floor(timeInSeconds % 60);
+                const ms = Math.floor((timeInSeconds % 1) * 1000);
+                return `${pad(h)}:${pad(m)}:${pad(s)},${pad(ms, 3)}`;
+            }
+        },
+        {
+            name: "HH:MM:SS:FF", 
+            format: (timeInSeconds, frameRate = DEFAULT_FRAMERATE) => {
+                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
+                    return '--:--:--:--';
+                }
+                const totalFrames = Math.floor(timeInSeconds * frameRate);
+                const h = Math.floor(totalFrames / (3600 * frameRate));
+                const m = Math.floor((totalFrames / (60 * frameRate)) % 60);
+                const s = Math.floor((totalFrames / frameRate) % 60);
+                const f = totalFrames % frameRate;
+                return `${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`;
+            }
+        },
+        {
+            name: "MM:SS,MMM",
+            format: (timeInSeconds) => {
+                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
+                    return '--:--,---';
+                }
+                const m = Math.floor(timeInSeconds / 60);
+                const s = Math.floor(timeInSeconds % 60);
+                const ms = Math.floor((timeInSeconds % 1) * 1000);
+                return `${pad(m)}:${pad(s)},${pad(ms, 3)}`;
+            }
+        },
+        {
+            name: "MM:SS:FF", 
+            format: (timeInSeconds, frameRate = DEFAULT_FRAMERATE) => {
+                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
+                    return '--:--:--';
+                }
+                const totalFrames = Math.floor(timeInSeconds * frameRate);
+                const m = Math.floor((totalFrames / (60 * frameRate)) % 60);
+                const s = Math.floor((totalFrames / frameRate) % 60);
+                const f = totalFrames % frameRate;
+                return `${pad(m)}:${pad(s)}:${pad(f)}`;
+            }
+        }
+    ];
+    let currentTCRFormatIndex = 0; 
+
+    // Función para actualizar la visualización del TCR
+    function updateTCRDisplay() {
+        if (video.src && !isNaN(video.currentTime) && isFinite(video.currentTime)) {
+            const displayTime = video.currentTime + tcrOffsetSeconds;
+            tcrDisplay.textContent = tcrFormats[currentTCRFormatIndex].format(displayTime, DEFAULT_FRAMERATE);
+        } else {
+            tcrDisplay.textContent = '--:--:--,---'; 
+        }
+    }
+
+
+    function parseTimeCodeToSeconds(timeCodeString, frameRate = DEFAULT_FRAMERATE) {
+        timeCodeString = timeCodeString.trim();
+        let matchMs = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})/);
+        if (matchMs) {
+            const h = parseInt(matchMs[1]);
+            const m = parseInt(matchMs[2]);
+            const s = parseInt(matchMs[3]);
+            const ms = parseInt(matchMs[4]);
+            return h * 3600 + m * 60 + s + ms / 1000;
+        }
+
+        let matchFrames = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2}):(\d{2})/);
+        if (matchFrames) {
+            const h = parseInt(matchFrames[1]);
+            const m = parseInt(matchFrames[2]);
+            const s = parseInt(matchFrames[3]);
+            const f = parseInt(matchFrames[4]);
+            return (h * 3600 + m * 60 + s) + (f / frameRate);
+        }
+        
+        let matchMsShort = timeCodeString.match(/(\d{2}):(\d{2}),(\d{3})/);
+        if (matchMsShort) {
+            const m = parseInt(matchMsShort[1]);
+            const s = parseInt(matchMsShort[2]);
+            const ms = parseInt(matchMsShort[3]);
+            return m * 60 + s + ms / 1000;
+        }
+
+        let matchFramesShort = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2})/);
+        if (matchFramesShort) {
+            const m = parseInt(matchFramesShort[1]);
+            const s = parseInt(matchFramesShort[2]);
+            const f = parseInt(matchFramesShort[3]);
+            return (m * 60 + s) + (f / frameRate);
+        }
+
+        return null;
+    }
+
+    function setInitialTCR(timeCodeString) {
+        if (!video.src) {
+            customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].setInitialTimecode.toLowerCase()]);
+            return;
+        }
+
+        const desiredTCRSeconds = parseTimeCodeToSeconds(timeCodeString);
+
+        if (desiredTCRSeconds === null || isNaN(desiredTCRSeconds) || desiredTCRSeconds < 0) {
+            customAlert('invalidTCRFormat', 'Error de Formato');
+            return;
+        }
+
+        tcrOffsetSeconds = desiredTCRSeconds - video.currentTime;
+        updateTCRDisplay();
+        customAlert('setTCRSuccess', 'TCR Establecido', [timeCodeString]);
+    }
+
+    function exportText(type, filename) {
+      let content;
+      let mimeType;
+
+      if (type === 'txt') {
+        content = editor.innerText; 
+        mimeType = 'text/plain;charset=utf-8';
+      } else if (type === 'html') {
+        // Construye un documento HTML completo para exportar
+        content = `<!DOCTYPE html>
+<html lang="${currentLanguage}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transcripción Exportada</title>
+  <style>
+    body { font-family: 'Inter', sans-serif; line-height: 1.6; padding: 20px; }
+    .timestamp { color: #1d4ed8; text-decoration: underline; cursor: pointer; } 
+    @media (prefers-color-scheme: dark) {
+        body { background-color: #1f2937; color: #e5e7eb; }
+        .timestamp { color: #93c5fd; }
+    }
+  </style>
+</head>
+<body>
+  ${editor.innerHTML}
+</body>
+</html>`;
+        mimeType = 'text/html;charset=utf-8';
+      } else {
+        customAlert('exportError', 'Error de Exportación');
+        return;
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename; 
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function showExportFormatModal() {
+        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
+        
+        let exportHtml = `
+            <div>
+                <label for="exportFilenameInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].exportFileMessage}</label>
+                <input type="text" id="exportFilenameInput" placeholder="${translations[currentLanguage].exportFilenamePlaceholder}" class="${modalInputClasses}" value="${translations[currentLanguage].exportFilenamePlaceholder}" />
+                
+                <label class="text-sm font-medium mb-1 block mt-4">${translations[currentLanguage].exportFormatLabel}</label>
+                <div class="space-y-2">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" name="exportFormat" value="txt" class="form-radio h-4 w-4 text-blue-600" checked>
+                        <span class="ml-2">${translations[currentLanguage].exportFormatTxt}</span>
+                    </label><br>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" name="exportFormat" value="html" class="form-radio h-4 w-4 text-blue-600">
+                        <span class="ml-2">${translations[currentLanguage].exportFormatHtml}</span>
+                    </label>
+                </div>
+            </div>
+        `;
+
+        showModal(
+            translations[currentLanguage].exportFileModalTitle,
+            '',
+            [
+                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' },
+                { text: translations[currentLanguage].exportButton, handler: () => {
+                    const filenameInput = document.getElementById('exportFilenameInput');
+                    const selectedFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+                    let filename = filenameInput.value.trim();
+
+                    if (!filename) {
+                        filename = translations[currentLanguage].exportFilenamePlaceholder;
+                    }
+                    
+                    // Asegura la extensión correcta según el formato seleccionado
+                    if (!filename.endsWith(`.${selectedFormat}`)) {
+                        filename += `.${selectedFormat}`;
+                    }
+
+                    exportText(selectedFormat, filename);
+                }, type: 'primary' }
+            ],
+            exportHtml
+        );
+
+        // Añade un oyente de eventos para actualizar la extensión del nombre de archivo cuando cambia el formato
+        const exportFilenameInput = document.getElementById('exportFilenameInput');
+        document.querySelectorAll('input[name="exportFormat"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                let currentFilename = exportFilenameInput.value.trim();
+                const newFormat = e.target.value;
+                
+                // Elimina las extensiones conocidas existentes antes de añadir la nueva
+                const knownExtensions = ['.txt', '.html']; 
+                for (let ext of knownExtensions) {
+                    if (currentFilename.endsWith(ext)) {
+                        currentFilename = currentFilename.slice(0, -ext.length);
+                        break;
+                    }
+                }
+                exportFilenameInput.value = currentFilename + `.${newFormat}`;
+            });
+        });
+    }
+
+    editor.addEventListener('focus', () => { 
+        if (editor.innerText.includes(translations[currentLanguage].editorPlaceholder.substring(0, 20))) { 
+            editor.innerHTML = '';
+        }
+    });
+
+    editor.addEventListener('blur', () => { 
+        if (editor.innerText.trim() === '') {
+            editor.innerHTML = `<p class="${themeClasses[isDarkMode ? 'dark' : 'light'].textColorSecondary} italic" data-i18n="editorPlaceholder">${translations[currentLanguage].editorPlaceholder}</p>`;
+            applyLanguage(currentLanguage); 
+        }
+    });
+
+    editor.addEventListener('click', (e) => { 
+        let target = e.target;
+        while (target && target !== editor) { 
+            if (target.classList.contains('timestamp')) {
+                const timestampText = target.textContent;
+                let totalSecondsParsed = null;
+
+                const matchMs = timestampText.match(/\[(\d{2}):(\d{2}):(\d{2}),(\d{3})\]/);
+                const matchMsShort = timestampText.match(/\[(\d{2}):(\d{2}),(\d{3})\]/);
+
+                if (matchMs) {
+                    const hours = parseInt(matchMs[1]);
+                    const minutes = parseInt(matchMs[2]);
+                    const seconds = parseInt(matchMs[3]);
+                    const milliseconds = parseInt(matchMs[4]);
+                    totalSecondsParsed = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+                } else if (matchMsShort) {
+                    const minutes = parseInt(matchMsShort[1]);
+                    const seconds = parseInt(matchMsShort[2]);
+                    const milliseconds = parseInt(matchMsShort[3]);
+                    totalSecondsParsed = minutes * 60 + seconds + milliseconds / 1000;
+                }
+
+                if (totalSecondsParsed !== null && video.src && !isNaN(video.duration)) {
+                    video.currentTime = totalSecondsParsed - tcrOffsetSeconds;
+                    video.play();
+                } else {
+                    customAlert('navigationError', 'Error de Navegación');
+                }
+                break;
+            }
+            target = target.parentNode;
+        }
+    });
+
+    // --- Atajos de Teclado ---
+    document.addEventListener('keydown', (e) => {
+      // No evita el comportamiento predeterminado para F5 (actualizar)
+      if (e.key === 'F5') {
+        return;
+      }
+      
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || (e.target.isContentEditable && e.target !== editor)) { 
+        return;
+      }
+
+      // Update character insertion to handle Alt + 1-8
+      if (e.altKey && ['1','2','3','4','5','6','7','8'].includes(e.key)) {
+        e.preventDefault();
+        const idx = parseInt(e.key) - 1;
+        // Ensure index is within bounds of charInputs
+        if (idx >= 0 && idx < charInputs.length) {
+            const name = charInputs[idx].value.trim();
+            if (name) {
+                insertHtmlAtCursor(name); 
+            }
+        }
+      }
+
+      if (e.altKey && e.code === 'KeyQ') {
+        e.preventDefault();
+        insertTimestamp();
+      }
+
+      // Comprueba Ctrl (Windows) o Command (Mac) + Espacio
+      if ((e.ctrlKey || e.metaKey) && e.code === 'Space') {
+        e.preventDefault();
+        playPauseBtn.click();
+      }
+
+      if (!video.src) return;
+
+      if (e.shiftKey) {
+        if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 5);
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 5);
+        }
+      } else if (e.ctrlKey || e.metaKey) { 
+        if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 1);
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 1);
+        }
+      } else if (e.altKey) { 
+        if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - (1 / DEFAULT_FRAMERATE));
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + (1 / DEFAULT_FRAMERATE));
+        }
+      }
+    });
+    
+
+    // --- Paneles Redimensionables (lógica eliminada, ahora usan flex-1) ---
+    const leftPanel = document.getElementById('left');
+    const rightPanel = document.getElementById('right');
+    // Las variables y eventos para resizeBar se han eliminado ya que no es necesaria.
+    
+    // Al cargar el DOM, simplemente asegúrate de que los paneles usen flex-1
+    document.addEventListener('DOMContentLoaded', () => {
+      // leftPanel.style.flexGrow = '1'; // Removed
+      // rightPanel.style.flexGrow = '1'; // Removed
+    });
+
+    // --- Entrada de Texto al Editor ---
+    importTextBtn.addEventListener('click', () => {
+        textFileInput.click();
+    });
+
+    textFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        editor.innerText = event.target.result; 
+        if (editor.innerText.trim() !== '') { 
+            editor.innerHTML = editor.innerText; 
+        }
+      };
+      reader.onerror = () => {
+          customAlert('textLoadError', 'Error de lectura');
+      };
+      reader.readAsText(file);
+    });
+
+    // --- Funciones de Buscar y Reemplazar ---
+
+    // Función de utilidad para obtener todos los nodos de texto dentro de un elemento
+    function getAllTextNodes(node) {
+        let textNodes = [];
+        for (let i = 0; i < node.childNodes.length; i++) {
+            let child = node.childNodes[i];
+            if (child.nodeType === Node.TEXT_NODE) {
+                textNodes.push(child);
+            } else if (child.nodeType === Node.ELEMENT_NODE && child.contentEditable !== 'false') {
+                if (child.classList && child.classList.contains('timestamp')) {
+                    continue; 
+                }
+                textNodes = textNodes.concat(getAllTextNodes(child));
+            }
+        }
+        return textNodes;
+    }
+
+    // Función para resaltar todas las ocurrencias de la consulta
+    function highlightAllMatches(query, caseSensitive) {
+        clearHighlights(); 
+
+        if (!query) {
+            findReplaceState.matches = [];
+            findReplaceState.currentIndex = -1;
+            return;
+        }
+
+        const flags = caseSensitive ? 'g' : 'gi';
+        const regex = new RegExp(query, flags);
+        const originalContent = editor.innerHTML; 
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = originalContent;
+
+        findReplaceState.matches = [];
+
+        function traverseAndHighlight(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.nodeValue;
+                let match;
+                let lastIndex = 0;
+                const fragment = document.createDocumentFragment();
+
+                while ((match = regex.exec(text)) !== null) {
+                    if (match.index > lastIndex) {
+                        fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+                    }
+                    const span = document.createElement('span');
+                    span.classList.add('highlighted-match');
+                    span.textContent = match[0];
+                    fragment.appendChild(span);
+                    findReplaceState.matches.push(span); 
+
+                    lastIndex = match.index + match[0].length;
+                }
+                if (lastIndex < text.length) {
+                    fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+                }
+                node.parentNode.replaceChild(fragment, node);
+
+            } else if (node.nodeType === Node.ELEMENT_NODE && node.contentEditable !== 'false') {
+                if (node.classList && node.classList.contains('timestamp')) {
+                    return;
+                }
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    traverseAndHighlight(node.childNodes[i]);
+                }
+            }
+        }
+
+        Array.from(tempDiv.childNodes).forEach(child => traverseAndHighlight(child));
+        editor.innerHTML = tempDiv.innerHTML; 
+        
+        applyTheme(isDarkMode ? 'dark' : 'light');
+    }
+
+    // Función para borrar todos los resaltados
+    function clearHighlights() {
+        let editorContent = editor.innerHTML; 
+        editorContent = editorContent.replace(/<span class="current-match">(.+?)<\/span>/g, '$1');
+        editorContent = editorContent.replace(/<span class="highlighted-match">(.+?)<\/span>/g, '$1');
+        editor.innerHTML = editorContent; 
+
+        findReplaceState.matches = [];
+        findReplaceState.currentIndex = -1;
+    }
+
+    // Función para navegar a una coincidencia específica
+    function goToMatch(index) {
+        if (findReplaceState.matches.length === 0) return;
+
+        if (findReplaceState.currentIndex !== -1 && findReplaceState.matches[findReplaceState.currentIndex]) {
+            findReplaceState.matches[findReplaceState.currentIndex].classList.remove('current-match');
+        }
+
+        findReplaceState.currentIndex = index;
+        const currentMatchSpan = findReplaceState.matches[findReplaceState.currentIndex];
+
+        if (currentMatchSpan) {
+            currentMatchSpan.classList.add('current-match');
+            currentMatchSpan.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(currentMatchSpan);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    }
+
+    // Función para buscar la siguiente ocurrencia
+    function findNext() {
+        const queryInput = document.getElementById('findQuery') || document.getElementById('findQueryReplace');
+        const caseSensitiveInput = document.getElementById('findCaseSensitive') || document.getElementById('replaceCaseSensitive');
+
+        const query = queryInput ? queryInput.value : '';
+        const caseSensitive = caseSensitiveInput ? caseSensitiveInput.checked : false;
+
+        if (!query) {
+            customAlert('enterTextToFind', 'Búsqueda');
+            return;
+        }
+
+        if (query !== findReplaceState.query || caseSensitive !== findReplaceState.caseSensitive) {
+            findReplaceState.query = query;
+            findReplaceState.caseSensitive = caseSensitive;
+            highlightAllMatches(query, caseSensitive);
+            findReplaceState.currentIndex = -1; 
+        }
+
+        if (findReplaceState.matches.length === 0) {
+            customAlert('noMatchesFound', 'Búsqueda');
+            return;
+        }
+
+        let nextIndex = findReplaceState.currentIndex + 1;
+        if (nextIndex >= findReplaceState.matches.length) {
+            nextIndex = 0; 
+            customAlert('searchEndReached', 'Búsqueda');
+        }
+        goToMatch(nextIndex);
+    }
+
+    // Función para buscar la ocurrencia anterior
+    function findPrevious() {
+        const queryInput = document.getElementById('findQuery') || document.getElementById('findQueryReplace');
+        const caseSensitiveInput = document.getElementById('findCaseSensitive') || document.getElementById('replaceCaseSensitive');
+
+        const query = queryInput ? queryInput.value : '';
+        const caseSensitive = caseSensitiveInput ? caseSensitiveInput.checked : false;
+
+        if (!query) {
+            customAlert('enterTextToFind', 'Búsqueda');
+            return;
+        }
+
+        if (query !== findReplaceState.query || caseSensitive !== findReplaceState.caseSensitive) {
+            findReplaceState.query = query;
+            findReplaceState.caseSensitive = caseSensitive;
+            highlightAllMatches(query, caseSensitive);
+            findReplaceState.currentIndex = -1; 
+        }
+
+        if (findReplaceState.matches.length === 0) {
+            customAlert('noMatchesFound', 'Búsqueda');
+            return;
+        }
+
+        let prevIndex = findReplaceState.currentIndex - 1;
+        if (prevIndex < 0) {
+            prevIndex = findReplaceState.matches.length - 1; 
+            customAlert('searchStartReached', 'Búsqueda');
+        }
+        goToMatch(prevIndex);
+    }
+
+    // Función para reemplazar la coincidencia actual
+    function replaceCurrent() {
+        if (findReplaceState.currentIndex === -1 || findReplaceState.matches.length === 0) {
+            customAlert('noMatchSelectedForReplace', 'Reemplazar');
+            return;
+        }
+
+        const currentMatchSpan = findReplaceState.matches[findReplaceState.currentIndex];
+        const replacementText = document.getElementById('replaceWith').value;
+
+        currentMatchSpan.textContent = replacementText;
+
+        const query = findReplaceState.query;
+        const caseSensitive = findReplaceState.caseSensitive;
+
+        findReplaceState.matches = []; 
+        findReplaceState.currentIndex = -1; 
+
+        highlightAllMatches(query, caseSensitive);
+
+        if (findReplaceState.matches.length > 0) {
+            let nextIndex = findReplaceState.currentIndex; 
+            if (nextIndex >= findReplaceState.matches.length) {
+                nextIndex = 0;
+            }
+            goToMatch(nextIndex);
+        } else {
+            customAlert('replacementCompleteNoMoreMatches', 'Reemplazar');
+        }
+    }
+
+    // Función para reemplazar todas las coincidencias
+    function replaceAll() {
+        const query = document.getElementById('findQueryReplace').value;
+        const replacement = document.getElementById('replaceWith').value;
+        const caseSensitive = document.getElementById('replaceCaseSensitive').checked;
+
+        if (!query) {
+            customAlert('enterTextToFind', 'Reemplazar Todo');
+            return;
+        }
+
+        const flags = caseSensitive ? 'g' : 'gi';
+        const regex = new RegExp(query, flags);
+        
+        let originalHtml = editor.innerHTML; 
+        let newHtml = originalHtml.replace(regex, replacement);
+        editor.innerHTML = newHtml; 
+
+        findReplaceState.matches = []; 
+        findReplaceState.currentIndex = -1; 
+
+        highlightAllMatches(query, caseSensitive); 
+
+        if (findReplaceState.matches.length > 0) {
+             goToMatch(0); 
+             customAlert('replacementComplete', 'Reemplazar Todo', [query]);
+        } else {
+             customAlert('replacementCompleteNoMoreMatches', 'Reemplazar Todo');
+        }
+    }
+
+    // Muestra el Modal de Buscar
+    findBtn.addEventListener('click', () => {
+        findReplaceState.isFinding = true;
+        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
+
+        let findHtml = `
+            <div>
+                <label for="findQuery" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
+                <input type="text" id="findQuery" class="${modalInputClasses}" value="${findReplaceState.query}" />
+                <label class="inline-flex items-center mt-2">
+                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox h-4 w-4 text-blue-600" ${findReplaceState.caseSensitive ? 'checked' : ''}>
+                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
+                </label>
+            </div>
+        `;
+
+        showModal(
+            translations[currentLanguage].findModalTitle,
+            '',
+            [
+                { text: translations[currentLanguage].findPrevious, handler: findPrevious, type: 'neutral' },
+                { text: translations[currentLanguage].findNext, handler: findNext, type: 'primary' },
+                { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
+            ],
+            findHtml
+        );
+
+        document.getElementById('findQuery').addEventListener('input', (e) => {
+            findReplaceState.query = e.target.value;
+            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
+            findReplaceState.currentIndex = -1; 
+        });
+        document.getElementById('findCaseSensitive').addEventListener('change', (e) => {
+            findReplaceState.caseSensitive = e.target.checked;
+            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
+            findReplaceState.currentIndex = -1; 
+        });
+        highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
+    });
+
+    // Muestra el Modal de Reemplazar
+    replaceBtn.addEventListener('click', () => {
+        findReplaceState.isFinding = true; 
+        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
+
+        let replaceHtml = `
+            <div>
+                <label for="findQueryReplace" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
+                <input type="text" id="findQueryReplace" class="${modalInputClasses}" value="${findReplaceState.query}" />
+                <label for="replaceWith" class="text-sm font-medium mb-1 block">${translations[currentLanguage].replaceWithLabel}:</label>
+                <input type="text" id="replaceWith" class="${modalInputClasses}" value="${findReplaceState.replacement}" />
+                <label class="inline-flex items-center mt-2">
+                    <input type="checkbox" id="replaceCaseSensitive" class="form-checkbox h-4 w-4 text-blue-600" ${findReplaceState.caseSensitive ? 'checked' : ''}>
+                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
+                </label>
+            </div>
+        `;
+
+        showModal(
+            translations[currentLanguage].replaceModalTitle,
+            '',
+            [
+                { text: translations[currentLanguage].findNext, handler: findNext, type: 'neutral' }, 
+                { text: translations[currentLanguage].replaceButtonInModal, handler: replaceCurrent, type: 'primary' },
+                { text: translations[currentLanguage].replaceAllButton, handler: replaceAll, type: 'danger' },
+                { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
+            ],
+            replaceHtml
+        );
+
+        document.getElementById('findQueryReplace').addEventListener('input', (e) => {
+            findReplaceState.query = e.target.value;
+            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
+            findReplaceState.currentIndex = -1;
+        });
+        document.getElementById('replaceWith').addEventListener('input', (e) => {
+            findReplaceState.replacement = e.target.value;
+        });
+        document.getElementById('replaceCaseSensitive').addEventListener('change', (e) => {
+            findReplaceState.caseSensitive = e.target.checked;
+            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
+            findReplaceState.currentIndex = -1;
+        });
+        highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
+    });
+    
+  </script>
+</body>
+</html>
