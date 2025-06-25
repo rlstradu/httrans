@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="title">TBX Glossary Editor</title>
+  <title data-i18n="title">PandaTerm</title>
   <style>
     :root {
       /* Light mode colors (White/Light Grey) */
@@ -76,6 +76,23 @@
       text-align: center;
       background-color: var(--header-bg);
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .logo-container {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 10px; /* Reduced margin to bring description closer */
+    }
+
+    .logo {
+      max-width: 200px; /* Adjust as needed */
+      height: auto;
+    }
+
+    .description {
+        text-align: center;
+        margin-bottom: 20px;
+        color: var(--text-color);
     }
 
     .container {
@@ -257,7 +274,12 @@
   </style>
 </head>
 <body>
-  <h1 data-i18n="main_title">Editor de glosarios TBX</h1>
+  <h1 data-i18n="main_title">PandaTerm</h1>
+  <div class="logo-container">
+    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png" alt="PandaTerm Logo" class="logo" />
+  </div>
+  <p class="description" data-i18n="app_description"></p>
+
 
   <div class="container">
     <div class="controls">
@@ -344,7 +366,7 @@
     // Global array to store glossary terms
     let glossary = [];
     // Get current UI language from local storage, default to English
-    let currentUILanguage = localStorage.getItem('language') || 'en';
+    let currentUILanguage = localStorage.getItem('language') || 'en'; // Default to English
     // Get current theme from local storage, default to light
     let currentTheme = localStorage.getItem('theme') || 'light';
 
@@ -355,8 +377,9 @@
     // Object containing all UI translations for English and Spanish
     const translations = {
       en: {
-        title: "TBX Glossary Editor",
-        main_title: "TBX Glossary Editor",
+        title: "PandaTerm", // Updated title
+        main_title: "PandaTerm", // Updated main title
+        app_description: "A simple TBX glossary editor", // New description
         import_tbx: "Import TBX",
         download_tbx: "Download TBX",
         new_glossary: "New glossary",
@@ -384,8 +407,9 @@
         "Error loading TBX file. Please ensure it's a valid XML/TBX.": "Error loading TBX file. Please ensure it's a valid XML/TBX."
       },
       es: {
-        title: "Editor de glosarios TBX",
-        main_title: "Editor de glosarios TBX",
+        title: "PandaTerm", // Updated title
+        main_title: "PandaTerm", // Updated main title
+        app_description: "Un sencillo editor de glosarios TBX", // New description
         import_tbx: "Importar TBX",
         download_tbx: "Descargar TBX",
         new_glossary: "Nuevo glosario",
@@ -782,6 +806,11 @@
 
     // Initialize theme, UI language, populate datalist, and set initial UI state on load
     document.addEventListener('DOMContentLoaded', () => {
+      // Set currentUILanguage to 'en' by default if not already set in local storage
+      if (!localStorage.getItem('language')) {
+        currentUILanguage = 'en';
+        localStorage.setItem('language', 'en');
+      }
       applyTheme(currentTheme); // Apply theme from local storage
       setUILanguage(currentUILanguage); // Apply UI language from local storage
       populateIsoLanguagesDatalist(); // Populate the datalist
