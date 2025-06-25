@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Contador de caracteres</title>
+<title>CharPanda</title>
 <style>
   /* Base styles */
   body {
@@ -120,26 +120,25 @@
     background: #f0f3f7; /* Subtle background for the button bar */
     border-radius: 8px; /* Rounded corners for the button bar */
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Prevent wrapping to keep buttons in one row */
     gap: 8px; /* Reduced gap between buttons to make them closer */
     justify-content: center; /* Centered buttons */
     box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); /* Subtle inner shadow */
     transition: background 0.3s ease, box-shadow 0.3s ease;
+    overflow-x: auto; /* Allow horizontal scrolling if buttons exceed container width */
   }
   button.action-btn {
     background: #3b82f6;
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 6px 12px; /* Adjusted padding for icons/emojis */
-    font-size: 1.2rem; /* Larger font size for emojis */
+    padding: 8px 15px; /* Adjusted padding for text buttons */
+    font-size: 1rem; /* Adjusted font size for text buttons */
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.15s ease;
     user-select: none;
-    display: flex; /* For icon/emoji centering */
-    align-items: center; /* For icon/emoji centering */
-    justify-content: center; /* For icon/emoji centering */
+    white-space: nowrap; /* Ensure button text doesn't wrap */
   }
   button.action-btn svg {
     width: 20px; /* Icon size */
@@ -180,65 +179,74 @@
     justify-content: center;
     gap: 15px;
   }
+  .app-logo {
+    max-width: 300px; /* Increased size */
+    height: auto;
+    margin-bottom: 10px;
+  }
 
 
   /* Dark mode styles */
   body.dark-mode {
-    background: #282c34;
-    color: #f0f0f0;
+    background: #282c34; /* Darker background */
+    color: #f0f0f0; /* Original lighter text color */
   }
   body.dark-mode header p {
-    color: #bbb;
+    color: #bbb; /* Original header paragraph color */
   }
   body.dark-mode .container {
-    background: #3a3f47;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    background: #3a3f47; /* Darker container background */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Darker shadow */
   }
   body.dark-mode h2 {
-    color: #e0e0e0;
+    color: #e0e0e0; /* Original heading color */
   }
   body.dark-mode textarea {
-    background: #4a4f57;
+    background: #4a4f57; /* Original textarea background */
     border-color: #5a5f67;
-    color: #f0f0f0;
+    color: #f0f0f0; /* Original textarea text color */
   }
   body.dark-mode textarea:focus {
-    border-color: #6a9dfa;
+    border-color: #6a9dfa; /* Original focus border */
     background: #5a5f67;
   }
   body.dark-mode .counter-area {
-    color: #8ab4f8;
+    color: #8ab4f8; /* Original counter text color */
   }
   body.dark-mode .counter-area input[type="number"] {
-    background: #4a4f57;
+    background: #4a4f57; /* Original input background */
     border-color: #5a5f67;
-    color: #f0f0f0;
+    color: #f0f0f0; /* Original input text color */
   }
   body.dark-mode .counter-area input[type="number"]:focus {
-    border-color: #6a9dfa;
+    border-color: #6a9dfa; /* Original input focus border */
     background: #5a5f67;
   }
   body.dark-mode .counter-area .limit-exceeded {
-    color: #ff7961; /* Lighter red for dark mode */
+    color: #ff7961; /* Original red for dark mode limit exceeded */
   }
   body.dark-mode .button-container { /* Dark mode specific background for button bar */
-    background: #30343a;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+    background: #30343a; /* Darker button bar background */
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); /* Original inner shadow */
   }
   body.dark-mode button.action-btn, body.dark-mode .settings-buttons button {
-    background: #6a9dfa;
+    background: #6a9dfa; /* Original blue for buttons */
   }
   body.dark-mode button.action-btn:hover, body.dark-mode .settings-buttons button:hover {
-    background: #4d8df6;
+    background: #4d8df6; /* Original blue on hover */
   }
   body.dark-mode button.action-btn.copied {
-    background: #4CAF50; /* A slightly darker green for dark mode */
+    background: #4CAF50; /* Original green for copied */
   }
   body.dark-mode button.action-btn.pasted {
-    background: #388E3C; /* A slightly darker green for dark mode */
+    background: #388E3C; /* Original green for pasted */
   }
   body.dark-mode button.action-btn.cleared {
-    background: #FFB300; /* Lighter orange for dark mode */
+    background: #FFB300; /* Original orange for cleared */
+  }
+  /* Added drop-shadow for the logo in dark mode */
+  body.dark-mode .app-logo {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Light glow/shadow */
   }
 
   /* Responsive design */
@@ -275,6 +283,7 @@
 <body>
 
 <header>
+  <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png" alt="CharPanda Logo" class="app-logo">
   <p id="app-description"></p>
   <div class="settings-buttons">
     <button id="modeToggle"></button>
@@ -296,11 +305,11 @@
       <span class="counter-item" id="pasteRemainingCount"></span>
     </div>
     <div class="button-container">
-      <button class="action-btn" id="pasteBtn" title="Pegar">📋</button>
-      <button class="action-btn" id="copyPaste" title="Copiar">C</button>
-      <button class="action-btn" id="clearPaste" title="Borrar">🔄️</button>
-      <button class="action-btn" id="upperPaste" title="Convertir a MAYÚSCULAS">🔠</button>
-      <button class="action-btn" id="lowerPaste" title="Convertir a minúsculas">🔡</button>
+      <button class="action-btn" id="copyPaste"></button>
+      <button class="action-btn" id="pasteBtn"></button>
+      <button class="action-btn" id="clearPaste"></button>
+      <button class="action-btn" id="upperPaste"></button>
+      <button class="action-btn" id="lowerPaste"></button>
     </div>
   </div>
 
@@ -317,11 +326,11 @@
       <span class="counter-item" id="writeRemainingCount"></span>
     </div>
     <div class="button-container">
-      <button class="action-btn" id="pasteWrite" title="Pegar">📋</button>
-      <button class="action-btn" id="copyWrite" title="Copiar">C</button>
-      <button class="action-btn" id="clearWrite" title="Borrar">🔄️</button>
-      <button class="action-btn" id="upperWrite" title="Convertir a MAYÚSCULAS">🔠</button>
-      <button class="action-btn" id="lowerWrite" title="Convertir a minúsculas">🔡</button>
+      <button class="action-btn" id="copyWrite"></button>
+      <button class="action-btn" id="pasteWrite"></button>
+      <button class="action-btn" id="clearWrite"></button>
+      <button class="action-btn" id="upperWrite"></button>
+      <button class="action-btn" id="lowerWrite"></button>
     </div>
   </div>
 </main>
@@ -365,7 +374,7 @@
   // Translation object
   const translations = {
     es: {
-      appDescription: 'Esta es una aplicación sencilla para contar caracteres. Tienes dos campos por si necesitas comparar dos textos. Que la disfrutes.',
+      appDescription: 'CharPanda es una aplicación sencilla para contar caracteres. Tienes dos campos por si necesitas comparar dos textos. Que la disfrutes.',
       modeToggleDark: 'Modo oscuro',   // Text for button when in LIGHT mode
       modeToggleLight: 'Modo claro',  // Text for button when in DARK mode
       languageToggle: 'English',
@@ -377,12 +386,11 @@
       words: 'Palabras',
       limit: 'Límite',
       remaining: 'Restantes',
-      copyButtonLetter: 'C',
-      pasteButtonTooltip: 'Pegar',
-      copyButtonTooltip: 'Copiar',
-      clearButtonTooltip: 'Borrar',
-      uppercaseButtonTooltip: 'Convertir a MAYÚSCULAS',
-      lowercaseButtonTooltip: 'Convertir a minúsculas',
+      pasteButton: 'Pegar',
+      copyButton: 'Copiar',
+      clearButton: 'Borrar',
+      uppercaseButton: 'MAYÚSCULAS',
+      lowercaseButton: 'minúsculas',
       copied: '¡Copiado!',
       pasted: '¡Pegado!',
       cleared: '¡Borrado!',
@@ -391,7 +399,7 @@
       limitExceeded: 'Límite de caracteres excedido'
     },
     en: {
-      appDescription: 'This is a simple character counting application. There are two fields in case you need to compare texts. Enjoy!',
+      appDescription: 'CharPanda is a simple character counting application. There are two fields in case you need to compare texts. Enjoy!',
       modeToggleDark: 'Dark mode',   // Text for button when in LIGHT mode
       modeToggleLight: 'Light mode',  // Text for button when in DARK mode
       languageToggle: 'Español',
@@ -403,12 +411,11 @@
       words: 'Words',
       limit: 'Limit',
       remaining: 'Remaining',
-      copyButtonLetter: 'C',
-      pasteButtonTooltip: 'Paste',
-      copyButtonTooltip: 'Copy',
-      clearButtonTooltip: 'Clear',
-      uppercaseButtonTooltip: 'Convert to UPPERCASE',
-      lowercaseButtonTooltip: 'Convert to lowercase',
+      pasteButton: 'Paste',
+      copyButton: 'Copy',
+      clearButton: 'Clear',
+      uppercaseButton: 'UPPERCASE',
+      lowercaseButton: 'lowercase',
       copied: 'Copied!',
       pasted: 'Pasted!',
       cleared: 'Cleared!',
@@ -418,7 +425,7 @@
     }
   };
 
-  let currentLanguage = localStorage.getItem('language') || 'es'; // Default to Spanish
+  let currentLanguage = localStorage.getItem('language') || 'en'; // Default to English
 
   // Function to update character and word count, and remaining characters
   function updateCounts(textarea, charCounter, wordCounter, limitInput, remainingCounter) {
@@ -462,20 +469,17 @@
     writeLimitLabel.textContent = translations[lang].limit + ':';
 
     // Update action button text and tooltips
-    copyPasteBtn.textContent = translations[lang].copyButtonLetter;
-    copyPasteBtn.title = translations[lang].copyButtonTooltip;
-    clearPasteBtn.title = translations[lang].clearButtonTooltip;
-    upperPasteBtn.title = translations[lang].uppercaseButtonTooltip;
-    lowerPasteBtn.title = translations[lang].lowercaseButtonTooltip;
-    pasteBtn.title = translations[lang].pasteButtonTooltip;
-
-
-    copyWriteBtn.textContent = translations[lang].copyButtonLetter;
-    copyWriteBtn.title = translations[lang].copyButtonTooltip;
-    clearWriteBtn.title = translations[lang].clearButtonTooltip;
-    upperWriteBtn.title = translations[lang].uppercaseButtonTooltip;
-    lowerWriteBtn.title = translations[lang].lowercaseButtonTooltip;
-    pasteWriteBtn.title = translations[lang].pasteButtonTooltip;
+    pasteBtn.textContent = translations[lang].pasteButton;
+    copyPasteBtn.textContent = translations[lang].copyButton;
+    clearPasteBtn.textContent = translations[lang].clearButton;
+    upperPasteBtn.textContent = translations[lang].uppercaseButton;
+    lowerPasteBtn.textContent = translations[lang].lowercaseButton;
+    
+    pasteWriteBtn.textContent = translations[lang].pasteButton;
+    copyWriteBtn.textContent = translations[lang].copyButton;
+    clearWriteBtn.textContent = translations[lang].clearButton;
+    upperWriteBtn.textContent = translations[lang].uppercaseButton;
+    lowerWriteBtn.textContent = translations[lang].lowercaseButton;
 
 
     // Update mode toggle button text based on current dark mode state
@@ -494,14 +498,11 @@
   // Function to handle copy text
   function copyText(textarea, button) {
     if (textarea.value.length === 0) return;
-    navigator.clipboard.writeText(textarea.value).then(() => {
-      button.classList.add('copied');
-      setTimeout(() => {
-        button.classList.remove('copied');
-      }, 1800);
-    }).catch(() => {
-      showMessage(translations[currentLanguage].copyError, 'error');
-    });
+    document.execCommand('copy'); // Using execCommand for wider compatibility in iframes
+    button.classList.add('copied');
+    setTimeout(() => {
+      button.classList.remove('copied');
+    }, 1800);
   }
 
   // Function to handle paste text
@@ -586,7 +587,7 @@
   // Load saved preferences on page load
   document.addEventListener('DOMContentLoaded', () => {
     // Set language first to ensure translations are available for mode button text
-    setLanguage(localStorage.getItem('language') || 'es');
+    setLanguage(localStorage.getItem('language') || 'en'); // Changed default to 'en'
 
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode === 'true') {
