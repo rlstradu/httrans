@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="appTitle">Herramienta de Transcripción Mejorada</title>
+  <title data-i18n="appTitle">PandaScript</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome para iconos -->
@@ -163,12 +163,13 @@
         <div id="videoDisplayContainer" class="absolute inset-0 bg-black flex items-center justify-center">
             <video id="video" controls class="w-full h-full object-contain hidden"></video> 
             <div id="emptyPlayerOverlay" class="absolute inset-0 flex flex-col justify-center items-center bg-black text-gray-400">
-                <span class="text-6xl mb-2">🎬</span> 
-                <span class="text-xl font-bold">AVEditor</span>
+                <!-- PandaScript Logo -->
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-logo.png" alt="PandaScript Logo" class="h-24 mb-2"> 
+                <span class="text-xl font-bold">PandaScript</span>
             </div>
         </div>
     </div>
-    <p id="noMediaMessage" class="text-sm text-center italic mb-4 hidden" data-i18n="noMediaMessage">No hay archivo multimedia cargado.</p>
+    <p id="noMediaMessage" class="text-sm text-center italic mb-4 hidden" data-i18n="noMediaMessage">No media file loaded.</p>
     
     <!-- Controles de Reproducción Minimalistas -->
     <div class="playback-controls flex flex-col gap-2 mb-4">
@@ -176,7 +177,7 @@
       <div class="flex flex-wrap justify-center items-center gap-2 w-full">
         <!-- Importación de Video/Audio actualizada - Movido aquí -->
         <input type="file" id="videoFileInput" accept="video/*,audio/*" class="hidden" />
-        <button id="importVideoAudioBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out w-auto" data-i18n="openMediaFile" data-i18n-title="openMediaFileTitle"><i class="fas fa-file-video mr-2"></i>Abrir archivo de vídeo/audio</button>
+        <button id="importVideoAudioBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out w-auto" data-i18n="openMediaFile" data-i18n-title="openMediaFileTitle"><i class="fas fa-file-video mr-2"></i>Open Video/Audio File</button>
         <!-- play/pause button below. close media button removed -->
 
         <button id="playPauseBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="playPauseTitle"><i class="fas fa-play"></i></button>
@@ -211,40 +212,40 @@
 
     <!-- Botones relacionados con TCR movidos aquí, incluyendo Establecer TCR Inicial -->
     <div class="flex flex-wrap gap-2 mb-4 w-full">
-      <button onclick="insertTimestamp()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="insertTimecode"><i class="fas fa-clock mr-2"></i>Insertar Código de Tiempo</button>
-      <button onclick="showTCRFormatSelection()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="timecodeFormat"><i class="fas fa-gear mr-2"></i>Formato de Código de Tiempo</button>
-      <button onclick="showSetInitialTCRModal()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="setInitialTimecode"><i class="fas fa-play mr-2"></i>Establecer Código de Tiempo Inicial</button>
+      <button onclick="insertTimestamp()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="insertTimecode"><i class="fas fa-clock mr-2"></i>Insert Timecode</button>
+      <button onclick="showTCRFormatSelection()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="timecodeFormat"><i class="fas fa-gear mr-2"></i>Timecode Format</button>
+      <button onclick="showSetInitialTCRModal()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="setInitialTimecode"><i class="fas fa-play mr-2"></i>Set Initial Timecode</button>
     </div>
     
     <div id="charFields" class="mt-4 mb-6 w-full">
-      <h4 class="text-lg font-semibold mb-3 border-b pb-2" data-i18n="charactersHeader">Personajes (Alt + 1-8 para insertar)</h4>
+      <h4 class="text-lg font-semibold mb-3 border-b pb-2" data-i18n="charactersHeader">Characters (Alt + 1-8 to insert)</h4>
       <div class="flex flex-wrap gap-2 justify-center mb-2">
-        <input type="text" id="char1" data-char-index="0" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="1" placeholder="Personaje 1" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char2" data-char-index="1" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="2" placeholder="Personaje 2" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char3" data-char-index="2" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="3" placeholder="Personaje 3" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char4" data-char-index="3" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="4" placeholder="Personaje 4" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char1" data-char-index="0" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="1" placeholder="Character 1" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char2" data-char-index="1" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="2" placeholder="Character 2" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char3" data-char-index="2" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="3" placeholder="Character 3" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char4" data-char-index="3" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="4" placeholder="Character 4" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
       <div class="flex flex-wrap gap-2 justify-center">
-        <input type="text" id="char5" data-char-index="4" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="5" placeholder="Personaje 5" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char6" data-char-index="5" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="6" placeholder="Personaje 6" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char7" data-char-index="6" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="7" placeholder="Personaje 7" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char8" data-char-index="7" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="8" placeholder="Personaje 8" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char5" data-char-index="4" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="5" placeholder="Character 5" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char6" data-char-index="5" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="6" placeholder="Character 6" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char7" data-char-index="6" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="7" placeholder="Character 7" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input type="text" id="char8" data-char-index="7" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="8" placeholder="Character 8" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
     </div>
 
     <!-- El div de atajos está oculto desde aquí, su contenido se usará en el modal -->
     <div id="shortcuts" class="hidden">
-      <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Atajos de Teclado:</h4>
+      <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Keyboard Shortcuts:</h4>
       <ul class="list-disc list-inside space-y-1">
-        <li data-i18n="shortcut1"><strong>Alt+Q</strong>: Insertar Código de Tiempo</li>
-        <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Espacio</strong>: Reproducir/Pausar</li>
-        <li data-i18n="shortcut3"><strong>Shift + Flecha Izquierda</strong>: Retroceder 5 segundos</li>
-        <li data-i18n="shortcut4"><strong>Shift + Flecha Derecha</strong>: Avanzar 5 segundos</li>
-        <li data-i18n="shortcut5"><strong>Alt/Opción + Flecha Izquierda</strong>: Retroceder 1 fotograma (aprox.)</li>
-        <li data-i18n="shortcut6"><strong>Alt/Opción + Flecha Derecha</strong>: Avanzar 1 fotograma (aprox.)</li>
-        <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Flecha Izquierda</strong>: Retroceder 1 segundo</li>
-        <li data-i18n="shortcut8"><strong>Ctrl/Cmd + Flecha Derecha</strong>: Avanzar 1 segundo</li>
-        <li data-i19n="shortcut9"><strong>Alt/Opción + 1 a 8</strong>: Insertar nombre del personaje</li>
+        <li data-i18n="shortcut1"><strong>Alt+Q</strong>: Insert Timecode</li>
+        <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Space</strong>: Play/Pause</li>
+        <li data-i18n="shortcut3"><strong>Shift + Left Arrow</strong>: Rewind 5 seconds</li>
+        <li data-i18n="shortcut4"><strong>Shift + Right Arrow</strong>: Forward 5 seconds</li>
+        <li data-i18n="shortcut5"><strong>Alt/Option + Left Arrow</strong>: Rewind 1 frame (approx.)</li>
+        <li data-i18n="shortcut6"><strong>Alt/Option + Right Arrow</strong>: Forward 1 frame (approx.)</li>
+        <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Left Arrow</strong>: Rewind 1 second</li>
+        <li data-i18n="shortcut8"><strong>Ctrl/Cmd + Right Arrow</strong>: Forward 1 second</li>
+        <li data-i19n="shortcut9"><strong>Alt/Option + 1 to 8</strong>: Insert character name</li>
       </ul>
     </div>
   </div>
@@ -254,33 +255,33 @@
     <div id="controls" class="mb-4 flex flex-wrap items-center gap-3">
       <!-- Importación de Texto Actualizada -->
       <input type="file" id="textFileInput" accept=".txt" class="hidden" />
-      <button id="importTextBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="importText"><i class="fas fa-file-alt mr-2"></i>Importar .txt</button>
+      <button id="importTextBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="importText"><i class="fas fa-file-alt mr-2"></i>Import .txt</button>
       
       <!-- Botones de Negrita y Cursiva con iconos -->
-      <button onclick="applyStyle('bold')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="bold"><i class="fas fa-bold mr-2"></i>Negrita</button>
-      <button onclick="applyStyle('italic')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="italic"><i class="fas fa-italic mr-2"></i>Cursiva</button>
+      <button onclick="applyStyle('bold')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="bold"><i class="fas fa-bold mr-2"></i>Bold</button>
+      <button onclick="applyStyle('italic')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="italic"><i class="fas fa-italic mr-2"></i>Italic</button>
       
       <!-- Nuevos botones de Buscar y Reemplazar -->
-      <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="findButton"><i class="fas fa-search mr-2"></i>Buscar</button>
-      <button id="replaceBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="replaceButton"><i class="fas fa-exchange-alt mr-2"></i>Reemplazar</button>
+      <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="findButton"><i class="fas fa-search mr-2"></i>Find</button>
+      <button id="replaceBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="replaceButton"><i class="fas fa-exchange-alt mr-2"></i>Replace</button>
 
       <!-- Botón para alternar el tema -->
-      <button onclick="toggleTheme()" id="themeToggleButton" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><span id="themeText" data-i18n="darkMode">Modo Oscuro</span></button>
+      <button onclick="toggleTheme()" id="themeToggleButton" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><span id="themeText" data-i18n="darkMode">Dark Mode</span></button>
       
       <!-- Botón para alternar el idioma (ahora abre un modal) -->
       <button onclick="showLanguageSelectionModal()" id="languageToggleButton" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm">
-        <span id="languageText" data-i18n="changeLanguageButton">Cambiar Idioma</span>
+        <span id="languageText" data-i18n="changeLanguageButton">Change Language</span>
       </button>
 
       <!-- Botón para abrir el modal de atajos -->
-      <button onclick="showShortcutsModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="shortcutsButton"><i class="fas fa-keyboard mr-2"></i>Atajos de Teclado</button>
+      <button onclick="showShortcutsModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="shortcutsButton"><i class="fas fa-keyboard mr-2"></i>Keyboard Shortcuts</button>
       <!-- Botón de exportar (ahora abre un modal para elegir el formato y el nombre del archivo) -->
-      <button onclick="showExportFormatModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="export"><i class="fas fa-download mr-2"></i>Exportar</button>
+      <button onclick="showExportFormatModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="export"><i class="fas fa-download mr-2"></i>Export</button>
     </div>
 
     <!-- Elemento del editor -->
-    <div id="editor" contenteditable="true" spellcheck="true" aria-label="Editor de texto" class="flex-1 rounded-lg p-4 font-mono text-sm overflow-y-auto outline-none shadow-inner min-h-[200px]">
-      <p class="italic" data-i18n="editorPlaceholder">Empieza a transcribir aquí, o importa un archivo de texto. Carga un vídeo/audio en el panel izquierdo para empezar.</p>
+    <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="flex-1 rounded-lg p-4 font-mono text-sm overflow-y-auto outline-none shadow-inner min-h-[200px]">
+      <p class="italic" data-i18n="editorPlaceholder">Start transcribing here, or import a text file. Load a video/audio in the left panel to begin.</p>
     </div>
   </div>
 
@@ -301,7 +302,7 @@
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Variables globales de Firebase accesibles por otros scripts
+    // Global Firebase variables accessible by other scripts
     window.firebaseApp = null;
     window.db = null;
     window.auth = null;
@@ -397,7 +398,7 @@
     // --- Objeto de Traducciones ---
     const translations = {
       en: {
-        appTitle: "Improved Transcription Tool",
+        appTitle: "PandaScript",
         openMediaFile: "Open Video/Audio File",
         openMediaFileTitle: "Open video or audio file",
         noMediaMessage: "No media file loaded.",
@@ -500,7 +501,7 @@
         languageSpanish: "Spanish"
       },
       es: {
-        appTitle: "Herramienta de Transcripción Mejorada",
+        appTitle: "PandaScript",
         openMediaFile: "Abrir archivo de vídeo/audio",
         openMediaFileTitle: "Abrir archivo de vídeo o audio",
         noMediaMessage: "Ningún archivo multimedia cargado.",
@@ -976,17 +977,17 @@
         // Vuelve a generar el contenido para asegurar que esté en el idioma actual
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = `
-            <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Atajos de Teclado:</h4>
+            <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Keyboard Shortcuts:</h4>
             <ul class="list-disc list-inside space-y-1">
                 <li data-i18n="shortcut1"><strong>Alt+Q</strong>: ${translations[currentLanguage].shortcut1}</li>
-                <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Espacio</strong>: ${translations[currentLanguage].shortcut2}</li>
-                <li data-i18n="shortcut3"><strong>Shift + Flecha Izquierda</strong>: ${translations[currentLanguage].shortcut3}</li>
-                <li data-i18n="shortcut4"><strong>Shift + Flecha Derecha</strong>: ${translations[currentLanguage].shortcut4}</li>
-                <li data-i18n="shortcut5"><strong>Alt/Opción + Flecha Izquierda</strong>: ${translations[currentLanguage].shortcut5}</li>
-                <li data-i18n="shortcut6"><strong>Alt/Opción + Flecha Derecha</strong>: ${translations[currentLanguage].shortcut6}</li>
-                <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Flecha Izquierda</strong>: ${translations[currentLanguage].shortcut7}</li>
-                <li data-i19n="shortcut8"><strong>Ctrl/Cmd + Flecha Derecha</strong>: ${translations[currentLanguage].shortcut8}</li>
-                <li data-i19n="shortcut9"><strong>Alt/Opción + 1 a 8</strong>: ${translations[currentLanguage].shortcut9}</li>
+                <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Space</strong>: ${translations[currentLanguage].shortcut2}</li>
+                <li data-i18n="shortcut3"><strong>Shift + Left Arrow</strong>: ${translations[currentLanguage].shortcut3}</li>
+                <li data-i18n="shortcut4"><strong>Shift + Right Arrow</strong>: ${translations[currentLanguage].shortcut4}</li>
+                <li data-i18n="shortcut5"><strong>Alt/Option + Left Arrow</strong>: ${translations[currentLanguage].shortcut5}</li>
+                <li data-i18n="shortcut6"><strong>Alt/Option + Right Arrow</strong>: ${translations[currentLanguage].shortcut6}</li>
+                <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Left Arrow</strong>: ${translations[currentLanguage].shortcut7}</li>
+                <li data-i19n="shortcut8"><strong>Ctrl/Cmd + Right Arrow</strong>: ${translations[currentLanguage].shortcut8}</li>
+                <li data-i19n="shortcut9"><strong>Alt/Option + 1 to 8</strong>: ${translations[currentLanguage].shortcut9}</li>
             </ul>
         `;
         
@@ -1042,7 +1043,6 @@
             tcrDisplay.textContent = '--:--:--,---'; 
         } else {
             emptyPlayerOverlay.classList.add('hidden'); 
-            noMediaMessage.classList.add('hidden'); 
             video.classList.remove('hidden'); 
         }
     }
@@ -1079,7 +1079,7 @@
         console.log("URL de objeto creada y asignada a video.src:", video.src);
       } catch (error) {
         console.error("Error al crear URL de objeto o asignar a video.src:", error);
-        customAlert('mediaLoadErrorWithFileProtocolHint', 'Error al cargar el medio');
+        customAlert('mediaLoadErrorWithFileProtocolHint', 'Error loading media');
         video.src = ''; // Clear src on error
         updateEmptyPlayerState();
         return;
@@ -1401,7 +1401,7 @@
 
         tcrOffsetSeconds = desiredTCRSeconds - video.currentTime;
         updateTCRDisplay();
-        customAlert('setTCRSuccess', 'TCR Establecido', [timeCodeString]);
+        customAlert('setTCRSuccess', 'TCR Set', [timeCodeString]);
     }
 
     function exportText(type, filename) {
@@ -1418,7 +1418,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Transcripción Exportada</title>
+  <title>Exported Transcription</title>
   <style>
     body { font-family: 'Inter', sans-serif; line-height: 1.6; padding: 20px; }
     .timestamp { color: #1d4ed8; text-decoration: underline; cursor: pointer; } 
@@ -1434,7 +1434,7 @@
 </html>`;
         mimeType = 'text/html;charset=utf-8';
       } else {
-        customAlert('exportError', 'Error de Exportación');
+        customAlert('exportError', 'Export Error');
         return;
       }
 
@@ -1556,7 +1556,7 @@
                     video.currentTime = totalSecondsParsed - tcrOffsetSeconds;
                     video.play();
                 } else {
-                    customAlert('navigationError', 'Error de Navegación');
+                    customAlert('navigationError', 'Navigation Error');
                 }
                 break;
             }
@@ -1657,7 +1657,7 @@
         }
       };
       reader.onerror = () => {
-          customAlert('textLoadError', 'Error de lectura');
+          customAlert('textLoadError', 'Read Error');
       };
       reader.readAsText(file);
     });
@@ -1782,7 +1782,7 @@
         const caseSensitive = caseSensitiveInput ? caseSensitiveInput.checked : false;
 
         if (!query) {
-            customAlert('enterTextToFind', 'Búsqueda');
+            customAlert('enterTextToFind', 'Search');
             return;
         }
 
@@ -1794,14 +1794,14 @@
         }
 
         if (findReplaceState.matches.length === 0) {
-            customAlert('noMatchesFound', 'Búsqueda');
+            customAlert('noMatchesFound', 'Search');
             return;
         }
 
         let nextIndex = findReplaceState.currentIndex + 1;
         if (nextIndex >= findReplaceState.matches.length) {
             nextIndex = 0; 
-            customAlert('searchEndReached', 'Búsqueda');
+            customAlert('searchEndReached', 'Search');
         }
         goToMatch(nextIndex);
     }
@@ -1815,7 +1815,7 @@
         const caseSensitive = caseSensitiveInput ? caseSensitiveInput.checked : false;
 
         if (!query) {
-            customAlert('enterTextToFind', 'Búsqueda');
+            customAlert('enterTextToFind', 'Search');
             return;
         }
 
@@ -1827,14 +1827,14 @@
         }
 
         if (findReplaceState.matches.length === 0) {
-            customAlert('noMatchesFound', 'Búsqueda');
+            customAlert('noMatchesFound', 'Search');
             return;
         }
 
         let prevIndex = findReplaceState.currentIndex - 1;
         if (prevIndex < 0) {
             prevIndex = findReplaceState.matches.length - 1; 
-            customAlert('searchStartReached', 'Búsqueda');
+            customAlert('searchStartReached', 'Search');
         }
         goToMatch(prevIndex);
     }
@@ -1842,7 +1842,7 @@
     // Función para reemplazar la coincidencia actual
     function replaceCurrent() {
         if (findReplaceState.currentIndex === -1 || findReplaceState.matches.length === 0) {
-            customAlert('noMatchSelectedForReplace', 'Reemplazar');
+            customAlert('noMatchSelectedForReplace', 'Replace');
             return;
         }
 
@@ -1866,7 +1866,7 @@
             }
             goToMatch(nextIndex);
         } else {
-            customAlert('replacementCompleteNoMoreMatches', 'Reemplazar');
+            customAlert('replacementCompleteNoMoreMatches', 'Replace');
         }
     }
 
@@ -1877,7 +1877,7 @@
         const caseSensitive = document.getElementById('replaceCaseSensitive').checked;
 
         if (!query) {
-            customAlert('enterTextToFind', 'Reemplazar Todo');
+            customAlert('enterTextToFind', 'Replace All');
             return;
         }
 
@@ -1895,9 +1895,9 @@
 
         if (findReplaceState.matches.length > 0) {
              goToMatch(0); 
-             customAlert('replacementComplete', 'Reemplazar Todo', [query]);
+             customAlert('replacementComplete', 'Replace All', [query]);
         } else {
-             customAlert('replacementCompleteNoMoreMatches', 'Reemplazar Todo');
+             customAlert('replacementCompleteNoMoreMatches', 'Replace All');
         }
     }
 
