@@ -55,6 +55,22 @@
             gap: 0.8rem; /* Espacio entre los botones */
             margin-top: 2rem; /* Espacio superior para separar del posible elemento encima */
         }
+        .tool-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .tool-logo {
+            max-width: 220px; /* Tamaño de los logotipos de las herramientas (aumentado un 10%) */
+            height: auto;
+            margin-bottom: 0.5rem; /* Espacio entre el logotipo y el botón */
+            transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out; /* Transición para el efecto de hover */
+        }
+        .tool-logo:hover {
+            transform: scale(1.05); /* Ligeramente más grande al pasar el ratón */
+            filter: drop-shadow(0 0 8px rgba(226, 59, 93, 0.7)); /* Efecto de "glow" (sombra de color rojo del logo) */
+        }
         .tool-button {
             display: flex;
             flex-direction: column;
@@ -67,6 +83,7 @@
             border-radius: 0.75rem; /* Esquinas redondeadas para los botones */
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra para los botones */
+            width: 100%; /* Asegura que el botón ocupe el ancho disponible */
         }
         .tool-button:hover {
             transform: translateY(-3px); /* Efecto de elevación al pasar el ratón */
@@ -156,6 +173,9 @@
                 gap: 0.7rem; /* Espacio más pequeño en móvil */
                 margin-top: 1.5rem;
             }
+            .tool-logo {
+                max-width: 165px; /* Ajuste para logos en móvil (un 10% más grandes) */
+            }
             .tool-button {
                 padding: 0.6rem; /* Padding más pequeño en móvil */
             }
@@ -202,25 +222,40 @@
         <p class="description" data-key="description"></p>
         <div class="tool-grid">
             <!-- Botón para el Editor de Glosarios -->
-            <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank" class="tool-button">
-                <i class="ph-book-open-text tool-icon"></i> <!-- Icono de libro abierto -->
-                <span class="tool-text" data-key="pandatermMain"></span>
-                <span class="tool-text-sub" data-key="pandatermSub"></span>
-            </a>
+            <div class="tool-item">
+                <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank">
+                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png" alt="PandaTerm Logo" class="tool-logo">
+                </a>
+                <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank" class="tool-button">
+                    <i class="ph-book-open-text tool-icon"></i> <!-- Icono de libro abierto -->
+                    <span class="tool-text" data-key="pandatermMain"></span>
+                    <span class="tool-text-sub" data-key="pandatermSub"></span>
+                </a>
+            </div>
 
             <!-- Botón para el Contador de Caracteres -->
-            <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank" class="tool-button">
-                <i class="ph-text-aa tool-icon"></i> <!-- Icono de texto -->
-                <span class="tool-text" data-key="charpandaMain"></span>
-                <span class="tool-text-sub" data-key="charpandaSub"></span>
-            </a>
+            <div class="tool-item">
+                <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank">
+                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png" alt="CharPanda Logo" class="tool-logo">
+                </a>
+                <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank" class="tool-button">
+                    <i class="ph-text-aa tool-icon"></i> <!-- Icono de texto -->
+                    <span class="tool-text" data-key="charpandaMain"></span>
+                    <span class="tool-text-sub" data-key="charpandaSub"></span>
+                </a>
+            </div>
 
             <!-- Botón para el Editor de Transcripciones -->
-            <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank" class="tool-button">
-                <i class="ph-microphone-stage tool-icon"></i> <!-- Icono de micrófono -->
-                <span class="tool-text" data-key="pandascriptMain"></span>
-                <span class="tool-text-sub" data-key="pandascriptSub"></span>
-            </a>
+            <div class="tool-item">
+                <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank">
+                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-final.png" alt="PAndaScript Logo" class="tool-logo">
+                </a>
+                <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank" class="tool-button">
+                    <i class="ph-microphone-stage tool-icon"></i> <!-- Icono de micrófono -->
+                    <span class="tool-text" data-key="pandascriptMain"></span>
+                    <span class="tool-text-sub" data-key="pandascriptSub"></span>
+                </a>
+            </div>
         </div>
 
         <!-- Información del creador y contacto -->
