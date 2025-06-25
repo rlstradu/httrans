@@ -25,8 +25,9 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
             padding: 2.5rem; /* Aumenta el padding interno */
             text-align: center;
-            max-width: 90%; /* Ancho máximo para el contenedor */
-            width: 768px; /* Ancho fijo en pantallas grandes */
+            max-width: 90%; /* Ancho máximo para el contenedor, para pantallas más pequeñas */
+            width: 800px; /* Ancho fijo para el contenedor principal */
+            position: relative; /* Para que el selector de idioma se posicione relativo a este */
         }
         .logo {
             max-width: 432px; /* Tamaño máximo para el logo, ampliado un 20% */
@@ -80,6 +81,14 @@
             font-size: 0.9rem; /* Tamaño de fuente para el texto del botón */
             font-weight: 600; /* Semi-negrita */
             text-transform: uppercase; /* ¡Texto en mayúsculas! */
+            line-height: 1.2; /* Ajuste para texto de varias líneas */
+        }
+        .tool-text-sub {
+            font-size: 0.7rem; /* Tamaño más pequeño para la aclaración */
+            font-weight: 400; /* Normal */
+            text-transform: none; /* Sin mayúsculas para la aclaración */
+            display: block; /* Asegura que la aclaración vaya en una nueva línea */
+            margin-top: 0.2rem; /* Pequeño margen superior para separar del nombre principal */
         }
         .footer-info {
             margin-top: 3rem; /* Margen superior para separar del grid de herramientas */
@@ -94,8 +103,44 @@
             text-decoration: underline; /* Subrayado al pasar el ratón por el enlace */
         }
 
+        /* Language Selector */
+        .language-selector {
+            position: absolute; /* Posicionamiento absoluto relativo al .container */
+            top: 20px; /* Distancia desde arriba */
+            right: 20px; /* Distancia desde la derecha */
+            display: flex;
+            gap: 5px;
+            background-color: #f0f2f5;
+            border-radius: 0.5rem;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .lang-button {
+            padding: 5px 10px;
+            border: none;
+            background-color: #e0e0e0;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .lang-button.active {
+            background-color: #E23B5D; /* Color activo para el idioma seleccionado (rojo del logo) */
+            color: white;
+        }
+        .lang-button:hover:not(.active) {
+            background-color: #d0d0d0;
+        }
+
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            .container {
+                width: 90%; /* Asegura que siga siendo responsive en móviles */
+                max-width: 100%;
+            }
             .logo {
                 max-width: 360px; /* Ajuste para móvil, ampliado un 20% */
             }
@@ -120,12 +165,21 @@
             .tool-text {
                 font-size: 0.8rem; /* Texto más pequeño en móvil */
             }
-            .container {
-                padding: 1.5rem;
+            .tool-text-sub {
+                font-size: 0.6rem; /* Aclaración más pequeña en móvil */
             }
             .footer-info {
                 margin-top: 2rem; /* Margen superior ajustado para móvil */
                 font-size: 0.75rem; /* Tamaño de fuente más pequeño en móvil */
+            }
+            .language-selector {
+                top: 10px;
+                right: 10px;
+                padding: 3px;
+            }
+            .lang-button {
+                padding: 3px 6px;
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -135,38 +189,126 @@
 </head>
 <body>
     <div class="container">
+        <!-- Selector de idioma -->
+        <div class="language-selector">
+            <button class="lang-button" data-lang="es">ES</button>
+            <button class="lang-button" data-lang="en">EN</button>
+        </div>
+
         <!-- Logo HTTrans -->
-        <img src="https://jugandoatraducir.com/wp-content/uploads/2025/06/httrans-logo.png" alt="HTTrans Logo" class="logo">
+        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png" alt="HTTrans Logo" class="logo">
         <h1 class="toolkit-title">HTML TRANSLATION TOOLKIT</h1>
         <!-- Descripción del proyecto -->
-        <p class="description">
-            Esta es una colección de herramientas sencillas y prácticas, diseñadas por un traductor y pensadas para facilitar el trabajo diario de otros traductores. Son completamente gratuitas, no requieren instalación y pueden usarse directamente desde cualquier navegador.
-        </p>
+        <p class="description" data-key="description"></p>
         <div class="tool-grid">
             <!-- Botón para el Editor de Glosarios -->
-            <a href="editor_glosarios.html" class="tool-button">
+            <a href="https://rlstradu.github.io/httrans/tbx-editor.html" target="_blank" class="tool-button">
                 <i class="ph-book-open-text tool-icon"></i> <!-- Icono de libro abierto -->
-                <span class="tool-text">EDITOR DE GLOSARIOS</span>
+                <span class="tool-text" data-key="pandatermMain"></span>
+                <span class="tool-text-sub" data-key="pandatermSub"></span>
             </a>
 
             <!-- Botón para el Contador de Caracteres -->
-            <a href="contador_caracteres.html" class="tool-button">
+            <a href="https://rlstradu.github.io/httrans/contarcaracteres.html" target="_blank" class="tool-button">
                 <i class="ph-text-aa tool-icon"></i> <!-- Icono de texto -->
-                <span class="tool-text">CONTADOR DE CARACTERES</span>
+                <span class="tool-text" data-key="charpandaMain"></span>
+                <span class="tool-text-sub" data-key="charpandaSub"></span>
             </a>
 
             <!-- Botón para el Editor de Transcripciones -->
-            <a href="editor_transcripciones.html" class="tool-button">
+            <a href="https://rlstradu.github.io/httrans/aveditor.html" target="_blank" class="tool-button">
                 <i class="ph-microphone-stage tool-icon"></i> <!-- Icono de micrófono -->
-                <span class="tool-text">EDITOR DE TRANSCRIPCIONES</span>
+                <span class="tool-text" data-key="pandascriptMain"></span>
+                <span class="tool-text-sub" data-key="pandascriptSub"></span>
             </a>
         </div>
 
         <!-- Información del creador y contacto -->
         <footer class="footer-info">
-            <p>Proyecto creado por Rafael López Sánchez</p>
-            <p>Para feedback o sugerencias: <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a></p>
+            <p data-key="projectBy"></p>
+            <p data-key="feedback"></p>
+            <p data-key="githubRepo"></p> <!-- Nuevo párrafo para el enlace de GitHub -->
         </footer>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const translations = {
+                es: {
+                    description: 'Esta es una colección de herramientas sencillas y prácticas, diseñadas por un traductor y pensadas para facilitar el trabajo diario de otros traductores. Son completamente gratuitas, no requieren instalación y pueden usarse directamente desde cualquier navegador.',
+                    pandatermMain: 'PANDATERM',
+                    pandatermSub: '(EDITOR DE GLOSARIOS TBX)',
+                    charpandaMain: 'CHARPANDA',
+                    charpandaSub: '(CONTADOR DE CARACTERES)',
+                    pandascriptMain: 'PANDASCRIPT',
+                    pandascriptSub: '(EDITOR DE TRANSCRIPCIONES)',
+                    projectBy: 'Proyecto creado por Rafael López Sánchez',
+                    feedback: 'Para feedback o sugerencias: rlstradu@gmail.com',
+                    githubRepo: 'Repositorio de GitHub: https://github.com/rlstradu/httrans', // Texto en español para GitHub
+                },
+                en: {
+                    description: 'This is a collection of simple, practical tools created by a translator who happens to be a big fan of pandas — and designed to make everyday translation work a little easier. They’re completely free to use, require no installation, and run straight from your browser.',
+                    pandatermMain: 'PANDATERM',
+                    pandatermSub: '(TBX GLOSSARY EDITOR)',
+                    charpandaMain: 'CHARPANDA',
+                    charpandaSub: '(CHARACTER COUNTER)',
+                    pandascriptMain: 'PANDASCRIPT',
+                    pandascriptSub: '(TRANSCRIPT EDITOR)',
+                    projectBy: 'Project by Rafael López Sánchez',
+                    feedback: 'For feedback or suggestions: rlstradu@gmail.com',
+                    githubRepo: 'GitHub Repository: https://github.com/rlstradu/httrans', // Texto en inglés para GitHub
+                }
+            };
+
+            const langButtons = document.querySelectorAll('.lang-button');
+            // Cambiar el idioma por defecto a 'en' si no hay una selección guardada
+            let currentLang = localStorage.getItem('selectedLang') || 'en';
+
+            // Función para actualizar el texto de la página
+            function updateText(lang) {
+                const elementsToTranslate = document.querySelectorAll('[data-key]');
+                elementsToTranslate.forEach(element => {
+                    const key = element.dataset.key;
+                    if (translations[lang] && translations[lang][key]) {
+                        // Special handling for the feedback and githubRepo lines to keep the mailto/href links
+                        if (key === 'feedback') {
+                            element.innerHTML = translations[lang][key].replace('rlstradu@gmail.com', '<a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>');
+                        } else if (key === 'githubRepo') {
+                            element.innerHTML = translations[lang][key].replace('https://github.com/rlstradu/httrans', '<a href="https://github.com/rlstradu/httrans" target="_blank">https://github.com/rlstradu/httrans</a>');
+                        }
+                        else {
+                            element.textContent = translations[lang][key];
+                        }
+                    }
+                });
+            }
+
+            // Función para actualizar el estado activo de los botones de idioma
+            function updateLangButtons(selectedLang) {
+                langButtons.forEach(button => {
+                    if (button.dataset.lang === selectedLang) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                });
+            }
+
+            // Inicializar el texto y los botones según el idioma actual al cargar la página
+            updateText(currentLang);
+            updateLangButtons(currentLang);
+
+            // Añadir event listeners a los botones de idioma
+            langButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const selectedLang = button.dataset.lang;
+                    localStorage.setItem('selectedLang', selectedLang); // Guardar idioma
+                    currentLang = selectedLang; // Actualizar el idioma actual
+                    updateText(currentLang);
+                    updateLangButtons(currentLang);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
