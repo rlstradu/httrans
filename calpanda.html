@@ -14,7 +14,7 @@
             color: #334155; /* Texto principal en gris oscuro */
         }
         .container {
-            max-width: 900px;
+            max-width: 750px; /* Ancho ajustado para parecer una hoja A4 */
             margin: 2.5rem auto; /* Margen superior/inferior aumentado */
             padding: 2.5rem; /* Relleno aumentado */
             background-color: #ffffff;
@@ -23,13 +23,22 @@
             position: relative;
             border: 1px solid #e2e8f0; /* Borde sutil */
         }
-        input[type="text"], input[type="number"], input[type="date"], textarea {
+        input[type="text"], input[type="number"], input[type="date"] {
             border-radius: 8px;
             padding: 0.8rem 1rem; /* Relleno ligeramente mayor */
             border: 1px solid #cbd5e1; /* Borde gris más suave */
             width: 100%;
             transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
+        /* Específico para textarea para mayor padding */
+        textarea {
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem; /* Increased padding specifically for textareas for more internal space */
+            border: 1px solid #cbd5e1; /* Borde gris más suave */
+            width: 100%;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
         input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, textarea:focus {
             outline: none;
             border-color: #60a5fa; /* Borde azul al enfocar */
@@ -144,8 +153,8 @@
         }
         table th input:focus {
             outline: none;
-            border: 1px solid #60a5fa; /* Borde azul al enfocar */
-            background-color: #fff; /* Fondo blanco al enfocar */
+            border: 1px solid #60a5fa;
+            background-color: #fff;
             box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
             padding: 0.2rem 0.4rem; /* Pequeño padding al enfocar para visibilidad */
             margin: -0.2rem -0.4rem; /* Ajustar el margen para compensar el padding */
@@ -177,22 +186,22 @@
             width: 100%; /* El input ocupa el 100% del ancho de su celda ajustada */
         }
 
-        /* Estilo para el botón de cambio de idioma */
-        #languageToggleBtn {
+        /* Estilo para los botones de la esquina superior derecha */
+        .top-right-buttons {
             position: absolute;
-            top: 1.5rem; /* Ajustado para un mejor espaciado */
-            right: 1.5rem; /* Ajustado para un mejor espaciado */
-            padding: 0.6rem 1.2rem; /* Relleno ligeramente mayor */
-            font-size: 0.9rem; /* Tamaño de fuente ligeramente mayor */
-            background-color: #64748b; /* Gris azulado más oscuro */
-            color: white;
-            border-radius: 8px;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex; /* Use flexbox to align buttons */
+            gap: 0.5rem; /* Space between buttons */
             z-index: 10;
+        }
+        .top-right-buttons button {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        #languageToggleBtn:hover {
-            background-color: #475569; /* Gris azulado más oscuro */
-            transform: translateY(-0.5px);
+        .top-right-buttons button:hover {
+             transform: translateY(-0.5px);
         }
 
         /* Estilo para la sección de impuestos y totales */
@@ -443,8 +452,10 @@
 </head>
 <body>
     <div class="container">
-        <!-- Botón de cambio de idioma -->
-        <button id="languageToggleBtn" data-key="languageToggleText">English</button>
+        <!-- Botones de la esquina superior derecha -->
+        <div class="top-right-buttons">
+            <button id="languageToggleBtn" data-key="languageToggleText"></button>
+        </div>
 
         <!-- Logo CalPanda -->
         <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png" alt="CalPanda Logo" class="calpanda-logo">
@@ -525,6 +536,7 @@
 
         <!-- Botones de Acción -->
         <div class="mt-8 text-center flex justify-center gap-4">
+            <button id="decimalToggleBtn" class="px-4 py-2" data-key="decimalPoint"></button>
             <button id="saveLoadConfigBtn" class="px-6 py-3 text-lg" data-key="saveLoadConfigButton">Guardar / cargar configuración</button>
             <button id="generatePdfBtn" class="px-8 py-4 text-lg" data-key="generatePdfButton">GENERAR PDF</button>
         </div>
@@ -650,7 +662,7 @@
                 generatePdfButton: "GENERAR PDF",
                 paymentInfoLabelDefault: "Información de pago:",
                 paymentInfoPlaceholder: "Condiciones de pago, datos bancarios, notas adicionales, etc.",
-                saveLoadConfigButton: "GUARDAR AJUSTE DE FACTURA",
+                saveLoadConfigButton: "GUARDAR/CARGAR PLANTILLA", // Updated text
                 configModalTitle: "Guardar / cargar configuración",
                 saveToFileButton: "Guardar a archivo",
                 loadFromFileButton: "Cargar desde archivo",
@@ -696,6 +708,8 @@
                 loadLocalDeleteButton: "Eliminar",
                 loadLocalNoSettings: "No hay ajustes guardados localmente.",
                 loadLocalConfirmDelete: "¿Estás seguro de que quieres eliminar este ajuste?",
+                decimalPoint: "CAMBIAR A COMA (0,00)", // Text when current is POINT
+                decimalComma: "CAMBIAR A PUNTO (0.00)"  // Text when current is COMMA
             },
             en: {
                 appTitle: "CalPanda",
@@ -719,7 +733,7 @@
                 generatePdfButton: "GENERATE PDF",
                 paymentInfoLabelDefault: "Payment information:",
                 paymentInfoPlaceholder: "Payment terms, bank details, additional notes, etc.",
-                saveLoadConfigButton: "SAVE INVOICE SETTING",
+                saveLoadConfigButton: "SAVE/LOAD TEMPLATE", // Updated text
                 configModalTitle: "Save / load configuration",
                 saveToFileButton: "Save to file",
                 loadFromFileButton: "Load from file",
@@ -745,16 +759,20 @@
                 languageToggleText: "Español",
                 taxDefaultIvaName: "VAT",
                 taxDefaultIrpfName: "IRPF",
-                configModalExplanationTitle: "About invoice configuration:",
+                configModalExplanationTitle: "About Invoice Configuration:",
                 configModalExplanationPara1: "Save and load your invoice settings to save time in the future.",
                 configModalExplanationPara2: "For example, you can create a custom configuration for each client, including their details, your sender information, tax settings, and payment terms.",
                 configModalExplanationLocalStorage: "If you choose to save the settings locally, the data is stored in your browser only and can't be accessed by anyone else.",
                 configModalExplanationFile: "You can also download your configuration as a file and load it whenever you need it.",
+                decimalPoint: "USE DECIMAL COMMA (0,00)", // Updated text for point to comma toggle
+                decimalComma: "USE DECIMAL POINT (0.00)"  // Updated text for comma to point toggle
             }
         };
 
         // Idioma actual (por defecto español)
         let currentLanguage = 'es';
+        // Decimal separator state: '.' for point, ',' for comma
+        let currentDecimalSeparator = '.'; 
 
         // --- Obtiene referencias a elementos del DOM ---
         const invoiceItemsTable = document.getElementById('invoiceItems');
@@ -770,6 +788,7 @@
         const invoiceNumberInput = document.getElementById('invoiceNumber');
         const senderDataInput = document.getElementById('senderData');
         const languageToggleBtn = document.getElementById('languageToggleBtn');
+        const decimalToggleBtn = document.getElementById('decimalToggleBtn'); // New decimal toggle button
         const servicesTitleInput = document.getElementById('servicesTitle');
         const paymentInfoInput = document.getElementById('paymentInfo');
         const paymentInfoLabelInput = document.getElementById('paymentInfoLabel');
@@ -785,8 +804,6 @@
         const tableHeaderRateInput = document.querySelector('th input[data-key="tableHeaderRate"]');
         const tableHeaderQuantityInput = document.querySelector('th input[data-key="tableHeaderQuantity"]');
         const tableHeaderTotalInput = document.querySelector('th input[data-key="tableHeaderTotal"]');
-        // No longer need a reference for tableHeaderActionsInput as the column is removed.
-
 
         // Modal elements
         const saveLoadConfigBtn = document.getElementById('saveLoadConfigBtn');
@@ -839,7 +856,33 @@
         }
 
         /**
-         * Updates all UI texts to the current language.
+         * Formats a number according to the current decimal separator.
+         * @param {number} num - The number to format.
+         * @param {number} decimals - Number of decimal places.
+         * @returns {string} The formatted number string.
+         */
+        function formatNumber(num, decimals = 2) {
+            let formatted = parseFloat(num).toFixed(decimals);
+            if (currentDecimalSeparator === ',') {
+                formatted = formatted.replace('.', ',');
+            }
+            return formatted;
+        }
+
+        /**
+         * Parses a number string according to the current decimal separator.
+         * @param {string} str - The string to parse.
+         * @returns {number} The parsed number.
+         */
+        function parseNumber(str) {
+            if (currentDecimalSeparator === ',') {
+                str = str.replace(',', '.');
+            }
+            return parseFloat(str);
+        }
+
+        /**
+         * Updates all UI texts to the current language and decimal separator.
          */
         function updateTexts() {
             const elements = document.querySelectorAll('[data-key]');
@@ -847,50 +890,52 @@
                 const key = element.dataset.key;
                 let translatedText = translations[currentLanguage][key];
 
-                if (element.id === 'generatePdfBtn' || element.id === 'saveLoadConfigBtn') {
-                    // Special case for these buttons: always uppercase
+                // Special handling for decimal toggle button
+                if (element.id === 'decimalToggleBtn') {
+                    // This logic is inverse: if current is '.', show text to change to ','
+                    // if current is ',', show text to change to '.'
+                    element.textContent = (currentDecimalSeparator === '.') ? 
+                                          translations[currentLanguage].decimalComma : 
+                                          translations[currentLanguage].decimalPoint;
+                } else if (element.id === 'generatePdfBtn' || element.id === 'saveLoadConfigBtn') {
                     element.textContent = translatedText.toUpperCase(); 
                 } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                    // Check if it's one of the specific editable labels first
                     if (element.id === 'servicesTitle' || element.id === 'paymentInfoLabel' ||
                         element.id === 'clientDataLabelInput' || element.id === 'invoiceNumberLabelInput' ||
                         element.id === 'invoiceDateLabelInput' || element.id === 'senderDataLabelInput') {
-                         if (!element._isUserModified) { // Only update if not user-modified
+                         if (!element._isUserModified) {
                             element.value = toSentenceCase(translatedText);
                         }
-                    } else if (element.closest('th')) { // Header inputs
+                    } else if (element.closest('th')) {
                         element.value = toSentenceCase(translatedText);
-                    } else { // Other inputs/textareas (placeholders)
+                    } else if (element.classList.contains('item-rate') || element.classList.contains('item-quantity') || element.classList.contains('tax-percentage-input')) {
+                        element.value = formatNumber(parseNumber(element.value));
+                    } else {
                         element.placeholder = toSentenceCase(translatedText);
                     }
                 } else if (element.tagName === 'TITLE') {
                     document.title = toSentenceCase(translatedText);
-                } else { // Other elements (spans, h1, buttons)
+                } else {
                     element.textContent = toSentenceCase(translatedText);
                 }
             });
 
-            // Update delete buttons in item rows
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.textContent = translations[currentLanguage].deleteButton; // Use raw 'X' or 'Eliminar' for delete button
+            document.querySelectorAll('.item-total').forEach(span => {
+                span.textContent = formatNumber(parseNumber(span.textContent));
             });
-            // Update delete buttons in tax rows
+
+            document.querySelectorAll('.tax-amount').forEach(span => {
+                span.textContent = formatNumber(parseNumber(span.textContent));
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.textContent = translations[currentLanguage].deleteButton;
+            });
             document.querySelectorAll('.delete-tax-btn').forEach(btn => {
                 btn.textContent = toSentenceCase(translations[currentLanguage].deleteTaxButton);
             });
 
-            // Update modal text content explicitly
-            document.querySelector('#configModalOverlay [data-key="configModalExplanationTitle"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationTitle);
-            document.querySelector('#configModalOverlay [data-key="configModalExplanationPara1"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationPara1);
-            document.querySelector('#configModalOverlay [data-key="configModalExplanationPara2"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationPara2);
-            document.querySelector('#configModalOverlay [data-key="configModalExplanationLocalStorage"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationLocalStorage);
-            document.querySelector('#configModalOverlay [data-key="configModalExplanationFile"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationFile);
-            
-            // Update local load modal text
-            document.querySelector('#loadLocalModalOverlay [data-key="loadLocalExplanation"]').textContent = toSentenceCase(translations[currentLanguage].loadLocalExplanation);
-
-
-            calculateTotals(); // Force recalculation to update tax amounts and total
+            calculateTotals();
         }
 
         // Mark user-modified fields
@@ -916,10 +961,10 @@
                         <textarea rows="2" placeholder="${toSentenceCase(translations[currentLanguage].tableHeaderProject)}" class="py-2 focus:ring-blue-500 focus:border-blue-500 w-full resize-y"></textarea>
                     </div>
                 </td>
-                <td><input type="number" step="0.01" value="0.00" class="item-rate py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
-                <td><input type="number" step="1" value="0" class="item-quantity py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
-                <td><span class="item-total text-right block w-full">0.00</span></td>
-            `; // Removed the empty <td> for the 5th column
+                <td><input type="number" step="0.01" value="${formatNumber(0.00)}" class="item-rate py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
+                <td><input type="number" step="1" value="${formatNumber(0)}" class="item-quantity py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
+                <td><span class="item-total text-right block w-full">${formatNumber(0.00)}</span></td>
+            `;
 
             invoiceItemsTable.appendChild(row);
 
@@ -929,10 +974,10 @@
             const deleteBtn = row.querySelector('.delete-btn');
 
             const calculateItemSubTotal = () => {
-                const rate = parseFloat(rateInput.value);
-                const quantity = parseFloat(quantityInput.value);
-                const total = (rate * quantity).toFixed(2);
-                totalSpan.textContent = total;
+                const rate = parseNumber(rateInput.value);
+                const quantity = parseNumber(quantityInput.value);
+                const total = (rate * quantity);
+                totalSpan.textContent = formatNumber(total);
                 calculateTotals();
             };
 
@@ -959,9 +1004,9 @@
             taxRow.innerHTML = `
                 <button class="tax-operation-btn" data-operation="${defaultOperation}">${defaultOperation}</button>
                 <input type="text" value="${defaultName}" class="tax-name-input">
-                <input type="number" step="0.01" value="${defaultValue}" class="tax-percentage-input">
+                <input type="number" step="0.01" value="${formatNumber(defaultValue)}" class="tax-percentage-input">
                 <span>%:</span>
-                <span class="tax-amount font-bold ml-2">0.00 €</span>
+                <span class="tax-amount font-bold ml-2">${formatNumber(0.00)}</span>
                 <button class="delete-tax-btn">${toSentenceCase(translations[currentLanguage].deleteTaxButton)}</button>
             `;
             taxFieldsContainer.appendChild(taxRow);
@@ -993,9 +1038,9 @@
         function calculateTotals() {
             let subTotal = 0;
             document.querySelectorAll('.item-total').forEach(itemTotalSpan => {
-                subTotal += parseFloat(itemTotalSpan.textContent);
+                subTotal += parseNumber(itemTotalSpan.textContent);
             });
-            subTotalAmountSpan.textContent = subTotal.toFixed(2) + ' €';
+            subTotalAmountSpan.textContent = formatNumber(subTotal) + ' €';
 
             let totalTaxAmount = 0;
             document.querySelectorAll('.tax-row').forEach(taxRow => {
@@ -1003,27 +1048,28 @@
                 const taxPercentageInput = taxRow.querySelector('.tax-percentage-input');
                 const taxAmountSpan = taxRow.querySelector('.tax-amount');
                 
-                const percentage = parseFloat(taxPercentageInput.value) || 0;
-                const taxAmount = (subTotal * (percentage / 100)).toFixed(2);
-                taxAmountSpan.textContent = taxAmount + ' €';
+                const percentage = parseNumber(taxPercentageInput.value);
+                const taxAmount = (subTotal * (percentage / 100));
+                taxAmountSpan.textContent = formatNumber(taxAmount) + ' €';
 
                 const operation = taxOperationBtn.dataset.operation;
                 if (operation === '-') {
-                    totalTaxAmount -= parseFloat(taxAmount);
+                    totalTaxAmount -= taxAmount;
                 } else { // '+'
-                    totalTaxAmount += parseFloat(taxAmount);
+                    totalTaxAmount += taxAmount;
                 }
             });
             
-            const finalTotal = (subTotal + totalTaxAmount).toFixed(2);
-            grandTotalSpan.textContent = finalTotal + ' €';
+            const finalTotal = (subTotal + totalTaxAmount);
+            grandTotalSpan.textContent = formatNumber(finalTotal) + ' €';
         }
 
         /**
          * Helper function to add multi-line text to PDF.
          * @param {jsPDF} doc - The jsPDF object.
-         * @param {number} x - The initial X coordinate.
-         * @param {number} y - The initial Y coordinate.
+         * @param {string} text - The text to add.
+         * @param {number} x - La coordenada X inicial.
+         * @param {number} y - La coordenada Y inicial.
          * @param {number} maxWidth - El ancho máximo para el texto antes de envolverlo.
          * @param {string} align - Alineación del texto ("left", "center", "right").
          * @returns {number} La coordenada Y final después de añadir el texto.
@@ -1069,7 +1115,6 @@
             const senderDataFinalY = addMultiLineText(doc, senderDataInput.value, pdfRightAlignedX, currentY + 7, 80, "right"); // currentY + 7 para un pequeño espacio
 
             // Determinar la posición Y para el inicio de la tabla (después del bloque de texto más largo)
-            // Calculamos el punto más bajo de los datos de cliente/emisor y le sumamos un pequeño margen.
             let tableStartY = Math.max(clientDataFinalY, senderDataFinalY) + 5; // Ajustado para que esté más arriba
 
             // Title of services (editable)
@@ -1090,7 +1135,6 @@
 
             document.querySelectorAll('#invoiceItems tr').forEach(row => {
                 const rowData = [];
-                // Obtener valor del textarea para el proyecto, otros de input/span
                 const projectContent = row.querySelector('td:nth-child(1) textarea').value;
                 rowData.push(projectContent);
                 rowData.push(row.querySelector('td:nth-child(2) input').value);
@@ -1099,90 +1143,84 @@
                 data.push(rowData);
             });
 
-            // Prepare table footer content
             const foot = [];
-            // Styles for transparent foot cells
-            const transparentFootCellStyles = {
+            const whiteFootCellStyles = {
                 fillColor: [255, 255, 255], // White background
                 textColor: [0, 0, 0],       // Black text
                 lineColor: [255, 255, 255], // White border
                 lineWidth: 0.5              // Thin border for separation, but visually "white on white"
             };
             
-            // Calculate starting column for totals (using index 2 for "Volumen")
-            const totalColStart = 2; // Index of 'Volumen' column
+            const availableWidth = pdfPageWidth - (2 * pdfMarginX);
+            const colWidthProject = availableWidth * 0.50;
+            const colWidthRate = availableWidth * 0.1667;
+            const colWidthQuantity = availableWidth * 0.1667;
+            const colWidthTotal = availableWidth * 0.1667;
 
-            // Subtotal row
+            const emptyColSpanForAlignment = 2;
+            const labelColSpanForValues = 1;
+
             foot.push([
-                { content: '', colSpan: totalColStart, styles: transparentFootCellStyles }, // Empty cells spanning to "Volumen"
-                { content: toSentenceCase(translations[currentLanguage].subtotalLabel), styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold' } },
-                { content: subTotalAmountSpan.textContent, styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold' } }
+                { content: '', colSpan: emptyColSpanForAlignment, styles: whiteFootCellStyles },
+                { content: toSentenceCase(translations[currentLanguage].subtotalLabel), styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold' } },
+                { content: subTotalAmountSpan.textContent, styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold' } }
             ]);
 
-            // Dynamic tax rows
             document.querySelectorAll('.tax-row').forEach(taxRow => {
                 const taxName = taxRow.querySelector('.tax-name-input').value;
                 const taxPercentage = taxRow.querySelector('.tax-percentage-input').value;
                 const taxAmount = taxRow.querySelector('.tax-amount').textContent;
-                const taxOperation = taxRow.querySelector('.tax-operation-btn').dataset.operation; // Get operation
+                const taxOperation = taxRow.querySelector('.tax-operation-btn').dataset.operation;
 
                 foot.push([
-                    { content: '', colSpan: totalColStart, styles: transparentFootCellStyles }, // Empty cells spanning to "Volumen"
-                    { content: `${taxName.toUpperCase()} (${taxPercentage}%)${taxOperation === '-' ? ' (-)' : ''}:`, styles: { ...transparentFootCellStyles, halign: 'right' } },
-                    { content: taxAmount, styles: { ...transparentFootCellStyles, halign: 'right' } }
+                    { content: '', colSpan: emptyColSpanForAlignment, styles: whiteFootCellStyles },
+                    { content: `${taxName.toUpperCase()} (${formatNumber(parseNumber(taxPercentage), 0)}%)${taxOperation === '-' ? ' (-)' : ''}:`, styles: { ...whiteFootCellStyles, halign: 'right' } },
+                    { content: taxAmount, styles: { ...whiteFootCellStyles, halign: 'right' } }
                 ]);
             });
 
-            // Final total row
             foot.push([
-                { content: '', colSpan: totalColStart, styles: transparentFootCellStyles }, // Empty cells spanning to "Volumen"
-                { content: toSentenceCase(translations[currentLanguage].finalTotalLabel), styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } },
-                { content: grandTotalSpan.textContent, styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } }
+                { content: '', colSpan: emptyColSpanForAlignment, styles: whiteFootCellStyles },
+                { content: toSentenceCase(translations[currentLanguage].finalTotalLabel), styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } },
+                { content: grandTotalSpan.textContent, styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } }
             ]);
 
-            // Column widths for autoTable
-            const availableWidth = pdfPageWidth - (2 * pdfMarginX);
-            const colWidthProject = availableWidth * 0.50; // Proyecto (50% de ancho disponible)
-            const colWidthOthers = availableWidth * 0.1667; // Cada una de las otras 3 columnas (aprox. 16.67%)
-
             doc.autoTable({
-                startY: tableStartY, // Posición inicial de la tabla
+                startY: tableStartY,
                 head: [headers],
                 body: data,
-                foot: foot, // Add the footer content
+                foot: foot,
                 styles: { fontSize: 10, cellPadding: 3, halign: 'left' },
                 headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255] },
                 alternateRowStyles: { fillColor: [248, 250, 252] },
-                margin: { left: pdfMarginX, right: pdfMarginX }, // Márgenes más estrechos
+                margin: { left: pdfMarginX, right: pdfMarginX },
                 columnStyles: {
-                    0: { cellWidth: colWidthProject }, // Proyecto
-                    1: { cellWidth: colWidthOthers, halign: 'center' }, // Tarifa
-                    2: { cellWidth: colWidthOthers, halign: 'center' }, // Volumen
-                    3: { cellWidth: colWidthOthers, halign: 'right' } // Total
+                    0: { cellWidth: colWidthProject },
+                    1: { cellWidth: colWidthRate, halign: 'center' },
+                    2: { cellWidth: colWidthQuantity, halign: 'center' },
+                    3: { cellWidth: colWidthTotal, halign: 'right' }
                 },
-                footStyles: { // Overall foot styles, individual cell styles override this.
-                    lineColor: [255, 255, 255], // White lines for the footer
+                footStyles: {
+                    lineColor: [255, 255, 255],
                     lineWidth: 0.5,
                     fontStyle: 'normal',
                 }
             });
 
-            // Get the final Y position of the table after autoTable is rendered
             let finalY = doc.autoTable.previous.finalY;
 
-            // Information of Payment / Clarifications (uses editable input value)
             if (paymentInfoInput.value.trim() !== '') {
                 finalY += 20;
                 doc.setFontSize(12);
                 doc.setFont("helvetica", "bold");
-                doc.text(toSentenceCase(paymentInfoLabelInput.value), pdfMarginX, finalY); // Usa el valor del input editable
+                doc.text(toSentenceCase(paymentInfoLabelInput.value), pdfMarginX, finalY);
                 doc.setFont("helvetica", "normal");
                 finalY += 7;
-                addMultiLineText(doc, paymentInfoInput.value, pdfMarginX, finalY, pdfPageWidth - (pdfMarginX * 2), "left"); // Ancho ajustado para márgenes más estrechos
+                addMultiLineText(doc, paymentInfoInput.value, pdfMarginX, finalY, pdfPageWidth - (pdfMarginX * 2), "left");
             }
 
             doc.save(`${fileName}.pdf`);
-            pdfNameModalOverlay.classList.remove('visible'); // Close modal after generating PDF
+            pdfNameModalOverlay.classList.remove('visible');
         }
 
         /**
@@ -1193,9 +1231,9 @@
             const items = [];
             document.querySelectorAll('#invoiceItems tr').forEach(row => {
                 items.push({
-                    project: row.querySelector('td:nth-child(1) textarea').value, // Obtener del textarea
-                    rate: parseFloat(row.querySelector('td:nth-child(2) input').value),
-                    quantity: parseFloat(row.querySelector('td:nth-child(3) input').value)
+                    project: row.querySelector('td:nth-child(1) textarea').value,
+                    rate: parseNumber(row.querySelector('td:nth-child(2) input').value), // Parse from formatted string
+                    quantity: parseNumber(row.querySelector('td:nth-child(3) input').value) // Parse from formatted string
                 });
             });
 
@@ -1204,12 +1242,11 @@
                 const operationBtn = taxRow.querySelector('.tax-operation-btn');
                 taxes.push({
                     name: taxRow.querySelector('.tax-name-input').value,
-                    percentage: parseFloat(taxRow.querySelector('.tax-percentage-input').value),
-                    operation: operationBtn ? operationBtn.dataset.operation : '+' // Save the operation
+                    percentage: parseNumber(taxRow.querySelector('.tax-percentage-input').value), // Parse from formatted string
+                    operation: operationBtn ? operationBtn.dataset.operation : '+'
                 });
             });
 
-            // Obtener valores de los inputs de encabezado
             const headerInputs = {};
             document.querySelectorAll('th input[data-key]').forEach(input => {
                 headerInputs[input.dataset.key] = input.value;
@@ -1227,10 +1264,11 @@
                 servicesTitle: servicesTitleInput.value,
                 paymentInfoLabel: paymentInfoLabelInput.value,
                 paymentInfoText: paymentInfoInput.value,
-                tableHeaders: headerInputs, // Guardar encabezados de tabla
+                tableHeaders: headerInputs,
                 items: items,
                 taxes: taxes,
-                language: currentLanguage // Guardar idioma actual también
+                language: currentLanguage,
+                decimalSeparator: currentDecimalSeparator // Save the current decimal separator
             };
         }
 
@@ -1240,12 +1278,11 @@
          */
         function applyInvoiceConfig(config) {
             try {
-                // Aplicar idioma primero
                 currentLanguage = config.language || 'es';
-                updateTexts();
+                currentDecimalSeparator = config.decimalSeparator || '.'; // Load decimal separator
 
-                // Establecer el indicador de modificado por el usuario a true después de cargar,
-                // para que no sean sobrescritos por cambios de idioma a menos que se cambien explícitamente.
+                updateTexts(); // This will re-render all texts and reformat numbers on UI
+
                 clientDataLabelInput.value = config.clientDataLabel || '';
                 clientDataLabelInput._isUserModified = true;
                 clientDataInput.value = config.clientData || '';
@@ -1269,7 +1306,6 @@
                 paymentInfoLabelInput._isUserModified = true;
                 paymentInfoInput.value = config.paymentInfoText || '';
 
-                // Aplicar encabezados de tabla
                 if (config.tableHeaders) {
                     for (const key in config.tableHeaders) {
                         const input = document.querySelector(`th input[data-key="${key}"]`);
@@ -1279,27 +1315,36 @@
                     }
                 }
 
-                // Limpiar ítems existentes y añadir nuevos
                 invoiceItemsTable.innerHTML = '';
                 itemCount = 0;
                 if (config.items && config.items.length > 0) {
                     config.items.forEach(item => {
-                        addItem(); // Añade una nueva fila
+                        addItem();
                         const lastRow = invoiceItemsTable.lastElementChild;
-                        lastRow.querySelector('td:nth-child(1) textarea').value = item.project; // Establecer en textarea
-                        lastRow.querySelector('td:nth-child(2) input').value = item.rate.toFixed(2);
-                        lastRow.querySelector('td:nth-child(3) input').value = item.quantity;
+                        const rateInput = lastRow.querySelector('.item-rate');
+                        const quantityInput = lastRow.querySelector('.item-quantity');
+
+                        lastRow.querySelector('td:nth-child(1) textarea').value = item.project;
+                        rateInput.value = formatNumber(item.rate !== undefined ? item.rate : 0);
+                        quantityInput.value = formatNumber(item.quantity !== undefined ? item.quantity : 0, 0);
+
+                        const event = new Event('input', { bubbles: true });
+                        quantityInput.dispatchEvent(event);
                     });
                 } else {
-                    addItem(); // Añadir al menos un ítem vacío
+                    addItem();
                 }
 
-                // Limpiar impuestos existentes y añadir nuevos
                 taxFieldsContainer.innerHTML = '';
                 taxCount = 0;
                 if (config.taxes && config.taxes.length > 0) {
                     config.taxes.forEach(tax => {
-                        addTaxField(tax.name, tax.percentage, tax.operation); // Pass the operation
+                        addTaxField(tax.name, tax.percentage, tax.operation);
+                        const lastTaxRow = taxFieldsContainer.lastElementChild;
+                        const taxOpBtn = lastTaxRow.querySelector('.tax-operation-btn');
+                        if (taxOpBtn) {
+                            taxOpBtn.textContent = tax.operation;
+                        }
                     });
                 } else {
                     addTaxField(translations[currentLanguage].taxDefaultIvaName, 21, '+');
@@ -1307,7 +1352,7 @@
                 }
 
                 calculateTotals();
-                showMessage(translations[currentLanguage].modalMessageSuccessLoadFile); // Usar mensaje de carga de archivo para carga general
+                showMessage(translations[currentLanguage].modalMessageSuccessLoadFile);
             } catch (e) {
                 console.error("Error al aplicar configuración de factura:", e);
                 showMessage(translations[currentLanguage].modalMessageErrorParse, true);
@@ -1381,11 +1426,18 @@
         languageToggleBtn.addEventListener('click', () => {
             currentLanguage = currentLanguage === 'es' ? 'en' : 'es';
             updateTexts();
-            // Clear and re-add default taxes so their names are updated
+            // Clear and re-add default taxes so their names are updated (operations reset to default too)
             taxFieldsContainer.innerHTML = '';
             addTaxField(translations[currentLanguage].taxDefaultIvaName, 21, '+');
             addTaxField(translations[currentLanguage].taxDefaultIrpfName, 15, '-');
         });
+
+        // Decimal separator toggle
+        decimalToggleBtn.addEventListener('click', () => {
+            currentDecimalSeparator = (currentDecimalSeparator === '.') ? ',' : '.';
+            updateTexts(); // Re-render all numbers with new separator
+        });
+
 
         // Main Config Modal event listeners
         saveLoadConfigBtn.addEventListener('click', () => {
@@ -1481,6 +1533,7 @@
                     localStorage.setItem('calpanda_local_configs', JSON.stringify(localConfigs));
                     showMessage(translations[currentLanguage].modalMessageSuccessSaveLocal);
                     saveLocalModalOverlay.classList.remove('visible'); // Close naming modal
+                    renderLocalSettingsList(); // Update the list immediately after saving
                 } catch (e) {
                     console.error("Error al guardar en el almacenamiento local:", e);
                     showMessage(translations[currentLanguage].modalMessageErrorLoad, true);
@@ -1565,9 +1618,9 @@
 
 
         // --- Inicialización ---
-        // Añadir un ítem inicial al cargar la página
+        // Add an initial item on page load
         addItem();
-        // Establecer la fecha actual por defecto
+        // Set current date by default
         invoiceDateInput.valueAsDate = new Date();
 
         // Inicializar inputs de etiqueta editables (no son placeholders, así que establecer valor)
@@ -1586,11 +1639,12 @@
         paymentInfoLabelInput.value = toSentenceCase(translations[currentLanguage].paymentInfoLabelDefault);
         paymentInfoLabelInput._isUserModified = false;
 
-        // Añadir impuestos por defecto al cargar inicialmente
+        // Add default taxes on initial load
+        taxFieldsContainer.innerHTML = ''; // Clear any pre-existing default taxes before adding
         addTaxField(translations[currentLanguage].taxDefaultIvaName, 21, '+');
         addTaxField(translations[currentLanguage].taxDefaultIrpfName, 15, '-');
 
-        // Actualizar todos los textos al cargar la página (por defecto en español)
+        // Update all texts at page load (defaults to Spanish)
         updateTexts();
     </script>
 </body>
