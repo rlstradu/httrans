@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-key="appTitle">CalPanda</title>
+    <!-- Incluye Tailwind CSS para estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Fondo muy claro, casi blanco */
+            color: #334155; /* Texto principal en gris oscuro */
+        }
+        .container {
+            max-width: 900px;
+            margin: 2.5rem auto; /* Margen superior/inferior aumentado */
+            padding: 2.5rem; /* Relleno aumentado */
+            background-color: #ffffff;
+            border-radius: 16px; /* Esquinas más redondeadas */
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 8px 15px -8px rgba(0, 0, 0, 0.08); /* Sombra más profunda y refinada */
+            position: relative;
+            border: 1px solid #e2e8f0; /* Borde sutil */
+        }
+        input[type="text"], input[type="number"], input[type="date"], textarea {
+            border-radius: 8px;
+            padding: 0.8rem 1rem; /* Relleno ligeramente mayor */
+            border: 1px solid #cbd5e1; /* Borde gris más suave */
+            width: 100%;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, textarea:focus {
+            outline: none;
+            border-color: #60a5fa; /* Borde azul al enfocar */
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3); /* Sombra de enfoque */
+        }
+        /* Estilo para los inputs que actúan como labels (sin borde, transparente) */
+        .editable-label-input {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            font-weight: 600; /* Semi-bold como los labels */
+            color: #334155; /* Color de texto como los labels */
+            font-size: 1rem; /* Tamaño de fuente estándar */
+            height: auto; /* Permitir que la altura se ajuste al contenido */
+            box-shadow: none; /* Eliminar sombra predeterminada de input */
+            text-align: left; /* Asegurar alineación izquierda */
+            width: auto; /* Ajustar ancho al contenido, se estirará por el grid */
+        }
+        .editable-label-input:focus {
+            outline: none;
+            border: 1px solid #60a5fa;
+            background-color: #fff;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+            padding: 0.2rem 0.4rem;
+            margin: -0.2rem -0.4rem;
+        }
+
+        button {
+            border-radius: 10px; /* Esquinas más redondeadas para botones */
+            padding: 0.85rem 1.75rem; /* Relleno ligeramente mayor */
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-out, box-shadow 0.2s ease-in-out; /* Added color transition */
+            
+            /* Colores predeterminados para Añadir elemento, Añadir impuesto, Guardar ajuste de factura, y Language Toggle */
+            background-color: #e2e8f0; /* Gris claro */
+            color: #1f2937; /* Texto gris muy oscuro */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06); /* Sombra de botón */
+        }
+        /* Hover effect for all buttons except generatePdfBtn and delete-btn */
+        button:hover:not(#generatePdfBtn):not(.delete-btn) {
+            background-color: #1a1a1a; /* Negro oscuro al pasar el ratón */
+            color: white; /* Texto blanco al pasar el ratón */
+            transform: translateY(-1px); /* Ligero efecto de levantamiento */
+            box-shadow: 0 6px 8px -2px rgba(0, 0, 0, 0.15), 0 3px 5px -3px rgba(0, 0, 0, 0.08);
+        }
+        button:active {
+            transform: translateY(0); /* Vuelve a la posición original al hacer clic */
+            box-shadow: none;
+        }
+        /* Estilos específicos para el botón Generar PDF */
+        #generatePdfBtn {
+            background-color: #0d9488; /* Color cian para Generar PDF */
+            color: white;
+        }
+        #generatePdfBtn:hover {
+            background-color: #0f766e; /* Cian más oscuro al pasar el ratón */
+            color: white;
+            /* Eliminar transform y box-shadow para hover específicos de este botón */
+            transform: none;
+            box-shadow: none;
+        }
+        /* El botón saveLoadConfigBtn ya recibe el estilo base de button */
+
+
+        .delete-btn {
+            background-color: #dc2626; /* Rojo más oscuro para eliminar */
+            color: white;
+            box-shadow: none; /* Eliminar sombra extra para botones de eliminar */
+            width: 28px; /* Fixed width for 'X' button */
+            height: 28px; /* Fixed height for 'X' button */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem; /* Larger font for 'X' */
+            font-weight: 700;
+            border-radius: 50%; /* Make it round */
+        }
+        .delete-btn:hover {
+            background-color: #b91c1c; /* Rojo aún más oscuro */
+            transform: none;
+            box-shadow: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate; /* Permite bordes redondeados en la tabla */
+            border-spacing: 0;
+            margin-top: 1.5rem;
+        }
+        table thead {
+            background-color: #f1f5f9; /* Fondo suave para el encabezado */
+        }
+        table th {
+            padding: 1rem; /* Más padding para los encabezados */
+            text-align: left;
+            font-weight: 700; /* Más negrita */
+            color: #475569; /* Color de texto del encabezado */
+            border-bottom: 1px solid #e2e8f0;
+        }
+        table th:first-child { border-top-left-radius: 8px; }
+        table th:last-child { border-top-right-radius: 8px; }
+
+        /* Estilos para los inputs dentro de los THs (encabezados editables) */
+        table th input {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            font-weight: inherit;
+            color: inherit;
+            text-align: inherit; /* Hereda la alineación de la celda */
+            transition: all 0.2s ease-in-out;
+        }
+        table th input:focus {
+            outline: none;
+            border: 1px solid #60a5fa; /* Borde azul al enfocar */
+            background-color: #fff; /* Fondo blanco al enfocar */
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+            padding: 0.2rem 0.4rem; /* Pequeño padding al enfocar para visibilidad */
+            margin: -0.2rem -0.4rem; /* Ajustar el margen para compensar el padding */
+        }
+
+        table td {
+            padding: 0.9rem; /* Más padding para las celdas */
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        table tbody tr:last-child td {
+            border-bottom: none; /* Sin borde inferior en la última fila */
+        }
+        table tbody tr:hover {
+            background-color: #f8fafc; /* Fondo sutil al pasar el ratón por la fila */
+        }
+
+        /* Ajustes específicos para las celdas de la tabla para controlar el ancho de los inputs */
+        #invoiceItems td:nth-child(1) { width: 45%; } /* Proyecto y botón Eliminar */
+        #invoiceItems td:nth-child(2) { width: 15%; } /* Tarifa */
+        #invoiceItems td:nth-child(3) { width: 15%; } /* Volumen */
+        #invoiceItems td:nth-child(4) { width: 15%; } /* Total */
+        /* La 5ta columna (Acciones) se ha eliminado, por lo que no es necesario el td:nth-child(5) */
+
+        /* Asegurar que los inputs dentro de las celdas de la tabla también se ajusten a los nuevos anchos */
+        #invoiceItems input[type="text"],
+        #invoiceItems input[type="number"],
+        #invoiceItems textarea { /* Added textarea here */
+            width: 100%; /* El input ocupa el 100% del ancho de su celda ajustada */
+        }
+
+        /* Estilo para el botón de cambio de idioma */
+        #languageToggleBtn {
+            position: absolute;
+            top: 1.5rem; /* Ajustado para un mejor espaciado */
+            right: 1.5rem; /* Ajustado para un mejor espaciado */
+            padding: 0.6rem 1.2rem; /* Relleno ligeramente mayor */
+            font-size: 0.9rem; /* Tamaño de fuente ligeramente mayor */
+            background-color: #64748b; /* Gris azulado más oscuro */
+            color: white;
+            border-radius: 8px;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #languageToggleBtn:hover {
+            background-color: #475569; /* Gris azulado más oscuro */
+            transform: translateY(-0.5px);
+        }
+
+        /* Estilo para la sección de impuestos y totales */
+        .total-summary-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-top: 2rem;
+            padding: 1rem 0;
+            border-top: 1px solid #e2e8f0;
+            width: 100%; /* Permite que la sección sea más ancha */
+            max-width: 450px; /* Ancho máximo aumentado para este bloque */
+            margin-left: auto; /* Alinea a la derecha */
+        }
+
+        .tax-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 400px; /* Ancho para las filas de impuesto dentro de la sección */
+            margin-bottom: 0.5rem;
+        }
+
+        .tax-row input[type="text"] { /* Estilo para el label del impuesto (ej. IVA) */
+            width: 120px; /* Ancho fijo para el nombre del impuesto */
+            padding: 0.2rem 0.5rem;
+            text-align: left;
+            font-size: 0.9rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+        .tax-row input[type="text"]:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+        }
+
+        .tax-row input[type="number"] { /* Ancho para el porcentaje del impuesto */
+            width: 60px;
+            padding: 0.2rem 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Nuevo estilo para el botón de operación de impuesto (+/-) */
+        .tax-operation-btn {
+            background-color: #cbd5e1; /* Gris medio claro */
+            color: #334155; /* Texto gris oscuro */
+            border-radius: 50%; /* Redondo */
+            width: 24px; /* Tamaño fijo */
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-right: 0.5rem; /* Espacio a la derecha */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .tax-operation-btn:hover {
+            background-color: #94a3b8; /* Gris más oscuro al pasar el ratón */
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .tax-row .delete-tax-btn {
+            background-color: #dc2626;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            margin-left: 0.5rem;
+            box-shadow: none;
+        }
+        .tax-row .delete-tax-btn:hover {
+            background-color: #b91c1c;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 250px;
+            margin-bottom: 0.5rem;
+        }
+
+        .total-row span {
+            font-weight: 500;
+        }
+
+        .final-grand-total {
+            background-color: #f1f5f9; /* Gris muy claro para el fondo del total */
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0; /* Borde gris suave */
+            margin-top: 1.5rem;
+            width: 100%;
+            max-width: 250px;
+            text-align: right;
+            color: #000000; /* Texto negro */
+        }
+
+        .final-grand-total span.label,
+        .final-grand-total span.value {
+            font-size: 1.25rem; /* Mismo tamaño para ambos */
+            font-weight: 700; /* Negrita para ambos */
+            color: #000000; /* Color negro para la cifra total y la etiqueta */
+        }
+        .calpanda-logo {
+            display: block;
+            margin: 0 auto 1.5rem auto; /* Centrado y con margen inferior */
+            width: 500px; /* Logo más grande */
+            height: auto;
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Fondo negro semi-transparente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Asegura que esté encima */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+        }
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #334155;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+        .modal-close-btn:hover {
+            color: #334155;
+        }
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        /* Estilos para los botones del modal */
+        .modal-body button {
+            background-color: #e2e8f0; /* Gris claro */
+            color: #334155; /* Texto gris oscuro */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .modal-body button:hover {
+            background-color: #cbd5e1; /* Gris un poco más oscuro al pasar el ratón */
+            color: #1a1a1a; /* Texto aún más oscuro al pasar el ratón */
+            transform: translateY(-1px);
+        }
+        .modal-file-input {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+        }
+        .modal-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background-color: #e0f2fe;
+            color: #1e40af;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .local-settings-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .local-settings-list-item:last-child {
+            border-bottom: none;
+        }
+        .local-settings-list-item span {
+            flex-grow: 1;
+            font-weight: 500;
+            color: #334155;
+        }
+        .local-settings-list-item button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            margin-left: 0.5rem;
+            border-radius: 6px;
+            box-shadow: none;
+        }
+        .local-settings-list-item button.load-btn {
+            background-color: #0d9488; /* Cian */
+            color: white;
+        }
+        .local-settings-list-item button.load-btn:hover {
+            background-color: #0f766e; /* Cian más oscuro */
+        }
+        .local-settings-list-item button.delete-btn-local {
+            background-color: #dc2626; /* Rojo */
+            color: white;
+        }
+        .local-settings-list-item button.delete-btn-local:hover {
+            background-color: #b91c1c; /* Rojo más oscuro */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Botón de cambio de idioma -->
+        <button id="languageToggleBtn" data-key="languageToggleText">English</button>
+
+        <!-- Logo CalPanda -->
+        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png" alt="CalPanda Logo" class="calpanda-logo">
+        
+        <!-- Sección de detalles de la factura -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Columna Izquierda: Datos del Cliente -->
+            <div>
+                <input type="text" id="clientDataLabelInput" class="editable-label-input block mb-2" data-key="clientDataLabelDefault">
+                <textarea id="clientData" rows="5" data-key="clientDataPlaceholder" placeholder="Nombre del cliente, dirección, CIF, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+            <!-- Columna Derecha: Número de Factura, Fecha y Datos del Emisor -->
+            <div class="flex flex-col gap-6">
+                <!-- Número de Factura y Fecha (arriba a la derecha) -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <input type="text" id="invoiceNumberLabelInput" class="editable-label-input block mb-2" data-key="invoiceNumberLabelDefault">
+                        <input type="text" id="invoiceNumber" data-key="invoiceNumberPlaceholder" placeholder="Ej: INV-2023-001" class="focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <input type="text" id="invoiceDateLabelInput" class="editable-label-input block mb-2" data-key="invoiceDateLabelDefault">
+                        <input type="date" id="invoiceDate" class="focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <!-- Datos del Emisor (debajo de Fecha/Número) -->
+                <div>
+                    <input type="text" id="senderDataLabelInput" class="editable-label-input block mb-2" data-key="senderDataLabelDefault">
+                    <textarea id="senderData" rows="5" data-key="senderDataPlaceholder" placeholder="Tu nombre/empresa, dirección, CIF, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de ítems de la factura con el título editable -->
+        <input type="text" id="servicesTitle" value="Servicios" class="text-2xl font-bold text-gray-700 mb-4 w-full text-center" data-key="servicesTitleDefault">
+        
+        <div class="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th><input type="text" data-key="tableHeaderProject" value="Proyecto" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-left"></th>
+                        <th><input type="text" data-key="tableHeaderRate" value="Tarifa (€)" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-center"></th>
+                        <th><input type="text" data-key="tableHeaderQuantity" value="Volumen" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-center"></th>
+                        <th><input type="text" data-key="tableHeaderTotal" value="Total (€)" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-right"></th>
+                        <!-- La columna de Acciones se ha eliminado del encabezado -->
+                    </tr>
+                </thead>
+                <tbody id="invoiceItems">
+                    <!-- Las filas de los ítems se añadirán aquí dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <button id="addItemBtn" class="mt-8 px-6 py-3" data-key="addItemButton">Añadir elemento</button>
+
+        <!-- Sección de Impuestos y Total Final (se mantiene la UI pero no se usa en PDF) -->
+        <div class="total-summary-section">
+            <div class="total-row">
+                <span data-key="subtotalLabel">Subtotal:</span>
+                <span id="subTotalAmount" class="font-bold">0.00 €</span>
+            </div>
+            <div id="taxFieldsContainer">
+                <!-- Los campos de impuestos se añadirán aquí dinámicamente -->
+            </div>
+            <button id="addTaxBtn" class="mt-4 px-4 py-2 text-sm" data-key="addTaxButton">Añadir impuesto</button>
+
+            <div class="final-grand-total">
+                <span class="label" data-key="finalTotalLabel">Total:</span>
+                <span id="grandTotal" class="value">0.00 €</span>
+            </div>
+        </div>
+
+        <!-- Campo para Información de Pago / Aclaraciones -->
+        <div class="mt-8">
+            <!-- La etiqueta ahora es un input editable -->
+            <input type="text" id="paymentInfoLabel" class="editable-label-input block mb-2" data-key="paymentInfoLabelDefault">
+            <textarea id="paymentInfo" rows="4" data-key="paymentInfoPlaceholder" placeholder="Condiciones de pago, datos bancarios, notas adicionales, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="mt-8 text-center flex justify-center gap-4">
+            <button id="saveLoadConfigBtn" class="px-6 py-3 text-lg" data-key="saveLoadConfigButton">Guardar / cargar configuración</button>
+            <button id="generatePdfBtn" class="px-8 py-4 text-lg" data-key="generatePdfButton">GENERAR PDF</button>
+        </div>
+    </div>
+
+    <!-- Modal para Guardar/Cargar Configuración -->
+    <div id="configModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-key="configModalTitle">Guardar / cargar configuración</h3>
+                <button class="modal-close-btn" id="closeConfigModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-text-explanation mb-4 text-sm text-gray-700">
+                    <p data-key="configModalExplanationTitle" class="font-semibold mb-2">Acerca de la configuración de factura:</p>
+                    <p data-key="configModalExplanationPara1" class="mb-1">Guarda o carga tus ajustes de factura para ahorrar tiempo la próxima vez.</p>
+                    <p data-key="configModalExplanationPara2" class="mb-1">Por ejemplo, puedes guardar un ajuste por cliente con sus datos, los datos del emisor, impuestos e información de pago.</p>
+                    <p data-key="configModalExplanationLocalStorage" class="mb-1">Si lo guardas localmente, se queda almacenado en tu navegador y nadie más puede acceder a esa información.</p>
+                    <p data-key="configModalExplanationFile">También puedes descargar un archivo con el ajuste y luego cargarlo en cualquier momento.</p>
+                </div>
+                <button id="saveToFileBtn" data-key="saveToFileButton">Guardar a archivo</button>
+                <button id="loadFromFileBtn" data-key="loadFromFileButton">Cargar desde archivo</button>
+                <input type="file" id="fileLoader" class="hidden modal-file-input" accept=".json">
+                <button id="saveToLocalBtn" data-key="saveToLocalButton">Guardar localmente</button>
+                <button id="loadFromLocalBtn" data-key="loadFromLocalButton">Cargar localmente</button>
+            </div>
+            <div id="modalMessage" class="modal-message hidden"></div>
+        </div>
+    </div>
+
+    <!-- New Modal for PDF Naming -->
+    <div id="pdfNameModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-key="pdfNameModalTitle">Nombrar archivo PDF</h3>
+                <button class="modal-close-btn" id="closePdfNameModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="pdfFileNameInput" class="block text-gray-700 font-semibold mb-2" data-key="pdfFileNameLabel">Nombre del archivo:</label>
+                <input type="text" id="pdfFileNameInput" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <button id="confirmPdfNameBtn" class="mt-4" data-key="confirmPdfNameButton">Generar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Modal for Save to File Naming -->
+    <div id="saveFileModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-key="saveFileModalTitle">Guardar configuración como...</h3>
+                <button class="modal-close-btn" id="closeSaveFileModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="saveFileNameInput" class="block text-gray-700 font-semibold mb-2" data-key="saveFileNameLabel">Nombre del archivo:</label>
+                <input type="text" id="saveFileNameInput" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <button id="confirmSaveFileNameBtn" class="mt-4" data-key="confirmSaveFileNameButton">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Modal for Local Save Naming -->
+    <div id="saveLocalModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-key="saveLocalModalTitle">Guardar ajuste localmente como...</h3>
+                <button class="modal-close-btn" id="closeSaveLocalModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="saveLocalNameInput" class="block text-gray-700 font-semibold mb-2" data-key="saveLocalNameLabel">Nombre del ajuste:</label>
+                <input type="text" id="saveLocalNameInput" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <button id="confirmSaveLocalNameBtn" class="mt-4" data-key="confirmSaveLocalNameButton">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Modal for Local Load Selection -->
+    <div id="loadLocalModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-key="loadLocalModalTitle">Cargar ajuste local</h3>
+                <button class="modal-close-btn" id="closeLoadLocalModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-gray-700 mb-4" data-key="loadLocalExplanation">Los ajustes guardados localmente se almacenan en tu navegador y nadie más puede acceder a esta información.</p>
+                <ul id="localSettingsList" class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50">
+                    <!-- Local settings will be listed here -->
+                </ul>
+            </div>
+            <div id="modalMessageLocalLoad" class="modal-message hidden"></div>
+        </div>
+    </div>
+
+
+    <!-- Incluye jsPDF para la generación de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Incluye jspdf-autotable para la generación de tablas en PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        // Inicializa jsPDF de la ventana global
+        const { jsPDF } = window.jspdf;
+
+        // --- Traducciones ---
+        const translations = {
+            es: {
+                appTitle: "CalPanda",
+                clientDataLabelDefault: "Datos del cliente:",
+                clientDataPlaceholder: "Nombre del cliente, dirección, CIF, etc.",
+                invoiceNumberLabelDefault: "Número de factura:",
+                invoiceNumberPlaceholder: "Ej: INV-2023-001",
+                invoiceDateLabelDefault: "Fecha:",
+                senderDataLabelDefault: "Datos del emisor:",
+                senderDataPlaceholder: "Tu nombre/empresa, dirección, CIF, etc.",
+                servicesTitleDefault: "Servicios",
+                tableHeaderProject: "Proyecto",
+                tableHeaderRate: "Tarifa (€)",
+                tableHeaderQuantity: "Volumen",
+                tableHeaderTotal: "Total (€)",
+                tableHeaderActions: "", // Eliminar el texto del encabezado de Acciones
+                addItemButton: "Añadir elemento",
+                subtotalLabel: "Subtotal:",
+                addTaxButton: "Añadir impuesto",
+                finalTotalLabel: "Total:",
+                generatePdfButton: "GENERAR PDF",
+                paymentInfoLabelDefault: "Información de pago:",
+                paymentInfoPlaceholder: "Condiciones de pago, datos bancarios, notas adicionales, etc.",
+                saveLoadConfigButton: "GUARDAR AJUSTE DE FACTURA",
+                configModalTitle: "Guardar / cargar configuración",
+                saveToFileButton: "Guardar a archivo",
+                loadFromFileButton: "Cargar desde archivo",
+                saveToLocalButton: "Guardar localmente",
+                loadFromLocalButton: "Cargar localmente",
+                modalMessageSuccessSaveFile: "Configuración guardada en archivo.",
+                modalMessageSuccessLoadFile: "Configuración cargada desde archivo.",
+                modalMessageSuccessSaveLocal: "Configuración guardada localmente.",
+                modalMessageSuccessLoadLocal: "Configuración cargada localmente.",
+                modalMessageErrorLoad: "Error al cargar la configuración.",
+                modalMessageErrorParse: "Error: El archivo no es un formato de configuración válido.",
+                pdfTitle: "Factura", // Este se elimina en el PDF, pero se mantiene para la traducción del key.
+                pdfInvoiceNumber: "Número de factura:",
+                pdfDate: "Fecha:",
+                pdfClientData: "Datos del cliente:",
+                pdfSenderData: "Datos del emisor:",
+                pdfServicesTitle: "Servicios",
+                pdfSubtotal: "Subtotal:",
+                pdfTotal: "Total:",
+                pdfPaymentInfo: "Información de pago:",
+                deleteButton: "X", // Changed to 'X'
+                deleteTaxButton: "Eliminar",
+                languageToggleText: "English",
+                taxDefaultIvaName: "IVA",
+                taxDefaultIrpfName: "IRPF",
+                configModalExplanationTitle: "Acerca de la configuración de factura:",
+                configModalExplanationPara1: "Guarda o carga tus ajustes de factura para ahorrar tiempo la próxima vez.",
+                configModalExplanationPara2: "Por ejemplo, puedes guardar un ajuste por cliente con sus datos, los datos del emisor, impuestos e información de pago.",
+                configModalExplanationLocalStorage: "Si lo guardas localmente, se queda almacenado en tu navegador y nadie más puede acceder a esa información.",
+                configModalExplanationFile: "También puedes descargar un archivo con el ajuste y luego cargarlo en cualquier momento.",
+                pdfNameModalTitle: "Nombrar archivo PDF",
+                pdfFileNameLabel: "Nombre del archivo:",
+                confirmPdfNameButton: "Generar",
+                saveFileModalTitle: "Guardar configuración como...",
+                saveFileNameLabel: "Nombre del archivo:",
+                confirmSaveFileNameButton: "Guardar",
+                saveLocalModalTitle: "Guardar ajuste localmente como...",
+                saveLocalNameLabel: "Nombre del ajuste:",
+                confirmSaveLocalNameButton: "Guardar",
+                loadLocalModalTitle: "Cargar ajuste local",
+                loadLocalExplanation: "Los ajustes guardados localmente se almacenan en tu navegador y nadie más puede acceder a esta información.",
+                loadLocalLoadButton: "Cargar",
+                loadLocalDeleteButton: "Eliminar",
+                loadLocalNoSettings: "No hay ajustes guardados localmente.",
+                loadLocalConfirmDelete: "¿Estás seguro de que quieres eliminar este ajuste?",
+            },
+            en: {
+                appTitle: "CalPanda",
+                clientDataLabelDefault: "Client details:",
+                clientDataPlaceholder: "Client name, address, tax ID, etc.",
+                invoiceNumberLabelDefault: "Invoice number:",
+                invoiceNumberPlaceholder: "Ex: INV-2023-001",
+                invoiceDateLabelDefault: "Date:",
+                senderDataLabelDefault: "Sender details:",
+                senderDataPlaceholder: "Your name/company, address, tax ID, etc.",
+                servicesTitleDefault: "Services",
+                tableHeaderProject: "Project",
+                tableHeaderRate: "Rate (€)",
+                tableHeaderQuantity: "Volume",
+                tableHeaderTotal: "Total (€)",
+                tableHeaderActions: "", // Remove Actions header text
+                addItemButton: "Add item",
+                subtotalLabel: "Subtotal:",
+                addTaxButton: "Add tax",
+                finalTotalLabel: "Total:",
+                generatePdfButton: "GENERATE PDF",
+                paymentInfoLabelDefault: "Payment information:",
+                paymentInfoPlaceholder: "Payment terms, bank details, additional notes, etc.",
+                saveLoadConfigButton: "SAVE INVOICE SETTING",
+                configModalTitle: "Save / load configuration",
+                saveToFileButton: "Save to file",
+                loadFromFileButton: "Load from file",
+                saveToLocalButton: "Save locally",
+                loadFromLocalButton: "Load locally",
+                modalMessageSuccessSaveFile: "Configuration saved to file.",
+                modalMessageSuccessLoadFile: "Configuration loaded from file.",
+                modalMessageSuccessSaveLocal: "Configuration saved locally.",
+                modalMessageSuccessLoadLocal: "Configuration loaded locally.",
+                modalMessageErrorLoad: "Error loading configuration.",
+                modalMessageErrorParse: "Error: The file is not a valid configuration format.",
+                pdfTitle: "Invoice",
+                pdfInvoiceNumber: "Invoice number:",
+                pdfDate: "Date:",
+                pdfClientData: "Client details:",
+                pdfSenderData: "Sender details:",
+                pdfServicesTitle: "Services",
+                pdfSubtotal: "Subtotal:",
+                pdfTotal: "Total:",
+                pdfPaymentInfo: "Payment information:",
+                deleteButton: "X", // Changed to 'X'
+                deleteTaxButton: "Delete",
+                languageToggleText: "Español",
+                taxDefaultIvaName: "VAT",
+                taxDefaultIrpfName: "IRPF",
+                configModalExplanationTitle: "About invoice configuration:",
+                configModalExplanationPara1: "Save and load your invoice settings to save time in the future.",
+                configModalExplanationPara2: "For example, you can create a custom configuration for each client, including their details, your sender information, tax settings, and payment terms.",
+                configModalExplanationLocalStorage: "If you choose to save the settings locally, the data is stored in your browser only and can't be accessed by anyone else.",
+                configModalExplanationFile: "You can also download your configuration as a file and load it whenever you need it.",
+            }
+        };
+
+        // Idioma actual (por defecto español)
+        let currentLanguage = 'es';
+
+        // --- Obtiene referencias a elementos del DOM ---
+        const invoiceItemsTable = document.getElementById('invoiceItems');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const grandTotalSpan = document.getElementById('grandTotal');
+        const subTotalAmountSpan = document.getElementById('subTotalAmount');
+        const taxFieldsContainer = document.getElementById('taxFieldsContainer');
+        const addTaxBtn = document.getElementById('addTaxBtn');
+
+        const generatePdfBtn = document.getElementById('generatePdfBtn');
+        const clientDataInput = document.getElementById('clientData');
+        const invoiceDateInput = document.getElementById('invoiceDate');
+        const invoiceNumberInput = document.getElementById('invoiceNumber');
+        const senderDataInput = document.getElementById('senderData');
+        const languageToggleBtn = document.getElementById('languageToggleBtn');
+        const servicesTitleInput = document.getElementById('servicesTitle');
+        const paymentInfoInput = document.getElementById('paymentInfo');
+        const paymentInfoLabelInput = document.getElementById('paymentInfoLabel');
+
+        // New editable label inputs for main sections
+        const clientDataLabelInput = document.getElementById('clientDataLabelInput');
+        const invoiceNumberLabelInput = document.getElementById('invoiceNumberLabelInput');
+        const invoiceDateLabelInput = document.getElementById('invoiceDateLabelInput');
+        const senderDataLabelInput = document.getElementById('senderDataLabelInput');
+
+        // References to the table header inputs
+        const tableHeaderProjectInput = document.querySelector('th input[data-key="tableHeaderProject"]');
+        const tableHeaderRateInput = document.querySelector('th input[data-key="tableHeaderRate"]');
+        const tableHeaderQuantityInput = document.querySelector('th input[data-key="tableHeaderQuantity"]');
+        const tableHeaderTotalInput = document.querySelector('th input[data-key="tableHeaderTotal"]');
+        // No longer need a reference for tableHeaderActionsInput as the column is removed.
+
+
+        // Modal elements
+        const saveLoadConfigBtn = document.getElementById('saveLoadConfigBtn');
+        const configModalOverlay = document.getElementById('configModalOverlay');
+        const closeConfigModalBtn = document.getElementById('closeConfigModalBtn');
+        const saveToFileBtn = document.getElementById('saveToFileBtn');
+        const loadFromFileBtn = document.getElementById('loadFromFileBtn');
+        const fileLoader = document.getElementById('fileLoader');
+        const saveToLocalBtn = document.getElementById('saveToLocalBtn');
+        const loadFromLocalBtn = document.getElementById('loadFromLocalBtn');
+        const modalMessage = document.getElementById('modalMessage');
+
+        // PDF Naming Modal elements
+        const pdfNameModalOverlay = document.getElementById('pdfNameModalOverlay');
+        const closePdfNameModalBtn = document.getElementById('closePdfNameModalBtn');
+        const pdfFileNameInput = document.getElementById('pdfFileNameInput');
+        const confirmPdfNameBtn = document.getElementById('confirmPdfNameBtn');
+
+        // Save to File Naming Modal elements
+        const saveFileModalOverlay = document.getElementById('saveFileModalOverlay');
+        const closeSaveFileModalBtn = document.getElementById('closeSaveFileModalBtn');
+        const saveFileNameInput = document.getElementById('saveFileNameInput');
+        const confirmSaveFileNameBtn = document.getElementById('confirmSaveFileNameBtn');
+
+        // Save to Local Naming Modal elements
+        const saveLocalModalOverlay = document.getElementById('saveLocalModalOverlay');
+        const closeSaveLocalModalBtn = document.getElementById('closeSaveLocalModalBtn');
+        const saveLocalNameInput = document.getElementById('saveLocalNameInput');
+        const confirmSaveLocalNameBtn = document.getElementById('confirmSaveLocalNameBtn');
+
+        // Load Local Selection Modal elements
+        const loadLocalModalOverlay = document.getElementById('loadLocalModalOverlay');
+        const closeLoadLocalModalBtn = document.getElementById('closeLoadLocalModalBtn');
+        const localSettingsList = document.getElementById('localSettingsList');
+        const modalMessageLocalLoad = document.getElementById('modalMessageLocalLoad');
+
+
+        let itemCount = 0;
+        let taxCount = 0;
+
+        /**
+         * Applies sentence capitalization (first letter uppercase, rest lowercase)
+         * to a string of text.
+         * @param {string} text - The text to capitalize.
+         * @returns {string} The text with sentence capitalization.
+         */
+        function toSentenceCase(text) {
+            if (!text) return '';
+            return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+        }
+
+        /**
+         * Updates all UI texts to the current language.
+         */
+        function updateTexts() {
+            const elements = document.querySelectorAll('[data-key]');
+            elements.forEach(element => {
+                const key = element.dataset.key;
+                let translatedText = translations[currentLanguage][key];
+
+                if (element.id === 'generatePdfBtn' || element.id === 'saveLoadConfigBtn') {
+                    // Special case for these buttons: always uppercase
+                    element.textContent = translatedText.toUpperCase(); 
+                } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                    // Check if it's one of the specific editable labels first
+                    if (element.id === 'servicesTitle' || element.id === 'paymentInfoLabel' ||
+                        element.id === 'clientDataLabelInput' || element.id === 'invoiceNumberLabelInput' ||
+                        element.id === 'invoiceDateLabelInput' || element.id === 'senderDataLabelInput') {
+                         if (!element._isUserModified) { // Only update if not user-modified
+                            element.value = toSentenceCase(translatedText);
+                        }
+                    } else if (element.closest('th')) { // Header inputs
+                        element.value = toSentenceCase(translatedText);
+                    } else { // Other inputs/textareas (placeholders)
+                        element.placeholder = toSentenceCase(translatedText);
+                    }
+                } else if (element.tagName === 'TITLE') {
+                    document.title = toSentenceCase(translatedText);
+                } else { // Other elements (spans, h1, buttons)
+                    element.textContent = toSentenceCase(translatedText);
+                }
+            });
+
+            // Update delete buttons in item rows
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.textContent = translations[currentLanguage].deleteButton; // Use raw 'X' or 'Eliminar' for delete button
+            });
+            // Update delete buttons in tax rows
+            document.querySelectorAll('.delete-tax-btn').forEach(btn => {
+                btn.textContent = toSentenceCase(translations[currentLanguage].deleteTaxButton);
+            });
+
+            // Update modal text content explicitly
+            document.querySelector('#configModalOverlay [data-key="configModalExplanationTitle"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationTitle);
+            document.querySelector('#configModalOverlay [data-key="configModalExplanationPara1"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationPara1);
+            document.querySelector('#configModalOverlay [data-key="configModalExplanationPara2"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationPara2);
+            document.querySelector('#configModalOverlay [data-key="configModalExplanationLocalStorage"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationLocalStorage);
+            document.querySelector('#configModalOverlay [data-key="configModalExplanationFile"]').textContent = toSentenceCase(translations[currentLanguage].configModalExplanationFile);
+            
+            // Update local load modal text
+            document.querySelector('#loadLocalModalOverlay [data-key="loadLocalExplanation"]').textContent = toSentenceCase(translations[currentLanguage].loadLocalExplanation);
+
+
+            calculateTotals(); // Force recalculation to update tax amounts and total
+        }
+
+        // Mark user-modified fields
+        servicesTitleInput.addEventListener('input', () => servicesTitleInput._isUserModified = true);
+        paymentInfoLabelInput.addEventListener('input', () => paymentInfoLabelInput._isUserModified = true);
+        clientDataLabelInput.addEventListener('input', () => clientDataLabelInput._isUserModified = true);
+        invoiceNumberLabelInput.addEventListener('input', () => invoiceNumberLabelInput._isUserModified = true);
+        invoiceDateLabelInput.addEventListener('input', () => invoiceDateLabelInput._isUserModified = true);
+        senderDataLabelInput.addEventListener('input', () => senderDataLabelInput._isUserModified = true);
+
+
+        /**
+         * Adds a new row to the invoice items table.
+         */
+        function addItem() {
+            itemCount++;
+            const row = document.createElement('tr');
+            row.id = `item-${itemCount}`;
+            row.innerHTML = `
+                <td>
+                    <div class="flex items-start gap-2">
+                        <button class="delete-btn px-2 py-1 text-xs">X</button>
+                        <textarea rows="2" placeholder="${toSentenceCase(translations[currentLanguage].tableHeaderProject)}" class="py-2 focus:ring-blue-500 focus:border-blue-500 w-full resize-y"></textarea>
+                    </div>
+                </td>
+                <td><input type="number" step="0.01" value="0.00" class="item-rate py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
+                <td><input type="number" step="1" value="0" class="item-quantity py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
+                <td><span class="item-total text-right block w-full">0.00</span></td>
+            `; // Removed the empty <td> for the 5th column
+
+            invoiceItemsTable.appendChild(row);
+
+            const rateInput = row.querySelector('.item-rate');
+            const quantityInput = row.querySelector('.item-quantity');
+            const totalSpan = row.querySelector('.item-total');
+            const deleteBtn = row.querySelector('.delete-btn');
+
+            const calculateItemSubTotal = () => {
+                const rate = parseFloat(rateInput.value);
+                const quantity = parseFloat(quantityInput.value);
+                const total = (rate * quantity).toFixed(2);
+                totalSpan.textContent = total;
+                calculateTotals();
+            };
+
+            rateInput.addEventListener('input', calculateItemSubTotal);
+            quantityInput.addEventListener('input', calculateItemSubTotal);
+            deleteBtn.addEventListener('click', () => {
+                row.remove();
+                calculateTotals();
+            });
+            calculateItemSubTotal();
+        }
+
+        /**
+         * Adds a new dynamic tax field.
+         * @param {string} defaultName - Default name for the tax.
+         * @param {number} defaultValue - Default percentage for the tax.
+         * @param {string} defaultOperation - Default operation ('+' or '-').
+         */
+        function addTaxField(defaultName = '', defaultValue = 0, defaultOperation = '+') {
+            taxCount++;
+            const taxRow = document.createElement('div');
+            taxRow.className = 'tax-row';
+            taxRow.id = `tax-row-${taxCount}`;
+            taxRow.innerHTML = `
+                <button class="tax-operation-btn" data-operation="${defaultOperation}">${defaultOperation}</button>
+                <input type="text" value="${defaultName}" class="tax-name-input">
+                <input type="number" step="0.01" value="${defaultValue}" class="tax-percentage-input">
+                <span>%:</span>
+                <span class="tax-amount font-bold ml-2">0.00 €</span>
+                <button class="delete-tax-btn">${toSentenceCase(translations[currentLanguage].deleteTaxButton)}</button>
+            `;
+            taxFieldsContainer.appendChild(taxRow);
+
+            const taxOperationBtn = taxRow.querySelector('.tax-operation-btn');
+            const taxNameInput = taxRow.querySelector('.tax-name-input');
+            const taxPercentageInput = taxRow.querySelector('.tax-percentage-input');
+            const deleteTaxBtn = taxRow.querySelector('.delete-tax-btn');
+
+            taxOperationBtn.addEventListener('click', () => {
+                const currentOp = taxOperationBtn.dataset.operation;
+                const newOp = currentOp === '+' ? '-' : '+';
+                taxOperationBtn.dataset.operation = newOp;
+                taxOperationBtn.textContent = newOp;
+                calculateTotals();
+            });
+            taxNameInput.addEventListener('input', calculateTotals);
+            taxPercentageInput.addEventListener('input', calculateTotals);
+            deleteTaxBtn.addEventListener('click', () => {
+                taxRow.remove();
+                calculateTotals();
+            });
+            calculateTotals();
+        }
+
+        /**
+         * Calculates the subtotal, tax amounts, and final total.
+         */
+        function calculateTotals() {
+            let subTotal = 0;
+            document.querySelectorAll('.item-total').forEach(itemTotalSpan => {
+                subTotal += parseFloat(itemTotalSpan.textContent);
+            });
+            subTotalAmountSpan.textContent = subTotal.toFixed(2) + ' €';
+
+            let totalTaxAmount = 0;
+            document.querySelectorAll('.tax-row').forEach(taxRow => {
+                const taxOperationBtn = taxRow.querySelector('.tax-operation-btn');
+                const taxPercentageInput = taxRow.querySelector('.tax-percentage-input');
+                const taxAmountSpan = taxRow.querySelector('.tax-amount');
+                
+                const percentage = parseFloat(taxPercentageInput.value) || 0;
+                const taxAmount = (subTotal * (percentage / 100)).toFixed(2);
+                taxAmountSpan.textContent = taxAmount + ' €';
+
+                const operation = taxOperationBtn.dataset.operation;
+                if (operation === '-') {
+                    totalTaxAmount -= parseFloat(taxAmount);
+                } else { // '+'
+                    totalTaxAmount += parseFloat(taxAmount);
+                }
+            });
+            
+            const finalTotal = (subTotal + totalTaxAmount).toFixed(2);
+            grandTotalSpan.textContent = finalTotal + ' €';
+        }
+
+        /**
+         * Helper function to add multi-line text to PDF.
+         * @param {jsPDF} doc - The jsPDF object.
+         * @param {number} x - The initial X coordinate.
+         * @param {number} y - The initial Y coordinate.
+         * @param {number} maxWidth - El ancho máximo para el texto antes de envolverlo.
+         * @param {string} align - Alineación del texto ("left", "center", "right").
+         * @returns {number} La coordenada Y final después de añadir el texto.
+         */
+        function addMultiLineText(doc, text, x, y, maxWidth, align = "left") {
+            const lines = doc.splitTextToSize(text, maxWidth);
+            doc.text(lines, x, y, { align: align });
+            return y + (lines.length * doc.getLineHeight());
+        }
+
+        /**
+         * Generates the invoice PDF document.
+         * @param {string} fileName - The desired name for the PDF file.
+         */
+        function generatePdf(fileName) {
+            const doc = new jsPDF();
+
+            // Define consistent margins
+            const pdfMarginX = 15; // Margen izquierdo
+            const pdfPageWidth = doc.internal.pageSize.getWidth();
+            const pdfRightAlignedX = pdfPageWidth - pdfMarginX; // Coordenada X alineada a la derecha
+            let currentY = 20; // Y inicial para elementos superiores (margen superior más estrecho)
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+
+            // Number of invoice and date
+            doc.text(`${toSentenceCase(invoiceNumberLabelInput.value)} ${invoiceNumberInput.value}`, pdfRightAlignedX, currentY, null, null, "right");
+            currentY += 7; // Pequeño incremento para la siguiente línea
+            doc.text(`${toSentenceCase(invoiceDateLabelInput.value)} ${invoiceDateInput.value}`, pdfRightAlignedX, currentY, null, null, "right");
+            currentY += 10; // Reducido espacio después de número de factura/fecha antes de datos de cliente/emisor
+
+            // Client Data (left)
+            doc.setFont("helvetica", "bold");
+            doc.text(toSentenceCase(clientDataLabelInput.value), pdfMarginX, currentY); // Título para datos del cliente
+            doc.setFont("helvetica", "normal");
+            const clientDataFinalY = addMultiLineText(doc, clientDataInput.value, pdfMarginX, currentY + 7, 80, "left"); // currentY + 7 para un pequeño espacio
+
+            // Sender Data (right)
+            doc.setFont("helvetica", "bold");
+            doc.text(toSentenceCase(senderDataLabelInput.value), pdfRightAlignedX, currentY, null, null, "right"); // Título para datos del emisor
+            doc.setFont("helvetica", "normal");
+            const senderDataFinalY = addMultiLineText(doc, senderDataInput.value, pdfRightAlignedX, currentY + 7, 80, "right"); // currentY + 7 para un pequeño espacio
+
+            // Determinar la posición Y para el inicio de la tabla (después del bloque de texto más largo)
+            // Calculamos el punto más bajo de los datos de cliente/emisor y le sumamos un pequeño margen.
+            let tableStartY = Math.max(clientDataFinalY, senderDataFinalY) + 5; // Ajustado para que esté más arriba
+
+            // Title of services (editable)
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text(toSentenceCase(servicesTitleInput.value), pdfMarginX, tableStartY); // Usa el valor del input editable
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            tableStartY += 10; // Espacio entre título y tabla
+
+            const headers = [
+                tableHeaderProjectInput.value,
+                tableHeaderRateInput.value,
+                tableHeaderQuantityInput.value,
+                tableHeaderTotalInput.value
+            ];
+            const data = [];
+
+            document.querySelectorAll('#invoiceItems tr').forEach(row => {
+                const rowData = [];
+                // Obtener valor del textarea para el proyecto, otros de input/span
+                const projectContent = row.querySelector('td:nth-child(1) textarea').value;
+                rowData.push(projectContent);
+                rowData.push(row.querySelector('td:nth-child(2) input').value);
+                rowData.push(row.querySelector('td:nth-child(3) input').value);
+                rowData.push(row.querySelector('td:nth-child(4) span').textContent);
+                data.push(rowData);
+            });
+
+            // Prepare table footer content
+            const foot = [];
+            // Styles for transparent foot cells
+            const transparentFootCellStyles = {
+                fillColor: [255, 255, 255], // White background
+                textColor: [0, 0, 0],       // Black text
+                lineColor: [255, 255, 255], // White border
+                lineWidth: 0.5              // Thin border for separation, but visually "white on white"
+            };
+            
+            // Calculate starting column for totals (using index 2 for "Volumen")
+            const totalColStart = 2; // Index of 'Volumen' column
+
+            // Subtotal row
+            foot.push([
+                { content: '', colSpan: totalColStart, styles: transparentFootCellStyles }, // Empty cells spanning to "Volumen"
+                { content: toSentenceCase(translations[currentLanguage].subtotalLabel), styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold' } },
+                { content: subTotalAmountSpan.textContent, styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold' } }
+            ]);
+
+            // Dynamic tax rows
+            document.querySelectorAll('.tax-row').forEach(taxRow => {
+                const taxName = taxRow.querySelector('.tax-name-input').value;
+                const taxPercentage = taxRow.querySelector('.tax-percentage-input').value;
+                const taxAmount = taxRow.querySelector('.tax-amount').textContent;
+                const taxOperation = taxRow.querySelector('.tax-operation-btn').dataset.operation; // Get operation
+
+                foot.push([
+                    { content: '', colSpan: totalColStart, styles: transparentFootCellStyles }, // Empty cells spanning to "Volumen"
+                    { content: `${taxName.toUpperCase()} (${taxPercentage}%)${taxOperation === '-' ? ' (-)' : ''}:`, styles: { ...transparentFootCellStyles, halign: 'right' } },
+                    { content: taxAmount, styles: { ...transparentFootCellStyles, halign: 'right' } }
+                ]);
+            });
+
+            // Final total row
+            foot.push([
+                { content: '', colSpan: totalColStart, styles: transparentFootCellStyles }, // Empty cells spanning to "Volumen"
+                { content: toSentenceCase(translations[currentLanguage].finalTotalLabel), styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } },
+                { content: grandTotalSpan.textContent, styles: { ...transparentFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } }
+            ]);
+
+            // Column widths for autoTable
+            const availableWidth = pdfPageWidth - (2 * pdfMarginX);
+            const colWidthProject = availableWidth * 0.50; // Proyecto (50% de ancho disponible)
+            const colWidthOthers = availableWidth * 0.1667; // Cada una de las otras 3 columnas (aprox. 16.67%)
+
+            doc.autoTable({
+                startY: tableStartY, // Posición inicial de la tabla
+                head: [headers],
+                body: data,
+                foot: foot, // Add the footer content
+                styles: { fontSize: 10, cellPadding: 3, halign: 'left' },
+                headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255] },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                margin: { left: pdfMarginX, right: pdfMarginX }, // Márgenes más estrechos
+                columnStyles: {
+                    0: { cellWidth: colWidthProject }, // Proyecto
+                    1: { cellWidth: colWidthOthers, halign: 'center' }, // Tarifa
+                    2: { cellWidth: colWidthOthers, halign: 'center' }, // Volumen
+                    3: { cellWidth: colWidthOthers, halign: 'right' } // Total
+                },
+                footStyles: { // Overall foot styles, individual cell styles override this.
+                    lineColor: [255, 255, 255], // White lines for the footer
+                    lineWidth: 0.5,
+                    fontStyle: 'normal',
+                }
+            });
+
+            // Get the final Y position of the table after autoTable is rendered
+            let finalY = doc.autoTable.previous.finalY;
+
+            // Information of Payment / Clarifications (uses editable input value)
+            if (paymentInfoInput.value.trim() !== '') {
+                finalY += 20;
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text(toSentenceCase(paymentInfoLabelInput.value), pdfMarginX, finalY); // Usa el valor del input editable
+                doc.setFont("helvetica", "normal");
+                finalY += 7;
+                addMultiLineText(doc, paymentInfoInput.value, pdfMarginX, finalY, pdfPageWidth - (pdfMarginX * 2), "left"); // Ancho ajustado para márgenes más estrechos
+            }
+
+            doc.save(`${fileName}.pdf`);
+            pdfNameModalOverlay.classList.remove('visible'); // Close modal after generating PDF
+        }
+
+        /**
+         * Recopila todos los datos de la factura en un único objeto.
+         * @returns {object} El objeto de configuración de la factura.
+         */
+        function getInvoiceConfig() {
+            const items = [];
+            document.querySelectorAll('#invoiceItems tr').forEach(row => {
+                items.push({
+                    project: row.querySelector('td:nth-child(1) textarea').value, // Obtener del textarea
+                    rate: parseFloat(row.querySelector('td:nth-child(2) input').value),
+                    quantity: parseFloat(row.querySelector('td:nth-child(3) input').value)
+                });
+            });
+
+            const taxes = [];
+            document.querySelectorAll('.tax-row').forEach(taxRow => {
+                const operationBtn = taxRow.querySelector('.tax-operation-btn');
+                taxes.push({
+                    name: taxRow.querySelector('.tax-name-input').value,
+                    percentage: parseFloat(taxRow.querySelector('.tax-percentage-input').value),
+                    operation: operationBtn ? operationBtn.dataset.operation : '+' // Save the operation
+                });
+            });
+
+            // Obtener valores de los inputs de encabezado
+            const headerInputs = {};
+            document.querySelectorAll('th input[data-key]').forEach(input => {
+                headerInputs[input.dataset.key] = input.value;
+            });
+
+            return {
+                clientDataLabel: clientDataLabelInput.value,
+                clientData: clientDataInput.value,
+                invoiceNumberLabel: invoiceNumberLabelInput.value,
+                invoiceNumber: invoiceNumberInput.value,
+                invoiceDateLabel: invoiceDateLabelInput.value,
+                invoiceDate: invoiceDateInput.value,
+                senderDataLabel: senderDataLabelInput.value,
+                senderData: senderDataInput.value,
+                servicesTitle: servicesTitleInput.value,
+                paymentInfoLabel: paymentInfoLabelInput.value,
+                paymentInfoText: paymentInfoInput.value,
+                tableHeaders: headerInputs, // Guardar encabezados de tabla
+                items: items,
+                taxes: taxes,
+                language: currentLanguage // Guardar idioma actual también
+            };
+        }
+
+        /**
+         * Aplica una configuración cargada al formulario de factura.
+         * @param {object} config - El objeto de configuración de la factura.
+         */
+        function applyInvoiceConfig(config) {
+            try {
+                // Aplicar idioma primero
+                currentLanguage = config.language || 'es';
+                updateTexts();
+
+                // Establecer el indicador de modificado por el usuario a true después de cargar,
+                // para que no sean sobrescritos por cambios de idioma a menos que se cambien explícitamente.
+                clientDataLabelInput.value = config.clientDataLabel || '';
+                clientDataLabelInput._isUserModified = true;
+                clientDataInput.value = config.clientData || '';
+
+                invoiceNumberLabelInput.value = config.invoiceNumberLabel || '';
+                invoiceNumberLabelInput._isUserModified = true;
+                invoiceNumberInput.value = config.invoiceNumber || '';
+
+                invoiceDateLabelInput.value = config.invoiceDateLabel || '';
+                invoiceDateLabelInput._isUserModified = true;
+                invoiceDateInput.value = config.invoiceDate || '';
+
+                senderDataLabelInput.value = config.senderDataLabel || '';
+                senderDataLabelInput._isUserModified = true;
+                senderDataInput.value = config.senderData || '';
+
+                servicesTitleInput.value = config.servicesTitle || translations[currentLanguage].servicesTitleDefault;
+                servicesTitleInput._isUserModified = true;
+
+                paymentInfoLabelInput.value = config.paymentInfoLabel || translations[currentLanguage].paymentInfoLabelDefault;
+                paymentInfoLabelInput._isUserModified = true;
+                paymentInfoInput.value = config.paymentInfoText || '';
+
+                // Aplicar encabezados de tabla
+                if (config.tableHeaders) {
+                    for (const key in config.tableHeaders) {
+                        const input = document.querySelector(`th input[data-key="${key}"]`);
+                        if (input) {
+                            input.value = config.tableHeaders[key];
+                        }
+                    }
+                }
+
+                // Limpiar ítems existentes y añadir nuevos
+                invoiceItemsTable.innerHTML = '';
+                itemCount = 0;
+                if (config.items && config.items.length > 0) {
+                    config.items.forEach(item => {
+                        addItem(); // Añade una nueva fila
+                        const lastRow = invoiceItemsTable.lastElementChild;
+                        lastRow.querySelector('td:nth-child(1) textarea').value = item.project; // Establecer en textarea
+                        lastRow.querySelector('td:nth-child(2) input').value = item.rate.toFixed(2);
+                        lastRow.querySelector('td:nth-child(3) input').value = item.quantity;
+                    });
+                } else {
+                    addItem(); // Añadir al menos un ítem vacío
+                }
+
+                // Limpiar impuestos existentes y añadir nuevos
+                taxFieldsContainer.innerHTML = '';
+                taxCount = 0;
+                if (config.taxes && config.taxes.length > 0) {
+                    config.taxes.forEach(tax => {
+                        addTaxField(tax.name, tax.percentage, tax.operation); // Pass the operation
+                    });
+                } else {
+                    addTaxField(translations[currentLanguage].taxDefaultIvaName, 21, '+');
+                    addTaxField(translations[currentLanguage].taxDefaultIrpfName, 15, '-');
+                }
+
+                calculateTotals();
+                showMessage(translations[currentLanguage].modalMessageSuccessLoadFile); // Usar mensaje de carga de archivo para carga general
+            } catch (e) {
+                console.error("Error al aplicar configuración de factura:", e);
+                showMessage(translations[currentLanguage].modalMessageErrorParse, true);
+            }
+        }
+
+
+        /**
+         * Muestra un mensaje en el modal.
+         * @param {string} msg - El mensaje a mostrar.
+         * @param {boolean} isError - True si es un mensaje de error.
+         */
+        function showMessage(msg, isError = false) {
+            modalMessage.textContent = msg;
+            modalMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-800', 'bg-red-100', 'text-red-800');
+            modalMessage.classList.add(isError ? 'bg-red-100' : 'bg-blue-100', isError ? 'text-red-800' : 'text-blue-800');
+            modalMessage.style.display = 'block'; // Asegura que sea visible
+            setTimeout(() => {
+                modalMessage.classList.add('hidden');
+                modalMessage.style.display = 'none'; // Ocultar correctamente
+            }, 3000);
+        }
+
+        /**
+         * Displays a message in the local load modal.
+         * @param {string} msg - The message to display.
+         * @param {boolean} isError - True if it's an error message.
+         */
+        function showMessageLocalLoad(msg, isError = false) {
+            modalMessageLocalLoad.textContent = msg;
+            modalMessageLocalLoad.classList.remove('hidden', 'bg-blue-100', 'text-blue-800', 'bg-red-100', 'text-red-800');
+            modalMessageLocalLoad.classList.add(isError ? 'bg-red-100' : 'bg-blue-100', isError ? 'text-red-800' : 'text-blue-800');
+            modalMessageLocalLoad.style.display = 'block'; // Ensure it's visible
+            setTimeout(() => {
+                modalMessageLocalLoad.classList.add('hidden');
+                modalMessageLocalLoad.style.display = 'none'; // Hide properly
+            }, 3000);
+        }
+
+
+        // --- Event Listeners ---
+        addItemBtn.addEventListener('click', addItem);
+        addTaxBtn.addEventListener('click', () => addTaxField('', 0));
+
+        // GENERATE PDF button - now opens naming modal
+        generatePdfBtn.addEventListener('click', () => {
+            pdfNameModalOverlay.classList.add('visible');
+            pdfFileNameInput.value = invoiceNumberInput.value || `factura_${new Date().toISOString().slice(0,10)}`; // Default to invoice number or date
+            pdfFileNameInput.focus();
+            pdfFileNameInput.select(); // Select the text for easy overwrite
+        });
+        confirmPdfNameBtn.addEventListener('click', () => {
+            const fileName = pdfFileNameInput.value.trim();
+            if (fileName) {
+                generatePdf(fileName);
+            } else {
+                alert('Please enter a file name.'); // Use a simple alert for now, can be custom modal later
+            }
+        });
+        closePdfNameModalBtn.addEventListener('click', () => {
+            pdfNameModalOverlay.classList.remove('visible');
+        });
+        pdfNameModalOverlay.addEventListener('click', (e) => {
+            if (e.target === pdfNameModalOverlay) {
+                pdfNameModalOverlay.classList.remove('visible');
+            }
+        });
+
+
+        // Event listener para el botón de cambio de idioma
+        languageToggleBtn.addEventListener('click', () => {
+            currentLanguage = currentLanguage === 'es' ? 'en' : 'es';
+            updateTexts();
+            // Clear and re-add default taxes so their names are updated
+            taxFieldsContainer.innerHTML = '';
+            addTaxField(translations[currentLanguage].taxDefaultIvaName, 21, '+');
+            addTaxField(translations[currentLanguage].taxDefaultIrpfName, 15, '-');
+        });
+
+        // Main Config Modal event listeners
+        saveLoadConfigBtn.addEventListener('click', () => {
+            configModalOverlay.classList.add('visible');
+            modalMessage.classList.add('hidden'); // Ocultar mensajes anteriores
+        });
+        closeConfigModalBtn.addEventListener('click', () => {
+            configModalOverlay.classList.remove('visible');
+        });
+        configModalOverlay.addEventListener('click', (e) => {
+            if (e.target === configModalOverlay) {
+                configModalOverlay.classList.remove('visible');
+            }
+        });
+
+        // Save to File - now opens naming modal
+        saveToFileBtn.addEventListener('click', () => {
+            saveFileModalOverlay.classList.add('visible');
+            saveFileNameInput.value = `calpanda_config_${new Date().toISOString().slice(0,10)}.json`; // Default name
+            saveFileNameInput.focus();
+            saveFileNameInput.select();
+            configModalOverlay.classList.remove('visible'); // Close main config modal
+        });
+        confirmSaveFileNameBtn.addEventListener('click', () => {
+            const fileName = saveFileNameInput.value.trim();
+            if (fileName) {
+                const config = getInvoiceConfig();
+                const configJson = JSON.stringify(config, null, 2);
+                const blob = new Blob([configJson], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName.endsWith('.json') ? fileName : `${fileName}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage(translations[currentLanguage].modalMessageSuccessSaveFile);
+                saveFileModalOverlay.classList.remove('visible'); // Close save file naming modal
+            } else {
+                alert('Please enter a file name for your configuration.'); // Basic alert
+            }
+        });
+        closeSaveFileModalBtn.addEventListener('click', () => {
+            saveFileModalOverlay.classList.remove('visible');
+        });
+        saveFileModalOverlay.addEventListener('click', (e) => {
+            if (e.target === saveFileModalOverlay) {
+                saveFileModalOverlay.classList.remove('visible');
+            }
+        });
+
+
+        // Load from File - remains the same, triggered by hidden input
+        loadFromFileBtn.addEventListener('click', () => {
+            fileLoader.click(); // Trigger hidden file input click
+        });
+
+        fileLoader.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const config = JSON.parse(e.target.result);
+                        applyInvoiceConfig(config);
+                        showMessage(translations[currentLanguage].modalMessageSuccessLoadFile);
+                        configModalOverlay.classList.remove('visible'); // Close main config modal
+                    } catch (error) {
+                        console.error("Error al analizar el archivo de configuración:", error);
+                        showMessage(translations[currentLanguage].modalMessageErrorParse, true);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Save to Local - now opens naming modal
+        saveToLocalBtn.addEventListener('click', () => {
+            saveLocalModalOverlay.classList.add('visible');
+            const defaultName = `Ajuste ${new Date().toLocaleDateString()}`;
+            saveLocalNameInput.value = defaultName;
+            saveLocalNameInput.focus();
+            saveLocalNameInput.select();
+            configModalOverlay.classList.remove('visible'); // Close main config modal
+        });
+        confirmSaveLocalNameBtn.addEventListener('click', () => {
+            const settingName = saveLocalNameInput.value.trim();
+            if (settingName) {
+                try {
+                    let localConfigs = JSON.parse(localStorage.getItem('calpanda_local_configs') || '{}');
+                    localConfigs[settingName] = getInvoiceConfig();
+                    localStorage.setItem('calpanda_local_configs', JSON.stringify(localConfigs));
+                    showMessage(translations[currentLanguage].modalMessageSuccessSaveLocal);
+                    saveLocalModalOverlay.classList.remove('visible'); // Close naming modal
+                } catch (e) {
+                    console.error("Error al guardar en el almacenamiento local:", e);
+                    showMessage(translations[currentLanguage].modalMessageErrorLoad, true);
+                }
+            } else {
+                alert('Please enter a name for your local setting.'); // Basic alert
+            }
+        });
+        closeSaveLocalModalBtn.addEventListener('click', () => {
+            saveLocalModalOverlay.classList.remove('visible');
+        });
+        saveLocalModalOverlay.addEventListener('click', (e) => {
+            if (e.target === saveLocalModalOverlay) {
+                saveLocalModalOverlay.classList.remove('visible');
+            }
+        });
+
+        // Load from Local - now opens selection modal
+        loadFromLocalBtn.addEventListener('click', () => {
+            loadLocalModalOverlay.classList.add('visible');
+            configModalOverlay.classList.remove('visible'); // Close main config modal
+            renderLocalSettingsList();
+        });
+        closeLoadLocalModalBtn.addEventListener('click', () => {
+            loadLocalModalOverlay.classList.remove('visible');
+        });
+        loadLocalModalOverlay.addEventListener('click', (e) => {
+            if (e.target === loadLocalModalOverlay) {
+                loadLocalModalOverlay.classList.remove('visible');
+            }
+        });
+
+        /**
+         * Renders the list of locally saved settings in the load local modal.
+         */
+        function renderLocalSettingsList() {
+            localSettingsList.innerHTML = ''; // Clear previous list
+            const localConfigs = JSON.parse(localStorage.getItem('calpanda_local_configs') || '{}');
+            const configNames = Object.keys(localConfigs);
+
+            if (configNames.length === 0) {
+                localSettingsList.innerHTML = `<li class="text-center py-4 text-gray-500">${toSentenceCase(translations[currentLanguage].loadLocalNoSettings)}</li>`;
+                return;
+            }
+
+            configNames.forEach(name => {
+                const listItem = document.createElement('li');
+                listItem.className = 'local-settings-list-item'; // Use the new class
+                listItem.innerHTML = `
+                    <span>${name}</span>
+                    <div>
+                        <button class="load-btn px-3 py-1 text-sm">${toSentenceCase(translations[currentLanguage].loadLocalLoadButton)}</button>
+                        <button class="delete-btn-local px-3 py-1 text-sm">${toSentenceCase(translations[currentLanguage].loadLocalDeleteButton)}</button>
+                    </div>
+                `;
+                localSettingsList.appendChild(listItem);
+
+                // Add event listeners for load and delete buttons
+                listItem.querySelector('.load-btn').addEventListener('click', (e) => {
+                    const nameToLoad = name; // Use the closure variable `name`
+                    const configToLoad = localConfigs[nameToLoad];
+                    if (configToLoad) {
+                        applyInvoiceConfig(configToLoad);
+                        showMessageLocalLoad(toSentenceCase(translations[currentLanguage].modalMessageSuccessLoadLocal));
+                        loadLocalModalOverlay.classList.remove('visible');
+                    } else {
+                        showMessageLocalLoad(toSentenceCase(translations[currentLanguage].modalMessageErrorLoad), true);
+                    }
+                });
+
+                listItem.querySelector('.delete-btn-local').addEventListener('click', (e) => {
+                    const nameToDelete = name; // Use the closure variable `name`
+                    if (confirm(toSentenceCase(translations[currentLanguage].loadLocalConfirmDelete))) {
+                        delete localConfigs[nameToDelete];
+                        localStorage.setItem('calpanda_local_configs', JSON.stringify(localConfigs));
+                        renderLocalSettingsList(); // Re-render the list
+                        showMessageLocalLoad(toSentenceCase(translations[currentLanguage].deleteButton) + ' ' + toSentenceCase(nameToDelete) + ' ' + toSentenceCase('eliminado.'), false); // Custom success message
+                    }
+                });
+            });
+        }
+
+
+        // --- Inicialización ---
+        // Añadir un ítem inicial al cargar la página
+        addItem();
+        // Establecer la fecha actual por defecto
+        invoiceDateInput.valueAsDate = new Date();
+
+        // Inicializar inputs de etiqueta editables (no son placeholders, así que establecer valor)
+        clientDataLabelInput.value = toSentenceCase(translations[currentLanguage].clientDataLabelDefault);
+        clientDataLabelInput._isUserModified = false;
+        invoiceNumberLabelInput.value = toSentenceCase(translations[currentLanguage].invoiceNumberLabelDefault);
+        invoiceNumberLabelInput._isUserModified = false;
+        invoiceDateLabelInput.value = toSentenceCase(translations[currentLanguage].invoiceDateLabelDefault);
+        invoiceDateLabelInput._isUserModified = false;
+        senderDataLabelInput.value = toSentenceCase(translations[currentLanguage].senderDataLabelDefault);
+        senderDataLabelInput._isUserModified = false;
+        
+        servicesTitleInput.value = toSentenceCase(translations[currentLanguage].servicesTitleDefault);
+        servicesTitleInput._isUserModified = false;
+
+        paymentInfoLabelInput.value = toSentenceCase(translations[currentLanguage].paymentInfoLabelDefault);
+        paymentInfoLabelInput._isUserModified = false;
+
+        // Añadir impuestos por defecto al cargar inicialmente
+        addTaxField(translations[currentLanguage].taxDefaultIvaName, 21, '+');
+        addTaxField(translations[currentLanguage].taxDefaultIrpfName, 15, '-');
+
+        // Actualizar todos los textos al cargar la página (por defecto en español)
+        updateTexts();
+    </script>
+</body>
+</html>
