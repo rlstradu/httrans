@@ -284,6 +284,9 @@
     color: #999;
     border-color: #444;
   }
+  body.dark-mode footer .httrans-logo {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7)); /* Halo blanco en dark mode */
+  }
   body.dark-mode footer .httrans-logo:hover {
     filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.9)); /* Halo rojo más intenso en dark mode */
   }
@@ -376,7 +379,7 @@
 
 <footer>
   <a href="https://rlstradu.github.io/httrans/" target="_blank" class="httrans-link">
-    <span>Aplicación desarrollada por Rafael López Sánchez. Forma parte del proyecto httrans.</span>
+    <span id="footer-text"></span>
     <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png" alt="httrans logo" class="httrans-logo">
   </a>
 </footer>
@@ -411,6 +414,7 @@
 
   const modeToggleBtn = document.getElementById('modeToggle');
   const languageToggleBtn = document.getElementById('languageToggle');
+  const footerTextSpan = document.getElementById('footer-text'); // Nuevo elemento para el texto del footer
 
   // Elements to translate
   const appDescription = document.getElementById('app-description');
@@ -442,7 +446,8 @@
       cleared: '¡Borrado!',
       copyError: 'Error al copiar. Intenta de nuevo.',
       pasteError: 'No se pudo pegar el texto. Por favor, permite el acceso al portapapeles.',
-      limitExceeded: 'Límite de caracteres excedido'
+      limitExceeded: 'Límite de caracteres excedido',
+      footerText: 'Esta aplicación ha sido desarrollada por Rafael López Sánchez y forma parte del proyecto httrans.'
     },
     en: {
       appDescription: 'CharPanda is a simple character counting application. There are two fields in case you need to compare texts. Enjoy!',
@@ -467,7 +472,8 @@
       cleared: 'Cleared!',
       copyError: 'Error copying. Please try again.',
       pasteError: 'Could not paste text. Please allow clipboard access.',
-      limitExceeded: 'Character limit exceeded'
+      limitExceeded: 'Character limit exceeded',
+      footerText: 'This application has been developed by Rafael López Sánchez and is part of the httrans project.'
     }
   };
 
@@ -513,6 +519,7 @@
     writeArea.placeholder = translations[lang].writePlaceholder;
     pasteLimitLabel.textContent = translations[lang].limit + ':';
     writeLimitLabel.textContent = translations[lang].limit + ':';
+    footerTextSpan.textContent = translations[lang].footerText; // Actualizar el texto del footer
 
     // Update action button text and tooltips
     pasteBtn.textContent = translations[lang].pasteButton;
