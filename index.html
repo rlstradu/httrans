@@ -50,17 +50,27 @@
             line-height: 1.6; /* Altura de línea para mejor legibilidad */
         }
         .tool-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Min-width para botones */
-            gap: 0.8rem; /* Espacio entre los botones */
-            margin-top: 2rem; /* Espacio superior para separar del posible elemento encima */
+            display: flex;
+            flex-direction: column; /* Las filas se apilan verticalmente */
+            gap: 0.8rem; /* Espacio entre las filas */
+            margin-top: 2rem;
+        }
+        .tool-row {
+            display: flex;
+            justify-content: center; /* Centra las herramientas dentro de cada fila */
+            flex-wrap: wrap; /* Permite que las herramientas se envuelvan en pantallas pequeñas */
+            gap: 0.8rem; /* Espacio entre las herramientas dentro de una fila */
         }
         .tool-item {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            flex: 1 1 calc(33.33% - 0.8rem); /* Para 3 columnas, ajusta el ancho y el gap */
+            max-width: calc(33.33% - 0.8rem); /* Asegura que no crezca más allá de 3 columnas */
+            min-width: 160px; /* Mínimo para el ajuste responsive */
         }
+        /* La clase .two-col ya no es necesaria si todas las filas tienen 3 elementos */
         .tool-logo {
             max-width: 220px; /* Tamaño de los logotipos de las herramientas (aumentado un 10%) */
             height: auto;
@@ -209,7 +219,13 @@
 
 
         /* Responsive adjustments */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) { /* Para tablets y pantallas medianas, 2 columnas */
+            .tool-item {
+                flex: 1 1 calc(50% - 0.8rem);
+                max-width: calc(50% - 0.8rem);
+            }
+        }
+        @media (max-width: 768px) { /* Para móviles, 1 columna */
             .container {
                 width: 90%; /* Asegura que siga siendo responsive en móviles */
                 max-width: 100%;
@@ -227,9 +243,15 @@
                 margin-bottom: 1.5rem;
             }
             .tool-grid {
-                grid-template-columns: 1fr; /* Una columna en pantallas pequeñas */
                 gap: 0.7rem; /* Espacio más pequeño en móvil */
                 margin-top: 1.5rem;
+            }
+            .tool-row {
+                gap: 0.7rem;
+            }
+            .tool-item {
+                flex: 1 1 100%; /* Una columna en pantallas pequeñas */
+                max-width: 100%;
             }
             .tool-logo {
                 max-width: 165px; /* Ajuste para logos en móvil (un 10% más grandes) */
@@ -291,52 +313,120 @@
         <!-- Descripción del proyecto -->
         <p class="description" data-key="description"></p>
         <div class="tool-grid">
-            <!-- Botón para el Editor de Glosarios -->
-            <div class="tool-item">
-                <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank">
-                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png" alt="PandaTerm Logo" class="tool-logo">
-                </a>
-                <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank" class="tool-button">
-                    <i class="ph-book-open-text tool-icon"></i> <!-- Icono de libro abierto -->
-                    <span class="tool-text" data-key="pandatermMain"></span>
-                    <span class="tool-text-sub" data-key="pandatermSub"></span>
-                </a>
+            <!-- Fila 1: poanda, pandaterm, pandoria -->
+            <div class="tool-row">
+                <!-- 1. Poanda -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/poanda.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/poanda-logo-final.png" alt="Poanda Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/poanda.html" target="_blank" class="tool-button">
+                        <i class="ph-file-text tool-icon"></i> <!-- Icono de archivo de texto -->
+                        <span class="tool-text" data-key="poandaMain"></span>
+                        <span class="tool-text-sub" data-key="poandaSub"></span>
+                    </a>
+                </div>
+
+                <!-- 2. Pandaterm -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png" alt="PandaTerm Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank" class="tool-button">
+                        <i class="ph-book-open-text tool-icon"></i> <!-- Icono de libro abierto -->
+                        <span class="tool-text" data-key="pandatermMain"></span>
+                        <span class="tool-text-sub" data-key="pandatermSub"></span>
+                    </a>
+                </div>
+
+                <!-- 3. Pandoria -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/pandoria.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png" alt="Pandoria Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/pandoria.html" target="_blank" class="tool-button">
+                        <i class="ph-database tool-icon"></i> <!-- Icono de base de datos -->
+                        <span class="tool-text" data-key="pandoriaMain"></span>
+                        <span class="tool-text-sub" data-key="pandoriaSub"></span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Botón para el Contador de Caracteres -->
-            <div class="tool-item">
-                <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank">
-                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png" alt="CharPanda Logo" class="tool-logo">
-                </a>
-                <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank" class="tool-button">
-                    <i class="ph-text-aa tool-icon"></i> <!-- Icono de texto -->
-                    <span class="tool-text" data-key="charpandaMain"></span>
-                    <span class="tool-text-sub" data-key="charpandaSub"></span>
-                </a>
+            <!-- Fila 2: pandascript, subpandaTM, subpandaQA -->
+            <div class="tool-row">
+                <!-- 4. Pandascript -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-final.png" alt="PAndaScript Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank" class="tool-button">
+                        <i class="ph-microphone-stage tool-icon"></i> <!-- Icono de micrófono -->
+                        <span class="tool-text" data-key="pandascriptMain"></span>
+                        <span class="tool-text-sub" data-key="pandascriptSub"></span>
+                    </a>
+                </div>
+
+                <!-- 5. SubPandaTM -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/subpandatm.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="SubPandaTM Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/subpandatm.html" target="_blank" class="tool-button">
+                        <i class="ph-translate tool-icon"></i> <!-- Icono de traducción -->
+                        <span class="tool-text" data-key="subpandatmMain"></span>
+                        <span class="tool-text-sub" data-key="subpandatmSub"></span>
+                    </a>
+                </div>
+
+                <!-- 6. SubPandaQA -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/subpandaqa.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaqa-logo.png" alt="SubPandaQA Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/subpandaqa.html" target="_blank" class="tool-button">
+                        <i class="ph-closed-captioning tool-icon"></i> <!-- Icono de subtítulos -->
+                        <span class="tool-text" data-key="subpandaqaMain"></span>
+                        <span class="tool-text-sub" data-key="subpandaqaSub"></span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Botón para el Editor de Transcripciones -->
-            <div class="tool-item">
-                <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank">
-                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-final.png" alt="PAndaScript Logo" class="tool-logo">
-                </a>
-                <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank" class="tool-button">
-                    <i class="ph-microphone-stage tool-icon"></i> <!-- Icono de micrófono -->
-                    <span class="tool-text" data-key="pandascriptMain"></span>
-                    <span class="tool-text-sub" data-key="pandascriptSub"></span>
-                </a>
-            </div>
+            <!-- Fila 3: diffpanda, charpanda, calpanda -->
+            <div class="tool-row">
+                <!-- 7. DiffPanda -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/diffpanda.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/diffpanda-logo.png" alt="DiffPanda Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/diffpanda.html" target="_blank" class="tool-button">
+                        <i class="ph-arrows-left-right tool-icon"></i> <!-- Icono de flechas izquierda-derecha para comparación -->
+                        <span class="tool-text" data-key="diffpandaMain"></span>
+                        <span class="tool-text-sub" data-key="diffpandaSub"></span>
+                    </a>
+                </div>
+                <!-- 8. Charpanda -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png" alt="CharPanda Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank" class="tool-button">
+                        <i class="ph-text-aa tool-icon"></i> <!-- Icono de texto -->
+                        <span class="tool-text" data-key="charpandaMain"></span>
+                        <span class="tool-text-sub" data-key="charpandaSub"></span>
+                    </a>
+                </div>
 
-            <!-- Nuevo Botón para Calpanda (Herramienta de Facturación) -->
-            <div class="tool-item">
-                <a href="https://rlstradu.github.io/httrans/calpanda.html" target="_blank">
-                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png" alt="Calpanda Logo" class="tool-logo">
-                </a>
-                <a href="https://rlstradu.github.io/httrans/calpanda.html" target="_blank" class="tool-button">
-                    <i class="ph-calculator tool-icon"></i> <!-- Icono de calculadora -->
-                    <span class="tool-text" data-key="calpandaMain"></span>
-                    <span class="tool-text-sub" data-key="calpandaSub"></span>
-                </a>
+                <!-- 9. Calpanda -->
+                <div class="tool-item">
+                    <a href="https://rlstradu.github.io/httrans/calpanda.html" target="_blank">
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png" alt="Calpanda Logo" class="tool-logo">
+                    </a>
+                    <a href="https://rlstradu.github.io/httrans/calpanda.html" target="_blank" class="tool-button">
+                        <i class="ph-calculator tool-icon"></i> <!-- Icono de calculadora -->
+                        <span class="tool-text" data-key="calpandaMain"></span>
+                        <span class="tool-text-sub" data-key="calpandaSub"></span>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -368,8 +458,18 @@
                     charpandaSub: '(CONTADOR DE CARACTERES)',
                     pandascriptMain: 'PANDASCRIPT',
                     pandascriptSub: '(EDITOR DE TRANSCRIPCIONES)',
-                    calpandaMain: 'CALPANDA', // Nueva entrada
-                    calpandaSub: '(HERRAMIENTA DE FACTURACIÓN)', // Nueva entrada
+                    calpandaMain: 'CALPANDA',
+                    calpandaSub: '(HERRAMIENTA DE FACTURACIÓN)',
+                    poandaMain: 'POANDA',
+                    poandaSub: '(EDITOR DE ARCHIVOS PO)',
+                    subpandaqaMain: 'SUBPANDAQA',
+                    subpandaqaSub: '(REVISIÓN DE SUBTÍTULOS SRT)',
+                    subpandatmMain: 'SUBPANDATM',
+                    subpandatmSub: '(TRADUCCIÓN DE SUBTÍTULOS)',
+                    pandoriaMain: 'PANDORIA',
+                    pandoriaSub: '(EDITOR DE MEMORIAS TMX)',
+                    diffpandaMain: 'DIFFPANDA', // Nueva entrada
+                    diffpandaSub: '(COMPARADOR DE TEXTOS)', // Nueva entrada
                     projectBy: 'Proyecto creado por Rafael López Sánchez',
                     feedback: 'Para feedback o sugerencias: rlstradu@gmail.com',
                     githubRepo: 'Repositorio de GitHub: https://github.com/rlstradu/httrans',
@@ -383,8 +483,18 @@
                     charpandaSub: '(CHARACTER COUNTER)',
                     pandascriptMain: 'PANDASCRIPT',
                     pandascriptSub: '(TRANSCRIPT EDITOR)',
-                    calpandaMain: 'CALPANDA', // Nueva entrada
-                    calpandaSub: '(INVOICE GENERATOR)', // Nueva entrada
+                    calpandaMain: 'CALPANDA',
+                    calpandaSub: '(INVOICE GENERATOR)',
+                    poandaMain: 'POANDA',
+                    poandaSub: '(PO FILE EDITOR)',
+                    subpandaqaMain: 'SUBPANDAQA',
+                    subpandaqaSub: '(SRT SUBTITLE REVIEW)',
+                    subpandatmMain: 'SUBPANDATM',
+                    subpandatmSub: '(SUBTITLE TRANSLATION)',
+                    pandoriaMain: 'PANDORIA',
+                    pandoriaSub: '(TMX MEMORY EDITOR)',
+                    diffpandaMain: 'DIFFPANDA', // Nueva entrada
+                    diffpandaSub: '(TEXT COMPARISON TOOL)', // Nueva entrada
                     projectBy: 'Project by Rafael López Sánchez',
                     feedback: 'For feedback or suggestions: rlstradu@gmail.com',
                     githubRepo: 'GitHub Repository: https://github.com/rlstradu/httrans',
