@@ -59,8 +59,8 @@
     transition: color 0.3s ease;
   }
   textarea {
-    /* flex: 1; <-- ELIMINADO: Esto impedía el redimensionamiento vertical manual */
-    resize: both; /* Permite el redimensionamiento horizontal y vertical manual desde la esquina inferior derecha */
+    /* Eliminado flex: 1; para permitir el redimensionamiento manual */
+    resize: both; /* Permite el redimensionamiento horizontal y vertical manual */
     min-height: 150px; /* Altura mínima para los textareas */
     border: 2px solid #d0d7de;
     border-radius: 10px;
@@ -72,6 +72,7 @@
     outline-offset: 2px;
     color: #2c3e50;
     background: #fafafa;
+    overflow: auto; /* Asegura que la barra de desplazamiento aparezca si el contenido excede el tamaño */
   }
   textarea:focus {
     border-color: #3b82f6;
@@ -576,6 +577,7 @@
       setTimeout(() => {
         button.classList.remove('pasted');
       }, 1800);
+      autoResize(textarea); // Llamar a autoResize después de pegar
     } catch (err) {
       showMessage(translations[currentLanguage].pasteError, 'error');
     }
@@ -589,6 +591,7 @@
     setTimeout(() => {
       button.classList.remove('cleared');
     }, 1800);
+    autoResize(textarea); // Llamar a autoResize después de borrar
   }
 
   // Function to transform text (uppercase/lowercase)
@@ -600,6 +603,7 @@
       textarea.value = textarea.value.toLowerCase();
     }
     updateAllCounts();
+    autoResize(textarea); // Llamar a autoResize después de transformar
   }
 
   // Event Listeners for textareas and limit inputs
@@ -657,7 +661,10 @@
     const isDarkMode = document.body.classList.contains('dark-mode');
     modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
 
-    // Ya no se necesita autoResize aquí, el redimensionamiento manual y flex:1 gestionan la altura.
+    // Inicializar auto-resize para textareas al cargar la página
+    [pasteArea, writeArea].forEach(area => {
+      autoResize(area);
+    });
   });
 
   // Custom message box function (replaces alert)
@@ -690,13 +697,15 @@
     }, 3000);
   }
 
-  // Se eliminan las funciones y llamadas a autoResize para permitir el redimensionamiento manual completo.
-  // function autoResize(textarea) {
-  //   textarea.style.height = 'auto';
-  //   textarea.style.height = textarea.scrollHeight + 'px';
-  // }
-  // pasteArea.addEventListener('input', () => autoResize(pasteArea));
-  // writeArea.addEventListener('input', () => autoResize(writeArea));
+  // Función para auto-redimensionar el textarea según el contenido
+  function autoResize(textarea) {
+    textarea.style.height = 'auto'; // Reset height to recalculate
+    textarea.style.height = textarea.scrollHeight + 'px'; // Set height to scrollHeight
+  }
+
+  // Adjuntar event listeners para auto-redimensionar al escribir
+  pasteArea.addEventListener('input', () => autoResize(pasteArea));
+  writeArea.addEventListener('input', () => autoResize(writeArea));
 
 </script>
 
