@@ -14,6 +14,9 @@
     box-sizing: border-box;
     color: #333;
     transition: background 0.3s ease, color 0.3s ease;
+    display: flex; /* Para centrar el contenido principal y el footer */
+    flex-direction: column;
+    min-height: 100vh; /* Asegura que el body ocupe al menos el 100% del viewport */
   }
   header {
     max-width: 900px;
@@ -29,11 +32,11 @@
     user-select: none;
   }
   main {
+    flex-grow: 1; /* Permite que el main ocupe el espacio disponible */
     display: flex;
     gap: 30px;
     max-width: 900px;
     margin: 0 auto;
-    height: 70vh;
     justify-content: center; /* Centrar los elementos flex horizontalmente */
     align-items: flex-start; /* Alinear los elementos flex al inicio del eje cruzado (arriba) */
   }
@@ -56,8 +59,9 @@
     transition: color 0.3s ease;
   }
   textarea {
-    flex: 1;
-    resize: none;
+    flex: 1; /* Permite que el textarea crezca y ocupe el espacio disponible */
+    resize: vertical; /* Permite el redimensionamiento vertical manual desde la esquina inferior derecha */
+    min-height: 150px; /* Altura mínima para los textareas */
     border: 2px solid #d0d7de;
     border-radius: 10px;
     padding: 15px 18px;
@@ -187,6 +191,31 @@
     margin-bottom: 10px;
   }
 
+  /* Footer styles */
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+    padding: 20px 0;
+    border-top: 1px solid #e0e0e0;
+    transition: color 0.3s ease, border-color 0.3s ease;
+  }
+  footer .httrans-link {
+    display: inline-flex; /* Para alinear el texto y la imagen */
+    align-items: center; /* Centrar verticalmente */
+    text-decoration: none; /* Quitar subrayado del enlace */
+    color: inherit; /* Heredar color del padre */
+  }
+  footer .httrans-logo {
+    height: 40px; /* Tamaño más grande para el logo */
+    vertical-align: middle;
+    margin-left: 8px; /* Aumentar espacio entre texto y logo */
+    transition: filter 0.3s ease; /* Transición para el efecto de sombra */
+  }
+  footer .httrans-logo:hover {
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.7)); /* Halo rojo al pasar el ratón */
+  }
 
   /* Dark mode styles */
   body.dark-mode {
@@ -249,6 +278,13 @@
   /* Added drop-shadow for the logo in dark mode */
   body.dark-mode .app-logo {
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Light glow/shadow */
+  }
+  body.dark-mode footer {
+    color: #999;
+    border-color: #444;
+  }
+  body.dark-mode footer .httrans-logo:hover {
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.9)); /* Halo rojo más intenso en dark mode */
   }
 
   /* Responsive design */
@@ -336,6 +372,13 @@
     </div>
   </div>
 </main>
+
+<footer>
+  <a href="https://rlstradu.github.io/httrans/" target="_blank" class="httrans-link">
+    <span>Aplicación desarrollada por Rafael López Sánchez. Forma parte del proyecto httrans.</span>
+    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png" alt="httrans logo" class="httrans-logo">
+  </a>
+</footer>
 
 <script>
   // Get DOM elements
@@ -500,11 +543,26 @@
   // Function to handle copy text
   function copyText(textarea, button) {
     if (textarea.value.length === 0) return;
-    document.execCommand('copy'); // Using execCommand for wider compatibility in iframes
-    button.classList.add('copied');
-    setTimeout(() => {
-      button.classList.remove('copied');
-    }, 1800);
+    // Use the new Clipboard API if available, fallback to execCommand
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        button.classList.add('copied');
+        setTimeout(() => {
+          button.classList.remove('copied');
+        }, 1800);
+      }).catch(err => {
+        showMessage(translations[currentLanguage].copyError, 'error');
+        console.error('Error copying text using Clipboard API:', err);
+      });
+    } else {
+      // Fallback for older browsers or iframes where Clipboard API might be restricted
+      textarea.select();
+      document.execCommand('copy');
+      button.classList.add('copied');
+      setTimeout(() => {
+        button.classList.remove('copied');
+      }, 1800);
+    }
   }
 
   // Function to handle paste text
