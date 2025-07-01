@@ -2723,7 +2723,7 @@
                                     const firstSets = entries[0].getElementsByTagName("LangSet");
                                     if (firstSets.length >= 2) {
                                         firstEntryLangs.src = firstSets[0].getAttribute("xml:lang");
-                                        firstEntryLangs.tgt = sets[1].getAttribute("xml:lang"); // Corrected to use sets[1] for target language
+                                        firstEntryLangs.tgt = firstSets[1].getAttribute("xml:lang"); // Corrected to use firstSets[1] for target language
                                     }
                                 }
 
@@ -3360,8 +3360,33 @@
             });
         }
 
-        // No longer adjusting workspace width dynamically based on sidebars.
-        // The dropArea max-width is now fixed at 90% in CSS.
+        /**
+         * Adjusts the padding of the main editor content based on open sidebars.
+         * Applies only on screens wider than 1024px.
+         */
+        function updateMainContentOffset() {
+            const isTerminologyOpen = terminologySidebar.classList.contains('show-sidebar');
+            const isTranslationMemoryOpen = translationMemorySidebar.classList.contains('show-sidebar');
+
+            // Remove existing padding classes first
+            if (editorMainContent) { // Added null check for editorMainContent
+                editorMainContent.classList.remove('left-sidebar-active', 'right-sidebar-active');
+
+                // Apply new padding classes based on open sidebars
+                if (isTerminologyOpen) {
+                    editorMainContent.classList.add('left-sidebar-active');
+                    // Set CSS variable for current width
+                    document.documentElement.style.setProperty('--terminology-sidebar-width', terminologySidebar.offsetWidth + 'px');
+                }
+                if (isTranslationMemoryOpen) {
+                    editorMainContent.classList.add('right-sidebar-active');
+                    // Set CSS variable for current width
+                    document.documentElement.style.setProperty('--translation-memory-sidebar-width', translationMemorySidebar.offsetWidth + 'px');
+                }
+            } else {
+                console.warn("editorMainContent element not found for offset update.");
+            }
+        }
 
 
         // --- Initialization on page load ---
