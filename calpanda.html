@@ -13,22 +13,9 @@
             background-color: #f8fafc; /* Fondo muy claro, casi blanco */
             color: #334155; /* Texto principal en gris oscuro */
         }
-        .main-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center; /* Center content horizontally */
-        }
-        .header-section {
-            width: 750px; /* Match container width */
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start; /* Align items to the top */
-            padding: 1.5rem 2.5rem 0rem 2.5rem; /* Top padding, match container horizontal padding */
-            box-sizing: border-box; /* Include padding in width */
-        }
         .container {
             max-width: 750px; /* Ancho ajustado para parecer una hoja A4 */
-            margin: 1.5rem auto; /* Margen superior/inferior aumentado, espacio después del header */
+            margin: 2.5rem auto; /* Margen superior/inferior aumentado */
             padding: 2.5rem; /* Relleno aumentado */
             background-color: #ffffff;
             border-radius: 16px; /* Esquinas más redondeadas */
@@ -185,11 +172,36 @@
             background-color: #f8fafc; /* Fondo sutil al pasar el ratón por la fila */
         }
 
+        /* Ajustes específicos para las celdas de la tabla para controlar el ancho de los inputs */
+        #invoiceItems td:nth-child(1) { width: 45%; } /* Proyecto y botón Eliminar */
+        #invoiceItems td:nth-child(2) { width: 15%; } /* Tarifa */
+        #invoiceItems td:nth-child(3) { width: 15%; } /* Volumen */
+        #invoiceItems td:nth-child(4) { width: 15%; } /* Total */
+        /* La 5ta columna (Acciones) se ha eliminado, por lo que no es necesario el td:nth-child(5) */
+
         /* Asegurar que los inputs dentro de las celdas de la tabla también se ajusten a los nuevos anchos */
         #invoiceItems input[type="text"],
         #invoiceItems input[type="number"],
         #invoiceItems textarea { /* Added textarea here */
             width: 100%; /* El input ocupa el 100% del ancho de su celda ajustada */
+        }
+
+        /* Estilo para los botones de la esquina superior derecha */
+        .top-right-buttons {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex; /* Use flexbox to align buttons */
+            gap: 0.5rem; /* Space between buttons */
+            z-index: 10;
+        }
+        .top-right-buttons button {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .top-right-buttons button:hover {
+             transform: translateY(-0.5px);
         }
 
         /* Estilo para la sección de impuestos y totales */
@@ -302,7 +314,8 @@
         }
         .calpanda-logo {
             display: block;
-            width: 250px; /* Tamaño del logo en el encabezado */
+            margin: 0 auto 1.5rem auto; /* Centrado y con margen inferior */
+            width: 500px; /* Logo más grande */
             height: auto;
         }
         
@@ -435,168 +448,102 @@
         .local-settings-list-item button.delete-btn-local:hover {
             background-color: #b91c1c; /* Rojo más oscuro */
         }
-        /* Estilos para el input de tipo file para el logo */
-        #logoUploadInput {
-            display: none; /* Ocultar el input original */
-        }
-        .logo-preview {
-            max-width: 250px; /* Tamaño máximo del logo en la interfaz */
-            max-height: 150px;
-            border-radius: 8px;
-        }
-        .logo-container {
-            position: static; /* Remove absolute positioning */
-            margin: 0; /* Remove default margins */
-        }
-        .top-right-buttons {
-            position: static; /* Remove absolute positioning */
-            gap: 1rem; /* Increased gap */
-            display: flex; /* Ensure flexbox */
-            flex-wrap: nowrap; /* Prevent wrapping */
-            justify-content: flex-end; /* Align buttons to the right */
-            align-items: center; /* Align items vertically in the center */
-        }
-        .top-right-buttons button {
-            padding: 0.85rem 1.75rem; /* Increased padding */
-            font-size: 1rem; /* Larger font */
-            white-space: nowrap; /* Ensure text stays on one line */
-        }
-        .logo-pdf {
-            max-width: 100px; /* Tamaño del logo en el PDF */
-            max-height: 80px;
-        }
 
-        /* Styles for ON/OFF buttons in visibility modal */
-        .toggle-button {
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-            width: 100px; /* Fixed width for consistency */
-            text-align: center;
-        }
-        .toggle-button.on {
-            background-color: #10B981; /* Green for ON */
-            color: white;
-        }
-        .toggle-button.off {
-            background-color: #EF4444; /* Red for OFF */
-            color: white;
-        }
-        .toggle-button:hover.on {
-            background-color: #059669;
-        }
-        .toggle-button:hover.off {
-            background-color: #DC2626;
-        }
-        .visibility-setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .visibility-setting-item:last-child {
-            border-bottom: none;
+        /* New CSS for hiding inputs */
+        .hidden-input {
+            display: none !important;
         }
     </style>
 </head>
 <body>
-    <div class="main-wrapper">
-        <div class="header-section">
-            <div class="logo-container">
-                <img id="invoiceLogo" src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png" alt="CalPanda Logo" class="calpanda-logo">
-                <input type="file" id="logoUploadInput" accept="image/*">
+    <div class="container">
+        <!-- Botones de la esquina superior derecha -->
+        <div class="top-right-buttons">
+            <button id="languageToggleBtn" data-key="languageToggleText"></button>
+        </div>
+
+        <!-- Logo CalPanda -->
+        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png" alt="CalPanda Logo" class="calpanda-logo">
+        
+        <!-- Sección de detalles de la factura -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Columna Izquierda: Datos del Cliente -->
+            <div>
+                <input type="text" id="clientDataLabelInput" class="editable-label-input block mb-2" data-key="clientDataLabelDefault">
+                <textarea id="clientData" rows="5" data-key="clientDataPlaceholder" placeholder="Nombre del cliente, dirección, CIF, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
-            <div class="top-right-buttons">
-                <button id="languageToggleBtn" data-key="languageToggleText"></button>
-                <button id="toggleVisibilitySettingsBtn" data-key="toggleVisibilitySettingsButton"></button>
-                <button id="uploadLogoBtn" data-key="uploadLogoButton"></button>
+            <!-- Columna Derecha: Número de Factura, Fecha y Datos del Emisor -->
+            <div class="flex flex-col gap-6">
+                <!-- Número de Factura y Fecha (arriba a la derecha) -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <input type="text" id="invoiceNumberLabelInput" class="editable-label-input block mb-2" data-key="invoiceNumberLabelDefault">
+                        <input type="text" id="invoiceNumber" data-key="invoiceNumberPlaceholder" placeholder="Ej: INV-2023-001" class="focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <input type="text" id="invoiceDateLabelInput" class="editable-label-input block mb-2" data-key="invoiceDateLabelDefault">
+                        <input type="date" id="invoiceDate" class="focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <!-- Datos del Emisor (debajo de Fecha/Número) -->
+                <div>
+                    <input type="text" id="senderDataLabelInput" class="editable-label-input block mb-2" data-key="senderDataLabelDefault">
+                    <textarea id="senderData" rows="5" data-key="senderDataPlaceholder" placeholder="Tu nombre/empresa, dirección, CIF, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
             </div>
         </div>
 
-        <div class="container">
-            <!-- Sección de detalles de la factura -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <!-- Columna Izquierda: Datos del Cliente -->
-                <div id="clientDataSection">
-                    <input type="text" id="clientDataLabelInput" class="editable-label-input block mb-2" data-key="clientDataLabelDefault">
-                    <textarea id="clientData" rows="5" data-key="clientDataPlaceholder" placeholder="Nombre del cliente, dirección, CIF, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
-                </div>
-                <!-- Columna Derecha: Número de Factura, Fecha y Datos del Emisor -->
-                <div class="flex flex-col gap-6">
-                    <!-- Número de Factura y Fecha (arriba a la derecha) -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <input type="text" id="invoiceNumberLabelInput" class="editable-label-input block mb-2" data-key="invoiceNumberLabelDefault">
-                            <input type="text" id="invoiceNumber" data-key="invoiceNumberPlaceholder" placeholder="Ej: INV-2023-001" class="focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <input type="text" id="invoiceDateLabelInput" class="editable-label-input block mb-2" data-key="invoiceDateLabelDefault">
-                            <input type="date" id="invoiceDate" class="focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-                    <!-- Datos del Emisor (debajo de Fecha/Número) -->
-                    <div id="senderDataSection">
-                        <input type="text" id="senderDataLabelInput" class="editable-label-input block mb-2" data-key="senderDataLabelDefault">
-                        <textarea id="senderData" rows="5" data-key="senderDataPlaceholder" placeholder="Tu nombre/empresa, dirección, CIF, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-                </div>
+        <!-- Sección de ítems de la factura con el título editable -->
+        <input type="text" id="servicesTitle" value="Servicios" class="text-2xl font-bold text-gray-700 mb-4 w-full text-center" data-key="servicesTitleDefault">
+        
+        <div class="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th><input type="text" data-key="tableHeaderProject" value="Proyecto" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-left"></th>
+                        <th><input type="text" data-key="tableHeaderRate" value="Tarifa (€)" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-center"></th>
+                        <th><input type="text" data-key="tableHeaderQuantity" value="Volumen" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-center"></th>
+                        <th><input type="text" data-key="tableHeaderTotal" value="Total (€)" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-right"></th>
+                        <!-- La columna de Acciones se ha eliminado del encabezado -->
+                    </tr>
+                </thead>
+                <tbody id="invoiceItems">
+                    <!-- Las filas de los ítems se añadirán aquí dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <button id="addItemBtn" class="mt-8 px-6 py-3" data-key="addItemButton">Añadir elemento</button>
+
+        <!-- Sección de Impuestos y Total Final (se mantiene la UI pero no se usa en PDF) -->
+        <div class="total-summary-section">
+            <div class="total-row">
+                <span data-key="subtotalLabel">Subtotal:</span>
+                <span id="subTotalAmount" class="font-bold">0.00 €</span>
             </div>
-
-            <!-- Sección de ítems de la factura con el título editable -->
-            <input type="text" id="servicesTitle" value="Servicios" class="text-2xl font-bold text-gray-700 mb-4 w-full text-center" data-key="servicesTitleDefault">
-            
-            <div class="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
-                <table class="min-w-full bg-white">
-                    <thead>
-                        <tr>
-                            <th><input type="text" data-key="tableHeaderProject" value="Proyecto" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-left"></th>
-                            <th class="rate-column-header"><input type="text" data-key="tableHeaderRate" value="Tarifa (€)" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-center"></th>
-                            <th class="quantity-column-header"><input type="text" data-key="tableHeaderQuantity" value="Volumen" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-center"></th>
-                            <th><input type="text" data-key="tableHeaderTotal" value="Total (€)" class="bg-transparent font-bold text-gray-700 border-none p-0 w-full text-right"></th>
-                            <!-- La columna de Acciones se ha eliminado del encabezado -->
-                        </tr>
-                    </thead>
-                    <tbody id="invoiceItems">
-                        <!-- Las filas de los ítems se añadirán aquí dinámicamente -->
-                    </tbody>
-                </table>
+            <div id="taxFieldsContainer">
+                <!-- Los campos de impuestos se añadirán aquí dinámicamente -->
             </div>
+            <button id="addTaxBtn" class="mt-4 px-4 py-2 text-sm" data-key="addTaxButton">Añadir impuesto</button>
 
-            <button id="addItemBtn" class="mt-8 px-6 py-3" data-key="addItemButton">Añadir elemento</button>
-
-            <!-- Sección de Impuestos y Total Final (se mantiene la UI pero no se usa en PDF) -->
-            <div class="total-summary-section">
-                <div class="total-row">
-                    <span data-key="subtotalLabel">Subtotal:</span>
-                    <span id="subTotalAmount" class="font-bold">0.00 €</span>
-                </div>
-                <div id="taxFieldsContainer">
-                    <!-- Los campos de impuestos se añadirán aquí dinámicamente -->
-                </div>
-                <button id="addTaxBtn" class="mt-4 px-4 py-2 text-sm" data-key="addTaxButton">Añadir impuesto</button>
-
-                <div class="final-grand-total">
-                    <span class="label" data-key="finalTotalLabel">Total:</span>
-                    <span id="grandTotal" class="value">0.00 €</span>
-                </div>
+            <div class="final-grand-total">
+                <span class="label" data-key="finalTotalLabel">Total:</span>
+                <span id="grandTotal" class="value">0.00 €</span>
             </div>
+        </div>
 
-            <!-- Campo para Información de Pago / Aclaraciones -->
-            <div class="mt-8" id="paymentInfoSection">
-                <!-- La etiqueta ahora es un input editable -->
-                <input type="text" id="paymentInfoLabel" class="editable-label-input block mb-2" data-key="paymentInfoLabelDefault">
-                <textarea id="paymentInfo" rows="4" data-key="paymentInfoPlaceholder" placeholder="Condiciones de pago, datos bancarios, notas adicionales, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
-            </div>
+        <!-- Campo para Información de Pago / Aclaraciones -->
+        <div class="mt-8">
+            <!-- La etiqueta ahora es un input editable -->
+            <input type="text" id="paymentInfoLabel" class="editable-label-input block mb-2" data-key="paymentInfoLabelDefault">
+            <textarea id="paymentInfo" rows="4" data-key="paymentInfoPlaceholder" placeholder="Condiciones de pago, datos bancarios, notas adicionales, etc." class="focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
 
-            <!-- Botones de Acción -->
-            <div class="mt-8 text-center flex justify-center gap-4">
-                <button id="decimalToggleBtn" class="px-4 py-2" data-key="decimalPoint"></button>
-                <button id="saveLoadConfigBtn" class="px-6 py-3 text-lg" data-key="saveLoadConfigButton">Guardar / cargar configuración</button>
-                <button id="generatePdfBtn" class="px-8 py-4 text-lg" data-key="generatePdfButton">GENERAR PDF</button>
-            </div>
+        <!-- Botones de Acción -->
+        <div class="mt-8 text-center flex justify-center gap-4">
+            <button id="decimalToggleBtn" class="px-4 py-2" data-key="decimalPoint"></button>
+            <button id="saveLoadConfigBtn" class="px-6 py-3 text-lg" data-key="saveLoadConfigButton">Guardar / cargar configuración</button>
+            <button id="generatePdfBtn" class="px-8 py-4 text-lg" data-key="generatePdfButton">GENERAR PDF</button>
         </div>
     </div>
 
@@ -649,7 +596,7 @@
             </div>
             <div class="modal-body">
                 <label for="saveFileNameInput" class="block text-gray-700 font-semibold mb-2" data-key="saveFileNameLabel">Nombre del archivo:</label>
-                <input type="text" id="saveFileNameInput" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <input type="text" id="saveFileNameInput" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-500">
                 <button id="confirmSaveFileNameBtn" class="mt-4" data-key="confirmSaveFileNameButton">Guardar</button>
             </div>
         </div>
@@ -684,41 +631,6 @@
                 </ul>
             </div>
             <div id="modalMessageLocalLoad" class="modal-message hidden"></div>
-        </div>
-    </div>
-
-    <!-- New Modal for Visibility Settings -->
-    <div id="visibilitySettingsModalOverlay" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 data-key="visibilitySettingsModalTitle">Mostrar / Ocultar elementos</h3>
-                <button class="modal-close-btn" id="closeVisibilitySettingsModalBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="flex flex-col gap-2">
-                    <div class="visibility-setting-item">
-                        <span data-key="toggleRateColumnLabel">Mostrar columna "Tarifa"</span>
-                        <button id="toggleRateColumnBtn" class="toggle-button"></button>
-                    </div>
-                    <div class="visibility-setting-item">
-                        <span data-key="toggleQuantityColumnLabel">Mostrar columna "Volumen"</span>
-                        <button id="toggleQuantityColumnBtn" class="toggle-button"></button>
-                    </div>
-                    <div class="visibility-setting-item">
-                        <span data-key="toggleClientDataLabel">Mostrar datos del cliente</span>
-                        <button id="toggleClientDataBtn" class="toggle-button"></button>
-                    </div>
-                    <div class="visibility-setting-item">
-                        <span data-key="toggleSenderDataLabel">Mostrar datos del emisor</span>
-                        <button id="toggleSenderDataBtn" class="toggle-button"></button>
-                    </div>
-                    <div class="visibility-setting-item">
-                        <span data-key="togglePaymentInfoLabel">Mostrar información de pago</span>
-                        <button id="togglePaymentInfoBtn" class="toggle-button"></button>
-                    </div>
-                </div>
-                <button id="applyVisibilitySettingsBtn" class="mt-4" data-key="applyVisibilitySettingsButton">Aplicar</button>
-            </div>
         </div>
     </div>
 
@@ -803,17 +715,7 @@
                 loadLocalConfirmDelete: "¿Estás seguro de que quieres eliminar este ajuste?",
                 decimalPoint: "CAMBIAR A COMA (0,00)", // Text when current is POINT
                 decimalComma: "CAMBIAR A PUNTO (0.00)",  // Text when current is COMMA
-                toggleVisibilitySettingsButton: "Ocultar elementos", // Updated button text
-                uploadLogoButton: "Subir logo",
-                visibilitySettingsModalTitle: "Mostrar / Ocultar elementos", // New modal title
-                toggleRateColumnLabel: "Mostrar columna 'Tarifa'",
-                toggleQuantityColumnLabel: "Mostrar columna 'Volumen'",
-                toggleClientDataLabel: "Mostrar datos del cliente",
-                toggleSenderDataLabel: "Mostrar datos del emisor",
-                togglePaymentInfoLabel: "Mostrar información de pago",
-                applyVisibilitySettingsButton: "Aplicar",
-                onButton: "ON",
-                offButton: "OFF"
+                singlePriceLabel: "Precio único" // New translation
             },
             en: {
                 appTitle: "CalPanda",
@@ -870,17 +772,7 @@
                 configModalExplanationFile: "You can also download your configuration as a file and load it whenever you need it.",
                 decimalPoint: "USE DECIMAL COMMA (0,00)", // Updated text for point to comma toggle
                 decimalComma: "USE DECIMAL POINT (0.00)",  // Updated text for comma to point toggle
-                toggleVisibilitySettingsButton: "Hide elements", // Updated button text
-                uploadLogoButton: "Upload logo",
-                visibilitySettingsModalTitle: "Show / Hide elements", // New modal title
-                toggleRateColumnLabel: "Show 'Rate' column",
-                toggleQuantityColumnLabel: "Show 'Volume' column",
-                toggleClientDataLabel: "Show client data",
-                toggleSenderDataLabel: "Show sender data",
-                togglePaymentInfoLabel: "Show payment info",
-                applyVisibilitySettingsButton: "Apply",
-                onButton: "ON",
-                offButton: "OFF"
+                singlePriceLabel: "Single Price" // New translation
             }
         };
 
@@ -888,14 +780,6 @@
         let currentLanguage = 'es';
         // Decimal separator state: '.' for point, ',' for comma
         let currentDecimalSeparator = '.'; 
-        // Visibility state variables (default to true for all visible)
-        let rateColumnVisible = true;
-        let quantityColumnVisible = true;
-        let clientDataVisible = true;
-        let senderDataVisible = true;
-        let paymentInfoVisible = true;
-        // Logo data (base64 or URL)
-        let logoData = null;
 
         // --- Obtiene referencias a elementos del DOM ---
         const invoiceItemsTable = document.getElementById('invoiceItems');
@@ -927,16 +811,6 @@
         const tableHeaderRateInput = document.querySelector('th input[data-key="tableHeaderRate"]');
         const tableHeaderQuantityInput = document.querySelector('th input[data-key="tableHeaderQuantity"]');
         const tableHeaderTotalInput = document.querySelector('th input[data-key="tableHeaderTotal"]');
-
-        // New column toggle button (now opens settings modal)
-        const toggleVisibilitySettingsBtn = document.getElementById('toggleVisibilitySettingsBtn');
-        const rateColumnHeader = document.querySelector('.rate-column-header');
-        const quantityColumnHeader = document.querySelector('.quantity-column-header');
-
-        // Logo upload elements
-        const invoiceLogo = document.getElementById('invoiceLogo');
-        const uploadLogoBtn = document.getElementById('uploadLogoBtn');
-        const logoUploadInput = document.getElementById('logoUploadInput');
 
         // Modal elements
         const saveLoadConfigBtn = document.getElementById('saveLoadConfigBtn');
@@ -972,21 +846,6 @@
         const closeLoadLocalModalBtn = document.getElementById('closeLoadLocalModalBtn');
         const localSettingsList = document.getElementById('localSettingsList');
         const modalMessageLocalLoad = document.getElementById('modalMessageLocalLoad');
-
-        // Visibility Settings Modal elements
-        const visibilitySettingsModalOverlay = document.getElementById('visibilitySettingsModalOverlay');
-        const closeVisibilitySettingsModalBtn = document.getElementById('closeVisibilitySettingsModalBtn');
-        const toggleRateColumnBtn = document.getElementById('toggleRateColumnBtn');
-        const toggleQuantityColumnBtn = document.getElementById('toggleQuantityColumnBtn');
-        const toggleClientDataBtn = document.getElementById('toggleClientDataBtn');
-        const toggleSenderDataBtn = document.getElementById('toggleSenderDataBtn');
-        const togglePaymentInfoBtn = document.getElementById('togglePaymentInfoBtn');
-        const applyVisibilitySettingsBtn = document.getElementById('applyVisibilitySettingsBtn');
-
-        // Sections to hide/show
-        const clientDataSection = document.getElementById('clientDataSection');
-        const senderDataSection = document.getElementById('senderDataSection');
-        const paymentInfoSection = document.getElementById('paymentInfoSection');
 
 
         let itemCount = 0;
@@ -1045,12 +904,9 @@
                     element.textContent = (currentDecimalSeparator === '.') ? 
                                           translations[currentLanguage].decimalComma : 
                                           translations[currentLanguage].decimalPoint;
-                } else if (element.id === 'toggleVisibilitySettingsBtn') {
-                    element.textContent = translations[currentLanguage].toggleVisibilitySettingsButton;
-                }
-                else if (element.id === 'generatePdfBtn' || element.id === 'saveLoadConfigBtn') {
+                } else if (element.id === 'generatePdfBtn' || element.id === 'saveLoadConfigBtn') {
                     element.textContent = translatedText.toUpperCase(); 
-                } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'LABEL') { // Added LABEL
                     if (element.id === 'servicesTitle' || element.id === 'paymentInfoLabel' ||
                         element.id === 'clientDataLabelInput' || element.id === 'invoiceNumberLabelInput' ||
                         element.id === 'invoiceDateLabelInput' || element.id === 'senderDataLabelInput') {
@@ -1059,7 +915,12 @@
                         }
                     } else if (element.closest('th')) {
                         element.value = toSentenceCase(translatedText);
-                    } else {
+                    } else if (element.classList.contains('item-rate') || element.classList.contains('item-quantity') || element.classList.contains('tax-percentage-input') || element.classList.contains('item-total-editable')) { // Added item-total-editable
+                        element.value = formatNumber(parseNumber(element.value));
+                    } else if (element.tagName === 'LABEL' && element.classList.contains('single-price-label')) { // Specific for single price label
+                        element.textContent = toSentenceCase(translatedText);
+                    }
+                    else {
                         element.placeholder = toSentenceCase(translatedText);
                     }
                 } else if (element.tagName === 'TITLE') {
@@ -1069,8 +930,8 @@
                 }
             });
 
-            document.querySelectorAll('.item-total-input').forEach(input => { // Changed to input
-                input.value = formatNumber(parseNumber(input.value)); // Read value from input
+            document.querySelectorAll('.item-total').forEach(span => {
+                span.textContent = formatNumber(parseNumber(span.textContent));
             });
 
             document.querySelectorAll('.tax-amount').forEach(span => {
@@ -1083,13 +944,6 @@
             document.querySelectorAll('.delete-tax-btn').forEach(btn => {
                 btn.textContent = toSentenceCase(translations[currentLanguage].deleteTaxButton);
             });
-
-            // Update ON/OFF button texts
-            updateToggleButtonState(toggleRateColumnBtn, rateColumnVisible);
-            updateToggleButtonState(toggleQuantityColumnBtn, quantityColumnVisible);
-            updateToggleButtonState(toggleClientDataBtn, clientDataVisible);
-            updateToggleButtonState(toggleSenderDataBtn, senderDataVisible);
-            updateToggleButtonState(togglePaymentInfoBtn, paymentInfoVisible);
 
             calculateTotals();
         }
@@ -1117,117 +971,82 @@
                         <textarea rows="2" placeholder="${toSentenceCase(translations[currentLanguage].tableHeaderProject)}" class="py-2 focus:ring-blue-500 focus:border-blue-500 w-full resize-y"></textarea>
                     </div>
                 </td>
-                <td class="item-rate-cell"><input type="number" step="0.01" value="${formatNumber(0.00)}" class="item-rate py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
-                <td class="item-quantity-cell"><input type="number" step="1" value="${formatNumber(0)}" class="item-quantity py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
-                <td><input type="number" step="0.01" value="${formatNumber(0.00)}" class="item-total-input text-right block w-full"></td>
+                <td>
+                    <input type="number" step="0.01" value="${formatNumber(0.00)}" class="item-rate py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center">
+                    <div class="flex items-center justify-center mt-1">
+                        <input type="checkbox" class="single-price-toggle" id="single-price-toggle-${itemCount}">
+                        <label for="single-price-toggle-${itemCount}" class="text-xs ml-1 text-gray-600 single-price-label" data-key="singlePriceLabel">${toSentenceCase(translations[currentLanguage].singlePriceLabel)}</label>
+                    </div>
+                </td>
+                <td><input type="number" step="1" value="${formatNumber(0)}" class="item-quantity py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
+                <td>
+                    <input type="number" step="0.01" value="${formatNumber(0.00)}" class="item-total-editable py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-right hidden-input">
+                    <span class="item-total text-right block w-full">${formatNumber(0.00)}</span>
+                </td>
             `;
 
             invoiceItemsTable.appendChild(row);
 
+            const projectTextarea = row.querySelector('td:nth-child(1) textarea');
             const rateInput = row.querySelector('.item-rate');
             const quantityInput = row.querySelector('.item-quantity');
-            const totalInput = row.querySelector('.item-total-input'); // Changed to input
+            const itemTotalSpan = row.querySelector('.item-total');
+            const itemTotalEditableInput = row.querySelector('.item-total-editable');
+            const singlePriceToggle = row.querySelector('.single-price-toggle');
             const deleteBtn = row.querySelector('.delete-btn');
 
             const calculateItemSubTotal = () => {
-                if (rateColumnVisible || quantityColumnVisible) { // Only calculate if at least one column is visible
+                let total = 0;
+                if (singlePriceToggle.checked) {
+                    // If single price is checked, take value directly from the editable total input
+                    total = parseNumber(itemTotalEditableInput.value);
+                    // Update the span to reflect the editable input's value
+                    itemTotalSpan.textContent = formatNumber(total);
+                } else {
+                    // Otherwise, calculate from rate and quantity
                     const rate = parseNumber(rateInput.value);
                     const quantity = parseNumber(quantityInput.value);
-                    const total = (rate * quantity);
-                    totalInput.value = formatNumber(total);
+                    total = (rate * quantity);
+                    itemTotalSpan.textContent = formatNumber(total); // Update the span
+                    // Keep the editable input's value in sync (optional, but good for consistency)
+                    itemTotalEditableInput.value = formatNumber(total);
                 }
                 calculateTotals();
             };
 
+            const togglePriceInputMode = () => {
+                if (singlePriceToggle.checked) {
+                    rateInput.classList.add('hidden-input');
+                    quantityInput.classList.add('hidden-input');
+                    itemTotalSpan.classList.add('hidden-input');
+                    itemTotalEditableInput.classList.remove('hidden-input');
+                    // When switching to single price, copy the current calculated total to the editable input
+                    itemTotalEditableInput.value = itemTotalSpan.textContent;
+                    itemTotalEditableInput.focus(); // Focus the editable total
+                } else {
+                    rateInput.classList.remove('hidden-input');
+                    quantityInput.classList.remove('hidden-input');
+                    itemTotalSpan.classList.remove('hidden-input');
+                    itemTotalEditableInput.classList.add('hidden-input');
+                    // When switching back, recalculate based on rate/quantity
+                    calculateItemSubTotal();
+                }
+                calculateTotals(); // Recalculate grand total after mode change
+            };
+
             rateInput.addEventListener('input', calculateItemSubTotal);
             quantityInput.addEventListener('input', calculateItemSubTotal);
-            totalInput.addEventListener('input', calculateTotals); // Listen for manual input on total
+            itemTotalEditableInput.addEventListener('input', calculateItemSubTotal); // Listen for direct input
+            singlePriceToggle.addEventListener('change', togglePriceInputMode); // Listen for toggle change
 
             deleteBtn.addEventListener('click', () => {
                 row.remove();
                 calculateTotals();
             });
+            
+            // Initial calculation and UI setup for the new row
             calculateItemSubTotal();
-            // Apply current visibility state to new row
-            applyVisibilitySettings(); 
         }
-
-        /**
-         * Updates the text and class of a toggle button.
-         * @param {HTMLElement} button - The button element.
-         * @param {boolean} isOn - True if the state is 'ON', false if 'OFF'.
-         */
-        function updateToggleButtonState(button, isOn) {
-            if (isOn) {
-                button.textContent = translations[currentLanguage].onButton;
-                button.classList.add('on');
-                button.classList.remove('off');
-            } else {
-                button.textContent = translations[currentLanguage].offButton;
-                button.classList.add('off');
-                button.classList.remove('on');
-            }
-        }
-
-        /**
-         * Applies the visibility settings for columns and textareas.
-         */
-        function applyVisibilitySettings() {
-            // Toggle Rate Column
-            const rateCells = document.querySelectorAll('.item-rate-cell');
-            rateColumnHeader.style.display = rateColumnVisible ? '' : 'none';
-            rateCells.forEach(cell => cell.style.display = rateColumnVisible ? '' : 'none');
-
-            // Toggle Quantity Column
-            const quantityCells = document.querySelectorAll('.item-quantity-cell');
-            quantityColumnHeader.style.display = quantityColumnVisible ? '' : 'none';
-            quantityCells.forEach(cell => cell.style.display = quantityColumnVisible ? '' : 'none');
-
-            // Handle total input editability: editable only if BOTH rate and quantity are hidden
-            const totalInputs = document.querySelectorAll('.item-total-input');
-            totalInputs.forEach(input => {
-                input.readOnly = (rateColumnVisible || quantityColumnVisible); 
-                input.classList.toggle('bg-gray-100', (rateColumnVisible || quantityColumnVisible)); 
-            });
-
-            // Adjust table column widths based on visibility
-            const table = document.querySelector('table');
-            if (table) {
-                const style = document.createElement('style');
-                style.id = 'dynamic-table-styles';
-                let projectColWidth;
-
-                if (rateColumnVisible && quantityColumnVisible) {
-                    projectColWidth = '45%';
-                } else if (rateColumnVisible && !quantityColumnVisible) {
-                    projectColWidth = '60%';
-                } else if (!rateColumnVisible && quantityColumnVisible) {
-                    projectColWidth = '60%';
-                } else { // Both hidden
-                    projectColWidth = '70%';
-                }
-
-                style.innerHTML = `
-                    #invoiceItems td:nth-child(1) { width: ${projectColWidth}; }
-                    #invoiceItems td:nth-child(2) { display: ${rateColumnVisible ? '' : 'none'}; }
-                    #invoiceItems td:nth-child(3) { display: ${quantityColumnVisible ? '' : 'none'}; }
-                `;
-                const existingStyle = document.getElementById('dynamic-table-styles');
-                if (existingStyle) {
-                    existingStyle.remove();
-                }
-                document.head.appendChild(style);
-            }
-
-            // Toggle Textarea Section Visibility
-            clientDataSection.style.display = clientDataVisible ? 'block' : 'none';
-            senderDataSection.style.display = senderDataVisible ? 'block' : 'none';
-            paymentInfoSection.style.display = paymentInfoVisible ? 'block' : 'none';
-
-            updateTexts(); // Update button text and other elements
-            calculateTotals(); // Recalculate totals as inputs might change behavior
-        }
-
 
         /**
          * Adds a new dynamic tax field.
@@ -1276,8 +1095,8 @@
          */
         function calculateTotals() {
             let subTotal = 0;
-            document.querySelectorAll('.item-total-input').forEach(itemTotalInput => { // Changed to input
-                subTotal += parseNumber(itemTotalInput.value); // Read value from input
+            document.querySelectorAll('.item-total').forEach(itemTotalSpan => {
+                subTotal += parseNumber(itemTotalSpan.textContent);
             });
             subTotalAmountSpan.textContent = formatNumber(subTotal) + ' €';
 
@@ -1335,102 +1154,61 @@
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
 
-            // Add logo if available
-            if (logoData) {
-                const img = new Image();
-                img.src = logoData;
-
-                // Calculate proportional dimensions
-                const maxWidth = 40; // Max width for the logo in PDF
-                const maxHeight = 30; // Max height for the logo in PDF
-
-                let width = img.width;
-                let height = img.height;
-
-                // If image is wider than maxWidth, scale down proportionally
-                if (width > maxWidth) {
-                    height = height * (maxWidth / width);
-                    width = maxWidth;
-                }
-
-                // If image is taller than maxHeight, scale down proportionally
-                if (height > maxHeight) {
-                    width = width * (maxHeight / height);
-                    height = maxHeight;
-                }
-                
-                doc.addImage(logoData, 'PNG', pdfMarginX, currentY, width, height);
-            } else {
-                // If no custom logo, use the default CalPanda logo
-                doc.addImage(invoiceLogo.src, 'PNG', pdfMarginX, currentY, 40, 30); // Use the default logo
-            }
-            currentY += 35; // Move Y down after placing logo or its placeholder
-
-            // Invoice number and date (always present)
+            // Number of invoice and date
             doc.text(`${toSentenceCase(invoiceNumberLabelInput.value)} ${invoiceNumberInput.value}`, pdfRightAlignedX, currentY, null, null, "right");
-            currentY += 7;
+            currentY += 7; // Pequeño incremento para la siguiente línea
             doc.text(`${toSentenceCase(invoiceDateLabelInput.value)} ${invoiceDateInput.value}`, pdfRightAlignedX, currentY, null, null, "right");
-            currentY += 10; // Space after invoice number/date
-
-            let maxSectionY = currentY;
+            currentY += 10; // Reducido espacio después de número de factura/fecha antes de datos de cliente/emisor
 
             // Client Data (left)
-            if (clientDataVisible) {
-                doc.setFont("helvetica", "bold");
-                doc.text(toSentenceCase(clientDataLabelInput.value), pdfMarginX, currentY);
-                doc.setFont("helvetica", "normal");
-                maxSectionY = addMultiLineText(doc, clientDataInput.value, pdfMarginX, currentY + 7, 80, "left");
-            }
+            doc.setFont("helvetica", "bold");
+            doc.text(toSentenceCase(clientDataLabelInput.value), pdfMarginX, currentY); // Título para datos del cliente
+            doc.setFont("helvetica", "normal");
+            const clientDataFinalY = addMultiLineText(doc, clientDataInput.value, pdfMarginX, currentY + 7, 80, "left"); // currentY + 7 para un pequeño espacio
 
             // Sender Data (right)
-            if (senderDataVisible) {
-                doc.setFont("helvetica", "bold");
-                doc.text(toSentenceCase(senderDataLabelInput.value), pdfRightAlignedX, currentY, null, null, "right");
-                doc.setFont("helvetica", "normal");
-                const senderDataCurrentY = addMultiLineText(doc, senderDataInput.value, pdfRightAlignedX, currentY + 7, 80, "right");
-                maxSectionY = Math.max(maxSectionY, senderDataCurrentY); // Update maxSectionY with sender data's final Y
-            }
+            doc.setFont("helvetica", "bold");
+            doc.text(toSentenceCase(senderDataLabelInput.value), pdfRightAlignedX, currentY, null, null, "right"); // Título para datos del emisor
+            doc.setFont("helvetica", "normal");
+            const senderDataFinalY = addMultiLineText(doc, senderDataInput.value, pdfRightAlignedX, currentY + 7, 80, "right"); // currentY + 7 para un pequeño espacio
 
-            let tableStartY = maxSectionY + 15; // Space after the client/sender data block
-            
+            // Determinar la posición Y para el inicio de la tabla (después del bloque de texto más largo)
+            let tableStartY = Math.max(clientDataFinalY, senderDataFinalY) + 5; // Ajustado para que esté más arriba
+
             // Title of services (editable)
             doc.setFont("helvetica", "bold");
             doc.setFontSize(16);
-            doc.text(toSentenceCase(servicesTitleInput.value), pdfMarginX, tableStartY);
+            doc.text(toSentenceCase(servicesTitleInput.value), pdfMarginX, tableStartY); // Usa el valor del input editable
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
             tableStartY += 10; // Espacio entre título y tabla
 
             const headers = [
                 tableHeaderProjectInput.value,
+                tableHeaderRateInput.value,
+                tableHeaderQuantityInput.value,
+                tableHeaderTotalInput.value
             ];
-            const columnStylesPdf = {
-                0: { cellWidth: 'auto' }
-            };
-
-            let currentPdfColIndex = 1;
-            if (rateColumnVisible) {
-                headers.push(tableHeaderRateInput.value);
-                columnStylesPdf[currentPdfColIndex++] = { halign: 'center' };
-            }
-            if (quantityColumnVisible) {
-                headers.push(tableHeaderQuantityInput.value);
-                columnStylesPdf[currentPdfColIndex++] = { halign: 'center' };
-            }
-            headers.push(tableHeaderTotalInput.value);
-            columnStylesPdf[currentPdfColIndex] = { halign: 'right' };
-
             const data = [];
+
             document.querySelectorAll('#invoiceItems tr').forEach(row => {
                 const rowData = [];
-                rowData.push(row.querySelector('td:nth-child(1) textarea').value);
-                if (rateColumnVisible) {
-                    rowData.push(row.querySelector('.item-rate').value);
+                const projectContent = row.querySelector('td:nth-child(1) textarea').value;
+                rowData.push(projectContent);
+                // For rate and quantity, check if single price is active. If so, they might be hidden, push empty string.
+                const rateInput = row.querySelector('.item-rate');
+                const quantityInput = row.querySelector('.item-quantity');
+                const singlePriceToggle = row.querySelector('.single-price-toggle');
+
+                if (singlePriceToggle && singlePriceToggle.checked) {
+                    rowData.push(''); // Empty for Rate
+                    rowData.push(''); // Empty for Quantity
+                } else {
+                    rowData.push(rateInput.value);
+                    rowData.push(quantityInput.value);
                 }
-                if (quantityColumnVisible) {
-                    rowData.push(row.querySelector('.item-quantity').value);
-                }
-                rowData.push(row.querySelector('.item-total-input').value); // Get value from input
+                
+                rowData.push(row.querySelector('.item-total').textContent); // Always get from the span (which holds the final value)
                 data.push(rowData);
             });
 
@@ -1442,16 +1220,14 @@
                 lineWidth: 0.5              // Thin border for separation, but visually "white on white"
             };
             
-            // Adjust colSpan for footer based on column visibility
-            let emptyColSpanForAlignment = 0;
-            if (rateColumnVisible && quantityColumnVisible) {
-                emptyColSpanForAlignment = 2;
-            } else if (rateColumnVisible || quantityColumnVisible) {
-                emptyColSpanForAlignment = 1;
-            } else { // Both hidden
-                emptyColSpanForAlignment = 0; // No columns to span, so just the labels and totals
-            }
+            const availableWidth = pdfPageWidth - (2 * pdfMarginX);
+            const colWidthProject = availableWidth * 0.50;
+            const colWidthRate = availableWidth * 0.1667;
+            const colWidthQuantity = availableWidth * 0.1667;
+            const colWidthTotal = availableWidth * 0.1667;
 
+            const emptyColSpanForAlignment = 2;
+            const labelColSpanForValues = 1;
 
             foot.push([
                 { content: '', colSpan: emptyColSpanForAlignment, styles: whiteFootCellStyles },
@@ -1487,7 +1263,12 @@
                 headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255] },
                 alternateRowStyles: { fillColor: [248, 250, 252] },
                 margin: { left: pdfMarginX, right: pdfMarginX },
-                columnStyles: columnStylesPdf,
+                columnStyles: {
+                    0: { cellWidth: colWidthProject },
+                    1: { cellWidth: colWidthRate, halign: 'center' },
+                    2: { cellWidth: colWidthQuantity, halign: 'center' },
+                    3: { cellWidth: colWidthTotal, halign: 'right' }
+                },
                 footStyles: {
                     lineColor: [255, 255, 255],
                     lineWidth: 0.5,
@@ -1497,7 +1278,7 @@
 
             let finalY = doc.autoTable.previous.finalY;
 
-            if (paymentInfoInput.value.trim() !== '' && paymentInfoVisible) {
+            if (paymentInfoInput.value.trim() !== '') {
                 finalY += 20;
                 doc.setFontSize(12);
                 doc.setFont("helvetica", "bold");
@@ -1518,11 +1299,15 @@
         function getInvoiceConfig() {
             const items = [];
             document.querySelectorAll('#invoiceItems tr').forEach(row => {
+                const singlePriceToggle = row.querySelector('.single-price-toggle');
+                const isSinglePrice = singlePriceToggle ? singlePriceToggle.checked : false;
+
                 items.push({
                     project: row.querySelector('td:nth-child(1) textarea').value,
-                    rate: parseNumber(row.querySelector('.item-rate').value), // Parse from formatted string
-                    quantity: parseNumber(row.querySelector('.item-quantity').value), // Parse from formatted string
-                    total: parseNumber(row.querySelector('.item-total-input').value) // Get total value
+                    rate: parseNumber(row.querySelector('.item-rate').value),
+                    quantity: parseNumber(row.querySelector('.item-quantity').value),
+                    totalDirect: parseNumber(row.querySelector('.item-total-editable').value),
+                    isSinglePrice: isSinglePrice
                 });
             });
 
@@ -1557,13 +1342,7 @@
                 items: items,
                 taxes: taxes,
                 language: currentLanguage,
-                decimalSeparator: currentDecimalSeparator, // Save the current decimal separator
-                rateColumnVisible: rateColumnVisible,
-                quantityColumnVisible: quantityColumnVisible,
-                clientDataVisible: clientDataVisible,
-                senderDataVisible: senderDataVisible,
-                paymentInfoVisible: paymentInfoVisible,
-                logoData: logoData // Save logo data
+                decimalSeparator: currentDecimalSeparator // Save the current decimal separator
             };
         }
 
@@ -1575,23 +1354,6 @@
             try {
                 currentLanguage = config.language || 'es';
                 currentDecimalSeparator = config.decimalSeparator || '.'; // Load decimal separator
-                rateColumnVisible = config.rateColumnVisible !== undefined ? config.rateColumnVisible : true;
-                quantityColumnVisible = config.quantityColumnVisible !== undefined ? config.quantityColumnVisible : true;
-                clientDataVisible = config.clientDataVisible !== undefined ? config.clientDataVisible : true;
-                senderDataVisible = config.senderDataVisible !== undefined ? config.senderDataVisible : true;
-                paymentInfoVisible = config.paymentInfoVisible !== undefined ? config.paymentInfoVisible : true;
-                logoData = config.logoData || null; // Load logo data
-
-                if (logoData) {
-                    invoiceLogo.src = logoData;
-                    invoiceLogo.classList.remove('calpanda-logo');
-                    invoiceLogo.classList.add('logo-preview');
-                } else {
-                    invoiceLogo.src = "https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png";
-                    invoiceLogo.classList.add('calpanda-logo');
-                    invoiceLogo.classList.remove('logo-preview');
-                }
-
 
                 updateTexts(); // This will re-render all texts and reformat numbers on UI
 
@@ -1633,21 +1395,39 @@
                     config.items.forEach(item => {
                         addItem();
                         const lastRow = invoiceItemsTable.lastElementChild;
-                        const projectInput = lastRow.querySelector('td:nth-child(1) textarea');
+                        const projectTextarea = lastRow.querySelector('td:nth-child(1) textarea');
                         const rateInput = lastRow.querySelector('.item-rate');
                         const quantityInput = lastRow.querySelector('.item-quantity');
-                        const totalInput = lastRow.querySelector('.item-total-input');
+                        const itemTotalSpan = lastRow.querySelector('.item-total');
+                        const itemTotalEditableInput = lastRow.querySelector('.item-total-editable');
+                        const singlePriceToggle = lastRow.querySelector('.single-price-toggle');
 
-                        projectInput.value = item.project;
+                        projectTextarea.value = item.project;
                         rateInput.value = formatNumber(item.rate !== undefined ? item.rate : 0);
                         quantityInput.value = formatNumber(item.quantity !== undefined ? item.quantity : 0, 0);
-                        totalInput.value = formatNumber(item.total !== undefined ? item.total : 0); // Set total value
+                        itemTotalEditableInput.value = formatNumber(item.totalDirect !== undefined ? item.totalDirect : 0);
 
-                        // No need to dispatch input event if total is manually set
-                        if (rateColumnVisible || quantityColumnVisible) {
-                            const event = new Event('input', { bubbles: true });
-                            quantityInput.dispatchEvent(event); // Trigger calculation if columns are visible
+                        // Restore single price state and trigger UI update
+                        if (singlePriceToggle && item.isSinglePrice) {
+                            singlePriceToggle.checked = true;
+                            // Manually trigger the UI update for the toggle (simulating a change event)
+                            const changeEvent = new Event('change', { bubbles: true });
+                            singlePriceToggle.dispatchEvent(changeEvent);
+                        } else {
+                            // Ensure the span shows the calculated value if not single price
+                            const rate = parseNumber(rateInput.value);
+                            const quantity = parseNumber(quantityInput.value);
+                            itemTotalSpan.textContent = formatNumber(rate * quantity);
+                            // Ensure rate/quantity inputs are visible and editable total is hidden
+                            rateInput.classList.remove('hidden-input');
+                            quantityInput.classList.remove('hidden-input');
+                            itemTotalSpan.classList.remove('hidden-input');
+                            itemTotalEditableInput.classList.add('hidden-input');
                         }
+
+                        // Trigger a generic input event to ensure calculations are fresh
+                        const event = new Event('input', { bubbles: true });
+                        quantityInput.dispatchEvent(event); // Or any input that triggers calculation
                     });
                 } else {
                     addItem();
@@ -1669,14 +1449,6 @@
                     addTaxField(translations[currentLanguage].taxDefaultIrpfName, 15, '-');
                 }
 
-                // Set toggle button states in the modal
-                updateToggleButtonState(toggleRateColumnBtn, rateColumnVisible);
-                updateToggleButtonState(toggleQuantityColumnBtn, quantityColumnVisible);
-                updateToggleButtonState(toggleClientDataBtn, clientDataVisible);
-                updateToggleButtonState(toggleSenderDataBtn, senderDataVisible);
-                updateToggleButtonState(togglePaymentInfoBtn, paymentInfoVisible);
-                
-                applyVisibilitySettings(); // Apply loaded visibility settings
                 calculateTotals();
                 showMessage(translations[currentLanguage].modalMessageSuccessLoadFile);
             } catch (e) {
@@ -1735,7 +1507,7 @@
             if (fileName) {
                 generatePdf(fileName);
             } else {
-                // Use a custom modal or message box instead of alert()
+                // Using a custom modal for alerts instead of window.alert
                 showMessage("Por favor, introduce un nombre de archivo.", true); 
             }
         });
@@ -1763,72 +1535,6 @@
         decimalToggleBtn.addEventListener('click', () => {
             currentDecimalSeparator = (currentDecimalSeparator === '.') ? ',' : '.';
             updateTexts(); // Re-render all numbers with new separator
-        });
-
-        // Toggle visibility settings modal
-        toggleVisibilitySettingsBtn.addEventListener('click', () => {
-            visibilitySettingsModalOverlay.classList.add('visible');
-            // Ensure toggle buttons reflect current state when opening modal
-            updateToggleButtonState(toggleRateColumnBtn, rateColumnVisible);
-            updateToggleButtonState(toggleQuantityColumnBtn, quantityColumnVisible);
-            updateToggleButtonState(toggleClientDataBtn, clientDataVisible);
-            updateToggleButtonState(toggleSenderDataBtn, senderDataVisible);
-            updateToggleButtonState(togglePaymentInfoBtn, paymentInfoVisible);
-        });
-        closeVisibilitySettingsModalBtn.addEventListener('click', () => {
-            visibilitySettingsModalOverlay.classList.remove('visible');
-        });
-        visibilitySettingsModalOverlay.addEventListener('click', (e) => {
-            if (e.target === visibilitySettingsModalOverlay) {
-                visibilitySettingsModalOverlay.classList.remove('visible');
-            }
-        });
-
-        // Event listeners for individual toggle buttons in the modal
-        toggleRateColumnBtn.addEventListener('click', () => {
-            rateColumnVisible = !rateColumnVisible;
-            updateToggleButtonState(toggleRateColumnBtn, rateColumnVisible);
-        });
-        toggleQuantityColumnBtn.addEventListener('click', () => {
-            quantityColumnVisible = !quantityColumnVisible;
-            updateToggleButtonState(toggleQuantityColumnBtn, quantityColumnVisible);
-        });
-        toggleClientDataBtn.addEventListener('click', () => {
-            clientDataVisible = !clientDataVisible;
-            updateToggleButtonState(toggleClientDataBtn, clientDataVisible);
-        });
-        toggleSenderDataBtn.addEventListener('click', () => {
-            senderDataVisible = !senderDataVisible;
-            updateToggleButtonState(toggleSenderDataBtn, senderDataVisible);
-        });
-        togglePaymentInfoBtn.addEventListener('click', () => {
-            paymentInfoVisible = !paymentInfoVisible;
-            updateToggleButtonState(togglePaymentInfoBtn, paymentInfoVisible);
-        });
-
-        applyVisibilitySettingsBtn.addEventListener('click', () => {
-            applyVisibilitySettings();
-            visibilitySettingsModalOverlay.classList.remove('visible');
-        });
-
-
-        // Logo upload functionality
-        uploadLogoBtn.addEventListener('click', () => {
-            logoUploadInput.click(); // Trigger hidden file input click
-        });
-
-        logoUploadInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    logoData = e.target.result; // Store base64 data
-                    invoiceLogo.src = logoData;
-                    invoiceLogo.classList.remove('calpanda-logo'); // Remove default logo styling
-                    invoiceLogo.classList.add('logo-preview'); // Add preview styling
-                };
-                reader.readAsDataURL(file);
-            }
         });
 
 
@@ -1871,7 +1577,7 @@
                 showMessage(translations[currentLanguage].modalMessageSuccessSaveFile);
                 saveFileModalOverlay.classList.remove('visible'); // Close save file naming modal
             } else {
-                showMessage("Por favor, introduce un nombre de archivo para tu configuración.", true); 
+                showMessage("Por favor, introduce un nombre de archivo para tu configuración.", true);
             }
         });
         closeSaveFileModalBtn.addEventListener('click', () => {
@@ -1999,8 +1705,9 @@
 
                 listItem.querySelector('.delete-btn-local').addEventListener('click', (e) => {
                     const nameToDelete = name; // Use the closure variable `name`
-                    // Use a custom modal or message box instead of confirm()
-                    if (confirm(toSentenceCase(translations[currentLanguage].loadLocalConfirmDelete))) {
+                    // Replaced window.confirm with a custom modal message for consistency
+                    const confirmDelete = confirm(toSentenceCase(translations[currentLanguage].loadLocalConfirmDelete));
+                    if (confirmDelete) {
                         delete localConfigs[nameToDelete];
                         localStorage.setItem('calpanda_local_configs', JSON.stringify(localConfigs));
                         renderLocalSettingsList(); // Re-render the list
@@ -2040,22 +1747,6 @@
 
         // Update all texts at page load (defaults to Spanish)
         updateTexts();
-
-        // Set initial toggle button states for visibility settings
-        // By default, all are visible (ON)
-        rateColumnVisible = true;
-        quantityColumnVisible = true;
-        clientDataVisible = true;
-        senderDataVisible = true;
-        paymentInfoVisible = true;
-
-        updateToggleButtonState(toggleRateColumnBtn, rateColumnVisible);
-        updateToggleButtonState(toggleQuantityColumnBtn, quantityColumnVisible);
-        updateToggleButtonState(toggleClientDataBtn, clientDataVisible);
-        updateToggleButtonState(toggleSenderDataBtn, senderDataVisible);
-        updateToggleButtonState(togglePaymentInfoBtn, paymentInfoVisible);
-        
-        applyVisibilitySettings(); // Apply initial visibility settings
     </script>
 </body>
 </html>
