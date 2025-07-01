@@ -59,8 +59,8 @@
     transition: color 0.3s ease;
   }
   textarea {
-    flex: 1; /* Permite que el textarea crezca y ocupe el espacio disponible */
-    resize: vertical; /* Permite el redimensionamiento vertical manual desde la esquina inferior derecha */
+    /* flex: 1; <-- ELIMINADO: Esto impedía el redimensionamiento vertical manual */
+    resize: both; /* Permite el redimensionamiento horizontal y vertical manual desde la esquina inferior derecha */
     min-height: 150px; /* Altura mínima para los textareas */
     border: 2px solid #d0d7de;
     border-radius: 10px;
@@ -656,6 +656,8 @@
     // Ensure the mode toggle button text is correct based on the loaded dark mode state
     const isDarkMode = document.body.classList.contains('dark-mode');
     modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
+
+    // Ya no se necesita autoResize aquí, el redimensionamiento manual y flex:1 gestionan la altura.
   });
 
   // Custom message box function (replaces alert)
@@ -687,6 +689,15 @@
       messageBox.addEventListener('transitionend', () => messageBox.remove());
     }, 3000);
   }
+
+  // Se eliminan las funciones y llamadas a autoResize para permitir el redimensionamiento manual completo.
+  // function autoResize(textarea) {
+  //   textarea.style.height = 'auto';
+  //   textarea.style.height = textarea.scrollHeight + 'px';
+  // }
+  // pasteArea.addEventListener('input', () => autoResize(pasteArea));
+  // writeArea.addEventListener('input', () => autoResize(writeArea));
+
 </script>
 
 </body>
