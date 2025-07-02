@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubPandaQA - Control de Calidad de Subtítulos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF CDN for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .container {
+            max-width: 960px;
+        }
+        .error-item {
+            background-color: #fee2e2; /* Light red background for errors */
+            border-left: 4px solid #ef4444; /* Red border */
+        }
+        /* New style for fixed errors */
+        .fixed-error-item {
+            background-color: #d1fae5; /* Light green */
+            border-left: 4px solid #10b981; /* Green border */
+            animation: fadeOut 1s forwards; /* 1-second fade out */
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; height: 0; padding: 0; margin: 0; border: none; }
+        }
+
+        input[type="file"] {
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            border-radius: 0.375rem; /* rounded-md */
+        }
+        /* Custom scrollbar for results div */
+        #results div {
+            max-height: 500px; /* Limit height for scroll */
+            overflow-y: auto;
+        }
+        #results div::-webkit-scrollbar {
+            width: 8px;
+        }
+        #results div::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        #results div::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        #results div::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Modal specific styling */
+        .modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .modal-content {
+            transform: translateY(20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal.hidden .modal-content {
+            transform: translateY(-20px);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto bg-white p-6 rounded-lg shadow-xl">
+        <!-- Header -->
+        <header class="flex flex-col items-center justify-center mb-8">
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaqa-logo.png" alt="SubPandaQA Logo" class="w-64 mb-4">
+            <p class="text-lg text-gray-600 text-center">Una herramienta sencilla para detectar errores en archivos de subtítulos SRT</p>
+        </header>
+
+        <!-- File Upload Section -->
+        <section class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">1. Subir archivo de subtítulos (.srt)</h2>
+            <input type="file" id="subtitleFile" accept=".srt" class="w-full text-gray-700 bg-white cursor-pointer rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <p id="fileName" class="mt-2 text-sm text-gray-500"></p>
+        </section>
+
+        <!-- Filter Configuration Section -->
+        <section class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">2. Configurar filtros</h2>
+            
+            <div class="flex items-center space-x-4 mb-6">
+                <button id="toggleAllFiltersButton" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200">
+                    Marcar/Desmarcar todas
+                </button>
+                <!-- Preset selector and buttons removed as per user's request for simpler version -->
+            </div>
+
+            <div class="flex flex-col space-y-4">
+                <!-- Reading Speed (CPS) -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterCps" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterCps" class="ml-2 text-gray-700">Velocidad de lectura (CPS)</label>
+                        <input type="number" id="maxCps" value="20" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="Máximo CPS">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta subtítulos que excedan los CPS que configures.</p>
+                </div>
+                <!-- Reading Speed (WPM) -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterWpm" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterWpm" class="ml-2 text-gray-700">Velocidad de lectura (WPM)</label>
+                        <input type="number" id="maxWpm" value="150" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="Máximo WPM">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta subtítulos que excedan los WPM que configures.</p>
+                </div>
+                <!-- Character Limit per Line -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterCharLimit" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterCharLimit" class="ml-2 text-gray-700">Límite de caracteres por línea</label>
+                        <input type="number" id="maxCharsPerLine" value="42" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="Máximo caracteres por línea">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta líneas que exceden el número de caracteres que configures.</p>
+                </div>
+                <!-- Line Limit -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterLineLimit" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterLineLimit" class="ml-2 text-gray-700">Límite de líneas</label>
+                        <input type="number" id="maxLines" value="2" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="Máximo líneas">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Identifica subtítulos con más de 2 líneas.</p>
+                </div>
+                <!-- Space after Dash -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterDashSpace" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterDashSpace" class="ml-2 text-gray-700">Espacio después de un guion</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta "-Hola" en lugar de "- Hola".</p>
+                </div>
+                <!-- Min/Max Duration -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterDuration" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterDuration" class="ml-2 text-gray-700">Duración mínima/máxima</label>
+                        <input type="number" id="minDuration" value="1000" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="Duración mínima (ms)">
+                        <input type="number" id="maxDuration" value="7000" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="Duración máxima (ms)">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Marca subtítulos con duración menor a 1 segundo o mayor a 7 segundos.</p>
+                </div>
+                <!-- Min Gap -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterMinGap" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterMinGap" class="ml-2 text-gray-700">Espacio mínimo entre subtítulos</label>
+                        <input type="number" id="minGap" value="100" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="Valor del gap">
+                        <select id="gapUnit" class="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="ms">ms</option>
+                            <option value="frames">frames</option>
+                        </select>
+                        <input type="number" id="frameRate" value="25" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="FPS" style="display:none;">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta gaps menores a 100ms o 4 frames entre subtítulos (configurable en el desplegable y en FPS).</p>
+                </div>
+                <!-- Tag Issues -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterUnclosedTags" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterUnclosedTags" class="ml-2 text-gray-700">Problemas con etiquetas</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Identifica etiquetas HTML (ej: &lt;i&gt;, &lt;b&gt;) sin cerrar, sin abrir o mal formadas.</p>
+                </div>
+                <!-- Double/Triple Spaces -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterDoubleSpaces" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterDoubleSpaces" class="ml-2 text-gray-700">Espacios dobles o triples</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Marca la presencia de dos espacios ("  ") o tres espacios ("   ") consecutivos.</p>
+                </div>
+                <!-- Missing Question/Exclamation Marks (Spanish specific) -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterQuestionMarks" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterQuestionMarks" class="ml-2 text-gray-700">Signos de interrogación/admiración de apertura/cierre</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta "¿Qué tal?" sin el signo de cierre o "Qué tal?" sin el de apertura, y de forma similar para "¡Hola!"</p>
+                </div>
+                <!-- Lowercase after Period -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterLowercaseAfterPeriod" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterLowercaseAfterPeriod" class="ml-2 text-gray-700">Minúscula después de punto</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Identifica "Texto. siguiente" en lugar de "Texto. Siguiente".</p>
+                </div>
+                <!-- Empty Subtitles -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterEmptySubtitle" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterEmptySubtitle" class="ml-2 text-gray-700">Subtítulo vacío</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta subtítulos que se han quedado vacíos o sin texto por despiste.</p>
+                </div>
+                <!-- Overlaps -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterOverlap" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterOverlap" class="ml-2 text-gray-700">Subtítulos superpuestos (overlaps)</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta subtítulos que pisan o se superponen con otros subtítulos.</p>
+                </div>
+                <!-- No space after period -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterNoSpaceAfterPeriod" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterNoSpaceAfterPeriod" class="ml-2 text-gray-700">Ausencia de espacios después de un punto</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta un punto seguido directamente de una palabra o letra, sin espacio intermedio.</p>
+                </div>
+                 <!-- Unclosed Quotes -->
+                 <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterUnclosedQuotes" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterUnclosedQuotes" class="ml-2 text-gray-700">Comillas sin cerrar</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Identifica "Texto de comillas simples sin cerrar' o "Texto de comillas dobles sin cerrar".</p>
+                </div>
+                <!-- Ellipsis (linking) -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterEllipsis" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterEllipsis" class="ml-2 text-gray-700">Errores en puntos suspensivos de enlace o elipsis</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Marca subtítulos que terminan con "..." sugiriendo una continuación.</p>
+                </div>
+                <!-- Number Punctuation -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterNumberPunctuation" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterNumberPunctuation" class="ml-2 text-gray-700">Puntuación de cifras</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta la puntuación "1,234.56" típica del inglés en lugar de "1.234,56".</p>
+                </div>
+
+                <!-- NEW FILTERS -->
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterUnitsFormat" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterUnitsFormat" class="ml-2 text-gray-700">Formato de unidades de medida</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta unidades de medida (ej. "km.", "cms") que terminan en punto o están en plural.</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterAcronymsFormat" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterAcronymsFormat" class="ml-2 text-gray-700">Formato de siglas</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta siglas (ej. "F.B.I", "O N U") que incluyen puntos o espacios.</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterEllipsisChar" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterEllipsisChar" class="ml-2 text-gray-700">Carácter de puntos suspensivos o elipsis incorrecto</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta el uso de tres puntos consecutivos (...) en lugar del carácter de elipsis único (…).</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterDualSpeakerHyphen" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterDualSpeakerHyphen" class="ml-2 text-gray-700">Guiones en diálogos de doble hablante</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta inconsistencias en el uso de guiones en subtítulos de doble hablante (ej. una línea con guion y otra sin él).</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterNumbers1to10" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterNumbers1to10" class="ml-2 text-gray-700">Números cardinales en cifras (1-10)</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta si los números del 1 al 10 están escritos en cifras en lugar de letras (ej. "5 perros" en lugar de "cinco perros").</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterFourDigitSeparator" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterFourDigitSeparator" class="ml-2 text-gray-700">Separador de miles en 4 dígitos</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta si los números de cuatro dígitos tienen separadores (ej. "2.000" en lugar de "2000").</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterSemicolons" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterSemicolons" class="ml-2 text-gray-700">Uso de punto y coma</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta la presencia de punto y coma (`;`).</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterQuotePeriod" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterQuotePeriod" class="ml-2 text-gray-700">Puntuación de comillas</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta si el punto final de una oración citada se encuentra dentro de las comillas de cierre (ej. "Texto." en lugar de "Texto".).</p>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="filterIdsSfxFormat" class="h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                        <label for="filterIdsSfxFormat" class="ml-2 text-gray-700">Detección de acotaciones o SFX (corchetes)</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">Detecta la presencia de texto encerrado entre corchetes (ej. "[Música]", "[Aplausos]").</p>
+                </div>
+            </div>
+            <button id="checkButton" class="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-all duration-200">
+                REVISAR SUBTÍTULOS
+            </button>
+        </section>
+
+        <!-- Results Section -->
+        <section class="mb-8 p-6 bg-red-50 rounded-lg border border-red-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">3. Resultados de la revisión</h2>
+            <div id="results" class="bg-white p-4 rounded-lg border border-gray-200 text-gray-800 text-sm">
+                <p class="text-gray-500">Sube un archivo de subtítulos y presiona "REVISAR SUBTÍTULOS" para ver los errores aquí.</p>
+            </div>
+            <div id="noErrorsMessage" class="hidden mt-4 bg-green-100 text-green-800 p-3 rounded-lg border border-green-300">
+                ¡Felicidades! No se encontraron errores con los filtros seleccionados.
+            </div>
+        </section>
+
+        <!-- Export Section -->
+        <section class="p-6 bg-yellow-50 rounded-lg border border-yellow-200">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Exportar informe de errores</h2>
+            <div class="flex space-x-4">
+                <button id="exportPdfButton" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 transition-all duration-200">
+                    Exportar a PDF
+                </button>
+                <button id="exportTableButton" class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transition-all duration-200">
+                    Exportar como Tabla HTML
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Global variables for subtitle data and errors
+        let subtitles = [];
+        let errorsFound = [];
+        let allFiltersCheckedState = true; // To track the state of "Marcar/Desmarcar todas"
+
+        // DOM Elements
+        const subtitleFile = document.getElementById('subtitleFile');
+        const fileNameDisplay = document.getElementById('fileName');
+        const checkButton = document.getElementById('checkButton');
+        const resultsDiv = document.getElementById('results');
+        const noErrorsMessage = document.getElementById('noErrorsMessage');
+        const exportPdfButton = document.getElementById('exportPdfButton');
+        const exportTableButton = document.getElementById('exportTableButton');
+        const toggleAllFiltersButton = document.getElementById('toggleAllFiltersButton'); // Added toggle button
+
+        // Filter Checkboxes and Inputs (defined as individual variables for direct access)
+        const filterCps = document.getElementById('filterCps');
+        const maxCps = document.getElementById('maxCps');
+        const filterWpm = document.getElementById('filterWpm'); // Explicit WPM filter checkbox
+        const maxWpm = document.getElementById('maxWpm');
+        const filterCharLimit = document.getElementById('filterCharLimit');
+        const maxCharsPerLine = document.getElementById('maxCharsPerLine');
+        const filterLineLimit = document.getElementById('filterLineLimit');
+        const maxLines = document.getElementById('maxLines');
+        const filterDashSpace = document.getElementById('filterDashSpace');
+        const filterDuration = document.getElementById('filterDuration');
+        const minDuration = document.getElementById('minDuration');
+        const maxDuration = document.getElementById('maxDuration');
+        const filterMinGap = document.getElementById('filterMinGap');
+        const minGap = document.getElementById('minGap');
+        const gapUnit = document.getElementById('gapUnit');
+        const frameRate = document.getElementById('frameRate');
+        const filterUnclosedTags = document.getElementById('filterUnclosedTags');
+        const filterDoubleSpaces = document.getElementById('filterDoubleSpaces');
+        const filterQuestionMarks = document.getElementById('filterQuestionMarks');
+        const filterLowercaseAfterPeriod = document.getElementById('filterLowercaseAfterPeriod');
+        const filterEmptySubtitle = document.getElementById('filterEmptySubtitle');
+        const filterOverlap = document.getElementById('filterOverlap');
+        const filterNoSpaceAfterPeriod = document.getElementById('filterNoSpaceAfterPeriod');
+        const filterUnclosedQuotes = document.getElementById('filterUnclosedQuotes');
+        const filterEllipsis = document.getElementById('filterEllipsis');
+        const filterNumberPunctuation = document.getElementById('filterNumberPunctuation');
+        const filterUnitsFormat = document.getElementById('filterUnitsFormat');
+        const filterAcronymsFormat = document.getElementById('filterAcronymsFormat');
+        const filterEllipsisChar = document.getElementById('filterEllipsisChar');
+        const filterDualSpeakerHyphen = document.getElementById('filterDualSpeakerHyphen');
+        const filterNumbers1to10 = document.getElementById('filterNumbers1to10');
+        const filterFourDigitSeparator = document.getElementById('filterFourDigitSeparator');
+        const filterSemicolons = document.getElementById('filterSemicolons');
+        const filterQuotePeriod = document.getElementById('filterQuotePeriod');
+        const filterIdsSfxFormat = document.getElementById('filterIdsSfxFormat');
+
+        // Collection of all filter checkboxes for the toggle function
+        const allFilterCheckboxes = [
+            filterCps, filterWpm, filterCharLimit, filterLineLimit, filterDashSpace,
+            filterDuration, filterMinGap, filterUnclosedTags, filterDoubleSpaces,
+            filterQuestionMarks, filterLowercaseAfterPeriod, filterEmptySubtitle,
+            filterOverlap, filterNoSpaceAfterPeriod, filterUnclosedQuotes,
+            filterEllipsis, filterNumberPunctuation, filterUnitsFormat,
+            filterAcronymsFormat, filterEllipsisChar, filterDualSpeakerHyphen,
+            filterNumbers1to10, filterFourDigitSeparator, filterSemicolons,
+            filterQuotePeriod, filterIdsSfxFormat
+        ];
+
+
+        // --- Core Functions ---
+
+        /**
+         * Converts milliseconds to a formatted time string (HH:MM:SS,ms).
+         */
+        function formatTime(ms) {
+            if (isNaN(ms) || ms < 0) return "00:00:00,000";
+            const date = new Date(ms);
+            const h = String(date.getUTCHours()).padStart(2, '0');
+            const m = String(date.getUTCMinutes()).padStart(2, '0');
+            const s = String(date.getUTCSeconds()).padStart(2, '0');
+            const mil = String(date.getUTCMilliseconds()).padStart(3, '0');
+            return `${h}:${m}:${s},${mil}`;
+        }
+
+        /**
+         * Converts a formatted time string (HH:MM:SS,ms) to milliseconds.
+         */
+        function timeToMs(timeString) {
+            const parts = timeString.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})/);
+            if (!parts) return 0;
+            const [, h, m, s, ms] = parts.map(Number);
+            return (h * 3600 + m * 60 + s) * 1000 + ms;
+        }
+
+        /**
+         * Calculates characters per second (CPS) for a given text and duration.
+         */
+        function calculateCps(text, durationMs) {
+            if (durationMs <= 0) return 0;
+            const cleanText = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ''); // Remove tags and count only non-whitespace characters
+            return cleanText.length / (durationMs / 1000);
+        }
+
+        /**
+         * Calculates words per minute (WPM) for a given text and duration.
+         */
+        function calculateWpm(text, durationMs) {
+            if (durationMs <= 0) return 0;
+            const cleanText = text.replace(/<[^>]*>/g, ''); // Remove tags for word count
+            const words = cleanText.split(/\s+/).filter(word => word.length > 0).length;
+            return words / (durationMs / 60000);
+        }
+
+        /**
+         * Parses an SRT string into an array of subtitle objects.
+         * Each subtitle object contains:
+         * - index: The subtitle number.
+         * - startMs: Start time in milliseconds.
+         * - endMs: End time in milliseconds.
+         * - durationMs: Duration in milliseconds.
+         * - text: The raw text of the subtitle.
+         * - originalLines: Array of original text lines.
+         * - errors: Array to store detected errors for this subtitle.
+         */
+        function parseSrt(srtText) {
+            const entries = srtText.trim().split(/\r?\n\r?\n/);
+            const parsedSubtitles = entries.map((entry, index) => {
+                const lines = entry.split(/\r?\n/);
+                // The first line is usually the index, second is time, rest is text
+                const timeMatch = lines[1] ? lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/) : null;
+
+                let startMs = 0;
+                let endMs = 0;
+                if (timeMatch) {
+                    startMs = timeToMs(timeMatch[1]);
+                    endMs = timeToMs(timeMatch[2]);
+                }
+
+                const textLines = lines.slice(2); // Text starts from the third line
+                const text = textLines.join('\n').trim();
+
+                return {
+                    index: parseInt(lines[0], 10) || (index + 1), // Use parsed index or sequential
+                    startMs: startMs,
+                    endMs: endMs,
+                    durationMs: endMs - startMs,
+                    text: text,
+                    originalLines: text.split(/\r?\n/), // Store lines based on processed text
+                    errors: []
+                };
+            }).filter(sub => !isNaN(sub.index) && sub.text !== ''); // Filter out malformed entries
+
+            return parsedSubtitles;
+        }
+
+        /**
+         * Handles the file selection event.
+         * Reads the selected SRT file and parses its content.
+         */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                fileNameDisplay.textContent = `Archivo seleccionado: ${file.name}`;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        subtitles = parseSrt(e.target.result);
+                        if (subtitles.length > 0) {
+                            resultsDiv.innerHTML = '<p class="text-gray-500">Archivo cargado. Presiona "REVISAR SUBTÍTULOS".</p>';
+                        } else {
+                            resultsDiv.innerHTML = '<p class="text-red-600">No se pudieron analizar subtítulos válidos del archivo.</p>';
+                        }
+                        noErrorsMessage.classList.add('hidden');
+                        errorsFound = []; // Reset errors
+                    } catch (error) {
+                        resultsDiv.innerHTML = `<p class="text-red-600">Error al procesar el archivo: ${error.message}. Asegúrate de que es un archivo SRT válido.</p>`;
+                        console.error("Error parsing SRT:", error);
+                        subtitles = [];
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                fileNameDisplay.textContent = '';
+                resultsDiv.innerHTML = '<p class="text-gray-500">Sube un archivo de subtítulos y presiona "REVISAR SUBTÍTULOS".</p>';
+                subtitles = [];
+                errorsFound = [];
+            }
+        }
+
+        /**
+         * Main function to perform all selected subtitle quality checks.
+         */
+        function checkSubtitles() {
+            if (subtitles.length === 0) {
+                resultsDiv.innerHTML = '<p class="text-red-600">Por favor, primero sube un archivo de subtítulos.</p>';
+                return;
+            }
+
+            errorsFound = []; // Reset errors for a new check
+
+            subtitles.forEach((sub, i) => {
+                sub.errors = []; // Clear previous errors for this subtitle
+
+                // 1. Check Reading Speed (CPS)
+                if (filterCps.checked) {
+                    const cps = calculateCps(sub.text, sub.durationMs);
+                    if (cps > parseFloat(maxCps.value)) {
+                        sub.errors.push(`Velocidad de lectura alta: ${cps.toFixed(2)} CPS (Máx: ${maxCps.value})`);
+                    }
+                }
+
+                // 1.5. Check Reading Speed (WPM) - Separated filter logic
+                if (filterWpm.checked) { // Check if WPM filter is actually enabled
+                    const wpm = calculateWpm(sub.text, sub.durationMs);
+                    if (wpm > parseFloat(maxWpm.value)) {
+                        sub.errors.push(`Velocidad de lectura alta: ${wpm.toFixed(2)} WPM (Máx: ${maxWpm.value})`);
+                    }
+                }
+
+                // 2. Check Character Limit per Line
+                if (filterCharLimit.checked) {
+                    sub.originalLines.forEach((line, lineIndex) => {
+                        if (line.length > parseInt(maxCharsPerLine.value)) {
+                            sub.errors.push(`Línea ${lineIndex + 1} excede el límite de caracteres (${line.length} > ${maxCharsPerLine.value})`);
+                        }
+                    });
+                }
+
+                // 3. Check Line Limit
+                if (filterLineLimit.checked) {
+                    if (sub.originalLines.length > parseInt(maxLines.value)) {
+                        sub.errors.push(`Excede el límite de líneas (${sub.originalLines.length} > ${maxLines.value})`);
+                    }
+                }
+
+                // 4. Check Space after Dash
+                if (filterDashSpace.checked) {
+                    if (sub.text.match(/-(?!\s)/) && !sub.text.match(/-\n/)) {
+                        sub.errors.push('No hay espacio después de un guion.');
+                    }
+                }
+
+                // 5. Check Min/Max Duration
+                if (filterDuration.checked) {
+                    if (sub.durationMs < parseInt(minDuration.value)) {
+                        sub.errors.push(`Duración demasiado corta (${sub.durationMs}ms < ${minDuration.value}ms)`);
+                    }
+                    if (sub.durationMs > parseInt(maxDuration.value)) {
+                        sub.errors.push(`Duración demasiado larga (${sub.durationMs}ms > ${maxDuration.value}ms)`);
+                    }
+                }
+
+                // 6. Check Min Gap between subtitles
+                if (filterMinGap.checked && i < subtitles.length - 1) {
+                    const nextSub = subtitles[i + 1];
+                    let requiredGapMs;
+                    const minGapValue = parseInt(minGap.value);
+                    const gapUnitValue = gapUnit.value;
+                    let currentFrameRateValue = parseFloat(frameRate.value); // Ensure it's defined
+
+                    if (gapUnitValue === 'ms') {
+                        requiredGapMs = minGapValue;
+                    } else { // frames
+                        if (isNaN(currentFrameRateValue) || currentFrameRateValue <= 0) {
+                            sub.errors.push('Velocidad de fotogramas inválida para el cálculo del gap.');
+                            return; // Skip this check if frame rate is invalid
+                        }
+                        requiredGapMs = (minGapValue / currentFrameRateValue) * 1000;
+                    }
+
+                    const actualGap = nextSub.startMs - sub.endMs;
+                    if (actualGap < requiredGapMs && actualGap >= 0) { // Only check if gap is positive or zero
+                        let errorMessage = `Espacio entre subtítulos demasiado pequeño (${actualGap}ms < ${requiredGapMs.toFixed(0)}ms`;
+                        if (gapUnitValue === 'frames') {
+                            errorMessage += `, o ${(actualGap / 1000 * currentFrameRateValue).toFixed(1)} frames`;
+                        }
+                        errorMessage += `)`;
+                        sub.errors.push(errorMessage);
+                    }
+                }
+
+                // 7. Check Unclosed Tags (basic HTML tags: <i>, <b>, <font>)
+                if (filterUnclosedTags.checked) {
+                    const tags = ['i', 'b', 'font'];
+                    tags.forEach(tag => {
+                        const openCount = (sub.text.match(new RegExp(`<${tag}>`, 'g')) || []).length;
+                        const closeCount = (sub.text.match(new RegExp(`</${tag}>`, 'g')) || []).length;
+                        if (openCount > closeCount) {
+                            sub.errors.push(`Etiqueta <${tag}> sin cerrar.`);
+                        } else if (closeCount > openCount) {
+                             sub.errors.push(`Etiqueta </${tag}> sin abrir.`);
+                        }
+                    });
+                    if (sub.text.match(/<\w+(?![^>]*>)/) || sub.text.match(/<\/\w+(?![^>]*>)/)) {
+                        sub.errors.push('Posible etiqueta HTML mal formada (falta ">").');
+                    }
+                }
+
+                // 8. Check Double/Triple Spaces
+                if (filterDoubleSpaces.checked) {
+                    if (sub.text.match(/\s\s+/)) {
+                        sub.errors.push('Contiene espacios dobles o triples.');
+                    }
+                }
+
+                // 9. Check Missing Question/Exclamation Marks (Spanish: ¿...?, ¡...!)
+                if (filterQuestionMarks.checked) {
+                    sub.originalLines.forEach((line, lineIndex) => {
+                        const hasOpenQ = line.includes('¿');
+                        const hasCloseQ = line.includes('?');
+                        const hasOpenA = line.includes('¡');
+                        const hasCloseA = line.includes('!');
+
+                        if (hasOpenQ && !hasCloseQ) {
+                            sub.errors.push(`Línea ${lineIndex + 1}: Falta signo de cierre de interrogación (?) después de "¿".`);
+                        } else if (!hasOpenQ && hasCloseQ && !line.includes('¿') && line.match(/[a-zA-ZáéíóúÁÉÍÓÚñÑ]$/)) {
+                             sub.errors.push(`Línea ${lineIndex + 1}: Falta signo de apertura de interrogación ("¿") antes de "?".`);
+                        }
+
+                        if (hasOpenA && !hasCloseA) {
+                            sub.errors.push(`Línea ${lineIndex + 1}: Falta signo de cierre de exclamación (!) después de "¡".`);
+                        } else if (!hasOpenA && hasCloseA && !line.includes('¡') && line.match(/[a-zA-ZáéíóúÁÉÍÓÚñÑ]$/)) {
+                             sub.errors.push(`Línea ${lineIndex + 1}: Falta signo de apertura de exclamación ("¡") antes de "!".`);
+                        }
+                    });
+                }
+
+                // 10. Check Lowercase after Period
+                if (filterLowercaseAfterPeriod.checked) {
+                    if (sub.text.match(/\.\s*([a-záéíóúüñ])/)) {
+                        const match = sub.text.match(/\.\s*([a-záéíóúüñ])/);
+                        if (match) {
+                            const preText = sub.text.substring(0, match.index + 1);
+                            const isAbbreviation = /(mr|dr|vs|etc|e\.g|i\.e)\.$/i.test(preText.trim());
+                            if (!isAbbreviation) {
+                                sub.errors.push('El subtítulo comienza con minúscula después de un punto.');
+                            }
+                        }
+                    }
+                }
+
+                // 11. Check Empty Subtitles
+                if (filterEmptySubtitle.checked) {
+                    if (sub.text.trim() === '') {
+                        sub.errors.push('Subtítulo vacío.');
+                    }
+                }
+
+                // 12. Check Overlaps
+                if (filterOverlap.checked && i < subtitles.length - 1) {
+                    const nextSub = subtitles[i + 1];
+                    if (sub.endMs > nextSub.startMs) {
+                        sub.errors.push(`Overlap con el siguiente subtítulo (Termina en ${formatTime(sub.endMs)}, Siguiente empieza en ${formatTime(nextSub.startMs)})`);
+                    }
+                }
+
+                // 13. Check No Space After Period (excluding ellipses)
+                if (filterNoSpaceAfterPeriod.checked) {
+                    const regex = /\.(?!\s|$)(?!\d)(?!\.)/g;
+                    if (sub.text.match(regex)) {
+                        sub.errors.push('Un punto seguido directamente de una palabra o letra, sin espacio intermedio.');
+                    }
+                }
+
+                // 14. Check Unclosed Quotes
+                if (filterUnclosedQuotes.checked) {
+                    const countSingle = (sub.text.match(/'/g) || []).length;
+                    const countDouble = (sub.text.match(/"/g) || []).length;
+
+                    if (countSingle % 2 !== 0) {
+                        sub.errors.push('Comilla simple (\') sin cerrar.');
+                    }
+                    if (countDouble % 2 !== 0) {
+                        sub.errors.push('Comilla doble (") sin cerrar.');
+                    }
+                }
+
+                // 15. Check Ellipsis (basic check for "..." at the end of a line)
+                if (filterEllipsis.checked) {
+                    const linesWithEllipsisAtEnd = sub.originalLines.filter(line => line.trim().endsWith('...'));
+                    if (linesWithEllipsisAtEnd.length > 0) {
+                        sub.errors.push('Contiene elipsis (...) al final de una línea (posiblemente un enlace).');
+                    }
+                }
+
+                // 16. Check Number Punctuation (Spanish convention: comma for decimals, period for thousands)
+                if (filterNumberPunctuation.checked) {
+                    // Detect English-style thousand separators (e.g., 1,234)
+                    if (sub.text.match(/\d{1,3}(,\d{3})+(\.\d+)?/)) {
+                        sub.errors.push('Usa puntuación de miles estilo inglés (coma como separador de miles).');
+                    }
+                    // Detect English-style decimals (e.g., 123.45) if context suggests integer then period then decimal, not just date.
+                    if (sub.text.match(/\d+\.\d+(?!\d{3})/)) {
+                         const numberMatch = sub.text.match(/(\d+\.\d+)(?!\.\d{3})/);
+                        if (numberMatch && !sub.text.match(/\d+\.\d{3}\.\d+/)) {
+                            sub.errors.push('Usa puntuación de decimales estilo inglés (punto como separador de decimales).');
+                        }
+                    }
+                }
+
+                // NEW FILTERS IMPLEMENTATION
+
+                // 17. Formato de unidades de medida
+                if (filterUnitsFormat.checked) {
+                    const unitRegex = /\b(\d+(\.\d+)?\s*(km|cm|m|kg|g|L|ml|A|V|Hz)(s|\.))\b/gi;
+                    const percentPeriodRegex = /\d+%\.$/g;
+                    if (sub.text.match(unitRegex) && !sub.text.match(percentPeriodRegex)) {
+                        sub.errors.push('Unidad de medida con formato incorrecto (punto o plural).');
+                    }
+                }
+
+                // 18. Formato de siglas
+                if (filterAcronymsFormat.checked) {
+                    const acronymsRegex = /\b[A-ZÑÁÉÍÓÚÄËÏÖÜ]\.([A-ZÑÁÉÍÓÚÄËÏÖÜ]\.)+\b|\b[A-ZÑÁÉÍÓÚÄËÏÖÜ]( [A-ZÑÁÉÍÓÚÄËÏÖÜ])+\b/g;
+                    if (sub.text.match(acronymsRegex)) {
+                        sub.errors.push('Sigla con puntuación o espacios internos incorrectos.');
+                    }
+                }
+
+                // 19. Elipsis incorrecta (carácter)
+                if (filterEllipsisChar.checked) {
+                    if (sub.text.includes('...') && !sub.text.includes('…')) {
+                        sub.errors.push('Usa tres puntos (...) en lugar del carácter de elipsis único (…).');
+                    }
+                }
+
+                // 20. Formato de doble hablante (consistency check)
+                if (filterDualSpeakerHyphen.checked) {
+                    if (sub.originalLines.length === 2) {
+                        const line1HasHyphen = sub.originalLines[0].trim().startsWith('-');
+                        const line2HasHyphen = sub.originalLines[1].trim().startsWith('-');
+
+                        if (line1HasHyphen && !line2HasHyphen) {
+                            sub.errors.push('Primera línea de diálogo de doble hablante con guion, la segunda sin él.');
+                        } else if (!line1HasHyphen && line2HasHyphen) {
+                            sub.errors.push('Primera línea de diálogo de doble hablante sin guion, la segunda con él.');
+                        }
+                    }
+                }
+
+                // 21. Números cardinales en cifras (1-10)
+                if (filterNumbers1to10.checked) {
+                    const numbersAsDigitsRegex = /\b(1|2|3|4|5|6|7|8|9|10)\b/g;
+                    let match;
+                    while ((match = numbersAsDigitsRegex.exec(sub.text)) !== null) {
+                        const num = parseInt(match[0]);
+                        const contextAfter = sub.text.substring(match.index + match[0].length);
+                        const contextBefore = sub.text.substring(0, match.index);
+                        if (!contextAfter.match(/^\s*(km|cm|m|kg|g|L|ml|A|V|Hz|%|\.)/i) &&
+                            !contextAfter.match(/^\s*(\d{1,2}|de|del|años|hora)/i) &&
+                            !contextBefore.match(/\b(Sr|Sra|Dr|Dra)\.?\s*$/i)
+                        ) {
+                            sub.errors.push(`Número ${num} escrito en cifra en lugar de letra (1-10).`);
+                        }
+                    }
+                }
+
+                // 22. Separador de miles en 4 dígitos
+                if (filterFourDigitSeparator.checked) {
+                    const fourDigitSeparatorRegex = /\b\d{1}[.,]\d{3}\b/g;
+                    if (sub.text.match(fourDigitSeparatorRegex)) {
+                        sub.errors.push('Número de cuatro dígitos con separador de miles.');
+                    }
+                }
+
+                // 23. Uso de punto y coma
+                if (filterSemicolons.checked) {
+                    if (sub.text.includes(';')) {
+                        sub.errors.push('Contiene punto y coma (;).');
+                    }
+                }
+
+                // 24. Puntuación de comillas (punto final fuera de comillas)
+                if (filterQuotePeriod.checked) {
+                    if (sub.text.match(/"\.[ \n\r]*$/)) {
+                        sub.errors.push('Punto final de cita se encuentra dentro de las comillas.');
+                    }
+                }
+
+                // 25. Detección de acotaciones o SFX (corchetes)
+                if (filterIdsSfxFormat.checked) {
+                    if (sub.text.match(/\[.*?\]/)) {
+                        sub.errors.push('Contiene acotaciones o efectos de sonido entre corchetes.');
+                    }
+                }
+
+                if (sub.errors.length > 0) {
+                    errorsFound.push(sub);
+                }
+            });
+
+            displayResults();
+        }
+
+        /**
+         * Displays the quality check results in the resultsDiv.
+         */
+        function displayResults() {
+            resultsDiv.innerHTML = ''; // Clear previous results
+
+            if (errorsFound.length === 0) {
+                noErrorsMessage.classList.remove('hidden');
+                resultsDiv.classList.add('hidden'); // Hide the empty results div
+                return;
+            } else {
+                noErrorsMessage.classList.add('hidden');
+                resultsDiv.classList.remove('hidden');
+            }
+
+            errorsFound.forEach(sub => {
+                const subElement = document.createElement('div');
+                subElement.classList.add('p-3', 'mb-3', 'rounded-md', 'shadow-sm', 'error-item');
+
+                const header = document.createElement('p');
+                header.classList.add('font-semibold', 'text-lg', 'text-red-700', 'mb-1');
+                header.innerHTML = `Subtítulo ${sub.index} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})`;
+                subElement.appendChild(header);
+
+                const originalText = document.createElement('pre');
+                originalText.classList.add('bg-white', 'p-2', 'rounded-md', 'border', 'border-red-300', 'text-gray-900', 'text-sm', 'whitespace-pre-wrap', 'mb-2');
+                originalText.textContent = sub.text;
+                subElement.appendChild(originalText);
+
+                const errorList = document.createElement('ul');
+                errorList.classList.add('list-disc', 'list-inside', 'text-red-600');
+                sub.errors.forEach(errorMsg => {
+                    const li = document.createElement('li');
+                    li.textContent = errorMsg;
+                    errorList.appendChild(li);
+                });
+                subElement.appendChild(errorList);
+
+                resultsDiv.appendChild(subElement);
+            });
+        }
+
+        /**
+         * Exports the error report to a PDF document.
+         * @param {string} filename - The desired filename for the PDF.
+         */
+        function exportToPdf(filename) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.text("Informe de Errores SubPandaQA", 105, 20, null, null, "center");
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
+            doc.text(`Fecha: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 10, 35);
+            doc.text(`Archivo: ${subtitleFile.files[0] ? subtitleFile.files[0].name : 'N/A'}`, 10, 42);
+
+            let y = 55;
+            const margin = 10;
+            const lineHeight = 7;
+
+            errorsFound.forEach(sub => {
+                if (y + (sub.originalLines.length * lineHeight) + (sub.errors.length * lineHeight * 1.5) + 30 > doc.internal.pageSize.height - margin) {
+                    doc.addPage();
+                    y = margin;
+                }
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor(200, 0, 0); // Red color for subtitle header
+                doc.text(`Subtítulo ${sub.index} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})`, margin, y);
+                y += lineHeight;
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0); // Black for text
+                sub.originalLines.forEach(line => {
+                    const splitText = doc.splitTextToSize(line, doc.internal.pageSize.width - 2 * margin - 10);
+                    doc.text(splitText, margin + 5, y);
+                    y += splitText.length * lineHeight;
+                });
+                y += 2; // Small gap
+
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(255, 0, 0); // Bright red for errors
+                sub.errors.forEach(errorMsg => {
+                    const splitText = doc.splitTextToSize(`- ${errorMsg}`, doc.internal.pageSize.width - 2 * margin - 10);
+                    doc.text(splitText, margin + 5, y);
+                    y += splitText.length * lineHeight;
+                });
+                y += 5; // Gap between subtitles
+            });
+
+            doc.save(`${filename}.pdf`);
+        }
+
+        /**
+         * Exports the error report as an HTML table that can be copied/saved.
+         * @param {string} filename - The desired filename for the HTML table.
+         */
+        function exportToTable(filename) {
+            let tableHtml = `
+                <h2 style="font-family: 'Inter', sans-serif; text-align: center; color: #333;">Informe de Errores SubPandaQA</h2>
+                <p style="font-family: 'Inter', sans-serif; text-align: center; color: #555;">Fecha: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+                <p style="font-family: 'Inter', sans-serif; text-align: center; color: #555;">Archivo: ${subtitleFile.files[0] ? subtitleFile.files[0].name : 'N/A'}</p>
+                <br>
+                <table style="width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif;">
+                    <thead>
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">ID Subtítulo</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Timestamps</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Texto Original</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Errores Detectados</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            errorsFound.forEach(sub => {
+                tableHtml += `
+                    <tr style="background-color: #fee2e2;">
+                        <td style="border: 1px solid #ddd; padding: 8px; vertical-align: top;">${sub.index}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; vertical-align: top;">${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; vertical-align: top;"><pre style="white-space: pre-wrap; margin: 0; font-family: 'Inter', sans-serif;">${escapeHtml(sub.text)}</pre></td>
+                        <td style="border: 1px solid #ddd; padding: 8px; vertical-align: top;">
+                            <ul style="margin: 0; padding-left: 20px; color: #ef4444;">
+                `;
+                sub.errors.forEach(errorMsg => {
+                    tableHtml += `<li>${escapeHtml(errorMsg)}</li>`;
+                });
+                tableHtml += `
+                            </ul>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+
+            // Open a new window and write the HTML table to it
+            const newWindow = window.open();
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <title>Informe de Errores - SubPandaQA</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Inter', sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                        pre { white-space: pre-wrap; font-family: 'Inter', sans-serif; }
+                        h2, p { text-align: center; }
+                        ul { list-style-type: disc; margin: 0; padding-left: 20px; color: #ef4444; }
+                    </style>
+                </head>
+                <body>
+                    ${tableHtml}
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+            newWindow.document.title = `${filename}.html`; // Set the title for the new window
+        }
+
+        /**
+         * Exports the currently loaded and potentially edited subtitles to a new SRT file.
+         * @param {string} filename - The desired filename for the SRT.
+         */
+        function exportRevisedSrt(filename) {
+            if (subtitles.length === 0) {
+                alert('No hay subtítulos para exportar.');
+                return;
+            }
+
+            let srtContent = '';
+            subtitles.forEach(sub => {
+                srtContent += `${sub.index}\n`;
+                srtContent += `${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)}\n`;
+                srtContent += `${sub.text}\n\n`;
+            });
+
+            const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${filename}.srt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            alert(`Subtítulos revisados exportados como "${filename}.srt".`);
+        }
+
+        /**
+         * Helper function to escape HTML entities for display in HTML table.
+         */
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // --- Event Listeners ---
+
+        // Main actions
+        subtitleFile.addEventListener('change', handleFileSelect);
+        checkButton.addEventListener('click', checkSubtitles);
+
+        // Export buttons
+        exportPdfButton.addEventListener('click', exportToPdf);
+        exportTableButton.addEventListener('click', exportToTable);
+
+        // Gap Unit Listener
+        gapUnit.addEventListener('change', function() {
+            if (this.value === 'frames') {
+                frameRate.style.display = 'inline-block';
+            } else {
+                frameRate.style.display = 'none';
+            }
+        });
+
+        // Toggle all filters button functionality
+        toggleAllFiltersButton.addEventListener('click', () => {
+            allFiltersCheckedState = !allFiltersCheckedState;
+            allFilterCheckboxes.forEach(checkbox => {
+                checkbox.checked = allFiltersCheckedState;
+            });
+        });
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial filter states as per previous requests
+            filterCps.checked = true;
+            maxCps.value = 20;
+
+            filterWpm.checked = false; // Unchecked by default for WPM
+
+            filterCharLimit.checked = true;
+            maxCharsPerLine.value = 42;
+
+            filterLineLimit.checked = true;
+            maxLines.value = 2;
+
+            // Set all other filters to checked by default
+            allFilterCheckboxes.forEach(checkbox => {
+                if (checkbox.id !== 'filterCps' && checkbox.id !== 'filterWpm' && checkbox.id !== 'filterCharLimit' && checkbox.id !== 'filterLineLimit') {
+                    checkbox.checked = true;
+                }
+            });
+
+            // Manually trigger change for gapUnit to ensure correct initial display
+            const event = new Event('change');
+            gapUnit.dispatchEvent(event);
+        });
+    </script>
+</body>
+</html>
