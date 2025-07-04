@@ -1,0 +1,3762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">subpandaTM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
+    <!-- Dexie.js for IndexedDB management -->
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <style>
+        /* General styles for body and font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light mode background */
+            color: #202020; /* General text color for light mode */
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden; /* Prevent body scroll during resize */
+        }
+
+        /* Allows vertical resizing of text areas */
+        textarea {
+            resize: vertical;
+            overflow-y: hidden; /* Hides initial scrollbar, handled by auto-resize */
+        }
+
+        /* Ensures preformatted text respects line breaks and doesn't overflow */
+        pre {
+            white-space: pre-wrap;
+            word-break: break-all; /* Breaks long words to prevent horizontal overflow */
+        }
+
+        /* Style for the check icon (SVG) */
+        .check-icon {
+            display: none; /* Hidden by default */
+            margin-left: 8px; /* Space to the left of the icon */
+            vertical-align: middle; /* Vertical alignment */
+            width: 20px; /* Icon width */
+            height: 20px; /* Icon height */
+            color: #22c55e; /* Green color for check */
+        }
+
+        /* Button styles with hover effects */
+        .btn-load {
+            background-color: #f48790;
+            color: #000;
+        }
+        .btn-load:hover {
+            background-color: #e07a82;
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-save {
+            background-color: #f7cf7e;
+            color: #000;
+        }
+        .btn-save:hover {
+            background-color: #e3b76e;
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Validate button color */
+        .btn-validate {
+            background-color: #f7cf7e;
+            color: #000;
+        }
+        .btn-validate:hover {
+            background-color: #e3b76e;
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Edit button color */
+        .btn-edit {
+            background-color: #f48790;
+            color: #000;
+        }
+        .btn-edit:hover {
+            background-color: #e07a82;
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Style for format buttons */
+        .btn-format {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            transition: background-color 0.2s;
+        }
+        .btn-format:hover {
+            background-color: #d1d5db;
+        }
+
+
+        /* Specific styles for code display fields (original, translation) */
+        .subtitle-display-code {
+            background-color: #e3e3e3; /* Light grey background */
+            border: 1px solid #000; /* Black border */
+            color: #202020; /* Dark black text */
+        }
+        /* The translation editor div will always have white background and black text */
+        .subtitle-editor {
+            background-color: #ffffff; /* White background */
+            color: #000000; /* Black text */
+            min-height: 50px; /* Reduced height */
+            border: 1px solid #d1d5db;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+        }
+        .subtitle-editor[contenteditable="false"] {
+            background-color: #f3f4f6;
+        }
+
+
+        /* Background of translation units in light mode */
+        .translation-unit-bg {
+            background-color: #f8f8f8; /* Very light background for translation unit container */
+            border-color: #e5e7eb; /* Light border */
+        }
+
+        /* Text color adjustments to ensure contrast in light mode */
+        .text-on-light-contrast {
+            color: #202020; /* Dark black for text on light backgrounds */
+        }
+
+        /* 2-column layout classes */
+        .translation-row {
+            display: flex;
+            flex-direction: column; /* Default on mobile: column */
+            gap: 1rem; /* Space between columns/rows */
+        }
+
+        @media (min-width: 768px) { /* From md (768px) */
+            .translation-row {
+                flex-direction: row; /* On desktop: row */
+            }
+            .original-col, .translation-col { /* Both columns have the same width */
+                flex: 1; /* Occupy the same proportion of available space */
+            }
+        }
+
+        /* Modal (pop-up) styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 500px; /* Default width for message/shortcuts modal */
+        }
+
+        /* Specific width for findReplaceModal to accommodate text on one line */
+        #findReplaceModal .modal-content {
+            width: 650px; /* Increased width to prevent text wrapping */
+            max-width: 95%; /* Ensure it doesn't overflow on smaller screens */
+        }
+        .shortcut-icon {
+            display: inline-block;
+            width: 1em; /* Adjust size as needed */
+            height: 1em;
+            vertical-align: middle;
+            margin: 0 4px;
+        }
+
+        /* Sidebars - now part of the flex flow */
+        .terminology-sidebar, .translation-memory-sidebar {
+            display: none; /* Hidden by default, takes no space */
+            flex-shrink: 0; /* Prevents shrinking when visible */
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            resize: horizontal;
+            min-width: 300px;
+            transition: width 0.3s ease-in-out; /* Transition for width change when resizing */
+        }
+
+        .terminology-sidebar.show-sidebar, .translation-memory-sidebar.show-sidebar {
+            display: flex; /* Make them visible and take space in the flex container */
+            flex-direction: column;
+            flex: 1; /* Make them share the available space */
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 0.5rem; /* For scrollbar space */
+            max-height: 40vh; /* Ensure a max height to enable scrolling */
+        }
+
+        /* Styles for glossary specific inputs and buttons within sidebar */
+        .glossary-input-group label, .tm-input-group label, .qa-input-group label {
+            white-space: nowrap;
+        }
+        .glossary-input-group input, .glossary-input-group select,
+        .tm-input-group input, .tm-input-group select,
+        .qa-input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-top: 4px;
+            color: #202020;
+            background-color: #fff;
+        }
+        .glossary-btn-primary, .tm-btn-primary {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .glossary-btn-primary:hover, .tm-btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .glossary-btn-secondary, .tm-btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .glossary-btn-secondary:hover, .tm-btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+        .glossary-delete-btn, .tm-delete-btn {
+            background-color: #f44336;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .glossary-delete-btn:hover, .tm-delete-btn:hover {
+            background-color: #da190b;
+        }
+        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            font-size: 0.9rem;
+        }
+        .glossary-table th, .tm-table th {
+            background-color: #f0f0f0;
+            font-weight: 600;
+        }
+        .glossary-info-box, .tm-info-box {
+            background-color: #f0f8ff;
+            border: 1px solid #d0e8f8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* Glossary Highlight for text and rows */
+        .glossary-highlight {
+            background-color: #ffcc00; /* Yellow highlight for text */
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+
+        .glossary-row-highlight {
+            background-color: #ffcc00 !important; /* Yellow highlight for glossary table rows */
+            transition: background-color 0.3s ease;
+        }
+
+        /* Active translation unit highlight */
+        .translation-unit-active {
+            border: 2px solid #3b82f6; /* Blue border for active unit */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Light blue glow */
+        }
+
+        /* Loading Overlay Styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001; /* Above modals */
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Accordion styles */
+        .accordion-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            background-color: #f9fafb; /* Light background for header */
+            border-bottom: 1px solid #e5e7eb;
+            user-select: none; /* Prevent text selection on double click */
+        }
+
+        .accordion-header:hover {
+            background-color: #f3f4f6;
+            color: #3b82f6; /* Tailwind blue-500 */
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            padding: 0 1rem; /* Adjust padding for collapsed state */
+        }
+        .accordion-content.collapsed {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .accordion-content.expanded {
+            max-height: 500px; /* Sufficiently large value to show all content */
+            padding-top: 1rem; /* Restore padding when expanded */
+            padding-bottom: 1rem;
+        }
+
+        /* TM Search Results Table Column Widths */
+        .tm-table th:nth-child(1), .tm-table td:nth-child(1) {
+            width: 10%; /* Percentage column narrower */
+            max-width: 60px; /* Max width to ensure it doesn't get too wide */
+            text-align: center;
+        }
+        .tm-table th:nth-child(2), .tm-table td:nth-child(2) {
+            width: 45%; /* Original column */
+        }
+        .tm-table th:nth-child(3), .tm-table td:nth-child(3) {
+            width: 45%; /* Translation column */
+        }
+
+        /* Highlight for active TM match in table */
+        .tm-best-match-highlight {
+            background-color: #d1fae5 !important; /* Light green */
+            border-color: #10b981 !important; /* Emerald-500 */
+            border-width: 2px;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); /* Light green glow */
+        }
+        
+        /* Styles for text diff */
+        .diff-deletion {
+            background-color: #fdd;
+            text-decoration: line-through;
+        }
+        .diff-insertion {
+            background-color: #dfd;
+        }
+
+        /* QA Error Styles */
+        .qa-error {
+            color: #ef4444; /* red-500 */
+            font-weight: 700;
+        }
+        .qa-success {
+            color: #22c55e; /* green-500 */
+            font-weight: 700;
+        }
+        #qaErrorStats.clickable {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .qa-error-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .qa-error-item:hover {
+            background-color: #f3f4f6;
+        }
+        #qaErrorListContainer {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+
+        /* Header styles */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .app-header .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .app-header .logo-container img {
+            height: 40px; /* Increased logo size */
+            width: auto;
+        }
+
+        .app-header .header-buttons {
+            display: flex;
+            gap: 0.75rem; /* space-x-3 */
+            flex-wrap: wrap; /* Allow buttons to wrap */
+            justify-content: center; /* Center buttons when wrapped */
+            margin-top: 0.5rem; /* Add some margin for wrapped buttons */
+        }
+
+        @media (min-width: 768px) {
+            .app-header .header-buttons {
+                margin-top: 0; /* Remove margin on larger screens */
+            }
+        }
+
+        .app-header button, .app-header label {
+            font-size: 0.875rem; /* text-sm */
+            white-space: nowrap; /* Prevent text from wrapping inside buttons */
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Main content area for video player and editor */
+        .main-app-content {
+            display: flex;
+            flex-direction: column; /* Default to column on small screens */
+            flex-grow: 1;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        /* New wrapper for editor and sidebars */
+        .editor-and-sidebars-wrapper {
+            display: flex;
+            flex-direction: column; /* Default to column on small screens */
+            flex-grow: 1; /* Allows it to take available space in right-panel-content */
+            gap: 1rem;
+        }
+
+        #vertical-resizer {
+            width: 100%;
+            height: 10px;
+            cursor: ns-resize;
+            background-color: #e5e7eb;
+            border-top: 1px solid #d1d5db;
+            border-bottom: 1px solid #d1d5db;
+        }
+        #vertical-resizer:hover {
+            background-color: #d1d5db;
+        }
+        
+        #horizontal-resizer {
+            width: 10px;
+            height: auto;
+            cursor: col-resize;
+            background-color: #e5e7eb;
+            border-left: 1px solid #d1d5db;
+            border-right: 1px solid #d1d5db;
+        }
+        #horizontal-resizer:hover {
+            background-color: #d1d5db;
+        }
+
+
+        @media (min-width: 1024px) {
+            .main-app-content {
+                flex-direction: row; /* Row layout on large screens */
+                align-items: stretch; /* Stretch items to fill height */
+                gap: 0; /* No gap for resizer */
+            }
+            .video-player-section {
+                flex-shrink: 0;
+                flex-basis: 33%; /* Initial width */
+                position: sticky; /* Make it sticky */
+                top: 70px; /* Adjust based on header height */
+                align-self: flex-start; /* Ensure it sticks to the top of its container */
+            }
+            .right-panel-content {
+                flex-grow: 1; /* Takes remaining space */
+                display: flex; /* Make it a flex container */
+                flex-direction: column; /* Its children (editor, sidebars) laid out in a column */
+                gap: 0; /* Removed gap for resizer */
+            }
+            .editor-and-sidebars-wrapper {
+                flex-direction: column; 
+                flex-grow: 1;
+                display: flex;
+            }
+            .editor-main-content {
+                flex-grow: 0; /* Let height be controlled by JS */
+                height: 25vh; /* Initial height */
+                overflow-y: auto;
+                resize: vertical; /* Allow vertical resize */
+                min-height: 100px; /* Minimum height */
+            }
+            .sidebars-container {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: row;
+                gap: 1rem;
+                overflow: auto; /* Allow scrolling if content overflows */
+            }
+        }
+
+        /* Video player styles */
+        #videoPlayerContainer {
+            width: 100%;
+            background-color: #000; /* Black background for video player */
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Ensures rounded corners apply to video */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        
+        /* Wrapper for video and subtitle overlay */
+        #videoPlayerWrapper {
+            position: relative;
+            width: 100%;
+            line-height: 0; /* Remove extra space below video */
+        }
+
+        #videoPlayer {
+            width: 100%;
+            height: auto;
+            max-height: 60vh; /* Limit video height */
+            border-radius: 0.5rem; /* Apply rounded corners to video element */
+        }
+
+        /* Subtitle Preview Overlay */
+        #subtitlePreviewOverlay {
+            position: absolute;
+            bottom: 5%; /* Position above controls */
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            text-align: center;
+            pointer-events: none; /* Allow clicks to pass through to the video */
+            transition: opacity 0.3s ease;
+        }
+
+        #subtitlePreviewText {
+            font-weight: bold;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 0.25em 0.5em;
+            border-radius: 0.25rem;
+            line-height: 1.4;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            white-space: pre-wrap; /* Respect newlines in subtitles */
+        }
+
+
+        #loadVideoBtn {
+            background-color: #4CAF50; /* Green color for video load button */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #loadVideoBtn:hover {
+            background-color: #45a049;
+        }
+        #videoFileInput {
+            display: none;
+        }
+
+        /* Animation for Restore button */
+        @keyframes pulse-yellow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(250, 204, 21, 0);
+            }
+        }
+        .animate-pulse-yellow {
+            animation: pulse-yellow 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header Section -->
+    <header class="app-header">
+        <div class="logo-container">
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-10 w-auto">
+        </div>
+        <div class="header-buttons">
+            <label for="srtFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
+                <span data-i18n="import_srt" id="importSrtBtnText">Importar .srt</span>
+                <input type="file" id="srtFile" accept=".srt" class="hidden">
+            </label>
+            <button id="saveSrt" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
+                <span data-i18n="export_srt" id="exportSrtBtnText">Exportar .srt</span>
+            </button>
+            <button id="backupBtn" class="bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="backup_btn" id="backupBtnText">Copia de seguridad</span>
+            </button>
+            <button id="qaBtn" class="bg-blue-200 hover:bg-blue-300 text-blue-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="qa_btn" id="qaBtnText">QA</span>
+            </button>
+            <button id="shortcutsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="shortcuts_btn" id="shortcutsBtnText">Atajos</span>
+            </button>
+            <button id="findReplaceBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="find_replace_btn" id="findReplaceBtnText">Buscar y reemplazar</span>
+            </button>
+            <button id="terminologyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="terminology_btn" id="terminologyBtnText">Terminología</span>
+            </button>
+            <button id="tmBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="tm_btn" id="tmBtnText">Memoria de traducción</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Application Content Area -->
+    <div class="main-app-content">
+        <!-- Video Player Section (Left Column on larger screens) -->
+        <div class="video-player-section flex flex-col items-center justify-center p-4">
+            <div id="videoPlayerContainer" class="w-full hidden">
+                <div id="videoPlayerWrapper">
+                    <video id="videoPlayer" controls></video>
+                    <div id="subtitlePreviewOverlay">
+                        <span id="subtitlePreviewText"></span>
+                    </div>
+                </div>
+                <div id="videoControls" class="w-full mt-4 flex flex-col items-center gap-4">
+                    <label for="videoFileInput" id="loadVideoBtn" class="cursor-pointer">
+                        <span data-i18n="load_video">Cargar vídeo</span>
+                        <input type="file" id="videoFileInput" accept="video/*" class="hidden">
+                    </label>
+                    <div class="flex items-center gap-2 text-white">
+                        <label for="subtitleFontSize" class="text-sm font-medium" data-i18n="preview_size">Tamaño:</label>
+                        <input type="range" id="subtitleFontSize" min="12" max="48" value="24" class="w-24">
+                    </div>
+                    <div class="flex items-center gap-2 text-white">
+                        <label for="subtitlePreviewSource" class="text-sm font-medium" data-i18n="preview_source">Mostrar:</label>
+                        <select id="subtitlePreviewSource" class="bg-gray-700 text-white text-sm rounded-md p-1 border border-gray-500">
+                            <option value="translation" data-i18n="translation_text_option">Traducción</option>
+                            <option value="original" data-i18n="original_text_option">Original</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- Statistics Display (Moved here) -->
+            <div id="statsContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 relative hidden">
+                <div class="accordion-item">
+                    <div class="accordion-header" id="statsAccordionHeader">
+                        <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="translation_stats_title" id="translationStatsTitle">Estadísticas</h3>
+                        <svg class="w-5 h-5 accordion-icon rotated" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="accordion-content collapsed" id="statsAccordionContent">
+                        <div class="bg-gray-100 p-3 rounded-md shadow-sm text-sm text-center text-on-light-contrast space-y-1">
+                            <p><span id="segmentsProgress">0/0 subtítulos traducidos (0%)</span></p>
+                            <p><span id="wordsTranslated">0 palabras traducidas</span> / <span id="wordsTotal">0 palabras originales totales</span></p>
+                            <p><span id="wordsRemaining">0 palabras pendientes</span></p>
+                            <!-- NEW: QA Error Stats Line -->
+                            <p id="qaErrorStats"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="horizontal-resizer"></div>
+
+        <!-- Right Panel Content (Editor, Sidebars) -->
+        <div class="right-panel-content">
+            <!-- Wrapper for editor and sidebars -->
+            <div class="editor-and-sidebars-wrapper" id="editorAndSidebarsWrapper">
+                <!-- Translation Content (Main Editor) -->
+                <div class="editor-main-content space-y-4 pr-2" id="editorMainContent">
+                    <div id="translationsContainer">
+                        <!-- Subtitles will be rendered here -->
+                        <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
+                            Carga un archivo .srt para empezar a editar.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="vertical-resizer"></div>
+
+                <!-- Container for both sidebars, arranged in a row -->
+                <div class="sidebars-container">
+                    <!-- Terminology Sidebar -->
+                    <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                        <div class="sidebar-header">
+                            <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle">Terminología</h3>
+                            <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <div class="sidebar-content">
+                            <!-- Language Configuration Section -->
+                            <div id="terminologyLanguageConfigSection" class="space-y-4">
+                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="config_lang_title" id="configLangTitle">Configurar idiomas del glosario</h4>
+                                <div class="glossary-info-box mb-4">
+                                    <p data-i18n="config_lang_info" id="configLangInfo"></p>
+                                </div>
+                                <div class="flex flex-col space-y-2 mb-4">
+                                    <div class="glossary-input-group">
+                                        <label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel">Idioma de origen:</label>
+                                        <input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
+                                    </div>
+                                    <div class="glossary-input-group">
+                                        <label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel">Idioma de destino:</label>
+                                        <input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
+                                    </div>
+                                    <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" id="confirmLanguagesBtn" class="glossary-btn-primary w-full rounded-md">Confirmar idiomas</button>
+                                </div>
+                            </div>
+
+                            <!-- Terminology Editor Section (Initially hidden) -->
+                            <div id="terminologyEditorSection" style="display:none;">
+                                <!-- Buttons: Import, Download, New Glossary -->
+                                <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                                    <button onclick="loadTBX()" data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Importar TBX</button>
+                                    <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
+                                    <button onclick="downloadTBX()" data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Descargar TBX</button>
+                                    <button onclick="resetGlossary()" data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Nuevo glosario</button>
+                                </div>
+
+
+                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_lang_title" id="currentLangTitle">Idiomas actuales del glosario</h4>
+                                <div class="flex space-x-2 mb-4">
+                                    <div class="glossary-input-group flex-1">
+                                        <label data-i18n="source_language">Idioma de origen:</label>
+                                        <input id="displaySrcLang" disabled class="block w-full rounded-md" />
+                                    </div>
+                                    <div class="glossary-input-group flex-1">
+                                        <label data-i18n="target_language">Idioma de destino:</label>
+                                        <input id="displayTgtLang" disabled class="block w-full rounded-md" />
+                                    </div>
+                                </div>
+
+                                <!-- Add Term Accordion -->
+                                <div class="accordion-item">
+                                    <div class="accordion-header flex justify-between items-center" id="addTermHeader">
+                                        <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion">Añadir término</h4>
+                                        <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                    <div class="accordion-content collapsed" id="addTermContent"> <!-- Changed to 'collapsed' by default -->
+                                        <div class="flex flex-col space-y-2 mb-4">
+                                            <div class="glossary-input-group">
+                                                <label for="srcTerm" data-i18n="term" id="termLabel">Término:</label>
+                                                <input id="srcTerm" class="block w-full rounded-md" />
+                                            </div>
+                                            <div class="glossary-input-group">
+                                                <label for="tgtTerm" data-i18n="translation" id="translationLabel">Traducción:</label>
+                                                <input id="tgtTerm" class="block w-full rounded-md" />
+                                            </div>
+                                            <button onclick="addTerm()" data-i18n="add_button" id="addTermBtn" class="glossary-btn-primary w-full rounded-md">Añadir</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Add Term Accordion -->
+
+                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="search_title" id="searchTitle">Buscar</h4>
+                                <div class="mb-4">
+                                    <input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="renderGlossary()" />
+                                </div>
+
+                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle">Glosario</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="glossary-table w-full">
+                                        <thead>
+                                            <tr>
+                                                <th data-i18n="source_term_col" id="sourceTermCol">Término de origen</th>
+                                                <th data-i18n="target_term_col" id="targetTermCol">Término de destino</th>
+                                                <th data-i18n="actions_col" id="actionsCol">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="glossaryTableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <datalist id="isoLanguages"></datalist>
+                    </div>
+
+                    <!-- Translation Memory Sidebar -->
+                    <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                        <div class="sidebar-header">
+                            <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle">Memoria de traducción</h3>
+                            <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <div class="sidebar-content">
+                            <!-- Internal TM message display -->
+                            <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
+
+                            <!-- Language Configuration Section for TM -->
+                            <div id="tmLanguageConfigSection" class="space-y-4">
+                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="tm_config_lang_title" id="tmConfigLangTitle">Configurar idiomas de la TM</h4>
+                                <div class="tm-info-box mb-4">
+                                    <p data-i18n="tm_config_lang_info" id="tmConfigLangInfo"></p>
+                                </div>
+                                <div class="flex flex-col space-y-2 mb-4">
+                                    <div class="tm-input-group">
+                                        <label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel">Idioma de origen:</label>
+                                        <input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
+                                    </div>
+                                    <div class="tm-input-group">
+                                        <label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel">Idioma de destino:</label>
+                                        <input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
+                                    </div>
+                                    <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" id="tmConfirmLanguagesBtn" class="tm-btn-primary w-full rounded-md">Confirmar idiomas</button>
+                                </div>
+                            </div>
+
+                            <!-- TM Editor Section (Initially hidden) -->
+                            <div id="tmEditorSection" style="display:none;">
+                                <!-- TM File Controls -->
+                                <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                                    <button onclick="resetTM()" data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Nueva TM</button>
+                                    <label for="tmFileInput" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 tm-btn-secondary flex-1 text-sm text-center">
+                                        <span data-i18n="import_tmx" id="importTmxBtnText">Importar TMX</span>
+                                        <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
+                                    </label>
+                                    <button onclick="downloadTMX()" data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Descargar TMX</button>
+                                </div>
+
+                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_tm_lang_title" id="currentTmLangTitle">Idiomas actuales de la TM</h4>
+                                <div class="flex space-x-2 mb-4">
+                                    <div class="tm-input-group flex-1">
+                                        <label data-i18n="source_language">Idioma de origen:</label>
+                                        <input id="displayTmSrcLang" disabled class="block w-full rounded-md" />
+                                    </div>
+                                    <div class="tm-input-group flex-1">
+                                        <label data-i18n="target_language">Idioma de destino:</label>
+                                        <input id="displayTmTgtLang" disabled class="block w-full rounded-md" />
+                                    </div>
+                                </div>
+
+                                <!-- TM Search Section -->
+                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle">Buscar en TM</h4>
+                                <div class="mb-4">
+                                    <input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="tmSearch()" />
+                                </div>
+
+                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle">Resultados de búsqueda en TM</h4>
+                                <div class="overflow-x-auto mb-4">
+                                    <table class="tm-table w-full">
+                                        <thead>
+                                            <tr>
+                                                <th data-i18n="tm_score_col" id="tmScoreCol">%</th>
+                                                <th data-i18n="tm_original_col" id="tmOriginalCol">Original</th>
+                                                <th data-i18n="tm_translation_col" id="tmTranslationCol">Traducción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tmSearchResultsTableBody">
+                                            <!-- TM search results will be rendered here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden">
+                                    No se encontraron coincidencias en la TM.
+                                </div>
+                            </div>
+                        </div>
+                        <datalist id="isoLanguages"></datalist>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box Modal -->
+    <div id="messageBox" class="modal hidden">
+        <div class="modal-content rounded-lg">
+            <p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p>
+            <button id="messageClose" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300">
+                <span data-i18n="ok" id="okBtnText">OK</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Shortcuts Modal -->
+    <div id="shortcutsModal" class="modal hidden">
+        <div class="modal-content rounded-lg">
+            <h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Atajos de teclado</h2>
+            <ul class="list-disc list-inside text-on-light-contrast space-y-2">
+                <li id="shortcutValidate"><strong>Ctrl + Enter:</strong> Validar traducción y pasar a la siguiente.</li>
+                <li id="shortcutNext"><strong>Ctrl + <span id="arrowDownIconHtml"></span></strong>: Ir a la siguiente traducción.</li>
+                <li id="shortcutPrev"><strong>Ctrl + <span id="arrowUpIconHtml"></span></strong>: Ir a la traducción anterior.</li>
+                <li id="shortcutAlt1"><strong>Alt + [1-5]:</strong> Insertar sugerencia de la memoria de traducción.</li>
+                <li id="shortcutTmInsert"><strong>Ctrl + Alt + [1-5]:</strong> Insertar término traducido resaltado en glosario.</li>
+                <li id="shortcutJumpToTime"><strong>Ctrl + J:</strong> Saltar al tiempo de inicio del subtítulo actual.</li>
+                <li id="shortcutPlaySegment"><strong>Ctrl + Barra espaciadora:</strong> Reproducir el subtítulo actual.</li>
+                <li id="shortcutPlayPause"><strong>Alt + P:</strong> Reproducir/pausar vídeo.</li>
+                <li id="shortcutSeek"><strong>Alt + Flechas:</strong> Avanzar/retroceder 3 segundos.</li>
+                <li id="shortcutSeekFast"><strong>Ctrl + Alt + Flechas:</strong> Avanzar/retroceder 5 segundos.</li>
+                <li id="shortcutBold"><strong>Ctrl + B:</strong> Aplicar negrita.</li>
+                <li id="shortcutItalic"><strong>Ctrl + I:</strong> Aplicar cursiva.</li>
+            </ul>
+            <button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300 rounded-lg">
+                <span id="closeBtnText">Cerrar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Find and Replace Modal -->
+    <div id="findReplaceModal" class="modal hidden">
+        <div class="modal-content rounded-lg">
+            <h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Buscar y reemplazar</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Buscar:</label>
+                    <input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div>
+                    <label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Reemplazar con:</label>
+                    <input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center text-on-light-contrast">
+                        <input type="checkbox" id="caseSensitiveCheckbox" class="mr-2 rounded">
+                        <span data-i18n="case_sensitive" id="caseSensitiveText">Distinguir mayúsculas y minúsculas</span>
+                    </label>
+                    <label class="flex items-center text-on-light-contrast">
+                        <input type="checkbox" id="regexCheckbox" class="mr-2 rounded">
+                        <span data-i18n="regular_expression" id="regexText">Expresión regular</span>
+                    </label>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button data-i18n="find_prev" id="findPrevBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span id="findPrevText">Buscar anterior</span>
+                    </button>
+                    <button data-i18n="find_next" id="findNextBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span id="findNextText">Buscar siguiente</span>
+                    </button>
+                    <button data-i18n="replace" id="replaceBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span id="replaceText">Reemplazar</span>
+                    </button>
+                    <button data-i18n="replace_all" id="replaceAllBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span id="replaceAllText">Reemplazar todo</span>
+                    </button>
+                </div>
+            </div>
+            <button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full rounded-lg">
+                <span id="closeBtnText">Cerrar</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Save SRT Modal -->
+    <div id="saveSrtModal" class="modal hidden">
+        <div class="modal-content rounded-lg">
+            <h2 data-i18n="save_srt_title" id="saveSrtTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Exportar Archivo SRT</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="fileNameInput" data-i18n="file_name_label" id="fileNameLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Nombre del archivo:</label>
+                    <input type="text" id="fileNameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button data-i18n="cancel_btn" id="cancelSaveBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span id="cancelSaveText">Cancelar</span>
+                    </button>
+                    <button data-i18n="save_btn" id="confirmSaveBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span id="confirmSaveText">Guardar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Modal -->
+    <div id="backupModal" class="modal hidden">
+        <div class="modal-content rounded-lg">
+            <h2 data-i18n="backup_modal_title" id="backupModalTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Copia de Seguridad</h2>
+            
+            <!-- View when backup EXISTS -->
+            <div id="backupFoundView">
+                <div id="backupInfo" class="bg-gray-100 p-4 rounded-md mb-4 text-on-light-contrast">
+                    <p data-i18n="restore_backup_info">Se ha encontrado una copia de seguridad de una sesión no guardada.</p>
+                    <p><strong><span data-i18n="file_label">Archivo:</span></strong> <span id="backupFileName"></span></p>
+                    <p><strong><span data-i18n="last_modified_label">Última modificación:</span></strong> <span id="backupLastModified"></span></p>
+                </div>
+                <div class="flex justify-end space-x-2 flex-wrap gap-2">
+                    <button data-i18n="export_srt_btn" id="exportSrtFromBackupBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        Exportar SRT
+                    </button>
+                    <button data-i18n="delete_backup_btn" id="deleteBackupBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        Borrar Backup
+                    </button>
+                    <button data-i18n="restore_btn" id="confirmRestoreBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        Restaurar
+                    </button>
+                </div>
+            </div>
+
+            <!-- View when backup DOES NOT EXIST -->
+            <div id="noBackupFoundView" class="hidden">
+                 <p data-i18n="no_backup_found_info" class="text-on-light-contrast">No se ha encontrado ninguna copia de seguridad automática.</p>
+            </div>
+
+            <button data-i18n="close_btn" id="closeBackupModalBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <!-- QA Modal -->
+    <div id="qaModal" class="modal hidden">
+        <div class="modal-content rounded-lg">
+            <h2 data-i18n="qa_modal_title" id="qaModalTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Configuración de QA</h2>
+            <div class="space-y-4">
+                <div class="qa-input-group">
+                    <label for="qaCpsLimit" data-i18n="cps_limit_label" class="block text-sm font-medium text-on-light-contrast mb-1">Límite de CPS:</label>
+                    <input type="number" id="qaCpsLimit" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="qa-input-group">
+                    <label for="qaCharsPerLineLimit" data-i18n="chars_per_line_limit_label" class="block text-sm font-medium text-on-light-contrast mb-1">Límite de caracteres por línea:</label>
+                    <input type="number" id="qaCharsPerLineLimit" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                 <button data-i18n="close_btn" id="closeQaModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                    Cerrar
+                </button>
+                <button data-i18n="save_and_apply_btn" id="saveQaSettingsBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                    Guardar y aplicar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: QA Error List Modal -->
+    <div id="qaErrorListModal" class="modal hidden">
+        <div class="modal-content rounded-lg">
+            <h2 data-i18n="qa_error_list_title" class="text-xl font-bold mb-4 text-on-light-contrast">Lista de Errores de QA</h2>
+            <div id="qaErrorListContainer">
+                <!-- Error list will be dynamically generated here -->
+            </div>
+            <button data-i18n="close_btn" id="closeQaErrorListModalBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p id="loadingMessage"></p>
+    </div>
+
+    <script>
+        // --- IndexedDB Setup (Dexie.js) ---
+        const db = new Dexie("subpandaTM_backup");
+        db.version(1).stores({
+            projects: '++id, fileName' // Table 'projects' with an auto-incrementing id and an index on fileName
+        });
+
+        // Global variable to hold backup data if found on load
+        let availableBackup = null;
+
+
+        // Global variables for Subtitle editor
+        let srtEntries = [];
+        let currentFileName = 'subtitles.srt';
+        let currentLanguage = 'es'; // Set default language to Spanish permanently
+        let findState = {
+            query: '',
+            replace: '',
+            caseSensitive: false,
+            useRegex: false,
+            lastFound: null,
+        };
+        let previewSource = 'translation'; // 'translation' or 'original'
+
+        // QA Settings
+        let qaSettings = {
+            cpsLimit: 20,
+            charsPerLineLimit: 42,
+        };
+
+        // Global variable to keep track of terms found in the currently active/focused segment's original text
+        let termsFoundInActiveSegment = new Set(); // Stores terms found in the currently focused original segment
+
+        // Global variables for Terminology (Glossary)
+        let glossary = [];
+        let glossarySourceLanguage = '';
+        let glossaryTargetLanguage = '';
+        let currentGlossaryLatestResults = []; // Stores the last set of results rendered in glossary table for shortcuts
+
+
+        // Global variables for Translation Memory (TM)
+        let translationMemory = []; // Stores {srcLang, srcText, tgtLang, tgtText, srcWordCount, tgtWordCount}
+        let tmSourceLanguage = ''; // Will typically be the source language of the SRT file
+        let tmTargetLanguage = ''; // Will typically be the target language of the SRT file
+        let tmBestMatchForActiveSegment = null; // Stores the best TM match for the currently focused segment
+        let currentTMLatestSearchResults = []; // Stores the last set of results rendered in TM search table
+
+        // Global for video playback control
+        let timeUpdateListener = null;
+        
+        // Diff Match Patch constants
+        const DIFF_DELETE = -1;
+        const DIFF_INSERT = 1;
+        const DIFF_EQUAL = 0;
+
+
+        // DOM elements for Subtitle editor
+        const srtFile = document.getElementById('srtFile');
+        const saveSrtButton = document.getElementById('saveSrt');
+        const translationsContainer = document.getElementById('translationsContainer');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const messageClose = document.getElementById('messageClose');
+        const dropArea = document.querySelector('.main-app-content'); // Changed to main content area for drop
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const editorAndSidebarsWrapper = document.getElementById('editorAndSidebarsWrapper'); // Renamed from mainEditorLayout
+
+        // Video Player DOM elements
+        const videoPlayerContainer = document.getElementById('videoPlayerContainer');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoFileInput = document.getElementById('videoFileInput');
+        // NEW: Subtitle Preview elements
+        const subtitlePreviewText = document.getElementById('subtitlePreviewText');
+        const subtitleFontSize = document.getElementById('subtitleFontSize');
+        const subtitlePreviewSource = document.getElementById('subtitlePreviewSource');
+
+
+        // Statistics DOM elements (now part of accordion)
+        const statsContainer = document.getElementById('statsContainer');
+        const segmentsProgress = document.getElementById('segmentsProgress');
+        const wordsTranslated = document.getElementById('wordsTranslated');
+        const wordsTotal = document.getElementById('wordsTotal');
+        const wordsRemaining = document.getElementById('wordsRemaining');
+        const qaErrorStats = document.getElementById('qaErrorStats');
+
+        // Statistics Accordion DOM elements
+        const statsAccordionHeader = document.getElementById('statsAccordionHeader');
+        const statsAccordionContent = document.getElementById('statsAccordionContent');
+        const statsAccordionIcon = statsAccordionHeader ? statsAccordionHeader.querySelector('.accordion-icon') : null;
+
+
+        // Subtitle Modals
+        const shortcutsBtn = document.getElementById('shortcutsBtn');
+        const shortcutsModal = document.getElementById('shortcutsModal');
+        const shortcutsCloseBtn = document.getElementById('shortcutsCloseBtn');
+        const arrowDownIconHtml = document.getElementById('arrowDownIconHtml');
+        const arrowUpIconHtml = document.getElementById('arrowUpIconHtml');
+        const findReplaceBtn = document.getElementById('findReplaceBtn');
+        const findReplaceModal = document.getElementById('findReplaceModal');
+        const findInput = document.getElementById('findInput');
+        const replaceInput = document.getElementById('replaceInput');
+        const caseSensitiveCheckbox = document.getElementById('caseSensitiveCheckbox');
+        const regexCheckbox = document.getElementById('regexCheckbox');
+        const findPrevBtn = document.getElementById('findPrevBtn');
+        const findNextBtn = document.getElementById('findNextBtn');
+        const replaceBtn = document.getElementById('replaceBtn');
+        const replaceAllBtn = document.getElementById('replaceAllBtn');
+        const findReplaceCloseBtn = document.getElementById('findReplaceCloseBtn');
+        
+        // Save SRT Modal elements
+        const saveSrtModal = document.getElementById('saveSrtModal');
+        const fileNameInput = document.getElementById('fileNameInput');
+        const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+        const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+
+        // Backup/Restore Modal elements
+        const backupBtn = document.getElementById('backupBtn');
+        const backupModal = document.getElementById('backupModal');
+        const backupFoundView = document.getElementById('backupFoundView');
+        const noBackupFoundView = document.getElementById('noBackupFoundView');
+        const backupFileName = document.getElementById('backupFileName');
+        const backupLastModified = document.getElementById('backupLastModified');
+        const closeBackupModalBtn = document.getElementById('closeBackupModalBtn');
+        const exportSrtFromBackupBtn = document.getElementById('exportSrtFromBackupBtn');
+        const deleteBackupBtn = document.getElementById('deleteBackupBtn');
+        const confirmRestoreBtn = document.getElementById('confirmRestoreBtn');
+
+        // QA Modal elements
+        const qaBtn = document.getElementById('qaBtn');
+        const qaModal = document.getElementById('qaModal');
+        const qaCpsLimitInput = document.getElementById('qaCpsLimit');
+        const qaCharsPerLineLimitInput = document.getElementById('qaCharsPerLineLimit');
+        const saveQaSettingsBtn = document.getElementById('saveQaSettingsBtn');
+        const closeQaModalBtn = document.getElementById('closeQaModalBtn');
+        const qaErrorListModal = document.getElementById('qaErrorListModal');
+        const qaErrorListContainer = document.getElementById('qaErrorListContainer');
+        const closeQaErrorListModalBtn = document.getElementById('closeQaErrorListModalBtn');
+
+
+        // Terminology Sidebar DOM elements
+        const terminologyBtn = document.getElementById('terminologyBtn');
+        const terminologySidebar = document.getElementById('terminologySidebar');
+        const closeTerminologySidebarBtn = document.getElementById('closeTerminologySidebarBtn');
+        const terminologyLanguageConfigSection = document.getElementById('terminologyLanguageConfigSection');
+        const terminologyEditorSection = document.getElementById('terminologyEditorSection');
+        const configSrcLang = document.getElementById('configSrcLang');
+        const configTgtLang = document.getElementById('configTgtLang');
+        const displaySrcLang = document.getElementById('displaySrcLang');
+        const displayTgtLang = document.getElementById('displayTgtLang');
+        const srcTermInput = document.getElementById('srcTerm');
+        const tgtTermInput = document.getElementById('tgtTerm');
+        const searchTermInput = document.getElementById('searchTerm');
+        const glossaryTableBody = document.getElementById('glossaryTableBody');
+        const tbxFileInput = document.getElementById('tbxFileInput');
+        const isoLanguagesDatalist = document.getElementById('isoLanguages');
+
+        // Buttons directly in config/editor sections for TBX
+        const importTbxBtn = document.getElementById('importTbxBtn');
+        const newGlossaryBtn = document.getElementById('newGlossaryBtn');
+        const addTermHeader = document.getElementById('addTermHeader');
+        const addTermContent = addTermHeader ? addTermHeader.nextElementSibling : null;
+        const addTermAccordionIcon = addTermHeader ? addTermHeader.querySelector('.accordion-icon') : null;
+
+        // Translation Memory Sidebar DOM elements
+        const tmBtn = document.getElementById('tmBtn');
+        const translationMemorySidebar = document.getElementById('translationMemorySidebar');
+        const closeTranslationMemorySidebarBtn = document.getElementById('closeTranslationMemorySidebarBtn');
+        const tmFileInput = document.getElementById('tmFileInput');
+        const tmSearchInput = document.getElementById('tmSearchInput');
+        const tmSearchResultsTableBody = document.getElementById('tmSearchResultsTableBody');
+        const tmNoMatchFoundMessage = document.getElementById('tmNoMatchFoundMessage');
+        // New TM config DOM elements
+        const tmLanguageConfigSection = document.getElementById('tmLanguageConfigSection');
+        const tmEditorSection = document.getElementById('tmEditorSection');
+        const tmConfigSrcLang = document.getElementById('tmConfigSrcLang');
+        const tmConfigTgtLang = document.getElementById('tmConfigTgtLang');
+        const displayTmSrcLang = document.getElementById('displayTmSrcLang');
+        const displayTmTgtLang = document.getElementById('displayTmTgtLang');
+        const tmInternalMessage = document.getElementById('tmInternalMessage'); // New TM internal message element
+
+        // DOM element for main content editor, needed for padding adjustments
+        const editorMainContent = document.getElementById('editorMainContent');
+
+
+        // Translations object (only Spanish now)
+        const translations = {
+            'es': {
+                'title': 'subpandaTM',
+                'import_srt': 'Importar .srt',
+                'export_srt': 'Exportar .srt',
+                'original_text': 'Original:',
+                'translation_text': 'Traducción:',
+                'time_codes': 'Códigos de tiempo:',
+                'char_count_original': 'Original: ',
+                'char_count_translation': 'Traducción: ',
+                'char_units': ' caracteres',
+                'cps': ' CPS',
+                'validate': 'Validar',
+                'edit': 'Editar',
+                'no_translations': 'Carga un archivo .srt para empezar a editar.',
+                'error_reading_file': 'Error al leer o analizar archivo .srt: ',
+                'error_saving_file': 'Error al guardar archivo .srt: ',
+                'file_saved_successfully': 'Archivo .srt guardado con éxito.',
+                'no_translations_to_save': 'No hay subtítulos para guardar. Carga un archivo .srt primero.',
+                'reached_last': 'Has llegado al último subtítulo.',
+                'reached_first': 'Ya estás en el primer subtítulo.',
+                'file_processing_error': '¡Error! No se pudo procesar el archivo. Asegúrate de que es un archivo .srt válido.',
+                'ok': 'OK',
+                'shortcuts_btn': 'Atajos',
+                'shortcuts_title': 'Atajos de teclado',
+                'shortcut_validate': 'Ctrl + Enter: Validar traducción y pasar a la siguiente.',
+                'shortcut_next': 'Ctrl + Flecha abajo: Ir al siguiente subtítulo.',
+                'shortcut_prev': 'Ctrl + Flecha arriba: Ir al subtítulo anterior.',
+                'shortcut_alt_1': 'Alt + [1-5]: Insertar sugerencia de la memoria de traducción.',
+                'shortcut_tm_insert': 'Ctrl + Alt + [1-5]: Insertar término traducido resaltado en glosario.',
+                'shortcut_jump_to_time': 'Ctrl + J: Saltar al tiempo de inicio del subtítulo actual.',
+                'shortcut_play_segment': 'Ctrl + Barra espaciadora: Reproducir el subtítulo actual.',
+                'shortcut_bold': 'Ctrl + B: Aplicar negrita.',
+                'shortcut_italic': 'Ctrl + I: Aplicar cursiva.',
+                'shortcut_play_pause': 'Alt + P: Reproducir/pausar vídeo.',
+                'shortcut_seek': 'Alt + Flechas: Avanzar/retroceder 3 segundos.',
+                'shortcut_seek_fast': 'Ctrl + Alt + Flechas: Avanzar/retroceder 5 segundos.',
+                'close_btn': 'Cerrar',
+                'find_replace_btn': 'Buscar y reemplazar',
+                'find_replace_title': 'Buscar y reemplazar',
+                'find_label': 'Buscar:',
+                'replace_label': 'Reemplazar con:',
+                'case_sensitive': 'Distinguir mayúsculas y minúsculas',
+                'regular_expression': 'Expresión regular',
+                'find_prev': 'Buscar anterior',
+                'find_next': 'Buscar siguiente',
+                'replace': 'Reemplazar',
+                'replace_all': 'Reemplazar todo',
+                'no_match_found': 'No se encontró ninguna coincidencia.',
+                'replaced_all': 'Todas las ocurrencias reemplazadas.',
+                'no_find_query': 'Por favor, introduce el texto a buscar.',
+                'loading_file': 'Cargando archivo...',
+                'saving_file': 'Guardando archivo...',
+                'load_video': 'Cargar vídeo',
+                'video_load_error': 'Error al cargar el vídeo. Asegúrate de que el formato es compatible.',
+                'translation_stats_title': 'Estadísticas',
+                'subtitles_translated': 'subtítulos traducidos',
+                'preview_size': 'Tamaño:',
+                'preview_source': 'Mostrar:',
+                'translation_text_option': 'Traducción',
+                'original_text_option': 'Original',
+                'save_srt_title': 'Exportar Archivo SRT',
+                'file_name_label': 'Nombre del archivo:',
+                'cancel_btn': 'Cancelar',
+                'save_btn': 'Guardar',
+
+                // Terminology specific translations
+                'terminology_btn': 'Terminología',
+                'terminology_sidebar_title': 'Terminología',
+                'config_lang_title': 'Configurar idiomas del glosario',
+                'config_lang_info': 'Define los idiomas de origen y destino de tu glosario. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear un glosario desde cero.',
+                'source_language': 'Idioma de origen:',
+                'target_language': 'Idioma de destino:',
+                'confirm_languages': 'Confirmar idiomas',
+                'current_lang_title': 'Idiomas actuales del glosario',
+                'add_term_title': 'Añadir término',
+                'term': 'Término:',
+                'translation': 'Traducción:',
+                'add_button': 'Añadir',
+                'search_title': 'Buscar',
+                'search_placeholder': 'Buscar término...',
+                'import_tbx': 'Importar TBX',
+                'download_tbx': 'Descargar TBX',
+                'new_glossary': 'Nuevo glosario',
+                'glossary_list_title': 'Glosario',
+                'source_term_col': 'Término de origen',
+                'target_term_col': 'Término de destino',
+                'actions_col': 'Acciones',
+                'delete_button': 'Eliminar',
+                'both_terms_required': 'Ambos términos son requeridos.',
+                'lang_config_required': 'Por favor, configura los idiomas de origen y destino para el glosario.',
+                'cannot_download_empty_or_unconfigured_glossary': 'No se puede descargar un glosario vacío o sin configurar.',
+                'error_loading_tbx_file': 'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.',
+                'no_valid_language_pairs_found_in_tbx': 'No se encontraron pares de idiomas válidos en el archivo TBX. Se usarán los valores por defecto (en-US, es-ES).',
+
+                // Translation Memory specific translations
+                'tm_btn': 'Memoria de traducción',
+                'tm_sidebar_title': 'Memoria de traducción',
+                'new_tm': 'Nueva TM',
+                'import_tmx': 'Importar TMX',
+                'download_tmx': 'Descargar TMX',
+                'no_tm_data': 'No hay datos en la memoria de traducción.',
+                'tm_source_segment': 'Original:',
+                'tm_target_segment': 'Traducción:',
+                'tm_match_score': 'Coincidencia:',
+                'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
+                'tm_insert_match': 'Insertar coincidencia',
+                'error_loading_tmx_file': 'Error al cargar el archivo TMX. Asegúrate de que sea un XML/TMX válido.',
+                'cannot_download_empty_tm': 'No se puede descargar una memoria de traducción vacía.',
+                'tm_best_match': 'Mejor coincidencia de TM:',
+                'tm_search_title': 'Buscar en TM',
+                'tm_search_placeholder': 'Buscar en la memoria...',
+                'tm_search_results_title': 'Resultados de búsqueda en TM',
+                'tm_score_col': '%',
+                'tm_original_col': 'Original',
+                'tm_translation_col': 'Traducción',
+                'tm_config_lang_title': 'Configurar idiomas de la TM',
+                'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.',
+                'current_tm_lang_title': 'Idiomas actuales de la TM',
+                'tm_initial_message': '',
+                'tmx_file_expected_tbx_found': 'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.',
+                'tbx_file_expected_tmx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.',
+
+                // Backup and Restore translations
+                'backup_btn': 'Copia de seguridad',
+                'backup_modal_title': 'Copia de Seguridad',
+                'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.',
+                'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.',
+                'file_label': 'Archivo:',
+                'last_modified_label': 'Última modificación:',
+                'export_srt_btn': 'Exportar SRT',
+                'delete_backup_btn': 'Borrar Backup',
+                'restore_btn': 'Restaurar',
+                'backup_deleted_confirmation': '¿Estás seguro de que quieres borrar permanentemente este backup? Esta acción no se puede deshacer.',
+                'backup_deleted_message': 'El backup ha sido borrado.',
+                'project_restored_message': 'Proyecto restaurado con éxito.',
+                'no_backup_to_export': 'No hay datos de backup disponibles para exportar.',
+                'backup_export_error': 'Error al exportar el SRT del backup: ',
+                'backup_export_success': 'El archivo ha sido exportado con éxito.',
+
+                // QA translations
+                'qa_btn': 'QA',
+                'qa_modal_title': 'Configuración de QA',
+                'cps_limit_label': 'Límite de CPS:',
+                'chars_per_line_limit_label': 'Límite de caracteres por línea:',
+                'save_and_apply_btn': 'Guardar y aplicar',
+                'qa_error_list_title': 'Lista de Errores de QA',
+                'qa_errors_found': 'errores de QA encontrados',
+                'qa_no_errors': 'No se han encontrado errores de QA.',
+            }
+        };
+
+        // SVG icons for shortcuts
+        const arrowDownIcon = `<svg class="shortcut-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 12a1 1 0 01-.707-.293l-4-4a1 1 0 011.414-1.414L10 9.586l3.293-3.293a1 1 0 111.414 1.414l-4 4A1 1 0 0110 12z" clip-rule="evenodd"></path></svg>`;
+        const arrowUpIcon = `<svg class="shortcut-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 8a1 1 0 01.707.293l4 4a1 1 0 01-1.414 1.414L10 10.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4A1 1 0 0110 8z" clip-rule="evenodd"></path></svg>`;
+
+        // List of common ISO 639-1 language codes for the datalist (for Terminology)
+        const isoLanguagesData = [
+          { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" },
+          { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" },
+          { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" },
+          { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" },
+          { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" },
+          { code: "sv", name: "Svenska" }, { code: "da", name: "Dansk" }, { code: "no", name: "Norsk" }, { code: "fi", "name": "Suomi" },
+          { code: "tr", name: "Türkçe" }, { code: "pl", name: "Polski" }, { code: "cs", name: "Čeština" }, { code: "hu", name: "Magyar" },
+          { code: "el", name: "Ελληνικά (Greek)" }, { code: "he", name: "עברית (Hebrew)" }, { code: "th", name: "ไทย (Thai)" },
+          { code: "vi", name: "Tiếng Việt (Vietnamese)" }, { code: "id", name: "Bahasa Indonesia" }, { code: "ms", name: "Bahasa Melayu" },
+          { code: "ca", name: "Català" }, { code: "eu", name: "Euskara" }, { code: "gl", name: "Galego" }, { code: "ro", name: "Română" },
+          { code: "uk", name: "Українська (Ukrainian)" }, { code: "bg", name: "Български (Bulgarian)" }, { code: "hr", name: "Hrvatski" },
+          { code: "sr", name: "Srpski" }, { code: "sk", name: "Slovenčina" }, { code: "sl", name: "Slovenščina" }, { code: "lt", name: "Lietuvių" },
+          { code: "lv", name: "Latviešu" }, { code: "et", name: "Eesti" }, { code: "is", name: "Íslenska" }, { code: "ga", name: "Gaeilge" },
+          { code: "mt", name: "Malti" },
+        ];
+
+
+        /**
+         * Counts words in a given text string.
+         * @param {string} text The text to count words from.
+         * @returns {number} The number of words.
+         */
+        function countWords(text) {
+            if (!text) return 0;
+            // Trim leading/trailing whitespace and split by one or more whitespace characters
+            const words = text.trim().split(/\s+/);
+            // Filter out empty strings that might result from multiple spaces
+            return words.filter(word => word.length > 0).length;
+        }
+        
+        /**
+         * Counts characters in a string, ignoring HTML tags.
+         * @param {string} text The text to count.
+         * @returns {number} The character count without tags.
+         */
+        function countCharactersWithoutTags(text) {
+            if (!text) return 0;
+            // Remove <b>, </b>, <i>, </i> tags using a regular expression
+            const strippedText = text.replace(/<\/?(b|i)>/gi, '');
+            return strippedText.length;
+        }
+
+        /**
+         * Converts milliseconds to SRT time format (HH:MM:SS,ms).
+         * @param {number} ms Milliseconds.
+         * @returns {string} Formatted time string.
+         */
+        function formatTime(ms) {
+            const hours = Math.floor(ms / 3600000);
+            ms %= 3600000;
+            const minutes = Math.floor(ms / 60000);
+            ms %= 60000;
+            const seconds = Math.floor(ms / 1000);
+            const milliseconds = ms % 1000;
+
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                seconds.toString().padStart(2, '0')
+            ].join(':') + ',' + milliseconds.toString().padStart(3, '0');
+        }
+
+        /**
+         * Converts SRT time format (HH:MM:SS,ms) to milliseconds.
+         * @param {string} timeStr Time string in SRT format.
+         * @returns {number} Milliseconds.
+         */
+        function parseTime(timeStr) {
+            const parts = timeStr.split(',');
+            const [h, m, s] = parts[0].split(':').map(Number);
+            const ms = Number(parts[1]);
+            return (h * 3600 + m * 60 + s) * 1000 + ms;
+        }
+
+        /**
+         * Calculates Characters Per Second (CPS) for a given text and duration.
+         * @param {string} text The text of the subtitle.
+         * @param {number} durationMs The duration of the subtitle in milliseconds.
+         * @returns {number} CPS value.
+         */
+        function calculateCPS(text, durationMs) {
+            if (durationMs <= 0) return 0;
+            const textWithoutTags = text.replace(/<\/?(b|i)>/gi, '');
+            return (textWithoutTags.length / (durationMs / 1000)).toFixed(2);
+        }
+
+        /**
+         * Parses the content of an SRT file.
+         * @param {string} content The full content of the SRT file.
+         * @returns {Array<Object>} An array of SRT entry objects.
+         */
+        function parseSrtContent(content) {
+            const entries = [];
+            const blocks = content.split(/\r?\n\r?\n/); // Split by double newline (CRLF or LF)
+
+            blocks.forEach(block => {
+                const lines = block.trim().split(/\r?\n/);
+                if (lines.length >= 3) {
+                    const index = parseInt(lines[0]);
+                    const timecodes = lines[1];
+                    const text = lines.slice(2).join('\n'); // Join remaining lines as text
+
+                    const [startTimeStr, endTimeStr] = timecodes.split(' --> ');
+                    const startTimeMs = parseTime(startTimeStr);
+                    const endTimeMs = parseTime(endTimeStr);
+                    const durationMs = endTimeMs - startTimeMs;
+                    const charCountOriginal = countCharactersWithoutTags(text);
+
+                    entries.push({
+                        index: index,
+                        timecodes: timecodes,
+                        startTimeMs: startTimeMs,
+                        endTimeMs: endTimeMs,
+                        durationMs: durationMs,
+                        original: text,
+                        translation: '', // Initialize translation as empty
+                        wordCountOriginal: countWords(text),
+                        wordCountTranslation: 0,
+                        isTranslated: false,
+                        charCountOriginal: charCountOriginal,
+                        charCountTranslation: 0,
+                        cpsOriginal: calculateCPS(text, durationMs),
+                        cpsTranslation: 0
+                    });
+                }
+            });
+            return entries;
+        }
+
+        /**
+         * Reconstructs the content of an SRT file from an array of entries.
+         * @param {Array<Object>} entries The array of subtitle objects.
+         * @returns {string} The reconstructed SRT file content.
+         */
+        function reconstructSrt(entries) {
+            let srtContent = '';
+            entries.forEach(entry => {
+                srtContent += `${entry.index}\n`;
+                srtContent += `${entry.timecodes}\n`;
+                srtContent += `${entry.translation || entry.original}\n\n`; // Use translation if available, otherwise original
+            });
+            return srtContent.trim(); // Trim last double newline
+        }
+
+        /**
+         * Adjusts the height of a textarea to fit its content.
+         * If the translation textarea is empty, it matches the height of the original textarea.
+         * @param {HTMLTextAreaElement} textarea The textarea element (translation).
+         * @param {HTMLElement} [originalElement] The original element (original text pre) for height comparison.
+         */
+        function autoResizeTextarea(textarea, originalElement) {
+            textarea.style.height = 'auto';
+            if (textarea.innerHTML.trim() === '' && originalElement) {
+                // If textarea is empty, set its height to match the original element's scroll height
+                textarea.style.height = originalElement.scrollHeight + 'px';
+            } else {
+                // Otherwise, let it expand to its own content
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+        }
+
+        /**
+         * Updates the character count and CPS for a specific textarea, including QA checks.
+         * @param {HTMLElement} editorDiv The contenteditable div element.
+         * @param {number} originalLength The length of the original string segment.
+         * @param {number} durationMs The duration of the subtitle in milliseconds.
+         */
+        function updateSubtitleStats(editorDiv, originalLength, durationMs) {
+            const entryIndex = parseInt(editorDiv.dataset.entryIndex);
+            const charCountSpan = document.getElementById(`charCount-${entryIndex}`);
+            const cpsSpan = document.getElementById(`cps-${entryIndex}`);
+            const lineCharCountsDiv = document.getElementById(`lineCharCounts-${entryIndex}`);
+            const translationLength = countCharactersWithoutTags(editorDiv.innerHTML);
+
+            if (charCountSpan) {
+                charCountSpan.textContent = `${translations.es['char_count_original']}${originalLength} ${translations.es['char_units']} | ${translations.es['char_count_translation']}${translationLength} ${translations.es['char_units']}`;
+            }
+            
+            if (cpsSpan) {
+                const currentCPS = calculateCPS(editorDiv.innerHTML, durationMs);
+                cpsSpan.textContent = `${currentCPS}${translations.es['cps']}`;
+                // QA Check for CPS
+                if (currentCPS > qaSettings.cpsLimit) {
+                    cpsSpan.classList.add('qa-error');
+                } else {
+                    cpsSpan.classList.remove('qa-error');
+                }
+            }
+
+            if (lineCharCountsDiv) {
+                const lines = editorDiv.innerText.split('\n');
+                lineCharCountsDiv.innerHTML = ''; // Clear previous counts
+                lines.forEach((line, i) => {
+                    const lineLength = countCharactersWithoutTags(line);
+                    const lineSpan = document.createElement('span');
+                    lineSpan.textContent = `L${i + 1}: ${lineLength}`;
+                    // QA Check for chars per line
+                    if (lineLength > qaSettings.charsPerLineLimit) {
+                        lineSpan.classList.add('qa-error');
+                    }
+                    if (i > 0) lineCharCountsDiv.append(document.createTextNode(', '));
+                    lineCharCountsDiv.appendChild(lineSpan);
+                });
+            }
+        }
+
+        /**
+         * Configures the editable state of a translation entry (editable/solo lectura).
+         * @param {number} entryIndex The index of the SRT entry.
+         * @param {boolean} isEditable True to make it editable, false for read-only.
+         */
+        function setTranslationEditableState(entryIndex, isEditable) {
+            const translationEditor = document.getElementById(`translation-${entryIndex}`);
+            const validateButton = document.getElementById(`validateBtn-${entryIndex}`);
+            const editButton = document.getElementById(`editBtn-${entryIndex}`);
+            const checkIcon = document.getElementById(`checkIcon-${entryIndex}`);
+            const translationUnit = document.getElementById(`translation-unit-${entryIndex}`); // Get the parent unit
+
+            if (!translationEditor || !validateButton || !editButton || !checkIcon || !translationUnit) {
+                console.error(`Elements not found for index ${entryIndex}`);
+                return;
+            }
+
+            translationEditor.contentEditable = isEditable;
+            if (!isEditable) {
+                translationUnit.classList.remove('translation-unit-active'); // Remove active highlight on validate
+
+                // Update translation status and words when segment is validated
+                const entry = srtEntries[entryIndex];
+                entry.isTranslated = translationEditor.innerText.trim() !== '';
+                entry.wordCountTranslation = countWords(translationEditor.innerText);
+                entry.charCountTranslation = countCharactersWithoutTags(translationEditor.innerHTML);
+                entry.cpsTranslation = calculateCPS(translationEditor.innerHTML, entry.durationMs);
+
+                updateStatsDisplay(); // Update stats
+                addOrUpdateTMEntry(entry.original, entry.translation); // Add/Update TM
+            } else {
+                translationUnit.classList.add('translation-unit-active'); // Add active highlight on edit/focus
+            }
+
+            validateButton.style.display = isEditable ? 'inline-block' : 'none';
+            editButton.style.display = isEditable ? 'none' : 'inline-block';
+            checkIcon.style.display = isEditable ? 'none' : 'inline-block';
+
+            if (isEditable) {
+                translationEditor.focus();
+            }
+        }
+
+        /**
+         * Applies a style command (like 'bold' or 'italic') to the current selection.
+         * @param {string} command The command to execute.
+         */
+        function formatText(command) {
+            document.execCommand(command, false, null);
+        }
+
+        /**
+         * Applies glossary term highlighting to a given text segment.
+         * Collects terms that were successfully highlighted.
+         * @param {string} text The original text to highlight.
+         * @returns {{html: string, foundTerms: Set<string>}} Object with HTML string and set of found terms.
+         */
+        function applyGlossaryHighlightToText(text) {
+            let highlightedHtml = text;
+            const currentFoundTerms = new Set(); // Terms found in *this specific* segment
+
+            // Ensure glossarySourceLanguage is set and matches the original's implicit language
+            if (!glossarySourceLanguage) {
+                return { html: text, foundTerms: currentFoundTerms }; // Cannot highlight without source language
+            }
+
+            // Sort glossary terms by length in descending order to match longer terms first
+            const sortedGlossary = [...glossary].sort((a, b) => b.srcTerm.length - a.srcTerm.length);
+
+
+            sortedGlossary.forEach(glossaryEntry => {
+                // Only highlight if the glossary entry's source language matches the current editor's source language
+                // Assuming srtEntries are implicitly in subtitulanda's current source language.
+                // For a more robust solution, each srtEntry might need a source language field.
+                // For now, we assume the glossary source language is the relevant source for highlighting.
+                // Also, ensure the glossary entry has a source term.
+                if (glossarySourceLanguage && glossaryEntry.srcTerm) {
+                    const term = glossaryEntry.srcTerm;
+                    // Use word boundaries \b to avoid partial word matches
+                    // Escape special regex characters in the term
+                    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    // 'g' for global, 'i' for case-insensitive
+                    const regex = new RegExp(`\\b(${escapedTerm})\\b`, 'gi'); // Added word boundaries
+
+
+                    // Only replace if the term is found (to avoid unnecessary string manipulations)
+                    if (highlightedHtml.match(regex)) {
+                        highlightedHtml = highlightedHtml.replace(regex, (match, p1) => {
+                            // p1 is the captured group, which is the actual matched term (case-preserved)
+                            currentFoundTerms.add(term); // Add the actual term from the glossary (case-preserved)
+                            return `<span class="glossary-highlight">${p1}</span>`; // Highlight the matched part
+                        });
+                    }
+                }
+            });
+            return { html: highlightedHtml, foundTerms: currentFoundTerms };
+        }
+
+        /**
+         * Updates highlighting in the glossary table based on terms found in the editor.
+         * This function is implicitly called via renderGlossary() after termsFoundInActiveSegment is updated.
+         */
+        function updateGlossaryTableHighlights() {
+            renderGlossary(); // Re-render glossary, which applies highlights based on termsFoundInActiveSegment
+        }
+
+
+        /**
+         * Renders subtitle entries in the user interface.
+         * @param {Array<Object>} entries The array of subtitle objects to render.
+         */
+        function renderTranslations(entries) {
+            translationsContainer.innerHTML = '';
+            termsFoundInActiveSegment.clear(); // Clear terms when re-rendering all translations
+
+            if (entries.length === 0) {
+                translationsContainer.innerHTML = `
+                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
+                        Carga un archivo .srt para empezar a editar.
+                    </div>
+                `;
+                saveSrtButton.disabled = true;
+                statsContainer.classList.add('hidden'); // Hide stats if no translations
+                videoPlayerContainer.classList.add('hidden'); // Hide video player
+                return;
+            }
+
+            entries.forEach((entry, entryIndex) => {
+                const translationUnit = document.createElement('div');
+                translationUnit.id = `translation-unit-${entryIndex}`;
+                translationUnit.className = 'translation-unit-bg p-2 rounded-lg shadow-sm border border-gray-200 mb-4';
+
+                // Subtitle Number
+                const subtitleNumberDiv = document.createElement('div');
+                subtitleNumberDiv.className = 'text-md font-bold text-on-light-contrast mb-1';
+                subtitleNumberDiv.textContent = `Subtítulo ${entry.index}`;
+                translationUnit.appendChild(subtitleNumberDiv);
+
+                // Time codes
+                const timecodesDiv = document.createElement('div');
+                timecodesDiv.className = 'text-sm font-medium text-on-light-contrast mb-1';
+                timecodesDiv.innerHTML = `<strong>${translations.es['time_codes']}</strong> ${entry.timecodes}`;
+                translationUnit.appendChild(timecodesDiv);
+
+                const segmentRow = document.createElement('div');
+                segmentRow.className = 'translation-row mb-2';
+
+                const originalCol = document.createElement('div');
+                originalCol.className = 'original-col';
+
+                const originalLabel = document.createElement('label');
+                originalLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
+                originalLabel.textContent = translations.es['original_text'];
+                originalCol.appendChild(originalLabel);
+
+                const originalPre = document.createElement('pre');
+                originalPre.id = `original-pre-${entryIndex}`;
+                originalPre.className = 'subtitle-display-code p-1 rounded-md text-base overflow-auto max-h-24';
+                originalPre.textContent = entry.original;
+                originalCol.appendChild(originalPre);
+                segmentRow.appendChild(originalCol);
+
+                const translationCol = document.createElement('div');
+                translationCol.className = 'translation-col';
+
+                const translationLabel = document.createElement('label');
+                translationLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
+                translationLabel.textContent = translations.es['translation_text'];
+                translationCol.appendChild(translationLabel);
+
+                const translationEditor = document.createElement('div');
+                translationEditor.id = `translation-${entryIndex}`;
+                translationEditor.className = 'subtitle-editor mt-1 block w-full focus:ring-blue-500 focus:border-blue-500 text-base';
+                translationEditor.contentEditable = true;
+                translationEditor.innerHTML = entry.translation;
+                translationEditor.dataset.entryIndex = entryIndex;
+                translationEditor.dataset.originalLength = entry.charCountOriginal;
+                translationEditor.dataset.durationMs = entry.durationMs;
+
+                translationCol.appendChild(translationEditor);
+                segmentRow.appendChild(translationCol);
+                translationUnit.appendChild(segmentRow);
+
+                const statsContainerDiv = document.createElement('div');
+                statsContainerDiv.className = 'flex items-center justify-between mt-1 w-full';
+
+                const charAndCpsSpan = document.createElement('span');
+                charAndCpsSpan.className = 'inline-block text-sm font-semibold text-on-light-contrast';
+                charAndCpsSpan.innerHTML = `<span id="charCount-${entryIndex}"></span> | <span id="cps-${entryIndex}"></span>`;
+                statsContainerDiv.appendChild(charAndCpsSpan);
+
+                const lineCharCountsDiv = document.createElement('div');
+                lineCharCountsDiv.id = `lineCharCounts-${entryIndex}`;
+                lineCharCountsDiv.className = 'inline-block text-sm font-semibold text-on-light-contrast ml-4';
+                statsContainerDiv.appendChild(lineCharCountsDiv);
+
+                const actionButtonsContainer = document.createElement('div');
+                actionButtonsContainer.className = 'flex items-center space-x-2';
+
+                // NEW: Format buttons
+                const boldButton = document.createElement('button');
+                boldButton.className = 'btn-format';
+                boldButton.innerHTML = '<b class="font-bold">B</b>';
+                boldButton.onclick = () => {
+                    translationEditor.focus();
+                    formatText('bold');
+                };
+                actionButtonsContainer.appendChild(boldButton);
+
+                const italicButton = document.createElement('button');
+                italicButton.className = 'btn-format';
+                italicButton.innerHTML = '<i class="italic">I</i>';
+                italicButton.onclick = () => {
+                    translationEditor.focus();
+                    formatText('italic');
+                };
+                actionButtonsContainer.appendChild(italicButton);
+
+
+                const checkIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                checkIcon.setAttribute("id", `checkIcon-${entryIndex}`);
+                checkIcon.setAttribute("class", "check-icon text-green-500");
+                checkIcon.setAttribute("fill", "none");
+                checkIcon.setAttribute("viewBox", "0 0 24 24");
+                checkIcon.setAttribute("stroke", "currentColor");
+                checkIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />`;
+                actionButtonsContainer.appendChild(checkIcon);
+
+                const validateButton = document.createElement('button');
+                validateButton.id = `validateBtn-${entryIndex}`;
+                validateButton.className = 'validate-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-validate';
+                validateButton.textContent = translations.es['validate'];
+                validateButton.dataset.entryIndex = entryIndex;
+                actionButtonsContainer.appendChild(validateButton);
+
+                const editButton = document.createElement('button');
+                editButton.id = `editBtn-${entryIndex}`;
+                editButton.className = 'edit-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-edit';
+                editButton.textContent = translations.es['edit'];
+                editButton.dataset.entryIndex = entryIndex;
+                editButton.style.display = 'none';
+                actionButtonsContainer.appendChild(editButton);
+
+                statsContainerDiv.appendChild(actionButtonsContainer);
+                translationUnit.appendChild(statsContainerDiv);
+
+                translationEditor.addEventListener('input', (event) => {
+                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
+                    const entry = srtEntries[currentEntryIndex];
+
+                    entry.translation = event.target.innerHTML;
+                    entry.wordCountTranslation = countWords(event.target.innerText);
+                    entry.isTranslated = event.target.innerText.trim() !== '';
+                    entry.charCountTranslation = countCharactersWithoutTags(event.target.innerHTML);
+                    entry.cpsTranslation = calculateCPS(event.target.innerHTML, entry.durationMs);
+
+                    autoResizeTextarea(event.target, originalCol.querySelector('pre'));
+                    updateSubtitleStats(event.target, entry.charCountOriginal, entry.durationMs);
+                    updateStatsDisplay();
+                    updateSubtitlePreview(); // Update preview as user types
+
+                    if (document.activeElement === translationEditor) {
+                        const tempOriginalText = entry.original;
+                        originalCol.querySelector('pre').textContent = tempOriginalText;
+                        termsFoundInActiveSegment.clear();
+                        const highlightResult = applyGlossaryHighlightToText(tempOriginalText);
+                        originalCol.querySelector('pre').innerHTML = highlightResult.html;
+                        highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
+                        updateGlossaryTableHighlights();
+                    }
+                });
+
+                translationEditor.addEventListener('focus', (event) => {
+                    document.querySelectorAll('.translation-unit-active').forEach(unit => {
+                        unit.classList.remove('translation-unit-active');
+                    });
+                    translationUnit.classList.add('translation-unit-active');
+
+                    termsFoundInActiveSegment.clear();
+                    const originalPreElement = document.getElementById(`original-pre-${entryIndex}`);
+                    if (originalPreElement && glossarySourceLanguage && glossary.length > 0) {
+                        const highlightResult = applyGlossaryHighlightToText(entry.original);
+                        originalPreElement.innerHTML = highlightResult.html;
+                        highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
+                    }
+                    updateGlossaryTableHighlights();
+                    autoResizeTextarea(event.target, originalCol.querySelector('pre'));
+                    event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    const currentSegmentOriginal = srtEntries[entryIndex].original;
+                    tmSearch(currentSegmentOriginal);
+                });
+
+                translationEditor.addEventListener('blur', (event) => {
+                    const originalPreElement = document.getElementById(`original-pre-${entryIndex}`);
+                    if (originalPreElement) {
+                        originalPreElement.textContent = entry.original;
+                    }
+                    termsFoundInActiveSegment.clear();
+                    updateGlossaryTableHighlights();
+                    tmSearch(); // Search without a specific segment text
+                });
+
+
+                translationEditor.addEventListener('click', (event) => {
+                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
+                    if (event.target.contentEditable !== "true") {
+                        setTranslationEditableState(currentEntryIndex, true);
+                    }
+                });
+
+                validateButton.addEventListener('click', (event) => {
+                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
+                    setTranslationEditableState(currentEntryIndex, false);
+                    goToNextTranslation(currentEntryIndex);
+                });
+
+                editButton.addEventListener('click', (event) => {
+                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
+                    setTranslationEditableState(currentEntryIndex, true);
+                });
+
+                autoResizeTextarea(translationEditor, originalPre);
+                updateSubtitleStats(translationEditor, entry.charCountOriginal, entry.durationMs);
+
+                translationsContainer.appendChild(translationUnit);
+            });
+            saveSrtButton.disabled = false;
+            statsContainer.classList.remove('hidden');
+            videoPlayerContainer.classList.remove('hidden');
+            updateStatsDisplay();
+
+            const firstEditableSegment = getFirstEditableSegment();
+            if (firstEditableSegment) {
+                navigateToTranslation(firstEditableSegment.entryIndex);
+            }
+        }
+
+        /**
+         * Updates the display of translation progress and word counts.
+         */
+        function updateStatsDisplay() {
+            let totalSegments = srtEntries.length;
+            let translatedSegments = 0;
+            let totalWordsOriginal = 0;
+            let totalWordsTranslated = 0;
+
+            srtEntries.forEach(entry => {
+                totalWordsOriginal += entry.wordCountOriginal;
+                if (entry.isTranslated) {
+                    translatedSegments++;
+                    totalWordsTranslated += entry.wordCountTranslation;
+                }
+            });
+
+            const percentage = totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
+            segmentsProgress.textContent = `${translatedSegments}/${totalSegments} ${translations.es['subtitles_translated']} (${percentage}%)`;
+            wordsTranslated.textContent = `${totalWordsTranslated} palabras traducidas`;
+            wordsTotal.textContent = `${totalWordsOriginal} palabras originales totales`;
+            wordsRemaining.textContent = `${totalWordsOriginal - totalWordsTranslated} palabras pendientes`;
+
+            // NEW: Update QA Error Stats
+            const qaErrors = calculateAllQaErrors();
+            if (qaErrors.length > 0) {
+                qaErrorStats.textContent = `${qaErrors.length} ${translations.es['qa_errors_found']}`;
+                qaErrorStats.classList.add('qa-error', 'clickable');
+                qaErrorStats.classList.remove('qa-success');
+            } else {
+                qaErrorStats.textContent = translations.es['qa_no_errors'];
+                qaErrorStats.classList.add('qa-success');
+                qaErrorStats.classList.remove('qa-error', 'clickable');
+            }
+        }
+
+
+        /**
+         * Gets the index of the currently focused translation textarea.
+         * @returns {{entryIndex: number} | null} The object with index, or null.
+         */
+        function getCurrentFocusedIndex() {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.classList.contains('subtitle-editor')) {
+                return {
+                    entryIndex: parseInt(activeElement.dataset.entryIndex)
+                };
+            }
+            return null;
+        }
+
+        /**
+         * Finds the first editable segment.
+         * @returns {{entryIndex: number} | null} The object with index, or null.
+         */
+        function getFirstEditableSegment() {
+            if (srtEntries.length > 0) {
+                return { entryIndex: 0 };
+            }
+            return null;
+        }
+
+
+        /**
+         * Navigates to and focuses a specific translation field.
+         * @param {number} entryIndex The index of the SRT entry.
+         */
+        function navigateToTranslation(entryIndex) {
+            const targetEditor = document.getElementById(`translation-${entryIndex}`);
+            if (targetEditor) {
+                const currentlyFocusedEditor = document.activeElement;
+                if (currentlyFocusedEditor && currentlyFocusedEditor.classList.contains('subtitle-editor') && currentlyFocusedEditor !== targetEditor) {
+                    currentlyFocusedEditor.blur();
+                }
+                setTranslationEditableState(entryIndex, true);
+                targetEditor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                jumpToCurrentSubtitleTime(entryIndex); // Autoplay video
+            }
+        }
+
+        /**
+         * Moves focus to the next translation field.
+         * @param {number} currentEntryIndex The current index of the SRT entry.
+         */
+        function goToNextTranslation(currentEntryIndex) {
+            if (srtEntries.length === 0) return;
+
+            let nextEntryIndex = currentEntryIndex + 1;
+
+            if (nextEntryIndex < srtEntries.length) {
+                navigateToTranslation(nextEntryIndex);
+            } else {
+                showMessage(translations.es['reached_last']);
+            }
+        }
+
+        /**
+         * Moves focus to the previous translation field.
+         * @param {number} currentEntryIndex The current index of the SRT entry.
+         */
+        function goToPreviousTranslation(currentEntryIndex) {
+            if (srtEntries.length === 0) return;
+
+            let prevEntryIndex = currentEntryIndex - 1;
+
+            if (prevEntryIndex >= 0) {
+                navigateToTranslation(prevEntryIndex);
+            } else {
+                showMessage(translations.es['reached_first']);
+            }
+        }
+
+        // --- Event Handlers ---
+
+        srtFile.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                await processFile(file);
+            }
+        });
+
+        saveSrtButton.addEventListener('click', () => {
+            if (srtEntries.length === 0) {
+                showMessage(translations.es['no_translations_to_save']);
+                return;
+            }
+            fileNameInput.value = currentFileName.replace(/\.srt$/i, '') + '_trad.srt';
+            saveSrtModal.classList.remove('hidden');
+            fileNameInput.focus();
+        });
+
+        cancelSaveBtn.addEventListener('click', () => {
+            saveSrtModal.classList.add('hidden');
+        });
+
+        confirmSaveBtn.addEventListener('click', () => {
+            const filename = fileNameInput.value;
+            if (!filename) {
+                showMessage("Por favor, introduce un nombre de archivo.");
+                return;
+            }
+            showLoadingOverlay(translations.es['saving_file']);
+            try {
+                const updatedSrtContent = reconstructSrt(srtEntries);
+                const blob = new Blob([updatedSrtContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename.endsWith('.srt') ? filename : filename + '.srt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage(translations.es['file_saved_successfully']);
+            } catch (error) {
+                showMessage(`${translations.es['error_saving_file']} ${error.message}`);
+                console.error("Error saving file:", error);
+            } finally {
+                hideLoadingOverlay();
+                saveSrtModal.classList.add('hidden');
+            }
+        });
+
+
+        async function processFile(file) {
+            currentFileName = file.name;
+            showLoadingOverlay(translations.es['loading_file']);
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const content = e.target.result;
+                        srtEntries = parseSrtContent(content);
+                        renderTranslations(srtEntries);
+                        runFullQaCheck(); // Run QA checks on new file
+                        updateStatsDisplay();
+                        resolve();
+                    } catch (error) {
+                        showMessage(`${translations.es['error_reading_file']} ${error.message}`);
+                        console.error("Error parsing file:", error);
+                        translationsContainer.innerHTML = `<div class="text-center text-red-500 p-4 border border-red-300 rounded-md">${translations.es['file_processing_error']}</div>`;
+                        saveSrtButton.disabled = true;
+                        statsContainer.classList.add('hidden');
+                        videoPlayerContainer.classList.add('hidden');
+                        resolve();
+                    } finally {
+                        hideLoadingOverlay();
+                    }
+                };
+                reader.onerror = () => {
+                    showMessage(translations.es['error_reading_file'] + (file.name || ''));
+                    saveSrtButton.disabled = true;
+                    statsContainer.classList.add('hidden');
+                    videoPlayerContainer.classList.add('hidden');
+                    hideLoadingOverlay();
+                    resolve();
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (shortcutsModal.classList.contains('hidden') && findReplaceModal.classList.contains('hidden') && messageBox.classList.contains('hidden')) {
+
+                const activeElement = document.activeElement;
+                const isEditorFocused = activeElement && activeElement.classList.contains('subtitle-editor');
+                const currentFocused = getCurrentFocusedIndex();
+
+                // --- High Priority Global Shortcuts (Video Control) ---
+                if (event.altKey && !event.ctrlKey && event.key.toLowerCase() === 'p') {
+                    event.preventDefault();
+                    if (videoPlayer.paused) videoPlayer.play(); else videoPlayer.pause();
+                    return;
+                }
+                if (event.altKey && !event.ctrlKey && event.key === 'ArrowRight') {
+                    event.preventDefault(); videoPlayer.currentTime += 3; return;
+                }
+                if (event.altKey && !event.ctrlKey && event.key === 'ArrowLeft') {
+                    event.preventDefault(); videoPlayer.currentTime -= 3; return;
+                }
+                if (event.ctrlKey && event.altKey && event.key === 'ArrowRight') {
+                    event.preventDefault(); videoPlayer.currentTime += 5; return;
+                }
+                if (event.ctrlKey && event.altKey && event.key === 'ArrowLeft') {
+                    event.preventDefault(); videoPlayer.currentTime -= 5; return;
+                }
+
+                // --- Editor-Context Shortcuts ---
+                if (isEditorFocused && currentFocused) {
+                    const isNumberKey = event.key >= '1' && event.key <= '5';
+                    const indexToInsert = parseInt(event.key) - 1;
+
+                    if (event.ctrlKey && event.altKey && isNumberKey) {
+                        event.preventDefault();
+                        if (currentGlossaryLatestResults.length > indexToInsert) {
+                            document.execCommand('insertHTML', false, currentGlossaryLatestResults[indexToInsert].tgtTerm);
+                        }
+                        return;
+                    }
+                    
+                    if (event.altKey && !event.ctrlKey && isNumberKey) {
+                        event.preventDefault();
+                        if (currentTMLatestSearchResults.length > indexToInsert) {
+                            document.execCommand('insertHTML', false, currentTMLatestSearchResults[indexToInsert].tgtText);
+                        }
+                        return;
+                    }
+
+                    if (event.ctrlKey && !event.altKey) {
+                        switch (event.key.toLowerCase()) {
+                            case 'b':
+                                event.preventDefault(); formatText('bold'); break;
+                            case 'i':
+                                event.preventDefault(); formatText('italic'); break;
+                            case 'enter':
+                                event.preventDefault();
+                                setTranslationEditableState(currentFocused.entryIndex, false);
+                                goToNextTranslation(currentFocused.entryIndex);
+                                break;
+                            case 'arrowdown':
+                                event.preventDefault(); goToNextTranslation(currentFocused.entryIndex); break;
+                            case 'arrowup':
+                                event.preventDefault(); goToPreviousTranslation(currentFocused.entryIndex); break;
+                            case 'j':
+                                event.preventDefault(); jumpToCurrentSubtitleTime(currentFocused.entryIndex); break;
+                        }
+                    }
+                    
+                    if (event.ctrlKey && event.code === 'Space') {
+                        event.preventDefault();
+                        jumpToCurrentSubtitleTime(currentFocused.entryIndex);
+                    }
+                }
+            }
+        });
+
+        // --- Message Box Functions ---
+        function showMessage(msg) {
+            messageText.textContent = msg;
+            messageBox.classList.remove('hidden');
+        }
+
+        messageClose.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+        });
+
+        // --- Keyboard Shortcuts Modal ---
+        shortcutsBtn.addEventListener('click', () => {
+            shortcutsModal.classList.remove('hidden');
+        });
+
+        shortcutsCloseBtn.addEventListener('click', () => {
+            shortcutsModal.classList.add('hidden');
+        });
+
+        // --- Find and Replace Modal ---
+        findReplaceBtn.addEventListener('click', () => {
+            findReplaceModal.classList.remove('hidden');
+            findInput.focus();
+        });
+
+        findReplaceCloseBtn.addEventListener('click', () => {
+            findReplaceModal.classList.add('hidden');
+            findState.lastFound = null;
+            const currentFocused = getCurrentFocusedIndex();
+            if (currentFocused) {
+                const targetEditor = document.getElementById(`translation-${currentFocused.entryIndex}`);
+                if (targetEditor) {
+                    targetEditor.focus();
+                }
+            }
+        });
+
+        findNextBtn.addEventListener('click', () => findAndNavigate(true));
+        findPrevBtn.addEventListener('click', () => findAndNavigate(false));
+        replaceBtn.addEventListener('click', replaceCurrentMatch);
+        replaceAllBtn.addEventListener('click', replaceAllMatches);
+
+        function findAndNavigate(forward = true) {
+            const query = findInput.value;
+            if (!query) {
+                showMessage(translations.es['no_find_query']);
+                return;
+            }
+
+            findState.query = query;
+            findState.caseSensitive = caseSensitiveCheckbox.checked;
+            findState.useRegex = regexCheckbox.checked;
+
+            let regex;
+            try {
+                regex = findState.useRegex ? new RegExp(findState.query, findState.caseSensitive ? '' : 'i') : null;
+            } catch (e) {
+                showMessage(`Error de expresión regular: ${e.message}`);
+                return;
+            }
+
+            let startEntryIndex = 0;
+            let startMatchIndex = 0;
+
+            if (findState.lastFound) {
+                startEntryIndex = findState.lastFound.entryIndex;
+                startMatchIndex = forward ? findState.lastFound.matchEnd : findState.lastFound.matchStart - 1;
+            } else {
+                if (!forward) {
+                    startEntryIndex = srtEntries.length - 1;
+                    startMatchIndex = Infinity;
+                }
+            }
+
+            let found = false;
+            let currentEntryIndex = startEntryIndex;
+            const totalEntries = srtEntries.length;
+
+            for (let i = 0; i < totalEntries; i++) {
+                const entry = srtEntries[currentEntryIndex];
+                const text = entry.translation;
+                let match;
+
+                if (findState.useRegex) {
+                    regex.lastIndex = 0;
+                    if (forward) {
+                        let searchFrom = (currentEntryIndex === startEntryIndex) ? startMatchIndex : 0;
+                        const subText = text.substring(searchFrom);
+                        match = regex.exec(subText);
+                        if (match) {
+                            match.index += searchFrom;
+                        }
+                    } else {
+                        let allMatches = [];
+                        let tempRegex = new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g');
+                        let tempMatch;
+                        while((tempMatch = tempRegex.exec(text)) !== null) {
+                            allMatches.push(tempMatch);
+                        }
+                        let searchUntil = (currentEntryIndex === startEntryIndex) ? startMatchIndex : text.length;
+                        match = allMatches.reverse().find(m => m.index < searchUntil);
+                    }
+                } else {
+                    const searchText = findState.caseSensitive ? text : text.toLowerCase();
+                    const queryLower = findState.caseSensitive ? findState.query : findState.query.toLowerCase();
+
+                    if (forward) {
+                        let searchFrom = (currentEntryIndex === startEntryIndex) ? startMatchIndex : 0;
+                        const foundIndex = searchText.indexOf(queryLower, searchFrom);
+                        if (foundIndex !== -1) {
+                            match = { index: foundIndex, 0: text.substring(foundIndex, foundIndex + queryLower.length) };
+                        }
+                    } else {
+                        let searchUntil = (currentEntryIndex === startEntryIndex) ? startMatchIndex : text.length;
+                        const foundIndex = searchText.lastIndexOf(queryLower, searchUntil);
+                        if (foundIndex !== -1) {
+                            match = { index: foundIndex, 0: text.substring(foundIndex, foundIndex + queryLower.length) };
+                        }
+                    }
+                }
+
+                if (match) {
+                    findState.lastFound = {
+                        entryIndex: currentEntryIndex,
+                        matchStart: match.index,
+                        matchEnd: match.index + match[0].length,
+                    };
+                    navigateToTranslation(currentEntryIndex);
+                    const targetEditor = document.getElementById(`translation-${currentEntryIndex}`);
+                    if (targetEditor) {
+                        const range = document.createRange();
+                        const sel = window.getSelection();
+                        range.setStart(targetEditor.firstChild, findState.lastFound.matchStart);
+                        range.setEnd(targetEditor.firstChild, findState.lastFound.matchEnd);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                    found = true;
+                    return;
+                }
+
+                currentEntryIndex = (currentEntryIndex + (forward ? 1 : -1) + totalEntries) % totalEntries;
+            }
+
+            if (!found) {
+                showMessage(translations.es['no_match_found']);
+                findState.lastFound = null;
+            }
+        }
+
+
+        function replaceCurrentMatch() {
+            if (!findState.lastFound || !findState.query) {
+                showMessage(translations.es['no_match_found']);
+                return;
+            }
+
+            const { entryIndex, matchStart, matchEnd } = findState.lastFound;
+            const entry = srtEntries[entryIndex];
+            let originalText = entry.translation;
+            let replacedText;
+
+            if (findState.useRegex) {
+                 const regex = new RegExp(findState.query, findState.caseSensitive ? '' : 'i');
+                 replacedText = originalText.substring(0, matchStart) +
+                                originalText.substring(matchStart, matchEnd).replace(regex, findState.replace) +
+                                originalText.substring(Math.min(matchEnd, originalText.length));
+
+            } else {
+                replacedText = originalText.substring(0, matchStart) +
+                               findState.replace +
+                               originalText.substring(Math.min(matchEnd, originalText.length));
+            }
+
+            entry.translation = replacedText;
+            entry.wordCountTranslation = countWords(replacedText);
+            entry.isTranslated = replacedText.trim() !== '';
+            entry.charCountTranslation = countCharactersWithoutTags(replacedText);
+            entry.cpsTranslation = calculateCPS(replacedText, entry.durationMs);
+
+            renderTranslations(srtEntries);
+            navigateToTranslation(entryIndex);
+            updateStatsDisplay();
+
+            findState.lastFound = null;
+        }
+
+        function replaceAllMatches() {
+            const query = findInput.value;
+            const replaceWith = replaceInput.value;
+            if (!query) {
+                showMessage(translations.es['no_find_query']);
+                return;
+            }
+
+            let replacedCount = 0;
+            let regex;
+            try {
+                regex = new RegExp(query, (caseSensitiveCheckbox.checked ? '' : 'i') + 'g' + (regexCheckbox.checked ? '' : ''));
+            } catch (e) {
+                showMessage(`Error de expresión regular: ${e.message}`);
+                return;
+            }
+
+            srtEntries.forEach(entry => {
+                let originalTranslation = entry.translation;
+                let newTranslation;
+
+                if (regexCheckbox.checked) {
+                    newTranslation = originalTranslation.replace(regex, replaceWith);
+                } else {
+                    const searchStr = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const nonRegexRegex = new RegExp(searchStr, (caseSensitiveCheckbox.checked ? '' : 'i') + 'g');
+                    newTranslation = originalTranslation.replace(nonRegexRegex, replaceWith);
+                }
+
+                if (originalTranslation !== newTranslation) {
+                    entry.translation = newTranslation;
+                    entry.wordCountTranslation = countWords(newTranslation);
+                    entry.isTranslated = newTranslation.trim() !== '';
+                    entry.charCountTranslation = countCharactersWithoutTags(newTranslation);
+                    entry.cpsTranslation = calculateCPS(newTranslation, entry.durationMs);
+                    replacedCount++;
+                }
+            });
+
+            renderTranslations(srtEntries);
+            showMessage(`${replacedCount} ${translations.es['replaced_all']}`);
+            findState.lastFound = null;
+            updateStatsDisplay();
+        }
+
+        function setLanguage(lang) {
+            currentLanguage = 'es';
+            updateTextContent();
+            renderTranslations(srtEntries);
+            renderGlossary();
+        }
+
+        function updateTextContent() {
+            const setTextContent = (id, text) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = text;
+            };
+            
+            const setOptionText = (selectId, optionValue, text) => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    const option = select.querySelector(`option[value="${optionValue}"]`);
+                    if (option) {
+                        option.textContent = text;
+                    }
+                }
+            };
+
+            document.title = translations.es['title'];
+            setTextContent('importSrtBtnText', translations.es['import_srt']);
+            setTextContent('exportSrtBtnText', translations.es['export_srt']);
+            setTextContent('okBtnText', translations.es['ok']);
+            setTextContent('loadVideo', translations.es['load_video']);
+
+            const initialMessageElement = document.getElementById('initialMessage');
+            if (initialMessageElement) {
+                initialMessageElement.textContent = translations.es['no_translations'];
+            }
+
+            setTextContent('shortcutsTitle', translations.es['shortcuts_title']);
+            const shortcutValidateElement = document.getElementById('shortcutValidate');
+            if(shortcutValidateElement) shortcutValidateElement.innerHTML = `<strong>Ctrl + Enter:</strong> ${translations.es['shortcut_validate'].substring(translations.es['shortcut_validate'].indexOf(':') + 1).trim()}`;
+
+            if(arrowDownIconHtml) arrowDownIconHtml.innerHTML = arrowDownIcon;
+            if(arrowUpIconHtml) arrowUpIconHtml.innerHTML = arrowUpIcon;
+            const shortcutNextElement = document.getElementById('shortcutNext');
+            if(shortcutNextElement) shortcutNextElement.innerHTML = `<strong>Ctrl + ${arrowDownIconHtml.innerHTML}</strong>: ${translations.es['shortcut_next'].substring(translations.es['shortcut_next'].indexOf(':') + 1).trim()}`;
+            const shortcutPrevElement = document.getElementById('shortcutPrev');
+            if(shortcutPrevElement) shortcutPrevElement.innerHTML = `<strong>Ctrl + ${arrowUpIconHtml.innerHTML}</strong>: ${translations.es['shortcut_prev'].substring(translations.es['shortcut_prev'].indexOf(':') + 1).trim()}`;
+
+            setTextContent('closeBtnText', translations.es['close_btn']);
+            setTextContent('shortcutsBtnText', translations.es['shortcuts_btn']);
+            const shortcutAlt1Element = document.getElementById('shortcutAlt1');
+            if(shortcutAlt1Element) shortcutAlt1Element.innerHTML = `<strong>Alt + [1-5]:</strong> ${translations.es['shortcut_alt_1'].substring(translations.es['shortcut_alt_1'].indexOf(':') + 1).trim()}`;
+            const shortcutTmInsertElement = document.getElementById('shortcutTmInsert');
+            if(shortcutTmInsertElement) shortcutTmInsertElement.innerHTML = `<strong>Ctrl + Alt + [1-5]:</strong> ${translations.es['shortcut_tm_insert'].substring(translations.es['shortcut_tm_insert'].indexOf(':') + 1).trim()}`;
+            const shortcutJumpToTimeElement = document.getElementById('shortcutJumpToTime');
+            if(shortcutJumpToTimeElement) shortcutJumpToTimeElement.innerHTML = `<strong>Ctrl + J:</strong> ${translations.es['shortcut_jump_to_time'].substring(translations.es['shortcut_jump_to_time'].indexOf(':') + 1).trim()}`;
+            const shortcutPlaySegmentElement = document.getElementById('shortcutPlaySegment');
+            if(shortcutPlaySegmentElement) shortcutPlaySegmentElement.innerHTML = `<strong>Ctrl + Barra espaciadora:</strong> ${translations.es['shortcut_play_segment'].substring(translations.es['shortcut_play_segment'].indexOf(':') + 1).trim()}`;
+            const shortcutBoldElement = document.getElementById('shortcutBold');
+            if(shortcutBoldElement) shortcutBoldElement.innerHTML = `<strong>Ctrl + B:</strong> ${translations.es['shortcut_bold'].substring(translations.es['shortcut_bold'].indexOf(':') + 1).trim()}`;
+            const shortcutItalicElement = document.getElementById('shortcutItalic');
+            if(shortcutItalicElement) shortcutItalicElement.innerHTML = `<strong>Ctrl + I:</strong> ${translations.es['shortcut_italic'].substring(translations.es['shortcut_italic'].indexOf(':') + 1).trim()}`;
+            const shortcutPlayPauseElement = document.getElementById('shortcutPlayPause');
+            if(shortcutPlayPauseElement) shortcutPlayPauseElement.innerHTML = `<strong>Alt + P:</strong> ${translations.es['shortcut_play_pause'].substring(translations.es['shortcut_play_pause'].indexOf(':') + 1).trim()}`;
+            const shortcutSeekElement = document.getElementById('shortcutSeek');
+            if(shortcutSeekElement) shortcutSeekElement.innerHTML = `<strong>Alt + Flechas:</strong> ${translations.es['shortcut_seek'].substring(translations.es['shortcut_seek'].indexOf(':') + 1).trim()}`;
+            const shortcutSeekFastElement = document.getElementById('shortcutSeekFast');
+            if(shortcutSeekFastElement) shortcutSeekFastElement.innerHTML = `<strong>Ctrl + Alt + Flechas:</strong> ${translations.es['shortcut_seek_fast'].substring(translations.es['shortcut_seek_fast'].indexOf(':') + 1).trim()}`;
+
+
+            setTextContent('findReplaceBtnText', translations.es['find_replace_btn']);
+            setTextContent('findReplaceTitle', translations.es['find_replace_title']);
+            setTextContent('findLabel', translations.es['find_label']);
+            setTextContent('replaceLabel', translations.es['replace_label']);
+            setTextContent('caseSensitiveText', translations.es['case_sensitive']);
+            setTextContent('regexText', translations.es['regular_expression']);
+            setTextContent('findPrevText', translations.es['find_prev']);
+            setTextContent('findNextText', translations.es['find_next']);
+            setTextContent('replaceText', translations.es['replace']);
+            setTextContent('replaceAllText', translations.es['replace_all']);
+            setTextContent('findReplaceCloseText', translations.es['close_btn']);
+
+            setTextContent('terminologyBtnText', translations.es['terminology_btn']);
+            setTextContent('terminologySidebarTitle', translations.es['terminology_sidebar_title']);
+            setTextContent('configLangTitle', translations.es['config_lang_title']);
+            setTextContent('configLangInfo', translations.es['config_lang_info']);
+            setTextContent('sourceLanguageLabel', translations.es['source_language']);
+            setTextContent('targetLanguageLabel', translations.es['target_language']);
+            setTextContent('confirmLanguagesBtn', translations.es['confirm_languages']);
+            setTextContent('currentLangTitle', translations.es['current_lang_title']);
+            setTextContent('addTermTitleAccordion', translations.es['add_term_title']);
+            setTextContent('termLabel', translations.es['term']);
+            setTextContent('translationLabel', translations.es['translation']);
+            setTextContent('addTermBtn', translations.es['add_button']);
+            setTextContent('searchTitle', translations.es['search_title']);
+            if (searchTermInput) searchTermInput.placeholder = translations.es['search_placeholder'];
+            setTextContent('importTbxBtn', translations.es['import_tbx']);
+            setTextContent('downloadTbxBtn', translations.es['download_tbx']);
+            setTextContent('newGlossaryBtn', translations.es['new_glossary']);
+            setTextContent('glossaryListTitle', translations.es['glossary_list_title']);
+            setTextContent('sourceTermCol', translations.es['source_term_col']);
+            setTextContent('targetTermCol', translations.es['target_term_col']);
+            setTextContent('actionsCol', translations.es['actions_col']);
+
+            setTextContent('translationStatsTitle', translations.es['translation_stats_title']);
+
+            setTextContent('tmBtnText', translations.es['tm_btn']);
+            setTextContent('tmSidebarTitle', translations.es['tm_sidebar_title']);
+            setTextContent('newTmBtn', translations.es['new_tm']);
+            setTextContent('importTmxBtnText', translations.es['import_tmx']);
+            setTextContent('downloadTmxBtn', translations.es['download_tmx']);
+            setTextContent('tmSearchTitle', translations.es['tm_search_title']);
+            if (tmSearchInput) tmSearchInput.placeholder = translations.es['tm_search_placeholder'];
+            setTextContent('tmSearchResultsTitle', translations.es['tm_search_results_title']);
+            setTextContent('tmScoreCol', translations.es['tm_score_col']);
+            setTextContent('tmOriginalCol', translations.es['tm_original_col']);
+            setTextContent('tmTranslationCol', translations.es['tm_translation_col']);
+            setTextContent('tmConfigLangTitle', translations.es['tm_config_lang_title']);
+            setTextContent('tmConfigLangInfo', translations.es['tm_config_lang_info']);
+            setTextContent('tmSourceLanguageLabel', translations.es['source_language']);
+            setTextContent('tmTargetLanguageLabel', translations.es['target_language']);
+            setTextContent('tmConfirmLanguagesBtn', translations.es['confirm_languages']);
+            setTextContent('currentTmLangTitle', translations.es['current_tm_lang_title']);
+            if (tmInternalMessage) tmInternalMessage.textContent = translations.es['tm_initial_message'];
+            
+            // Update preview control texts
+            document.querySelector('label[for="subtitleFontSize"]').textContent = translations.es['preview_size'];
+            document.querySelector('label[for="subtitlePreviewSource"]').textContent = translations.es['preview_source'];
+            setOptionText('subtitlePreviewSource', 'translation', translations.es['translation_text_option']);
+            setOptionText('subtitlePreviewSource', 'original', translations.es['original_text_option']);
+            
+            // Update Save SRT Modal texts
+            setTextContent('saveSrtTitle', translations.es['save_srt_title']);
+            setTextContent('fileNameLabel', translations.es['file_name_label']);
+            setTextContent('cancelSaveText', translations.es['cancel_btn']);
+            setTextContent('confirmSaveText', translations.es['save_btn']);
+
+            // Backup Modal texts
+            setTextContent('backupBtnText', translations.es['backup_btn']);
+            setTextContent('backupModalTitle', translations.es['backup_modal_title']);
+            document.querySelector('#backupFoundView [data-i18n="restore_backup_info"]').textContent = translations.es['restore_backup_info'];
+            document.querySelector('#noBackupFoundView [data-i18n="no_backup_found_info"]').textContent = translations.es['no_backup_found_info'];
+            document.querySelector('#backupFoundView [data-i18n="file_label"]').textContent = translations.es['file_label'];
+            document.querySelector('#backupFoundView [data-i18n="last_modified_label"]').textContent = translations.es['last_modified_label'];
+            document.querySelector('#exportSrtFromBackupBtn').textContent = translations.es['export_srt_btn'];
+            document.querySelector('#deleteBackupBtn').textContent = translations.es['delete_backup_btn'];
+            document.querySelector('#confirmRestoreBtn').textContent = translations.es['restore_btn'];
+            document.querySelector('#closeBackupModalBtn').textContent = translations.es['close_btn'];
+
+            // QA Modal texts
+            setTextContent('qaBtnText', translations.es['qa_btn']);
+            setTextContent('qaModalTitle', translations.es['qa_modal_title']);
+            document.querySelector('label[for="qaCpsLimit"]').textContent = translations.es['cps_limit_label'];
+            document.querySelector('label[for="qaCharsPerLineLimit"]').textContent = translations.es['chars_per_line_limit_label'];
+            document.querySelector('#saveQaSettingsBtn').textContent = translations.es['save_and_apply_btn'];
+            document.querySelector('#closeQaModalBtn').textContent = translations.es['close_btn'];
+            setTextContent('qaErrorListModalTitle', translations.es['qa_error_list_title']);
+            document.querySelector('#closeQaErrorListModalBtn').textContent = translations.es['close_btn'];
+        }
+
+        // --- Terminology Sidebar Logic ---
+        terminologyBtn.addEventListener('click', () => {
+            const isHidden = !terminologySidebar.classList.contains('show-sidebar');
+            if (isHidden) {
+                terminologySidebar.classList.add('show-sidebar');
+            } else {
+                terminologySidebar.classList.remove('show-sidebar');
+            }
+            if (isHidden) {
+                if (!glossarySourceLanguage || !glossaryTargetLanguage) {
+                    showLanguageConfigSection();
+                } else {
+                    showGlossaryEditorSection();
+                }
+            }
+        });
+
+        closeTerminologySidebarBtn.addEventListener('click', () => {
+            terminologySidebar.classList.remove('show-sidebar');
+        });
+
+        function populateIsoLanguagesDatalist() {
+            isoLanguagesDatalist.innerHTML = '';
+            isoLanguagesData.forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang.code;
+                option.textContent = lang.name;
+                isoLanguagesDatalist.appendChild(option);
+            });
+        }
+
+        function resetGlossary() {
+            glossary = [];
+            glossarySourceLanguage = '';
+            glossaryTargetLanguage = '';
+            if (configSrcLang) configSrcLang.value = 'en-US';
+            if (configTgtLang) configTgtLang.value = 'es-ES';
+            if (srcTermInput) srcTermInput.value = "";
+            if (tgtTermInput) tgtTermInput.value = "";
+            if (searchTermInput) searchTermInput.value = "";
+            if (terminologyLanguageConfigSection && terminologyEditorSection) {
+                terminologyLanguageConfigSection.style.display = 'block';
+                terminologyEditorSection.style.display = 'none';
+            }
+            renderGlossary();
+            renderTranslations(srtEntries);
+            updateStatsDisplay();
+        }
+
+        function showLanguageConfigSection() {
+            if (terminologyLanguageConfigSection && terminologyEditorSection) {
+                terminologyLanguageConfigSection.style.display = 'block';
+                terminologyEditorSection.style.display = 'none';
+            }
+        }
+
+        function showGlossaryEditorSection() {
+            if (terminologyLanguageConfigSection && terminologyEditorSection && displaySrcLang && displayTgtLang) {
+                terminologyLanguageConfigSection.style.display = 'none';
+                terminologyEditorSection.style.display = 'block';
+                displaySrcLang.value = glossarySourceLanguage;
+                displayTgtLang.value = glossaryTargetLanguage;
+                renderGlossary();
+            }
+        }
+
+        function confirmGlossaryLanguages() {
+            const srcLang = configSrcLang ? configSrcLang.value.trim() : '';
+            const tgtLang = configTgtLang ? configTgtLang.value.trim() : '';
+            if (!srcLang || !tgtLang) {
+                showMessage(translations.es['lang_config_required']);
+                return;
+            }
+            glossarySourceLanguage = srcLang;
+            glossaryTargetLanguage = tgtLang;
+            showGlossaryEditorSection();
+            renderTranslations(srtEntries);
+        }
+
+        function addTerm() {
+            const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
+            const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
+            if (!srcTerm || !tgtTerm) {
+                showMessage(translations.es['both_terms_required']);
+                return;
+            }
+            glossary.push({
+                srcLang: glossarySourceLanguage,
+                srcTerm: srcTerm,
+                tgtLang: glossaryTargetLanguage,
+                tgtTerm: tgtTerm
+            });
+            if (srcTermInput) srcTermInput.value = "";
+            if (tgtTermInput) tgtTermInput.value = "";
+            renderGlossary();
+            renderTranslations(srtEntries);
+        }
+
+        function deleteTerm(index) {
+            glossary.splice(index, 1);
+            renderGlossary();
+            renderTranslations(srtEntries);
+        }
+
+        function renderGlossary() {
+            if (!glossaryTableBody) return;
+            const search = searchTermInput ? searchTermInput.value.toLowerCase() : '';
+            glossaryTableBody.innerHTML = "";
+            const filteredGlossary = glossary.filter(entry =>
+                (entry.srcTerm && entry.srcTerm.toLowerCase().includes(search)) ||
+                (entry.tgtTerm && entry.tgtTerm.toLowerCase().includes(search))
+            );
+            const highlightedTerms = [];
+            const otherTerms = [];
+            filteredGlossary.forEach(entry => {
+                if (entry.srcTerm && termsFoundInActiveSegment.has(entry.srcTerm)) {
+                    highlightedTerms.push(entry);
+                } else {
+                    otherTerms.push(entry);
+                }
+            });
+            currentGlossaryLatestResults = [...highlightedTerms, ...otherTerms.sort((a, b) => a.srcTerm.localeCompare(b.srcTerm))];
+            highlightedTerms.forEach((entry) => {
+                const row = document.createElement("tr");
+                row.classList.add('glossary-row-highlight');
+                row.innerHTML = `<td>${entry.srcTerm}</td><td>${entry.tgtTerm}</td><td><button class="glossary-delete-btn rounded-md" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations.es['delete_button']}</button></td>`;
+                glossaryTableBody.appendChild(row);
+            });
+            otherTerms.forEach((entry) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${entry.srcTerm}</td><td>${entry.tgtTerm}</td><td><button class="glossary-delete-btn rounded-md" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations.es['delete_button']}</button></td>`;
+                glossaryTableBody.appendChild(row);
+            });
+        }
+
+        function generateTBX() {
+            const xml = [`<?xml version="1.0" encoding="UTF-8"?><martif type="TBX" xml:lang="${glossarySourceLanguage}"><text><body>`];
+            glossary.forEach(entry => {
+                xml.push(`<termEntry><LangSet xml:lang="${entry.srcLang}"><tig><term>${entry.srcTerm}</term></tig></LangSet><LangSet xml:lang="${entry.tgtLang}"><tig><term>${entry.tgtTerm}</term></tig></LangSet></termEntry>`);
+            });
+            xml.push(`</body></text></martif>`);
+            return xml.join("\n");
+        }
+
+        function downloadTBX() {
+            if (glossary.length === 0 && (!glossarySourceLanguage || !glossaryTargetLanguage)) {
+                showMessage(translations.es['cannot_download_empty_or_unconfigured_glossary']);
+                return;
+            }
+            showLoadingOverlay(translations.es['saving_file']);
+            try {
+                const blob = new Blob([generateTBX()], { type: "application/xml" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "glossary.tbx";
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL(url);
+                showMessage(translations.es['file_saved_successfully']);
+            } catch (error) {
+                showMessage(`${translations.es['error_saving_file']} ${error.message}`);
+                console.error("Error downloading TBX:", error);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        function loadTBX() {
+            if (!tbxFileInput) return;
+            tbxFileInput.click();
+            tbxFileInput.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                showLoadingOverlay(translations.es['loading_file']);
+                try {
+                    const reader = new FileReader();
+                    await new Promise((resolve, reject) => {
+                        reader.onload = () => {
+                            try {
+                                const parser = new DOMParser();
+                                const xmlDoc = parser.parseFromString(reader.result, "application/xml");
+                                if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                                    throw new Error("Invalid XML/TBX format: " + xmlDoc.getElementsByTagName("parsererror")[0].textContent);
+                                }
+                                if (xmlDoc.getElementsByTagName("tu").length > 0) {
+                                    showTMInternalMessage(translations.es['tbx_file_expected_tmx_found'], true);
+                                    reject(new Error("Attempted to load TMX into Glossary."));
+                                    return;
+                                }
+                                const entries = xmlDoc.getElementsByTagName("termEntry");
+                                glossary = [];
+                                let firstEntryLangs = { src: '', tgt: '' };
+                                if (entries.length > 0) {
+                                    const firstSets = entries[0].getElementsByTagName("LangSet");
+                                    if (firstSets.length >= 2) {
+                                        firstEntryLangs.src = firstSets[0].getAttribute("xml:lang");
+                                        firstEntryLangs.tgt = firstSets[1].getAttribute("xml:lang");
+                                    }
+                                }
+                                for (let entry of entries) {
+                                    const sets = entry.getElementsByTagName("LangSet");
+                                    if (sets.length >= 2) {
+                                        const lang1 = sets[0].getAttribute("xml:lang");
+                                        const term1 = sets[0].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
+                                        const lang2 = sets[1].getAttribute("xml:lang");
+                                        const term2 = sets[1].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
+                                        glossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2 });
+                                    }
+                                }
+                                if (glossary.length > 0 && firstEntryLangs.src && firstEntryLangs.tgt) {
+                                    glossarySourceLanguage = firstEntryLangs.src;
+                                    glossaryTargetLanguage = firstEntryLangs.tgt;
+                                } else if (glossary.length === 0) {
+                                    showMessage(translations.es['error_loading_tbx_file']);
+                                }
+                                showGlossaryEditorSection();
+                                renderTranslations(srtEntries);
+                                resolve();
+                            } catch (error) {
+                                reject(error);
+                            }
+                        };
+                        reader.onerror = reject;
+                        reader.readAsText(file);
+                    });
+                } catch (error) {
+                    console.error("Error loading TBX file:", error);
+                    if (!error.message.includes("Attempted to load TMX")) {
+                        showMessage(translations.es['error_loading_tbx_file']);
+                    }
+                    resetGlossary();
+                } finally {
+                    hideLoadingOverlay();
+                }
+            };
+        }
+
+        // --- Translation Memory (TM) Logic ---
+        function levenshteinDistance(a, b) {
+            const an = a.length, bn = b.length;
+            if (an === 0) return bn;
+            if (bn === 0) return an;
+            const matrix = Array(bn + 1).fill(null).map(() => Array(an + 1).fill(null));
+            for (let i = 0; i <= an; i++) matrix[0][i] = i;
+            for (let i = 0; i <= bn; i++) matrix[i][0] = i;
+            for (let i = 1; i <= bn; i++) {
+                for (let j = 1; j <= an; j++) {
+                    const cost = a[j - 1] === b[i - 1] ? 0 : 1;
+                    matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+                }
+            }
+            return matrix[bn][an];
+        }
+
+        function calculateSimilarity(s1, s2) {
+            if (!s1 || !s2) return 0;
+            const longerLength = Math.max(s1.length, s2.length);
+            if (longerLength === 0) return 100;
+            const distance = levenshteinDistance(s1, s2);
+            return ((longerLength - distance) / longerLength) * 100;
+        }
+        
+        function renderDiff(tmText, originalText) {
+            const dmp = new diff_match_patch();
+            const diffs = dmp.diff_main(tmText, originalText);
+            dmp.diff_cleanupSemantic(diffs);
+
+            return diffs.map(([op, text]) => {
+                const safeText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '&para;<br>');
+                switch (op) {
+                    case DIFF_INSERT: return `<span class="diff-insertion">${safeText}</span>`;
+                    case DIFF_DELETE: return `<span class="diff-deletion">${safeText}</span>`;
+                    case DIFF_EQUAL: return safeText;
+                }
+            }).join('');
+        }
+
+
+        tmBtn.addEventListener('click', () => {
+            const isHidden = !translationMemorySidebar.classList.contains('show-sidebar');
+            if (isHidden) {
+                translationMemorySidebar.classList.add('show-sidebar');
+            } else {
+                translationMemorySidebar.classList.remove('show-sidebar');
+            }
+            if (isHidden) {
+                if (!tmSourceLanguage || !tmTargetLanguage) {
+                    showTMLanguageConfigSection();
+                } else {
+                    showTMEditorSection();
+                    tmSearch();
+                }
+            }
+        });
+
+        closeTranslationMemorySidebarBtn.addEventListener('click', () => {
+            translationMemorySidebar.classList.remove('show-sidebar');
+        });
+
+        tmFileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                await loadTMX(file);
+            }
+        });
+
+        function showTMInternalMessage(msg, isError = false) {
+            if (tmInternalMessage) {
+                tmInternalMessage.textContent = msg;
+                tmInternalMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'border-red-500', 'bg-blue-100', 'text-blue-800', 'border-blue-500');
+                tmInternalMessage.classList.add(isError ? 'bg-red-100' : 'bg-blue-100', isError ? 'text-red-800' : 'text-blue-800', isError ? 'border-red-500' : 'border-blue-500');
+                tmInternalMessage.classList.remove('hidden');
+            }
+        }
+
+        function hideTMInternalMessage() {
+            if (tmInternalMessage) {
+                tmInternalMessage.classList.add('hidden');
+                tmInternalMessage.textContent = '';
+            }
+        }
+
+        function resetTM() {
+            translationMemory = [];
+            tmSearchInput.value = '';
+            renderTMSearchResults([]);
+            showTMLanguageConfigSection();
+            hideTMInternalMessage(); // Hide the message on reset
+        }
+
+        function showTMLanguageConfigSection() {
+            if (tmLanguageConfigSection && tmEditorSection) {
+                tmLanguageConfigSection.style.display = 'block';
+                tmEditorSection.style.display = 'none';
+                if (tmConfigSrcLang) tmConfigSrcLang.value = 'en-US';
+                if (tmConfigTgtLang) tmConfigTgtLang.value = 'es-ES';
+                hideTMInternalMessage();
+            }
+        }
+
+        function showTMEditorSection() {
+            if (tmLanguageConfigSection && tmEditorSection && displayTmSrcLang && displayTmTgtLang) {
+                tmLanguageConfigSection.style.display = 'none';
+                tmEditorSection.style.display = 'block';
+                displayTmSrcLang.value = tmSourceLanguage;
+                displayTmTgtLang.value = tmTargetLanguage;
+                tmSearch();
+                hideTMInternalMessage();
+            }
+        }
+
+        function confirmTMLanguages() {
+            const srcLang = tmConfigSrcLang ? tmConfigSrcLang.value.trim() : '';
+            const tgtLang = tmConfigTgtLang ? tmConfigTgtLang.value.trim() : '';
+            if (!srcLang || !tgtLang) {
+                showTMInternalMessage(translations.es['lang_config_required'], true);
+                return;
+            }
+            tmSourceLanguage = srcLang;
+            tmTargetLanguage = tgtLang;
+            showTMEditorSection();
+        }
+
+        async function loadTMX(file) {
+            showLoadingOverlay(translations.es['loading_file']);
+            hideTMInternalMessage();
+            try {
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                    reader.onload = () => {
+                        try {
+                            const parser = new DOMParser();
+                            const xmlDoc = parser.parseFromString(reader.result, "application/xml");
+                            if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                                throw new Error("Invalid XML/TMX format: " + xmlDoc.getElementsByTagName("parsererror")[0].textContent);
+                            }
+                            if (xmlDoc.getElementsByTagName("termEntry").length > 0) {
+                                showTMInternalMessage(translations.es['tmx_file_expected_tbx_found'], true);
+                                reject(new Error("Attempted to load TBX into Translation Memory."));
+                                return;
+                            }
+                            const tuElements = xmlDoc.getElementsByTagName("tu");
+                            let newTM = [];
+                            let detectedSrcLang = '', detectedTgtLang = '';
+                            if (tuElements.length > 0) {
+                                const tuvElements = tuElements[0].getElementsByTagName("tuv");
+                                if (tuvElements.length >= 2) {
+                                    detectedSrcLang = tuvElements[0].getAttribute("xml:lang");
+                                    detectedTgtLang = tuvElements[1].getAttribute("xml:lang");
+                                }
+                            }
+                            for (let tu of tuElements) {
+                                const tuvElements = tu.getElementsByTagName("tuv");
+                                if (tuvElements.length >= 2) {
+                                    const srcTuv = tuvElements[0], tgtTuv = tuvElements[1];
+                                    const srcLang = srcTuv.getAttribute("xml:lang"), tgtLang = tgtTuv.getAttribute("xml:lang");
+                                    const srcSeg = srcTuv.getElementsByTagName("seg")[0]?.textContent || '', tgtSeg = tgtTuv.getElementsByTagName("seg")[0]?.textContent || '';
+                                    newTM.push({ srcLang, srcText: srcSeg, tgtLang, tgtText: tgtSeg, srcWordCount: countWords(srcSeg), tgtWordCount: countWords(tgtSeg) });
+                                }
+                            }
+                            translationMemory = newTM;
+                            tmSourceLanguage = detectedSrcLang || (tmConfigSrcLang ? tmConfigSrcLang.value : 'en-US');
+                            tmTargetLanguage = detectedTgtLang || (tmConfigTgtLang ? tmConfigTgtLang.value : 'es-ES');
+                            showTMInternalMessage(`TMX cargado con ${translationMemory.length} unidades de traducción.`);
+                            showTMEditorSection();
+                            tmSearch();
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsText(file);
+                });
+            } catch (error) {
+                console.error("Error loading TMX file:", error);
+                if (!error.message.includes("Attempted to load TBX")) {
+                    showTMInternalMessage(translations.es['error_loading_tmx_file'], true);
+                }
+                resetTM();
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        function generateTMX() {
+            if (translationMemory.length === 0) {
+                showTMInternalMessage(translations.es['cannot_download_empty_tm'], true);
+                return null;
+            }
+            const header = `<?xml version="1.0" encoding="UTF-8"?><tmx version="1.4"><header creationtool="subpandaTM" creationtoolversion="1.0" datatype="unknown" segtype="sentence" changeid="subpandaTMUser" srclang="${tmSourceLanguage || 'en-US'}" o-tmf="subpandaTM" adminlang="en-US" ${tmTargetLanguage ? `targetlang="${tmTargetLanguage}"` : ''}> </header><body>`;
+            const xml = [header];
+            translationMemory.forEach(entry => {
+                xml.push(`    <tu><tuv xml:lang="${entry.srcLang}"><seg>${entry.srcText}</seg></tuv><tuv xml:lang="${entry.tgtLang}"><seg>${entry.tgtText}</seg></tuv></tu>`);
+            });
+            xml.push(`  </body></tmx>`);
+            return xml.join("\n");
+        }
+
+        function downloadTMX() {
+            const tmxContent = generateTMX();
+            if (!tmxContent) return;
+            showLoadingOverlay(translations.es['saving_file']);
+            try {
+                const blob = new Blob([tmxContent], { type: "application/xml" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "translation_memory.tmx";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showTMInternalMessage(translations.es['file_saved_successfully']);
+            } catch (error) {
+                showTMInternalMessage(`${translations.es['error_saving_file']} ${error.message}`, true);
+                console.error("Error downloading TMX:", error);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        function addOrUpdateTMEntry(original, translation) {
+            if (!original || !translation || !tmSourceLanguage || !tmTargetLanguage) return;
+            const existingIndex = translationMemory.findIndex(e => e.srcText === original && e.srcLang === tmSourceLanguage && e.tgtLang === tmTargetLanguage);
+            if (existingIndex !== -1) {
+                translationMemory[existingIndex].tgtText = translation;
+                translationMemory[existingIndex].tgtWordCount = countWords(translation);
+            } else {
+                translationMemory.push({ srcLang: tmSourceLanguage, srcText: original, tgtLang: tmTargetLanguage, tgtText: translation, srcWordCount: countWords(original), tgtWordCount: countWords(translation) });
+            }
+            tmSearch();
+        }
+
+        function findBestTMMatch(sourceSegmentText) {
+            if (translationMemory.length === 0 || !sourceSegmentText.trim() || !tmSourceLanguage || !tmTargetLanguage) return null;
+            let bestMatch = null, highestScore = 0;
+            const MIN_FUZZY_THRESHOLD = 70;
+            translationMemory.forEach(entry => {
+                if (entry.srcLang === tmSourceLanguage && entry.tgtLang === tmTargetLanguage && entry.srcText.trim()) {
+                    const score = calculateSimilarity(sourceSegmentText, entry.srcText);
+                    if (score >= MIN_FUZZY_THRESHOLD && score > highestScore) {
+                        highestScore = score;
+                        bestMatch = { ...entry, score: score.toFixed(0) };
+                    }
+                }
+            });
+            return bestMatch;
+        }
+
+        function tmSearch(activeSegmentOriginalText = null) {
+            const query = tmSearchInput ? tmSearchInput.value.toLowerCase().trim() : '';
+            if (!activeSegmentOriginalText) {
+                const currentFocused = getCurrentFocusedIndex();
+                if (currentFocused && srtEntries[currentFocused.entryIndex]) {
+                    activeSegmentOriginalText = srtEntries[currentFocused.entryIndex].original;
+                }
+            }
+
+            const filteredTM = translationMemory.filter(entry => {
+                if (query) {
+                    return (entry.srcText && entry.srcText.toLowerCase().includes(query)) || (entry.tgtText && entry.tgtText.toLowerCase().includes(query));
+                }
+                return true;
+            });
+
+            let resultsToRender = filteredTM.map(entry => {
+                let score = 0;
+                let diffHtml = entry.srcText;
+                if (activeSegmentOriginalText) {
+                    score = calculateSimilarity(activeSegmentOriginalText, entry.srcText);
+                    diffHtml = renderDiff(entry.srcText, activeSegmentOriginalText);
+                } else if (query) {
+                    score = calculateSimilarity(query, entry.srcText);
+                }
+                return { ...entry, score: score.toFixed(0), diffHtml: diffHtml };
+            });
+
+            resultsToRender.sort((a, b) => b.score - a.score);
+
+            const MIN_FUZZY_THRESHOLD = 70;
+            resultsToRender.forEach((result, index) => {
+                result.isBestMatch = index === 0 && result.score >= MIN_FUZZY_THRESHOLD;
+            });
+
+            currentTMLatestSearchResults = resultsToRender;
+            renderTMSearchResults(resultsToRender);
+        }
+
+        function renderTMSearchResults(results) {
+            if (!tmSearchResultsTableBody) return;
+            tmSearchResultsTableBody.innerHTML = '';
+            if (results.length === 0) {
+                if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
+                if (tmInternalMessage && tmInternalMessage.classList.contains('hidden')) {
+                    if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
+                }
+                return;
+            } else {
+                if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');
+            }
+            hideTMInternalMessage();
+            results.forEach(entry => {
+                const row = document.createElement('tr');
+                if (entry.isBestMatch) row.classList.add('tm-best-match-highlight');
+                row.innerHTML = `<td>${entry.score}%</td><td><pre class="whitespace-pre-wrap word-break-all">${entry.diffHtml || entry.srcText}</pre></td><td><pre class="whitespace-pre-wrap word-break-all">${entry.tgtText}</pre></td>`;
+                row.addEventListener('click', () => {
+                    const currentFocused = getCurrentFocusedIndex();
+                    if (currentFocused) {
+                        const targetEditor = document.getElementById(`translation-${currentFocused.entryIndex}`);
+                        if (targetEditor && targetEditor.contentEditable === 'true') {
+                            targetEditor.innerHTML = entry.tgtText;
+                            const event = new Event('input', { bubbles: true });
+                            targetEditor.dispatchEvent(event);
+                        }
+                    }
+                });
+                tmSearchResultsTableBody.appendChild(row);
+            });
+        }
+
+        function showLoadingOverlay(message) {
+            if (loadingMessage && loadingOverlay) {
+                loadingMessage.textContent = message;
+                loadingOverlay.classList.remove('hidden');
+            }
+        }
+
+        function hideLoadingOverlay() {
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        if (dropArea) {
+            dropArea.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                dropArea.classList.add('border-blue-500');
+            });
+            dropArea.addEventListener('dragleave', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                dropArea.classList.remove('border-blue-500');
+            });
+            dropArea.addEventListener('drop', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                dropArea.classList.remove('border-blue-500');
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    const srtFileToProcess = Array.from(files).find(file => file.name.toLowerCase().endsWith('.srt'));
+                    if (srtFileToProcess) {
+                        await processFile(srtFileToProcess);
+                    } else {
+                        showMessage('Por favor, suelta un archivo .srt válido.');
+                    }
+                }
+            });
+        }
+
+        if (addTermHeader && addTermContent && addTermAccordionIcon) {
+            addTermHeader.addEventListener('click', () => {
+                const isCollapsed = addTermContent.classList.contains('collapsed');
+                if (isCollapsed) {
+                    addTermContent.classList.remove('collapsed');
+                    addTermContent.classList.add('expanded');
+                    addTermAccordionIcon.classList.remove('rotated');
+                } else {
+                    addTermContent.classList.remove('expanded');
+                    addTermContent.classList.add('collapsed');
+                    addTermAccordionIcon.classList.add('rotated');
+                }
+            });
+        }
+
+        if (statsAccordionHeader && statsAccordionContent && statsAccordionIcon) {
+            statsAccordionHeader.addEventListener('click', () => {
+                const isCollapsed = statsAccordionContent.classList.contains('collapsed');
+                if (isCollapsed) {
+                    statsAccordionContent.classList.remove('collapsed');
+                    statsAccordionContent.classList.add('expanded');
+                    statsAccordionIcon.classList.remove('rotated');
+                } else {
+                    statsAccordionContent.classList.remove('expanded');
+                    statsAccordionContent.classList.add('collapsed');
+                    statsAccordionIcon.classList.add('rotated');
+                }
+            });
+        }
+
+        videoFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const videoURL = URL.createObjectURL(file);
+                videoPlayer.src = videoURL;
+                videoPlayer.load();
+                videoPlayer.play();
+                videoPlayerContainer.classList.remove('hidden');
+            } else {
+                showMessage(translations.es['video_load_error']);
+            }
+        });
+
+        /**
+         * Jumps the video player to the start time of the specified subtitle and plays until the end time.
+         * @param {number} entryIndex The index of the SRT entry to play.
+         */
+        function jumpToCurrentSubtitleTime(entryIndex) {
+            if (srtEntries[entryIndex] && videoPlayer.src) {
+                const entry = srtEntries[entryIndex];
+                const stopTime = entry.endTimeMs / 1000;
+                videoPlayer.currentTime = entry.startTimeMs / 1000;
+                videoPlayer.play();
+
+                // Remove previous listener to avoid duplicates
+                if (timeUpdateListener) {
+                    videoPlayer.removeEventListener('timeupdate', timeUpdateListener);
+                }
+
+                // Define the listener function
+                timeUpdateListener = () => {
+                    if (videoPlayer.currentTime >= stopTime) {
+                        videoPlayer.pause();
+                        // Clean up: remove the listener after it has done its job
+                        videoPlayer.removeEventListener('timeupdate', timeUpdateListener);
+                        timeUpdateListener = null;
+                    }
+                };
+                
+                // Add the listener
+                videoPlayer.addEventListener('timeupdate', timeUpdateListener);
+            }
+        }
+        
+        /**
+         * Updates the subtitle preview overlay based on the video's current time and user selection.
+         */
+        function updateSubtitlePreview() {
+            if (!videoPlayer.src || srtEntries.length === 0) {
+                subtitlePreviewText.innerHTML = '';
+                return;
+            }
+
+            const currentTime = videoPlayer.currentTime;
+            let activeSubtitle = null;
+
+            for (const entry of srtEntries) {
+                const startTime = entry.startTimeMs / 1000;
+                const endTime = entry.endTimeMs / 1000;
+                if (currentTime >= startTime && currentTime <= endTime) {
+                    activeSubtitle = entry;
+                    break;
+                }
+            }
+
+            if (activeSubtitle) {
+                let textToShow = '';
+                if (previewSource === 'translation') {
+                    // Use translation if available, otherwise fall back to original
+                    textToShow = activeSubtitle.translation.trim() || activeSubtitle.original;
+                } else { // previewSource is 'original'
+                    textToShow = activeSubtitle.original;
+                }
+                subtitlePreviewText.innerHTML = textToShow;
+            } else {
+                subtitlePreviewText.innerHTML = '';
+            }
+        }
+        
+        // --- Backup and Restore Functions ---
+
+        /**
+         * Gathers the entire project state into a single object for saving.
+         * @returns {Object | null} The project state object or null if no project is loaded.
+         */
+        function getProjectState() {
+            if (srtEntries.length === 0) return null;
+
+            return {
+                fileName: currentFileName,
+                srtEntries: srtEntries,
+                glossary: {
+                    data: glossary,
+                    sourceLang: glossarySourceLanguage,
+                    targetLang: glossaryTargetLanguage
+                },
+                translationMemory: {
+                    data: translationMemory,
+                    sourceLang: tmSourceLanguage,
+                    targetLang: tmTargetLanguage
+                },
+                qaSettings: qaSettings, // Include QA settings in the backup
+                lastModified: new Date()
+            };
+        }
+
+        /**
+         * Saves the current project state to IndexedDB.
+         */
+        async function saveBackup() {
+            const projectState = getProjectState();
+            if (!projectState) {
+                // If there's no project, ensure the pulse is off
+                backupBtn.classList.remove('animate-pulse-yellow');
+                return;
+            }
+
+            try {
+                // We use a fixed ID of 1 to always overwrite the same backup record.
+                await db.projects.put({ id: 1, ...projectState });
+                console.log('Backup guardado en IndexedDB a las', new Date().toLocaleTimeString());
+                // After a successful save, ensure the pulse is on
+                backupBtn.classList.add('animate-pulse-yellow');
+            } catch (error) {
+                console.error('Error al guardar el backup en IndexedDB:', error);
+            }
+        }
+        
+        /**
+         * Restores the application state from a backup object.
+         * @param {Object} backupData The backup data object from IndexedDB.
+         */
+        function restoreProject(backupData) {
+            // Restore global variables
+            currentFileName = backupData.fileName;
+            srtEntries = backupData.srtEntries;
+            glossary = backupData.glossary.data || [];
+            glossarySourceLanguage = backupData.glossary.sourceLang;
+            glossaryTargetLanguage = backupData.glossary.targetLang;
+            translationMemory = backupData.translationMemory.data || [];
+            tmSourceLanguage = backupData.translationMemory.sourceLang;
+            tmTargetLanguage = backupData.translationMemory.targetLang;
+            // Restore QA settings, with defaults for backward compatibility
+            qaSettings = backupData.qaSettings || { cpsLimit: 20, charsPerLineLimit: 42 };
+            
+            // Re-render the entire UI with the restored data
+            renderTranslations(srtEntries);
+            showGlossaryEditorSection();
+            showTMEditorSection();
+            
+            showMessage(translations.es['project_restored_message']);
+        }
+
+        // --- QA Functions ---
+        /**
+         * Iterates through all subtitles and re-applies QA checks.
+         */
+        function runFullQaCheck() {
+            srtEntries.forEach((entry, index) => {
+                const editorDiv = document.getElementById(`translation-${index}`);
+                if (editorDiv) {
+                    updateSubtitleStats(editorDiv, entry.charCountOriginal, entry.durationMs);
+                }
+            });
+            updateStatsDisplay(); // Update the main stats display including the error count
+        }
+
+        /**
+         * Calculates all QA errors in the project.
+         * @returns {Array<Object>} An array of objects, each representing a subtitle with errors.
+         */
+        function calculateAllQaErrors() {
+            const errors = [];
+            srtEntries.forEach((entry, index) => {
+                const errorTypes = new Set();
+                const currentCPS = calculateCPS(entry.translation, entry.durationMs);
+                if (currentCPS > qaSettings.cpsLimit) {
+                    errorTypes.add('CPS');
+                }
+                const lines = entry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').split('\n');
+                lines.forEach(line => {
+                    if (countCharactersWithoutTags(line) > qaSettings.charsPerLineLimit) {
+                        errorTypes.add('Longitud de línea');
+                    }
+                });
+
+                if (errorTypes.size > 0) {
+                    errors.push({
+                        index: index,
+                        subtitleIndex: entry.index,
+                        text: entry.translation.replace(/<[^>]+>/g, ' ').substring(0, 50) + '...', // Snippet
+                        errors: Array.from(errorTypes)
+                    });
+                }
+            });
+            return errors;
+        }
+
+        /**
+         * Renders the list of QA errors in its modal.
+         */
+        function renderQaErrorList() {
+            const errors = calculateAllQaErrors();
+            qaErrorListContainer.innerHTML = '';
+            if (errors.length === 0) {
+                qaErrorListContainer.textContent = translations.es['qa_no_errors'];
+                return;
+            }
+            
+            errors.forEach(error => {
+                const errorItem = document.createElement('div');
+                errorItem.className = 'qa-error-item';
+                errorItem.dataset.entryIndex = error.index;
+                errorItem.innerHTML = `
+                    <div class="font-bold">Subtítulo #${error.subtitleIndex} <span class="text-red-500">(${error.errors.join(', ')})</span></div>
+                    <div class="text-sm text-gray-600">${error.text}</div>
+                `;
+                qaErrorListContainer.appendChild(errorItem);
+            });
+        }
+
+
+        // --- Initialization on page load ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            populateIsoLanguagesDatalist();
+            updateTextContent();
+            resetGlossary();
+            resetTM();
+
+            // Open sidebars by default
+            if (terminologySidebar) terminologySidebar.classList.add('show-sidebar');
+            if (translationMemorySidebar) translationMemorySidebar.classList.add('show-sidebar');
+
+            if (translationsContainer) {
+                translationsContainer.innerHTML = `<div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">${translations.es['no_translations']}</div>`;
+            }
+            if (saveSrtButton) saveSrtButton.disabled = true;
+            if (statsContainer) statsContainer.classList.add('hidden');
+            if (videoPlayerContainer) videoPlayerContainer.classList.add('hidden');
+
+            if (addTermContent && addTermAccordionIcon) {
+                addTermContent.classList.add('collapsed');
+                addTermContent.classList.remove('expanded');
+                addTermAccordionIcon.classList.remove('rotated');
+            }
+            if (statsAccordionContent && statsAccordionIcon) {
+                statsAccordionContent.classList.add('collapsed');
+                statsAccordionContent.classList.remove('expanded');
+                statsAccordionIcon.classList.add('rotated');
+            }
+            
+            // Event listener for the font size slider
+            subtitleFontSize.addEventListener('input', (event) => {
+                subtitlePreviewText.style.fontSize = `${event.target.value}px`;
+            });
+            // Set initial font size
+            subtitlePreviewText.style.fontSize = `${subtitleFontSize.value}px`;
+
+            // Persistent listener for the subtitle preview
+            videoPlayer.addEventListener('timeupdate', updateSubtitlePreview);
+            
+            // Event listener for the preview source selector
+            subtitlePreviewSource.addEventListener('change', (event) => {
+                previewSource = event.target.value;
+                updateSubtitlePreview(); // Refresh the preview immediately
+            });
+
+
+            // Vertical Resizer logic
+            const verticalResizer = document.getElementById('vertical-resizer');
+            const editor = document.getElementById('editorMainContent');
+            let isVerticalResizing = false;
+
+            verticalResizer.addEventListener('mousedown', (e) => {
+                isVerticalResizing = true;
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = 'ns-resize';
+                document.addEventListener('mousemove', handleVerticalMouseMove);
+                document.addEventListener('mouseup', () => {
+                    isVerticalResizing = false;
+                    document.body.style.userSelect = '';
+                    document.body.style.cursor = '';
+                    document.removeEventListener('mousemove', handleVerticalMouseMove);
+                });
+            });
+
+            function handleVerticalMouseMove(e) {
+                if (!isVerticalResizing) return;
+                const newHeight = e.clientY - editor.getBoundingClientRect().top;
+                if (newHeight > 100) { // Enforce min height
+                    editor.style.height = `${newHeight}px`;
+                }
+            }
+
+            // Horizontal Resizer logic
+            const horizontalResizer = document.getElementById('horizontal-resizer');
+            const videoSection = document.querySelector('.video-player-section');
+            const rightPanel = document.querySelector('.right-panel-content');
+            let isHorizontalResizing = false;
+
+            horizontalResizer.addEventListener('mousedown', (e) => {
+                isHorizontalResizing = true;
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = 'col-resize';
+                document.addEventListener('mousemove', handleHorizontalMouseMove);
+                document.addEventListener('mouseup', () => {
+                    isHorizontalResizing = false;
+                    document.body.style.userSelect = '';
+                    document.body.style.cursor = '';
+                    document.removeEventListener('mousemove', handleHorizontalMouseMove);
+                });
+            });
+
+            function handleHorizontalMouseMove(e) {
+                if (!isHorizontalResizing) return;
+                const container = document.querySelector('.main-app-content');
+                const containerRect = container.getBoundingClientRect();
+                const newVideoWidth = e.clientX - containerRect.left;
+                const containerWidth = container.offsetWidth;
+                const newVideoWidthPercent = (newVideoWidth / containerWidth) * 100;
+
+                if (newVideoWidthPercent > 20 && newVideoWidthPercent < 80) {
+                    videoSection.style.flexBasis = `${newVideoWidthPercent}%`;
+                    rightPanel.style.flexBasis = `${100 - newVideoWidthPercent}%`;
+                }
+            }
+
+            // --- Backup and Restore Initialization ---
+
+            // Check for a backup on load to set the initial pulse animation
+            try {
+                const backup = await db.projects.get(1);
+                if (backup) {
+                    backupBtn.classList.add('animate-pulse-yellow');
+                } else {
+                    backupBtn.classList.remove('animate-pulse-yellow');
+                }
+            } catch (error) {
+                console.error('Error al comprobar el backup inicial:', error);
+            }
+
+            // Set up autosave interval (every 5 minutes)
+            setInterval(saveBackup, 300000);
+
+            // Event Listeners for the Backup Modal
+            backupBtn.addEventListener('click', async () => {
+                // Always check for the latest backup state when the button is clicked
+                availableBackup = await db.projects.get(1);
+
+                if (availableBackup) {
+                    backupFileName.textContent = availableBackup.fileName;
+                    backupLastModified.textContent = new Date(availableBackup.lastModified).toLocaleString();
+                    backupFoundView.classList.remove('hidden');
+                    noBackupFoundView.classList.add('hidden');
+                } else {
+                    backupFoundView.classList.add('hidden');
+                    noBackupFoundView.classList.remove('hidden');
+                }
+                backupModal.classList.remove('hidden');
+            });
+
+            closeBackupModalBtn.addEventListener('click', () => {
+                backupModal.classList.add('hidden');
+            });
+
+            confirmRestoreBtn.addEventListener('click', () => {
+                if (availableBackup) {
+                    restoreProject(availableBackup);
+                    backupModal.classList.add('hidden');
+                }
+            });
+
+            deleteBackupBtn.addEventListener('click', async () => {
+                if (confirm(translations.es['backup_deleted_confirmation'])) {
+                    await db.projects.delete(1);
+                    availableBackup = null;
+                    backupBtn.classList.remove('animate-pulse-yellow');
+                    backupModal.classList.add('hidden');
+                    showMessage(translations.es['backup_deleted_message']);
+                }
+            });
+
+            exportSrtFromBackupBtn.addEventListener('click', () => {
+                if (!availableBackup) {
+                    showMessage(translations.es['no_backup_to_export']);
+                    return;
+                }
+                try {
+                    const srtContent = reconstructSrt(availableBackup.srtEntries);
+                    const originalFileName = availableBackup.fileName.replace(/\.srt$/i, '');
+                    const formattedDate = new Date().toISOString().slice(0, 10);
+                    const newFileName = `${originalFileName}_recuperado_${formattedDate}.srt`;
+
+                    const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = newFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showMessage(`${translations.es['backup_export_success']}: "${newFileName}"`);
+                } catch (error) {
+                    showMessage(`${translations.es['backup_export_error']}${error.message}`);
+                    console.error("Error exporting backup SRT:", error);
+                }
+            });
+
+            // --- QA Modal Initialization ---
+            qaBtn.addEventListener('click', () => {
+                qaCpsLimitInput.value = qaSettings.cpsLimit;
+                qaCharsPerLineLimitInput.value = qaSettings.charsPerLineLimit;
+                qaModal.classList.remove('hidden');
+            });
+
+            closeQaModalBtn.addEventListener('click', () => {
+                qaModal.classList.add('hidden');
+            });
+
+            saveQaSettingsBtn.addEventListener('click', () => {
+                const newCps = parseInt(qaCpsLimitInput.value, 10);
+                const newChars = parseInt(qaCharsPerLineLimitInput.value, 10);
+
+                if (!isNaN(newCps) && newCps > 0) {
+                    qaSettings.cpsLimit = newCps;
+                }
+                if (!isNaN(newChars) && newChars > 0) {
+                    qaSettings.charsPerLineLimit = newChars;
+                }
+                
+                runFullQaCheck();
+                qaModal.classList.add('hidden');
+            });
+
+            // --- QA Error List Modal Initialization ---
+            qaErrorStats.addEventListener('click', () => {
+                const errors = calculateAllQaErrors();
+                if (errors.length > 0) {
+                    renderQaErrorList();
+                    qaErrorListModal.classList.remove('hidden');
+                }
+            });
+
+            closeQaErrorListModalBtn.addEventListener('click', () => {
+                qaErrorListModal.classList.add('hidden');
+            });
+
+            qaErrorListContainer.addEventListener('click', (event) => {
+                const errorItem = event.target.closest('.qa-error-item');
+                if (errorItem) {
+                    const entryIndex = parseInt(errorItem.dataset.entryIndex, 10);
+                    navigateToTranslation(entryIndex);
+                    qaErrorListModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
