@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pandoria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1200px;
+      position: relative;
+    }
+    .btn {
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .btn-primary {
+      background-color: #FF5F18; /* Naranja */
+      color: #ffffff; /* Blanco */
+    }
+    .btn-primary:hover {
+      background-color: #E05215; /* Naranja más oscuro */
+    }
+    .btn-secondary {
+      background-color: #202020; /* Gris oscuro */
+      color: #ffffff; /* Blanco */
+    }
+    .btn-secondary:hover {
+      background-color: #404040; /* Gris más claro */
+    }
+     .btn-danger {
+      background-color: #ef4444;
+      color: white;
+    }
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+    .modal {
+        display: none; /* Oculto por defecto */
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .modal-content p {
+        margin-bottom: 1rem;
+    }
+    .modal-content button {
+        width: 100px;
+    }
+    .editable-cell {
+        padding: 0.75rem;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+        transition: border-color 0.2s;
+    }
+    .editable-cell:focus {
+        outline: none;
+        border-color: #FF5F18;
+        background-color: #fff;
+    }
+    .table-container {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    .lang-btn {
+        background-color: #e5e7eb;
+        color: #4b5563;
+        border: 2px solid transparent;
+        transition: all 0.2s ease-in-out;
+    }
+    .lang-btn.active {
+        background-color: #FF5F18;
+        color: #ffffff;
+    }
+    .lang-btn:not(.active):hover {
+        background-color: #d1d5db;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8">
+
+  <div class="container w-full bg-white p-6 rounded-xl shadow-lg">
+    <!-- Selector de Idioma -->
+    <div class="absolute top-6 left-6 flex gap-2">
+        <button id="langEnBtn" class="lang-btn font-bold py-1 px-3 rounded-md text-sm">EN</button>
+        <button id="langEsBtn" class="lang-btn font-bold py-1 px-3 rounded-md text-sm active">ES</button>
+    </div>
+  
+    <!-- Encabezado -->
+    <header class="text-center mb-6 pt-8">
+      <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png" alt="Pandoria Logo" class="mx-auto mb-4 w-48 h-auto">
+      <p class="text-gray-600" data-i18n="tool_description">Una herramienta sencilla para editar memorias de traducción TMX.</p>
+    </header>
+
+    <!-- Controles Principales -->
+    <div class="controls flex flex-wrap gap-3 justify-center mb-6">
+      <label for="tmxFileInput" class="btn btn-primary font-medium py-2 px-4 rounded-lg cursor-pointer" data-i18n="import_tmx">
+        Importar TMX
+      </label>
+      <input type="file" id="tmxFileInput" accept=".xml,.tmx" class="hidden" />
+      <button id="downloadTmxBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="download_tmx">Descargar TMX</button>
+      <button id="newTmxBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="create_tmx">Crear TMX</button>
+    </div>
+
+    <!-- Sección de Configuración de Idioma (Inicialmente visible) -->
+    <div id="languageConfigSection" class="mb-6 p-4 bg-gray-50 rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center" data-i18n="configure_tm_languages">Configurar Idiomas de la Memoria</h2>
+      <div class="info-box text-sm text-gray-600 bg-blue-50 border border-blue-200 p-3 rounded-md mb-4">
+        <p data-i18n="info_box_text">Define los idiomas de origen y destino para tu nueva memoria. Es importante que el código ISO sea correcto para que funcione bien en tu herramienta TAO.</p>
+      </div>
+      <div class="flex flex-wrap gap-4 justify-center items-end">
+        <div class="flex-grow">
+          <label for="configSrcLang" class="block text-sm font-medium text-gray-700 mb-1" data-i18n="source_language">Idioma de origen:</label>
+          <input id="configSrcLang" list="isoLanguages" value="en-US" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+        </div>
+        <div class="flex-grow">
+          <label for="configTgtLang" class="block text-sm font-medium text-gray-700 mb-1" data-i18n="target_language">Idioma de destino:</label>
+          <input id="configTgtLang" list="isoLanguages" value="es-ES" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+        </div>
+        <button id="confirmLanguagesBtn" class="btn btn-primary font-medium py-2 px-4 rounded-lg h-10" data-i18n="confirm">Confirmar</button>
+      </div>
+    </div>
+
+    <!-- Sección del Editor (Inicialmente oculta) -->
+    <div id="editorSection" class="hidden">
+      <!-- Info de Idiomas y Búsqueda -->
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg">
+        <div class="flex gap-4">
+            <p class="text-sm"><strong data-i18n="source_language">Origen:</strong> <span id="displaySrcLang"></span></p>
+            <p class="text-sm"><strong data-i18n="target_language">Destino:</strong> <span id="displayTgtLang"></span></p>
+        </div>
+        <div class="flex-grow max-w-md">
+           <input id="searchTerm" data-i18n-placeholder="search_placeholder" placeholder="Buscar en origen o destino..." class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+        </div>
+      </div>
+
+      <!-- Tabla de la Memoria de Traducción -->
+      <div class="table-container">
+        <table class="w-full text-sm text-left text-gray-500">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+            <tr>
+              <th scope="col" class="px-6 py-3 w-5/12" data-i18n="source_header">Origen</th>
+              <th scope="col" class="px-6 py-3 w-5/12" data-i18n="translation_header">Traducción</th>
+              <th scope="col" class="px-6 py-3 w-2/12 text-center" data-i18n="actions_header">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tmTableBody">
+            <!-- Las filas se insertarán aquí dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+       <div id="noResultsMessage" class="text-center p-8 text-gray-500 hidden">
+            <p data-i18n="no_results">No se encontraron resultados para tu búsqueda.</p>
+        </div>
+      <div class="mt-4 text-center">
+          <button id="addEntryBtn" class="btn btn-primary font-medium py-2 px-4 rounded-lg" data-i18n="add_new_entry">Añadir nueva entrada</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datalist para códigos ISO -->
+  <datalist id="isoLanguages"></datalist>
+
+  <!-- Modal para mensajes -->
+    <div id="messageBox" class="modal">
+        <div class="modal-content">
+            <p id="messageText"></p>
+            <button id="messageCloseBtn" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+
+  <script>
+    // Variables globales
+    let translationMemory = [];
+    let tmSourceLanguage = '';
+    let tmTargetLanguage = '';
+    let currentLanguage = 'es';
+
+    // Traducciones
+    const translations = {
+        es: {
+            'import_tmx': 'Importar TMX',
+            'download_tmx': 'Descargar TMX',
+            'create_tmx': 'Crear TMX',
+            'add_new_entry': 'Añadir nueva entrada',
+            'configure_tm_languages': 'Configurar Idiomas de la Memoria',
+            'info_box_text': 'Define los idiomas de origen y destino para tu nueva memoria. Es importante que el código ISO sea correcto para que funcione bien en tu herramienta TAO.',
+            'source_language': 'Idioma de origen:',
+            'target_language': 'Idioma de destino:',
+            'confirm': 'Confirmar',
+            'search_placeholder': 'Buscar en origen o destino...',
+            'source_header': 'Origen',
+            'translation_header': 'Traducción',
+            'actions_header': 'Acciones',
+            'delete': 'Eliminar',
+            'no_results': 'No se encontraron resultados para tu búsqueda.',
+            'tool_description': 'Una herramienta sencilla para editar memorias de traducción TMX.',
+            'error_processing_tmx': 'Error al procesar el archivo TMX: ',
+            'error_reading_file': 'Error al leer el archivo.',
+            'invalid_xml': 'El archivo no es un XML válido.',
+            'no_header': 'No se encontró la cabecera TMX.',
+            'no_tus': 'El archivo TMX no contiene unidades de traducción.',
+            'lang_not_configured': 'Los idiomas de origen y destino no están configurados.',
+            'tm_saved_success': 'Memoria de traducción guardada con éxito.',
+            'enter_lang_codes': 'Por favor, introduce los códigos de idioma de origen y destino.',
+        },
+        en: {
+            'import_tmx': 'Import TMX',
+            'download_tmx': 'Download TMX',
+            'create_tmx': 'Create TMX',
+            'add_new_entry': 'Add new entry',
+            'configure_tm_languages': 'Configure Memory Languages',
+            'info_box_text': 'Define the source and target languages for your new memory. It is important that the ISO code is correct for it to work well in your CAT tool.',
+            'source_language': 'Source language:',
+            'target_language': 'Target language:',
+            'confirm': 'Confirm',
+            'search_placeholder': 'Search in source or target...',
+            'source_header': 'Source',
+            'translation_header': 'Translation',
+            'actions_header': 'Actions',
+            'delete': 'Delete',
+            'no_results': 'No results found for your search.',
+            'tool_description': 'A simple tool to edit TMX translation memories.',
+            'error_processing_tmx': 'Error processing TMX file: ',
+            'error_reading_file': 'Error reading file.',
+            'invalid_xml': 'The file is not valid XML.',
+            'no_header': 'TMX header not found.',
+            'no_tus': 'The TMX file contains no translation units.',
+            'lang_not_configured': 'Source and target languages are not configured.',
+            'tm_saved_success': 'Translation memory saved successfully.',
+            'enter_lang_codes': 'Please enter the source and target language codes.',
+        }
+    };
+
+    // Elementos del DOM
+    const tmxFileInput = document.getElementById('tmxFileInput');
+    const downloadTmxBtn = document.getElementById('downloadTmxBtn');
+    const newTmxBtn = document.getElementById('newTmxBtn');
+    const languageConfigSection = document.getElementById('languageConfigSection');
+    const editorSection = document.getElementById('editorSection');
+    const configSrcLangInput = document.getElementById('configSrcLang');
+    const configTgtLangInput = document.getElementById('configTgtLang');
+    const confirmLanguagesBtn = document.getElementById('confirmLanguagesBtn');
+    const displaySrcLangSpan = document.getElementById('displaySrcLang');
+    const displayTgtLangSpan = document.getElementById('displayTgtLang');
+    const searchTermInput = document.getElementById('searchTerm');
+    const tmTableBody = document.getElementById('tmTableBody');
+    const addEntryBtn = document.getElementById('addEntryBtn');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const isoLanguagesDatalist = document.getElementById('isoLanguages');
+    const langEnBtn = document.getElementById('langEnBtn');
+    const langEsBtn = document.getElementById('langEsBtn');
+
+    // Modal
+    const messageBox = document.getElementById('messageBox');
+    const messageText = document.getElementById('messageText');
+    const messageCloseBtn = document.getElementById('messageCloseBtn');
+
+    // Lista de idiomas ISO
+    const isoLanguagesData = [
+        { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" },
+        { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" },
+        { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" },
+        { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" },
+        { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" },
+        { code: "ca", name: "Català" }, { code: "eu", name: "Euskara" }, { code: "gl", name: "Galego" }
+    ];
+
+    // --- Inicialización ---
+    document.addEventListener('DOMContentLoaded', () => {
+        populateIsoLanguagesDatalist();
+        setLanguage(currentLanguage); // Set initial language
+        newTmxBtn.addEventListener('click', resetTM);
+        confirmLanguagesBtn.addEventListener('click', confirmLanguages);
+        tmxFileInput.addEventListener('change', handleFileLoad);
+        downloadTmxBtn.addEventListener('click', downloadTMX);
+        searchTermInput.addEventListener('input', () => renderTM(translationMemory));
+        addEntryBtn.addEventListener('click', addEntry);
+        messageCloseBtn.addEventListener('click', () => messageBox.style.display = 'none');
+        langEnBtn.addEventListener('click', () => setLanguage('en'));
+        langEsBtn.addEventListener('click', () => setLanguage('es'));
+    });
+
+    /**
+     * Establece el idioma de la interfaz y actualiza los textos.
+     * @param {string} lang - El código del idioma ('en' o 'es').
+     */
+    function setLanguage(lang) {
+        currentLanguage = lang;
+        langEnBtn.classList.toggle('active', lang === 'en');
+        langEsBtn.classList.toggle('active', lang === 'es');
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (translations[lang][key]) {
+                el.textContent = translations[lang][key];
+            }
+        });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.dataset.i18nPlaceholder;
+            if (translations[lang][key]) {
+                el.placeholder = translations[lang][key];
+            }
+        });
+        
+        // Vuelve a renderizar la tabla para actualizar el texto de los botones "Eliminar"
+        if (!editorSection.classList.contains('hidden')) {
+             renderTM(translationMemory);
+        }
+    }
+
+    /**
+     * Rellena el datalist con los códigos de idioma ISO.
+     */
+    function populateIsoLanguagesDatalist() {
+        isoLanguagesDatalist.innerHTML = '';
+        isoLanguagesData.forEach(lang => {
+            const option = document.createElement('option');
+            option.value = lang.code;
+            option.textContent = lang.name;
+            isoLanguagesDatalist.appendChild(option);
+        });
+    }
+
+    /**
+     * Muestra un mensaje en el modal.
+     * @param {string} msg - El mensaje a mostrar.
+     */
+    function showMessage(msg) {
+        messageText.textContent = msg;
+        messageBox.style.display = 'flex';
+    }
+
+    /**
+     * Reinicia la interfaz para crear o cargar una nueva TM.
+     */
+    function resetTM() {
+        translationMemory = [];
+        tmSourceLanguage = '';
+        tmTargetLanguage = '';
+        configSrcLangInput.value = 'en-US';
+        configTgtLangInput.value = 'es-ES';
+        searchTermInput.value = '';
+
+        languageConfigSection.style.display = 'block';
+        editorSection.classList.add('hidden');
+        renderTM([]);
+    }
+
+    /**
+     * Confirma los idiomas seleccionados y muestra el editor.
+     */
+    function confirmLanguages() {
+        const srcLang = configSrcLangInput.value.trim();
+        const tgtLang = configTgtLangInput.value.trim();
+
+        if (!srcLang || !tgtLang) {
+            showMessage(translations[currentLanguage]['enter_lang_codes']);
+            return;
+        }
+
+        tmSourceLanguage = srcLang;
+        tmTargetLanguage = tgtLang;
+
+        displaySrcLangSpan.textContent = tmSourceLanguage;
+        displayTgtLangSpan.textContent = tmTargetLanguage;
+
+        languageConfigSection.style.display = 'none';
+        editorSection.classList.remove('hidden');
+        renderTM([]);
+    }
+
+    /**
+     * Maneja la carga de un archivo TMX.
+     * @param {Event} event - El evento de cambio del input de archivo.
+     */
+    function handleFileLoad(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const content = e.target.result;
+                parseTMX(content);
+                languageConfigSection.style.display = 'none';
+                editorSection.classList.remove('hidden');
+                renderTM(translationMemory);
+            } catch (error) {
+                showMessage(`${translations[currentLanguage]['error_processing_tmx']}${error.message}`);
+                console.error(error);
+                resetTM();
+            }
+        };
+        reader.onerror = () => {
+             showMessage(translations[currentLanguage]['error_reading_file']);
+             resetTM();
+        };
+        reader.readAsText(file);
+    }
+
+    /**
+     * Parsea el contenido de un archivo TMX y lo carga en la memoria.
+     * @param {string} tmxContent - El contenido XML del archivo TMX.
+     */
+    function parseTMX(tmxContent) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(tmxContent, "application/xml");
+
+        const parserError = xmlDoc.querySelector("parsererror");
+        if (parserError) {
+            throw new Error(translations[currentLanguage]['invalid_xml']);
+        }
+
+        const header = xmlDoc.querySelector("header");
+        if (!header) throw new Error(translations[currentLanguage]['no_header']);
+        
+        tmSourceLanguage = header.getAttribute("srclang");
+        // TMX puede tener múltiples idiomas de destino, tomamos el del primer 'tu' como referencia.
+
+        const tuElements = xmlDoc.querySelectorAll("tu");
+        if (tuElements.length === 0) {
+            showMessage(translations[currentLanguage]['no_tus']);
+            translationMemory = [];
+            return;
+        }
+
+        // Detectar idioma de destino del primer 'tu' si no está en la cabecera
+        const firstTuvs = tuElements[0].querySelectorAll("tuv");
+        if (firstTuvs.length > 1 && !header.hasAttribute("targetlang")) {
+            tmTargetLanguage = firstTuvs[1].getAttribute("xml:lang");
+        } else {
+            tmTargetLanguage = header.getAttribute("targetlang") || "unknown";
+        }
+
+
+        const newTM = [];
+        tuElements.forEach(tu => {
+            const tuvs = tu.querySelectorAll("tuv");
+            if (tuvs.length >= 2) {
+                const srcLang = tuvs[0].getAttribute("xml:lang");
+                const srcText = tuvs[0].querySelector("seg")?.textContent || '';
+                const tgtLang = tuvs[1].getAttribute("xml:lang");
+                const tgtText = tuvs[1].querySelector("seg")?.textContent || '';
+
+                if (srcLang === tmSourceLanguage) {
+                     newTM.push({ srcText, tgtText });
+                }
+            }
+        });
+
+        translationMemory = newTM;
+        displaySrcLangSpan.textContent = tmSourceLanguage;
+        displayTgtLangSpan.textContent = tmTargetLanguage;
+    }
+
+    /**
+     * Renderiza la tabla de la memoria de traducción.
+     * @param {Array<Object>} tm - El array de unidades de traducción a mostrar.
+     */
+    function renderTM(tm) {
+        const filter = searchTermInput.value.toLowerCase();
+        tmTableBody.innerHTML = '';
+
+        const filteredTM = tm.filter(entry =>
+            entry.srcText.toLowerCase().includes(filter) ||
+            entry.tgtText.toLowerCase().includes(filter)
+        );
+
+        if (filteredTM.length === 0 && tm.length > 0) {
+            noResultsMessage.classList.remove('hidden');
+        } else {
+            noResultsMessage.classList.add('hidden');
+        }
+
+        filteredTM.forEach((entry, index) => {
+            const originalIndex = translationMemory.indexOf(entry);
+            const row = document.createElement('tr');
+            row.className = "bg-white border-b hover:bg-gray-50";
+            row.innerHTML = `
+                <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="srcText">${entry.srcText}</td>
+                <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="tgtText">${entry.tgtText}</td>
+                <td class="px-6 py-4 text-center">
+                    <button class="btn btn-danger font-medium py-1 px-3 rounded-md text-xs" data-index="${originalIndex}">${translations[currentLanguage]['delete']}</button>
+                </td>
+            `;
+            tmTableBody.appendChild(row);
+        });
+
+        // Añadir event listeners para edición y eliminación
+        tmTableBody.querySelectorAll('.editable-cell').forEach(cell => {
+            cell.addEventListener('input', updateEntry);
+        });
+        tmTableBody.querySelectorAll('.btn-danger').forEach(button => {
+            button.addEventListener('click', deleteEntry);
+        });
+    }
+
+    /**
+     * Añade una nueva entrada vacía a la memoria de traducción.
+     */
+    function addEntry() {
+        translationMemory.unshift({ srcText: '', tgtText: '' });
+        renderTM(translationMemory);
+        // Enfocar la nueva celda
+        const newCell = tmTableBody.querySelector('tr:first-child .editable-cell');
+        if(newCell) {
+            newCell.focus();
+        }
+    }
+
+    /**
+     * Actualiza una entrada en el array de la memoria de traducción.
+     * @param {Event} event - El evento de input de la celda editable.
+     */
+    function updateEntry(event) {
+        const index = event.target.dataset.index;
+        const field = event.target.dataset.field;
+        const value = event.target.textContent;
+        if (translationMemory[index]) {
+            translationMemory[index][field] = value;
+        }
+    }
+
+    /**
+     * Elimina una entrada de la memoria de traducción.
+     * @param {Event} event - El evento de click del botón de eliminar.
+     */
+    function deleteEntry(event) {
+        const index = event.target.dataset.index;
+        translationMemory.splice(index, 1);
+        renderTM(translationMemory);
+    }
+
+    /**
+     * Genera el contenido XML para un archivo TMX.
+     * @returns {string} - El contenido TMX como string.
+     */
+    function generateTMX() {
+        if (!tmSourceLanguage || !tmTargetLanguage) {
+            showMessage(translations[currentLanguage]['lang_not_configured']);
+            return null;
+        }
+
+        let tmxString = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        tmxString += `<tmx version="1.4">\n`;
+        tmxString += `  <header creationtool="Pandoria" adminlang="en" srclang="${tmSourceLanguage}" datatype="plaintext"/>\n`;
+        tmxString += `  <body>\n`;
+
+        translationMemory.forEach(entry => {
+            // Escapar caracteres XML especiales
+            const escapeXML = (str) => str.replace(/[<>&'"]/g, c => {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+
+            const src = escapeXML(entry.srcText);
+            const tgt = escapeXML(entry.tgtText);
+
+            tmxString += `    <tu>\n`;
+            tmxString += `      <tuv xml:lang="${tmSourceLanguage}">\n`;
+            tmxString += `        <seg>${src}</seg>\n`;
+            tmxString += `      </tuv>\n`;
+            tmxString += `      <tuv xml:lang="${tmTargetLanguage}">\n`;
+            tmxString += `        <seg>${tgt}</seg>\n`;
+            tmxString += `      </tuv>\n`;
+            tmxString += `    </tu>\n`;
+        });
+
+        tmxString += `  </body>\n`;
+        tmxString += `</tmx>\n`;
+
+        return tmxString;
+    }
+
+    /**
+     * Inicia la descarga del archivo TMX generado.
+     */
+    function downloadTMX() {
+        const tmxContent = generateTMX();
+        if (!tmxContent) return;
+
+        const blob = new Blob([tmxContent], { type: 'application/xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'memoria_pandoria.tmx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showMessage(translations[currentLanguage]['tm_saved_success']);
+    }
+
+  </script>
+</body>
+</html>
