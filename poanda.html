@@ -1,16 +1,18 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">Poanda</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Estilos generales para el cuerpo y la fuente */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             background-color: #f3f4f6; /* Fondo para modo claro */
             color: #202020; /* Color de texto general para modo claro */
             transition: background-color 0.3s ease, color 0.3s ease; /* Transiciones suaves */
@@ -442,41 +444,45 @@
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
+        <!-- Language Switcher -->
+        <div class="absolute top-4 right-4 space-x-2">
+            <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
+            <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
+        </div>
+
         <!-- Top Utility Buttons (Shortcuts, Find/Replace, Terminology, Translation Memory, Statistics) -->
         <div class="top-utility-buttons-container">
             <button id="shortcutsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="shortcuts_btn" id="shortcutsBtnText">Atajos</span>
+                <span data-i18n="shortcuts_btn" id="shortcutsBtnText"></span>
             </button>
             <button id="findReplaceBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="find_replace_btn" id="findReplaceBtnText">Buscar y reemplazar</span>
+                <span data-i18n="find_replace_btn" id="findReplaceBtnText"></span>
             </button>
             <button id="terminologyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="terminology_btn" id="terminologyBtnText">Terminología</span>
+                <span data-i18n="terminology_btn" id="terminologyBtnText"></span>
             </button>
             <button id="tmBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="tm_btn" id="tmBtnText">Memoria de traducción</span>
+                <span data-i18n="tm_btn" id="tmBtnText"></span>
             </button>
             <button id="statsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="statistics_btn" id="statsBtnText">Estadísticas</span>
+                <span data-i18n="statistics_btn" id="statsBtnText"></span>
             </button>
         </div>
-        <!-- Removed Language Buttons -->
 
         <div class="flex flex-col items-center mb-6 mt-12">
             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/poanda-logo-final.png" alt="Poanda Logo" class="max-w-xs h-auto mb-2">
             <div data-i18n="tool_description" id="toolDescription" class="text-lg text-center text-on-light-contrast">
-                Una herramienta sencilla para editar archivos .po.
             </div>
         </div>
 
         <!-- Main file controls: Load and Save .po -->
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <label for="poFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
-                <span data-i18n="load_file" id="loadBtnText">Cargar archivo .po</span>
+                <span data-i18n="load_file" id="loadBtnText"></span>
                 <input type="file" id="poFile" accept=".po" class="hidden">
             </label>
             <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
-                <span data-i18n="save_file" id="saveBtnText">Guardar archivo .po</span>
+                <span data-i18n="save_file" id="saveBtnText"></span>
             </button>
         </div>
 
@@ -487,7 +493,6 @@
                 <div id="translationsContainer">
                     <!-- Translations will be rendered here -->
                     <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                        Carga un archivo .po para empezar a editar.
                     </div>
                 </div>
             </div>
@@ -495,7 +500,7 @@
             <!-- Terminology Sidebar (Left Floating) -->
             <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                 <div class="sidebar-header">
-                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle">Terminología</h3>
+                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle"></h3>
                     <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -503,20 +508,20 @@
                 <div class="sidebar-content">
                     <!-- Language Configuration Section -->
                     <div id="terminologyLanguageConfigSection" class="space-y-4">
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="config_lang_title" id="configLangTitle">Configurar idiomas del glosario</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="config_lang_title" id="configLangTitle"></h4>
                         <div class="glossary-info-box mb-4">
                             <p data-i18n="config_lang_info" id="configLangInfo"></p>
                         </div>
                         <div class="flex flex-col space-y-2 mb-4">
                             <div class="glossary-input-group">
-                                <label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel">Idioma de origen:</label>
+                                <label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel"></label>
                                 <input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full" />
                             </div>
                             <div class="glossary-input-group">
-                                <label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel">Idioma de destino:</label>
+                                <label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel"></label>
                                 <input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full" />
                             </div>
-                            <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" id="confirmLanguagesBtn" class="glossary-btn-primary w-full">Confirmar idiomas</button>
+                            <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" id="confirmLanguagesBtn" class="glossary-btn-primary w-full"></button>
                         </div>
                     </div>
 
@@ -524,21 +529,21 @@
                     <div id="terminologyEditorSection" style="display:none;">
                         <!-- Buttons: Import, Download, New Glossary -->
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                            <button onclick="loadTBX()" data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2">Importar TBX</button>
+                            <button onclick="loadTBX()" data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
-                            <button onclick="downloadTBX()" data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2">Descargar TBX</button>
-                            <button onclick="resetGlossary()" data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2">Nuevo glosario</button>
+                            <button onclick="downloadTBX()" data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
+                            <button onclick="resetGlossary()" data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                         </div>
 
 
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_lang_title" id="currentLangTitle">Idiomas actuales del glosario</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_lang_title" id="currentLangTitle"></h4>
                         <div class="flex space-x-2 mb-4">
                             <div class="glossary-input-group flex-1">
-                                <label data-i18n="source_language">Idioma de origen:</label>
+                                <label data-i18n="source_language" id="displaySourceLanguageLabel"></label>
                                 <input id="displaySrcLang" disabled class="block w-full" />
                             </div>
                             <div class="glossary-input-group flex-1">
-                                <label data-i18n="target_language">Idioma de destino:</label>
+                                <label data-i18n="target_language" id="displayTargetLanguageLabel"></label>
                                 <input id="displayTgtLang" disabled class="block w-full" />
                             </div>
                         </div>
@@ -546,38 +551,38 @@
                         <!-- Add Term Accordion -->
                         <div class="accordion-item">
                             <div class="accordion-header flex justify-between items-center" id="addTermHeader">
-                                <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion">Añadir término</h4>
+                                <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion"></h4>
                                 <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
                             <div class="accordion-content collapsed" id="addTermContent"> <!-- Changed to 'collapsed' by default -->
                                 <div class="flex flex-col space-y-2 mb-4">
                                     <div class="glossary-input-group">
-                                        <label for="srcTerm" data-i18n="term" id="termLabel">Término:</label>
+                                        <label for="srcTerm" data-i18n="term" id="termLabel"></label>
                                         <input id="srcTerm" class="block w-full" />
                                     </div>
                                     <div class="glossary-input-group">
-                                        <label for="tgtTerm" data-i18n="translation" id="translationLabel">Traducción:</label>
+                                        <label for="tgtTerm" data-i18n="translation" id="translationLabel"></label>
                                         <input id="tgtTerm" class="block w-full" />
                                     </div>
-                                    <button onclick="addTerm()" data-i18n="add_button" id="addTermBtn" class="glossary-btn-primary w-full">Añadir</button>
+                                    <button onclick="addTerm()" data-i18n="add_button" id="addTermBtn" class="glossary-btn-primary w-full"></button>
                                 </div>
                             </div>
                         </div>
                         <!-- End Add Term Accordion -->
 
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="search_title" id="searchTitle">Buscar</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="search_title" id="searchTitle"></h4>
                         <div class="mb-4">
                             <input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full" oninput="renderGlossary()" />
                         </div>
 
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle">Glosario</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle"></h4>
                         <div class="overflow-x-auto">
                             <table class="glossary-table w-full">
                                 <thead>
                                     <tr>
-                                        <th data-i18n="source_term_col" id="sourceTermCol">Término de origen</th>
-                                        <th data-i18n="target_term_col" id="targetTermCol">Término de destino</th>
-                                        <th data-i18n="actions_col" id="actionsCol">Acciones</th>
+                                        <th data-i18n="source_term_col" id="sourceTermCol"></th>
+                                        <th data-i18n="target_term_col" id="targetTermCol"></th>
+                                        <th data-i18n="actions_col" id="actionsCol"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="glossaryTableBody"></tbody>
@@ -591,7 +596,7 @@
             <!-- Translation Memory Sidebar (Right Floating) -->
             <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                 <div class="sidebar-header">
-                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle">Memoria de Traducción (TM)</h3>
+                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle"></h3>
                     <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -602,20 +607,20 @@
 
                     <!-- Language Configuration Section for TM -->
                     <div id="tmLanguageConfigSection" class="space-y-4">
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="tm_config_lang_title" id="tmConfigLangTitle">Configurar idiomas de la TM</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="tm_config_lang_title" id="tmConfigLangTitle"></h4>
                         <div class="tm-info-box mb-4">
                             <p data-i18n="tm_config_lang_info" id="tmConfigLangInfo"></p>
                         </div>
                         <div class="flex flex-col space-y-2 mb-4">
                             <div class="tm-input-group">
-                                <label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel">Idioma de origen:</label>
+                                <label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel"></label>
                                 <input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full" />
                             </div>
                             <div class="tm-input-group">
-                                <label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel">Idioma de destino:</label>
+                                <label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel"></label>
                                 <input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full" />
                             </div>
-                            <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" id="tmConfirmLanguagesBtn" class="tm-btn-primary w-full">Confirmar idiomas</button>
+                            <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" id="tmConfirmLanguagesBtn" class="tm-btn-primary w-full"></button>
                         </div>
                     </div>
 
@@ -623,40 +628,40 @@
                     <div id="tmEditorSection" style="display:none;">
                         <!-- TM File Controls -->
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                            <button onclick="resetTM()" data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2">Nueva TM</button>
+                            <button onclick="resetTM()" data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <label for="tmFileInput" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 tm-btn-secondary flex-1 text-sm text-center">
-                                <span data-i18n="import_tmx" id="importTmxBtnText">Importar TMX</span>
+                                <span data-i18n="import_tmx" id="importTmxBtnText"></span>
                                 <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
                             </label>
-                            <button onclick="downloadTMX()" data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2">Descargar TMX</button>
+                            <button onclick="downloadTMX()" data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
                         </div>
 
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_tm_lang_title" id="currentTmLangTitle">Idiomas actuales de la TM</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_tm_lang_title" id="currentTmLangTitle"></h4>
                         <div class="flex space-x-2 mb-4">
                             <div class="tm-input-group flex-1">
-                                <label data-i18n="source_language">Idioma de origen:</label>
+                                <label data-i18n="source_language" id="displayTmSourceLanguageLabel"></label>
                                 <input id="displayTmSrcLang" disabled class="block w-full" />
                             </div>
                             <div class="tm-input-group flex-1">
-                                <label data-i18n="target_language">Idioma de destino:</label>
+                                <label data-i18n="target_language" id="displayTmTargetLanguageLabel"></label>
                                 <input id="displayTmTgtLang" disabled class="block w-full" />
                             </div>
                         </div>
 
                         <!-- TM Search Section -->
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle">Buscar en TM</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle"></h4>
                         <div class="mb-4">
                             <input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="tmSearch()" />
                         </div>
 
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle">Resultados de búsqueda en TM</h4>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle"></h4>
                         <div class="overflow-x-auto mb-4">
                             <table class="tm-table w-full">
                                 <thead>
                                     <tr>
-                                        <th data-i18n="tm_score_col" id="tmScoreCol">%</th>
-                                        <th data-i18n="tm_original_col" id="tmOriginalCol">Original</th>
-                                        <th data-i18n="tm_translation_col" id="tmTranslationCol">Traducción</th>
+                                        <th data-i18n="tm_score_col" id="tmScoreCol"></th>
+                                        <th data-i18n="tm_original_col" id="tmOriginalCol"></th>
+                                        <th data-i18n="tm_translation_col" id="tmTranslationCol"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="tmSearchResultsTableBody">
@@ -665,7 +670,6 @@
                             </table>
                         </div>
                         <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden">
-                            No se encontraron coincidencias en la TM.
                         </div>
                     </div>
                 </div>
@@ -678,7 +682,7 @@
             <div class="modal-content">
                 <p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p>
                 <button id="messageClose" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300">
-                    <span data-i18n="ok" id="okBtnText">OK</span>
+                    <span data-i18n="ok" id="okBtnText"></span>
                 </button>
             </div>
         </div>
@@ -686,16 +690,16 @@
         <!-- Shortcuts Modal -->
         <div id="shortcutsModal" class="modal hidden">
             <div class="modal-content">
-                <h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Atajos de teclado</h2>
+                <h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
                 <ul class="list-disc list-inside text-on-light-contrast space-y-2">
-                    <li id="shortcutValidate"><strong>Ctrl + Enter:</strong> Validar traducción y pasar a la siguiente.</li>
-                    <li id="shortcutNext"><strong>Ctrl + <span id="arrowDownIconHtml"></span></strong>: Ir a la siguiente traducción.</li>
-                    <li id="shortcutPrev"><strong>Ctrl + <span id="arrowUpIconHtml"></span></strong>: Ir a la traducción anterior.</li>
-                    <li id="shortcutAlt1"><strong>Alt + [1-5]:</strong> Insertar sugerencia de la memoria de traducción.</li>
-                    <li id="shortcutTmInsert"><strong>Ctrl + Alt + [1-5]:</strong> Insertar término traducido resaltado en glosario.</li>
+                    <li id="shortcutValidate"></li>
+                    <li id="shortcutNext"></li>
+                    <li id="shortcutPrev"></li>
+                    <li id="shortcutAlt1"></li>
+                    <li id="shortcutTmInsert"></li>
                 </ul>
                 <button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300">
-                    <span id="closeBtnText">Cerrar</span>
+                    <span id="shortcutsCloseBtnText"></span>
                 </button>
             </div>
         </div>
@@ -703,43 +707,43 @@
         <!-- Find and Replace Modal -->
         <div id="findReplaceModal" class="modal hidden">
             <div class="modal-content">
-                <h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Buscar y reemplazar</h2>
+                <h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
                 <div class="space-y-4">
                     <div>
-                        <label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Buscar:</label>
+                        <label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label>
                         <input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
                     </div>
                     <div>
-                        <label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Reemplazar con:</label>
+                        <label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label>
                         <input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
                     </div>
                     <div class="flex items-center space-x-4">
                         <label class="flex items-center text-on-light-contrast">
                             <input type="checkbox" id="caseSensitiveCheckbox" class="mr-2">
-                            <span data-i18n="case_sensitive" id="caseSensitiveText">Distinguir mayúsculas y minúsculas</span>
+                            <span data-i18n="case_sensitive" id="caseSensitiveText"></span>
                         </label>
                         <label class="flex items-center text-on-light-contrast">
                             <input type="checkbox" id="regexCheckbox" class="mr-2">
-                            <span data-i18n="regular_expression" id="regexText">Expresión regular</span>
+                            <span data-i18n="regular_expression" id="regexText"></span>
                         </label>
                     </div>
                     <div class="flex justify-end space-x-2">
                         <button data-i18n="find_prev" id="findPrevBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="findPrevText">Buscar anterior</span>
+                            <span id="findPrevText"></span>
                         </button>
                         <button data-i18n="find_next" id="findNextBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="findNextText">Buscar siguiente</span>
+                            <span id="findNextText"></span>
                         </button>
                         <button data-i18n="replace" id="replaceBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="replaceText">Reemplazar</span>
+                            <span id="replaceText"></span>
                         </button>
                         <button data-i18n="replace_all" id="replaceAllBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="replaceAllText">Reemplazar todo</span>
+                            <span id="replaceAllText"></span>
                         </button>
                     </div>
                 </div>
                 <button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full">
-                    <span id="closeBtnText">Cerrar</span>
+                    <span id="findReplaceCloseBtnText"></span>
                 </button>
             </div>
         </div>
@@ -748,9 +752,9 @@
     <!-- Statistics Display (Fixed Panel) -->
     <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]">
         <div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2">
-            <p><strong class="font-semibold" data-i18n="stats_progress_label">Progreso:</strong> <span id="segmentsProgress">0/0 segmentos (0%)</span></p>
-            <p><strong class="font-semibold" data-i18n="stats_words_label">Palabras (Traducidas / Totales):</strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p>
-            <p><strong class="font-semibold" data-i18n="stats_remaining_label">Palabras Pendientes:</strong> <span id="wordsRemaining">0</span></p>
+            <p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p>
+            <p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p>
+            <p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p>
         </div>
     </div>
 
@@ -765,7 +769,7 @@
         // Global variables for Poanda editor
         let poEntries = [];
         let currentFileName = 'translations.po';
-        let currentLanguage = 'es'; // Set default language to Spanish permanently
+        let currentLanguage = 'en'; // Default language set to English
         let findState = {
             query: '',
             replace: '',
@@ -819,8 +823,6 @@
         const shortcutsBtn = document.getElementById('shortcutsBtn');
         const shortcutsModal = document.getElementById('shortcutsModal');
         const shortcutsCloseBtn = document.getElementById('shortcutsCloseBtn');
-        const arrowDownIconHtml = document.getElementById('arrowDownIconHtml');
-        const arrowUpIconHtml = document.getElementById('arrowUpIconHtml');
         const findReplaceBtn = document.getElementById('findReplaceBtn');
         const findReplaceModal = document.getElementById('findReplaceModal');
         const findInput = document.getElementById('findInput');
@@ -878,8 +880,112 @@
         const editorMainContent = document.getElementById('editorMainContent');
 
 
-        // Translations object (only Spanish now)
+        // Translations object for EN and ES
         const translations = {
+            'en': {
+                'title': 'Poanda',
+                'load_file': 'Load .po file',
+                'save_file': 'Save .po file',
+                'original_msgid': 'Original (msgid):',
+                'translation_msgstr': 'Translation (msgstr):',
+                'context_msgctxt': 'Context (msgctxt):',
+                'validate': 'Validate',
+                'edit': 'Edit',
+                'fuzzy': 'Fuzzy',
+                'char_count_original': 'Original: ',
+                'char_count_translation': 'Translation: ',
+                'char_units': ' characters',
+                'no_translations': 'Load a .po file to start editing.',
+                'error_reading_file': 'Error reading or parsing .po file: ',
+                'error_saving_file': 'Error saving .po file: ',
+                'file_saved_successfully': '.po file saved successfully.',
+                'no_translations_to_save': 'No translations to save. Load a .po file first.',
+                'reached_last': 'You have reached the last translation.',
+                'reached_first': 'You are already at the first translation.',
+                'file_processing_error': 'Error! Could not process the file. Make sure it is a valid .po file.',
+                'tool_description': 'A simple tool for editing .po files.',
+                'ok': 'OK',
+                'shortcuts_btn': 'Shortcuts',
+                'shortcuts_title': 'Keyboard Shortcuts',
+                'shortcut_validate': 'Ctrl + Enter: Validate translation and go to the next one.',
+                'shortcut_next': 'Ctrl + Arrow Down: Go to the next translation.',
+                'shortcut_prev': 'Ctrl + Arrow Up: Go to the previous translation.',
+                'shortcut_alt_1': 'Alt + [1-5]: Insert translation memory suggestion.',
+                'shortcut_tm_insert': 'Ctrl + Alt + [1-5]: Insert highlighted glossary term.',
+                'close_btn': 'Close',
+                'find_replace_btn': 'Find & Replace',
+                'find_replace_title': 'Find and Replace',
+                'find_label': 'Find:',
+                'replace_label': 'Replace with:',
+                'case_sensitive': 'Case sensitive',
+                'regular_expression': 'Regular expression',
+                'find_prev': 'Find previous',
+                'find_next': 'Find next',
+                'replace': 'Replace',
+                'replace_all': 'Replace all',
+                'no_match_found': 'No match found.',
+                'replaced_all': 'All occurrences replaced.',
+                'no_find_query': 'Please enter text to find.',
+                'loading_file': 'Loading file...',
+                'saving_file': 'Saving file...',
+                'terminology_btn': 'Terminology',
+                'terminology_sidebar_title': 'Terminology',
+                'config_lang_title': 'Configure Glossary Languages',
+                'config_lang_info': 'Define the source and target languages for your glossary. You can enter the ISO code directly or select from the suggestions. It is crucial that the ISO code is correct for it to work properly with your CAT tool.',
+                'source_language': 'Source Language:',
+                'target_language': 'Target Language:',
+                'confirm_languages': 'Confirm Languages',
+                'current_lang_title': 'Current Glossary Languages',
+                'add_term_title': 'Add Term',
+                'term': 'Term:',
+                'translation': 'Translation:',
+                'add_button': 'Add',
+                'search_title': 'Search',
+                'search_placeholder': 'Search term...',
+                'import_tbx': 'Import TBX',
+                'download_tbx': 'Download TBX',
+                'new_glossary': 'New Glossary',
+                'glossary_list_title': 'Glossary',
+                'source_term_col': 'Source Term',
+                'target_term_col': 'Target Term',
+                'actions_col': 'Actions',
+                'delete_button': 'Delete',
+                'both_terms_required': 'Both terms are required.',
+                'lang_config_required': 'Please configure the source and target languages for the glossary.',
+                'cannot_download_empty_or_unconfigured_glossary': 'Cannot download an empty or unconfigured glossary.',
+                'error_loading_tbx_file': 'Error loading TBX file. Make sure it is a valid XML/TBX.',
+                'no_valid_language_pairs_found_in_tbx': 'No valid language pairs were found in the TBX file. Default values (en-US, es-ES) will be used.',
+                'statistics_btn': 'Statistics',
+                'stats_progress_label': 'Progress:',
+                'stats_words_label': 'Words (Translated / Total):',
+                'stats_remaining_label': 'Remaining Words:',
+                'tm_btn': 'Translation Memory',
+                'tm_sidebar_title': 'Translation Memory (TM)',
+                'new_tm': 'New TM',
+                'import_tmx': 'Import TMX',
+                'download_tmx': 'Download TMX',
+                'no_tm_data': 'No data in the translation memory.',
+                'tm_source_segment': 'Original:',
+                'tm_target_segment': 'Translation:',
+                'tm_match_score': 'Match:',
+                'tm_no_match_found': 'No matches found in the TM.',
+                'tm_insert_match': 'Insert match',
+                'error_loading_tmx_file': 'Error loading TMX file. Make sure it is a valid XML/TMX.',
+                'cannot_download_empty_tm': 'Cannot download an empty translation memory.',
+                'tm_best_match': 'Best TM match:',
+                'tm_search_title': 'Search in TM',
+                'tm_search_placeholder': 'Search in memory...',
+                'tm_search_results_title': 'TM Search Results',
+                'tm_score_col': '%',
+                'tm_original_col': 'Original',
+                'tm_translation_col': 'Translation',
+                'tm_config_lang_title': 'Configure TM Languages',
+                'tm_config_lang_info': 'Define the source and target languages for your Translation Memory. It is crucial that the ISO code is correct for matching to work properly.',
+                'current_tm_lang_title': 'Current TM Languages',
+                'tm_initial_message': 'Create a new TM or import a TMX file to start working with the translation memory.',
+                'tmx_file_expected_tbx_found': 'This file appears to be a glossary (TBX). Please use the "Import TBX" option in the Terminology panel.',
+                'tbx_file_expected_tmx_found': 'This file appears to be a translation memory (TMX). Please use the "Import TMX" option in the Translation Memory panel.'
+            },
             'es': {
                 'title': 'Poanda',
                 'load_file': 'Cargar archivo .po',
@@ -908,10 +1014,10 @@
                 'shortcut_validate': 'Ctrl + Enter: Validar traducción y pasar a la siguiente.',
                 'shortcut_next': 'Ctrl + Flecha abajo: Ir a la siguiente traducción.',
                 'shortcut_prev': 'Ctrl + Flecha arriba: Ir a la traducción anterior.',
-                'shortcut_alt_1': 'Alt + [1-5]: Insertar sugerencia de la memoria de traducción.', // Updated shortcut for TM
-                'shortcut_tm_insert': 'Ctrl + Alt + [1-5]: Insertar término traducido resaltado en glosario.', // Updated shortcut for Glossary
+                'shortcut_alt_1': 'Alt + [1-5]: Insertar sugerencia de la memoria de traducción.',
+                'shortcut_tm_insert': 'Ctrl + Alt + [1-5]: Insertar término traducido resaltado en glosario.',
                 'close_btn': 'Cerrar',
-                'find_replace_btn': 'Buscar y reemplazar', // Reverted to full text
+                'find_replace_btn': 'Buscar y reemplazar',
                 'find_replace_title': 'Buscar y reemplazar',
                 'find_label': 'Buscar:',
                 'replace_label': 'Reemplazar con:',
@@ -926,8 +1032,6 @@
                 'no_find_query': 'Por favor, introduce el texto a buscar.',
                 'loading_file': 'Cargando archivo...',
                 'saving_file': 'Guardando archivo...',
-
-                // Terminology specific translations
                 'terminology_btn': 'Terminología',
                 'terminology_sidebar_title': 'Terminología',
                 'config_lang_title': 'Configurar idiomas del glosario',
@@ -955,15 +1059,11 @@
                 'cannot_download_empty_or_unconfigured_glossary': 'No se puede descargar un glosario vacío o sin configurar.',
                 'error_loading_tbx_file': 'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.',
                 'no_valid_language_pairs_found_in_tbx': 'No se encontraron pares de idiomas válidos en el archivo TBX. Se usarán los valores por defecto (en-US, es-ES).',
-                
-                // Statistics specific translations
                 'statistics_btn': 'Estadísticas',
                 'stats_progress_label': 'Progreso:',
                 'stats_words_label': 'Palabras (Traducidas / Totales):',
                 'stats_remaining_label': 'Palabras Pendientes:',
-
-                // Translation Memory specific translations
-                'tm_btn': 'Memoria de traducción', // Reverted to full text
+                'tm_btn': 'Memoria de traducción',
                 'tm_sidebar_title': 'Memoria de Traducción (TM)',
                 'new_tm': 'Nueva TM',
                 'import_tmx': 'Importar TMX',
@@ -980,13 +1080,13 @@
                 'tm_search_title': 'Buscar en TM',
                 'tm_search_placeholder': 'Buscar en la memoria...',
                 'tm_search_results_title': 'Resultados de búsqueda en TM',
-                'tm_score_col': '%', /* Changed from 'Coincidencia' to '%' */
+                'tm_score_col': '%',
                 'tm_original_col': 'Original',
                 'tm_translation_col': 'Traducción',
                 'tm_config_lang_title': 'Configurar idiomas de la TM',
                 'tm_config_lang_info': 'Define los idiomas de origen y destino de tu Memoria de Traducción. Es fundamental que el código ISO sea correcto para que la coincidencia funcione correctamente.',
                 'current_tm_lang_title': 'Idiomas actuales de la TM',
-                'tm_initial_message': 'Crea una nueva TM o importa un archivo TMX para empezar a trabajar con la memoria de traducción.', // New message for initial state
+                'tm_initial_message': 'Crea una nueva TM o importa un archivo TMX para empezar a trabajar con la memoria de traducción.',
                 'tmx_file_expected_tbx_found': 'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.',
                 'tbx_file_expected_tmx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.'
             }
@@ -1029,11 +1129,11 @@
         }
 
         /**
-         * Desescapa una cadena de texto en formato PO.
-         * Elimina las comillas de inicio/fin y maneja los caracteres escapados como \n, \t, \", \\.
-         * También convierte <br> y &lt;br&gt; en saltos de línea para una mejor visualización.
-         * @param {string} s La cadena PO a desescapar.
-         * @returns {string} La cadena desescapada.
+         * Unescapes a string from PO format.
+         * Removes start/end quotes and handles escaped characters like \n, \t, \", \\.
+         * Also converts <br> and &lt;br&gt; to newlines for better display.
+         * @param {string} s The PO string to unescape.
+         * @returns {string} The unescaped string.
          */
         function unescapePoString(s) {
             if (s.startsWith('"') && s.endsWith('"')) {
@@ -1050,10 +1150,10 @@
         }
 
         /**
-         * Escapa una cadena de texto para el formato PO.
-         * Añade comillas de inicio/fin y escapa caracteres especiales como ", \, \n, \t.
-         * @param {string} s La cadena a escapar.
-         * @returns {string} La cadena escapada en formato PO.
+         * Escapes a string for PO format.
+         * Adds start/end quotes and escapes special characters like ", \, \n, \t.
+         * @param {string} s The string to escape.
+         * @returns {string} The escaped string in PO format.
          */
         function escapePoString(s) {
             let escaped = s.replace(/\\/g, '\\\\')
@@ -1064,9 +1164,9 @@
         }
 
         /**
-         * Heurística para dividir texto en "oraciones" para la visualización.
-         * @param {string} text El texto a dividir.
-         * @returns {Array<string>} Un array de segmentos de texto.
+         * Heuristic to split text into "sentences" for display.
+         * @param {string} text The text to split.
+         * @returns {Array<string>} An array of text segments.
          */
         function splitTextIntoSentences(text) {
             if (!text || typeof text !== 'string' || text.trim() === '') {
@@ -1237,9 +1337,9 @@
 
 
         /**
-         * Reconstruye el contenido de un archivo PO a partir de una matriz de entradas.
-         * @param {Array<Object>} entries La matriz de objetos de traducción.
-         * @returns {string} El contenido del archivo PO reconstruido.
+         * Reconstructs the content of a PO file from an array of entries.
+         * @param {Array<Object>} entries The array of translation objects.
+         * @returns {string} The reconstructed PO file content.
          */
         function reconstructPo(entries) {
             let poContent = '';
@@ -1302,12 +1402,12 @@
             const segmentIndex = parseInt(textarea.dataset.segmentIndex);
             const charCountSpan = document.getElementById(`charCount-${entryIndex}-${segmentIndex}`);
             if (charCountSpan) {
-                charCountSpan.textContent = `${translations.es['char_count_original']}${originalLength} ${translations.es['char_units']} | ${translations.es['char_count_translation']}${textarea.value.length} ${translations.es['char_units']}`;
+                charCountSpan.textContent = `${translations[currentLanguage]['char_count_original']}${originalLength} ${translations[currentLanguage]['char_units']} | ${translations[currentLanguage]['char_count_translation']}${textarea.value.length} ${translations[currentLanguage]['char_units']}`;
             }
         }
 
         /**
-         * Configures the editable state of a translation entry (editable/solo lectura).
+         * Configures the editable state of a translation entry (editable/read-only).
          * @param {number} entryIndex The index of the main PO entry.
          * @param {number} segmentIndex The index of the sentence segment.
          * @param {boolean} isEditable True to make it editable, false for read-only.
@@ -1419,7 +1519,7 @@
             if (entries.length === 0) {
                 translationsContainer.innerHTML = `
                     <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                        Carga un archivo .po para empezar a editar.
+                        ${translations[currentLanguage]['no_translations']}
                     </div>
                 `;
                 savePoButton.disabled = true;
@@ -1446,7 +1546,7 @@
                 if (entry.msgctxt) {
                     const msgctxtLabel = document.createElement('label');
                     msgctxtLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
-                    msgctxtLabel.textContent = translations.es['context_msgctxt'];
+                    msgctxtLabel.textContent = translations[currentLanguage]['context_msgctxt'];
                     translationUnit.appendChild(msgctxtLabel);
 
                     const msgctxtPre = document.createElement('pre');
@@ -1465,7 +1565,7 @@
 
                     const msgidLabel = document.createElement('label');
                     msgidLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
-                    msgidLabel.textContent = translations.es['original_msgid'];
+                    msgidLabel.textContent = translations[currentLanguage]['original_msgid'];
                     originalCol.appendChild(msgidLabel);
 
                     const msgidPre = document.createElement('pre');
@@ -1480,7 +1580,7 @@
 
                     const msgstrLabel = document.createElement('label');
                     msgstrLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
-                    msgstrLabel.textContent = translations.es['translation_msgstr'];
+                    msgstrLabel.textContent = translations[currentLanguage]['translation_msgstr'];
                     translationCol.appendChild(msgstrLabel);
 
                     const msgstrTextarea = document.createElement('textarea');
@@ -1520,7 +1620,7 @@
                     const validateButton = document.createElement('button');
                     validateButton.id = `validateBtn-${entryIndex}-${segmentIndex}`;
                     validateButton.className = 'validate-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-validate';
-                    validateButton.textContent = translations.es['validate'];
+                    validateButton.textContent = translations[currentLanguage]['validate'];
                     validateButton.dataset.entryIndex = entryIndex;
                     validateButton.dataset.segmentIndex = segmentIndex;
                     actionButtonsContainer.appendChild(validateButton);
@@ -1528,7 +1628,7 @@
                     const editButton = document.createElement('button');
                     editButton.id = `editBtn-${entryIndex}-${segmentIndex}`;
                     editButton.className = 'edit-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-edit';
-                    editButton.textContent = translations.es['edit'];
+                    editButton.textContent = translations[currentLanguage]['edit'];
                     editButton.dataset.entryIndex = entryIndex;
                     editButton.dataset.segmentIndex = segmentIndex;
                     editButton.style.display = 'none';
@@ -1634,7 +1734,7 @@
                 if (entry.fuzzy) {
                     const fuzzyIndicator = document.createElement('span');
                     fuzzyIndicator.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-2';
-                    fuzzyIndicator.textContent = translations.es['fuzzy'];
+                    fuzzyIndicator.textContent = translations[currentLanguage]['fuzzy'];
                     translationUnit.appendChild(fuzzyIndicator);
                 }
 
@@ -1679,7 +1779,7 @@
             });
 
             const percentage = totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
-            segmentsProgress.textContent = `${translatedSegments}/${totalSegments} segmentos (${percentage}%)`;
+            segmentsProgress.textContent = `${translatedSegments}/${totalSegments} segments (${percentage}%)`;
             wordsTranslated.textContent = `${totalWordsTranslated}`;
             wordsTotal.textContent = `${totalWordsOriginal}`;
             wordsRemaining.textContent = `${totalWordsOriginal - totalWordsTranslated}`;
@@ -1748,7 +1848,7 @@
             // Loop to find the next *editable* segment
             while (true) {
                 if (nextEntryIndex >= poEntries.length) {
-                    showMessage(translations.es['reached_last']);
+                    showMessage(translations[currentLanguage]['reached_last']);
                     return;
                 }
 
@@ -1785,7 +1885,7 @@
             // Loop to find the previous *editable* segment
             while (true) {
                 if (prevEntryIndex < 0) {
-                    showMessage(translations.es['reached_first']);
+                    showMessage(translations[currentLanguage]['reached_first']);
                     return;
                 }
 
@@ -1819,10 +1919,10 @@
 
         savePoButton.addEventListener('click', async () => {
             if (poEntries.length === 0) {
-                showMessage(translations.es['no_translations_to_save']);
+                showMessage(translations[currentLanguage]['no_translations_to_save']);
                 return;
             }
-            showLoadingOverlay(translations.es['saving_file']);
+            showLoadingOverlay(translations[currentLanguage]['saving_file']);
             try {
                 const updatedPoContent = reconstructPo(poEntries);
                 const blob = new Blob([updatedPoContent], { type: 'text/plain;charset=utf-8' });
@@ -1834,9 +1934,9 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showMessage(translations.es['file_saved_successfully']);
+                showMessage(translations[currentLanguage]['file_saved_successfully']);
             } catch (error) {
-                showMessage(`${translations.es['error_saving_file']} ${error.message}`);
+                showMessage(`${translations[currentLanguage]['error_saving_file']} ${error.message}`);
                 console.error("Error saving file:", error);
             } finally {
                 hideLoadingOverlay();
@@ -1845,7 +1945,7 @@
 
         async function processFile(file) {
             currentFileName = file.name;
-            showLoadingOverlay(translations.es['loading_file']);
+            showLoadingOverlay(translations[currentLanguage]['loading_file']);
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1856,11 +1956,11 @@
                         updateStatsDisplay(); // Ensure stats are updated after parsing and rendering
                         resolve();
                     } catch (error) {
-                        showMessage(`${translations.es['error_reading_file']} ${error.message}`);
+                        showMessage(`${translations[currentLanguage]['error_reading_file']} ${error.message}`);
                         console.error("Error parsing file:", error);
                         translationsContainer.innerHTML = `
                             <div class="text-center text-red-500 p-4 border border-red-300 rounded-md">
-                                ${translations.es['file_processing_error']}
+                                ${translations[currentLanguage]['file_processing_error']}
                             </div>
                         `;
                         savePoButton.disabled = true;
@@ -1871,7 +1971,7 @@
                     }
                 };
                 reader.onerror = () => {
-                    showMessage(translations.es['error_reading_file'] + (file.name || ''));
+                    showMessage(translations[currentLanguage]['error_reading_file'] + (file.name || ''));
                     savePoButton.disabled = true;
                     statsContainer.classList.remove('show'); // Hide stats on error
                     hideLoadingOverlay();
@@ -1919,7 +2019,7 @@
                         const inputEvent = new Event('input', { bubbles: true });
                         targetTextarea.dispatchEvent(inputEvent);
                     } else {
-                        showMessage(translations.es['tm_no_match_found']);
+                        showMessage(translations[currentLanguage]['tm_no_match_found']);
                     }
                 }
             } else if (event.ctrlKey && event.altKey) { // Only Ctrl + Alt + [1-5]
@@ -1951,7 +2051,7 @@
                         const inputEvent = new Event('input', { bubbles: true });
                         targetTextarea.dispatchEvent(inputEvent);
                     } else {
-                        showMessage(translations.es['no_match_found']); // Reusing generic "no match found" for glossary
+                        showMessage(translations[currentLanguage]['no_match_found']); // Reusing generic "no match found" for glossary
                     }
                 }
             } else if (event.ctrlKey) { // Standard Ctrl shortcuts (not Alt)
@@ -2023,7 +2123,7 @@
         function findAndNavigate(forward = true) {
             const query = findInput.value;
             if (!query) {
-                showMessage(translations.es['no_find_query']);
+                showMessage(translations[currentLanguage]['no_find_query']);
                 return;
             }
 
@@ -2035,7 +2135,7 @@
             try {
                 regex = findState.useRegex ? new RegExp(findState.query, findState.caseSensitive ? '' : 'i') : null;
             } catch (e) {
-                showMessage(`Error de expresión regular: ${e.message}`);
+                showMessage(`Regular expression error: ${e.message}`);
                 return;
             }
 
@@ -2157,7 +2257,7 @@
             }
 
             if (!found) {
-                showMessage(translations.es['no_match_found']);
+                showMessage(translations[currentLanguage]['no_match_found']);
                 findState.lastFound = null;
             }
         }
@@ -2165,7 +2265,7 @@
 
         function replaceCurrentMatch() {
             if (!findState.lastFound || !findState.query) {
-                showMessage(translations.es['no_match_found']);
+                showMessage(translations[currentLanguage]['no_match_found']);
                 return;
             }
 
@@ -2205,7 +2305,7 @@
             const query = findInput.value;
             const replaceWith = replaceInput.value;
             if (!query) {
-                showMessage(translations.es['no_find_query']);
+                showMessage(translations[currentLanguage]['no_find_query']);
                 return;
             }
 
@@ -2215,7 +2315,7 @@
                 // Ensure global flag 'g' for replaceAll
                 regex = new RegExp(query, (caseSensitiveCheckbox.checked ? '' : 'i') + 'g' + (regexCheckbox.checked ? '' : ''));
             } catch (e) {
-                showMessage(`Error de expresión regular: ${e.message}`);
+                showMessage(`Regular expression error: ${e.message}`);
                 return;
             }
 
@@ -2248,132 +2348,86 @@
             });
 
             renderTranslations(poEntries); // Re-render the whole thing to reflect all changes
-            showMessage(`${replacedCount} ${translations.es['replaced_all']}`);
+            showMessage(`${replacedCount} ${translations[currentLanguage]['replaced_all']}`);
             findState.lastFound = null; // Clear last found state after replace all
             updateStatsDisplay(); // Update stats after replace all
         }
 
 
-        // --- Language Change (now only updates UI texts to Spanish, no actual language switch) ---
-        // Removed the language selection mechanism, permanently setting the app to Spanish.
+        // --- Language Change ---
         function setLanguage(lang) {
-            // This function is now effectively a no-op for actual language switching,
-            // but is kept to trigger UI text updates if needed by existing calls.
-            currentLanguage = 'es'; // Ensure it's always Spanish
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
             updateTextContent();
             renderTranslations(poEntries);
             renderGlossary();
+
+            const langEnBtn = document.getElementById('langEnBtn');
+            const langEsBtn = document.getElementById('langEsBtn');
+            
+            langEnBtn.classList.remove('bg-blue-500', 'text-white');
+            langEsBtn.classList.remove('bg-blue-500', 'text-white');
+            langEnBtn.classList.add('bg-gray-200', 'text-gray-800');
+            langEsBtn.classList.add('bg-gray-200', 'text-gray-800');
+
+            if (lang === 'en') {
+                langEnBtn.classList.add('bg-blue-500', 'text-white');
+                langEnBtn.classList.remove('bg-gray-200', 'text-gray-800');
+            } else {
+                langEsBtn.classList.add('bg-blue-500', 'text-white');
+                langEsBtn.classList.remove('bg-gray-200', 'text-gray-800');
+            }
         }
 
         function updateTextContent() {
-            // Helper to safely update text content
-            const setTextContent = (id, text) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.textContent = text;
-                } else {
-                    console.warn(`Element with ID '${id}' not found for textContent update.`);
+            const lang = translations[currentLanguage];
+
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (lang[key]) {
+                    if (element.tagName === 'INPUT' && element.hasAttribute('data-i18n-placeholder')) {
+                        element.placeholder = lang[key];
+                    } else {
+                        element.textContent = lang[key];
+                    }
                 }
-            };
+            });
 
-            // Update title
-            document.title = translations.es['title'];
-
-            // Poanda Editor UI
-            setTextContent('toolDescription', translations.es['tool_description']);
-            setTextContent('loadBtnText', translations.es['load_file']);
-            setTextContent('saveBtnText', translations.es['save_file']);
-            setTextContent('okBtnText', translations.es['ok']);
-
-            const initialMessageElement = document.getElementById('initialMessage');
-            if (initialMessageElement) {
-                initialMessageElement.textContent = translations.es['no_translations'];
-            }
-
-            // Shortcuts modal content
-            setTextContent('shortcutsTitle', translations.es['shortcuts_title']);
-            // Special handling for HTML within shortcut list items
+            // Special cases for elements with dynamic content or innerHTML
             const shortcutValidateElement = document.getElementById('shortcutValidate');
-            if(shortcutValidateElement) shortcutValidateElement.innerHTML = `<strong>Ctrl + Enter:</strong> ${translations.es['shortcut_validate'].substring(translations.es['shortcut_validate'].indexOf(':') + 1).trim()}`;
+            if (shortcutValidateElement) shortcutValidateElement.innerHTML = `<strong>Ctrl + Enter:</strong> ${lang['shortcut_validate'].substring(lang['shortcut_validate'].indexOf(':') + 1).trim()}`;
 
-            if(arrowDownIconHtml) arrowDownIconHtml.innerHTML = arrowDownIcon;
-            if(arrowUpIconHtml) arrowUpIconHtml.innerHTML = arrowUpIcon;
             const shortcutNextElement = document.getElementById('shortcutNext');
-            if(shortcutNextElement) shortcutNextElement.innerHTML = `<strong>Ctrl + ${arrowDownIconHtml.innerHTML}</strong>: ${translations.es['shortcut_next'].substring(translations.es['shortcut_next'].indexOf(':') + 1).trim()}`;
+            if (shortcutNextElement) shortcutNextElement.innerHTML = `<strong>Ctrl + ${arrowDownIcon}</strong>: ${lang['shortcut_next'].substring(lang['shortcut_next'].indexOf(':') + 1).trim()}`;
+            
             const shortcutPrevElement = document.getElementById('shortcutPrev');
-            if(shortcutPrevElement) shortcutPrevElement.innerHTML = `<strong>Ctrl + ${arrowUpIconHtml.innerHTML}</strong>: ${translations.es['shortcut_prev'].substring(translations.es['shortcut_prev'].indexOf(':') + 1).trim()}`;
+            if (shortcutPrevElement) shortcutPrevElement.innerHTML = `<strong>Ctrl + ${arrowUpIcon}</strong>: ${lang['shortcut_prev'].substring(lang['shortcut_prev'].indexOf(':') + 1).trim()}`;
 
-            setTextContent('closeBtnText', translations.es['close_btn']);
-            setTextContent('shortcutsBtnText', translations.es['shortcuts_btn']);
             const shortcutAlt1Element = document.getElementById('shortcutAlt1');
-            if(shortcutAlt1Element) shortcutAlt1Element.innerHTML = `<strong>Alt + [1-5]:</strong> ${translations.es['shortcut_alt_1'].substring(translations.es['shortcut_alt_1'].indexOf(':') + 1).trim()}`;
+            if (shortcutAlt1Element) shortcutAlt1Element.innerHTML = `<strong>Alt + [1-5]:</strong> ${lang['shortcut_alt_1'].substring(lang['shortcut_alt_1'].indexOf(':') + 1).trim()}`;
+
             const shortcutTmInsertElement = document.getElementById('shortcutTmInsert');
-            if(shortcutTmInsertElement) shortcutTmInsertElement.innerHTML = `<strong>Ctrl + Alt + [1-5]:</strong> ${translations.es['shortcut_tm_insert'].substring(translations.es['shortcut_tm_insert'].indexOf(':') + 1).trim()}`;
+            if (shortcutTmInsertElement) shortcutTmInsertElement.innerHTML = `<strong>Ctrl + Alt + [1-5]:</strong> ${lang['shortcut_tm_insert'].substring(lang['shortcut_tm_insert'].indexOf(':') + 1).trim()}`;
+            
+            // Labels that were missed
+            const displaySourceLanguageLabel = document.getElementById('displaySourceLanguageLabel');
+            if (displaySourceLanguageLabel) displaySourceLanguageLabel.textContent = lang['source_language'];
+            
+            const displayTargetLanguageLabel = document.getElementById('displayTargetLanguageLabel');
+            if (displayTargetLanguageLabel) displayTargetLanguageLabel.textContent = lang['target_language'];
 
+            const displayTmSourceLanguageLabel = document.getElementById('displayTmSourceLanguageLabel');
+            if (displayTmSourceLanguageLabel) displayTmSourceLanguageLabel.textContent = lang['source_language'];
 
-            // Find/replace modal content
-            setTextContent('findReplaceBtnText', translations.es['find_replace_btn']);
-            setTextContent('findReplaceTitle', translations.es['find_replace_title']);
-            setTextContent('findLabel', translations.es['find_label']);
-            setTextContent('replaceLabel', translations.es['replace_label']);
-            setTextContent('caseSensitiveText', translations.es['case_sensitive']);
-            setTextContent('regexText', translations.es['regular_expression']);
-            setTextContent('findPrevText', translations.es['find_prev']);
-            setTextContent('findNextText', translations.es['find_next']);
-            setTextContent('replaceText', translations.es['replace']);
-            setTextContent('replaceAllText', translations.es['replace_all']);
-            setTextContent('findReplaceCloseText', translations.es['close_btn']);
+            const displayTmTargetLanguageLabel = document.getElementById('displayTmTargetLanguageLabel');
+            if (displayTmTargetLanguageLabel) displayTmTargetLanguageLabel.textContent = lang['target_language'];
 
-            // Terminology Sidebar UI
-            setTextContent('terminologyBtnText', translations.es['terminology_btn']);
-            setTextContent('terminologySidebarTitle', translations.es['terminology_sidebar_title']);
-            setTextContent('configLangTitle', translations.es['config_lang_title']);
-            setTextContent('configLangInfo', translations.es['config_lang_info']);
-            setTextContent('sourceLanguageLabel', translations.es['source_language']);
-            setTextContent('targetLanguageLabel', translations.es['target_language']);
-            setTextContent('confirmLanguagesBtn', translations.es['confirm_languages']);
-            setTextContent('currentLangTitle', translations.es['current_lang_title']);
-            // These should use .value for input fields, not .textContent for labels.
-            // document.getElementById('displaySrcLang').value = glossarySourceLanguage; // Already setting this on showGlossaryEditorSection()
-            // document.getElementById('displayTgtLang').value = glossaryTargetLanguage; // Already setting this on showGlossaryEditorSection()
-            setTextContent('addTermTitleAccordion', translations.es['add_term_title']);
-            setTextContent('termLabel', translations.es['term']);
-            setTextContent('translationLabel', translations.es['translation']);
-            setTextContent('addTermBtn', translations.es['add_button']);
-            setTextContent('searchTitle', translations.es['search_title']);
-            if (searchTermInput) searchTermInput.placeholder = translations.es['search_placeholder'];
-            setTextContent('importTbxBtn', translations.es['import_tbx']);
-            setTextContent('downloadTbxBtn', translations.es['download_tbx']);
-            setTextContent('newGlossaryBtn', translations.es['new_glossary']);
-            setTextContent('glossaryListTitle', translations.es['glossary_list_title']);
-            setTextContent('sourceTermCol', translations.es['source_term_col']);
-            setTextContent('targetTermCol', translations.es['target_term_col']);
-            setTextContent('actionsCol', translations.es['actions_col']);
-            // delete_button text is handled in renderGlossary
-
-            // Statistics Button
-            setTextContent('statsBtnText', translations.es['statistics_btn']);
-
-            // Translation Memory Sidebar UI
-            setTextContent('tmBtnText', translations.es['tm_btn']);
-            setTextContent('tmSidebarTitle', translations.es['tm_sidebar_title']);
-            setTextContent('newTmBtn', translations.es['new_tm']);
-            setTextContent('importTmxBtnText', translations.es['import_tmx']);
-            setTextContent('downloadTmxBtn', translations.es['download_tmx']);
-            setTextContent('tmSearchTitle', translations.es['tm_search_title']);
-            if (tmSearchInput) tmSearchInput.placeholder = translations.es['tm_search_placeholder'];
-            setTextContent('tmSearchResultsTitle', translations.es['tm_search_results_title']);
-            setTextContent('tmScoreCol', translations.es['tm_score_col']); /* Updated */
-            setTextContent('tmOriginalCol', translations.es['tm_original_col']);
-            setTextContent('tmTranslationCol', translations.es['tm_translation_col']);
-            // TM suggestion box labels (dynamic, so not here)
-            setTextContent('tmConfigLangTitle', translations.es['tm_config_lang_title']);
-            setTextContent('tmConfigLangInfo', translations.es['tm_config_lang_info']);
-            setTextContent('tmSourceLanguageLabel', translations.es['source_language']);
-            setTextContent('tmTargetLanguageLabel', translations.es['target_language']);
-            setTextContent('tmConfirmLanguagesBtn', translations.es['confirm_languages']);
-            setTextContent('currentTmLangTitle', translations.es['current_tm_lang_title']);
-            if (tmInternalMessage) tmInternalMessage.textContent = translations.es['tm_initial_message']; // Set initial message
+            // Button texts inside other elements
+            const shortcutsCloseBtnText = document.getElementById('shortcutsCloseBtnText');
+            if(shortcutsCloseBtnText) shortcutsCloseBtnText.textContent = lang['close_btn'];
+            
+            const findReplaceCloseBtnText = document.getElementById('findReplaceCloseBtnText');
+            if(findReplaceCloseBtnText) findReplaceCloseBtnText.textContent = lang['close_btn'];
         }
 
         /**
@@ -2497,7 +2551,7 @@
             const tgtLang = configTgtLang ? configTgtLang.value.trim() : ''; // Added null check
 
             if (!srcLang || !tgtLang) {
-                showMessage(translations.es['lang_config_required']);
+                showMessage(translations[currentLanguage]['lang_config_required']);
                 return;
             }
 
@@ -2516,7 +2570,7 @@
             const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : ''; // Added null check
 
             if (!srcTerm || !tgtTerm) {
-                showMessage(translations.es['both_terms_required']);
+                showMessage(translations[currentLanguage]['both_terms_required']);
                 return;
             }
 
@@ -2581,7 +2635,7 @@
                 row.innerHTML = `
                     <td>${entry.srcTerm}</td>
                     <td>${entry.tgtTerm}</td>
-                    <td><button class="glossary-delete-btn" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations.es['delete_button']}</button></td>
+                    <td><button class="glossary-delete-btn" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations[currentLanguage]['delete_button']}</button></td>
                 `;
                 glossaryTableBody.appendChild(row);
             });
@@ -2593,7 +2647,7 @@
                 row.innerHTML = `
                     <td>${entry.srcTerm}</td>
                     <td>${entry.tgtTerm}</td>
-                    <td><button class="glossary-delete-btn" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations.es['delete_button']}</button></td>
+                    <td><button class="glossary-delete-btn" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations[currentLanguage]['delete_button']}</button></td>
                 `;
                 glossaryTableBody.appendChild(row);
             });
@@ -2629,10 +2683,10 @@
          */
         function downloadTBX() {
             if (glossary.length === 0 && (!glossarySourceLanguage || !glossaryTargetLanguage)) {
-                showMessage(translations.es['cannot_download_empty_or_unconfigured_glossary']);
+                showMessage(translations[currentLanguage]['cannot_download_empty_or_unconfigured_glossary']);
                 return;
             }
-            showLoadingOverlay(translations.es['saving_file']);
+            showLoadingOverlay(translations[currentLanguage]['saving_file']);
             try {
                 const blob = new Blob([generateTBX()], { type: "application/xml" });
                 const url = URL.createObjectURL(blob);
@@ -2642,9 +2696,9 @@
                 document.body.appendChild(a);
                 a.click();
                 URL.revokeObjectURL(url);
-                showMessage(translations.es['file_saved_successfully']); // Reuse generic save success message
+                showMessage(translations[currentLanguage]['file_saved_successfully']); // Reuse generic save success message
             } catch (error) {
-                showMessage(`${translations.es['error_saving_file']} ${error.message}`);
+                showMessage(`${translations[currentLanguage]['error_saving_file']} ${error.message}`);
                 console.error("Error downloading TBX:", error);
             } finally {
                 hideLoadingOverlay();
@@ -2665,7 +2719,7 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                showLoadingOverlay(translations.es['loading_file']);
+                showLoadingOverlay(translations[currentLanguage]['loading_file']);
                 try {
                     const reader = new FileReader();
                     await new Promise((resolve, reject) => {
@@ -2683,7 +2737,7 @@
 
                                 // --- New: Check if it's a TMX file instead of TBX ---
                                 if (xmlDoc.getElementsByTagName("tu").length > 0) {
-                                    showTMInternalMessage(translations.es['tbx_file_expected_tmx_found'], true);
+                                    showTMInternalMessage(translations[currentLanguage]['tbx_file_expected_tmx_found'], true);
                                     reject(new Error("Attempted to load TMX into Glossary.")); // Reject to stop process
                                     return;
                                 }
@@ -2717,7 +2771,7 @@
                                     glossarySourceLanguage = firstEntryLangs.src;
                                     glossaryTargetLanguage = firstEntryLangs.tgt;
                                 } else if (glossary.length === 0) { // If no entries found but parsed, might be empty or malformed TBX
-                                    showMessage(translations.es['error_loading_tbx_file']); // Generic parsing error for TBX
+                                    showMessage(translations[currentLanguage]['error_loading_tbx_file']); // Generic parsing error for TBX
                                 }
                                 // No longer showing specific message for no valid language pairs if glossary.length is 0
 
@@ -2737,7 +2791,7 @@
                     if (error.message.includes("Attempted to load TMX")) {
                         // Message already shown by the TMX check
                     } else {
-                        showMessage(translations.es['error_loading_tbx_file']);
+                        showMessage(translations[currentLanguage]['error_loading_tbx_file']);
                     }
                     resetGlossary(); // Reset to config state on error
                 } finally {
@@ -2863,7 +2917,7 @@
             renderTMSearchResults([]); // Clear search results table
             // Show config section for new TM
             showTMLanguageConfigSection();
-            showTMInternalMessage(translations.es['tm_initial_message']); // Inform user TM is empty
+            showTMInternalMessage(translations[currentLanguage]['tm_initial_message']); // Inform user TM is empty
         }
 
         /**
@@ -2903,7 +2957,7 @@
             const tgtLang = tmConfigTgtLang ? tmConfigTgtLang.value.trim() : ''; // Added null check
 
             if (!srcLang || !tgtLang) {
-                showTMInternalMessage(translations.es['lang_config_required'], true); // Show error message
+                showTMInternalMessage(translations[currentLanguage]['lang_config_required'], true); // Show error message
                 return;
             }
 
@@ -2919,7 +2973,7 @@
          * @param {File} file The TMX file object.
          */
         async function loadTMX(file) {
-            showLoadingOverlay(translations.es['loading_file']);
+            showLoadingOverlay(translations[currentLanguage]['loading_file']);
             hideTMInternalMessage(); // Hide any previous internal message
 
             try {
@@ -2938,7 +2992,7 @@
 
                             // --- New: Check if it's a TBX file instead of TMX ---
                             if (xmlDoc.getElementsByTagName("termEntry").length > 0) {
-                                showTMInternalMessage(translations.es['tmx_file_expected_tbx_found'], true);
+                                showTMInternalMessage(translations[currentLanguage]['tmx_file_expected_tbx_found'], true);
                                 reject(new Error("Attempted to load TBX into Translation Memory.")); // Reject to stop process
                                 return;
                             }
@@ -2983,7 +3037,7 @@
                             tmSourceLanguage = detectedSrcLang || (tmConfigSrcLang ? tmConfigSrcLang.value : 'en-US'); // Fallback to current config input
                             tmTargetLanguage = detectedTgtLang || (tmConfigTgtLang ? tmConfigTgtLang.value : 'es-ES'); // Fallback to current config input
 
-                            showTMInternalMessage(`TMX cargado con ${translationMemory.length} unidades de traducción.`);
+                            showTMInternalMessage(`TMX loaded with ${translationMemory.length} translation units.`);
                             showTMEditorSection(); // Show editor section
                             tmSearch(); // Refresh TM search results
                             resolve();
@@ -3000,7 +3054,7 @@
                 if (error.message.includes("Attempted to load TBX")) {
                     // Message already shown by the TBX check
                 } else {
-                    showTMInternalMessage(translations.es['error_loading_tmx_file'], true); // Show error message
+                    showTMInternalMessage(translations[currentLanguage]['error_loading_tmx_file'], true); // Show error message
                 }
                 resetTM(); // Reset to config state on error
             } finally {
@@ -3014,7 +3068,7 @@
          */
         function generateTMX() {
             if (translationMemory.length === 0) {
-                showTMInternalMessage(translations.es['cannot_download_empty_tm'], true); // Show error message
+                showTMInternalMessage(translations[currentLanguage]['cannot_download_empty_tm'], true); // Show error message
                 return null;
             }
 
@@ -3051,7 +3105,7 @@
             const tmxContent = generateTMX();
             if (!tmxContent) return; // generateTMX already shows message if empty
 
-            showLoadingOverlay(translations.es['saving_file']);
+            showLoadingOverlay(translations[currentLanguage]['saving_file']);
             try {
                 const blob = new Blob([tmxContent], { type: "application/xml" });
                 const url = URL.createObjectURL(blob);
@@ -3062,9 +3116,9 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showTMInternalMessage(translations.es['file_saved_successfully']); // Reuse generic save success message
+                showTMInternalMessage(translations[currentLanguage]['file_saved_successfully']); // Reuse generic save success message
             } catch (error) {
-                showTMInternalMessage(`${translations.es['error_saving_file']} ${error.message}`, true); // Show error message
+                showTMInternalMessage(`${translations[currentLanguage]['error_saving_file']} ${error.message}`, true); // Show error message
                 console.error("Error downloading TMX:", error);
             } finally {
                 hideLoadingOverlay();
@@ -3307,7 +3361,7 @@
                     if (poFileToProcess) {
                         await processFile(poFileToProcess);
                     } else {
-                        showMessage('Por favor, suelta un archivo .po válido.');
+                        showMessage('Please drop a valid .po file.');
                     }
                 }
             });
@@ -3362,8 +3416,13 @@
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', () => {
             populateIsoLanguagesDatalist();
-            // currentLanguage is now permanently 'es'
-            updateTextContent(); // Apply initial language and content
+            
+            // Add event listeners for language buttons
+            document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
+            document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
+
+            setLanguage(currentLanguage); // Apply initial language (en) and content
+
             resetGlossary(); // Start in the new glossary configuration mode (first step)
             resetTM(); // Initialize TM - this will now show the language config for TM and its initial message
             
@@ -3376,7 +3435,7 @@
             if (translationsContainer) { // Added null check
                 translationsContainer.innerHTML = `
                     <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                        ${translations.es['no_translations']}
+                        ${translations[currentLanguage]['no_translations']}
                     </div>
                 `;
             }
