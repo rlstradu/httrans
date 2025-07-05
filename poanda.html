@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">Poanda</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Estilos generales para el cuerpo y la fuente */
@@ -421,6 +422,21 @@
         }
         #statsContainer.show {
             transform: translateY(0);
+        }
+        
+        /* Styles for Diff highlighting in TM */
+        .diff-added {
+            background-color: #e6ffed; /* Light green background */
+            color: #22863a; /* Dark green text */
+            padding: 1px 2px;
+            border-radius: 3px;
+        }
+        .diff-removed {
+            background-color: #ffebe9; /* Light red background */
+            color: #b31d28; /* Dark red text */
+            text-decoration: line-through;
+            padding: 1px 2px;
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -1663,10 +1679,10 @@
             });
 
             const percentage = totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
-            segmentsProgress.textContent = `${translatedSegments}/${totalSegments} segmentos traducidos (${percentage}%)`;
-            wordsTranslated.textContent = `${totalWordsTranslated} palabras traducidas`;
-            wordsTotal.textContent = `${totalWordsOriginal} palabras originales totales`;
-            wordsRemaining.textContent = `${totalWordsOriginal - totalWordsTranslated} palabras pendientes`;
+            segmentsProgress.textContent = `${translatedSegments}/${totalSegments} segmentos (${percentage}%)`;
+            wordsTranslated.textContent = `${totalWordsTranslated}`;
+            wordsTotal.textContent = `${totalWordsOriginal}`;
+            wordsRemaining.textContent = `${totalWordsOriginal - totalWordsTranslated}`;
         }
 
 
@@ -3186,52 +3202,62 @@
             });
 
             currentTMLatestSearchResults = resultsToRender; // Store for shortcut
-            renderTMSearchResults(resultsToRender);
+            renderTMSearchResults(resultsToRender, activeSegmentOriginalText);
         }
 
 
         /**
          * Renders the TM search results in the table.
          * @param {Array<Object>} results Array of TM entries to display.
+         * @param {string|null} activeSegmentOriginalText The original text of the currently active segment.
          */
-        function renderTMSearchResults(results) {
-            if (!tmSearchResultsTableBody) { // Added null check for tmSearchResultsTableBody
+        function renderTMSearchResults(results, activeSegmentOriginalText) {
+            if (!tmSearchResultsTableBody) {
                 console.warn("tmSearchResultsTableBody element not found. Cannot render TM search results.");
                 return;
             }
             tmSearchResultsTableBody.innerHTML = '';
             if (results.length === 0) {
-                if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden'); // Added null check
-                // If there's an internal message (e.g., "no data"), don't override it.
-                // Otherwise, show "no results" message.
-                if (tmInternalMessage && tmInternalMessage.classList.contains('hidden')) { // Added null check
-                    if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden'); // Added null check
+                if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
+                if (tmInternalMessage && tmInternalMessage.classList.contains('hidden')) {
+                    if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
                 }
                 return;
             } else {
-                if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden'); // Added null check
+                if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');
             }
-            hideTMInternalMessage(); // Hide general internal message once results are shown
+            hideTMInternalMessage();
 
             results.forEach(entry => {
                 const row = document.createElement('tr');
-                // Apply green highlight if it's the best match for the active segment
                 if (entry.isBestMatch) {
-                    row.classList.add('tm-best-match-highlight'); // Tailwind green colors for highlight
+                    row.classList.add('tm-best-match-highlight');
                 }
+
+                let originalCellHtml = '';
+                // If an active segment is focused, perform a diff. Otherwise, show plain text.
+                if (activeSegmentOriginalText) {
+                    const differences = Diff.diffChars(entry.srcText, activeSegmentOriginalText);
+                    originalCellHtml = differences.map(part => {
+                        const className = part.added ? 'diff-added' :
+                                        part.removed ? 'diff-removed' : 'diff-common';
+                        return `<span class="${className}">${part.value}</span>`;
+                    }).join('');
+                } else {
+                    originalCellHtml = entry.srcText;
+                }
+
                 row.innerHTML = `
                     <td>${entry.score}%</td>
-                    <td><pre class="whitespace-pre-wrap">${entry.srcText}</pre></td>
+                    <td><pre class="whitespace-pre-wrap">${originalCellHtml}</pre></td>
                     <td><pre class="whitespace-pre-wrap">${entry.tgtText}</pre></td>
                 `;
-                // Add click listener to insert the translation from this row
                 row.addEventListener('click', () => {
                     const currentFocused = getCurrentFocusedIndex();
                     if (currentFocused) {
                         const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
                         if (targetTextarea && !targetTextarea.readOnly) {
                             targetTextarea.value = entry.tgtText;
-                            // Trigger input event manually to update stats and char counts
                             const event = new Event('input', { bubbles: true });
                             targetTextarea.dispatchEvent(event);
                         }
