@@ -438,7 +438,7 @@
         /* Header styles */
         .app-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* Changed from space-between */
             align-items: center;
             padding: 0.5rem 1rem;
             background-color: #fff;
@@ -447,17 +447,6 @@
             top: 0;
             z-index: 900;
             flex-wrap: wrap; /* Allow wrapping on smaller screens */
-        }
-
-        .app-header .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .app-header .logo-container img {
-            height: 40px; /* Increased logo size */
-            width: auto;
         }
 
         .app-header .header-buttons {
@@ -584,6 +573,9 @@
             position: relative;
             width: 100%;
             line-height: 0; /* Remove extra space below video */
+            background-color: #000;
+            border-radius: 0.5rem;
+            min-height: 250px; /* Give it a minimum height to be visible */
         }
 
         #videoPlayer {
@@ -649,9 +641,7 @@
 <body class="bg-gray-100">
     <!-- Header Section -->
     <header class="app-header">
-        <div class="logo-container">
-            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-10 w-auto">
-        </div>
+        <!-- ========== LOGO REMOVED ========== -->
         <div class="header-buttons">
             <label for="srtFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
                 <span data-i18n="import_srt" id="importSrtBtnText">Importar .srt</span>
@@ -686,8 +676,16 @@
         <!-- Video Player Section (Left Column on larger screens) -->
         <div class="video-player-section flex flex-col items-center justify-center p-4">
             <div id="videoPlayerContainer" class="w-full hidden">
-                <div id="videoPlayerWrapper">
-                    <video id="videoPlayer" controls></video>
+                <div id="videoPlayerWrapper" class="relative bg-black rounded-lg">
+                    <!-- El elemento de vídeo ahora está oculto por defecto -->
+                    <video id="videoPlayer" controls class="hidden w-full h-auto max-h-[60vh] rounded-lg"></video>
+            
+                    <!-- Placeholder con el logotipo, centrado y visible por defecto dentro del wrapper -->
+                    <div id="videoLogoPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                         <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
+                    </div>
+            
+                    <!-- La superposición de subtítulos se mantiene igual -->
                     <div id="subtitlePreviewOverlay">
                         <span id="subtitlePreviewText"></span>
                     </div>
@@ -1354,6 +1352,7 @@
                 'loading_file': 'Cargando archivo...',
                 'saving_file': 'Guardando archivo...',
                 'load_video': 'Cargar vídeo',
+                'change_video': 'Cambiar vídeo',
                 'video_load_error': 'Error al cargar el vídeo. Asegúrate de que el formato es compatible.',
                 'translation_stats_title': 'Estadísticas',
                 'subtitles_translated': 'subtítulos traducidos',
@@ -1991,6 +1990,7 @@
 
                 translationsContainer.appendChild(translationUnit);
             });
+            
             saveSrtButton.disabled = false;
             statsContainer.classList.remove('hidden');
             videoPlayerContainer.classList.remove('hidden');
@@ -2169,6 +2169,19 @@
         async function processFile(file) {
             currentFileName = file.name;
             showLoadingOverlay(translations.es['loading_file']);
+
+            // Reset the video player state
+            videoPlayer.pause();
+            videoPlayer.src = '';
+            videoPlayer.classList.add('hidden'); // Hide the <video> element
+            document.getElementById('videoLogoPlaceholder').classList.remove('hidden'); // Show the logo
+
+            // Restore the button text
+            const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
+            if (loadVideoBtnSpan) {
+                loadVideoBtnSpan.textContent = translations.es['load_video'];
+            }
+
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -2537,7 +2550,7 @@
             setTextContent('importSrtBtnText', translations.es['import_srt']);
             setTextContent('exportSrtBtnText', translations.es['export_srt']);
             setTextContent('okBtnText', translations.es['ok']);
-            setTextContent('loadVideo', translations.es['load_video']);
+            document.querySelector('#loadVideoBtn span').textContent = translations.es['load_video'];
 
             const initialMessageElement = document.getElementById('initialMessage');
             if (initialMessageElement) {
@@ -3306,7 +3319,16 @@
                 videoPlayer.src = videoURL;
                 videoPlayer.load();
                 videoPlayer.play();
-                videoPlayerContainer.classList.remove('hidden');
+        
+                // Hide the logo and show the video element
+                document.getElementById('videoLogoPlaceholder').classList.add('hidden');
+                videoPlayer.classList.remove('hidden');
+        
+                // Update the button text to allow changing the video later
+                const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
+                if (loadVideoBtnSpan) {
+                    loadVideoBtnSpan.textContent = translations.es['change_video'];
+                }
             } else {
                 showMessage(translations.es['video_load_error']);
             }
