@@ -7,21 +7,43 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    @keyframes gradientAnimation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f3f4f6;
       color: #1f2937;
+      background: linear-gradient(-45deg, #f3f4f6, #e5e7eb, #d1d5db, #f9fafb);
+      background-size: 400% 400%;
+      animation: gradientAnimation 15s ease infinite;
     }
     .container {
+      background-color: #ffffff;
       max-width: 1200px;
       position: relative;
+      animation: fadeInUp 0.8s ease-out forwards;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 5px 10px rgba(0,0,0,0.04);
     }
     .btn {
       transition: all 0.2s ease-in-out;
     }
     .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
     .btn-primary {
       background-color: #FF5F18; /* Naranja */
@@ -45,7 +67,7 @@
       background-color: #dc2626;
     }
     .modal {
-        display: none; /* Oculto por defecto */
+        display: none;
         position: fixed;
         z-index: 1000;
         left: 0;
@@ -53,7 +75,7 @@
         width: 100%;
         height: 100%;
         overflow: auto;
-        background-color: rgba(0,0,0,0.5);
+        background-color: rgba(0,0,0,0.6);
         justify-content: center;
         align-items: center;
     }
@@ -67,12 +89,7 @@
         border-radius: 0.5rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         text-align: center;
-    }
-    .modal-content p {
-        margin-bottom: 1rem;
-    }
-    .modal-content button {
-        width: 100px;
+        animation: fadeInUp 0.5s ease-out forwards;
     }
     .editable-cell {
         padding: 0.75rem;
@@ -88,6 +105,15 @@
     .table-container {
         max-height: 60vh;
         overflow-y: auto;
+    }
+    #tmTableBody tr {
+        transition: all 0.2s ease-in-out;
+    }
+    #tmTableBody tr:hover {
+        transform: scale(1.01);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        z-index: 10;
+        position: relative;
     }
     .lang-btn {
         background-color: #e5e7eb;
@@ -107,15 +133,15 @@
 <body class="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8">
 
   <div class="container w-full bg-white p-6 rounded-xl shadow-lg">
-    <!-- Selector de Idioma -->
-    <div class="absolute top-6 left-6 flex gap-2">
+    <!-- Controles Superiores -->
+    <div class="absolute top-6 right-6 flex gap-2 items-center">
         <button id="langEnBtn" class="lang-btn font-bold py-1 px-3 rounded-md text-sm">EN</button>
         <button id="langEsBtn" class="lang-btn font-bold py-1 px-3 rounded-md text-sm active">ES</button>
     </div>
   
     <!-- Encabezado -->
     <header class="text-center mb-6 pt-8">
-      <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png" alt="Pandoria Logo" class="mx-auto mb-4 w-48 h-auto">
+      <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png" alt="Pandoria Logo" class="mx-auto mb-4 w-64 h-auto">
       <p class="text-gray-600" data-i18n="tool_description">Una herramienta sencilla para editar memorias de traducción TMX.</p>
     </header>
 
@@ -131,7 +157,7 @@
 
     <!-- Sección de Configuración de Idioma (Inicialmente visible) -->
     <div id="languageConfigSection" class="mb-6 p-4 bg-gray-50 rounded-lg">
-      <h2 class="text-lg font-semibold mb-3 text-center" data-i18n="configure_tm_languages">Configurar Idiomas de la Memoria</h2>
+      <h2 class="text-lg font-semibold mb-3 text-center" data-i18n="configure_tm_languages">Configurar idiomas de la memoria</h2>
       <div class="info-box text-sm text-gray-600 bg-blue-50 border border-blue-200 p-3 rounded-md mb-4">
         <p data-i18n="info_box_text">Define los idiomas de origen y destino para tu nueva memoria. Es importante que el código ISO sea correcto para que funcione bien en tu herramienta TAO.</p>
       </div>
@@ -210,7 +236,7 @@
             'download_tmx': 'Descargar TMX',
             'create_tmx': 'Crear TMX',
             'add_new_entry': 'Añadir nueva entrada',
-            'configure_tm_languages': 'Configurar Idiomas de la Memoria',
+            'configure_tm_languages': 'Configurar idiomas de la memoria',
             'info_box_text': 'Define los idiomas de origen y destino para tu nueva memoria. Es importante que el código ISO sea correcto para que funcione bien en tu herramienta TAO.',
             'source_language': 'Idioma de origen:',
             'target_language': 'Idioma de destino:',
@@ -236,7 +262,7 @@
             'download_tmx': 'Download TMX',
             'create_tmx': 'Create TMX',
             'add_new_entry': 'Add new entry',
-            'configure_tm_languages': 'Configure Memory Languages',
+            'configure_tm_languages': 'Set Translation Memory Languages',
             'info_box_text': 'Define the source and target languages for your new memory. It is important that the ISO code is correct for it to work well in your CAT tool.',
             'source_language': 'Source language:',
             'target_language': 'Target language:',
@@ -286,7 +312,7 @@
     // Lista de idiomas ISO
     const isoLanguagesData = [
         { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" },
-        { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" },
+        { code: "es", name: "Español" }, { code: "es-AR", name: "Español (Argentina)" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" },
         { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" },
         { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" },
         { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" },
@@ -504,7 +530,7 @@
         filteredTM.forEach((entry, index) => {
             const originalIndex = translationMemory.indexOf(entry);
             const row = document.createElement('tr');
-            row.className = "bg-white border-b hover:bg-gray-50";
+            row.className = "border-b";
             row.innerHTML = `
                 <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="srcText">${entry.srcText}</td>
                 <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="tgtText">${entry.tgtText}</td>
