@@ -22,7 +22,7 @@
         /* Asegura que el texto preformateado respete los saltos de línea y no desborde */
         pre {
             white-space: pre-wrap;
-            word-break: break-all; /* Rompe palabras largas para evitar desbordamiento horizontal */
+            overflow-wrap: break-word; /* Evita la división de palabras, ajustando el texto de forma más natural */
         }
         /* Estilo para el icono de check (SVG) */
         .check-icon {
@@ -3262,8 +3262,8 @@
                 }
                 row.innerHTML = `
                     <td>${entry.score}%</td>
-                    <td><pre class="whitespace-pre-wrap word-break-all">${entry.srcText}</pre></td>
-                    <td><pre class="whitespace-pre-wrap word-break-all">${entry.tgtText}</pre></td>
+                    <td><pre class="whitespace-pre-wrap">${entry.srcText}</pre></td>
+                    <td><pre class="whitespace-pre-wrap">${entry.tgtText}</pre></td>
                 `;
                 // Add click listener to insert the translation from this row
                 row.addEventListener('click', () => {
