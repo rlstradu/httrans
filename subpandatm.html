@@ -935,14 +935,10 @@
         };
         let shortcuts = { ...defaultShortcuts };
 
-        // SVG icons for shortcuts
-        const arrowDownIcon = `<svg class="shortcut-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 12a1 1 0 01-.707-.293l-4-4a1 1 0 011.414-1.414L10 9.586l3.293-3.293a1 1 0 111.414 1.414l-4 4A1 1 0 0110 12z" clip-rule="evenodd"></path></svg>`;
-        const arrowUpIcon = `<svg class="shortcut-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 8a1 1 0 01.707.293l4 4a1 1 0 01-1.414 1.414L10 10.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4A1 1 0 0110 8z" clip-rule="evenodd"></path></svg>`;
-
-        // List of common ISO 639-1 language codes for the datalist (for Terminology)
+        // List of common ISO 639-1 language codes for the datalist
         const isoLanguagesData = [
           { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" },
-          { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" },
+          { code: "es", name: "Español" }, { code: "es-AR", name: "Español (Argentina)" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" },
           { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" },
           { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" },
           { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" },
