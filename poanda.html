@@ -301,53 +301,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Accordion styles */
-        .accordion-item {
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-        .accordion-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            padding: 0.75rem 1rem;
-            background-color: #f9fafb; /* Light background for header */
-            border-bottom: 1px solid #e5e7eb;
-            user-select: none; /* Prevent text selection on double click */
-        }
-
-        .accordion-header:hover {
-            background-color: #f3f4f6;
-            color: #3b82f6; /* Tailwind blue-500 */
-        }
-
-        .accordion-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .accordion-icon.rotated {
-            transform: rotate(180deg);
-        }
-
-        .accordion-content {
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-            padding: 0 1rem; /* Adjust padding for collapsed state */
-        }
-        .accordion-content.collapsed {
-            max-height: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
-        .accordion-content.expanded {
-            max-height: 500px; /* Sufficiently large value to show all content */
-            padding-top: 1rem; /* Restore padding when expanded */
-            padding-bottom: 1rem;
-        }
-
         /* TM Search Results Table Column Widths */
         .tm-table th:nth-child(1), .tm-table td:nth-child(1) {
             width: 10%; /* Percentage column narrower */
@@ -460,11 +413,20 @@
             padding-left: 0.75rem; /* px-3 */
             padding-right: 0.75rem; /* px-3 */
         }
+
+        /* Styles for the new fixed statistics panel */
+        #statsContainer {
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #statsContainer.show {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
-        <!-- Top Utility Buttons (Shortcuts, Find/Replace, Terminolo, Translation Memory) -->
+        <!-- Top Utility Buttons (Shortcuts, Find/Replace, Terminology, Translation Memory, Statistics) -->
         <div class="top-utility-buttons-container">
             <button id="shortcutsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="shortcuts_btn" id="shortcutsBtnText">Atajos</span>
@@ -477,6 +439,9 @@
             </button>
             <button id="tmBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="tm_btn" id="tmBtnText">Memoria de traducción</span>
+            </button>
+            <button id="statsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="statistics_btn" id="statsBtnText">Estadísticas</span>
             </button>
         </div>
         <!-- Removed Language Buttons -->
@@ -764,22 +729,15 @@
         </div>
     </div>
 
-    <!-- Statistics Display (Moved to bottom and made accordion) -->
-    <div id="statsContainer" class="bg-white p-4 rounded-lg shadow-xl w-full max-w-6xl mt-4 relative hidden">
-        <div class="accordion-item">
-            <div class="accordion-header" id="statsAccordionHeader">
-                <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="translation_stats_title" id="translationStatsTitle">Estadísticas de traducción</h3>
-                <svg class="w-5 h-5 accordion-icon rotated" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-            <div class="accordion-content collapsed" id="statsAccordionContent">
-                <div class="bg-gray-100 p-3 rounded-md shadow-sm text-sm text-center text-on-light-contrast">
-                    <p><span id="segmentsProgress">0/0 segmentos traducidos (0%)</span></p>
-                    <p><span id="wordsTranslated">0 palabras traducidas</span> / <span id="wordsTotal">0 palabras originales totales</span></p>
-                    <p><span id="wordsRemaining">0 palabras pendientes</span></p>
-                </div>
-            </div>
+    <!-- Statistics Display (Fixed Panel) -->
+    <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]">
+        <div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2">
+            <p><strong class="font-semibold" data-i18n="stats_progress_label">Progreso:</strong> <span id="segmentsProgress">0/0 segmentos (0%)</span></p>
+            <p><strong class="font-semibold" data-i18n="stats_words_label">Palabras (Traducidas / Totales):</strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p>
+            <p><strong class="font-semibold" data-i18n="stats_remaining_label">Palabras Pendientes:</strong> <span id="wordsRemaining">0</span></p>
         </div>
     </div>
+
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay hidden">
@@ -832,17 +790,13 @@
         const mainEditorLayout = document.getElementById('mainEditorLayout');
 
 
-        // Statistics DOM elements (now part of accordion)
+        // Statistics DOM elements
+        const statsBtn = document.getElementById('statsBtn');
         const statsContainer = document.getElementById('statsContainer');
         const segmentsProgress = document.getElementById('segmentsProgress');
         const wordsTranslated = document.getElementById('wordsTranslated');
         const wordsTotal = document.getElementById('wordsTotal');
         const wordsRemaining = document.getElementById('wordsRemaining');
-
-        // Statistics Accordion DOM elements
-        const statsAccordionHeader = document.getElementById('statsAccordionHeader');
-        const statsAccordionContent = document.getElementById('statsAccordionContent');
-        const statsAccordionIcon = statsAccordionHeader ? statsAccordionHeader.querySelector('.accordion-icon') : null;
 
 
         // Poanda Modals
@@ -985,7 +939,12 @@
                 'cannot_download_empty_or_unconfigured_glossary': 'No se puede descargar un glosario vacío o sin configurar.',
                 'error_loading_tbx_file': 'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.',
                 'no_valid_language_pairs_found_in_tbx': 'No se encontraron pares de idiomas válidos en el archivo TBX. Se usarán los valores por defecto (en-US, es-ES).',
-                'translation_stats_title': 'Estadísticas de traducción',
+                
+                // Statistics specific translations
+                'statistics_btn': 'Estadísticas',
+                'stats_progress_label': 'Progreso:',
+                'stats_words_label': 'Palabras (Traducidas / Totales):',
+                'stats_remaining_label': 'Palabras Pendientes:',
 
                 // Translation Memory specific translations
                 'tm_btn': 'Memoria de traducción', // Reverted to full text
@@ -1448,7 +1407,7 @@
                     </div>
                 `;
                 savePoButton.disabled = true;
-                statsContainer.classList.add('hidden'); // Hide stats if no translations
+                statsContainer.classList.remove('show'); // Hide stats if no translations
                 return;
             }
 
@@ -1666,7 +1625,7 @@
                 translationsContainer.appendChild(translationUnit);
             });
             savePoButton.disabled = false;
-            statsContainer.classList.remove('hidden'); // Show stats container
+            statsContainer.classList.add('show'); // Show stats container
             updateStatsDisplay(); // Initial stats display after rendering
 
             // Initial focus on the first editable translation if any (this will trigger its focus listener for highlight)
@@ -1889,7 +1848,7 @@
                             </div>
                         `;
                         savePoButton.disabled = true;
-                        statsContainer.classList.add('hidden'); // Hide stats on error
+                        statsContainer.classList.remove('show'); // Hide stats on error
                         resolve(); // Resolve even on error to hide loading overlay
                     } finally {
                         hideLoadingOverlay();
@@ -1898,7 +1857,7 @@
                 reader.onerror = () => {
                     showMessage(translations.es['error_reading_file'] + (file.name || ''));
                     savePoButton.disabled = true;
-                    statsContainer.classList.add('hidden'); // Hide stats on error
+                    statsContainer.classList.remove('show'); // Hide stats on error
                     hideLoadingOverlay();
                     resolve();
                 };
@@ -2376,8 +2335,8 @@
             setTextContent('actionsCol', translations.es['actions_col']);
             // delete_button text is handled in renderGlossary
 
-            // Statistics Accordion Title
-            setTextContent('translationStatsTitle', translations.es['translation_stats_title']);
+            // Statistics Button
+            setTextContent('statsBtnText', translations.es['statistics_btn']);
 
             // Translation Memory Sidebar UI
             setTextContent('tmBtnText', translations.es['tm_btn']);
@@ -3344,21 +3303,6 @@
             });
         }
 
-        // --- Accordion Logic for Stats ---
-        if (statsAccordionHeader && statsAccordionContent && statsAccordionIcon) {
-            statsAccordionHeader.addEventListener('click', () => {
-                const isCollapsed = statsAccordionContent.classList.contains('collapsed');
-                if (isCollapsed) {
-                    statsAccordionContent.classList.remove('collapsed');
-                    statsAccordionContent.classList.add('expanded');
-                    statsAccordionIcon.classList.remove('rotated');
-                } else {
-                    statsAccordionContent.classList.remove('expanded');
-                    statsAccordionContent.classList.add('collapsed');
-                    statsAccordionIcon.classList.add('rotated');
-                }
-            });
-        }
 
         /**
          * Adjusts the padding of the main editor content based on open sidebars.
@@ -3396,7 +3340,12 @@
             updateTextContent(); // Apply initial language and content
             resetGlossary(); // Start in the new glossary configuration mode (first step)
             resetTM(); // Initialize TM - this will now show the language config for TM and its initial message
-            // Initial renderTranslations will happen when a file is loaded or on a new glossary to clear previous content.
+            
+            // Add event listener for the new stats button
+            statsBtn.addEventListener('click', () => {
+                statsContainer.classList.toggle('show');
+            });
+
             // For first load, we ensure the "no_translations" message is shown.
             if (translationsContainer) { // Added null check
                 translationsContainer.innerHTML = `
@@ -3406,7 +3355,7 @@
                 `;
             }
             if (savePoButton) savePoButton.disabled = true; // Added null check
-            if (statsContainer) statsContainer.classList.add('hidden'); // Added null check
+            if (statsContainer) statsContainer.classList.remove('show'); // Ensure stats are hidden on load
 
             // Ensure accordions are collapsed on initial load
             if (addTermContent && addTermAccordionIcon) {
@@ -3414,11 +3363,7 @@
                 addTermContent.classList.remove('expanded');
                 addTermAccordionIcon.classList.remove('rotated'); // Ensure it's not rotated initially
             }
-            if (statsAccordionContent && statsAccordionIcon) {
-                statsAccordionContent.classList.add('collapsed');
-                statsAccordionContent.classList.remove('expanded');
-                statsAccordionIcon.classList.add('rotated'); // Ensure it's rotated (closed) initially
-            }
+
             // Ensure TM sidebar is hidden initially
             if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar'); // Added null check
 
