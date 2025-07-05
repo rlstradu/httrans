@@ -3,444 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML Translation Toolkit</title>
-    <!-- Carga de Tailwind CSS para un diseño moderno y responsive -->
+    <title>HTTrans - HTML Translation Toolkit</title>
+    <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
+    <!-- Carga de Google Fonts (Montserrat) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Fuente Inter para una mejor legibilidad */
+        /* Estilos base y fondo animado */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Un fondo gris claro para la interfaz */
+            font-family: 'Montserrat', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Asegura que ocupe toda la altura de la vista */
+            min-height: 100vh;
             margin: 0;
-            padding: 20px; /* Padding general para el contenido */
-            box-sizing: border-box; /* Incluye padding en el tamaño total */
-        }
-        .container {
-            background-color: #ffffff; /* Fondo blanco para el contenedor principal */
-            border-radius: 1.5rem; /* Esquinas más redondeadas */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
-            padding: 2.5rem; /* Aumenta el padding interno */
-            text-align: center;
-            max-width: 90%; /* Ancho máximo para el contenedor, para pantallas más pequeñas */
-            width: 800px; /* Ancho fijo para el contenedor principal */
-            position: relative; /* Para que el selector de idioma se posicione relativo a este */
-        }
-        .logo {
-            max-width: 432px; /* Tamaño máximo para el logo, ampliado un 20% */
-            height: auto;
-            margin: 0 auto 0.5rem auto; /* Centra la imagen horizontalmente y añade margen inferior */
-            display: block; /* Asegura que margin: auto funcione para centrar */
-        }
-        .toolkit-title {
-            color: #2c3e50;
-            font-size: 1.25rem; /* Tamaño del subtítulo "HTML Translation Toolkit" */
-            font-weight: 700;
-            text-transform: uppercase; /* Título en mayúsculas */
-            margin-bottom: 1.5rem; /* Espacio debajo del subtítulo antes de la descripción */
-            line-height: 1; /* Asegura que no haya espacio extra */
-        }
-        .description {
-            color: #555; /* Color de texto más suave para la descripción */
-            margin-bottom: 2rem; /* Espacio debajo de la descripción antes de los botones */
-            font-size: 1.1rem; /* Tamaño de fuente para la descripción */
-            line-height: 1.6; /* Altura de línea para mejor legibilidad */
-        }
-        .tool-grid {
-            display: flex;
-            flex-direction: column; /* Las filas se apilan verticalmente */
-            gap: 0.8rem; /* Espacio entre las filas */
-            margin-top: 2rem;
-        }
-        .tool-row {
-            display: flex;
-            justify-content: center; /* Centra las herramientas dentro de cada fila */
-            flex-wrap: wrap; /* Permite que las herramientas se envuelvan en pantallas pequeñas */
-            gap: 0.8rem; /* Espacio entre las herramientas dentro de una fila */
-        }
-        .tool-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1 1 calc(33.33% - 0.8rem); /* Para 3 columnas, ajusta el ancho y el gap */
-            max-width: calc(33.33% - 0.8rem); /* Asegura que no crezca más allá de 3 columnas */
-            min-width: 160px; /* Mínimo para el ajuste responsive */
-        }
-        /* La clase .two-col ya no es necesaria si todas las filas tienen 3 elementos */
-        .tool-logo {
-            max-width: 220px; /* Tamaño de los logotipos de las herramientas (aumentado un 10%) */
-            height: auto;
-            margin-bottom: 0.5rem; /* Espacio entre el logotipo y el botón */
-            transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out; /* Transición para el efecto de hover */
-        }
-        .tool-logo:hover {
-            transform: scale(1.05); /* Ligeramente más grande al pasar el ratón */
-            filter: drop-shadow(0 0 8px rgba(226, 59, 93, 0.7)); /* Efecto de "glow" (sombra de color rojo del logo) */
-        }
-        .tool-button {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.7rem; /* Padding para achicar los botones */
-            background-color: #E23B5D; /* Tono de rojo del logo para los botones */
-            color: white;
-            text-decoration: none;
-            border-radius: 0.75rem; /* Esquinas redondeadas para los botones */
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra para los botones */
-            width: 100%; /* Asegura que el botón ocupe el ancho disponible */
-        }
-        .tool-button:hover {
-            transform: translateY(-3px); /* Efecto de elevación al pasar el ratón */
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Sombra más grande al pasar el ratón */
-            background-color: #C42F4B; /* Tono de rojo ligeramente más oscuro al pasar el ratón */
-        }
-        .tool-icon {
-            font-size: 1.8rem; /* Tamaño de icono */
-            margin-bottom: 0.3rem; /* Espacio entre icono y texto */
-        }
-        .tool-text {
-            font-size: 0.9rem; /* Tamaño de fuente para el texto del botón */
-            font-weight: 600; /* Semi-negrita */
-            text-transform: uppercase; /* ¡Texto en mayúsculas! */
-            line-height: 1.2; /* Ajuste para texto de varias líneas */
-        }
-        .tool-text-sub {
-            font-size: 0.7rem; /* Tamaño más pequeño para la aclaración */
-            font-weight: 400; /* Normal */
-            text-transform: none; /* Sin mayúsculas para la aclaración */
-            display: block; /* Asegura que la aclaración vaya en una nueva línea */
-            margin-top: 0.2rem; /* Pequeño margen superior para separar del nombre principal */
-        }
-        .footer-info {
-            margin-top: 3rem; /* Margen superior para separar del grid de herramientas */
-            font-size: 0.85rem; /* Tamaño de fuente pequeño para el pie de página */
-            color: #777; /* Color gris suave */
-            /* Añadido para centrar el panda-hug-section que ahora está dentro */
-            display: flex;
-            flex-direction: column;
-            align-items: center; /* Centra los elementos hijos horizontalmente */
-        }
-        .footer-info a {
-            color: #4a90e2; /* Color de enlace azul */
-            text-decoration: none;
-        }
-        .footer-info a:hover {
-            text-decoration: underline; /* Subrayado al pasar el ratón por el enlace */
+            padding: 2rem;
+            box-sizing: border-box;
+            background: linear-gradient(45deg, #fde7ea, #e8eaf6, #e0f2f1, #fce4ec);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
         }
 
-        /* Language Selector */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Contenedor principal con efecto Glassmorphism */
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 2.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Animaciones de entrada */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        
+        /* Estilos para el logo y títulos */
+        .logo {
+            max-width: 380px;
+            height: auto;
+            margin: 0 auto 0.5rem auto;
+            display: block;
+        }
+
+        .toolkit-title {
+            color: #373737;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .description {
+            color: #4a5568;
+            margin-bottom: 2.5rem;
+            font-size: 1rem; /* Tamaño de fuente reducido */
+            line-height: 1.6;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Grid de herramientas mejorado */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tool-item {
+            position: relative;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Nuevo efecto hover */
+        .tool-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 1);
+            border-color: #E23B5D;
+        }
+
+        .tool-logo {
+            max-width: 200px; /* Tamaño de logo aumentado */
+            height: 100px;    /* Tamaño de logo aumentado */
+            object-fit: contain;
+            margin: 0 auto 1rem auto;
+            transition: transform 0.3s ease;
+        }
+
+        .tool-item:hover .tool-logo {
+            transform: scale(1.05);
+        }
+        
+        .tool-text-main {
+            font-size: 1.1rem; /* Tamaño de fuente aumentado */
+            font-weight: 700;
+            color: #2c3e50;
+            text-transform: uppercase;
+        }
+
+        .tool-text-sub {
+            font-size: 0.85rem; /* Tamaño de fuente aumentado */
+            font-weight: 400;
+            color: #718096;
+            text-transform: none;
+        }
+
+        /* Footer */
+        .footer-info {
+            margin-top: 3rem;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+        .footer-info a {
+            color: #E23B5D;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* Selector de idioma */
         .language-selector {
-            position: absolute; /* Posicionamiento absoluto relativo al .container */
-            top: 20px; /* Distancia desde arriba */
-            right: 20px; /* Distancia desde la derecha */
+            position: absolute;
+            top: 20px;
+            right: 20px;
             display: flex;
             gap: 5px;
-            background-color: #f0f2f5;
+            background-color: rgba(255, 255, 255, 0.5);
             border-radius: 0.5rem;
             padding: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 10; /* Asegura que esté por encima de otros elementos */
+            z-index: 10;
         }
         .lang-button {
             padding: 5px 10px;
             border: none;
-            background-color: #e0e0e0;
+            background-color: transparent;
             border-radius: 0.3rem;
             cursor: pointer;
             font-size: 0.8rem;
             font-weight: 600;
             color: #555;
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .lang-button.active {
-            background-color: #E23B5D; /* Color activo para el idioma seleccionado (rojo del logo) */
+            background-color: #E23B5D;
             color: white;
         }
-        .lang-button:hover:not(.active) {
-            background-color: #d0d0d0;
-        }
 
-        /* Panda Hug Like Button */
+        /* Botón Panda Hug */
         .panda-hug-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center; /* Centra los elementos internos (texto y botón) */
-            gap: 5px;
-            margin-top: 2rem; /* Espacio superior para separarlo del GitHub repo */
+            margin-top: 2rem;
+        }
+        .panda-hug-button {
+            background-color: #fce4ec;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+            color: #E23B5D;
+            font-weight: 600;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .panda-hug-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(226, 59, 93, 0.2);
+        }
+        .panda-hug-button.clicked .panda-hug-icon {
+            animation: panda-hug-anim 0.5s ease-out;
+        }
+        @keyframes panda-hug-anim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(-10deg); }
+            100% { transform: scale(1); }
+        }
+        .panda-hug-icon {
+            width: 30px;
+            height: auto;
         }
         .panda-hug-text {
             font-size: 0.85rem;
             color: #777;
-            margin-bottom: 5px;
-            opacity: 0; /* Oculto por defecto */
-            max-height: 0; /* Colapsa la altura */
-            overflow: hidden; /* Oculta el desbordamiento */
-            transition: opacity 0.3s ease-in-out, max-height 0.3s ease-in-out; /* Transición suave */
-            text-align: center; /* Asegura que el texto esté centrado */
-        }
-        .panda-hug-section:hover .panda-hug-text { /* Muestra el texto al pasar el ratón sobre la sección */
-            opacity: 1; /* Visible al pasar el ratón */
-            max-height: 50px; /* Altura suficiente para mostrar el texto */
-            margin-bottom: 5px; /* Restablece el margen si es necesario para el espaciado */
-        }
-        .panda-hug-button {
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 1rem;
-            color: #555;
-            transition: transform 0.2s ease-in-out;
-        }
-        .panda-hug-button:hover {
-            transform: scale(1.05);
-        }
-        .panda-hug-icon {
-            width: 40px; /* Tamaño del icono */
-            height: auto;
-            transition: filter 0.2s ease-in-out;
-        }
-        .panda-hug-button:hover .panda-hug-icon {
-            filter: drop-shadow(0 0 5px rgba(226, 59, 93, 0.7)); /* Efecto de "glow" */
-        }
-        .like-count {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #E23B5D;
+            margin-bottom: 10px;
         }
 
-
-        /* Responsive adjustments */
-        @media (max-width: 1024px) { /* Para tablets y pantallas medianas, 2 columnas */
-            .tool-item {
-                flex: 1 1 calc(50% - 0.8rem);
-                max-width: calc(50% - 0.8rem);
-            }
-        }
-        @media (max-width: 768px) { /* Para móviles, 1 columna */
-            .container {
-                width: 90%; /* Asegura que siga siendo responsive en móviles */
-                max-width: 100%;
-            }
-            .logo {
-                max-width: 80%; /* Ajuste para móvil: escala el logo principal al 80% del contenedor */
-                margin-left: auto; /* Centrar con margin auto */
-                margin-right: auto; /* Centrar con margin auto */
-            }
-            .toolkit-title {
-                font-size: 1rem; /* Ajuste para móvil */
-            }
-            .description {
-                font-size: 1rem;
-                margin-bottom: 1.5rem;
-            }
-            .tool-grid {
-                gap: 0.7rem; /* Espacio más pequeño en móvil */
-                margin-top: 1.5rem;
-            }
-            .tool-row {
-                gap: 0.7rem;
-            }
-            .tool-item {
-                flex: 1 1 100%; /* Una columna en pantallas pequeñas */
-                max-width: 100%;
-            }
-            .tool-logo {
-                max-width: 165px; /* Ajuste para logos en móvil (un 10% más grandes) */
-            }
-            .tool-button {
-                padding: 0.6rem; /* Padding más pequeño en móvil */
-            }
-            .tool-icon {
-                font-size: 1.6rem; /* Icono más pequeño en móvil */
-            }
-            .tool-text {
-                font-size: 0.8rem; /* Texto más pequeño en móvil */
-            }
-            .tool-text-sub {
-                font-size: 0.6rem; /* Aclaración más pequeña en móvil */
-            }
-            .footer-info {
-                margin-top: 2rem; /* Margen superior ajustado para móvil */
-                font-size: 0.75rem; /* Tamaño de fuente más pequeño en móvil */
-            }
-            .language-selector {
-                top: 10px;
-                right: 10px;
-                padding: 3px;
-            }
-            .lang-button {
-                padding: 3px 6px;
-                font-size: 0.7rem;
-            }
-            .panda-hug-section {
-                margin-top: 1.5rem; /* Ajuste el margen superior para móviles */
-            }
-            .panda-hug-text {
-                font-size: 0.75rem;
-            }
-            .panda-hug-icon {
-                width: 35px; /* Icono un poco más pequeño en móvil */
-            }
-            .like-count {
-                font-size: 0.8rem;
-            }
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .main-container { padding: 1.5rem; }
+            .logo { max-width: 250px; }
+            .toolkit-title { font-size: 1.2rem; }
+            .description { font-size: 0.9rem; }
+            .tool-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .language-selector { top: 10px; right: 10px; }
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Iconos Phosphor Icons (alternativa a Font Awesome) -->
-    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="main-container">
         <!-- Selector de idioma -->
         <div class="language-selector">
             <button class="lang-button" data-lang="es">ES</button>
             <button class="lang-button" data-lang="en">EN</button>
         </div>
 
-        <!-- Logo HTTrans -->
-        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png" alt="HTTrans Logo" class="logo">
-        <h1 class="toolkit-title">HTML TRANSLATION TOOLKIT</h1>
-        <!-- Descripción del proyecto -->
-        <p class="description" data-key="description"></p>
+        <!-- Contenido principal -->
+        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png" alt="HTTrans Logo" class="logo fade-in">
+        <h1 class="toolkit-title fade-in" style="animation-delay: 0.1s;">HTML TRANSLATION TOOLKIT</h1>
+        <p class="description fade-in" style="animation-delay: 0.2s;" data-key="description"></p>
+        
         <div class="tool-grid">
-            <!-- Fila 1: poanda, pandaterm, pandoria -->
-            <div class="tool-row">
-                <!-- 1. Poanda -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/poanda.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/poanda-logo-final.png" alt="Poanda Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/poanda.html" target="_blank" class="tool-button">
-                        <i class="ph-file-text tool-icon"></i> <!-- Icono de archivo de texto -->
-                        <span class="tool-text" data-key="poandaMain"></span>
-                        <span class="tool-text-sub" data-key="poandaSub"></span>
-                    </a>
-                </div>
-
-                <!-- 2. Pandaterm -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png" alt="PandaTerm Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/pandaterm.html" target="_blank" class="tool-button">
-                        <i class="ph-book-open-text tool-icon"></i> <!-- Icono de libro abierto -->
-                        <span class="tool-text" data-key="pandatermMain"></span>
-                        <span class="tool-text-sub" data-key="pandatermSub"></span>
-                    </a>
-                </div>
-
-                <!-- 3. Pandoria -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/pandoria.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png" alt="Pandoria Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/pandoria.html" target="_blank" class="tool-button">
-                        <i class="ph-database tool-icon"></i> <!-- Icono de base de datos -->
-                        <span class="tool-text" data-key="pandoriaMain"></span>
-                        <span class="tool-text-sub" data-key="pandoriaSub"></span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Fila 2: pandascript, subpandaTM, subpandaQA -->
-            <div class="tool-row">
-                <!-- 4. Pandascript -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-final.png" alt="PAndaScript Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/pandascript.html" target="_blank" class="tool-button">
-                        <i class="ph-microphone-stage tool-icon"></i> <!-- Icono de micrófono -->
-                        <span class="tool-text" data-key="pandascriptMain"></span>
-                        <span class="tool-text-sub" data-key="pandascriptSub"></span>
-                    </a>
-                </div>
-
-                <!-- 5. SubPandaTM -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/subpandatm.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="SubPandaTM Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/subpandatm.html" target="_blank" class="tool-button">
-                        <i class="ph-translate tool-icon"></i> <!-- Icono de traducción -->
-                        <span class="tool-text" data-key="subpandatmMain"></span>
-                        <span class="tool-text-sub" data-key="subpandatmSub"></span>
-                    </a>
-                </div>
-
-                <!-- 6. SubPandaQA -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/subpandaqa.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaqa-logo.png" alt="SubPandaQA Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/subpandaqa.html" target="_blank" class="tool-button">
-                        <i class="ph-closed-captioning tool-icon"></i> <!-- Icono de subtítulos -->
-                        <span class="tool-text" data-key="subpandaqaMain"></span>
-                        <span class="tool-text-sub" data-key="subpandaqaSub"></span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Fila 3: diffpanda, charpanda, calpanda -->
-            <div class="tool-row">
-                <!-- 7. DiffPanda -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/diffpanda.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/diffpanda-logo.png" alt="DiffPanda Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/diffpanda.html" target="_blank" class="tool-button">
-                        <i class="ph-arrows-left-right tool-icon"></i> <!-- Icono de flechas izquierda-derecha para comparación -->
-                        <span class="tool-text" data-key="diffpandaMain"></span>
-                        <span class="tool-text-sub" data-key="diffpandaSub"></span>
-                    </a>
-                </div>
-                <!-- 8. Charpanda -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png" alt="CharPanda Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/charpanda.html" target="_blank" class="tool-button">
-                        <i class="ph-text-aa tool-icon"></i> <!-- Icono de texto -->
-                        <span class="tool-text" data-key="charpandaMain"></span>
-                        <span class="tool-text-sub" data-key="charpandaSub"></span>
-                    </a>
-                </div>
-
-                <!-- 9. Calpanda -->
-                <div class="tool-item">
-                    <a href="https://rlstradu.github.io/httrans/calpanda.html" target="_blank">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png" alt="Calpanda Logo" class="tool-logo">
-                    </a>
-                    <a href="https://rlstradu.github.io/httrans/calpanda.html" target="_blank" class="tool-button">
-                        <i class="ph-calculator tool-icon"></i> <!-- Icono de calculadora -->
-                        <span class="tool-text" data-key="calpandaMain"></span>
-                        <span class="tool-text-sub" data-key="calpandaSub"></span>
-                    </a>
-                </div>
-            </div>
+            <!-- Herramientas (generadas con JS para la animación) -->
         </div>
 
-        <!-- Información del creador y contacto -->
-        <footer class="footer-info">
+        <!-- Footer -->
+        <footer class="footer-info fade-in" style="animation-delay: 0.8s;">
             <p data-key="projectBy"></p>
             <p data-key="feedback"></p>
-            <p data-key="githubRepo"></p> <!-- Nuevo párrafo para el enlace de GitHub -->
+            <p data-key="githubRepo"></p>
 
-            <!-- Sección del botón "Me gusta" de panda hug -->
             <div class="panda-hug-section">
                 <p class="panda-hug-text" data-key="pandaHugMessage"></p>
                 <button id="pandaHugButton" class="panda-hug-button">
                     <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/panda-hug-love.png" alt="Panda Hug Icon" class="panda-hug-icon">
+                    <span data-key="pandaHugCta"></span>
                     <span id="likeCount" class="like-count">0</span>
                 </button>
             </div>
@@ -449,119 +275,137 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- DATOS Y TRADUCCIONES ---
+            const tools = [
+                { id: 'poanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/poanda-logo-final.png', href: 'https://rlstradu.github.io/httrans/poanda.html' },
+                { id: 'pandaterm', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png', href: 'https://rlstradu.github.io/httrans/pandaterm.html' },
+                { id: 'pandoria', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png', href: 'https://rlstradu.github.io/httrans/pandoria.html' },
+                { id: 'pandascript', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-final.png', href: 'https://rlstradu.github.io/httrans/pandascript.html' },
+                { id: 'subpandatm', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png', href: 'https://rlstradu.github.io/httrans/subpandatm.html' },
+                { id: 'subpandaqa', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaqa-logo.png', href: 'https://rlstradu.github.io/httrans/subpandaqa.html' },
+                { id: 'diffpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/diffpanda-logo.png', href: 'https://rlstradu.github.io/httrans/diffpanda.html' },
+                { id: 'charpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png', href: 'https://rlstradu.github.io/httrans/charpanda.html' },
+                { id: 'calpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png', href: 'https://rlstradu.github.io/httrans/calpanda.html' },
+            ];
+
             const translations = {
                 es: {
-                    description: 'Esta es una colección de herramientas sencillas y prácticas, diseñadas por un traductor al que le encantan los pandas y pensadas para facilitar el trabajo diario de otros traductores. Son completamente gratuitas, no requieren instalación y pueden usarse directamente desde cualquier navegador.',
-                    pandatermMain: 'PANDATERM',
-                    pandatermSub: '(EDITOR DE GLOSARIOS TBX)',
-                    charpandaMain: 'CHARPANDA',
-                    charpandaSub: '(CONTADOR DE CARACTERES)',
-                    pandascriptMain: 'PANDASCRIPT',
-                    pandascriptSub: '(EDITOR DE TRANSCRIPCIONES)',
-                    calpandaMain: 'CALPANDA',
-                    calpandaSub: '(HERRAMIENTA DE FACTURACIÓN)',
-                    poandaMain: 'POANDA',
-                    poandaSub: '(EDITOR DE ARCHIVOS PO)',
-                    subpandaqaMain: 'SUBPANDAQA',
-                    subpandaqaSub: '(REVISIÓN DE SUBTÍTULOS SRT)',
-                    subpandatmMain: 'SUBPANDATM',
-                    subpandatmSub: '(TRADUCCIÓN DE SUBTÍTULOS)',
-                    pandoriaMain: 'PANDORIA',
-                    pandoriaSub: '(EDITOR DE MEMORIAS TMX)',
-                    diffpandaMain: 'DIFFPANDA', // Nueva entrada
-                    diffpandaSub: '(COMPARADOR DE TEXTOS)', // Nueva entrada
+                    description: 'Una colección de herramientas sencillas y prácticas, diseñadas por un traductor al que le encantan los pandas y pensadas para facilitar el trabajo diario de otros traductores. Son completamente gratuitas, no requieren instalación y pueden usarse directamente desde cualquier navegador.',
+                    poandaMain: 'Poanda', poandaSub: 'Editor de archivos PO',
+                    pandatermMain: 'Pandaterm', pandatermSub: 'Editor de glosarios TBX',
+                    pandoriaMain: 'Pandoria', pandoriaSub: 'Editor de memorias TMX',
+                    pandascriptMain: 'Pandascript', pandascriptSub: 'Editor de transcripciones',
+                    subpandatmMain: 'SubPandaTM', subpandatmSub: 'Traducción de subtítulos',
+                    subpandaqaMain: 'SubPandaQA', subpandaqaSub: 'Revisión de subtítulos SRT',
+                    diffpandaMain: 'DiffPanda', diffpandaSub: 'Comparador de textos',
+                    charpandaMain: 'Charpanda', charpandaSub: 'Contador de caracteres',
+                    calpandaMain: 'Calpanda', calpandaSub: 'Herramienta de facturación',
                     projectBy: 'Proyecto creado por Rafael López Sánchez',
-                    feedback: 'Para feedback o sugerencias: rlstradu@gmail.com',
-                    githubRepo: 'Repositorio de GitHub: https://github.com/rlstradu/httrans',
+                    feedback: 'Para feedback o sugerencias: <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>',
+                    githubRepo: 'Repositorio en <a href="https://github.com/rlstradu/httrans" target="_blank">GitHub</a>',
                     pandaHugMessage: 'Envía un abrazo de panda al desarrollador como agradecimiento',
+                    pandaHugCta: 'Abrazo',
                 },
                 en: {
                     description: 'A handy set of simple, practical tools created by a fellow translator who loves pandas, designed to make your day-to-day work easier. They’re completely free, require no installation, and work right from your browser.',
-                    pandatermMain: 'PANDATERM',
-                    pandatermSub: '(TBX GLOSSARY EDITOR)',
-                    charpandaMain: 'CHARPANDA',
-                    charpandaSub: '(CHARACTER COUNTER)',
-                    pandascriptMain: 'PANDASCRIPT',
-                    pandascriptSub: '(TRANSCRIPT EDITOR)',
-                    calpandaMain: 'CALPANDA',
-                    calpandaSub: '(INVOICE GENERATOR)',
-                    poandaMain: 'POANDA',
-                    poandaSub: '(PO FILE EDITOR)',
-                    subpandaqaMain: 'SUBPANDAQA',
-                    subpandaqaSub: '(SRT SUBTITLE REVIEW)',
-                    subpandatmMain: 'SUBPANDATM',
-                    subpandatmSub: '(SUBTITLE TRANSLATION)',
-                    pandoriaMain: 'PANDORIA',
-                    pandoriaSub: '(TMX MEMORY EDITOR)',
-                    diffpandaMain: 'DIFFPANDA', // Nueva entrada
-                    diffpandaSub: '(TEXT COMPARISON TOOL)', // Nueva entrada
+                    poandaMain: 'Poanda', poandaSub: 'PO File Editor',
+                    pandatermMain: 'Pandaterm', pandatermSub: 'TBX Glossary Editor',
+                    pandoriaMain: 'Pandoria', pandoriaSub: 'TMX Memory Editor',
+                    pandascriptMain: 'Pandascript', pandascriptSub: 'Transcript Editor',
+                    subpandatmMain: 'SubPandaTM', subpandatmSub: 'Subtitle Translation',
+                    subpandaqaMain: 'SubPandaQA', subpandaqaSub: 'SRT Subtitle Review',
+                    diffpandaMain: 'DiffPanda', diffpandaSub: 'Text Comparison Tool',
+                    charpandaMain: 'Charpanda', charpandaSub: 'Character Counter',
+                    calpandaMain: 'Calpanda', calpandaSub: 'Invoice Generator',
                     projectBy: 'Project by Rafael López Sánchez',
-                    feedback: 'For feedback or suggestions: rlstradu@gmail.com',
-                    githubRepo: 'GitHub Repository: https://github.com/rlstradu/httrans',
+                    feedback: 'For feedback or suggestions: <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>',
+                    githubRepo: 'Repository on <a href="https://github.com/rlstradu/httrans" target="_blank">GitHub</a>',
                     pandaHugMessage: 'Send a panda hug to the developer as a thank you',
+                    pandaHugCta: 'Hug',
                 }
             };
 
+            // --- LÓGICA DE LA APLICACIÓN ---
+            const toolGrid = document.querySelector('.tool-grid');
             const langButtons = document.querySelectorAll('.lang-button');
-            let currentLang = localStorage.getItem('selectedLang') || 'en';
-
-            function updateText(lang) {
-                const elementsToTranslate = document.querySelectorAll('[data-key]');
-                elementsToTranslate.forEach(element => {
-                    const key = element.dataset.key;
-                    if (translations[lang] && translations[lang][key]) {
-                        if (key === 'feedback') {
-                            element.innerHTML = translations[lang][key].replace('rlstradu@gmail.com', '<a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>');
-                        } else if (key === 'githubRepo') {
-                            element.innerHTML = translations[lang][key].replace('https://github.com/rlstradu/httrans', '<a href="https://github.com/rlstradu/httrans" target="_blank">https://github.com/rlstradu/httrans</a>');
-                        }
-                        else {
-                            element.textContent = translations[lang][key];
-                        }
-                    }
-                });
-            }
-
-            function updateLangButtons(selectedLang) {
-                langButtons.forEach(button => {
-                    if (button.dataset.lang === selectedLang) {
-                        button.classList.add('active');
-                    } else {
-                        button.classList.remove('active');
-                    }
-                });
-            }
-
-            // Lógica para el botón "Me gusta"
             const pandaHugButton = document.getElementById('pandaHugButton');
             const likeCountSpan = document.getElementById('likeCount');
+            
+            let currentLang = localStorage.getItem('selectedLang') || 'en';
             let likeCount = parseInt(localStorage.getItem('pandaHugCount') || '0');
 
+            // Función para renderizar las tarjetas de herramientas
+            function renderTools() {
+                toolGrid.innerHTML = '';
+                tools.forEach((tool, index) => {
+                    const toolElement = document.createElement('a');
+                    toolElement.href = tool.href;
+                    toolElement.target = '_blank';
+                    toolElement.className = 'tool-item fade-in';
+                    toolElement.style.animationDelay = `${0.3 + index * 0.05}s`;
+                    
+                    toolElement.innerHTML = `
+                        <img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo">
+                        <div>
+                            <div class="tool-text-main" data-key="${tool.id}Main"></div>
+                            <div class="tool-text-sub" data-key="${tool.id}Sub"></div>
+                        </div>
+                    `;
+                    toolGrid.appendChild(toolElement);
+                });
+            }
+
+            // Función para actualizar textos según el idioma
+            function updateText(lang) {
+                document.querySelectorAll('[data-key]').forEach(element => {
+                    const key = element.dataset.key;
+                    if (translations[lang] && translations[lang][key]) {
+                        // Usar innerHTML para que renderice las etiquetas <a>
+                        element.innerHTML = translations[lang][key];
+                    }
+                });
+            }
+
+            // Función para actualizar el estado de los botones de idioma
+            function updateLangButtons(selectedLang) {
+                langButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.lang === selectedLang);
+                });
+            }
+
+            // Lógica del botón "Me gusta"
             function updateLikeCount() {
                 likeCountSpan.textContent = likeCount;
                 localStorage.setItem('pandaHugCount', likeCount);
             }
 
-            pandaHugButton.addEventListener('click', () => {
+            pandaHugButton.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevenir navegación si se hace clic en el botón dentro de un enlace de pie de página
                 likeCount++;
                 updateLikeCount();
+                
+                // Añadir animación
+                pandaHugButton.classList.add('clicked');
+                setTimeout(() => {
+                    pandaHugButton.classList.remove('clicked');
+                }, 500);
             });
 
-            // Inicializar el texto y los botones según el idioma actual al cargar la página
-            updateText(currentLang);
-            updateLangButtons(currentLang);
-            updateLikeCount(); // Inicializa el contador al cargar la página
-
-            // Añadir event listeners a los botones de idioma
+            // Lógica para cambiar de idioma
             langButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    const selectedLang = button.dataset.lang;
-                    localStorage.setItem('selectedLang', selectedLang); // Guardar idioma
-                    currentLang = selectedLang; // Actualizar el idioma actual
-                    updateText(currentLang);
+                    currentLang = button.dataset.lang;
+                    localStorage.setItem('selectedLang', currentLang);
                     updateLangButtons(currentLang);
+                    updateText(currentLang);
                 });
             });
+
+            // --- INICIALIZACIÓN ---
+            renderTools();
+            updateLangButtons(currentLang);
+            updateText(currentLang);
+            updateLikeCount();
         });
     </script>
 </body>
