@@ -4,143 +4,201 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="title">PandaTerm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* Light mode colors (White/Light Grey) */
-      --background-color: #fcfcfc; /* Almost white */
-      --text-color: #333333; /* Dark grey for text */
-      --card-background: #ffffff; /* Pure white for card backgrounds */
-      --border-color: #e0e0e0; /* Light grey for borders */
+      /* Brand Colors */
+      --primary-color: #7DCEC7; /* Mint Green */
+      --primary-hover-color: #6cbdb5; 
+      --text-color-dark: #373737; /* Dark Grey */
+      --background-color-light: #f7f9fb;
+      --card-background-light: #ffffff;
+      --border-color-light: #e0e0e0;
+      --header-text-light: #ffffff;
 
-      --btn-primary-bg: #007bff; /* Blue for primary actions */
-      --btn-primary-hover-bg: #0056b3;
-      --btn-primary-text-color: white;
-
-      --btn-secondary-bg: #e0e0e0; /* Light grey for secondary actions */
-      --btn-secondary-hover-bg: #d0d0d0;
-      --btn-secondary-text-color: #333333;
-
-      --btn-danger-bg: #f44336; /* Red for delete */
+      /* Light mode theme */
+      --background-color: var(--background-color-light);
+      --text-color: var(--text-color-dark);
+      --card-background: var(--card-background-light);
+      --border-color: var(--border-color-light);
+      --header-bg: var(--primary-color);
+      --header-text: var(--header-text-light);
+      --btn-primary-bg: var(--primary-color);
+      --btn-primary-hover-bg: var(--primary-hover-color);
+      --btn-primary-text-color: var(--header-text-light);
+      --btn-secondary-bg: #e9eef2;
+      --btn-secondary-hover-bg: #dbe1e6;
+      --btn-secondary-text-color: var(--text-color-dark);
+      --btn-danger-bg: #f44336;
       --btn-danger-hover-bg: #da190b;
-
-      --input-border: #cccccc; /* Medium grey for input borders */
-      --header-bg: #f0f0f0; /* Very light grey for header */
-      --header-text: #333333; /* Dark text on light header */
-      --info-box-bg: #f0f8ff; /* Very light blue for info box */
-      --info-box-border: #d0e8f8; /* Light blue border */
+      --input-border: #dce1e7;
+      --info-box-bg: rgba(125, 206, 199, 0.1);
+      --info-box-border: rgba(125, 206, 199, 0.3);
     }
 
     body.dark-mode {
-      /* Dark mode colors (Black/Dark Grey) */
-      --background-color: #121212; /* Very dark grey, almost black */
-      --text-color: #e0e0e0; /* Light grey for text */
-      --card-background: #1e1e1e; /* Dark grey for card backgrounds */
-      --border-color: #3a3a3a; /* Darker grey for borders */
-
-      --btn-primary-bg: #0056b3; /* Darker blue for primary actions */
-      --btn-primary-hover-bg: #003d80;
-      --btn-primary-text-color: white;
-
-      --btn-secondary-bg: #4a4a4a; /* Medium dark grey for secondary actions */
-      --btn-secondary-hover-bg: #606060;
+      /* Dark mode theme */
+      --background-color: #1a1a1a;
+      --text-color: #e0e0e0;
+      --card-background: #252525;
+      --border-color: #3a3a3a;
+      --header-bg: var(--text-color-dark);
+      --header-text: var(--primary-color);
+      --btn-primary-bg: var(--primary-color);
+      --btn-primary-hover-bg: var(--primary-hover-color);
+      --btn-primary-text-color: var(--text-color-dark);
+      --btn-secondary-bg: #3a3a3a;
+      --btn-secondary-hover-bg: #4a4a4a;
       --btn-secondary-text-color: #ffffff;
+      --input-border: #4a4a4a;
+      --info-box-bg: rgba(125, 206, 199, 0.1);
+      --info-box-border: rgba(125, 206, 199, 0.2);
+    }
 
-      --btn-danger-bg: #e74c3c; /* Red for delete */
-      --btn-danger-hover-bg: #c0392b;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-      --input-border: #5a5a5a; /* Darker grey for input borders */
-      --header-bg: #0a0a0a; /* Even darker, almost black for header */
-      --header-text: #ffffff; /* White text on dark header */
-      --info-box-bg: #2a2a2a; /* Matching card background for info box */
-      --info-box-border: #5a5a5a; /* Darker grey border */
+    @keyframes popIn {
+        0% { transform: scale(0.9); opacity: 0; }
+        70% { transform: scale(1.02); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .row-pop-in {
+        animation: popIn 0.3s ease-out forwards;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 20px;
       background-color: var(--background-color);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--background-color) 300px);
       color: var(--text-color);
       transition: background-color 0.3s, color 0.3s;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      position: relative;
     }
 
-    h1 {
-      color: var(--header-text);
-      margin-top: 0;
-      padding: 20px;
-      width: 100%;
-      text-align: center;
-      background-color: var(--header-bg);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    .lang-switcher-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
     }
 
     .logo-container {
       width: 100%;
       text-align: center;
-      margin-bottom: 10px; /* Reduced margin to bring description closer */
+      margin-top: 40px;
+      margin-bottom: 10px;
+      animation: fadeIn 0.5s ease-out forwards;
     }
 
     .logo {
-      max-width: 200px; /* Adjust as needed */
+      max-width: 220px; /* Increased logo size */
       height: auto;
+      cursor: pointer;
+      transition: transform 0.3s ease-out, filter 0.3s ease-out;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+    }
+
+    .logo:hover {
+      transform: scale(1.05); /* Added hover effect */
+    }
+    
+    body.dark-mode .logo {
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)); /* Sharper, more intense white halo */
+    }
+
+    body.dark-mode .logo:hover {
+      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8)); /* Even brighter halo on hover */
     }
 
     .description {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         color: var(--text-color);
+        font-size: 1.1rem;
+        opacity: 0;
+        animation: fadeIn 0.5s ease-out 0.2s forwards;
     }
 
     .container {
       width: 90%;
       max-width: 900px;
-      padding: 20px;
+      padding: 30px;
       background-color: var(--card-background);
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
       margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 0.4s forwards;
     }
 
     .controls, .add-term, .search-section, .lang-display {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 20px;
-      /* align-items: center; Removed for flex-end alignment */
+    }
+    
+    .controls {
+        align-items: center;
     }
 
-    /* General styles for inputs, selects, and buttons */
     .controls button,
     .add-term button,
     .search-section input,
-    .lang-display button, /* Specifically target button in lang-display */
+    .lang-display button,
     .add-term input,
     .lang-display input,
     select {
-      padding: 10px 20px; /* Increased horizontal padding */
+      padding: 12px 20px;
       border: 1px solid var(--input-border);
-      border-radius: 5px;
+      border-radius: 8px;
       font-size: 1rem;
       color: var(--text-color);
-      min-width: 150px; /* Increased min-width for better appearance */
-      flex-grow: 1; /* Make them grow to fill space */
-      box-sizing: border-box; /* Include padding and border in the element's total width and height */
+      min-width: 150px;
+      flex-grow: 1;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+      font-family: 'Montserrat', sans-serif;
+    }
+    
+    input:focus, select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(125, 206, 199, 0.3);
     }
 
-    /* Buttons general styles - will be overridden by specific classes */
     button {
       cursor: pointer;
-      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
       border: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      background-color: transparent; /* Reset default background for buttons to be set by classes */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      font-weight: 600;
+      transition: all 0.2s ease-out;
+    }
+    
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    /* Input specific background */
     .add-term input,
     .search-section input,
     .lang-display input,
@@ -148,7 +206,6 @@
         background-color: var(--card-background);
     }
 
-    /* Primary button styles */
     .btn-primary {
       background-color: var(--btn-primary-bg);
       color: var(--btn-primary-text-color);
@@ -157,7 +214,6 @@
       background-color: var(--btn-primary-hover-bg);
     }
 
-    /* Secondary button styles */
     .btn-secondary {
       background-color: var(--btn-secondary-bg);
       color: var(--btn-secondary-text-color);
@@ -165,20 +221,36 @@
     .btn-secondary:hover {
       background-color: var(--btn-secondary-hover-bg);
     }
+    
+    .lang-btn {
+        background-color: var(--card-background);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        min-width: 50px;
+        flex-grow: 0;
+        padding: 8px 12px;
+    }
+    
+    .lang-btn.active {
+        background-color: var(--primary-color);
+        color: var(--btn-primary-text-color);
+        border-color: var(--primary-color);
+    }
 
-    /* Danger button styles (for delete) */
     .delete-btn {
       background-color: var(--btn-danger-bg);
-      color: white; /* Always white text on danger buttons */
+      color: white;
     }
     .delete-btn:hover {
       background-color: var(--btn-danger-hover-bg);
     }
 
     button:disabled {
-      background-color: #cccccc !important; /* Override with !important to ensure disabled state */
+      background-color: #cccccc !important;
       cursor: not-allowed;
       color: #6c757d !important;
+      transform: none;
+      box-shadow: none;
     }
 
     input[type="file"] {
@@ -186,9 +258,13 @@
     }
 
     label {
-      font-weight: bold;
+      font-weight: 500;
       margin-right: 5px;
       white-space: nowrap;
+      margin-bottom: 8px;
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-color);
     }
 
     .input-group {
@@ -198,12 +274,7 @@
       min-width: 150px;
     }
 
-    /* Align items to the bottom within lang-display */
-    .lang-display {
-        align-items: flex-end;
-    }
-    /* Align items to the bottom within add-term, for consistency with lang-display */
-    .add-term {
+    .lang-display, .add-term {
         align-items: flex-end;
     }
 
@@ -214,8 +285,8 @@
     }
 
     body.dark-mode input:disabled {
-      background-color: #4a4a4a; /* Darker disabled input in dark mode */
-      color: #bbcfdc;
+      background-color: #3a3a3a;
+      color: #888;
     }
 
     table {
@@ -225,27 +296,46 @@
       background-color: var(--card-background);
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     th, td {
-      border: 1px solid var(--border-color);
-      padding: 12px 15px;
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 16px;
       text-align: left;
+    }
+    
+    td {
+        color: var(--text-color);
     }
 
     th {
-      background-color: var(--header-bg);
-      color: var(--header-text);
-      font-weight: normal;
+      background-color: var(--card-background);
+      color: var(--text-color);
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    body.dark-mode th {
+        background-color: #303030;
     }
 
-    tr:nth-child(even) {
-      background-color: rgba(0,0,0,0.02);
+    tr:last-child td {
+        border-bottom: none;
     }
 
     tr:hover {
-      background-color: rgba(0,0,0,0.05);
+      background-color: rgba(125, 206, 199, 0.07);
+    }
+    
+    h2 {
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-color);
     }
 
     .message-box {
@@ -254,13 +344,14 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background-color: var(--card-background);
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       z-index: 1000;
       text-align: center;
-      max-width: 300px;
+      max-width: 320px;
       color: var(--text-color);
+      border-top: 4px solid var(--primary-color);
     }
 
     .info-box {
@@ -271,10 +362,27 @@
       margin-bottom: 20px;
       color: var(--text-color);
     }
+
+    #languageConfigSection, #editorSection {
+        transition: opacity 0.4s ease-out, transform 0.4s ease-out, max-height 0.4s ease-out;
+        overflow: hidden;
+        max-height: 1000px; /* Arbitrary large value */
+    }
+
+    .hidden-section {
+        opacity: 0;
+        transform: translateY(10px);
+        max-height: 0 !important;
+        margin-bottom: 0;
+        pointer-events: none;
+    }
   </style>
 </head>
 <body>
-  <h1 data-i18n="main_title">PandaTerm</h1>
+  <div class="lang-switcher-container">
+    <button id="langBtnEN" onclick="setUILanguage('en')" class="lang-btn">EN</button>
+    <button id="langBtnES" onclick="setUILanguage('es')" class="lang-btn">ES</button>
+  </div>
   <div class="logo-container">
     <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png" alt="PandaTerm Logo" class="logo" />
   </div>
@@ -288,10 +396,6 @@
       <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn-secondary">Descargar TBX</button>
       <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn-secondary">Nuevo glosario</button>
       <button onclick="toggleTheme()" id="themeToggleButton" data-i18n="toggle_theme" class="btn-secondary">Cambiar tema</button>
-      <select id="languageSelector" onchange="setUILanguage(this.value)">
-        <option value="en">English</option>
-        <option value="es">Español</option>
-      </select>
     </div>
 
     <div id="languageConfigSection">
@@ -310,11 +414,11 @@
           <label for="configTgtLang" data-i18n="target_language">Idioma de destino:</label>
           <input id="configTgtLang" list="isoLanguages" value="es-ES" />
         </div>
-        <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" class="btn-secondary">Confirmar idiomas</button>
+        <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" class="btn-primary">Confirmar idiomas</button>
       </div>
     </div>
 
-    <div id="editorSection" style="display:none;"> <!-- Initially hidden -->
+    <div id="editorSection" class="hidden-section">
         <h2 data-i18n="current_lang_title">Idiomas actuales del glosario</h2>
         <div class="lang-display">
             <div class="input-group">
@@ -337,7 +441,7 @@
                 <label for="tgtTerm" data-i18n="translation">Traducción:</label>
                 <input id="tgtTerm" />
             </div>
-            <button onclick="addTerm()" data-i18n="add_button" class="btn-secondary">Añadir</button>
+            <button onclick="addTerm()" data-i18n="add_button" class="btn-primary">Añadir</button>
         </div>
 
         <h2 data-i18n="search_title">Buscar</h2>
@@ -366,7 +470,7 @@
     // Global array to store glossary terms
     let glossary = [];
     // Get current UI language from local storage, default to English
-    let currentUILanguage = localStorage.getItem('language') || 'en'; // Default to English
+    let currentUILanguage = localStorage.getItem('language') || 'en';
     // Get current theme from local storage, default to light
     let currentTheme = localStorage.getItem('theme') || 'light';
 
@@ -374,18 +478,17 @@
     let glossarySourceLanguage = '';
     let glossaryTargetLanguage = '';
 
-    // Object containing all UI translations for English and Spanish
     const translations = {
       en: {
-        title: "PandaTerm", // Updated title
-        main_title: "PandaTerm", // Updated main title
-        app_description: "A simple TBX glossary editor", // New description
+        title: "PandaTerm",
+        main_title: "PandaTerm",
+        app_description: "A simple TBX glossary editor",
         import_tbx: "Import TBX",
         download_tbx: "Download TBX",
         new_glossary: "New glossary",
         toggle_theme: "Toggle theme",
         config_lang_title: "Configure glossary languages",
-        config_lang_info: "Define the source and target languages for your glossary. You can type directly the ISO code or select from the suggestions. It is important that the ISO code is correct for it to work well in your CAT tool.",
+        config_lang_info: "Define the source and target languages for your glossary. You can type the ISO code directly or select from the suggestions. It is important that the ISO code is correct for it to work well in your CAT tool.",
         confirm_languages: "Confirm languages",
         current_lang_title: "Current glossary languages",
         add_term_title: "Add term",
@@ -400,16 +503,16 @@
         target_term_col: "Target term",
         actions_col: "Actions",
         delete_button: "Delete",
-        both_terms_required: "Both terms are required.",
+        both_terms_required: "Both term and translation are required.",
         lang_config_required: "Please configure source and target languages for the glossary.",
         "Cannot download empty or unconfigured glossary.": "Cannot download empty or unconfigured glossary.",
         "No valid language pairs found in TBX. Defaulting to en-US/es-ES.": "No valid language pairs found in TBX. Defaulting to en-US/es-ES.",
         "Error loading TBX file. Please ensure it's a valid XML/TBX.": "Error loading TBX file. Please ensure it's a valid XML/TBX."
       },
       es: {
-        title: "PandaTerm", // Updated title
-        main_title: "PandaTerm", // Updated main title
-        app_description: "Un sencillo editor de glosarios TBX", // New description
+        title: "PandaTerm",
+        main_title: "PandaTerm",
+        app_description: "Un sencillo editor de glosarios TBX",
         import_tbx: "Importar TBX",
         download_tbx: "Descargar TBX",
         new_glossary: "Nuevo glosario",
@@ -430,7 +533,7 @@
         target_term_col: "Término de destino",
         actions_col: "Acciones",
         delete_button: "Eliminar",
-        both_terms_required: "Ambos términos son requeridos.",
+        both_terms_required: "El término y la traducción son obligatorios.",
         lang_config_required: "Por favor, configura los idiomas de origen y destino para el glosario.",
         "Cannot download empty or unconfigured glossary.": "No se puede descargar un glosario vacío o sin configurar.",
         "No valid language pairs found in TBX. Defaulting to en-US/es-ES.": "No se encontraron pares de idioma válidos en TBX. Se utiliza en-US/es-ES por defecto.",
@@ -438,146 +541,78 @@
       }
     };
 
-    // List of common ISO 639-1 language codes for the datalist
     const isoLanguagesData = [
-      { code: "en", name: "English" },
-      { code: "en-US", name: "English (United States)" },
-      { code: "en-GB", name: "English (United Kingdom)" },
-      { code: "es", name: "Español" },
-      { code: "es-ES", name: "Español (España)" },
-      { code: "es-MX", name: "Español (México)" },
-      { code: "fr", name: "Français" },
-      { code: "de", name: "Deutsch" },
-      { code: "it", name: "Italiano" },
-      { code: "pt", name: "Português" },
-      { code: "ja", name: "日本語 (Japanese)" },
-      { code: "zh", name: "中文 (Chinese)" },
-      { code: "ar", name: "العربية (Arabic)" },
-      { code: "ru", name: "Русский (Russian)" },
-      { code: "ko", name: "한국어 (Korean)" },
-      { code: "nl", name: "Nederlands" },
-      { code: "sv", name: "Svenska" },
-      { code: "da", name: "Dansk" },
-      { code: "no", name: "Norsk" },
-      { code: "fi", name: "Suomi" },
-      { code: "tr", name: "Türkçe" },
-      { code: "pl", name: "Polski" },
-      { code: "cs", name: "Čeština" },
-      { code: "hu", name: "Magyar" },
-      { code: "el", name: "Ελληνικά (Greek)" },
-      { code: "he", name: "עברית (Hebrew)" },
-      { code: "th", name: "ไทย (Thai)" },
-      { code: "vi", name: "Tiếng Việt (Vietnamese)" },
-      { code: "id", name: "Bahasa Indonesia" },
-      { code: "ms", name: "Bahasa Melayu" },
-      { code: "ca", name: "Català" },
-      { code: "eu", name: "Euskara" },
-      { code: "gl", name: "Galego" },
-      { code: "ro", name: "Română" },
-      { code: "uk", name: "Українська (Ukrainian)" },
-      { code: "bg", name: "Български (Bulgarian)" },
-      { code: "hr", name: "Hrvatski" },
-      { code: "sr", name: "Srpski" },
-      { code: "sk", name: "Slovenčina" },
-      { code: "sl", name: "Slovenščina" },
-      { code: "lt", name: "Lietuvių" },
-      { code: "lv", name: "Latviešu" },
-      { code: "et", name: "Eesti" },
-      { code: "is", name: "Íslenska" },
-      { code: "ga", name: "Gaeilge" },
-      { code: "mt", name: "Malti" },
-      // Add more as needed
+      { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" }, { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" }, { code: "es-AR", name: "Español (Argentina)" }, { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" }, { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" }, { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" }, { code: "sv", name: "Svenska" }, { code: "da", name: "Dansk" }, { code: "no", name: "Norsk" }, { code: "fi", name: "Suomi" }, { code: "tr", name: "Türkçe" }, { code: "pl", name: "Polski" }, { code: "ca", name: "Català" }, { code: "eu", name: "Euskara" }, { code: "gl", name: "Galego" }
     ];
 
-    /**
-     * Populates the datalist with ISO language codes.
-     */
     function populateIsoLanguagesDatalist() {
       const datalist = document.getElementById('isoLanguages');
-      datalist.innerHTML = ''; // Clear existing options
+      datalist.innerHTML = '';
       isoLanguagesData.forEach(lang => {
         const option = document.createElement('option');
         option.value = lang.code;
-        option.textContent = lang.name; // Display full name
+        option.textContent = lang.name;
         datalist.appendChild(option);
       });
     }
 
-    /**
-     * Applies the selected theme (light or dark) to the body element
-     * and saves the preference to local storage.
-     * @param {string} theme - The theme to apply ('light' or 'dark').
-     */
     function applyTheme(theme) {
       document.body.className = theme === 'dark' ? 'dark-mode' : '';
       currentTheme = theme;
       localStorage.setItem('theme', theme);
     }
 
-    /**
-     * Toggles the current theme between light and dark.
-     */
     function toggleTheme() {
       applyTheme(currentTheme === 'light' ? 'dark' : 'light');
     }
 
-    /**
-     * Sets the UI language and updates all text content.
-     * @param {string} lang - The language code ('en' or 'es').
-     */
     function setUILanguage(lang) {
       currentUILanguage = lang;
       localStorage.setItem('language', lang);
       updateTextContent();
+      updateLanguageButtons();
+    }
+    
+    function updateLanguageButtons() {
+        document.getElementById('langBtnEN').classList.toggle('active', currentUILanguage === 'en');
+        document.getElementById('langBtnES').classList.toggle('active', currentUILanguage === 'es');
     }
 
-    /**
-     * Updates the text content of all elements with data-i18n attributes
-     * based on the current UI language.
-     */
     function updateTextContent() {
-      const elements = document.querySelectorAll('[data-i18n]');
-      elements.forEach(el => {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (translations[currentUILanguage][key]) {
           el.textContent = translations[currentUILanguage][key];
         }
       });
 
-      const placeholders = document.querySelectorAll('[data-i18n-placeholder]');
-      placeholders.forEach(el => {
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         if (translations[currentUILanguage][key]) {
           el.placeholder = translations[currentUILanguage][key];
         }
       });
-
-      // Update the language selector to reflect the current language
-      document.getElementById('languageSelector').value = currentUILanguage;
-      // Re-render glossary to update delete button text
       renderGlossary();
     }
 
-    /**
-     * Resets the glossary and UI to the initial "New Glossary" state.
-     */
+    function showSection(sectionId) {
+        const sectionToShow = document.getElementById(sectionId);
+        const sectionToHide = sectionId === 'editorSection' ? document.getElementById('languageConfigSection') : document.getElementById('editorSection');
+        
+        sectionToHide.classList.add('hidden-section');
+        sectionToShow.classList.remove('hidden-section');
+    }
+
     function resetGlossary() {
       glossary = [];
       glossarySourceLanguage = '';
       glossaryTargetLanguage = '';
       document.getElementById('configSrcLang').value = 'en-US';
       document.getElementById('configTgtLang').value = 'es-ES';
-
-      document.getElementById('languageConfigSection').style.display = 'block';
-      document.getElementById('editorSection').style.display = 'none';
-
-      renderGlossary(); // Clear table
+      showSection('languageConfigSection');
+      renderGlossary();
     }
 
-    /**
-     * Confirms the glossary's source and target languages from user input.
-     * Enables the main editor section if languages are valid.
-     */
     function confirmGlossaryLanguages() {
       const srcLang = document.getElementById('configSrcLang').value.trim();
       const tgtLang = document.getElementById('configTgtLang').value.trim();
@@ -589,19 +624,12 @@
 
       glossarySourceLanguage = srcLang;
       glossaryTargetLanguage = tgtLang;
-
-      // Update display inputs
       document.getElementById('displaySrcLang').value = glossarySourceLanguage;
       document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
-
-      document.getElementById('languageConfigSection').style.display = 'none';
-      document.getElementById('editorSection').style.display = 'block';
+      showSection('editorSection');
       renderGlossary();
     }
 
-    /**
-     * Adds a new term to the glossary. Uses the globally configured languages.
-     */
     function addTerm() {
       const srcTerm = document.getElementById("srcTerm").value.trim();
       const tgtTerm = document.getElementById("tgtTerm").value.trim();
@@ -619,50 +647,45 @@
       });
       document.getElementById("srcTerm").value = "";
       document.getElementById("tgtTerm").value = "";
-      renderGlossary();
+      renderGlossary(true); // Pass true to animate the last row
     }
 
-    /**
-     * Deletes a term from the glossary at the specified index.
-     * @param {number} index - The index of the term to delete.
-     */
     function deleteTerm(index) {
       glossary.splice(index, 1);
       renderGlossary();
     }
 
-    /**
-     * Renders the glossary table, filtering terms based on the search input.
-     */
-    function renderGlossary() {
+    function renderGlossary(animateLastRow = false) {
       const tbody = document.getElementById("glossaryTable");
       const search = document.getElementById("searchTerm").value.toLowerCase();
-      tbody.innerHTML = ""; // Clear existing rows
+      tbody.innerHTML = "";
 
-      glossary.forEach((entry, i) => {
-        // Filter based on search term in source or target term
-        if (
-          entry.srcTerm.toLowerCase().includes(search) ||
-          entry.tgtTerm.toLowerCase().includes(search)
-        ) {
+      const filteredGlossary = glossary.filter(entry => 
+        entry.srcTerm.toLowerCase().includes(search) ||
+        entry.tgtTerm.toLowerCase().includes(search)
+      );
+
+      filteredGlossary.forEach((entry, i) => {
+          // Find original index to pass to deleteTerm
+          const originalIndex = glossary.findIndex(g => g === entry);
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>${entry.srcTerm}</td>
             <td>${entry.tgtTerm}</td>
-            <td><button class="delete-btn" onclick="deleteTerm(${i})">${translations[currentUILanguage]['delete_button']}</button></td>
+            <td><button class="delete-btn" onclick="deleteTerm(${originalIndex})">${translations[currentUILanguage]['delete_button']}</button></td>
           `;
+          
+          if (animateLastRow && i === filteredGlossary.length - 1) {
+              row.classList.add('row-pop-in');
+          }
+
           tbody.appendChild(row);
-        }
       });
     }
 
-    /**
-     * Generates a TBX XML string from the current glossary data.
-     * @returns {string} The TBX XML content.
-     */
     function generateTBX() {
       const xml = [`<?xml version="1.0" encoding="UTF-8"?>`,
-        `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`, // Use main glossary source language for martif
+        `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`,
         `  <text>`,
         `    <body>`];
 
@@ -681,9 +704,6 @@
       return xml.join("\n");
     }
 
-    /**
-     * Triggers a download of the generated TBX XML file.
-     */
     function downloadTBX() {
       if (glossary.length === 0 && (!glossarySourceLanguage || !glossaryTargetLanguage)) {
         showMessageBox(translations[currentUILanguage]["Cannot download empty or unconfigured glossary."]);
@@ -692,21 +712,17 @@
       const blob = new Blob([generateTBX()], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+a.href = url;
       a.download = "glossary.tbx";
       a.click();
-      URL.revokeObjectURL(url); // Clean up the URL object
+      URL.revokeObjectURL(url);
     }
 
-    /**
-     * Loads TBX data from a user-selected XML/TBX file.
-     * Parses the XML and updates the glossary array and sets glossary languages.
-     */
     function loadTBX() {
-      document.getElementById("tbxFileInput").click(); // Trigger file input click
+      document.getElementById("tbxFileInput").click();
       document.getElementById("tbxFileInput").onchange = (event) => {
         const file = event.target.files[0];
-        if (!file) return; // No file selected
+        if (!file) return;
 
         const reader = new FileReader();
         reader.onload = () => {
@@ -715,7 +731,7 @@
             const xmlDoc = parser.parseFromString(reader.result, "application/xml");
             const entries = xmlDoc.getElementsByTagName("termEntry");
 
-            glossary = []; // Clear current glossary
+            glossary = [];
             let firstEntryLangs = { src: '', tgt: '' };
 
             if (entries.length > 0) {
@@ -728,7 +744,7 @@
 
             for (let entry of entries) {
               const sets = entry.getElementsByTagName("LangSet");
-              if (sets.length === 2) { // Expecting two language sets for source and target
+              if (sets.length === 2) {
                 const lang1 = sets[0].getAttribute("xml:lang");
                 const term1 = sets[0].getElementsByTagName("term")[0].textContent;
                 const lang2 = sets[1].getAttribute("xml:lang");
@@ -741,46 +757,33 @@
                 glossarySourceLanguage = firstEntryLangs.src;
                 glossaryTargetLanguage = firstEntryLangs.tgt;
             } else {
-                // Fallback if no valid entries to extract languages from
                 glossarySourceLanguage = 'en-US';
                 glossaryTargetLanguage = 'es-ES';
                 showMessageBox(translations[currentUILanguage]["No valid language pairs found in TBX. Defaulting to en-US/es-ES."]);
             }
 
-
-            // Update display inputs
             document.getElementById('displaySrcLang').value = glossarySourceLanguage;
             document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
-
-            // Hide config section, show editor section
-            document.getElementById('languageConfigSection').style.display = 'none';
-            document.getElementById('editorSection').style.display = 'block';
-
-            renderGlossary(); // Re-render the glossary with loaded data
+            showSection('editorSection');
+            renderGlossary();
           } catch (error) {
             console.error("Error loading TBX file:", error);
             showMessageBox(translations[currentUILanguage]["Error loading TBX file. Please ensure it's a valid XML/TBX."]);
-            resetGlossary(); // Reset to configuration state on error
+            resetGlossary();
           }
         };
-        reader.readAsText(file); // Read file content as text
+        reader.readAsText(file);
       };
     }
 
-    /**
-     * Displays a custom message box instead of native alert().
-     * @param {string} message - The message to display.
-     */
     function showMessageBox(message) {
-      // Remove any existing message box to prevent duplicates
       const existingMessageBox = document.querySelector('.message-box');
       if (existingMessageBox) {
         existingMessageBox.remove();
       }
 
-      // Create message box elements
       const messageBox = document.createElement('div');
-      messageBox.className = 'message-box'; // Apply CSS class
+      messageBox.className = 'message-box';
 
       const messageText = document.createElement('p');
       messageText.textContent = message;
@@ -788,15 +791,7 @@
 
       const closeButton = document.createElement('button');
       closeButton.textContent = 'OK';
-      closeButton.style.cssText = `
-        padding: 8px 15px;
-        background-color: var(--btn-primary-bg);
-        color: var(--btn-primary-text-color);
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1rem;
-      `;
+      closeButton.className = 'btn-primary';
       closeButton.onclick = () => document.body.removeChild(messageBox);
 
       messageBox.appendChild(messageText);
@@ -804,17 +799,15 @@
       document.body.appendChild(messageBox);
     }
 
-    // Initialize theme, UI language, populate datalist, and set initial UI state on load
     document.addEventListener('DOMContentLoaded', () => {
-      // Set currentUILanguage to 'en' by default if not already set in local storage
       if (!localStorage.getItem('language')) {
-        currentUILanguage = 'en';
         localStorage.setItem('language', 'en');
+        currentUILanguage = 'en';
       }
-      applyTheme(currentTheme); // Apply theme from local storage
-      setUILanguage(currentUILanguage); // Apply UI language from local storage
-      populateIsoLanguagesDatalist(); // Populate the datalist
-      resetGlossary(); // Start in the new glossary configuration mode
+      applyTheme(currentTheme);
+      setUILanguage(currentUILanguage);
+      populateIsoLanguagesDatalist();
+      resetGlossary();
     });
   </script>
 </body>
