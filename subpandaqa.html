@@ -137,14 +137,14 @@
 
             <!-- File Upload Section -->
             <section class="section-card">
-                <h2 class="section-title"><span class="material-icons">upload_file</span><span data-lang="upload_title">1. Upload Subtitle File (.srt)</span></h2>
+                <h2 class="section-title"><span class="material-icons">upload_file</span><span data-lang="upload_title">1. Upload subtitle file (.srt)</span></h2>
                 <input type="file" id="subtitleFile" accept=".srt" class="w-full text-gray-700 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-100 hover:border-brand-color transition-colors">
                 <p id="fileName" class="mt-3 text-sm text-gray-500"></p>
             </section>
 
             <!-- Filter Configuration Section -->
             <section class="section-card">
-                <h2 class="section-title"><span class="material-icons">filter_alt</span><span data-lang="filters_title">2. Configure Filters</span></h2>
+                <h2 class="section-title"><span class="material-icons">filter_alt</span><span data-lang="filters_title">2. Configure filters</span></h2>
                 <div class="flex items-center space-x-4 mb-6">
                     <button id="toggleAllFiltersButton" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200" data-lang="toggle_filters">
                         Toggle All
@@ -163,7 +163,7 @@
 
             <!-- Results Section -->
             <section id="results-container" class="section-card flex-grow flex flex-col">
-                <h2 class="section-title"><span class="material-icons">error</span><span data-lang="results_title">3. Review Results</span></h2>
+                <h2 class="section-title"><span class="material-icons">error</span><span data-lang="results_title">3. Review results</span></h2>
                 <div id="results" class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm flex-grow">
                     <p class="text-gray-500" data-lang="results_placeholder">Upload a subtitle file and press "CHECK SUBTITLES" to see the errors here.</p>
                 </div>
@@ -174,7 +174,7 @@
 
             <!-- Export Section -->
             <section class="section-card">
-                 <h2 class="section-title"><span class="material-icons">save</span><span data-lang="export_title">Export Error Report</span></h2>
+                 <h2 class="section-title"><span class="material-icons">save</span><span data-lang="export_title">Export error report</span></h2>
                 <div class="flex flex-col sm:flex-row gap-4">
                     <button id="exportPdfButton" class="btn-primary flex-1 bg-[#373737] hover:bg-[#2a2a2a]">
                         <span class="material-icons">picture_as_pdf</span>
@@ -194,47 +194,47 @@
         const translations = {
             en: {
                 app_description: "A powerful tool to detect errors in SRT subtitle files with style.",
-                upload_title: "1. Upload Subtitle File (.srt)",
-                filters_title: "2. Configure Filters",
-                toggle_filters: "Toggle All",
-                check_button: "CHECK SUBTITLES",
-                results_title: "3. Review Results",
-                results_placeholder: 'Upload a subtitle file and press "CHECK SUBTITLES" to see the errors here.',
+                upload_title: "1. Upload subtitle file (.srt)",
+                filters_title: "2. Configure filters",
+                toggle_filters: "Toggle all",
+                check_button: "Check subtitles",
+                results_title: "3. Review results",
+                results_placeholder: 'Upload a subtitle file and press "Check subtitles" to see the errors here.',
                 no_errors: "Congratulations! No errors were found with the selected filters.",
-                export_title: "Export Error Report",
+                export_title: "Export error report",
                 export_pdf: "Export to PDF",
                 export_table: "Export as HTML Table",
                 selected_file: "Selected file: {fileName}",
-                file_loaded: 'File loaded. Press "CHECK SUBTITLES".',
+                file_loaded: 'File loaded. Press "Check subtitles".',
                 no_valid_subs: "Could not parse valid subtitles from the file.",
                 file_process_error: "Error processing file: {errorMessage}. Make sure it is a valid SRT file.",
                 upload_first: "Please upload a subtitle file first.",
-                filter_cps: "Reading Speed (CPS)",
-                filter_wpm: "Reading Speed (WPM)",
-                filter_char_limit: "Character Limit per Line",
-                filter_line_limit: "Line Limit",
-                filter_dash_space: "Space after Dash",
-                filter_duration: "Min/Max Duration",
-                filter_min_gap: "Minimum Gap Between Subtitles",
-                filter_unclosed_tags: "Tag Issues",
-                filter_double_spaces: "Double/Triple Spaces",
-                filter_question_marks: "Opening/Closing Question/Exclamation Marks",
-                filter_lowercase_after_period: "Lowercase after Period",
-                filter_empty_subtitle: "Empty Subtitle",
-                filter_overlap: "Overlapping Subtitles",
-                filter_no_space_after_period: "No Space after Period",
-                filter_unclosed_quotes: "Unclosed Quotes",
-                filter_ellipsis: "Ellipsis Linking Errors",
-                filter_number_punctuation: "Number Punctuation",
-                filter_units_format: "Measurement Unit Format",
-                filter_acronyms_format: "Acronym Format",
-                filter_ellipsis_char: "Incorrect Ellipsis Character",
-                filter_dual_speaker_hyphen: "Dual Speaker Hyphen Inconsistencies",
-                filter_numbers_1_to_10: "Cardinal Numbers as Digits (1-10)",
-                filter_four_digit_separator: "Thousand Separator in 4-Digit Numbers",
-                filter_semicolons: "Use of Semicolons",
-                filter_quote_period: "Quote Punctuation",
-                filter_ids_sfx_format: "SFX/Description Detection (Brackets)",
+                filter_cps: "Reading speed (CPS)",
+                filter_wpm: "Reading speed (WPM)",
+                filter_char_limit: "Character limit per line",
+                filter_line_limit: "Line limit",
+                filter_dash_space: "Space after dash",
+                filter_duration: "Min/max duration",
+                filter_min_gap: "Minimum gap between subtitles",
+                filter_unclosed_tags: "Tag issues",
+                filter_double_spaces: "Double/triple spaces",
+                filter_question_marks: "Opening/closing question/exclamation marks",
+                filter_lowercase_after_period: "Lowercase after period",
+                filter_empty_subtitle: "Empty subtitle",
+                filter_overlap: "Overlapping subtitles",
+                filter_no_space_after_period: "No space after period",
+                filter_unclosed_quotes: "Unclosed quotes",
+                filter_ellipsis: "Ellipsis linking errors",
+                filter_number_punctuation: "Number punctuation",
+                filter_units_format: "Measurement unit format",
+                filter_acronyms_format: "Acronym format",
+                filter_ellipsis_char: "Incorrect ellipsis character",
+                filter_dual_speaker_hyphen: "Dual speaker hyphen inconsistencies",
+                filter_numbers_1_to_10: "Cardinal numbers as digits (1-10)",
+                filter_four_digit_separator: "Thousand separator in 4-digit numbers",
+                filter_semicolons: "Use of semicolons",
+                filter_quote_period: "Quote punctuation",
+                filter_ids_sfx_format: "SFX/description detection (brackets)",
                 desc_cps: "Detects subtitles exceeding the configured CPS.",
                 desc_wpm: "Detects subtitles exceeding the configured WPM.",
                 desc_char_limit: "Detects lines exceeding the configured number of characters.",
@@ -242,9 +242,9 @@
                 desc_dash_space: 'Detects "-Hello" instead of "- Hello".',
                 desc_duration: "Flags subtitles shorter than 1s or longer than 7s.",
                 desc_min_gap: "Detects gaps smaller than 100ms or 4 frames between subtitles.",
-                desc_unclosed_tags: "Identifies unclosed, unopened, or malformed HTML tags (e.g., <i>, <b>).",
-                desc_double_spaces: 'Flags the presence of two ("  ") or three ("   ") consecutive spaces.',
-                desc_question_marks: 'Detects "¿How are you?" without the closing mark or "How are you?" without the opening one, and similarly for "¡Hello!"',
+                desc_unclosed_tags: "Identifies unclosed, unopened, or malformed tags.",
+                desc_double_spaces: "Flags the presence of two or more consecutive spaces.",
+                desc_question_marks: "Detects missing opening or closing marks for questions and exclamations.",
                 desc_lowercase_after_period: 'Identifies "Text. next" instead of "Text. Next".',
                 desc_empty_subtitle: "Detects subtitles that have been mistakenly left empty.",
                 desc_overlap: "Detects subtitles that overlap with subsequent subtitles.",
