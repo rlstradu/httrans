@@ -5,114 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">subpandaTM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
     <!-- Dexie.js for IndexedDB management -->
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <style>
         /* General styles for body and font */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light mode background */
-            color: #202020; /* General text color for light mode */
-            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions */
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: #202020;
+            transition: background-color 0.3s ease, color 0.3s ease;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            overflow: hidden; /* Prevent body scroll during resize */
-        }
-
-        /* Allows vertical resizing of text areas */
-        textarea {
-            resize: vertical;
-            overflow-y: hidden; /* Hides initial scrollbar, handled by auto-resize */
+            overflow: hidden;
         }
 
         /* Ensures preformatted text respects line breaks and doesn't overflow */
         pre {
             white-space: pre-wrap;
-            word-break: break-all; /* Breaks long words to prevent horizontal overflow */
+            word-break: break-all;
         }
 
         /* Style for the check icon (SVG) */
         .check-icon {
-            display: none; /* Hidden by default */
-            margin-left: 8px; /* Space to the left of the icon */
-            vertical-align: middle; /* Vertical alignment */
-            width: 20px; /* Icon width */
-            height: 20px; /* Icon height */
-            color: #22c55e; /* Green color for check */
+            display: none;
+            margin-left: 8px;
+            vertical-align: middle;
+            width: 20px;
+            height: 20px;
+            color: #22c55e;
         }
 
-        /* Button styles with hover effects */
-        .btn-load {
-            background-color: #f48790;
-            color: #000;
+        /* --- UNIFIED BUTTON STYLES --- */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid transparent;
         }
-        .btn-load:hover {
-            background-color: #e07a82;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-
-        .btn-save {
-            background-color: #f7cf7e;
-            color: #000;
-        }
-        .btn-save:hover {
-            background-color: #e3b76e;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Validate button color */
-        .btn-validate {
-            background-color: #f7cf7e;
-            color: #000;
-        }
-        .btn-validate:hover {
-            background-color: #e3b76e;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        /* Edit button color */
-        .btn-edit {
-            background-color: #f48790;
-            color: #000;
+        /* Primary button style */
+        .btn-primary {
+            background-color: #075BA2;
+            color: white;
         }
-        .btn-edit:hover {
-            background-color: #e07a82;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .btn-primary:hover:not(:disabled) {
+            background-color: #064f8a;
         }
-        
-        /* Style for format buttons */
-        .btn-format {
+
+        /* Secondary button style */
+        .btn-secondary {
             background-color: #e5e7eb;
             color: #1f2937;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            line-height: 1.25rem;
-            transition: background-color 0.2s;
+            border-color: #d1d5db;
         }
-        .btn-format:hover {
+        .btn-secondary:hover:not(:disabled) {
             background-color: #d1d5db;
+        }
+
+        /* Destructive button style */
+        .btn-destructive {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-destructive:hover:not(:disabled) {
+            background-color: #dc2626;
+        }
+        
+        /* Language button style */
+        .btn-lang {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            padding: 0.25rem 0.75rem;
+        }
+        .btn-lang.active {
+            background-color: #075BA2;
+            color: white;
+            font-weight: 700;
         }
 
 
         /* Specific styles for code display fields (original, translation) */
         .subtitle-display-code {
-            background-color: #e3e3e3; /* Light grey background */
-            border: 1px solid #000; /* Black border */
-            color: #202020; /* Dark black text */
+            background-color: #e3e3e3;
+            border: 1px solid #000;
+            color: #202020;
         }
-        /* The translation editor div will always have white background and black text */
         .subtitle-editor {
-            background-color: #ffffff; /* White background */
-            color: #000000; /* Black text */
-            min-height: 50px; /* Reduced height */
+            background-color: #ffffff;
+            color: #000000;
+            min-height: 50px;
             border: 1px solid #d1d5db;
             padding: 0.5rem;
             border-radius: 0.375rem;
@@ -121,31 +119,25 @@
             background-color: #f3f4f6;
         }
 
-
-        /* Background of translation units in light mode */
+        /* Background of translation units */
         .translation-unit-bg {
-            background-color: #f8f8f8; /* Very light background for translation unit container */
-            border-color: #e5e7eb; /* Light border */
-        }
-
-        /* Text color adjustments to ensure contrast in light mode */
-        .text-on-light-contrast {
-            color: #202020; /* Dark black for text on light backgrounds */
+            background-color: #f8f8f8;
+            border-color: #e5e7eb;
         }
 
         /* 2-column layout classes */
         .translation-row {
             display: flex;
-            flex-direction: column; /* Default on mobile: column */
-            gap: 1rem; /* Space between columns/rows */
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        @media (min-width: 768px) { /* From md (768px) */
+        @media (min-width: 768px) {
             .translation-row {
-                flex-direction: row; /* On desktop: row */
+                flex-direction: row;
             }
-            .original-col, .translation-col { /* Both columns have the same width */
-                flex: 1; /* Occupy the same proportion of available space */
+            .original-col, .translation-col {
+                flex: 1;
             }
         }
 
@@ -168,58 +160,50 @@
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             max-width: 90%;
-            width: 500px; /* Default width for message/shortcuts modal */
+            width: 500px;
         }
-
-        /* Specific width for findReplaceModal to accommodate text on one line */
         #findReplaceModal .modal-content {
-            width: 650px; /* Increased width to prevent text wrapping */
-            max-width: 95%; /* Ensure it doesn't overflow on smaller screens */
+            width: 650px;
+            max-width: 95%;
         }
         .shortcut-icon {
             display: inline-block;
-            width: 1em; /* Adjust size as needed */
+            width: 1em;
             height: 1em;
             vertical-align: middle;
             margin: 0 4px;
         }
 
-        /* Sidebars - now part of the flex flow */
+        /* Sidebars */
         .terminology-sidebar, .translation-memory-sidebar {
-            display: none; /* Hidden by default, takes no space */
-            flex-shrink: 0; /* Prevents shrinking when visible */
+            display: none;
+            flex-shrink: 0;
             border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             resize: horizontal;
             min-width: 300px;
-            transition: width 0.3s ease-in-out; /* Transition for width change when resizing */
+            transition: width 0.3s ease-in-out;
         }
-
         .terminology-sidebar.show-sidebar, .translation-memory-sidebar.show-sidebar {
-            display: flex; /* Make them visible and take space in the flex container */
+            display: flex;
             flex-direction: column;
-            flex: 1; /* Make them share the available space */
+            flex: 1;
         }
-
         .sidebar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
-
         .sidebar-content {
             flex-grow: 1;
             overflow-y: auto;
-            padding-right: 0.5rem; /* For scrollbar space */
-            max-height: 40vh; /* Ensure a max height to enable scrolling */
+            padding-right: 0.5rem;
+            max-height: 40vh;
         }
 
-        /* Styles for glossary specific inputs and buttons within sidebar */
-        .glossary-input-group label, .tm-input-group label, .qa-input-group label {
-            white-space: nowrap;
-        }
+        /* Glossary/TM specific styles */
         .glossary-input-group input, .glossary-input-group select,
         .tm-input-group input, .tm-input-group select,
         .qa-input-group input {
@@ -232,45 +216,6 @@
             color: #202020;
             background-color: #fff;
         }
-        .glossary-btn-primary, .tm-btn-primary {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-        .glossary-btn-primary:hover, .tm-btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .glossary-btn-secondary, .tm-btn-secondary {
-            background-color: #e0e0e0;
-            color: #333;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-        .glossary-btn-secondary:hover, .tm-btn-secondary:hover {
-            background-color: #d0d0d0;
-        }
-        .glossary-delete-btn, .tm-delete-btn {
-            background-color: #f44336;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .glossary-delete-btn:hover, .tm-delete-btn:hover {
-            background-color: #da190b;
-        }
-        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td {
-            padding: 8px 12px;
-            border: 1px solid #e0e0e0;
-            font-size: 0.9rem;
-        }
-        .glossary-table th, .tm-table th {
-            background-color: #f0f0f0;
-            font-weight: 600;
-        }
         .glossary-info-box, .tm-info-box {
             background-color: #f0f8ff;
             border: 1px solid #d0e8f8;
@@ -279,166 +224,68 @@
             font-size: 0.85rem;
             color: #333;
         }
-
-        /* Glossary Highlight for text and rows */
         .glossary-highlight {
-            background-color: #ffcc00; /* Yellow highlight for text */
+            background-color: #ffcc00;
             padding: 0 2px;
             border-radius: 3px;
         }
-
         .glossary-row-highlight {
-            background-color: #ffcc00 !important; /* Yellow highlight for glossary table rows */
+            background-color: #ffcc00 !important;
             transition: background-color 0.3s ease;
         }
 
         /* Active translation unit highlight */
         .translation-unit-active {
-            border: 2px solid #3b82f6; /* Blue border for active unit */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Light blue glow */
+            border: 2px solid #075BA2;
+            box-shadow: 0 0 0 3px rgba(7, 91, 162, 0.25);
         }
 
         /* Loading Overlay Styles */
         .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001; /* Above modals */
-            font-size: 1.2rem;
-            color: #333;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1001; font-size: 1.2rem; color: #333;
         }
-
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin-bottom: 15px;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Accordion styles */
-        .accordion-item {
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-        .accordion-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            padding: 0.75rem 1rem;
-            background-color: #f9fafb; /* Light background for header */
-            border-bottom: 1px solid #e5e7eb;
-            user-select: none; /* Prevent text selection on double click */
-        }
+        .accordion-item { border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; margin-bottom: 1rem; }
+        .accordion-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 0.75rem 1rem; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; user-select: none; }
+        .accordion-header:hover { background-color: #f3f4f6; color: #075BA2; }
+        .accordion-icon { transition: transform 0.3s ease; }
+        .accordion-icon.rotated { transform: rotate(180deg); }
+        .accordion-content { overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; padding: 0 1rem; }
+        .accordion-content.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; }
+        .accordion-content.expanded { max-height: 500px; padding-top: 1rem; padding-bottom: 1rem; }
 
-        .accordion-header:hover {
-            background-color: #f3f4f6;
-            color: #3b82f6; /* Tailwind blue-500 */
-        }
-
-        .accordion-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .accordion-icon.rotated {
-            transform: rotate(180deg);
-        }
-
-        .accordion-content {
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-            padding: 0 1rem; /* Adjust padding for collapsed state */
-        }
-        .accordion-content.collapsed {
-            max-height: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
-        .accordion-content.expanded {
-            max-height: 500px; /* Sufficiently large value to show all content */
-            padding-top: 1rem; /* Restore padding when expanded */
-            padding-bottom: 1rem;
-        }
-
-        /* TM Search Results Table Column Widths */
-        .tm-table th:nth-child(1), .tm-table td:nth-child(1) {
-            width: 10%; /* Percentage column narrower */
-            max-width: 60px; /* Max width to ensure it doesn't get too wide */
-            text-align: center;
-        }
-        .tm-table th:nth-child(2), .tm-table td:nth-child(2) {
-            width: 45%; /* Original column */
-        }
-        .tm-table th:nth-child(3), .tm-table td:nth-child(3) {
-            width: 45%; /* Translation column */
-        }
-
-        /* Highlight for active TM match in table */
-        .tm-best-match-highlight {
-            background-color: #d1fae5 !important; /* Light green */
-            border-color: #10b981 !important; /* Emerald-500 */
-            border-width: 2px;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); /* Light green glow */
-        }
+        /* TM Table styles */
+        .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 10%; max-width: 60px; text-align: center; }
+        .tm-table th:nth-child(2), .tm-table td:nth-child(2) { width: 45%; }
+        .tm-table th:nth-child(3), .tm-table td:nth-child(3) { width: 45%; }
+        .tm-best-match-highlight { background-color: #d1fae5 !important; border-color: #10b981 !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); }
         
-        /* Styles for text diff */
-        .diff-deletion {
-            background-color: #fdd;
-            text-decoration: line-through;
-        }
-        .diff-insertion {
-            background-color: #dfd;
-        }
+        /* Diff styles */
+        .diff-deletion { background-color: #fdd; text-decoration: line-through; }
+        .diff-insertion { background-color: #dfd; }
 
         /* QA Error Styles */
-        .qa-error {
-            color: #ef4444; /* red-500 */
-            font-weight: 700;
-        }
-        .qa-success {
-            color: #22c55e; /* green-500 */
-            font-weight: 700;
-        }
-        #qaErrorStats.clickable {
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        .qa-error-item {
-            padding: 0.5rem;
-            border-bottom: 1px solid #e5e7eb;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .qa-error-item:hover {
-            background-color: #f3f4f6;
-        }
-        #qaErrorListContainer {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
+        .qa-error { color: #ef4444; font-weight: 700; }
+        .qa-success { color: #22c55e; font-weight: 700; }
+        #qaErrorStats.clickable { cursor: pointer; text-decoration: underline; }
+        .qa-error-item { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background-color 0.2s; }
+        .qa-error-item:hover { background-color: #f3f4f6; }
+        #qaErrorListContainer { max-height: 60vh; overflow-y: auto; }
 
         /* Header styles */
         .app-header {
             display: flex;
-            justify-content: center; /* Changed from space-between */
+            justify-content: space-between; /* Reverted to space-between */
             align-items: center;
             padding: 0.5rem 1rem;
             background-color: #fff;
@@ -446,252 +293,102 @@
             position: sticky;
             top: 0;
             z-index: 900;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            flex-wrap: wrap;
         }
-
-        .app-header .header-buttons {
+        .header-main-actions {
             display: flex;
-            gap: 0.75rem; /* space-x-3 */
-            flex-wrap: wrap; /* Allow buttons to wrap */
-            justify-content: center; /* Center buttons when wrapped */
-            margin-top: 0.5rem; /* Add some margin for wrapped buttons */
-        }
-
-        @media (min-width: 768px) {
-            .app-header .header-buttons {
-                margin-top: 0; /* Remove margin on larger screens */
-            }
-        }
-
-        .app-header button, .app-header label {
-            font-size: 0.875rem; /* text-sm */
-            white-space: nowrap; /* Prevent text from wrapping inside buttons */
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        /* Main content area for video player and editor */
-        .main-app-content {
-            display: flex;
-            flex-direction: column; /* Default to column on small screens */
             flex-grow: 1;
-            padding: 1rem;
-            gap: 1rem;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
-
-        /* New wrapper for editor and sidebars */
-        .editor-and-sidebars-wrapper {
+        .header-lang-switcher {
             display: flex;
-            flex-direction: column; /* Default to column on small screens */
-            flex-grow: 1; /* Allows it to take available space in right-panel-content */
-            gap: 1rem;
+            gap: 0.5rem;
         }
 
-        #vertical-resizer {
-            width: 100%;
-            height: 10px;
-            cursor: ns-resize;
-            background-color: #e5e7eb;
-            border-top: 1px solid #d1d5db;
-            border-bottom: 1px solid #d1d5db;
-        }
-        #vertical-resizer:hover {
-            background-color: #d1d5db;
-        }
-        
-        #horizontal-resizer {
-            width: 10px;
-            height: auto;
-            cursor: col-resize;
-            background-color: #e5e7eb;
-            border-left: 1px solid #d1d5db;
-            border-right: 1px solid #d1d5db;
-        }
-        #horizontal-resizer:hover {
-            background-color: #d1d5db;
-        }
-
+        /* Main content area */
+        .main-app-content { display: flex; flex-direction: column; flex-grow: 1; padding: 1rem; gap: 1rem; }
+        .editor-and-sidebars-wrapper { display: flex; flex-direction: column; flex-grow: 1; gap: 1rem; }
+        #vertical-resizer { width: 100%; height: 10px; cursor: ns-resize; background-color: #e5e7eb; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db; }
+        #vertical-resizer:hover { background-color: #d1d5db; }
+        #horizontal-resizer { width: 10px; height: auto; cursor: col-resize; background-color: #e5e7eb; border-left: 1px solid #d1d5db; border-right: 1px solid #d1d5db; }
+        #horizontal-resizer:hover { background-color: #d1d5db; }
 
         @media (min-width: 1024px) {
-            .main-app-content {
-                flex-direction: row; /* Row layout on large screens */
-                align-items: stretch; /* Stretch items to fill height */
-                gap: 0; /* No gap for resizer */
-            }
-            .video-player-section {
-                flex-shrink: 0;
-                flex-basis: 33%; /* Initial width */
-                position: sticky; /* Make it sticky */
-                top: 70px; /* Adjust based on header height */
-                align-self: flex-start; /* Ensure it sticks to the top of its container */
-            }
-            .right-panel-content {
-                flex-grow: 1; /* Takes remaining space */
-                display: flex; /* Make it a flex container */
-                flex-direction: column; /* Its children (editor, sidebars) laid out in a column */
-                gap: 0; /* Removed gap for resizer */
-            }
-            .editor-and-sidebars-wrapper {
-                flex-direction: column; 
-                flex-grow: 1;
-                display: flex;
-            }
-            .editor-main-content {
-                flex-grow: 0; /* Let height be controlled by JS */
-                height: 25vh; /* Initial height */
-                overflow-y: auto;
-                resize: vertical; /* Allow vertical resize */
-                min-height: 100px; /* Minimum height */
-            }
-            .sidebars-container {
-                flex-grow: 1;
-                display: flex;
-                flex-direction: row;
-                gap: 1rem;
-                overflow: auto; /* Allow scrolling if content overflows */
-            }
+            .main-app-content { flex-direction: row; align-items: stretch; gap: 0; }
+            .video-player-section { flex-shrink: 0; flex-basis: 33%; position: sticky; top: 60px; align-self: flex-start; }
+            .right-panel-content { flex-grow: 1; display: flex; flex-direction: column; gap: 0; }
+            .editor-and-sidebars-wrapper { flex-direction: column; flex-grow: 1; display: flex; }
+            .editor-main-content { flex-grow: 0; height: 25vh; overflow-y: auto; resize: vertical; min-height: 100px; }
+            .sidebars-container { flex-grow: 1; display: flex; flex-direction: row; gap: 1rem; overflow: auto; }
         }
 
         /* Video player styles */
-        #videoPlayerContainer {
-            width: 100%;
-            background-color: #000; /* Black background for video player */
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Ensures rounded corners apply to video */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            gap: 1rem;
-        }
-        
-        /* Wrapper for video and subtitle overlay */
-        #videoPlayerWrapper {
-            position: relative;
-            width: 100%;
-            line-height: 0; /* Remove extra space below video */
-            background-color: #000;
-            border-radius: 0.5rem;
-            min-height: 250px; /* Give it a minimum height to be visible */
-        }
-
-        #videoPlayer {
-            width: 100%;
-            height: auto;
-            max-height: 60vh; /* Limit video height */
-            border-radius: 0.5rem; /* Apply rounded corners to video element */
-        }
-
-        /* Subtitle Preview Overlay */
-        #subtitlePreviewOverlay {
-            position: absolute;
-            bottom: 5%; /* Position above controls */
-            left: 0;
-            right: 0;
-            padding: 1rem;
-            text-align: center;
-            pointer-events: none; /* Allow clicks to pass through to the video */
-            transition: opacity 0.3s ease;
-        }
-
-        #subtitlePreviewText {
-            font-weight: bold;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.6);
-            padding: 0.25em 0.5em;
-            border-radius: 0.25rem;
-            line-height: 1.4;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            white-space: pre-wrap; /* Respect newlines in subtitles */
-        }
-
-
-        #loadVideoBtn {
-            background-color: #4CAF50; /* Green color for video load button */
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        #loadVideoBtn:hover {
-            background-color: #45a049;
-        }
-        #videoFileInput {
-            display: none;
-        }
+        #videoPlayerContainer { width: 100%; background-color: #000; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; gap: 1rem; }
+        #videoPlayerWrapper { position: relative; width: 100%; line-height: 0; background-color: #000; border-radius: 0.5rem; min-height: 250px; }
+        #videoPlayer { width: 100%; height: auto; max-height: 60vh; border-radius: 0.5rem; }
+        #subtitlePreviewOverlay { position: absolute; bottom: 5%; left: 0; right: 0; padding: 1rem; text-align: center; pointer-events: none; transition: opacity 0.3s ease; }
+        #subtitlePreviewText { font-weight: bold; color: white; background-color: rgba(0, 0, 0, 0.6); padding: 0.25em 0.5em; border-radius: 0.25rem; line-height: 1.4; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); white-space: pre-wrap; }
+        #videoFileInput { display: none; }
 
         /* Animation for Restore button */
-        @keyframes pulse-yellow {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7);
-            }
-            50% {
-                box-shadow: 0 0 0 8px rgba(250, 204, 21, 0);
-            }
-        }
-        .animate-pulse-yellow {
-            animation: pulse-yellow 2s infinite;
-        }
+        @keyframes pulse-yellow { 0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 50% { box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); } }
+        .animate-pulse-yellow { animation: pulse-yellow 2s infinite; }
     </style>
 </head>
 <body class="bg-gray-100">
     <!-- Header Section -->
     <header class="app-header">
-        <!-- ========== LOGO REMOVED ========== -->
-        <div class="header-buttons">
-            <label for="srtFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
-                <span data-i18n="import_srt" id="importSrtBtnText">Importar .srt</span>
+        <div class="header-main-actions">
+            <label for="srtFile" class="btn btn-primary">
+                <span data-i18n="import_srt">Importar .srt</span>
                 <input type="file" id="srtFile" accept=".srt" class="hidden">
             </label>
-            <button id="saveSrt" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
-                <span data-i18n="export_srt" id="exportSrtBtnText">Exportar .srt</span>
+            <button id="saveSrt" class="btn btn-primary" disabled>
+                <span data-i18n="export_srt">Exportar .srt</span>
             </button>
-            <button id="backupBtn" class="bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="backup_btn" id="backupBtnText">Copia de seguridad</span>
+            <button id="backupBtn" class="btn btn-secondary">
+                <span data-i18n="backup_btn">Copia de seguridad</span>
             </button>
-            <button id="qaBtn" class="bg-blue-200 hover:bg-blue-300 text-blue-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="qa_btn" id="qaBtnText">QA</span>
+            <button id="qaBtn" class="btn btn-secondary">
+                <span data-i18n="qa_btn">QA</span>
             </button>
-            <button id="shortcutsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="shortcuts_btn" id="shortcutsBtnText">Atajos</span>
+            <button id="shortcutsBtn" class="btn btn-secondary">
+                <span data-i18n="shortcuts_btn">Atajos</span>
             </button>
-            <button id="findReplaceBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="find_replace_btn" id="findReplaceBtnText">Buscar y reemplazar</span>
+            <button id="findReplaceBtn" class="btn btn-secondary">
+                <span data-i18n="find_replace_btn">Buscar y reemplazar</span>
             </button>
-            <button id="terminologyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="terminology_btn" id="terminologyBtnText">Terminología</span>
+            <button id="terminologyBtn" class="btn btn-secondary">
+                <span data-i18n="terminology_btn">Terminología</span>
             </button>
-            <button id="tmBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="tm_btn" id="tmBtnText">Memoria de traducción</span>
+            <button id="tmBtn" class="btn btn-secondary">
+                <span data-i18n="tm_btn">Memoria de traducción</span>
             </button>
+        </div>
+        <div class="header-lang-switcher">
+            <button id="lang-es" class="btn btn-lang active">ES</button>
+            <button id="lang-en" class="btn btn-lang">EN</button>
         </div>
     </header>
 
     <!-- Main Application Content Area -->
     <div class="main-app-content">
-        <!-- Video Player Section (Left Column on larger screens) -->
+        <!-- Video Player Section -->
         <div class="video-player-section flex flex-col items-center justify-center p-4">
             <div id="videoPlayerContainer" class="w-full hidden">
                 <div id="videoPlayerWrapper" class="relative bg-black rounded-lg">
-                    <!-- El elemento de vídeo ahora está oculto por defecto -->
                     <video id="videoPlayer" controls class="hidden w-full h-auto max-h-[60vh] rounded-lg"></video>
-            
-                    <!-- Placeholder con el logotipo, centrado y visible por defecto dentro del wrapper -->
                     <div id="videoLogoPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
                          <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
                     </div>
-            
-                    <!-- La superposición de subtítulos se mantiene igual -->
                     <div id="subtitlePreviewOverlay">
                         <span id="subtitlePreviewText"></span>
                     </div>
                 </div>
                 <div id="videoControls" class="w-full mt-4 flex flex-col items-center gap-4">
-                    <label for="videoFileInput" id="loadVideoBtn" class="cursor-pointer">
+                    <label for="videoFileInput" id="loadVideoBtn" class="btn btn-primary">
                         <span data-i18n="load_video">Cargar vídeo</span>
                         <input type="file" id="videoFileInput" accept="video/*" class="hidden">
                     </label>
@@ -708,19 +405,18 @@
                     </div>
                 </div>
             </div>
-            <!-- Statistics Display (Moved here) -->
+            <!-- Statistics Display -->
             <div id="statsContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 relative hidden">
                 <div class="accordion-item">
                     <div class="accordion-header" id="statsAccordionHeader">
-                        <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="translation_stats_title" id="translationStatsTitle">Estadísticas</h3>
+                        <h3 class="text-lg font-bold" data-i18n="translation_stats_title">Estadísticas</h3>
                         <svg class="w-5 h-5 accordion-icon rotated" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                     <div class="accordion-content collapsed" id="statsAccordionContent">
-                        <div class="bg-gray-100 p-3 rounded-md shadow-sm text-sm text-center text-on-light-contrast space-y-1">
-                            <p><span id="segmentsProgress">0/0 subtítulos traducidos (0%)</span></p>
-                            <p><span id="wordsTranslated">0 palabras traducidas</span> / <span id="wordsTotal">0 palabras originales totales</span></p>
-                            <p><span id="wordsRemaining">0 palabras pendientes</span></p>
-                            <!-- NEW: QA Error Stats Line -->
+                        <div class="bg-gray-100 p-3 rounded-md shadow-sm text-sm text-center space-y-1">
+                            <p><span id="segmentsProgress"></span></p>
+                            <p><span id="wordsTranslated"></span> / <span id="wordsTotal"></span></p>
+                            <p><span id="wordsRemaining"></span></p>
                             <p id="qaErrorStats"></p>
                         </div>
                     </div>
@@ -730,64 +426,57 @@
 
         <div id="horizontal-resizer"></div>
 
-        <!-- Right Panel Content (Editor, Sidebars) -->
+        <!-- Right Panel Content -->
         <div class="right-panel-content">
-            <!-- Wrapper for editor and sidebars -->
             <div class="editor-and-sidebars-wrapper" id="editorAndSidebarsWrapper">
                 <!-- Translation Content (Main Editor) -->
                 <div class="editor-main-content space-y-4 pr-2" id="editorMainContent">
                     <div id="translationsContainer">
-                        <!-- Subtitles will be rendered here -->
-                        <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                            Carga un archivo .srt para empezar a editar.
+                        <div data-i18n="no_translations" id="initialMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md">
+                           Importa un archivo .srt y un vídeo para empezar a trabajar. Si lo deseas, puedes trabajar con una memoria de traducción TMX y un glosario TBX, que puedes importar o crear desde cero.
                         </div>
                     </div>
                 </div>
 
                 <div id="vertical-resizer"></div>
 
-                <!-- Container for both sidebars, arranged in a row -->
+                <!-- Sidebars Container -->
                 <div class="sidebars-container">
                     <!-- Terminology Sidebar -->
                     <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                         <div class="sidebar-header">
-                            <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle">Terminología</h3>
+                            <h3 class="text-lg font-bold" data-i18n="terminology_sidebar_title">Terminología</h3>
                             <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                         <div class="sidebar-content">
-                            <!-- Language Configuration Section -->
                             <div id="terminologyLanguageConfigSection" class="space-y-4">
-                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="config_lang_title" id="configLangTitle">Configurar idiomas del glosario</h4>
+                                <h4 class="text-md font-semibold mb-2" data-i18n="config_lang_title">Configurar idiomas del glosario</h4>
                                 <div class="glossary-info-box mb-4">
-                                    <p data-i18n="config_lang_info" id="configLangInfo"></p>
+                                    <p data-i18n="config_lang_info"></p>
                                 </div>
                                 <div class="flex flex-col space-y-2 mb-4">
                                     <div class="glossary-input-group">
-                                        <label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel">Idioma de origen:</label>
+                                        <label for="configSrcLang" data-i18n="source_language">Idioma de origen:</label>
                                         <input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
                                     </div>
                                     <div class="glossary-input-group">
-                                        <label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel">Idioma de destino:</label>
+                                        <label for="configTgtLang" data-i18n="target_language">Idioma de destino:</label>
                                         <input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
                                     </div>
-                                    <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" id="confirmLanguagesBtn" class="glossary-btn-primary w-full rounded-md">Confirmar idiomas</button>
+                                    <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" class="btn btn-primary w-full">Confirmar idiomas</button>
                                 </div>
                             </div>
 
-                            <!-- Terminology Editor Section (Initially hidden) -->
                             <div id="terminologyEditorSection" style="display:none;">
-                                <!-- Buttons: Import, Download, New Glossary -->
                                 <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                                    <button onclick="loadTBX()" data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Importar TBX</button>
+                                    <button onclick="loadTBX()" data-i18n="import_tbx" class="btn btn-secondary flex-1 text-sm">Importar TBX</button>
                                     <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
-                                    <button onclick="downloadTBX()" data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Descargar TBX</button>
-                                    <button onclick="resetGlossary()" data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Nuevo glosario</button>
+                                    <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn btn-secondary flex-1 text-sm">Descargar TBX</button>
+                                    <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn btn-secondary flex-1 text-sm">Nuevo glosario</button>
                                 </div>
-
-
-                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_lang_title" id="currentLangTitle">Idiomas actuales del glosario</h4>
+                                <h4 class="text-md font-semibold mb-2" data-i18n="current_lang_title">Idiomas actuales del glosario</h4>
                                 <div class="flex space-x-2 mb-4">
                                     <div class="glossary-input-group flex-1">
                                         <label data-i18n="source_language">Idioma de origen:</label>
@@ -798,42 +487,37 @@
                                         <input id="displayTgtLang" disabled class="block w-full rounded-md" />
                                     </div>
                                 </div>
-
-                                <!-- Add Term Accordion -->
                                 <div class="accordion-item">
-                                    <div class="accordion-header flex justify-between items-center" id="addTermHeader">
-                                        <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion">Añadir término</h4>
+                                    <div class="accordion-header" id="addTermHeader">
+                                        <h4 class="text-md font-semibold m-0" data-i18n="add_term_title">Añadir término</h4>
                                         <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </div>
-                                    <div class="accordion-content collapsed" id="addTermContent"> <!-- Changed to 'collapsed' by default -->
+                                    <div class="accordion-content collapsed" id="addTermContent">
                                         <div class="flex flex-col space-y-2 mb-4">
                                             <div class="glossary-input-group">
-                                                <label for="srcTerm" data-i18n="term" id="termLabel">Término:</label>
+                                                <label for="srcTerm" data-i18n="term">Término:</label>
                                                 <input id="srcTerm" class="block w-full rounded-md" />
                                             </div>
                                             <div class="glossary-input-group">
-                                                <label for="tgtTerm" data-i18n="translation" id="translationLabel">Traducción:</label>
+                                                <label for="tgtTerm" data-i18n="translation">Traducción:</label>
                                                 <input id="tgtTerm" class="block w-full rounded-md" />
                                             </div>
-                                            <button onclick="addTerm()" data-i18n="add_button" id="addTermBtn" class="glossary-btn-primary w-full rounded-md">Añadir</button>
+                                            <button onclick="addTerm()" data-i18n="add_button" class="btn btn-primary w-full">Añadir</button>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- End Add Term Accordion -->
-
-                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="search_title" id="searchTitle">Buscar</h4>
+                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="search_title">Buscar</h4>
                                 <div class="mb-4">
                                     <input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="renderGlossary()" />
                                 </div>
-
-                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle">Glosario</h4>
+                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="glossary_list_title">Glosario</h4>
                                 <div class="overflow-x-auto">
-                                    <table class="glossary-table w-full">
+                                    <table class="w-full">
                                         <thead>
                                             <tr>
-                                                <th data-i18n="source_term_col" id="sourceTermCol">Término de origen</th>
-                                                <th data-i18n="target_term_col" id="targetTermCol">Término de destino</th>
-                                                <th data-i18n="actions_col" id="actionsCol">Acciones</th>
+                                                <th data-i18n="source_term_col">Término de origen</th>
+                                                <th data-i18n="target_term_col">Término de destino</th>
+                                                <th data-i18n="actions_col">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody id="glossaryTableBody"></tbody>
@@ -847,47 +531,41 @@
                     <!-- Translation Memory Sidebar -->
                     <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                         <div class="sidebar-header">
-                            <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle">Memoria de traducción</h3>
+                            <h3 class="text-lg font-bold" data-i18n="tm_sidebar_title">Memoria de traducción</h3>
                             <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                         <div class="sidebar-content">
-                            <!-- Internal TM message display -->
                             <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
-
-                            <!-- Language Configuration Section for TM -->
                             <div id="tmLanguageConfigSection" class="space-y-4">
-                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="tm_config_lang_title" id="tmConfigLangTitle">Configurar idiomas de la TM</h4>
+                                <h4 class="text-md font-semibold mb-2" data-i18n="tm_config_lang_title">Configurar idiomas de la TM</h4>
                                 <div class="tm-info-box mb-4">
-                                    <p data-i18n="tm_config_lang_info" id="tmConfigLangInfo"></p>
+                                    <p data-i18n="tm_config_lang_info"></p>
                                 </div>
                                 <div class="flex flex-col space-y-2 mb-4">
                                     <div class="tm-input-group">
-                                        <label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel">Idioma de origen:</label>
+                                        <label for="tmConfigSrcLang" data-i18n="source_language">Idioma de origen:</label>
                                         <input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
                                     </div>
                                     <div class="tm-input-group">
-                                        <label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel">Idioma de destino:</label>
+                                        <label for="tmConfigTgtLang" data-i18n="target_language">Idioma de destino:</label>
                                         <input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
                                     </div>
-                                    <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" id="tmConfirmLanguagesBtn" class="tm-btn-primary w-full rounded-md">Confirmar idiomas</button>
+                                    <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" class="btn btn-primary w-full">Confirmar idiomas</button>
                                 </div>
                             </div>
 
-                            <!-- TM Editor Section (Initially hidden) -->
                             <div id="tmEditorSection" style="display:none;">
-                                <!-- TM File Controls -->
                                 <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                                    <button onclick="resetTM()" data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Nueva TM</button>
-                                    <label for="tmFileInput" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 tm-btn-secondary flex-1 text-sm text-center">
-                                        <span data-i18n="import_tmx" id="importTmxBtnText">Importar TMX</span>
+                                    <button onclick="resetTM()" data-i18n="new_tm" class="btn btn-secondary flex-1 text-sm">Nueva TM</button>
+                                    <label for="tmFileInput" class="btn btn-secondary flex-1 text-sm text-center">
+                                        <span data-i18n="import_tmx">Importar TMX</span>
                                         <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
                                     </label>
-                                    <button onclick="downloadTMX()" data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2 rounded-md">Descargar TMX</button>
+                                    <button onclick="downloadTMX()" data-i18n="download_tmx" class="btn btn-secondary flex-1 text-sm">Descargar TMX</button>
                                 </div>
-
-                                <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_tm_lang_title" id="currentTmLangTitle">Idiomas actuales de la TM</h4>
+                                <h4 class="text-md font-semibold mb-2" data-i18n="current_tm_lang_title">Idiomas actuales de la TM</h4>
                                 <div class="flex space-x-2 mb-4">
                                     <div class="tm-input-group flex-1">
                                         <label data-i18n="source_language">Idioma de origen:</label>
@@ -898,26 +576,21 @@
                                         <input id="displayTmTgtLang" disabled class="block w-full rounded-md" />
                                     </div>
                                 </div>
-
-                                <!-- TM Search Section -->
-                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle">Buscar en TM</h4>
+                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="tm_search_title">Buscar en TM</h4>
                                 <div class="mb-4">
                                     <input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="tmSearch()" />
                                 </div>
-
-                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle">Resultados de búsqueda en TM</h4>
+                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="tm_search_results_title">Resultados de búsqueda en TM</h4>
                                 <div class="overflow-x-auto mb-4">
                                     <table class="tm-table w-full">
                                         <thead>
                                             <tr>
-                                                <th data-i18n="tm_score_col" id="tmScoreCol">%</th>
-                                                <th data-i18n="tm_original_col" id="tmOriginalCol">Original</th>
-                                                <th data-i18n="tm_translation_col" id="tmTranslationCol">Traducción</th>
+                                                <th data-i18n="tm_score_col">%</th>
+                                                <th data-i18n="tm_original_col">Original</th>
+                                                <th data-i18n="tm_translation_col">Traducción</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="tmSearchResultsTableBody">
-                                            <!-- TM search results will be rendered here -->
-                                        </tbody>
+                                        <tbody id="tmSearchResultsTableBody"></tbody>
                                     </table>
                                 </div>
                                 <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden">
@@ -925,186 +598,133 @@
                                 </div>
                             </div>
                         </div>
-                        <datalist id="isoLanguages"></datalist>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Message Box Modal -->
+    <!-- Modals -->
     <div id="messageBox" class="modal hidden">
-        <div class="modal-content rounded-lg">
-            <p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p>
-            <button id="messageClose" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300">
-                <span data-i18n="ok" id="okBtnText">OK</span>
-            </button>
+        <div class="modal-content">
+            <p id="messageText" class="text-lg font-semibold mb-4"></p>
+            <button id="messageClose" class="btn btn-primary w-full" data-i18n="ok">OK</button>
         </div>
     </div>
-
-    <!-- Shortcuts Modal -->
     <div id="shortcutsModal" class="modal hidden">
-        <div class="modal-content rounded-lg">
-            <h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Atajos de teclado</h2>
-            <ul class="list-disc list-inside text-on-light-contrast space-y-2">
-                <li id="shortcutValidate"><strong>Ctrl + Enter:</strong> Validar traducción y pasar a la siguiente.</li>
-                <li id="shortcutNext"><strong>Ctrl + <span id="arrowDownIconHtml"></span></strong>: Ir a la siguiente traducción.</li>
-                <li id="shortcutPrev"><strong>Ctrl + <span id="arrowUpIconHtml"></span></strong>: Ir a la traducción anterior.</li>
-                <li id="shortcutAlt1"><strong>Alt + [1-5]:</strong> Insertar sugerencia de la memoria de traducción.</li>
-                <li id="shortcutTmInsert"><strong>Ctrl + Alt + [1-5]:</strong> Insertar término traducido resaltado en glosario.</li>
-                <li id="shortcutJumpToTime"><strong>Ctrl + J:</strong> Saltar al tiempo de inicio del subtítulo actual.</li>
-                <li id="shortcutPlaySegment"><strong>Ctrl + Barra espaciadora:</strong> Reproducir el subtítulo actual.</li>
-                <li id="shortcutPlayPause"><strong>Alt + P:</strong> Reproducir/pausar vídeo.</li>
-                <li id="shortcutSeek"><strong>Alt + Flechas:</strong> Avanzar/retroceder 3 segundos.</li>
-                <li id="shortcutSeekFast"><strong>Ctrl + Alt + Flechas:</strong> Avanzar/retroceder 5 segundos.</li>
-                <li id="shortcutBold"><strong>Ctrl + B:</strong> Aplicar negrita.</li>
-                <li id="shortcutItalic"><strong>Ctrl + I:</strong> Aplicar cursiva.</li>
+        <div class="modal-content">
+            <h2 data-i18n="shortcuts_title" class="text-xl font-bold mb-4">Atajos de teclado</h2>
+            <ul class="list-disc list-inside space-y-2">
+                <li data-i18n-html="shortcut_validate"><strong>Ctrl + Enter:</strong> Validar traducción y pasar a la siguiente.</li>
+                <li data-i18n-html="shortcut_next"><strong>Ctrl + <span id="arrowDownIconHtml"></span></strong>: Ir a la siguiente traducción.</li>
+                <li data-i18n-html="shortcut_prev"><strong>Ctrl + <span id="arrowUpIconHtml"></span></strong>: Ir a la traducción anterior.</li>
+                <li data-i18n-html="shortcut_alt_1"><strong>Alt + [1-5]:</strong> Insertar sugerencia de la memoria de traducción.</li>
+                <li data-i18n-html="shortcut_tm_insert"><strong>Ctrl + Alt + [1-5]:</strong> Insertar término traducido resaltado en glosario.</li>
+                <li data-i18n-html="shortcut_jump_to_time"><strong>Ctrl + J:</strong> Saltar al tiempo de inicio del subtítulo actual.</li>
+                <li data-i18n-html="shortcut_play_segment"><strong>Ctrl + Barra espaciadora:</strong> Reproducir el subtítulo actual.</li>
+                <li data-i18n-html="shortcut_play_pause"><strong>Alt + P:</strong> Reproducir/pausar vídeo.</li>
+                <li data-i18n-html="shortcut_seek"><strong>Alt + Flechas:</strong> Avanzar/retroceder 3 segundos.</li>
+                <li data-i18n-html="shortcut_seek_fast"><strong>Ctrl + Alt + Flechas:</strong> Avanzar/retroceder 5 segundos.</li>
+                <li data-i18n-html="shortcut_bold"><strong>Ctrl + B:</strong> Aplicar negrita.</li>
+                <li data-i18n-html="shortcut_italic"><strong>Ctrl + I:</strong> Aplicar cursiva.</li>
             </ul>
-            <button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300 rounded-lg">
-                <span id="closeBtnText">Cerrar</span>
-            </button>
+            <button id="shortcutsCloseBtn" class="btn btn-primary w-full mt-6" data-i18n="close_btn">Cerrar</button>
         </div>
     </div>
-
-    <!-- Find and Replace Modal -->
     <div id="findReplaceModal" class="modal hidden">
-        <div class="modal-content rounded-lg">
-            <h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Buscar y reemplazar</h2>
+        <div class="modal-content">
+            <h2 data-i18n="find_replace_title" class="text-xl font-bold mb-4">Buscar y reemplazar</h2>
             <div class="space-y-4">
                 <div>
-                    <label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Buscar:</label>
+                    <label for="findInput" data-i18n="find_label" class="block text-sm font-medium mb-1">Buscar:</label>
                     <input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
                 </div>
                 <div>
-                    <label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Reemplazar con:</label>
+                    <label for="replaceInput" data-i18n="replace_label" class="block text-sm font-medium mb-1">Reemplazar con:</label>
                     <input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
                 </div>
                 <div class="flex items-center space-x-4">
-                    <label class="flex items-center text-on-light-contrast">
+                    <label class="flex items-center">
                         <input type="checkbox" id="caseSensitiveCheckbox" class="mr-2 rounded">
-                        <span data-i18n="case_sensitive" id="caseSensitiveText">Distinguir mayúsculas y minúsculas</span>
+                        <span data-i18n="case_sensitive">Distinguir mayúsculas y minúsculas</span>
                     </label>
-                    <label class="flex items-center text-on-light-contrast">
+                    <label class="flex items-center">
                         <input type="checkbox" id="regexCheckbox" class="mr-2 rounded">
-                        <span data-i18n="regular_expression" id="regexText">Expresión regular</span>
+                        <span data-i18n="regular_expression">Expresión regular</span>
                     </label>
                 </div>
                 <div class="flex justify-end space-x-2">
-                    <button data-i18n="find_prev" id="findPrevBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span id="findPrevText">Buscar anterior</span>
-                    </button>
-                    <button data-i18n="find_next" id="findNextBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span id="findNextText">Buscar siguiente</span>
-                    </button>
-                    <button data-i18n="replace" id="replaceBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span id="replaceText">Reemplazar</span>
-                    </button>
-                    <button data-i18n="replace_all" id="replaceAllBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span id="replaceAllText">Reemplazar todo</span>
-                    </button>
+                    <button id="findPrevBtn" class="btn btn-secondary" data-i18n="find_prev">Buscar anterior</button>
+                    <button id="findNextBtn" class="btn btn-secondary" data-i18n="find_next">Buscar siguiente</button>
+                    <button id="replaceBtn" class="btn btn-primary" data-i18n="replace">Reemplazar</button>
+                    <button id="replaceAllBtn" class="btn btn-destructive" data-i18n="replace_all">Reemplazar todo</button>
                 </div>
             </div>
-            <button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full rounded-lg">
-                <span id="closeBtnText">Cerrar</span>
-            </button>
+            <button id="findReplaceCloseBtn" class="btn btn-secondary w-full mt-6" data-i18n="close_btn">Cerrar</button>
         </div>
     </div>
-    
-    <!-- Save SRT Modal -->
     <div id="saveSrtModal" class="modal hidden">
-        <div class="modal-content rounded-lg">
-            <h2 data-i18n="save_srt_title" id="saveSrtTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Exportar Archivo SRT</h2>
+        <div class="modal-content">
+            <h2 data-i18n="save_srt_title" class="text-xl font-bold mb-4">Exportar Archivo SRT</h2>
             <div class="space-y-4">
                 <div>
-                    <label for="fileNameInput" data-i18n="file_name_label" id="fileNameLabel" class="block text-sm font-medium text-on-light-contrast mb-1">Nombre del archivo:</label>
+                    <label for="fileNameInput" data-i18n="file_name_label" class="block text-sm font-medium mb-1">Nombre del archivo:</label>
                     <input type="text" id="fileNameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
                 </div>
                 <div class="flex justify-end space-x-2">
-                    <button data-i18n="cancel_btn" id="cancelSaveBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span id="cancelSaveText">Cancelar</span>
-                    </button>
-                    <button data-i18n="save_btn" id="confirmSaveBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span id="confirmSaveText">Guardar</span>
-                    </button>
+                    <button id="cancelSaveBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                    <button id="confirmSaveBtn" class="btn btn-primary" data-i18n="save_btn">Guardar</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Backup Modal -->
     <div id="backupModal" class="modal hidden">
-        <div class="modal-content rounded-lg">
-            <h2 data-i18n="backup_modal_title" id="backupModalTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Copia de Seguridad</h2>
-            
-            <!-- View when backup EXISTS -->
+        <div class="modal-content">
+            <h2 data-i18n="backup_modal_title" class="text-xl font-bold mb-4">Copia de Seguridad</h2>
             <div id="backupFoundView">
-                <div id="backupInfo" class="bg-gray-100 p-4 rounded-md mb-4 text-on-light-contrast">
-                    <p data-i18n="restore_backup_info">Se ha encontrado una copia de seguridad de una sesión no guardada.</p>
-                    <p><strong><span data-i18n="file_label">Archivo:</span></strong> <span id="backupFileName"></span></p>
-                    <p><strong><span data-i18n="last_modified_label">Última modificación:</span></strong> <span id="backupLastModified"></span></p>
+                <div id="backupInfo" class="bg-gray-100 p-4 rounded-md mb-4">
+                    <p data-i18n="restore_backup_info"></p>
+                    <p><strong><span data-i18n="file_label"></span></strong> <span id="backupFileName"></span></p>
+                    <p><strong><span data-i18n="last_modified_label"></span></strong> <span id="backupLastModified"></span></p>
                 </div>
                 <div class="flex justify-end space-x-2 flex-wrap gap-2">
-                    <button data-i18n="export_srt_btn" id="exportSrtFromBackupBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        Exportar SRT
-                    </button>
-                    <button data-i18n="delete_backup_btn" id="deleteBackupBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        Borrar Backup
-                    </button>
-                    <button data-i18n="restore_btn" id="confirmRestoreBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        Restaurar
-                    </button>
+                    <button data-i18n="export_srt_btn" id="exportSrtFromBackupBtn" class="btn btn-primary">Exportar SRT</button>
+                    <button data-i18n="delete_backup_btn" id="deleteBackupBtn" class="btn btn-destructive">Borrar Backup</button>
+                    <button data-i18n="restore_btn" id="confirmRestoreBtn" class="btn btn-primary">Restaurar</button>
                 </div>
             </div>
-
-            <!-- View when backup DOES NOT EXIST -->
             <div id="noBackupFoundView" class="hidden">
-                 <p data-i18n="no_backup_found_info" class="text-on-light-contrast">No se ha encontrado ninguna copia de seguridad automática.</p>
+                 <p data-i18n="no_backup_found_info"></p>
             </div>
-
-            <button data-i18n="close_btn" id="closeBackupModalBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full">
-                Cerrar
-            </button>
+            <button data-i18n="close_btn" id="closeBackupModalBtn" class="btn btn-secondary w-full mt-6">Cerrar</button>
         </div>
     </div>
-
-    <!-- QA Modal -->
     <div id="qaModal" class="modal hidden">
-        <div class="modal-content rounded-lg">
-            <h2 data-i18n="qa_modal_title" id="qaModalTitle" class="text-xl font-bold mb-4 text-on-light-contrast">Configuración de QA</h2>
+        <div class="modal-content">
+            <h2 data-i18n="qa_modal_title" class="text-xl font-bold mb-4">Configuración de QA</h2>
             <div class="space-y-4">
                 <div class="qa-input-group">
-                    <label for="qaCpsLimit" data-i18n="cps_limit_label" class="block text-sm font-medium text-on-light-contrast mb-1">Límite de CPS:</label>
+                    <label for="qaCpsLimit" data-i18n="cps_limit_label" class="block text-sm font-medium mb-1">Límite de CPS:</label>
                     <input type="number" id="qaCpsLimit" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
                 </div>
                 <div class="qa-input-group">
-                    <label for="qaCharsPerLineLimit" data-i18n="chars_per_line_limit_label" class="block text-sm font-medium text-on-light-contrast mb-1">Límite de caracteres por línea:</label>
+                    <label for="qaCharsPerLineLimit" data-i18n="chars_per_line_limit_label" class="block text-sm font-medium mb-1">Límite de caracteres por línea:</label>
                     <input type="number" id="qaCharsPerLineLimit" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
                 </div>
             </div>
             <div class="flex justify-end space-x-2 mt-6">
-                 <button data-i18n="close_btn" id="closeQaModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                    Cerrar
-                </button>
-                <button data-i18n="save_and_apply_btn" id="saveQaSettingsBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                    Guardar y aplicar
-                </button>
+                 <button id="closeQaModalBtn" class="btn btn-secondary" data-i18n="close_btn">Cerrar</button>
+                <button id="saveQaSettingsBtn" class="btn btn-primary" data-i18n="save_and_apply_btn">Guardar y aplicar</button>
             </div>
         </div>
     </div>
-
-    <!-- NEW: QA Error List Modal -->
     <div id="qaErrorListModal" class="modal hidden">
-        <div class="modal-content rounded-lg">
-            <h2 data-i18n="qa_error_list_title" class="text-xl font-bold mb-4 text-on-light-contrast">Lista de Errores de QA</h2>
-            <div id="qaErrorListContainer">
-                <!-- Error list will be dynamically generated here -->
-            </div>
-            <button data-i18n="close_btn" id="closeQaErrorListModalBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full">
-                Cerrar
-            </button>
+        <div class="modal-content">
+            <h2 data-i18n="qa_error_list_title" class="text-xl font-bold mb-4">Lista de Errores de QA</h2>
+            <div id="qaErrorListContainer"></div>
+            <button id="closeQaErrorListModalBtn" class="btn btn-secondary w-full mt-6" data-i18n="close_btn">Cerrar</button>
         </div>
     </div>
-
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay hidden">
@@ -1116,100 +736,60 @@
         // --- IndexedDB Setup (Dexie.js) ---
         const db = new Dexie("subpandaTM_backup");
         db.version(1).stores({
-            projects: '++id, fileName' // Table 'projects' with an auto-incrementing id and an index on fileName
+            projects: '++id, fileName'
         });
 
-        // Global variable to hold backup data if found on load
-        let availableBackup = null;
-
-
-        // Global variables for Subtitle editor
+        // Global variables
         let srtEntries = [];
         let currentFileName = 'subtitles.srt';
-        let currentLanguage = 'es'; // Set default language to Spanish permanently
-        let findState = {
-            query: '',
-            replace: '',
-            caseSensitive: false,
-            useRegex: false,
-            lastFound: null,
-        };
-        let previewSource = 'translation'; // 'translation' or 'original'
-
-        // QA Settings
-        let qaSettings = {
-            cpsLimit: 20,
-            charsPerLineLimit: 42,
-        };
-
-        // Global variable to keep track of terms found in the currently active/focused segment's original text
-        let termsFoundInActiveSegment = new Set(); // Stores terms found in the currently focused original segment
-
-        // Global variables for Terminology (Glossary)
+        let currentLanguage = 'es';
+        let findState = { query: '', replace: '', caseSensitive: false, useRegex: false, lastFound: null };
+        let previewSource = 'translation';
+        let qaSettings = { cpsLimit: 20, charsPerLineLimit: 42 };
+        let termsFoundInActiveSegment = new Set();
         let glossary = [];
         let glossarySourceLanguage = '';
         let glossaryTargetLanguage = '';
-        let currentGlossaryLatestResults = []; // Stores the last set of results rendered in glossary table for shortcuts
-
-
-        // Global variables for Translation Memory (TM)
-        let translationMemory = []; // Stores {srcLang, srcText, tgtLang, tgtText, srcWordCount, tgtWordCount}
-        let tmSourceLanguage = ''; // Will typically be the source language of the SRT file
-        let tmTargetLanguage = ''; // Will typically be the target language of the SRT file
-        let tmBestMatchForActiveSegment = null; // Stores the best TM match for the currently focused segment
-        let currentTMLatestSearchResults = []; // Stores the last set of results rendered in TM search table
-
-        // Global for video playback control
+        let currentGlossaryLatestResults = [];
+        let translationMemory = [];
+        let tmSourceLanguage = '';
+        let tmTargetLanguage = '';
+        let tmBestMatchForActiveSegment = null;
+        let currentTMLatestSearchResults = [];
         let timeUpdateListener = null;
         
-        // Diff Match Patch constants
         const DIFF_DELETE = -1;
         const DIFF_INSERT = 1;
         const DIFF_EQUAL = 0;
 
-
-        // DOM elements for Subtitle editor
+        // DOM elements
         const srtFile = document.getElementById('srtFile');
         const saveSrtButton = document.getElementById('saveSrt');
         const translationsContainer = document.getElementById('translationsContainer');
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
         const messageClose = document.getElementById('messageClose');
-        const dropArea = document.querySelector('.main-app-content'); // Changed to main content area for drop
+        const dropArea = document.querySelector('.main-app-content');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingMessage = document.getElementById('loadingMessage');
-        const editorAndSidebarsWrapper = document.getElementById('editorAndSidebarsWrapper'); // Renamed from mainEditorLayout
-
-        // Video Player DOM elements
         const videoPlayerContainer = document.getElementById('videoPlayerContainer');
         const videoPlayer = document.getElementById('videoPlayer');
         const videoFileInput = document.getElementById('videoFileInput');
-        // NEW: Subtitle Preview elements
         const subtitlePreviewText = document.getElementById('subtitlePreviewText');
         const subtitleFontSize = document.getElementById('subtitleFontSize');
         const subtitlePreviewSource = document.getElementById('subtitlePreviewSource');
-
-
-        // Statistics DOM elements (now part of accordion)
         const statsContainer = document.getElementById('statsContainer');
         const segmentsProgress = document.getElementById('segmentsProgress');
         const wordsTranslated = document.getElementById('wordsTranslated');
         const wordsTotal = document.getElementById('wordsTotal');
         const wordsRemaining = document.getElementById('wordsRemaining');
         const qaErrorStats = document.getElementById('qaErrorStats');
-
-        // Statistics Accordion DOM elements
         const statsAccordionHeader = document.getElementById('statsAccordionHeader');
         const statsAccordionContent = document.getElementById('statsAccordionContent');
-        const statsAccordionIcon = statsAccordionHeader ? statsAccordionHeader.querySelector('.accordion-icon') : null;
-
-
-        // Subtitle Modals
+        const statsAccordionIcon = statsAccordionHeader.querySelector('.accordion-icon');
         const shortcutsBtn = document.getElementById('shortcutsBtn');
         const shortcutsModal = document.getElementById('shortcutsModal');
         const shortcutsCloseBtn = document.getElementById('shortcutsCloseBtn');
-        const arrowDownIconHtml = document.getElementById('arrowDownIconHtml');
-        const arrowUpIconHtml = document.getElementById('arrowUpIconHtml');
         const findReplaceBtn = document.getElementById('findReplaceBtn');
         const findReplaceModal = document.getElementById('findReplaceModal');
         const findInput = document.getElementById('findInput');
@@ -1221,14 +801,10 @@
         const replaceBtn = document.getElementById('replaceBtn');
         const replaceAllBtn = document.getElementById('replaceAllBtn');
         const findReplaceCloseBtn = document.getElementById('findReplaceCloseBtn');
-        
-        // Save SRT Modal elements
         const saveSrtModal = document.getElementById('saveSrtModal');
         const fileNameInput = document.getElementById('fileNameInput');
         const confirmSaveBtn = document.getElementById('confirmSaveBtn');
         const cancelSaveBtn = document.getElementById('cancelSaveBtn');
-
-        // Backup/Restore Modal elements
         const backupBtn = document.getElementById('backupBtn');
         const backupModal = document.getElementById('backupModal');
         const backupFoundView = document.getElementById('backupFoundView');
@@ -1239,8 +815,6 @@
         const exportSrtFromBackupBtn = document.getElementById('exportSrtFromBackupBtn');
         const deleteBackupBtn = document.getElementById('deleteBackupBtn');
         const confirmRestoreBtn = document.getElementById('confirmRestoreBtn');
-
-        // QA Modal elements
         const qaBtn = document.getElementById('qaBtn');
         const qaModal = document.getElementById('qaModal');
         const qaCpsLimitInput = document.getElementById('qaCpsLimit');
@@ -1250,9 +824,6 @@
         const qaErrorListModal = document.getElementById('qaErrorListModal');
         const qaErrorListContainer = document.getElementById('qaErrorListContainer');
         const closeQaErrorListModalBtn = document.getElementById('closeQaErrorListModalBtn');
-
-
-        // Terminology Sidebar DOM elements
         const terminologyBtn = document.getElementById('terminologyBtn');
         const terminologySidebar = document.getElementById('terminologySidebar');
         const closeTerminologySidebarBtn = document.getElementById('closeTerminologySidebarBtn');
@@ -1268,15 +839,9 @@
         const glossaryTableBody = document.getElementById('glossaryTableBody');
         const tbxFileInput = document.getElementById('tbxFileInput');
         const isoLanguagesDatalist = document.getElementById('isoLanguages');
-
-        // Buttons directly in config/editor sections for TBX
-        const importTbxBtn = document.getElementById('importTbxBtn');
-        const newGlossaryBtn = document.getElementById('newGlossaryBtn');
         const addTermHeader = document.getElementById('addTermHeader');
-        const addTermContent = addTermHeader ? addTermHeader.nextElementSibling : null;
-        const addTermAccordionIcon = addTermHeader ? addTermHeader.querySelector('.accordion-icon') : null;
-
-        // Translation Memory Sidebar DOM elements
+        const addTermContent = addTermHeader.nextElementSibling;
+        const addTermAccordionIcon = addTermHeader.querySelector('.accordion-icon');
         const tmBtn = document.getElementById('tmBtn');
         const translationMemorySidebar = document.getElementById('translationMemorySidebar');
         const closeTranslationMemorySidebarBtn = document.getElementById('closeTranslationMemorySidebarBtn');
@@ -1284,59 +849,66 @@
         const tmSearchInput = document.getElementById('tmSearchInput');
         const tmSearchResultsTableBody = document.getElementById('tmSearchResultsTableBody');
         const tmNoMatchFoundMessage = document.getElementById('tmNoMatchFoundMessage');
-        // New TM config DOM elements
         const tmLanguageConfigSection = document.getElementById('tmLanguageConfigSection');
         const tmEditorSection = document.getElementById('tmEditorSection');
         const tmConfigSrcLang = document.getElementById('tmConfigSrcLang');
         const tmConfigTgtLang = document.getElementById('tmConfigTgtLang');
         const displayTmSrcLang = document.getElementById('displayTmSrcLang');
         const displayTmTgtLang = document.getElementById('displayTmTgtLang');
-        const tmInternalMessage = document.getElementById('tmInternalMessage'); // New TM internal message element
+        const tmInternalMessage = document.getElementById('tmInternalMessage');
+        const langEsBtn = document.getElementById('lang-es');
+        const langEnBtn = document.getElementById('lang-en');
 
-        // DOM element for main content editor, needed for padding adjustments
-        const editorMainContent = document.getElementById('editorMainContent');
-
-
-        // Translations object (only Spanish now)
+        // Translations object
         const translations = {
             'es': {
                 'title': 'subpandaTM',
                 'import_srt': 'Importar .srt',
                 'export_srt': 'Exportar .srt',
+                'backup_btn': 'Copia de seguridad',
+                'qa_btn': 'QA',
+                'shortcuts_btn': 'Atajos',
+                'find_replace_btn': 'Buscar y reemplazar',
+                'terminology_btn': 'Terminología',
+                'tm_btn': 'Memoria de traducción',
+                'load_video': 'Cargar vídeo',
+                'change_video': 'Cambiar vídeo',
+                'preview_size': 'Tamaño:',
+                'preview_source': 'Mostrar:',
+                'translation_text_option': 'Traducción',
+                'original_text_option': 'Original',
+                'translation_stats_title': 'Estadísticas',
+                'segments_progress_text': '{0}/{1} subtítulos traducidos ({2}%)',
+                'words_translated_text': '{0} palabras traducidas',
+                'words_total_text': '{0} palabras originales totales',
+                'words_remaining_text': '{0} palabras pendientes',
+                'no_translations': 'Importa un archivo .srt y un vídeo para empezar a trabajar. Si lo deseas, puedes trabajar con una memoria de traducción TMX y un glosario TBX, que puedes importar o crear desde cero.',
+                'time_codes': 'Códigos de tiempo:',
                 'original_text': 'Original:',
                 'translation_text': 'Traducción:',
-                'time_codes': 'Códigos de tiempo:',
+                'validate': 'Validar',
+                'edit': 'Editar',
                 'char_count_original': 'Original: ',
                 'char_count_translation': 'Traducción: ',
                 'char_units': ' caracteres',
                 'cps': ' CPS',
-                'validate': 'Validar',
-                'edit': 'Editar',
-                'no_translations': 'Carga un archivo .srt para empezar a editar.',
-                'error_reading_file': 'Error al leer o analizar archivo .srt: ',
-                'error_saving_file': 'Error al guardar archivo .srt: ',
-                'file_saved_successfully': 'Archivo .srt guardado con éxito.',
-                'no_translations_to_save': 'No hay subtítulos para guardar. Carga un archivo .srt primero.',
-                'reached_last': 'Has llegado al último subtítulo.',
-                'reached_first': 'Ya estás en el primer subtítulo.',
-                'file_processing_error': '¡Error! No se pudo procesar el archivo. Asegúrate de que es un archivo .srt válido.',
                 'ok': 'OK',
-                'shortcuts_btn': 'Atajos',
-                'shortcuts_title': 'Atajos de teclado',
-                'shortcut_validate': 'Ctrl + Enter: Validar traducción y pasar a la siguiente.',
-                'shortcut_next': 'Ctrl + Flecha abajo: Ir al siguiente subtítulo.',
-                'shortcut_prev': 'Ctrl + Flecha arriba: Ir al subtítulo anterior.',
-                'shortcut_alt_1': 'Alt + [1-5]: Insertar sugerencia de la memoria de traducción.',
-                'shortcut_tm_insert': 'Ctrl + Alt + [1-5]: Insertar término traducido resaltado en glosario.',
-                'shortcut_jump_to_time': 'Ctrl + J: Saltar al tiempo de inicio del subtítulo actual.',
-                'shortcut_play_segment': 'Ctrl + Barra espaciadora: Reproducir el subtítulo actual.',
-                'shortcut_bold': 'Ctrl + B: Aplicar negrita.',
-                'shortcut_italic': 'Ctrl + I: Aplicar cursiva.',
-                'shortcut_play_pause': 'Alt + P: Reproducir/pausar vídeo.',
-                'shortcut_seek': 'Alt + Flechas: Avanzar/retroceder 3 segundos.',
-                'shortcut_seek_fast': 'Ctrl + Alt + Flechas: Avanzar/retroceder 5 segundos.',
                 'close_btn': 'Cerrar',
-                'find_replace_btn': 'Buscar y reemplazar',
+                'save_btn': 'Guardar',
+                'cancel_btn': 'Cancelar',
+                'shortcuts_title': 'Atajos de teclado',
+                'shortcut_validate': '<strong>Ctrl + Enter:</strong> Validar traducción y pasar a la siguiente.',
+                'shortcut_next': '<strong>Ctrl + <span id="arrowDownIconHtml"></span></strong>: Ir al siguiente subtítulo.',
+                'shortcut_prev': '<strong>Ctrl + <span id="arrowUpIconHtml"></span></strong>: Ir al subtítulo anterior.',
+                'shortcut_alt_1': '<strong>Alt + [1-5]:</strong> Insertar sugerencia de la memoria de traducción.',
+                'shortcut_tm_insert': '<strong>Ctrl + Alt + [1-5]:</strong> Insertar término traducido resaltado en glosario.',
+                'shortcut_jump_to_time': '<strong>Ctrl + J:</strong> Saltar al tiempo de inicio del subtítulo actual.',
+                'shortcut_play_segment': '<strong>Ctrl + Barra espaciadora:</strong> Reproducir el subtítulo actual.',
+                'shortcut_play_pause': '<strong>Alt + P:</strong> Reproducir/pausar vídeo.',
+                'shortcut_seek': '<strong>Alt + Flechas:</strong> Avanzar/retroceder 3 segundos.',
+                'shortcut_seek_fast': '<strong>Ctrl + Alt + Flechas:</strong> Avanzar/retroceder 5 segundos.',
+                'shortcut_bold': '<strong>Ctrl + B:</strong> Aplicar negrita.',
+                'shortcut_italic': '<strong>Ctrl + I:</strong> Aplicar cursiva.',
                 'find_replace_title': 'Buscar y reemplazar',
                 'find_label': 'Buscar:',
                 'replace_label': 'Reemplazar con:',
@@ -1346,27 +918,23 @@
                 'find_next': 'Buscar siguiente',
                 'replace': 'Reemplazar',
                 'replace_all': 'Reemplazar todo',
-                'no_match_found': 'No se encontró ninguna coincidencia.',
-                'replaced_all': 'Todas las ocurrencias reemplazadas.',
-                'no_find_query': 'Por favor, introduce el texto a buscar.',
-                'loading_file': 'Cargando archivo...',
-                'saving_file': 'Guardando archivo...',
-                'load_video': 'Cargar vídeo',
-                'change_video': 'Cambiar vídeo',
-                'video_load_error': 'Error al cargar el vídeo. Asegúrate de que el formato es compatible.',
-                'translation_stats_title': 'Estadísticas',
-                'subtitles_translated': 'subtítulos traducidos',
-                'preview_size': 'Tamaño:',
-                'preview_source': 'Mostrar:',
-                'translation_text_option': 'Traducción',
-                'original_text_option': 'Original',
                 'save_srt_title': 'Exportar Archivo SRT',
                 'file_name_label': 'Nombre del archivo:',
-                'cancel_btn': 'Cancelar',
-                'save_btn': 'Guardar',
-
-                // Terminology specific translations
-                'terminology_btn': 'Terminología',
+                'backup_modal_title': 'Copia de Seguridad',
+                'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.',
+                'file_label': 'Archivo:',
+                'last_modified_label': 'Última modificación:',
+                'export_srt_btn': 'Exportar SRT',
+                'delete_backup_btn': 'Borrar Backup',
+                'restore_btn': 'Restaurar',
+                'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.',
+                'qa_modal_title': 'Configuración de QA',
+                'cps_limit_label': 'Límite de CPS:',
+                'chars_per_line_limit_label': 'Límite de caracteres por línea:',
+                'save_and_apply_btn': 'Guardar y aplicar',
+                'qa_error_list_title': 'Lista de Errores de QA',
+                'qa_errors_found': '{0} errores de QA encontrados',
+                'qa_no_errors': 'No se han encontrado errores de QA.',
                 'terminology_sidebar_title': 'Terminología',
                 'config_lang_title': 'Configurar idiomas del glosario',
                 'config_lang_info': 'Define los idiomas de origen y destino de tu glosario. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear un glosario desde cero.',
@@ -1388,66 +956,191 @@
                 'target_term_col': 'Término de destino',
                 'actions_col': 'Acciones',
                 'delete_button': 'Eliminar',
-                'both_terms_required': 'Ambos términos son requeridos.',
-                'lang_config_required': 'Por favor, configura los idiomas de origen y destino para el glosario.',
-                'cannot_download_empty_or_unconfigured_glossary': 'No se puede descargar un glosario vacío o sin configurar.',
-                'error_loading_tbx_file': 'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.',
-                'no_valid_language_pairs_found_in_tbx': 'No se encontraron pares de idiomas válidos en el archivo TBX. Se usarán los valores por defecto (en-US, es-ES).',
-
-                // Translation Memory specific translations
-                'tm_btn': 'Memoria de traducción',
                 'tm_sidebar_title': 'Memoria de traducción',
+                'tm_config_lang_title': 'Configurar idiomas de la TM',
+                'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.',
+                'current_tm_lang_title': 'Idiomas actuales de la TM',
                 'new_tm': 'Nueva TM',
                 'import_tmx': 'Importar TMX',
                 'download_tmx': 'Descargar TMX',
-                'no_tm_data': 'No hay datos en la memoria de traducción.',
-                'tm_source_segment': 'Original:',
-                'tm_target_segment': 'Traducción:',
-                'tm_match_score': 'Coincidencia:',
-                'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
-                'tm_insert_match': 'Insertar coincidencia',
-                'error_loading_tmx_file': 'Error al cargar el archivo TMX. Asegúrate de que sea un XML/TMX válido.',
-                'cannot_download_empty_tm': 'No se puede descargar una memoria de traducción vacía.',
-                'tm_best_match': 'Mejor coincidencia de TM:',
                 'tm_search_title': 'Buscar en TM',
                 'tm_search_placeholder': 'Buscar en la memoria...',
                 'tm_search_results_title': 'Resultados de búsqueda en TM',
                 'tm_score_col': '%',
                 'tm_original_col': 'Original',
                 'tm_translation_col': 'Traducción',
-                'tm_config_lang_title': 'Configurar idiomas de la TM',
-                'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.',
-                'current_tm_lang_title': 'Idiomas actuales de la TM',
-                'tm_initial_message': '',
-                'tmx_file_expected_tbx_found': 'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.',
-                'tbx_file_expected_tmx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.',
+                'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
+            },
+            'en': {
+                'title': 'subpandaTM',
+                'import_srt': 'Import .srt',
+                'export_srt': 'Export .srt',
+                'backup_btn': 'Backup',
+                'qa_btn': 'QA',
+                'shortcuts_btn': 'Shortcuts',
+                'find_replace_btn': 'Find & Replace',
+                'terminology_btn': 'Terminology',
+                'tm_btn': 'Translation Memory',
+                'load_video': 'Load Video',
+                'change_video': 'Change Video',
+                'preview_size': 'Size:',
+                'preview_source': 'Show:',
+                'translation_text_option': 'Translation',
+                'original_text_option': 'Original',
+                'translation_stats_title': 'Statistics',
+                'segments_progress_text': '{0}/{1} subtitles translated ({2}%)',
+                'words_translated_text': '{0} words translated',
+                'words_total_text': '{0} total original words',
+                'words_remaining_text': '{0} words remaining',
+                'no_translations': 'Import an .srt file and a video to start working. If you wish, you can work with a TMX translation memory and a TBX glossary, which you can import or create from scratch.',
+                'time_codes': 'Time codes:',
+                'original_text': 'Original:',
+                'translation_text': 'Translation:',
+                'validate': 'Validate',
+                'edit': 'Edit',
+                'char_count_original': 'Original: ',
+                'char_count_translation': 'Translation: ',
+                'char_units': ' characters',
+                'cps': ' CPS',
+                'ok': 'OK',
+                'close_btn': 'Close',
+                'save_btn': 'Save',
+                'cancel_btn': 'Cancel',
+                'shortcuts_title': 'Keyboard Shortcuts',
+                'shortcut_validate': '<strong>Ctrl + Enter:</strong> Validate translation and move to the next one.',
+                'shortcut_next': '<strong>Ctrl + <span id="arrowDownIconHtml"></span></strong>: Go to the next subtitle.',
+                'shortcut_prev': '<strong>Ctrl + <span id="arrowUpIconHtml"></span></strong>: Go to the previous subtitle.',
+                'shortcut_alt_1': '<strong>Alt + [1-5]:</strong> Insert translation memory suggestion.',
+                'shortcut_tm_insert': '<strong>Ctrl + Alt + [1-5]:</strong> Insert highlighted glossary term.',
+                'shortcut_jump_to_time': '<strong>Ctrl + J:</strong> Jump to the current subtitle\'s start time.',
+                'shortcut_play_segment': '<strong>Ctrl + Spacebar:</strong> Play the current subtitle.',
+                'shortcut_play_pause': '<strong>Alt + P:</strong> Play/pause video.',
+                'shortcut_seek': '<strong>Alt + Arrows:</strong> Seek forward/backward 3 seconds.',
+                'shortcut_seek_fast': '<strong>Ctrl + Alt + Arrows:</strong> Seek forward/backward 5 seconds.',
+                'shortcut_bold': '<strong>Ctrl + B:</strong> Apply bold.',
+                'shortcut_italic': '<strong>Ctrl + I:</strong> Apply italics.',
+                'find_replace_title': 'Find and Replace',
+                'find_label': 'Find:',
+                'replace_label': 'Replace with:',
+                'case_sensitive': 'Case sensitive',
+                'regular_expression': 'Regular expression',
+                'find_prev': 'Find previous',
+                'find_next': 'Find next',
+                'replace': 'Replace',
+                'replace_all': 'Replace all',
+                'save_srt_title': 'Export SRT File',
+                'file_name_label': 'File name:',
+                'backup_modal_title': 'Backup',
+                'restore_backup_info': 'A backup of an unsaved session has been found.',
+                'file_label': 'File:',
+                'last_modified_label': 'Last modified:',
+                'export_srt_btn': 'Export SRT',
+                'delete_backup_btn': 'Delete Backup',
+                'restore_btn': 'Restore',
+                'no_backup_found_info': 'No automatic backup has been found.',
+                'qa_modal_title': 'QA Settings',
+                'cps_limit_label': 'CPS Limit:',
+                'chars_per_line_limit_label': 'Characters per line limit:',
+                'save_and_apply_btn': 'Save and apply',
+                'qa_error_list_title': 'QA Error List',
+                'qa_errors_found': '{0} QA errors found',
+                'qa_no_errors': 'No QA errors found.',
+                'terminology_sidebar_title': 'Terminology',
+                'config_lang_title': 'Set up glossary languages',
+                'config_lang_info': 'Define the source and target languages for your glossary. The ISO code must be correct. After setting the language, you can import or create a glossary from scratch.',
+                'source_language': 'Source language:',
+                'target_language': 'Target language:',
+                'confirm_languages': 'Confirm languages',
+                'current_lang_title': 'Current glossary languages',
+                'add_term_title': 'Add term',
+                'term': 'Term:',
+                'translation': 'Translation:',
+                'add_button': 'Add',
+                'search_title': 'Search',
+                'search_placeholder': 'Search term...',
+                'import_tbx': 'Import TBX',
+                'download_tbx': 'Download TBX',
+                'new_glossary': 'New glossary',
+                'glossary_list_title': 'Glossary',
+                'source_term_col': 'Source term',
+                'target_term_col': 'Target term',
+                'actions_col': 'Actions',
+                'delete_button': 'Delete',
+                'tm_sidebar_title': 'Translation Memory',
+                'tm_config_lang_title': 'Set up TM languages',
+                'tm_config_lang_info': 'Define the source and target languages for your translation memory. The ISO code must be correct. After setting the language, you can import or create a memory from scratch.',
+                'current_tm_lang_title': 'Current TM languages',
+                'new_tm': 'New TM',
+                'import_tmx': 'Import TMX',
+                'download_tmx': 'Download TMX',
+                'tm_search_title': 'Search TM',
+                'tm_search_placeholder': 'Search in memory...',
+                'tm_search_results_title': 'TM Search Results',
+                'tm_score_col': '%',
+                'tm_original_col': 'Original',
+                'tm_translation_col': 'Translation',
+                'tm_no_match_found': 'No matches found in the TM.',
+            }
+        };
 
-                // Backup and Restore translations
-                'backup_btn': 'Copia de seguridad',
-                'backup_modal_title': 'Copia de Seguridad',
-                'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.',
-                'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.',
-                'file_label': 'Archivo:',
-                'last_modified_label': 'Última modificación:',
-                'export_srt_btn': 'Exportar SRT',
-                'delete_backup_btn': 'Borrar Backup',
-                'restore_btn': 'Restaurar',
+        const errorMessages = {
+            'es': {
+                'error_reading_file': 'Error al leer o analizar archivo .srt: ',
+                'error_saving_file': 'Error al guardar archivo .srt: ',
+                'file_saved_successfully': 'Archivo .srt guardado con éxito.',
+                'no_translations_to_save': 'No hay subtítulos para guardar. Carga un archivo .srt primero.',
+                'reached_last': 'Has llegado al último subtítulo.',
+                'reached_first': 'Ya estás en el primer subtítulo.',
+                'file_processing_error': '¡Error! No se pudo procesar el archivo. Asegúrate de que es un archivo .srt válido.',
+                'no_match_found': 'No se encontró ninguna coincidencia.',
+                'replaced_all': 'Todas las ocurrencias reemplazadas.',
+                'no_find_query': 'Por favor, introduce el texto a buscar.',
+                'loading_file': 'Cargando archivo...',
+                'saving_file': 'Guardando archivo...',
+                'video_load_error': 'Error al cargar el vídeo. Asegúrate de que el formato es compatible.',
+                'both_terms_required': 'Ambos términos son requeridos.',
+                'lang_config_required': 'Por favor, configura los idiomas de origen y destino para el glosario.',
+                'cannot_download_empty_or_unconfigured_glossary': 'No se puede descargar un glosario vacío o sin configurar.',
+                'error_loading_tbx_file': 'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.',
+                'tmx_file_expected_tbx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.',
+                'tbx_file_expected_tmx_found': 'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.',
+                'error_loading_tmx_file': 'Error al cargar el archivo TMX. Asegúrate de que sea un XML/TMX válido.',
+                'cannot_download_empty_tm': 'No se puede descargar una memoria de traducción vacía.',
                 'backup_deleted_confirmation': '¿Estás seguro de que quieres borrar permanentemente este backup? Esta acción no se puede deshacer.',
                 'backup_deleted_message': 'El backup ha sido borrado.',
                 'project_restored_message': 'Proyecto restaurado con éxito.',
                 'no_backup_to_export': 'No hay datos de backup disponibles para exportar.',
                 'backup_export_error': 'Error al exportar el SRT del backup: ',
                 'backup_export_success': 'El archivo ha sido exportado con éxito.',
-
-                // QA translations
-                'qa_btn': 'QA',
-                'qa_modal_title': 'Configuración de QA',
-                'cps_limit_label': 'Límite de CPS:',
-                'chars_per_line_limit_label': 'Límite de caracteres por línea:',
-                'save_and_apply_btn': 'Guardar y aplicar',
-                'qa_error_list_title': 'Lista de Errores de QA',
-                'qa_errors_found': 'errores de QA encontrados',
-                'qa_no_errors': 'No se han encontrado errores de QA.',
+            },
+            'en': {
+                'error_reading_file': 'Error reading or parsing .srt file: ',
+                'error_saving_file': 'Error saving .srt file: ',
+                'file_saved_successfully': '.srt file saved successfully.',
+                'no_translations_to_save': 'No subtitles to save. Load an .srt file first.',
+                'reached_last': 'You have reached the last subtitle.',
+                'reached_first': 'You are already at the first subtitle.',
+                'file_processing_error': 'Error! Could not process the file. Make sure it is a valid .srt file.',
+                'no_match_found': 'No match found.',
+                'replaced_all': 'All occurrences replaced.',
+                'no_find_query': 'Please enter text to search for.',
+                'loading_file': 'Loading file...',
+                'saving_file': 'Saving file...',
+                'video_load_error': 'Error loading video. Make sure the format is supported.',
+                'both_terms_required': 'Both terms are required.',
+                'lang_config_required': 'Please set up the source and target languages for the glossary.',
+                'cannot_download_empty_or_unconfigured_glossary': 'Cannot download an empty or unconfigured glossary.',
+                'error_loading_tbx_file': 'Error loading TBX file. Make sure it is a valid XML/TBX.',
+                'tmx_file_expected_tbx_found': 'This file appears to be a Translation Memory (TMX). Please use the "Import TMX" option in the Translation Memory panel.',
+                'tbx_file_expected_tmx_found': 'This file appears to be a Glossary (TBX). Please use the "Import TBX" option in the Terminology panel.',
+                'error_loading_tmx_file': 'Error loading TMX file. Make sure it is a valid XML/TMX.',
+                'cannot_download_empty_tm': 'Cannot download an empty translation memory.',
+                'backup_deleted_confirmation': 'Are you sure you want to permanently delete this backup? This action cannot be undone.',
+                'backup_deleted_message': 'The backup has been deleted.',
+                'project_restored_message': 'Project restored successfully.',
+                'no_backup_to_export': 'No backup data available to export.',
+                'backup_export_error': 'Error exporting SRT from backup: ',
+                'backup_export_success': 'File exported successfully.',
             }
         };
 
@@ -1630,14 +1323,15 @@
             const cpsSpan = document.getElementById(`cps-${entryIndex}`);
             const lineCharCountsDiv = document.getElementById(`lineCharCounts-${entryIndex}`);
             const translationLength = countCharactersWithoutTags(editorDiv.innerHTML);
+            const t = translations[currentLanguage];
 
             if (charCountSpan) {
-                charCountSpan.textContent = `${translations.es['char_count_original']}${originalLength} ${translations.es['char_units']} | ${translations.es['char_count_translation']}${translationLength} ${translations.es['char_units']}`;
+                charCountSpan.textContent = `${t.char_count_original}${originalLength}${t.char_units} | ${t.char_count_translation}${translationLength}${t.char_units}`;
             }
             
             if (cpsSpan) {
                 const currentCPS = calculateCPS(editorDiv.innerHTML, durationMs);
-                cpsSpan.textContent = `${currentCPS}${translations.es['cps']}`;
+                cpsSpan.textContent = `${currentCPS}${t.cps}`;
                 // QA Check for CPS
                 if (currentCPS > qaSettings.cpsLimit) {
                     cpsSpan.classList.add('qa-error');
@@ -1724,36 +1418,22 @@
             let highlightedHtml = text;
             const currentFoundTerms = new Set(); // Terms found in *this specific* segment
 
-            // Ensure glossarySourceLanguage is set and matches the original's implicit language
             if (!glossarySourceLanguage) {
-                return { html: text, foundTerms: currentFoundTerms }; // Cannot highlight without source language
+                return { html: text, foundTerms: currentFoundTerms };
             }
 
-            // Sort glossary terms by length in descending order to match longer terms first
             const sortedGlossary = [...glossary].sort((a, b) => b.srcTerm.length - a.srcTerm.length);
 
-
             sortedGlossary.forEach(glossaryEntry => {
-                // Only highlight if the glossary entry's source language matches the current editor's source language
-                // Assuming srtEntries are implicitly in subtitulanda's current source language.
-                // For a more robust solution, each srtEntry might need a source language field.
-                // For now, we assume the glossary source language is the relevant source for highlighting.
-                // Also, ensure the glossary entry has a source term.
                 if (glossarySourceLanguage && glossaryEntry.srcTerm) {
                     const term = glossaryEntry.srcTerm;
-                    // Use word boundaries \b to avoid partial word matches
-                    // Escape special regex characters in the term
                     const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    // 'g' for global, 'i' for case-insensitive
-                    const regex = new RegExp(`\\b(${escapedTerm})\\b`, 'gi'); // Added word boundaries
+                    const regex = new RegExp(`\\b(${escapedTerm})\\b`, 'gi'); 
 
-
-                    // Only replace if the term is found (to avoid unnecessary string manipulations)
                     if (highlightedHtml.match(regex)) {
                         highlightedHtml = highlightedHtml.replace(regex, (match, p1) => {
-                            // p1 is the captured group, which is the actual matched term (case-preserved)
-                            currentFoundTerms.add(term); // Add the actual term from the glossary (case-preserved)
-                            return `<span class="glossary-highlight">${p1}</span>`; // Highlight the matched part
+                            currentFoundTerms.add(term);
+                            return `<span class="glossary-highlight">${p1}</span>`;
                         });
                     }
                 }
@@ -1763,10 +1443,9 @@
 
         /**
          * Updates highlighting in the glossary table based on terms found in the editor.
-         * This function is implicitly called via renderGlossary() after termsFoundInActiveSegment is updated.
          */
         function updateGlossaryTableHighlights() {
-            renderGlossary(); // Re-render glossary, which applies highlights based on termsFoundInActiveSegment
+            renderGlossary();
         }
 
 
@@ -1776,17 +1455,14 @@
          */
         function renderTranslations(entries) {
             translationsContainer.innerHTML = '';
-            termsFoundInActiveSegment.clear(); // Clear terms when re-rendering all translations
+            termsFoundInActiveSegment.clear();
+            const t = translations[currentLanguage];
 
             if (entries.length === 0) {
-                translationsContainer.innerHTML = `
-                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                        Carga un archivo .srt para empezar a editar.
-                    </div>
-                `;
+                translationsContainer.innerHTML = `<div data-i18n="no_translations" id="initialMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md">${t.no_translations}</div>`;
                 saveSrtButton.disabled = true;
-                statsContainer.classList.add('hidden'); // Hide stats if no translations
-                videoPlayerContainer.classList.add('hidden'); // Hide video player
+                statsContainer.classList.add('hidden');
+                videoPlayerContainer.classList.add('hidden');
                 return;
             }
 
@@ -1795,200 +1471,83 @@
                 translationUnit.id = `translation-unit-${entryIndex}`;
                 translationUnit.className = 'translation-unit-bg p-2 rounded-lg shadow-sm border border-gray-200 mb-4';
 
-                // Subtitle Number
-                const subtitleNumberDiv = document.createElement('div');
-                subtitleNumberDiv.className = 'text-md font-bold text-on-light-contrast mb-1';
-                subtitleNumberDiv.textContent = `Subtítulo ${entry.index}`;
-                translationUnit.appendChild(subtitleNumberDiv);
-
-                // Time codes
-                const timecodesDiv = document.createElement('div');
-                timecodesDiv.className = 'text-sm font-medium text-on-light-contrast mb-1';
-                timecodesDiv.innerHTML = `<strong>${translations.es['time_codes']}</strong> ${entry.timecodes}`;
-                translationUnit.appendChild(timecodesDiv);
-
-                const segmentRow = document.createElement('div');
-                segmentRow.className = 'translation-row mb-2';
-
-                const originalCol = document.createElement('div');
-                originalCol.className = 'original-col';
-
-                const originalLabel = document.createElement('label');
-                originalLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
-                originalLabel.textContent = translations.es['original_text'];
-                originalCol.appendChild(originalLabel);
-
-                const originalPre = document.createElement('pre');
-                originalPre.id = `original-pre-${entryIndex}`;
-                originalPre.className = 'subtitle-display-code p-1 rounded-md text-base overflow-auto max-h-24';
-                originalPre.textContent = entry.original;
-                originalCol.appendChild(originalPre);
-                segmentRow.appendChild(originalCol);
-
-                const translationCol = document.createElement('div');
-                translationCol.className = 'translation-col';
-
-                const translationLabel = document.createElement('label');
-                translationLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
-                translationLabel.textContent = translations.es['translation_text'];
-                translationCol.appendChild(translationLabel);
-
-                const translationEditor = document.createElement('div');
-                translationEditor.id = `translation-${entryIndex}`;
-                translationEditor.className = 'subtitle-editor mt-1 block w-full focus:ring-blue-500 focus:border-blue-500 text-base';
-                translationEditor.contentEditable = true;
-                translationEditor.innerHTML = entry.translation;
-                translationEditor.dataset.entryIndex = entryIndex;
-                translationEditor.dataset.originalLength = entry.charCountOriginal;
-                translationEditor.dataset.durationMs = entry.durationMs;
-
-                translationCol.appendChild(translationEditor);
-                segmentRow.appendChild(translationCol);
-                translationUnit.appendChild(segmentRow);
-
-                const statsContainerDiv = document.createElement('div');
-                statsContainerDiv.className = 'flex items-center justify-between mt-1 w-full';
-
-                const charAndCpsSpan = document.createElement('span');
-                charAndCpsSpan.className = 'inline-block text-sm font-semibold text-on-light-contrast';
-                charAndCpsSpan.innerHTML = `<span id="charCount-${entryIndex}"></span> | <span id="cps-${entryIndex}"></span>`;
-                statsContainerDiv.appendChild(charAndCpsSpan);
-
-                const lineCharCountsDiv = document.createElement('div');
-                lineCharCountsDiv.id = `lineCharCounts-${entryIndex}`;
-                lineCharCountsDiv.className = 'inline-block text-sm font-semibold text-on-light-contrast ml-4';
-                statsContainerDiv.appendChild(lineCharCountsDiv);
-
-                const actionButtonsContainer = document.createElement('div');
-                actionButtonsContainer.className = 'flex items-center space-x-2';
-
-                // NEW: Format buttons
-                const boldButton = document.createElement('button');
-                boldButton.className = 'btn-format';
-                boldButton.innerHTML = '<b class="font-bold">B</b>';
-                boldButton.onclick = () => {
-                    translationEditor.focus();
-                    formatText('bold');
-                };
-                actionButtonsContainer.appendChild(boldButton);
-
-                const italicButton = document.createElement('button');
-                italicButton.className = 'btn-format';
-                italicButton.innerHTML = '<i class="italic">I</i>';
-                italicButton.onclick = () => {
-                    translationEditor.focus();
-                    formatText('italic');
-                };
-                actionButtonsContainer.appendChild(italicButton);
-
-
-                const checkIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                checkIcon.setAttribute("id", `checkIcon-${entryIndex}`);
-                checkIcon.setAttribute("class", "check-icon text-green-500");
-                checkIcon.setAttribute("fill", "none");
-                checkIcon.setAttribute("viewBox", "0 0 24 24");
-                checkIcon.setAttribute("stroke", "currentColor");
-                checkIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />`;
-                actionButtonsContainer.appendChild(checkIcon);
-
-                const validateButton = document.createElement('button');
-                validateButton.id = `validateBtn-${entryIndex}`;
-                validateButton.className = 'validate-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-validate';
-                validateButton.textContent = translations.es['validate'];
-                validateButton.dataset.entryIndex = entryIndex;
-                actionButtonsContainer.appendChild(validateButton);
-
-                const editButton = document.createElement('button');
-                editButton.id = `editBtn-${entryIndex}`;
-                editButton.className = 'edit-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-edit';
-                editButton.textContent = translations.es['edit'];
-                editButton.dataset.entryIndex = entryIndex;
-                editButton.style.display = 'none';
-                actionButtonsContainer.appendChild(editButton);
-
-                statsContainerDiv.appendChild(actionButtonsContainer);
-                translationUnit.appendChild(statsContainerDiv);
+                translationUnit.innerHTML = `
+                    <div class="text-md font-bold mb-1">Subtítulo ${entry.index}</div>
+                    <div class="text-sm font-medium mb-1"><strong>${t.time_codes}</strong> ${entry.timecodes}</div>
+                    <div class="translation-row mb-2">
+                        <div class="original-col">
+                            <label class="block text-sm font-medium mb-1">${t.original_text}</label>
+                            <pre id="original-pre-${entryIndex}" class="subtitle-display-code p-1 rounded-md text-base overflow-auto max-h-24">${entry.original}</pre>
+                        </div>
+                        <div class="translation-col">
+                            <label class="block text-sm font-medium mb-1">${t.translation_text}</label>
+                            <div id="translation-${entryIndex}" class="subtitle-editor mt-1 block w-full focus:ring-blue-500 focus:border-blue-500 text-base" contenteditable="true" data-entry-index="${entryIndex}" data-original-length="${entry.charCountOriginal}" data-duration-ms="${entry.durationMs}">${entry.translation}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1 w-full">
+                        <span class="inline-block text-sm font-semibold">
+                            <span id="charCount-${entryIndex}"></span> | <span id="cps-${entryIndex}"></span>
+                        </span>
+                        <div id="lineCharCounts-${entryIndex}" class="inline-block text-sm font-semibold ml-4"></div>
+                        <div class="flex items-center space-x-2">
+                            <button class="btn btn-secondary text-xs p-1" onclick="formatText('bold')"><b class="font-bold">B</b></button>
+                            <button class="btn btn-secondary text-xs p-1" onclick="formatText('italic')"><i class="italic">I</i></button>
+                            <svg id="checkIcon-${entryIndex}" class="check-icon text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <button id="validateBtn-${entryIndex}" class="btn btn-primary text-xs" data-entry-index="${entryIndex}">${t.validate}</button>
+                            <button id="editBtn-${entryIndex}" class="btn btn-secondary text-xs" data-entry-index="${entryIndex}" style="display: none;">${t.edit}</button>
+                        </div>
+                    </div>
+                `;
+                
+                const translationEditor = translationUnit.querySelector(`#translation-${entryIndex}`);
+                const originalColPre = translationUnit.querySelector(`#original-pre-${entryIndex}`);
+                const validateButton = translationUnit.querySelector(`#validateBtn-${entryIndex}`);
+                const editButton = translationUnit.querySelector(`#editBtn-${entryIndex}`);
 
                 translationEditor.addEventListener('input', (event) => {
-                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
-                    const entry = srtEntries[currentEntryIndex];
-
-                    entry.translation = event.target.innerHTML;
-                    entry.wordCountTranslation = countWords(event.target.innerText);
-                    entry.isTranslated = event.target.innerText.trim() !== '';
-                    entry.charCountTranslation = countCharactersWithoutTags(event.target.innerHTML);
-                    entry.cpsTranslation = calculateCPS(event.target.innerHTML, entry.durationMs);
-
-                    autoResizeTextarea(event.target, originalCol.querySelector('pre'));
-                    updateSubtitleStats(event.target, entry.charCountOriginal, entry.durationMs);
+                    const currentEntry = srtEntries[entryIndex];
+                    currentEntry.translation = event.target.innerHTML;
+                    currentEntry.wordCountTranslation = countWords(event.target.innerText);
+                    currentEntry.isTranslated = event.target.innerText.trim() !== '';
+                    currentEntry.charCountTranslation = countCharactersWithoutTags(event.target.innerHTML);
+                    currentEntry.cpsTranslation = calculateCPS(event.target.innerHTML, currentEntry.durationMs);
+                    autoResizeTextarea(event.target, originalColPre);
+                    updateSubtitleStats(event.target, currentEntry.charCountOriginal, currentEntry.durationMs);
                     updateStatsDisplay();
-                    updateSubtitlePreview(); // Update preview as user types
-
-                    if (document.activeElement === translationEditor) {
-                        const tempOriginalText = entry.original;
-                        originalCol.querySelector('pre').textContent = tempOriginalText;
-                        termsFoundInActiveSegment.clear();
-                        const highlightResult = applyGlossaryHighlightToText(tempOriginalText);
-                        originalCol.querySelector('pre').innerHTML = highlightResult.html;
-                        highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
-                        updateGlossaryTableHighlights();
-                    }
+                    updateSubtitlePreview();
                 });
 
                 translationEditor.addEventListener('focus', (event) => {
-                    document.querySelectorAll('.translation-unit-active').forEach(unit => {
-                        unit.classList.remove('translation-unit-active');
-                    });
+                    document.querySelectorAll('.translation-unit-active').forEach(unit => unit.classList.remove('translation-unit-active'));
                     translationUnit.classList.add('translation-unit-active');
-
                     termsFoundInActiveSegment.clear();
-                    const originalPreElement = document.getElementById(`original-pre-${entryIndex}`);
-                    if (originalPreElement && glossarySourceLanguage && glossary.length > 0) {
+                    if (glossarySourceLanguage && glossary.length > 0) {
                         const highlightResult = applyGlossaryHighlightToText(entry.original);
-                        originalPreElement.innerHTML = highlightResult.html;
+                        originalColPre.innerHTML = highlightResult.html;
                         highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
                     }
                     updateGlossaryTableHighlights();
-                    autoResizeTextarea(event.target, originalCol.querySelector('pre'));
+                    autoResizeTextarea(event.target, originalColPre);
                     event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                    const currentSegmentOriginal = srtEntries[entryIndex].original;
-                    tmSearch(currentSegmentOriginal);
+                    tmSearch(srtEntries[entryIndex].original);
                 });
 
-                translationEditor.addEventListener('blur', (event) => {
-                    const originalPreElement = document.getElementById(`original-pre-${entryIndex}`);
-                    if (originalPreElement) {
-                        originalPreElement.textContent = entry.original;
-                    }
+                translationEditor.addEventListener('blur', () => {
+                    originalColPre.textContent = entry.original;
                     termsFoundInActiveSegment.clear();
                     updateGlossaryTableHighlights();
-                    tmSearch(); // Search without a specific segment text
+                    tmSearch();
                 });
 
-
-                translationEditor.addEventListener('click', (event) => {
-                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
-                    if (event.target.contentEditable !== "true") {
-                        setTranslationEditableState(currentEntryIndex, true);
-                    }
+                validateButton.addEventListener('click', () => {
+                    setTranslationEditableState(entryIndex, false);
+                    goToNextTranslation(entryIndex);
                 });
 
-                validateButton.addEventListener('click', (event) => {
-                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
-                    setTranslationEditableState(currentEntryIndex, false);
-                    goToNextTranslation(currentEntryIndex);
-                });
-
-                editButton.addEventListener('click', (event) => {
-                    const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
-                    setTranslationEditableState(currentEntryIndex, true);
-                });
-
-                autoResizeTextarea(translationEditor, originalPre);
-                updateSubtitleStats(translationEditor, entry.charCountOriginal, entry.durationMs);
+                editButton.addEventListener('click', () => setTranslationEditableState(entryIndex, true));
 
                 translationsContainer.appendChild(translationUnit);
+                updateSubtitleStats(translationEditor, entry.charCountOriginal, entry.durationMs);
             });
             
             saveSrtButton.disabled = false;
@@ -2006,35 +1565,26 @@
          * Updates the display of translation progress and word counts.
          */
         function updateStatsDisplay() {
+            const t = translations[currentLanguage];
             let totalSegments = srtEntries.length;
-            let translatedSegments = 0;
-            let totalWordsOriginal = 0;
-            let totalWordsTranslated = 0;
-
-            srtEntries.forEach(entry => {
-                totalWordsOriginal += entry.wordCountOriginal;
-                if (entry.isTranslated) {
-                    translatedSegments++;
-                    totalWordsTranslated += entry.wordCountTranslation;
-                }
-            });
+            let translatedSegments = srtEntries.filter(e => e.isTranslated).length;
+            let totalWordsOriginal = srtEntries.reduce((acc, e) => acc + e.wordCountOriginal, 0);
+            let totalWordsTranslated = srtEntries.reduce((acc, e) => acc + e.wordCountTranslation, 0);
 
             const percentage = totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
-            segmentsProgress.textContent = `${translatedSegments}/${totalSegments} ${translations.es['subtitles_translated']} (${percentage}%)`;
-            wordsTranslated.textContent = `${totalWordsTranslated} palabras traducidas`;
-            wordsTotal.textContent = `${totalWordsOriginal} palabras originales totales`;
-            wordsRemaining.textContent = `${totalWordsOriginal - totalWordsTranslated} palabras pendientes`;
+            
+            segmentsProgress.textContent = t.segments_progress_text.replace('{0}', translatedSegments).replace('{1}', totalSegments).replace('{2}', percentage);
+            wordsTranslated.textContent = t.words_translated_text.replace('{0}', totalWordsTranslated);
+            wordsTotal.textContent = t.words_total_text.replace('{0}', totalWordsOriginal);
+            wordsRemaining.textContent = t.words_remaining_text.replace('{0}', totalWordsOriginal - totalWordsTranslated);
 
-            // NEW: Update QA Error Stats
             const qaErrors = calculateAllQaErrors();
             if (qaErrors.length > 0) {
-                qaErrorStats.textContent = `${qaErrors.length} ${translations.es['qa_errors_found']}`;
-                qaErrorStats.classList.add('qa-error', 'clickable');
-                qaErrorStats.classList.remove('qa-success');
+                qaErrorStats.textContent = t.qa_errors_found.replace('{0}', qaErrors.length);
+                qaErrorStats.className = 'qa-error clickable';
             } else {
-                qaErrorStats.textContent = translations.es['qa_no_errors'];
-                qaErrorStats.classList.add('qa-success');
-                qaErrorStats.classList.remove('qa-error', 'clickable');
+                qaErrorStats.textContent = t.qa_no_errors;
+                qaErrorStats.className = 'qa-success';
             }
         }
 
@@ -2094,7 +1644,7 @@
             if (nextEntryIndex < srtEntries.length) {
                 navigateToTranslation(nextEntryIndex);
             } else {
-                showMessage(translations.es['reached_last']);
+                showMessage(errorMessages[currentLanguage]['reached_last']);
             }
         }
 
@@ -2110,7 +1660,7 @@
             if (prevEntryIndex >= 0) {
                 navigateToTranslation(prevEntryIndex);
             } else {
-                showMessage(translations.es['reached_first']);
+                showMessage(errorMessages[currentLanguage]['reached_first']);
             }
         }
 
@@ -2125,7 +1675,7 @@
 
         saveSrtButton.addEventListener('click', () => {
             if (srtEntries.length === 0) {
-                showMessage(translations.es['no_translations_to_save']);
+                showMessage(errorMessages[currentLanguage]['no_translations_to_save']);
                 return;
             }
             fileNameInput.value = currentFileName.replace(/\.srt$/i, '') + '_trad.srt';
@@ -2140,10 +1690,10 @@
         confirmSaveBtn.addEventListener('click', () => {
             const filename = fileNameInput.value;
             if (!filename) {
-                showMessage("Por favor, introduce un nombre de archivo.");
+                showMessage("Por favor, introduce un nombre de archivo."); // This can be internationalized too
                 return;
             }
-            showLoadingOverlay(translations.es['saving_file']);
+            showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
             try {
                 const updatedSrtContent = reconstructSrt(srtEntries);
                 const blob = new Blob([updatedSrtContent], { type: 'text/plain;charset=utf-8' });
@@ -2155,9 +1705,9 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showMessage(translations.es['file_saved_successfully']);
+                showMessage(errorMessages[currentLanguage]['file_saved_successfully']);
             } catch (error) {
-                showMessage(`${translations.es['error_saving_file']} ${error.message}`);
+                showMessage(`${errorMessages[currentLanguage]['error_saving_file']} ${error.message}`);
                 console.error("Error saving file:", error);
             } finally {
                 hideLoadingOverlay();
@@ -2168,18 +1718,16 @@
 
         async function processFile(file) {
             currentFileName = file.name;
-            showLoadingOverlay(translations.es['loading_file']);
+            showLoadingOverlay(errorMessages[currentLanguage]['loading_file']);
 
-            // Reset the video player state
             videoPlayer.pause();
             videoPlayer.src = '';
-            videoPlayer.classList.add('hidden'); // Hide the <video> element
-            document.getElementById('videoLogoPlaceholder').classList.remove('hidden'); // Show the logo
-
-            // Restore the button text
+            videoPlayer.classList.add('hidden');
+            document.getElementById('videoLogoPlaceholder').classList.remove('hidden');
+            
             const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
             if (loadVideoBtnSpan) {
-                loadVideoBtnSpan.textContent = translations.es['load_video'];
+                loadVideoBtnSpan.textContent = translations[currentLanguage]['load_video'];
             }
 
             return new Promise((resolve) => {
@@ -2189,13 +1737,13 @@
                         const content = e.target.result;
                         srtEntries = parseSrtContent(content);
                         renderTranslations(srtEntries);
-                        runFullQaCheck(); // Run QA checks on new file
+                        runFullQaCheck();
                         updateStatsDisplay();
                         resolve();
                     } catch (error) {
-                        showMessage(`${translations.es['error_reading_file']} ${error.message}`);
+                        showMessage(`${errorMessages[currentLanguage]['error_reading_file']} ${error.message}`);
                         console.error("Error parsing file:", error);
-                        translationsContainer.innerHTML = `<div class="text-center text-red-500 p-4 border border-red-300 rounded-md">${translations.es['file_processing_error']}</div>`;
+                        translationsContainer.innerHTML = `<div class="text-center text-red-500 p-4 border border-red-300 rounded-md">${errorMessages[currentLanguage]['file_processing_error']}</div>`;
                         saveSrtButton.disabled = true;
                         statsContainer.classList.add('hidden');
                         videoPlayerContainer.classList.add('hidden');
@@ -2205,7 +1753,7 @@
                     }
                 };
                 reader.onerror = () => {
-                    showMessage(translations.es['error_reading_file'] + (file.name || ''));
+                    showMessage(errorMessages[currentLanguage]['error_reading_file'] + (file.name || ''));
                     saveSrtButton.disabled = true;
                     statsContainer.classList.add('hidden');
                     videoPlayerContainer.classList.add('hidden');
@@ -2336,7 +1884,7 @@
         function findAndNavigate(forward = true) {
             const query = findInput.value;
             if (!query) {
-                showMessage(translations.es['no_find_query']);
+                showMessage(errorMessages[currentLanguage]['no_find_query']);
                 return;
             }
 
@@ -2436,7 +1984,7 @@
             }
 
             if (!found) {
-                showMessage(translations.es['no_match_found']);
+                showMessage(errorMessages[currentLanguage]['no_match_found']);
                 findState.lastFound = null;
             }
         }
@@ -2444,7 +1992,7 @@
 
         function replaceCurrentMatch() {
             if (!findState.lastFound || !findState.query) {
-                showMessage(translations.es['no_match_found']);
+                showMessage(errorMessages[currentLanguage]['no_match_found']);
                 return;
             }
 
@@ -2482,7 +2030,7 @@
             const query = findInput.value;
             const replaceWith = replaceInput.value;
             if (!query) {
-                showMessage(translations.es['no_find_query']);
+                showMessage(errorMessages[currentLanguage]['no_find_query']);
                 return;
             }
 
@@ -2518,166 +2066,50 @@
             });
 
             renderTranslations(srtEntries);
-            showMessage(`${replacedCount} ${translations.es['replaced_all']}`);
+            showMessage(`${replacedCount} ${errorMessages[currentLanguage]['replaced_all']}`);
             findState.lastFound = null;
             updateStatsDisplay();
         }
 
         function setLanguage(lang) {
-            currentLanguage = 'es';
-            updateTextContent();
-            renderTranslations(srtEntries);
-            renderGlossary();
-        }
-
-        function updateTextContent() {
-            const setTextContent = (id, text) => {
-                const element = document.getElementById(id);
-                if (element) element.textContent = text;
-            };
+            currentLanguage = lang;
             
-            const setOptionText = (selectId, optionValue, text) => {
-                const select = document.getElementById(selectId);
-                if (select) {
-                    const option = select.querySelector(`option[value="${optionValue}"]`);
-                    if (option) {
-                        option.textContent = text;
-                    }
+            // Update language buttons active state
+            langEsBtn.classList.toggle('active', lang === 'es');
+            langEnBtn.classList.toggle('active', lang === 'en');
+
+            // Update all text content
+            const t = translations[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) {
+                    el.textContent = t[key];
                 }
-            };
-
-            document.title = translations.es['title'];
-            setTextContent('importSrtBtnText', translations.es['import_srt']);
-            setTextContent('exportSrtBtnText', translations.es['export_srt']);
-            setTextContent('okBtnText', translations.es['ok']);
-            document.querySelector('#loadVideoBtn span').textContent = translations.es['load_video'];
-
-            const initialMessageElement = document.getElementById('initialMessage');
-            if (initialMessageElement) {
-                initialMessageElement.textContent = translations.es['no_translations'];
+            });
+             document.querySelectorAll('[data-i18n-html]').forEach(el => {
+                const key = el.getAttribute('data-i18n-html');
+                if (t[key]) {
+                    el.innerHTML = t[key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key]) {
+                    el.placeholder = t[key];
+                }
+            });
+            
+            // Re-render dynamic content
+            if (srtEntries.length > 0) {
+                renderTranslations(srtEntries);
+            } else {
+                 const initialMessageElement = document.getElementById('initialMessage');
+                if (initialMessageElement) {
+                    initialMessageElement.textContent = t.no_translations;
+                }
             }
-
-            setTextContent('shortcutsTitle', translations.es['shortcuts_title']);
-            const shortcutValidateElement = document.getElementById('shortcutValidate');
-            if(shortcutValidateElement) shortcutValidateElement.innerHTML = `<strong>Ctrl + Enter:</strong> ${translations.es['shortcut_validate'].substring(translations.es['shortcut_validate'].indexOf(':') + 1).trim()}`;
-
-            if(arrowDownIconHtml) arrowDownIconHtml.innerHTML = arrowDownIcon;
-            if(arrowUpIconHtml) arrowUpIconHtml.innerHTML = arrowUpIcon;
-            const shortcutNextElement = document.getElementById('shortcutNext');
-            if(shortcutNextElement) shortcutNextElement.innerHTML = `<strong>Ctrl + ${arrowDownIconHtml.innerHTML}</strong>: ${translations.es['shortcut_next'].substring(translations.es['shortcut_next'].indexOf(':') + 1).trim()}`;
-            const shortcutPrevElement = document.getElementById('shortcutPrev');
-            if(shortcutPrevElement) shortcutPrevElement.innerHTML = `<strong>Ctrl + ${arrowUpIconHtml.innerHTML}</strong>: ${translations.es['shortcut_prev'].substring(translations.es['shortcut_prev'].indexOf(':') + 1).trim()}`;
-
-            setTextContent('closeBtnText', translations.es['close_btn']);
-            setTextContent('shortcutsBtnText', translations.es['shortcuts_btn']);
-            const shortcutAlt1Element = document.getElementById('shortcutAlt1');
-            if(shortcutAlt1Element) shortcutAlt1Element.innerHTML = `<strong>Alt + [1-5]:</strong> ${translations.es['shortcut_alt_1'].substring(translations.es['shortcut_alt_1'].indexOf(':') + 1).trim()}`;
-            const shortcutTmInsertElement = document.getElementById('shortcutTmInsert');
-            if(shortcutTmInsertElement) shortcutTmInsertElement.innerHTML = `<strong>Ctrl + Alt + [1-5]:</strong> ${translations.es['shortcut_tm_insert'].substring(translations.es['shortcut_tm_insert'].indexOf(':') + 1).trim()}`;
-            const shortcutJumpToTimeElement = document.getElementById('shortcutJumpToTime');
-            if(shortcutJumpToTimeElement) shortcutJumpToTimeElement.innerHTML = `<strong>Ctrl + J:</strong> ${translations.es['shortcut_jump_to_time'].substring(translations.es['shortcut_jump_to_time'].indexOf(':') + 1).trim()}`;
-            const shortcutPlaySegmentElement = document.getElementById('shortcutPlaySegment');
-            if(shortcutPlaySegmentElement) shortcutPlaySegmentElement.innerHTML = `<strong>Ctrl + Barra espaciadora:</strong> ${translations.es['shortcut_play_segment'].substring(translations.es['shortcut_play_segment'].indexOf(':') + 1).trim()}`;
-            const shortcutBoldElement = document.getElementById('shortcutBold');
-            if(shortcutBoldElement) shortcutBoldElement.innerHTML = `<strong>Ctrl + B:</strong> ${translations.es['shortcut_bold'].substring(translations.es['shortcut_bold'].indexOf(':') + 1).trim()}`;
-            const shortcutItalicElement = document.getElementById('shortcutItalic');
-            if(shortcutItalicElement) shortcutItalicElement.innerHTML = `<strong>Ctrl + I:</strong> ${translations.es['shortcut_italic'].substring(translations.es['shortcut_italic'].indexOf(':') + 1).trim()}`;
-            const shortcutPlayPauseElement = document.getElementById('shortcutPlayPause');
-            if(shortcutPlayPauseElement) shortcutPlayPauseElement.innerHTML = `<strong>Alt + P:</strong> ${translations.es['shortcut_play_pause'].substring(translations.es['shortcut_play_pause'].indexOf(':') + 1).trim()}`;
-            const shortcutSeekElement = document.getElementById('shortcutSeek');
-            if(shortcutSeekElement) shortcutSeekElement.innerHTML = `<strong>Alt + Flechas:</strong> ${translations.es['shortcut_seek'].substring(translations.es['shortcut_seek'].indexOf(':') + 1).trim()}`;
-            const shortcutSeekFastElement = document.getElementById('shortcutSeekFast');
-            if(shortcutSeekFastElement) shortcutSeekFastElement.innerHTML = `<strong>Ctrl + Alt + Flechas:</strong> ${translations.es['shortcut_seek_fast'].substring(translations.es['shortcut_seek_fast'].indexOf(':') + 1).trim()}`;
-
-
-            setTextContent('findReplaceBtnText', translations.es['find_replace_btn']);
-            setTextContent('findReplaceTitle', translations.es['find_replace_title']);
-            setTextContent('findLabel', translations.es['find_label']);
-            setTextContent('replaceLabel', translations.es['replace_label']);
-            setTextContent('caseSensitiveText', translations.es['case_sensitive']);
-            setTextContent('regexText', translations.es['regular_expression']);
-            setTextContent('findPrevText', translations.es['find_prev']);
-            setTextContent('findNextText', translations.es['find_next']);
-            setTextContent('replaceText', translations.es['replace']);
-            setTextContent('replaceAllText', translations.es['replace_all']);
-            setTextContent('findReplaceCloseText', translations.es['close_btn']);
-
-            setTextContent('terminologyBtnText', translations.es['terminology_btn']);
-            setTextContent('terminologySidebarTitle', translations.es['terminology_sidebar_title']);
-            setTextContent('configLangTitle', translations.es['config_lang_title']);
-            setTextContent('configLangInfo', translations.es['config_lang_info']);
-            setTextContent('sourceLanguageLabel', translations.es['source_language']);
-            setTextContent('targetLanguageLabel', translations.es['target_language']);
-            setTextContent('confirmLanguagesBtn', translations.es['confirm_languages']);
-            setTextContent('currentLangTitle', translations.es['current_lang_title']);
-            setTextContent('addTermTitleAccordion', translations.es['add_term_title']);
-            setTextContent('termLabel', translations.es['term']);
-            setTextContent('translationLabel', translations.es['translation']);
-            setTextContent('addTermBtn', translations.es['add_button']);
-            setTextContent('searchTitle', translations.es['search_title']);
-            if (searchTermInput) searchTermInput.placeholder = translations.es['search_placeholder'];
-            setTextContent('importTbxBtn', translations.es['import_tbx']);
-            setTextContent('downloadTbxBtn', translations.es['download_tbx']);
-            setTextContent('newGlossaryBtn', translations.es['new_glossary']);
-            setTextContent('glossaryListTitle', translations.es['glossary_list_title']);
-            setTextContent('sourceTermCol', translations.es['source_term_col']);
-            setTextContent('targetTermCol', translations.es['target_term_col']);
-            setTextContent('actionsCol', translations.es['actions_col']);
-
-            setTextContent('translationStatsTitle', translations.es['translation_stats_title']);
-
-            setTextContent('tmBtnText', translations.es['tm_btn']);
-            setTextContent('tmSidebarTitle', translations.es['tm_sidebar_title']);
-            setTextContent('newTmBtn', translations.es['new_tm']);
-            setTextContent('importTmxBtnText', translations.es['import_tmx']);
-            setTextContent('downloadTmxBtn', translations.es['download_tmx']);
-            setTextContent('tmSearchTitle', translations.es['tm_search_title']);
-            if (tmSearchInput) tmSearchInput.placeholder = translations.es['tm_search_placeholder'];
-            setTextContent('tmSearchResultsTitle', translations.es['tm_search_results_title']);
-            setTextContent('tmScoreCol', translations.es['tm_score_col']);
-            setTextContent('tmOriginalCol', translations.es['tm_original_col']);
-            setTextContent('tmTranslationCol', translations.es['tm_translation_col']);
-            setTextContent('tmConfigLangTitle', translations.es['tm_config_lang_title']);
-            setTextContent('tmConfigLangInfo', translations.es['tm_config_lang_info']);
-            setTextContent('tmSourceLanguageLabel', translations.es['source_language']);
-            setTextContent('tmTargetLanguageLabel', translations.es['target_language']);
-            setTextContent('tmConfirmLanguagesBtn', translations.es['confirm_languages']);
-            setTextContent('currentTmLangTitle', translations.es['current_tm_lang_title']);
-            if (tmInternalMessage) tmInternalMessage.textContent = translations.es['tm_initial_message'];
-            
-            // Update preview control texts
-            document.querySelector('label[for="subtitleFontSize"]').textContent = translations.es['preview_size'];
-            document.querySelector('label[for="subtitlePreviewSource"]').textContent = translations.es['preview_source'];
-            setOptionText('subtitlePreviewSource', 'translation', translations.es['translation_text_option']);
-            setOptionText('subtitlePreviewSource', 'original', translations.es['original_text_option']);
-            
-            // Update Save SRT Modal texts
-            setTextContent('saveSrtTitle', translations.es['save_srt_title']);
-            setTextContent('fileNameLabel', translations.es['file_name_label']);
-            setTextContent('cancelSaveText', translations.es['cancel_btn']);
-            setTextContent('confirmSaveText', translations.es['save_btn']);
-
-            // Backup Modal texts
-            setTextContent('backupBtnText', translations.es['backup_btn']);
-            setTextContent('backupModalTitle', translations.es['backup_modal_title']);
-            document.querySelector('#backupFoundView [data-i18n="restore_backup_info"]').textContent = translations.es['restore_backup_info'];
-            document.querySelector('#noBackupFoundView [data-i18n="no_backup_found_info"]').textContent = translations.es['no_backup_found_info'];
-            document.querySelector('#backupFoundView [data-i18n="file_label"]').textContent = translations.es['file_label'];
-            document.querySelector('#backupFoundView [data-i18n="last_modified_label"]').textContent = translations.es['last_modified_label'];
-            document.querySelector('#exportSrtFromBackupBtn').textContent = translations.es['export_srt_btn'];
-            document.querySelector('#deleteBackupBtn').textContent = translations.es['delete_backup_btn'];
-            document.querySelector('#confirmRestoreBtn').textContent = translations.es['restore_btn'];
-            document.querySelector('#closeBackupModalBtn').textContent = translations.es['close_btn'];
-
-            // QA Modal texts
-            setTextContent('qaBtnText', translations.es['qa_btn']);
-            setTextContent('qaModalTitle', translations.es['qa_modal_title']);
-            document.querySelector('label[for="qaCpsLimit"]').textContent = translations.es['cps_limit_label'];
-            document.querySelector('label[for="qaCharsPerLineLimit"]').textContent = translations.es['chars_per_line_limit_label'];
-            document.querySelector('#saveQaSettingsBtn').textContent = translations.es['save_and_apply_btn'];
-            document.querySelector('#closeQaModalBtn').textContent = translations.es['close_btn'];
-            setTextContent('qaErrorListModalTitle', translations.es['qa_error_list_title']);
-            document.querySelector('#closeQaErrorListModalBtn').textContent = translations.es['close_btn'];
+            renderGlossary();
+            tmSearch();
         }
 
         // --- Terminology Sidebar Logic ---
@@ -2750,7 +2182,7 @@
             const srcLang = configSrcLang ? configSrcLang.value.trim() : '';
             const tgtLang = configTgtLang ? configTgtLang.value.trim() : '';
             if (!srcLang || !tgtLang) {
-                showMessage(translations.es['lang_config_required']);
+                showMessage(errorMessages[currentLanguage]['lang_config_required']);
                 return;
             }
             glossarySourceLanguage = srcLang;
@@ -2763,7 +2195,7 @@
             const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
             const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
             if (!srcTerm || !tgtTerm) {
-                showMessage(translations.es['both_terms_required']);
+                showMessage(errorMessages[currentLanguage]['both_terms_required']);
                 return;
             }
             glossary.push({
@@ -2788,6 +2220,7 @@
             if (!glossaryTableBody) return;
             const search = searchTermInput ? searchTermInput.value.toLowerCase() : '';
             glossaryTableBody.innerHTML = "";
+            const t = translations[currentLanguage];
             const filteredGlossary = glossary.filter(entry =>
                 (entry.srcTerm && entry.srcTerm.toLowerCase().includes(search)) ||
                 (entry.tgtTerm && entry.tgtTerm.toLowerCase().includes(search))
@@ -2802,17 +2235,17 @@
                 }
             });
             currentGlossaryLatestResults = [...highlightedTerms, ...otherTerms.sort((a, b) => a.srcTerm.localeCompare(b.srcTerm))];
-            highlightedTerms.forEach((entry) => {
-                const row = document.createElement("tr");
-                row.classList.add('glossary-row-highlight');
-                row.innerHTML = `<td>${entry.srcTerm}</td><td>${entry.tgtTerm}</td><td><button class="glossary-delete-btn rounded-md" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations.es['delete_button']}</button></td>`;
+            
+            const renderRow = (entry) => {
+                 const row = document.createElement("tr");
+                if (highlightedTerms.includes(entry)) {
+                    row.classList.add('glossary-row-highlight');
+                }
+                row.innerHTML = `<td>${entry.srcTerm}</td><td>${entry.tgtTerm}</td><td><button class="btn btn-destructive text-xs" onclick="deleteTerm(${glossary.indexOf(entry)})">${t.delete_button}</button></td>`;
                 glossaryTableBody.appendChild(row);
-            });
-            otherTerms.forEach((entry) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td>${entry.srcTerm}</td><td>${entry.tgtTerm}</td><td><button class="glossary-delete-btn rounded-md" onclick="deleteTerm(${glossary.indexOf(entry)})">${translations.es['delete_button']}</button></td>`;
-                glossaryTableBody.appendChild(row);
-            });
+            };
+
+            currentGlossaryLatestResults.forEach(renderRow);
         }
 
         function generateTBX() {
@@ -2826,10 +2259,10 @@
 
         function downloadTBX() {
             if (glossary.length === 0 && (!glossarySourceLanguage || !glossaryTargetLanguage)) {
-                showMessage(translations.es['cannot_download_empty_or_unconfigured_glossary']);
+                showMessage(errorMessages[currentLanguage]['cannot_download_empty_or_unconfigured_glossary']);
                 return;
             }
-            showLoadingOverlay(translations.es['saving_file']);
+            showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
             try {
                 const blob = new Blob([generateTBX()], { type: "application/xml" });
                 const url = URL.createObjectURL(blob);
@@ -2839,9 +2272,9 @@
                 document.body.appendChild(a);
                 a.click();
                 URL.revokeObjectURL(url);
-                showMessage(translations.es['file_saved_successfully']);
+                showMessage(errorMessages[currentLanguage]['file_saved_successfully']);
             } catch (error) {
-                showMessage(`${translations.es['error_saving_file']} ${error.message}`);
+                showMessage(`${errorMessages[currentLanguage]['error_saving_file']} ${error.message}`);
                 console.error("Error downloading TBX:", error);
             } finally {
                 hideLoadingOverlay();
@@ -2854,7 +2287,7 @@
             tbxFileInput.onchange = async (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
-                showLoadingOverlay(translations.es['loading_file']);
+                showLoadingOverlay(errorMessages[currentLanguage]['loading_file']);
                 try {
                     const reader = new FileReader();
                     await new Promise((resolve, reject) => {
@@ -2866,7 +2299,7 @@
                                     throw new Error("Invalid XML/TBX format: " + xmlDoc.getElementsByTagName("parsererror")[0].textContent);
                                 }
                                 if (xmlDoc.getElementsByTagName("tu").length > 0) {
-                                    showTMInternalMessage(translations.es['tbx_file_expected_tmx_found'], true);
+                                    showTMInternalMessage(errorMessages[currentLanguage]['tbx_file_expected_tmx_found'], true);
                                     reject(new Error("Attempted to load TMX into Glossary."));
                                     return;
                                 }
@@ -2894,7 +2327,7 @@
                                     glossarySourceLanguage = firstEntryLangs.src;
                                     glossaryTargetLanguage = firstEntryLangs.tgt;
                                 } else if (glossary.length === 0) {
-                                    showMessage(translations.es['error_loading_tbx_file']);
+                                    showMessage(errorMessages[currentLanguage]['error_loading_tbx_file']);
                                 }
                                 showGlossaryEditorSection();
                                 renderTranslations(srtEntries);
@@ -2909,7 +2342,7 @@
                 } catch (error) {
                     console.error("Error loading TBX file:", error);
                     if (!error.message.includes("Attempted to load TMX")) {
-                        showMessage(translations.es['error_loading_tbx_file']);
+                        showMessage(errorMessages[currentLanguage]['error_loading_tbx_file']);
                     }
                     resetGlossary();
                 } finally {
@@ -3036,7 +2469,7 @@
             const srcLang = tmConfigSrcLang ? tmConfigSrcLang.value.trim() : '';
             const tgtLang = tmConfigTgtLang ? tmConfigTgtLang.value.trim() : '';
             if (!srcLang || !tgtLang) {
-                showTMInternalMessage(translations.es['lang_config_required'], true);
+                showTMInternalMessage(errorMessages[currentLanguage]['lang_config_required'], true);
                 return;
             }
             tmSourceLanguage = srcLang;
@@ -3045,7 +2478,7 @@
         }
 
         async function loadTMX(file) {
-            showLoadingOverlay(translations.es['loading_file']);
+            showLoadingOverlay(errorMessages[currentLanguage]['loading_file']);
             hideTMInternalMessage();
             try {
                 const reader = new FileReader();
@@ -3058,7 +2491,7 @@
                                 throw new Error("Invalid XML/TMX format: " + xmlDoc.getElementsByTagName("parsererror")[0].textContent);
                             }
                             if (xmlDoc.getElementsByTagName("termEntry").length > 0) {
-                                showTMInternalMessage(translations.es['tmx_file_expected_tbx_found'], true);
+                                showTMInternalMessage(errorMessages[currentLanguage]['tmx_file_expected_tbx_found'], true);
                                 reject(new Error("Attempted to load TBX into Translation Memory."));
                                 return;
                             }
@@ -3084,7 +2517,7 @@
                             translationMemory = newTM;
                             tmSourceLanguage = detectedSrcLang || (tmConfigSrcLang ? tmConfigSrcLang.value : 'en-US');
                             tmTargetLanguage = detectedTgtLang || (tmConfigTgtLang ? tmConfigTgtLang.value : 'es-ES');
-                            showTMInternalMessage(`TMX cargado con ${translationMemory.length} unidades de traducción.`);
+                            showTMInternalMessage(`TMX loaded with ${translationMemory.length} translation units.`);
                             showTMEditorSection();
                             tmSearch();
                             resolve();
@@ -3098,7 +2531,7 @@
             } catch (error) {
                 console.error("Error loading TMX file:", error);
                 if (!error.message.includes("Attempted to load TBX")) {
-                    showTMInternalMessage(translations.es['error_loading_tmx_file'], true);
+                    showTMInternalMessage(errorMessages[currentLanguage]['error_loading_tmx_file'], true);
                 }
                 resetTM();
             } finally {
@@ -3108,7 +2541,7 @@
 
         function generateTMX() {
             if (translationMemory.length === 0) {
-                showTMInternalMessage(translations.es['cannot_download_empty_tm'], true);
+                showTMInternalMessage(errorMessages[currentLanguage]['cannot_download_empty_tm'], true);
                 return null;
             }
             const header = `<?xml version="1.0" encoding="UTF-8"?><tmx version="1.4"><header creationtool="subpandaTM" creationtoolversion="1.0" datatype="unknown" segtype="sentence" changeid="subpandaTMUser" srclang="${tmSourceLanguage || 'en-US'}" o-tmf="subpandaTM" adminlang="en-US" ${tmTargetLanguage ? `targetlang="${tmTargetLanguage}"` : ''}> </header><body>`;
@@ -3123,7 +2556,7 @@
         function downloadTMX() {
             const tmxContent = generateTMX();
             if (!tmxContent) return;
-            showLoadingOverlay(translations.es['saving_file']);
+            showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
             try {
                 const blob = new Blob([tmxContent], { type: "application/xml" });
                 const url = URL.createObjectURL(blob);
@@ -3134,9 +2567,9 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showTMInternalMessage(translations.es['file_saved_successfully']);
+                showTMInternalMessage(errorMessages[currentLanguage]['file_saved_successfully']);
             } catch (error) {
-                showTMInternalMessage(`${translations.es['error_saving_file']} ${error.message}`, true);
+                showTMInternalMessage(`${errorMessages[currentLanguage]['error_saving_file']} ${error.message}`, true);
                 console.error("Error downloading TMX:", error);
             } finally {
                 hideLoadingOverlay();
@@ -3212,16 +2645,14 @@
 
         function renderTMSearchResults(results) {
             if (!tmSearchResultsTableBody) return;
+            const t = translations[currentLanguage];
             tmSearchResultsTableBody.innerHTML = '';
             if (results.length === 0) {
                 if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
-                if (tmInternalMessage && tmInternalMessage.classList.contains('hidden')) {
-                    if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
-                }
                 return;
-            } else {
-                if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');
-            }
+            } 
+            if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');
+            
             hideTMInternalMessage();
             results.forEach(entry => {
                 const row = document.createElement('tr');
@@ -3320,17 +2751,15 @@
                 videoPlayer.load();
                 videoPlayer.play();
         
-                // Hide the logo and show the video element
                 document.getElementById('videoLogoPlaceholder').classList.add('hidden');
                 videoPlayer.classList.remove('hidden');
         
-                // Update the button text to allow changing the video later
                 const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
                 if (loadVideoBtnSpan) {
-                    loadVideoBtnSpan.textContent = translations.es['change_video'];
+                    loadVideoBtnSpan.textContent = translations[currentLanguage]['change_video'];
                 }
             } else {
-                showMessage(translations.es['video_load_error']);
+                showMessage(errorMessages[currentLanguage]['video_load_error']);
             }
         });
 
@@ -3345,22 +2774,18 @@
                 videoPlayer.currentTime = entry.startTimeMs / 1000;
                 videoPlayer.play();
 
-                // Remove previous listener to avoid duplicates
                 if (timeUpdateListener) {
                     videoPlayer.removeEventListener('timeupdate', timeUpdateListener);
                 }
 
-                // Define the listener function
                 timeUpdateListener = () => {
                     if (videoPlayer.currentTime >= stopTime) {
                         videoPlayer.pause();
-                        // Clean up: remove the listener after it has done its job
                         videoPlayer.removeEventListener('timeupdate', timeUpdateListener);
                         timeUpdateListener = null;
                     }
                 };
                 
-                // Add the listener
                 videoPlayer.addEventListener('timeupdate', timeUpdateListener);
             }
         }
@@ -3389,9 +2814,8 @@
             if (activeSubtitle) {
                 let textToShow = '';
                 if (previewSource === 'translation') {
-                    // Use translation if available, otherwise fall back to original
                     textToShow = activeSubtitle.translation.trim() || activeSubtitle.original;
-                } else { // previewSource is 'original'
+                } else {
                     textToShow = activeSubtitle.original;
                 }
                 subtitlePreviewText.innerHTML = textToShow;
@@ -3401,60 +2825,31 @@
         }
         
         // --- Backup and Restore Functions ---
-
-        /**
-         * Gathers the entire project state into a single object for saving.
-         * @returns {Object | null} The project state object or null if no project is loaded.
-         */
         function getProjectState() {
             if (srtEntries.length === 0) return null;
-
             return {
-                fileName: currentFileName,
-                srtEntries: srtEntries,
-                glossary: {
-                    data: glossary,
-                    sourceLang: glossarySourceLanguage,
-                    targetLang: glossaryTargetLanguage
-                },
-                translationMemory: {
-                    data: translationMemory,
-                    sourceLang: tmSourceLanguage,
-                    targetLang: tmTargetLanguage
-                },
-                qaSettings: qaSettings, // Include QA settings in the backup
-                lastModified: new Date()
+                fileName: currentFileName, srtEntries: srtEntries,
+                glossary: { data: glossary, sourceLang: glossarySourceLanguage, targetLang: glossaryTargetLanguage },
+                translationMemory: { data: translationMemory, sourceLang: tmSourceLanguage, targetLang: tmTargetLanguage },
+                qaSettings: qaSettings, lastModified: new Date()
             };
         }
 
-        /**
-         * Saves the current project state to IndexedDB.
-         */
         async function saveBackup() {
             const projectState = getProjectState();
             if (!projectState) {
-                // If there's no project, ensure the pulse is off
                 backupBtn.classList.remove('animate-pulse-yellow');
                 return;
             }
-
             try {
-                // We use a fixed ID of 1 to always overwrite the same backup record.
                 await db.projects.put({ id: 1, ...projectState });
-                console.log('Backup guardado en IndexedDB a las', new Date().toLocaleTimeString());
-                // After a successful save, ensure the pulse is on
                 backupBtn.classList.add('animate-pulse-yellow');
             } catch (error) {
-                console.error('Error al guardar el backup en IndexedDB:', error);
+                console.error('Error saving backup to IndexedDB:', error);
             }
         }
         
-        /**
-         * Restores the application state from a backup object.
-         * @param {Object} backupData The backup data object from IndexedDB.
-         */
         function restoreProject(backupData) {
-            // Restore global variables
             currentFileName = backupData.fileName;
             srtEntries = backupData.srtEntries;
             glossary = backupData.glossary.data || [];
@@ -3463,21 +2858,16 @@
             translationMemory = backupData.translationMemory.data || [];
             tmSourceLanguage = backupData.translationMemory.sourceLang;
             tmTargetLanguage = backupData.translationMemory.targetLang;
-            // Restore QA settings, with defaults for backward compatibility
             qaSettings = backupData.qaSettings || { cpsLimit: 20, charsPerLineLimit: 42 };
             
-            // Re-render the entire UI with the restored data
             renderTranslations(srtEntries);
             showGlossaryEditorSection();
             showTMEditorSection();
             
-            showMessage(translations.es['project_restored_message']);
+            showMessage(errorMessages[currentLanguage]['project_restored_message']);
         }
 
         // --- QA Functions ---
-        /**
-         * Iterates through all subtitles and re-applies QA checks.
-         */
         function runFullQaCheck() {
             srtEntries.forEach((entry, index) => {
                 const editorDiv = document.getElementById(`translation-${index}`);
@@ -3485,13 +2875,9 @@
                     updateSubtitleStats(editorDiv, entry.charCountOriginal, entry.durationMs);
                 }
             });
-            updateStatsDisplay(); // Update the main stats display including the error count
+            updateStatsDisplay();
         }
 
-        /**
-         * Calculates all QA errors in the project.
-         * @returns {Array<Object>} An array of objects, each representing a subtitle with errors.
-         */
         function calculateAllQaErrors() {
             const errors = [];
             srtEntries.forEach((entry, index) => {
@@ -3503,7 +2889,7 @@
                 const lines = entry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').split('\n');
                 lines.forEach(line => {
                     if (countCharactersWithoutTags(line) > qaSettings.charsPerLineLimit) {
-                        errorTypes.add('Longitud de línea');
+                        errorTypes.add('Line length');
                     }
                 });
 
@@ -3511,7 +2897,7 @@
                     errors.push({
                         index: index,
                         subtitleIndex: entry.index,
-                        text: entry.translation.replace(/<[^>]+>/g, ' ').substring(0, 50) + '...', // Snippet
+                        text: entry.translation.replace(/<[^>]+>/g, ' ').substring(0, 50) + '...',
                         errors: Array.from(errorTypes)
                     });
                 }
@@ -3519,14 +2905,12 @@
             return errors;
         }
 
-        /**
-         * Renders the list of QA errors in its modal.
-         */
         function renderQaErrorList() {
             const errors = calculateAllQaErrors();
             qaErrorListContainer.innerHTML = '';
+            const t = translations[currentLanguage];
             if (errors.length === 0) {
-                qaErrorListContainer.textContent = translations.es['qa_no_errors'];
+                qaErrorListContainer.textContent = t.qa_no_errors;
                 return;
             }
             
@@ -3535,7 +2919,7 @@
                 errorItem.className = 'qa-error-item';
                 errorItem.dataset.entryIndex = error.index;
                 errorItem.innerHTML = `
-                    <div class="font-bold">Subtítulo #${error.subtitleIndex} <span class="text-red-500">(${error.errors.join(', ')})</span></div>
+                    <div class="font-bold">Subtitle #${error.subtitleIndex} <span class="text-red-500">(${error.errors.join(', ')})</span></div>
                     <div class="text-sm text-gray-600">${error.text}</div>
                 `;
                 qaErrorListContainer.appendChild(errorItem);
@@ -3546,133 +2930,63 @@
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
             populateIsoLanguagesDatalist();
-            updateTextContent();
+            setLanguage('es'); 
             resetGlossary();
             resetTM();
 
-            // Open sidebars by default
             if (terminologySidebar) terminologySidebar.classList.add('show-sidebar');
             if (translationMemorySidebar) translationMemorySidebar.classList.add('show-sidebar');
-
-            if (translationsContainer) {
-                translationsContainer.innerHTML = `<div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">${translations.es['no_translations']}</div>`;
-            }
             if (saveSrtButton) saveSrtButton.disabled = true;
             if (statsContainer) statsContainer.classList.add('hidden');
             if (videoPlayerContainer) videoPlayerContainer.classList.add('hidden');
-
-            if (addTermContent && addTermAccordionIcon) {
-                addTermContent.classList.add('collapsed');
-                addTermContent.classList.remove('expanded');
-                addTermAccordionIcon.classList.remove('rotated');
-            }
-            if (statsAccordionContent && statsAccordionIcon) {
-                statsAccordionContent.classList.add('collapsed');
-                statsAccordionContent.classList.remove('expanded');
-                statsAccordionIcon.classList.add('rotated');
-            }
+            if (addTermContent) addTermContent.classList.add('collapsed');
+            if (statsAccordionContent) statsAccordionContent.classList.add('collapsed');
             
-            // Event listener for the font size slider
             subtitleFontSize.addEventListener('input', (event) => {
                 subtitlePreviewText.style.fontSize = `${event.target.value}px`;
             });
-            // Set initial font size
             subtitlePreviewText.style.fontSize = `${subtitleFontSize.value}px`;
 
-            // Persistent listener for the subtitle preview
             videoPlayer.addEventListener('timeupdate', updateSubtitlePreview);
             
-            // Event listener for the preview source selector
             subtitlePreviewSource.addEventListener('change', (event) => {
                 previewSource = event.target.value;
-                updateSubtitlePreview(); // Refresh the preview immediately
+                updateSubtitlePreview();
             });
 
+            // Language switcher events
+            langEsBtn.addEventListener('click', () => setLanguage('es'));
+            langEnBtn.addEventListener('click', () => setLanguage('en'));
 
-            // Vertical Resizer logic
+            // Resizer logic
             const verticalResizer = document.getElementById('vertical-resizer');
             const editor = document.getElementById('editorMainContent');
             let isVerticalResizing = false;
+            verticalResizer.addEventListener('mousedown', () => { isVerticalResizing = true; document.body.style.cursor = 'ns-resize'; });
+            document.addEventListener('mousemove', (e) => { if (isVerticalResizing) { const newHeight = e.clientY - editor.getBoundingClientRect().top; if (newHeight > 100) editor.style.height = `${newHeight}px`; } });
+            document.addEventListener('mouseup', () => { isVerticalResizing = false; document.body.style.cursor = ''; });
 
-            verticalResizer.addEventListener('mousedown', (e) => {
-                isVerticalResizing = true;
-                document.body.style.userSelect = 'none';
-                document.body.style.cursor = 'ns-resize';
-                document.addEventListener('mousemove', handleVerticalMouseMove);
-                document.addEventListener('mouseup', () => {
-                    isVerticalResizing = false;
-                    document.body.style.userSelect = '';
-                    document.body.style.cursor = '';
-                    document.removeEventListener('mousemove', handleVerticalMouseMove);
-                });
-            });
-
-            function handleVerticalMouseMove(e) {
-                if (!isVerticalResizing) return;
-                const newHeight = e.clientY - editor.getBoundingClientRect().top;
-                if (newHeight > 100) { // Enforce min height
-                    editor.style.height = `${newHeight}px`;
-                }
-            }
-
-            // Horizontal Resizer logic
             const horizontalResizer = document.getElementById('horizontal-resizer');
             const videoSection = document.querySelector('.video-player-section');
-            const rightPanel = document.querySelector('.right-panel-content');
             let isHorizontalResizing = false;
-
-            horizontalResizer.addEventListener('mousedown', (e) => {
-                isHorizontalResizing = true;
-                document.body.style.userSelect = 'none';
-                document.body.style.cursor = 'col-resize';
-                document.addEventListener('mousemove', handleHorizontalMouseMove);
-                document.addEventListener('mouseup', () => {
-                    isHorizontalResizing = false;
-                    document.body.style.userSelect = '';
-                    document.body.style.cursor = '';
-                    document.removeEventListener('mousemove', handleHorizontalMouseMove);
-                });
-            });
-
-            function handleHorizontalMouseMove(e) {
-                if (!isHorizontalResizing) return;
-                const container = document.querySelector('.main-app-content');
-                const containerRect = container.getBoundingClientRect();
-                const newVideoWidth = e.clientX - containerRect.left;
-                const containerWidth = container.offsetWidth;
-                const newVideoWidthPercent = (newVideoWidth / containerWidth) * 100;
-
-                if (newVideoWidthPercent > 20 && newVideoWidthPercent < 80) {
-                    videoSection.style.flexBasis = `${newVideoWidthPercent}%`;
-                    rightPanel.style.flexBasis = `${100 - newVideoWidthPercent}%`;
-                }
-            }
-
-            // --- Backup and Restore Initialization ---
-
-            // Check for a backup on load to set the initial pulse animation
+            horizontalResizer.addEventListener('mousedown', () => { isHorizontalResizing = true; document.body.style.cursor = 'col-resize'; });
+            document.addEventListener('mousemove', (e) => { if (isHorizontalResizing) { const container = document.querySelector('.main-app-content'); const newVideoWidthPercent = ((e.clientX - container.getBoundingClientRect().left) / container.offsetWidth) * 100; if (newVideoWidthPercent > 20 && newVideoWidthPercent < 80) videoSection.style.flexBasis = `${newVideoWidthPercent}%`; } });
+            document.addEventListener('mouseup', () => { isHorizontalResizing = false; document.body.style.cursor = ''; });
+            
+            // Backup Initialization
             try {
                 const backup = await db.projects.get(1);
-                if (backup) {
-                    backupBtn.classList.add('animate-pulse-yellow');
-                } else {
-                    backupBtn.classList.remove('animate-pulse-yellow');
-                }
+                if (backup) backupBtn.classList.add('animate-pulse-yellow');
             } catch (error) {
-                console.error('Error al comprobar el backup inicial:', error);
+                console.error('Error checking initial backup:', error);
             }
-
-            // Set up autosave interval (every 5 minutes)
             setInterval(saveBackup, 300000);
 
-            // Event Listeners for the Backup Modal
             backupBtn.addEventListener('click', async () => {
-                // Always check for the latest backup state when the button is clicked
-                availableBackup = await db.projects.get(1);
-
-                if (availableBackup) {
-                    backupFileName.textContent = availableBackup.fileName;
-                    backupLastModified.textContent = new Date(availableBackup.lastModified).toLocaleString();
+                const backup = await db.projects.get(1);
+                if (backup) {
+                    backupFileName.textContent = backup.fileName;
+                    backupLastModified.textContent = new Date(backup.lastModified).toLocaleString();
                     backupFoundView.classList.remove('hidden');
                     noBackupFoundView.classList.add('hidden');
                 } else {
@@ -3681,100 +2995,66 @@
                 }
                 backupModal.classList.remove('hidden');
             });
-
-            closeBackupModalBtn.addEventListener('click', () => {
-                backupModal.classList.add('hidden');
-            });
-
-            confirmRestoreBtn.addEventListener('click', () => {
-                if (availableBackup) {
-                    restoreProject(availableBackup);
+            closeBackupModalBtn.addEventListener('click', () => backupModal.classList.add('hidden'));
+            confirmRestoreBtn.addEventListener('click', async () => {
+                const backup = await db.projects.get(1);
+                if (backup) {
+                    restoreProject(backup);
                     backupModal.classList.add('hidden');
                 }
             });
-
             deleteBackupBtn.addEventListener('click', async () => {
-                if (confirm(translations.es['backup_deleted_confirmation'])) {
+                if (confirm(errorMessages[currentLanguage]['backup_deleted_confirmation'])) {
                     await db.projects.delete(1);
-                    availableBackup = null;
                     backupBtn.classList.remove('animate-pulse-yellow');
                     backupModal.classList.add('hidden');
-                    showMessage(translations.es['backup_deleted_message']);
+                    showMessage(errorMessages[currentLanguage]['backup_deleted_message']);
                 }
             });
-
-            exportSrtFromBackupBtn.addEventListener('click', () => {
-                if (!availableBackup) {
-                    showMessage(translations.es['no_backup_to_export']);
-                    return;
-                }
+            exportSrtFromBackupBtn.addEventListener('click', async () => {
+                const backup = await db.projects.get(1);
+                if (!backup) { showMessage(errorMessages[currentLanguage]['no_backup_to_export']); return; }
                 try {
-                    const srtContent = reconstructSrt(availableBackup.srtEntries);
-                    const originalFileName = availableBackup.fileName.replace(/\.srt$/i, '');
-                    const formattedDate = new Date().toISOString().slice(0, 10);
-                    const newFileName = `${originalFileName}_recuperado_${formattedDate}.srt`;
-
+                    const srtContent = reconstructSrt(backup.srtEntries);
+                    const newFileName = `${backup.fileName.replace(/\.srt$/i, '')}_recuperado_${new Date().toISOString().slice(0, 10)}.srt`;
                     const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = url;
+                    a.href = URL.createObjectURL(blob);
                     a.download = newFileName;
-                    document.body.appendChild(a);
                     a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    
-                    showMessage(`${translations.es['backup_export_success']}: "${newFileName}"`);
+                    URL.revokeObjectURL(a.href);
+                    showMessage(`${errorMessages[currentLanguage]['backup_export_success']}: "${newFileName}"`);
                 } catch (error) {
-                    showMessage(`${translations.es['backup_export_error']}${error.message}`);
-                    console.error("Error exporting backup SRT:", error);
+                    showMessage(`${errorMessages[currentLanguage]['backup_export_error']}${error.message}`);
                 }
             });
 
-            // --- QA Modal Initialization ---
+            // QA Modal Initialization
             qaBtn.addEventListener('click', () => {
                 qaCpsLimitInput.value = qaSettings.cpsLimit;
                 qaCharsPerLineLimitInput.value = qaSettings.charsPerLineLimit;
                 qaModal.classList.remove('hidden');
             });
-
-            closeQaModalBtn.addEventListener('click', () => {
-                qaModal.classList.add('hidden');
-            });
-
+            closeQaModalBtn.addEventListener('click', () => qaModal.classList.add('hidden'));
             saveQaSettingsBtn.addEventListener('click', () => {
-                const newCps = parseInt(qaCpsLimitInput.value, 10);
-                const newChars = parseInt(qaCharsPerLineLimitInput.value, 10);
-
-                if (!isNaN(newCps) && newCps > 0) {
-                    qaSettings.cpsLimit = newCps;
-                }
-                if (!isNaN(newChars) && newChars > 0) {
-                    qaSettings.charsPerLineLimit = newChars;
-                }
-                
+                qaSettings.cpsLimit = parseInt(qaCpsLimitInput.value, 10) || qaSettings.cpsLimit;
+                qaSettings.charsPerLineLimit = parseInt(qaCharsPerLineLimitInput.value, 10) || qaSettings.charsPerLineLimit;
                 runFullQaCheck();
                 qaModal.classList.add('hidden');
             });
 
-            // --- QA Error List Modal Initialization ---
+            // QA Error List Modal Initialization
             qaErrorStats.addEventListener('click', () => {
-                const errors = calculateAllQaErrors();
-                if (errors.length > 0) {
+                if (calculateAllQaErrors().length > 0) {
                     renderQaErrorList();
                     qaErrorListModal.classList.remove('hidden');
                 }
             });
-
-            closeQaErrorListModalBtn.addEventListener('click', () => {
-                qaErrorListModal.classList.add('hidden');
-            });
-
+            closeQaErrorListModalBtn.addEventListener('click', () => qaErrorListModal.classList.add('hidden'));
             qaErrorListContainer.addEventListener('click', (event) => {
                 const errorItem = event.target.closest('.qa-error-item');
                 if (errorItem) {
-                    const entryIndex = parseInt(errorItem.dataset.entryIndex, 10);
-                    navigateToTranslation(entryIndex);
+                    navigateToTranslation(parseInt(errorItem.dataset.entryIndex, 10));
                     qaErrorListModal.classList.add('hidden');
                 }
             });
