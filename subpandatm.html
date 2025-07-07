@@ -695,6 +695,39 @@
             </div>
         </div>
     </div>
+    <!-- START: New Modals for TBX/TMX Download -->
+    <div id="saveTbxModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="save_tbx_title" class="text-xl font-bold mb-4">Exportar Archivo TBX</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="fileNameInputTbx" data-i18n="file_name_label" class="block text-sm font-medium mb-1">Nombre del archivo:</label>
+                    <input type="text" id="fileNameInputTbx" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="cancelSaveTbxBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                    <button id="confirmSaveTbxBtn" class="btn btn-primary" data-i18n="save_btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="saveTmxModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="save_tmx_title" class="text-xl font-bold mb-4">Exportar Archivo TMX</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="fileNameInputTmx" data-i18n="file_name_label" class="block text-sm font-medium mb-1">Nombre del archivo:</label>
+                    <input type="text" id="fileNameInputTmx" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="cancelSaveTmxBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                    <button id="confirmSaveTmxBtn" class="btn btn-primary" data-i18n="save_btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END: New Modals for TBX/TMX Download -->
     <div id="backupModal" class="modal hidden">
         <div class="modal-content">
             <h2 data-i18n="backup_modal_title" class="text-xl font-bold mb-4">Copia de Seguridad</h2>
@@ -880,6 +913,15 @@
         const exportShortcutsBtn = document.getElementById('exportShortcutsBtn');
         const importShortcutsInput = document.getElementById('importShortcutsInput');
         const restoreShortcutsBtn = document.getElementById('restoreShortcutsBtn');
+        // New DOM elements for TBX/TMX modals
+        const saveTbxModal = document.getElementById('saveTbxModal');
+        const fileNameInputTbx = document.getElementById('fileNameInputTbx');
+        const confirmSaveTbxBtn = document.getElementById('confirmSaveTbxBtn');
+        const cancelSaveTbxBtn = document.getElementById('cancelSaveTbxBtn');
+        const saveTmxModal = document.getElementById('saveTmxModal');
+        const fileNameInputTmx = document.getElementById('fileNameInputTmx');
+        const confirmSaveTmxBtn = document.getElementById('confirmSaveTmxBtn');
+        const cancelSaveTmxBtn = document.getElementById('cancelSaveTmxBtn');
 
         // --- I18N & SHORTCUTS SETUP ---
 
@@ -887,24 +929,24 @@
             'es': {
                 'title': 'subpandaTM', 'import_srt': 'Importar .srt', 'export_srt': 'Exportar .srt', 'backup_btn': 'Copia de seguridad', 'qa_btn': 'QA', 'shortcuts_btn': 'Atajos', 'find_replace_btn': 'Buscar y reemplazar', 'terminology_btn': 'Terminología', 'tm_btn': 'Memoria de traducción', 'load_video': 'Cargar vídeo', 'change_video': 'Cambiar vídeo', 'preview_size': 'Tamaño:', 'preview_source': 'Mostrar:', 'translation_text_option': 'Traducción', 'original_text_option': 'Original', 'translation_stats_title': 'Estadísticas', 'segments_progress_text': '{0}/{1} subtítulos traducidos ({2}%)', 'words_translated_text': '{0} palabras traducidas', 'words_total_text': '{0} palabras originales totales', 'words_remaining_text': '{0} palabras pendientes', 'no_translations': 'Importa un archivo .srt y un vídeo para empezar a trabajar. Si lo deseas, puedes trabajar con una memoria de traducción TMX y un glosario TBX, que puedes importar o crear desde cero.', 'time_codes': 'Códigos de tiempo:', 'original_text': 'Original:', 'translation_text': 'Traducción:', 'validate': 'Validar', 'edit': 'Editar', 'char_count_original': 'Original: ', 'char_count_translation': 'Traducción: ', 'char_units': ' caracteres', 'cps': ' CPS', 'ok': 'OK', 'close_btn': 'Cerrar', 'save_btn': 'Guardar', 'cancel_btn': 'Cancelar', 'shortcuts_title': 'Atajos de teclado',
                 'shortcut_desc_validateAndNext': 'Validar traducción y pasar a la siguiente', 'shortcut_desc_goToNext': 'Ir al siguiente subtítulo', 'shortcut_desc_goToPrevious': 'Ir al subtítulo anterior', 'shortcut_desc_insertTM1': 'Insertar 1ª sugerencia de la MT', 'shortcut_desc_insertTM2': 'Insertar 2ª sugerencia de la MT', 'shortcut_desc_insertTM3': 'Insertar 3ª sugerencia de la MT', 'shortcut_desc_insertTM4': 'Insertar 4ª sugerencia de la MT', 'shortcut_desc_insertTM5': 'Insertar 5ª sugerencia de la MT', 'shortcut_desc_insertGloss1': 'Insertar 1er término del glosario', 'shortcut_desc_insertGloss2': 'Insertar 2º término del glosario', 'shortcut_desc_insertGloss3': 'Insertar 3er término del glosario', 'shortcut_desc_insertGloss4': 'Insertar 4º término del glosario', 'shortcut_desc_insertGloss5': 'Insertar 5º término del glosario', 'shortcut_desc_jumpToTime': 'Saltar al tiempo de inicio del subtítulo actual', 'shortcut_desc_playSegment': 'Reproducir el subtítulo actual', 'shortcut_desc_playPause': 'Reproducir/pausar vídeo', 'shortcut_desc_seekForward': 'Avanzar 3 segundos', 'shortcut_desc_seekBackward': 'Retroceder 3 segundos', 'shortcut_desc_seekForwardFast': 'Avanzar 5 segundos', 'shortcut_desc_seekBackwardFast': 'Retroceder 5 segundos', 'shortcut_desc_bold': 'Aplicar negrita', 'shortcut_desc_italic': 'Aplicar cursiva',
-                'find_replace_title': 'Buscar y reemplazar', 'find_label': 'Buscar:', 'replace_label': 'Reemplazar con:', 'case_sensitive': 'Distinguir mayúsculas y minúsculas', 'regular_expression': 'Expresión regular', 'find_prev': 'Buscar anterior', 'find_next': 'Buscar siguiente', 'replace': 'Reemplazar', 'replace_all': 'Reemplazar todo', 'save_srt_title': 'Exportar Archivo SRT', 'file_name_label': 'Nombre del archivo:', 'backup_modal_title': 'Copia de Seguridad', 'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.', 'file_label': 'Archivo:', 'last_modified_label': 'Última modificación:', 'export_srt_btn': 'Exportar SRT', 'delete_backup_btn': 'Borrar Backup', 'restore_btn': 'Restaurar', 'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.', 'qa_modal_title': 'Configuración de QA', 'cps_limit_label': 'Límite de CPS:', 'chars_per_line_limit_label': 'Límite de caracteres por línea:', 'save_and_apply_btn': 'Guardar y aplicar', 'qa_error_list_title': 'Lista de Errores de QA', 'qa_errors_found': '{0} errores de QA encontrados', 'qa_no_errors': 'No se han encontrado errores de QA.', 'terminology_sidebar_title': 'Terminología', 'config_lang_title': 'Configurar idiomas del glosario', 'config_lang_info': 'Define los idiomas de origen y destino de tu glosario. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear un glosario desde cero.', 'source_language': 'Idioma de origen:', 'target_language': 'Idioma de destino:', 'confirm_languages': 'Confirmar idiomas', 'current_lang_title': 'Idiomas actuales del glosario', 'add_term_title': 'Añadir término', 'term': 'Término:', 'translation': 'Traducción:', 'add_button': 'Añadir', 'search_title': 'Buscar', 'search_placeholder': 'Buscar término...', 'import_tbx': 'Importar TBX', 'download_tbx': 'Descargar TBX', 'new_glossary': 'Nuevo glosario', 'glossary_list_title': 'Glosario', 'source_term_col': 'Término de origen', 'target_term_col': 'Término de destino', 'actions_col': 'Acciones', 'delete_button': 'Eliminar', 'tm_sidebar_title': 'Memoria de traducción', 'tm_config_lang_title': 'Configurar idiomas de la TM', 'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.', 'current_tm_lang_title': 'Idiomas actuales de la TM', 'new_tm': 'Nueva TM', 'import_tmx': 'Importar TMX', 'download_tmx': 'Descargar TMX', 'tm_search_title': 'Buscar en TM', 'tm_search_placeholder': 'Buscar en la memoria...', 'tm_search_results_title': 'Resultados de búsqueda en TM', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Traducción', 'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
+                'find_replace_title': 'Buscar y reemplazar', 'find_label': 'Buscar:', 'replace_label': 'Reemplazar con:', 'case_sensitive': 'Distinguir mayúsculas y minúsculas', 'regular_expression': 'Expresión regular', 'find_prev': 'Buscar anterior', 'find_next': 'Buscar siguiente', 'replace': 'Reemplazar', 'replace_all': 'Reemplazar todo', 'save_srt_title': 'Exportar Archivo SRT', 'save_tbx_title': 'Exportar Archivo TBX', 'save_tmx_title': 'Exportar Archivo TMX', 'file_name_label': 'Nombre del archivo:', 'backup_modal_title': 'Copia de Seguridad', 'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.', 'file_label': 'Archivo:', 'last_modified_label': 'Última modificación:', 'export_srt_btn': 'Exportar SRT', 'delete_backup_btn': 'Borrar Backup', 'restore_btn': 'Restaurar', 'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.', 'qa_modal_title': 'Configuración de QA', 'cps_limit_label': 'Límite de CPS:', 'chars_per_line_limit_label': 'Límite de caracteres por línea:', 'save_and_apply_btn': 'Guardar y aplicar', 'qa_error_list_title': 'Lista de Errores de QA', 'qa_errors_found': '{0} errores de QA encontrados', 'qa_no_errors': 'No se han encontrado errores de QA.', 'terminology_sidebar_title': 'Terminología', 'config_lang_title': 'Configurar idiomas del glosario', 'config_lang_info': 'Define los idiomas de origen y destino de tu glosario. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear un glosario desde cero.', 'source_language': 'Idioma de origen:', 'target_language': 'Idioma de destino:', 'confirm_languages': 'Confirmar idiomas', 'current_lang_title': 'Idiomas actuales del glosario', 'add_term_title': 'Añadir término', 'term': 'Término:', 'translation': 'Traducción:', 'add_button': 'Añadir', 'search_title': 'Buscar', 'search_placeholder': 'Buscar término...', 'import_tbx': 'Importar TBX', 'download_tbx': 'Descargar TBX', 'new_glossary': 'Nuevo glosario', 'glossary_list_title': 'Glosario', 'source_term_col': 'Término de origen', 'target_term_col': 'Término de destino', 'actions_col': 'Acciones', 'delete_button': 'Eliminar', 'tm_sidebar_title': 'Memoria de traducción', 'tm_config_lang_title': 'Configurar idiomas de la TM', 'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.', 'current_tm_lang_title': 'Idiomas actuales de la TM', 'new_tm': 'Nueva TM', 'import_tmx': 'Importar TMX', 'download_tmx': 'Descargar TMX', 'tm_search_title': 'Buscar en TM', 'tm_search_placeholder': 'Buscar en la memoria...', 'tm_search_results_title': 'Resultados de búsqueda en TM', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Traducción', 'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
                 'import_shortcuts_btn': 'Importar', 'export_shortcuts_btn': 'Exportar', 'restore_defaults_btn': 'Restaurar valores por defecto', 'edit_shortcut_btn': 'Editar', 'recording_shortcut_text': 'Pulsar tecla...',
             },
             'en': {
                 'title': 'subpandaTM', 'import_srt': 'Import .srt', 'export_srt': 'Export .srt', 'backup_btn': 'Backup', 'qa_btn': 'QA', 'shortcuts_btn': 'Shortcuts', 'find_replace_btn': 'Find & Replace', 'terminology_btn': 'Terminology', 'tm_btn': 'Translation Memory', 'load_video': 'Load Video', 'change_video': 'Change Video', 'preview_size': 'Size:', 'preview_source': 'Show:', 'translation_text_option': 'Translation', 'original_text_option': 'Original', 'translation_stats_title': 'Statistics', 'segments_progress_text': '{0}/{1} subtitles translated ({2}%)', 'words_translated_text': '{0} words translated', 'words_total_text': '{0} total original words', 'words_remaining_text': '{0} words remaining', 'no_translations': 'Import an .srt file and a video to start working. If you wish, you can work with a TMX translation memory and a TBX glossary, which you can import or create from scratch.', 'time_codes': 'Time codes:', 'original_text': 'Original:', 'translation_text': 'Translation:', 'validate': 'Validate', 'edit': 'Edit', 'char_count_original': 'Original: ', 'char_count_translation': 'Translation: ', 'char_units': ' characters', 'cps': ' CPS', 'ok': 'OK', 'close_btn': 'Close', 'save_btn': 'Save', 'cancel_btn': 'Cancel', 'shortcuts_title': 'Keyboard Shortcuts',
                 'shortcut_desc_validateAndNext': 'Validate translation and move to next', 'shortcut_desc_goToNext': 'Go to next subtitle', 'shortcut_desc_goToPrevious': 'Go to previous subtitle', 'shortcut_desc_insertTM1': 'Insert 1st TM suggestion', 'shortcut_desc_insertTM2': 'Insert 2nd TM suggestion', 'shortcut_desc_insertTM3': 'Insert 3rd TM suggestion', 'shortcut_desc_insertTM4': 'Insert 4th TM suggestion', 'shortcut_desc_insertTM5': 'Insert 5th TM suggestion', 'shortcut_desc_insertGloss1': 'Insert 1st glossary term', 'shortcut_desc_insertGloss2': 'Insert 2nd glossary term', 'shortcut_desc_insertGloss3': 'Insert 3rd glossary term', 'shortcut_desc_insertGloss4': 'Insert 4th glossary term', 'shortcut_desc_insertGloss5': 'Insert 5th glossary term', 'shortcut_desc_jumpToTime': 'Jump to current subtitle start time', 'shortcut_desc_playSegment': 'Play current subtitle', 'shortcut_desc_playPause': 'Play/pause video', 'shortcut_desc_seekForward': 'Seek forward 3 seconds', 'shortcut_desc_seekBackward': 'Seek backward 3 seconds', 'shortcut_desc_seekForwardFast': 'Seek forward 5 seconds', 'shortcut_desc_seekBackwardFast': 'Seek backward 5 seconds', 'shortcut_desc_bold': 'Apply bold', 'shortcut_desc_italic': 'Apply italics',
-                'find_replace_title': 'Find and Replace', 'find_label': 'Find:', 'replace_label': 'Replace with:', 'case_sensitive': 'Case sensitive', 'regular_expression': 'Regular expression', 'find_prev': 'Find previous', 'find_next': 'Find next', 'replace': 'Replace', 'replace_all': 'Replace all', 'save_srt_title': 'Export SRT File', 'file_name_label': 'File name:', 'backup_modal_title': 'Backup', 'restore_backup_info': 'A backup of an unsaved session has been found.', 'file_label': 'File:', 'last_modified_label': 'Last modified:', 'export_srt_btn': 'Export SRT', 'delete_backup_btn': 'Delete Backup', 'restore_btn': 'Restore', 'no_backup_found_info': 'No automatic backup has been found.', 'qa_modal_title': 'QA Settings', 'cps_limit_label': 'CPS Limit:', 'chars_per_line_limit_label': 'Characters per line limit:', 'save_and_apply_btn': 'Save and apply', 'qa_error_list_title': 'QA Error List', 'qa_errors_found': '{0} QA errors found', 'qa_no_errors': 'No QA errors found.', 'terminology_sidebar_title': 'Terminology', 'config_lang_title': 'Set up glossary languages', 'config_lang_info': 'Define the source and target languages for your glossary. The ISO code must be correct. After setting the language, you can import or create a glossary from scratch.', 'source_language': 'Source language:', 'target_language': 'Target language:', 'confirm_languages': 'Confirm languages', 'current_lang_title': 'Current glossary languages', 'add_term_title': 'Add term', 'term': 'Term:', 'translation': 'Translation:', 'add_button': 'Add', 'search_title': 'Search', 'search_placeholder': 'Search term...', 'import_tbx': 'Import TBX', 'download_tbx': 'Download TBX', 'new_glossary': 'New glossary', 'glossary_list_title': 'Glossary', 'source_term_col': 'Source term', 'target_term_col': 'Target term', 'actions_col': 'Actions', 'delete_button': 'Delete', 'tm_sidebar_title': 'Translation Memory', 'tm_config_lang_title': 'Set up TM languages', 'tm_config_lang_info': 'Define the source and target languages for your translation memory. The ISO code must be correct. After setting the language, you can import or create a memory from scratch.', 'current_tm_lang_title': 'Current TM languages', 'new_tm': 'New TM', 'import_tmx': 'Import TMX', 'download_tmx': 'Download TMX', 'tm_search_title': 'Search TM', 'tm_search_placeholder': 'Search in memory...', 'tm_search_results_title': 'TM Search Results', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Translation', 'tm_no_match_found': 'No matches found in the TM.',
+                'find_replace_title': 'Find and Replace', 'find_label': 'Find:', 'replace_label': 'Replace with:', 'case_sensitive': 'Case sensitive', 'regular_expression': 'Regular expression', 'find_prev': 'Find previous', 'find_next': 'Find next', 'replace': 'Replace', 'replace_all': 'Replace all', 'save_srt_title': 'Export SRT File', 'save_tbx_title': 'Export TBX File', 'save_tmx_title': 'Export TMX File', 'file_name_label': 'File name:', 'backup_modal_title': 'Backup', 'restore_backup_info': 'A backup of an unsaved session has been found.', 'file_label': 'File:', 'last_modified_label': 'Last modified:', 'export_srt_btn': 'Export SRT', 'delete_backup_btn': 'Delete Backup', 'restore_btn': 'Restore', 'no_backup_found_info': 'No automatic backup has been found.', 'qa_modal_title': 'QA Settings', 'cps_limit_label': 'CPS Limit:', 'chars_per_line_limit_label': 'Characters per line limit:', 'save_and_apply_btn': 'Save and apply', 'qa_error_list_title': 'QA Error List', 'qa_errors_found': '{0} QA errors found', 'qa_no_errors': 'No QA errors found.', 'terminology_sidebar_title': 'Terminology', 'config_lang_title': 'Set up glossary languages', 'config_lang_info': 'Define the source and target languages for your glossary. The ISO code must be correct. After setting the language, you can import or create a glossary from scratch.', 'source_language': 'Source language:', 'target_language': 'Target language:', 'confirm_languages': 'Confirm languages', 'current_lang_title': 'Current glossary languages', 'add_term_title': 'Add term', 'term': 'Term:', 'translation': 'Translation:', 'add_button': 'Add', 'search_title': 'Search', 'search_placeholder': 'Search term...', 'import_tbx': 'Import TBX', 'download_tbx': 'Download TBX', 'new_glossary': 'New glossary', 'glossary_list_title': 'Glossary', 'source_term_col': 'Source term', 'target_term_col': 'Target term', 'actions_col': 'Actions', 'delete_button': 'Delete', 'tm_sidebar_title': 'Translation Memory', 'tm_config_lang_title': 'Set up TM languages', 'tm_config_lang_info': 'Define the source and target languages for your translation memory. The ISO code must be correct. After setting the language, you can import or create a memory from scratch.', 'current_tm_lang_title': 'Current TM languages', 'new_tm': 'New TM', 'import_tmx': 'Import TMX', 'download_tmx': 'Download TMX', 'tm_search_title': 'Search TM', 'tm_search_placeholder': 'Search in memory...', 'tm_search_results_title': 'TM Search Results', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Translation', 'tm_no_match_found': 'No matches found in the TM.',
                 'import_shortcuts_btn': 'Import', 'export_shortcuts_btn': 'Export', 'restore_defaults_btn': 'Restore Defaults', 'edit_shortcut_btn': 'Edit', 'recording_shortcut_text': 'Press key...',
             }
         };
 
         const errorMessages = {
             'es': {
-                'error_reading_file': 'Error al leer o analizar archivo .srt: ', 'error_saving_file': 'Error al guardar archivo .srt: ', 'file_saved_successfully': 'Archivo .srt guardado con éxito.', 'no_translations_to_save': 'No hay subtítulos para guardar. Carga un archivo .srt primero.', 'reached_last': 'Has llegado al último subtítulo.', 'reached_first': 'Ya estás en el primer subtítulo.', 'file_processing_error': '¡Error! No se pudo procesar el archivo. Asegúrate de que es un archivo .srt válido.', 'no_match_found': 'No se encontró ninguna coincidencia.', 'replaced_all': 'Todas las ocurrencias reemplazadas.', 'no_find_query': 'Por favor, introduce el texto a buscar.', 'loading_file': 'Cargando archivo...', 'saving_file': 'Guardando archivo...', 'video_load_error': 'Error al cargar el vídeo. Asegúrate de que el formato es compatible.', 'both_terms_required': 'Ambos términos son requeridos.', 'lang_config_required': 'Por favor, configura los idiomas de origen y destino para el glosario.', 'cannot_download_empty_or_unconfigured_glossary': 'No se puede descargar un glosario vacío o sin configurar.', 'error_loading_tbx_file': 'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.', 'tmx_file_expected_tbx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.', 'tbx_file_expected_tmx_found': 'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.', 'error_loading_tmx_file': 'Error al cargar el archivo TMX. Asegúrate de que sea un XML/TMX válido.', 'cannot_download_empty_tm': 'No se puede descargar una memoria de traducción vacía.', 'backup_deleted_confirmation': '¿Estás seguro de que quieres borrar permanentemente este backup? Esta acción no se puede deshacer.', 'backup_deleted_message': 'El backup ha sido borrado.', 'project_restored_message': 'Proyecto restaurado con éxito.', 'no_backup_to_export': 'No hay datos de backup disponibles para exportar.', 'backup_export_error': 'Error al exportar el SRT del backup: ', 'backup_export_success': 'El archivo ha sido exportado con éxito.',
+                'error_reading_file': 'Error al leer o analizar archivo .srt: ', 'error_saving_file': 'Error al guardar archivo: ', 'file_saved_successfully': 'Archivo .srt guardado con éxito.', 'file_saved_successfully_tbx': 'Archivo TBX guardado con éxito.', 'file_saved_successfully_tmx': 'Archivo TMX guardado con éxito.', 'please_enter_filename': 'Por favor, introduce un nombre de archivo.', 'no_translations_to_save': 'No hay subtítulos para guardar. Carga un archivo .srt primero.', 'reached_last': 'Has llegado al último subtítulo.', 'reached_first': 'Ya estás en el primer subtítulo.', 'file_processing_error': '¡Error! No se pudo procesar el archivo. Asegúrate de que es un archivo .srt válido.', 'no_match_found': 'No se encontró ninguna coincidencia.', 'replaced_all': 'Todas las ocurrencias reemplazadas.', 'no_find_query': 'Por favor, introduce el texto a buscar.', 'loading_file': 'Cargando archivo...', 'saving_file': 'Guardando archivo...', 'video_load_error': 'Error al cargar el vídeo. Asegúrate de que el formato es compatible.', 'both_terms_required': 'Ambos términos son requeridos.', 'lang_config_required': 'Por favor, configura los idiomas de origen y destino para el glosario.', 'cannot_download_empty_or_unconfigured_glossary': 'No se puede descargar un glosario vacío o sin configurar.', 'error_loading_tbx_file': 'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.', 'tmx_file_expected_tbx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.', 'tbx_file_expected_tmx_found': 'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.', 'error_loading_tmx_file': 'Error al cargar el archivo TMX. Asegúrate de que sea un XML/TMX válido.', 'cannot_download_empty_tm': 'No se puede descargar una memoria de traducción vacía.', 'backup_deleted_confirmation': '¿Estás seguro de que quieres borrar permanentemente este backup? Esta acción no se puede deshacer.', 'backup_deleted_message': 'El backup ha sido borrado.', 'project_restored_message': 'Proyecto restaurado con éxito.', 'no_backup_to_export': 'No hay datos de backup disponibles para exportar.', 'backup_export_error': 'Error al exportar el SRT del backup: ', 'backup_export_success': 'El archivo ha sido exportado con éxito.',
                 'shortcut_import_error': 'Error al importar los atajos. Asegúrate de que es un archivo JSON válido.', 'shortcut_conflict': 'Este atajo ya está en uso. Por favor, elige otro.'
             },
             'en': {
-                'error_reading_file': 'Error reading or parsing .srt file: ', 'error_saving_file': 'Error saving .srt file: ', 'file_saved_successfully': '.srt file saved successfully.', 'no_translations_to_save': 'No subtitles to save. Load an .srt file first.', 'reached_last': 'You have reached the last subtitle.', 'reached_first': 'You are already at the first subtitle.', 'file_processing_error': 'Error! Could not process the file. Make sure it is a valid .srt file.', 'no_match_found': 'No match found.', 'replaced_all': 'All occurrences replaced.', 'no_find_query': 'Please enter text to search for.', 'loading_file': 'Loading file...', 'saving_file': 'Saving file...', 'video_load_error': 'Error loading video. Make sure the format is supported.', 'both_terms_required': 'Both terms are required.', 'lang_config_required': 'Please set up the source and target languages for the glossary.', 'cannot_download_empty_or_unconfigured_glossary': 'Cannot download an empty or unconfigured glossary.', 'error_loading_tbx_file': 'Error loading TBX file. Make sure it is a valid XML/TBX.', 'tmx_file_expected_tbx_found': 'This file appears to be a Translation Memory (TMX). Please use the "Import TMX" option in the Translation Memory panel.', 'tbx_file_expected_tmx_found': 'This file appears to be a Glossary (TBX). Please use the "Import TBX" option in the Terminology panel.', 'error_loading_tmx_file': 'Error loading TMX file. Make sure it is a valid XML/TMX.', 'cannot_download_empty_tm': 'Cannot download an empty translation memory.', 'backup_deleted_confirmation': 'Are you sure you want to permanently delete this backup? This action cannot be undone.', 'backup_deleted_message': 'The backup has been deleted.', 'project_restored_message': 'Project restored successfully.', 'no_backup_to_export': 'No backup data available to export.', 'backup_export_error': 'Error exporting SRT from backup: ', 'backup_export_success': 'File exported successfully.',
+                'error_reading_file': 'Error reading or parsing .srt file: ', 'error_saving_file': 'Error saving file: ', 'file_saved_successfully': '.srt file saved successfully.', 'file_saved_successfully_tbx': 'TBX file saved successfully.', 'file_saved_successfully_tmx': 'TMX file saved successfully.', 'please_enter_filename': 'Please enter a filename.', 'no_translations_to_save': 'No subtitles to save. Load an .srt file first.', 'reached_last': 'You have reached the last subtitle.', 'reached_first': 'You are already at the first subtitle.', 'file_processing_error': 'Error! Could not process the file. Make sure it is a valid .srt file.', 'no_match_found': 'No match found.', 'replaced_all': 'All occurrences replaced.', 'no_find_query': 'Please enter text to search for.', 'loading_file': 'Loading file...', 'saving_file': 'Saving file...', 'video_load_error': 'Error loading video. Make sure the format is supported.', 'both_terms_required': 'Both terms are required.', 'lang_config_required': 'Please set up the source and target languages for the glossary.', 'cannot_download_empty_or_unconfigured_glossary': 'Cannot download an empty or unconfigured glossary.', 'error_loading_tbx_file': 'Error loading TBX file. Make sure it is a valid XML/TBX.', 'tmx_file_expected_tbx_found': 'This file appears to be a Translation Memory (TMX). Please use the "Import TMX" option in the Translation Memory panel.', 'tbx_file_expected_tmx_found': 'This file appears to be a Glossary (TBX). Please use the "Import TBX" option in the Terminology panel.', 'error_loading_tmx_file': 'Error loading TMX file. Make sure it is a valid XML/TMX.', 'cannot_download_empty_tm': 'Cannot download an empty translation memory.', 'backup_deleted_confirmation': 'Are you sure you want to permanently delete this backup? This action cannot be undone.', 'backup_deleted_message': 'The backup has been deleted.', 'project_restored_message': 'Project restored successfully.', 'no_backup_to_export': 'No backup data available to export.', 'backup_export_error': 'Error exporting SRT from backup: ', 'backup_export_success': 'File exported successfully.',
                 'shortcut_import_error': 'Error importing shortcuts. Please ensure it is a valid JSON file.', 'shortcut_conflict': 'This shortcut is already in use. Please choose another one.'
             }
         };
@@ -1477,7 +1519,7 @@
         confirmSaveBtn.addEventListener('click', () => {
             const filename = fileNameInput.value;
             if (!filename) {
-                showMessage("Por favor, introduce un nombre de archivo."); // This can be internationalized too
+                showMessage(errorMessages[currentLanguage]['please_enter_filename']);
                 return;
             }
             showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
@@ -2194,28 +2236,17 @@
             return xml.join("\n");
         }
 
+        /**
+         * Opens a modal to ask for a filename before downloading the TBX file.
+         */
         function downloadTBX() {
             if (glossary.length === 0 && (!glossarySourceLanguage || !glossaryTargetLanguage)) {
                 showMessage(errorMessages[currentLanguage]['cannot_download_empty_or_unconfigured_glossary']);
                 return;
             }
-            showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
-            try {
-                const blob = new Blob([generateTBX()], { type: "application/xml" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "glossary.tbx";
-                document.body.appendChild(a);
-                a.click();
-                URL.revokeObjectURL(url);
-                showMessage(errorMessages[currentLanguage]['file_saved_successfully']);
-            } catch (error) {
-                showMessage(`${errorMessages[currentLanguage]['error_saving_file']} ${error.message}`);
-                console.error("Error downloading TBX:", error);
-            } finally {
-                hideLoadingOverlay();
-            }
+            fileNameInputTbx.value = 'glossary.tbx';
+            saveTbxModal.classList.remove('hidden');
+            fileNameInputTbx.focus();
         }
 
         function loadTBX() {
@@ -2490,27 +2521,17 @@
             return xml.join("\n");
         }
 
+        /**
+         * Opens a modal to ask for a filename before downloading the TMX file.
+         */
         function downloadTMX() {
-            const tmxContent = generateTMX();
-            if (!tmxContent) return;
-            showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
-            try {
-                const blob = new Blob([tmxContent], { type: "application/xml" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "translation_memory.tmx";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showTMInternalMessage(errorMessages[currentLanguage]['file_saved_successfully']);
-            } catch (error) {
-                showTMInternalMessage(`${errorMessages[currentLanguage]['error_saving_file']} ${error.message}`, true);
-                console.error("Error downloading TMX:", error);
-            } finally {
-                hideLoadingOverlay();
+            if (translationMemory.length === 0) {
+                showMessage(errorMessages[currentLanguage]['cannot_download_empty_tm']);
+                return;
             }
+            fileNameInputTmx.value = 'translation_memory.tmx';
+            saveTmxModal.classList.remove('hidden');
+            fileNameInputTmx.focus();
         }
 
         function addOrUpdateTMEntry(original, translation) {
@@ -2996,6 +3017,73 @@
                     qaErrorListModal.classList.add('hidden');
                 }
             });
+
+            // START: Event listeners for new TBX/TMX modals
+            cancelSaveTbxBtn.addEventListener('click', () => {
+                saveTbxModal.classList.add('hidden');
+            });
+
+            confirmSaveTbxBtn.addEventListener('click', () => {
+                const filename = fileNameInputTbx.value;
+                if (!filename) {
+                    showMessage(errorMessages[currentLanguage]['please_enter_filename']);
+                    return;
+                }
+                showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
+                try {
+                    const tbxContent = generateTBX();
+                    const blob = new Blob([tbxContent], { type: "application/xml" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename.endsWith('.tbx') ? filename : filename + '.tbx';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showMessage(errorMessages[currentLanguage]['file_saved_successfully_tbx']);
+                } catch (error) {
+                    showMessage(`${errorMessages[currentLanguage]['error_saving_file']} ${error.message}`);
+                    console.error("Error downloading TBX:", error);
+                } finally {
+                    hideLoadingOverlay();
+                    saveTbxModal.classList.add('hidden');
+                }
+            });
+
+            cancelSaveTmxBtn.addEventListener('click', () => {
+                saveTmxModal.classList.add('hidden');
+            });
+
+            confirmSaveTmxBtn.addEventListener('click', () => {
+                const filename = fileNameInputTmx.value;
+                if (!filename) {
+                    showMessage(errorMessages[currentLanguage]['please_enter_filename']);
+                    return;
+                }
+                showLoadingOverlay(errorMessages[currentLanguage]['saving_file']);
+                try {
+                    const tmxContent = generateTMX();
+                    if (!tmxContent) return;
+                    const blob = new Blob([tmxContent], { type: "application/xml" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename.endsWith('.tmx') ? filename : filename + '.tmx';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showMessage(errorMessages[currentLanguage]['file_saved_successfully_tmx']);
+                } catch (error) {
+                    showMessage(`${errorMessages[currentLanguage]['error_saving_file']} ${error.message}`);
+                    console.error("Error downloading TMX:", error);
+                } finally {
+                    hideLoadingOverlay();
+                    saveTmxModal.classList.add('hidden');
+                }
+            });
+            // END: Event listeners for new TBX/TMX modals
         });
     </script>
 </body>
