@@ -6,6 +6,8 @@
     <title data-i18n="title">Poanda</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
+    <!-- NEW: Added JSZip library for project saving/loading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -410,12 +412,45 @@
             min-width: 400px; /* Example: adjust this based on desired button spacing and text length */
         }
         /* Style for the actual buttons within the container, reducing font size */
-        .top-utility-buttons-container button {
+        .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn {
             font-size: 0.875rem; /* text-sm, to help fit text on one line */
             white-space: nowrap; /* Prevent text from wrapping inside buttons */
             padding-left: 0.75rem; /* px-3 */
             padding-right: 0.75rem; /* px-3 */
         }
+
+        /* NEW: Styles for the Project Dropdown Menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 0.375rem;
+        }
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.875rem;
+        }
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .dropdown:hover .dropdown-btn {
+            background-color: #ccc;
+        }
+
 
         /* Styles for the new fixed statistics panel */
         #statsContainer {
@@ -450,8 +485,20 @@
             <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
         </div>
 
-        <!-- Top Utility Buttons (Shortcuts, Find/Replace, Terminology, Translation Memory, Statistics) -->
+        <!-- Top Utility Buttons (Project, Shortcuts, Find/Replace, etc.) -->
         <div class="top-utility-buttons-container">
+            <!-- Project Dropdown Menu -->
+            <div class="dropdown">
+                <button id="projectBtn" class="dropdown-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                    <span data-i18n="project_btn">Project</span>
+                </button>
+                <div class="dropdown-content">
+                    <a id="newProjectBtn" data-i18n="new_project_btn">New Project</a>
+                    <a id="openProjectBtn" data-i18n="open_project_btn">Open Project</a>
+                    <a id="saveProjectBtn" data-i18n="save_project_btn">Save Project</a>
+                </div>
+            </div>
+
             <button id="shortcutsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="shortcuts_btn" id="shortcutsBtnText"></span>
             </button>
@@ -480,6 +527,8 @@
             <label for="poFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
                 <span data-i18n="load_file" id="loadBtnText"></span>
                 <input type="file" id="poFile" accept=".po" class="hidden">
+                 <!-- Hidden input for opening project zip/poanda -->
+                <input type="file" id="projectFile" accept=".zip,.poanda" class="hidden">
             </label>
             <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
                 <span data-i18n="save_file" id="saveBtnText"></span>
@@ -747,6 +796,28 @@
                 </button>
             </div>
         </div>
+
+        <!-- NEW: Save Project Modal -->
+        <div id="saveProjectModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label>
+                        <input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button id="saveProjectCancelBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span data-i18n="cancel_button"></span>
+                    </button>
+                    <button id="saveProjectConfirmBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        <span data-i18n="save_button"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Statistics Display (Fixed Panel) -->
@@ -808,6 +879,18 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingMessage = document.getElementById('loadingMessage');
         const mainEditorLayout = document.getElementById('mainEditorLayout');
+
+        // Project DOM elements
+        const projectFileInput = document.getElementById('projectFile');
+        const newProjectBtn = document.getElementById('newProjectBtn');
+        const openProjectBtn = document.getElementById('openProjectBtn');
+        const saveProjectBtn = document.getElementById('saveProjectBtn');
+        
+        // Save Project Modal DOM elements
+        const saveProjectModal = document.getElementById('saveProjectModal');
+        const projectFilenameInput = document.getElementById('projectFilenameInput');
+        const saveProjectConfirmBtn = document.getElementById('saveProjectConfirmBtn');
+        const saveProjectCancelBtn = document.getElementById('saveProjectCancelBtn');
 
 
         // Statistics DOM elements
@@ -895,7 +978,7 @@
                 'char_count_original': 'Original: ',
                 'char_count_translation': 'Translation: ',
                 'char_units': ' characters',
-                'no_translations': 'Load a .po file to start editing.',
+                'no_translations': 'Load a .po file or open a project to start editing.',
                 'error_reading_file': 'Error reading or parsing .po file: ',
                 'error_saving_file': 'Error saving .po file: ',
                 'file_saved_successfully': '.po file saved successfully.',
@@ -984,7 +1067,24 @@
                 'current_tm_lang_title': 'Current TM Languages',
                 'tm_initial_message': 'Create a new TM or import a TMX file to start working with the translation memory.',
                 'tmx_file_expected_tbx_found': 'This file appears to be a glossary (TBX). Please use the "Import TBX" option in the Terminology panel.',
-                'tbx_file_expected_tmx_found': 'This file appears to be a translation memory (TMX). Please use the "Import TMX" option in the Translation Memory panel.'
+                'tbx_file_expected_tmx_found': 'This file appears to be a translation memory (TMX). Please use the "Import TMX" option in the Translation Memory panel.',
+                'project_btn': 'Project',
+                'new_project_btn': 'New Project',
+                'open_project_btn': 'Open Project',
+                'save_project_btn': 'Save Project',
+                'project_saved': 'Project saved successfully.',
+                'error_saving_project': 'Error saving project.',
+                'no_project_to_save': 'There is no active .po file to save as a project.',
+                'loading_project': 'Loading project...',
+                'project_loaded': 'Project loaded successfully.',
+                'error_opening_project': 'Error opening project file.',
+                'invalid_project_file': 'Invalid project file. The zip must contain a .po file.',
+                'new_project_confirm': 'Are you sure you want to start a new project? All unsaved progress will be lost.',
+                'save_project_title': 'Save Project',
+                'filename_label': 'Filename:',
+                'save_button': 'Save',
+                'cancel_button': 'Cancel',
+                'enter_filename': 'Please enter a filename.'
             },
             'es': {
                 'title': 'Poanda',
@@ -999,7 +1099,7 @@
                 'char_count_original': 'Original: ',
                 'char_count_translation': 'Traducción: ',
                 'char_units': ' caracteres',
-                'no_translations': 'Carga un archivo .po para empezar a editar.',
+                'no_translations': 'Carga un archivo .po o abre un proyecto para empezar a editar.',
                 'error_reading_file': 'Error al leer o analizar archivo .po: ',
                 'error_saving_file': 'Error al guardar archivo .po: ',
                 'file_saved_successfully': 'Archivo .po guardado con éxito.',
@@ -1088,7 +1188,24 @@
                 'current_tm_lang_title': 'Idiomas actuales de la TM',
                 'tm_initial_message': 'Crea una nueva TM o importa un archivo TMX para empezar a trabajar con la memoria de traducción.',
                 'tmx_file_expected_tbx_found': 'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.',
-                'tbx_file_expected_tmx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.'
+                'tbx_file_expected_tmx_found': 'Este archivo parece ser una memoria de traducción (TMX). Por favor, usa la opción "Importar TMX" en el panel de Memoria de Traducción.',
+                'project_btn': 'Proyecto',
+                'new_project_btn': 'Nuevo proyecto',
+                'open_project_btn': 'Abrir proyecto',
+                'save_project_btn': 'Guardar proyecto',
+                'project_saved': 'Proyecto guardado con éxito.',
+                'error_saving_project': 'Error al guardar el proyecto.',
+                'no_project_to_save': 'No hay ningún archivo .po activo para guardar como proyecto.',
+                'loading_project': 'Cargando proyecto...',
+                'project_loaded': 'Proyecto cargado con éxito.',
+                'error_opening_project': 'Error al abrir el archivo del proyecto.',
+                'invalid_project_file': 'Archivo de proyecto no válido. El zip debe contener un archivo .po.',
+                'new_project_confirm': '¿Seguro que quieres iniciar un nuevo proyecto? Se perderá todo el progreso no guardado.',
+                'save_project_title': 'Guardar Proyecto',
+                'filename_label': 'Nombre del archivo:',
+                'save_button': 'Guardar',
+                'cancel_button': 'Cancelar',
+                'enter_filename': 'Por favor, introduce un nombre de archivo.'
             }
         };
 
@@ -1913,9 +2030,33 @@
         poFile.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (file) {
-                await processFile(file);
+                currentFileName = file.name;
+                const content = await file.text();
+                processPoContent(content);
             }
         });
+
+        // REFACTORED: Process PO file from content string
+        function processPoContent(content) {
+             showLoadingOverlay(translations[currentLanguage]['loading_file']);
+             try {
+                poEntries = parsePoContent(content); // Now only calls parsePoContent
+                renderTranslations(poEntries);
+                updateStatsDisplay(); // Ensure stats are updated after parsing and rendering
+             } catch (error) {
+                showMessage(`${translations[currentLanguage]['error_reading_file']} ${error.message}`);
+                console.error("Error parsing file:", error);
+                translationsContainer.innerHTML = `
+                    <div class="text-center text-red-500 p-4 border border-red-300 rounded-md">
+                        ${translations[currentLanguage]['file_processing_error']}
+                    </div>
+                `;
+                savePoButton.disabled = true;
+                statsContainer.classList.remove('show'); // Hide stats on error
+             } finally {
+                hideLoadingOverlay();
+             }
+        }
 
         savePoButton.addEventListener('click', async () => {
             if (poEntries.length === 0) {
@@ -1945,45 +2086,13 @@
 
         async function processFile(file) {
             currentFileName = file.name;
-            showLoadingOverlay(translations[currentLanguage]['loading_file']);
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const content = e.target.result;
-                        poEntries = parsePoContent(content); // Now only calls parsePoContent
-                        renderTranslations(poEntries);
-                        updateStatsDisplay(); // Ensure stats are updated after parsing and rendering
-                        resolve();
-                    } catch (error) {
-                        showMessage(`${translations[currentLanguage]['error_reading_file']} ${error.message}`);
-                        console.error("Error parsing file:", error);
-                        translationsContainer.innerHTML = `
-                            <div class="text-center text-red-500 p-4 border border-red-300 rounded-md">
-                                ${translations[currentLanguage]['file_processing_error']}
-                            </div>
-                        `;
-                        savePoButton.disabled = true;
-                        statsContainer.classList.remove('show'); // Hide stats on error
-                        resolve(); // Resolve even on error to hide loading overlay
-                    } finally {
-                        hideLoadingOverlay();
-                    }
-                };
-                reader.onerror = () => {
-                    showMessage(translations[currentLanguage]['error_reading_file'] + (file.name || ''));
-                    savePoButton.disabled = true;
-                    statsContainer.classList.remove('show'); // Hide stats on error
-                    hideLoadingOverlay();
-                    resolve();
-                };
-                reader.readAsText(file);
-            });
+            const content = await file.text();
+            processPoContent(content);
         }
 
         document.addEventListener('keydown', (event) => {
             // Check if any modal is open. If so, prevent default shortcuts to avoid interference.
-            if (!shortcutsModal.classList.contains('hidden') || !findReplaceModal.classList.contains('hidden') || !messageBox.classList.contains('hidden')) {
+            if (!shortcutsModal.classList.contains('hidden') || !findReplaceModal.classList.contains('hidden') || !messageBox.classList.contains('hidden') || !saveProjectModal.classList.contains('hidden')) {
                 return;
             }
 
@@ -2707,98 +2816,82 @@
 
         /**
          * Loads TBX data from a user-selected XML/TBX file.
-         * Parses the XML and updates the glossary array and sets glossary languages.
          */
         function loadTBX() {
             if (!tbxFileInput) { // Added null check
                 console.warn("tbxFileInput element not found. Cannot load TBX.");
                 return;
             }
-            tbxFileInput.click(); // Trigger file input click
             tbxFileInput.onchange = async (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
-
-                showLoadingOverlay(translations[currentLanguage]['loading_file']);
-                try {
-                    const reader = new FileReader();
-                    await new Promise((resolve, reject) => {
-                        reader.onload = () => {
-                            try {
-                                const parser = new DOMParser();
-                                const xmlDoc = parser.parseFromString(reader.result, "application/xml");
-
-                                // Check for XML parsing errors
-                                if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
-                                    const errorText = xmlDoc.getElementsByTagName("parsererror")[0].textContent;
-                                    console.error("Error parsing XML:", errorText);
-                                    throw new Error("Invalid XML/TBX format: " + errorText);
-                                }
-
-                                // --- New: Check if it's a TMX file instead of TBX ---
-                                if (xmlDoc.getElementsByTagName("tu").length > 0) {
-                                    showTMInternalMessage(translations[currentLanguage]['tbx_file_expected_tmx_found'], true);
-                                    reject(new Error("Attempted to load TMX into Glossary.")); // Reject to stop process
-                                    return;
-                                }
-                                // --- End New Check ---
-
-                                const entries = xmlDoc.getElementsByTagName("termEntry");
-
-                                glossary = [];
-                                let firstEntryLangs = { src: '', tgt: '' };
-
-                                if (entries.length > 0) {
-                                    const firstSets = entries[0].getElementsByTagName("LangSet");
-                                    if (firstSets.length >= 2) {
-                                        firstEntryLangs.src = firstSets[0].getAttribute("xml:lang");
-                                        firstEntryLangs.tgt = firstSets[1].getAttribute("xml:lang"); // Corrected to use firstSets[1] for target language
-                                    }
-                                }
-
-                                for (let entry of entries) {
-                                    const sets = entry.getElementsByTagName("LangSet");
-                                    if (sets.length >= 2) { // Ensure there are at least two LangSet elements
-                                        const lang1 = sets[0].getAttribute("xml:lang");
-                                        const term1 = sets[0].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
-                                        const lang2 = sets[1].getAttribute("xml:lang");
-                                        const term2 = sets[1].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
-                                        glossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2 });
-                                    }
-                                }
-
-                                if (glossary.length > 0 && firstEntryLangs.src && firstEntryLangs.tgt) {
-                                    glossarySourceLanguage = firstEntryLangs.src;
-                                    glossaryTargetLanguage = firstEntryLangs.tgt;
-                                } else if (glossary.length === 0) { // If no entries found but parsed, might be empty or malformed TBX
-                                    showMessage(translations[currentLanguage]['error_loading_tbx_file']); // Generic parsing error for TBX
-                                }
-                                // No longer showing specific message for no valid language pairs if glossary.length is 0
-
-                                showGlossaryEditorSection(); // Show editor after loading
-                                renderTranslations(poEntries); // Re-render main editor to apply new highlights
-                                resolve();
-                            } catch (error) {
-                                reject(error);
-                            }
-                        };
-                        reader.onerror = reject;
-                        reader.readAsText(file);
-                    });
-                } catch (error) {
-                    console.error("Error loading TBX file:", error);
-                    // Check if the error was from the TMX check, otherwise show generic TBX error
-                    if (error.message.includes("Attempted to load TMX")) {
-                        // Message already shown by the TMX check
-                    } else {
-                        showMessage(translations[currentLanguage]['error_loading_tbx_file']);
-                    }
-                    resetGlossary(); // Reset to config state on error
-                } finally {
-                    hideLoadingOverlay();
-                }
+                const content = await file.text();
+                processTBXContent(content);
             };
+            tbxFileInput.click(); // Trigger file input click
         }
+
+        // REFACTORED: Process TBX file from content string
+        function processTBXContent(content) {
+            showLoadingOverlay(translations[currentLanguage]['loading_file']);
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(content, "application/xml");
+
+                if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                    const errorText = xmlDoc.getElementsByTagName("parsererror")[0].textContent;
+                    throw new Error("Invalid XML/TBX format: " + errorText);
+                }
+
+                if (xmlDoc.getElementsByTagName("tu").length > 0) {
+                    showTMInternalMessage(translations[currentLanguage]['tbx_file_expected_tmx_found'], true);
+                    throw new Error("Attempted to load TMX into Glossary.");
+                }
+
+                const entries = xmlDoc.getElementsByTagName("termEntry");
+                glossary = [];
+                let firstEntryLangs = { src: '', tgt: '' };
+
+                if (entries.length > 0) {
+                    const firstSets = entries[0].getElementsByTagName("LangSet");
+                    if (firstSets.length >= 2) {
+                        firstEntryLangs.src = firstSets[0].getAttribute("xml:lang");
+                        firstEntryLangs.tgt = firstSets[1].getAttribute("xml:lang");
+                    }
+                }
+
+                for (let entry of entries) {
+                    const sets = entry.getElementsByTagName("LangSet");
+                    if (sets.length >= 2) {
+                        const lang1 = sets[0].getAttribute("xml:lang");
+                        const term1 = sets[0].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
+                        const lang2 = sets[1].getAttribute("xml:lang");
+                        const term2 = sets[1].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
+                        glossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2 });
+                    }
+                }
+
+                if (glossary.length > 0 && firstEntryLangs.src && firstEntryLangs.tgt) {
+                    glossarySourceLanguage = firstEntryLangs.src;
+                    glossaryTargetLanguage = firstEntryLangs.tgt;
+                } else if (glossary.length === 0) {
+                    showMessage(translations[currentLanguage]['error_loading_tbx_file']);
+                }
+
+                showGlossaryEditorSection();
+                renderTranslations(poEntries);
+
+            } catch (error) {
+                console.error("Error loading TBX file:", error);
+                if (!error.message.includes("Attempted to load TMX")) {
+                     showMessage(translations[currentLanguage]['error_loading_tbx_file']);
+                }
+                resetGlossary();
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
 
         // --- Translation Memory (TM) Logic ---
 
@@ -2872,7 +2965,8 @@
         tmFileInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (file) {
-                await loadTMX(file);
+                 const content = await file.text();
+                 processTMXContent(content);
             }
         });
 
@@ -2970,93 +3064,71 @@
 
         /**
          * Parses a TMX file content and populates the translationMemory array.
-         * @param {File} file The TMX file object.
+         * @param {string} content The TMX file content string.
          */
-        async function loadTMX(file) {
+        function processTMXContent(content) {
             showLoadingOverlay(translations[currentLanguage]['loading_file']);
             hideTMInternalMessage(); // Hide any previous internal message
 
             try {
-                const reader = new FileReader();
-                await new Promise((resolve, reject) => {
-                    reader.onload = () => {
-                        try {
-                            const parser = new DOMParser();
-                            const xmlDoc = parser.parseFromString(reader.result, "application/xml");
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(content, "application/xml");
 
-                            if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
-                                const errorText = xmlDoc.getElementsByTagName("parsererror")[0].textContent;
-                                console.error("Error parsing XML:", errorText);
-                                throw new Error("Invalid XML/TMX format: " + errorText);
-                            }
+                if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                    const errorText = xmlDoc.getElementsByTagName("parsererror")[0].textContent;
+                    throw new Error("Invalid XML/TMX format: " + errorText);
+                }
 
-                            // --- New: Check if it's a TBX file instead of TMX ---
-                            if (xmlDoc.getElementsByTagName("termEntry").length > 0) {
-                                showTMInternalMessage(translations[currentLanguage]['tmx_file_expected_tbx_found'], true);
-                                reject(new Error("Attempted to load TBX into Translation Memory.")); // Reject to stop process
-                                return;
-                            }
-                            // --- End New Check ---
+                if (xmlDoc.getElementsByTagName("termEntry").length > 0) {
+                    showTMInternalMessage(translations[currentLanguage]['tmx_file_expected_tbx_found'], true);
+                    throw new Error("Attempted to load TBX into Translation Memory.");
+                }
 
-                            const tuElements = xmlDoc.getElementsByTagName("tu");
-                            let newTM = [];
-                            let detectedSrcLang = '';
-                            let detectedTgtLang = '';
+                const tuElements = xmlDoc.getElementsByTagName("tu");
+                let newTM = [];
+                let detectedSrcLang = '';
+                let detectedTgtLang = '';
 
-                            // Try to detect source and target languages from the first tu
-                            if (tuElements.length > 0) {
-                                const tuvElements = tuElements[0].getElementsByTagName("tuv");
-                                if (tuvElements.length >= 2) {
-                                    detectedSrcLang = tuvElements[0].getAttribute("xml:lang");
-                                    detectedTgtLang = tuvElements[1].getAttribute("xml:lang");
-                                }
-                            }
+                if (tuElements.length > 0) {
+                    const tuvElements = tuElements[0].getElementsByTagName("tuv");
+                    if (tuvElements.length >= 2) {
+                        detectedSrcLang = tuvElements[0].getAttribute("xml:lang");
+                        detectedTgtLang = tuvElements[1].getAttribute("xml:lang");
+                    }
+                }
 
-                            for (let tu of tuElements) {
-                                const tuvElements = tu.getElementsByTagName("tuv");
-                                if (tuvElements.length >= 2) {
-                                    const srcTuv = tuvElements[0];
-                                    const tgtTuv = tuvElements[1];
-                                    const srcLang = srcTuv.getAttribute("xml:lang");
-                                    const tgtLang = tgtTuv.getAttribute("xml:lang");
-                                    const srcSeg = srcTuv.getElementsByTagName("seg")[0]?.textContent || '';
-                                    const tgtSeg = tgtTuv.getElementsByTagName("seg")[0]?.textContent || '';
+                for (let tu of tuElements) {
+                    const tuvElements = tu.getElementsByTagName("tuv");
+                    if (tuvElements.length >= 2) {
+                        const srcTuv = tuvElements[0];
+                        const tgtTuv = tuvElements[1];
+                        const srcLang = srcTuv.getAttribute("xml:lang");
+                        const tgtLang = tgtTuv.getAttribute("xml:lang");
+                        const srcSeg = srcTuv.getElementsByTagName("seg")[0]?.textContent || '';
+                        const tgtSeg = tgtTuv.getElementsByTagName("seg")[0]?.textContent || '';
 
-                                    newTM.push({
-                                        srcLang: srcLang,
-                                        srcText: srcSeg,
-                                        tgtLang: tgtLang,
-                                        tgtText: tgtSeg,
-                                        srcWordCount: countWords(srcSeg),
-                                        tgtWordCount: countWords(tgtSeg)
-                                    });
-                                }
-                            }
+                        newTM.push({
+                            srcLang: srcLang, srcText: srcSeg,
+                            tgtLang: tgtLang, tgtText: tgtSeg,
+                            srcWordCount: countWords(srcSeg), tgtWordCount: countWords(tgtSeg)
+                        });
+                    }
+                }
 
-                            translationMemory = newTM;
-                            tmSourceLanguage = detectedSrcLang || (tmConfigSrcLang ? tmConfigSrcLang.value : 'en-US'); // Fallback to current config input
-                            tmTargetLanguage = detectedTgtLang || (tmConfigTgtLang ? tmConfigTgtLang.value : 'es-ES'); // Fallback to current config input
+                translationMemory = newTM;
+                tmSourceLanguage = detectedSrcLang || (tmConfigSrcLang ? tmConfigSrcLang.value : 'en-US');
+                tmTargetLanguage = detectedTgtLang || (tmConfigTgtLang ? tmConfigTgtLang.value : 'es-ES');
 
-                            showTMInternalMessage(`TMX loaded with ${translationMemory.length} translation units.`);
-                            showTMEditorSection(); // Show editor section
-                            tmSearch(); // Refresh TM search results
-                            resolve();
-                        } catch (error) {
-                            reject(error);
-                        }
-                    };
-                    reader.onerror = reject;
-                    reader.readAsText(file);
-                });
+                showTMInternalMessage(`TMX loaded with ${translationMemory.length} translation units.`);
+                showTMEditorSection();
+                tmSearch();
+
             } catch (error) {
                 console.error("Error loading TMX file:", error);
-                // Check if the error was from the TBX check, otherwise show generic TMX error
-                if (error.message.includes("Attempted to load TBX")) {
-                    // Message already shown by the TBX check
-                } else {
-                    showTMInternalMessage(translations[currentLanguage]['error_loading_tmx_file'], true); // Show error message
+                if (!error.message.includes("Attempted to load TBX")) {
+                     showTMInternalMessage(translations[currentLanguage]['error_loading_tmx_file'], true);
                 }
-                resetTM(); // Reset to config state on error
+                resetTM();
             } finally {
                 hideLoadingOverlay();
             }
@@ -3068,8 +3140,7 @@
          */
         function generateTMX() {
             if (translationMemory.length === 0) {
-                showTMInternalMessage(translations[currentLanguage]['cannot_download_empty_tm'], true); // Show error message
-                return null;
+                return null; // Return null if nothing to generate
             }
 
             const header = `<?xml version="1.0" encoding="UTF-8"?>
@@ -3079,7 +3150,6 @@
           srclang="${tmSourceLanguage || 'en-US'}" o-tmf="Poanda"
           adminlang="en-US" `;
 
-            // If a target language is explicitly set, add it. Otherwise, TMX supports multiple targets.
             const targetLangAttr = tmTargetLanguage ? `targetlang="${tmTargetLanguage}"` : '';
 
             const xml = [header + targetLangAttr + `>
@@ -3103,7 +3173,10 @@
          */
         function downloadTMX() {
             const tmxContent = generateTMX();
-            if (!tmxContent) return; // generateTMX already shows message if empty
+            if (!tmxContent) {
+                 showTMInternalMessage(translations[currentLanguage]['cannot_download_empty_tm'], true);
+                 return;
+            }
 
             showLoadingOverlay(translations[currentLanguage]['saving_file']);
             try {
@@ -3116,9 +3189,9 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showTMInternalMessage(translations[currentLanguage]['file_saved_successfully']); // Reuse generic save success message
+                showTMInternalMessage(translations[currentLanguage]['file_saved_successfully']);
             } catch (error) {
-                showTMInternalMessage(`${translations[currentLanguage]['error_saving_file']} ${error.message}`, true); // Show error message
+                showTMInternalMessage(`${translations[currentLanguage]['error_saving_file']} ${error.message}`, true);
                 console.error("Error downloading TMX:", error);
             } finally {
                 hideLoadingOverlay();
@@ -3357,11 +3430,13 @@
 
                 const files = event.dataTransfer.files;
                 if (files.length > 0) {
-                    const poFileToProcess = Array.from(files).find(file => file.name.toLowerCase().endsWith('.po'));
-                    if (poFileToProcess) {
-                        await processFile(poFileToProcess);
+                    const file = files[0];
+                    if (file.name.toLowerCase().endsWith('.po')) {
+                        await processFile(file);
+                    } else if (file.name.toLowerCase().endsWith('.zip') || file.name.toLowerCase().endsWith('.poanda')) {
+                        await openProject(file);
                     } else {
-                        showMessage('Please drop a valid .po file.');
+                        showMessage('Please drop a valid .po or .poanda project file.');
                     }
                 }
             });
@@ -3412,6 +3487,153 @@
             }
         }
 
+        // --- Project Management Functions ---
+
+        /**
+         * Resets the entire application to a clean state, without confirmation.
+         */
+        function resetProjectState() {
+            // Reset PO file data
+            poEntries = [];
+            currentFileName = 'translations.po';
+            renderTranslations([]); // Clears the editor
+            updateStatsDisplay();
+
+            // Reset sidebars
+            resetGlossary();
+            resetTM();
+
+            // Hide sidebars if they are open
+            terminologySidebar.classList.remove('show-sidebar');
+            translationMemorySidebar.classList.remove('show-sidebar');
+            updateMainContentOffset();
+        }
+
+        /**
+         * Starts a new project, asking for confirmation if there's unsaved work.
+         */
+        function newProject() {
+            if (poEntries.length > 0) {
+                if (!confirm(translations[currentLanguage]['new_project_confirm'])) {
+                    return;
+                }
+            }
+            resetProjectState();
+        }
+
+        /**
+         * Shows the modal to get a filename before saving the project.
+         */
+        function showSaveProjectModal() {
+            if (poEntries.length === 0) {
+                showMessage(translations[currentLanguage]['no_project_to_save']);
+                return;
+            }
+            // Suggest a filename based on the current .po file name, without extension
+            projectFilenameInput.value = currentFileName.replace(/\.po$/i, '');
+            saveProjectModal.classList.remove('hidden');
+            projectFilenameInput.focus();
+        }
+
+        /**
+         * Executes the project save logic after getting the filename from the modal.
+         */
+        async function executeSaveProject() {
+            const filename = projectFilenameInput.value.trim();
+            if (!filename) {
+                showMessage(translations[currentLanguage]['enter_filename']);
+                return;
+            }
+
+            showLoadingOverlay(translations[currentLanguage]['saving_file']);
+            try {
+                const zip = new JSZip();
+
+                // 1. Add .po file
+                const poContent = reconstructPo(poEntries);
+                zip.file(currentFileName, poContent);
+
+                // 2. Add .tmx file if TM has content
+                const tmxContent = generateTMX();
+                if (tmxContent) {
+                    zip.file("memory.tmx", tmxContent);
+                }
+
+                // 3. Add .tbx file if glossary has content
+                if (glossary.length > 0) {
+                    const tbxContent = generateTBX();
+                    zip.file("glossary.tbx", tbxContent);
+                }
+
+                // Generate and download zip with .poanda extension
+                const zipBlob = await zip.generateAsync({ type: "blob" });
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${filename}.poanda`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                saveProjectModal.classList.add('hidden');
+                showMessage(translations[currentLanguage]['project_saved']);
+
+            } catch (error) {
+                showMessage(translations[currentLanguage]['error_saving_project'] + ': ' + error.message);
+                console.error("Error saving project:", error);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        /**
+         * Opens a project from a .zip or .poanda file.
+         * @param {File} file The project file to open.
+         */
+        async function openProject(file) {
+            if (!file) return;
+
+            showLoadingOverlay(translations[currentLanguage]['loading_project']);
+            try {
+                // Reset current state silently before loading the new project
+                resetProjectState();
+
+                const zip = await JSZip.loadAsync(file);
+                let poFileFound = false;
+
+                const promises = [];
+                zip.forEach((relativePath, zipEntry) => {
+                    const fileNameLower = zipEntry.name.toLowerCase();
+                    if (fileNameLower.endsWith('.po')) {
+                        poFileFound = true;
+                        currentFileName = zipEntry.name;
+                        promises.push(zipEntry.async("string").then(processPoContent));
+                    } else if (fileNameLower.endsWith('.tmx')) {
+                         promises.push(zipEntry.async("string").then(processTMXContent));
+                    } else if (fileNameLower.endsWith('.tbx')) {
+                         promises.push(zipEntry.async("string").then(processTBXContent));
+                    }
+                });
+
+                await Promise.all(promises);
+
+                if (!poFileFound) {
+                    throw new Error(translations[currentLanguage]['invalid_project_file']);
+                }
+                showMessage(translations[currentLanguage]['project_loaded']);
+
+            } catch (error) {
+                showMessage(translations[currentLanguage]['error_opening_project'] + ': ' + error.message);
+                console.error("Error opening project:", error);
+                // Reset again if loading failed, to ensure a clean state
+                resetProjectState();
+            } finally {
+                hideLoadingOverlay();
+                // Reset file input value to allow opening the same file again
+                projectFileInput.value = '';
+            }
+        }
 
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -3420,6 +3642,22 @@
             // Add event listeners for language buttons
             document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
             document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
+
+            // Add event listeners for project buttons
+            newProjectBtn.addEventListener('click', newProject);
+            saveProjectBtn.addEventListener('click', showSaveProjectModal);
+            openProjectBtn.addEventListener('click', () => projectFileInput.click());
+            projectFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                openProject(file);
+            });
+
+            // Add event listeners for the save project modal
+            saveProjectConfirmBtn.addEventListener('click', executeSaveProject);
+            saveProjectCancelBtn.addEventListener('click', () => {
+                saveProjectModal.classList.add('hidden');
+            });
+
 
             setLanguage(currentLanguage); // Apply initial language (en) and content
 
