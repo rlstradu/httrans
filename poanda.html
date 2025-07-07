@@ -6,474 +6,121 @@
     <title data-i18n="title">Poanda</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
-    <!-- NEW: Added JSZip library for project saving/loading -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Estilos generales para el cuerpo y la fuente */
         body {
             font-family: 'Montserrat', sans-serif;
-            background-color: #f3f4f6; /* Fondo para modo claro */
-            color: #202020; /* Color de texto general para modo claro */
-            transition: background-color 0.3s ease, color 0.3s ease; /* Transiciones suaves */
+            background-color: #f3f4f6;
+            color: #202020;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        /* Permite redimensionar verticalmente las áreas de texto */
         textarea {
             resize: vertical;
-            overflow-y: hidden; /* Oculta el scrollbar inicial, se maneja con auto-redimensionado */
+            overflow-y: hidden;
         }
-        /* Asegura que el texto preformateado respete los saltos de línea y no desborde */
         pre {
             white-space: pre-wrap;
-            overflow-wrap: break-word; /* Evita la división de palabras, ajustando el texto de forma más natural */
+            overflow-wrap: break-word;
         }
-        /* Estilo para el icono de check (SVG) */
         .check-icon {
-            display: none; /* Oculto por defecto */
-            margin-left: 8px; /* Espacio a la izquierda del icono */
-            vertical-align: middle; /* Alineación vertical */
-            width: 20px; /* Ancho del icono */
-            height: 20px; /* Altura del icono */
-            color: #22c55e; /* Color verde para el check */
-        }
-
-        /* Estilos de los botones con efectos hover */
-        .btn-load {
-            background-color: #f48790;
-            color: #000;
-        }
-        .btn-load:hover {
-            background-color: #e07a82;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-save {
-            background-color: #f7cf7e;
-            color: #000;
-        }
-        .btn-save:hover {
-            background-color: #e3b76e;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Color del botón Validar */
-        .btn-validate {
-            background-color: #f7cf7e;
-            color: #000;
-        }
-        .btn-validate:hover {
-            background-color: #e3b76e;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Color del botón Editar (Edit) */
-        .btn-edit {
-            background-color: #f48790;
-            color: #000;
-        }
-        .btn-edit:hover {
-            background-color: #e07a82;
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Estilos específicos para los campos de visualización de código (msgid, msgctxt) */
-        .po-display-code {
-            background-color: #e3e3e3; /* Fondo gris claro */
-            border: 1px solid #000; /* Borde negro */
-            color: #202020; /* Texto negro oscuro */
-        }
-        /* El textarea msgstr siempre tendrá fondo blanco y texto negro */
-        .msgstr-textarea {
-            background-color: #ffffff; /* Fondo blanco */
-            color: #000000; /* Texto negro */
-            min-height: 80px; /* Altura mínima por defecto para los campos de traducción */
-        }
-
-        /* Fondo de las unidades de traducción en modo claro */
-        .translation-unit-bg {
-            background-color: #f8f8f8; /* Fondo muy claro para el contenedor de unidades de traducción */
-            border-color: #e5e7eb; /* Borde claro */
-        }
-
-        /* Ajustes de color de texto para asegurar contraste en modo claro */
-        .text-on-light-contrast {
-            color: #202020; /* Negro oscuro para texto sobre fondos claros */
-        }
-
-        /* Clases para el layout de 2 columnas */
-        .translation-row {
-            display: flex;
-            flex-direction: column; /* Por defecto en móvil: columna */
-            gap: 1rem; /* Espacio entre columnas/filas */
-        }
-
-        @media (min-width: 768px) { /* A partir de md (768px) */
-            .translation-row {
-                flex-direction: row; /* En desktop: fila */
-            }
-            .original-col, .translation-col { /* Ambas columnas tienen el mismo ancho */
-                flex: 1; /* Ocupan la misma proporción del espacio disponible */
-            }
-        }
-
-        /* Estilos para el pop-up (modal) */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            width: 500px; /* Default width for message/shortcuts modal */
-        }
-
-        /* Specific width for findReplaceModal to accommodate text on one line */
-        #findReplaceModal .modal-content {
-            width: 650px; /* Increased width to prevent text wrapping */
-            max-width: 95%; /* Ensure it doesn't overflow on smaller screens */
-        }
-        .shortcut-icon {
-            display: inline-block;
-            width: 1em; /* Adjust size as needed */
-            height: 1em;
-            vertical-align: middle;
-            margin: 0 4px;
-        }
-
-        /* Main layout container for editor and terminology sidebar */
-        .main-editor-layout {
-            display: flex;
-            flex-direction: column; /* Default to column on small screens */
-            gap: 1rem; /* Espacio entre editor y barra lateral */
-            width: 100%;
-        }
-
-        @media (min-width: 1024px) { /* On large screens, switch to row layout */
-            .main-editor-layout {
-                flex-direction: row;
-                gap: 1rem; /* Apply gap universally on large screens */
-            }
-            .editor-main-content {
-                flex: 2; /* Main editor takes 2/3 width or 2/4 total when both sidebars are visible */
-            }
-            /* Sidebar widths */
-            .terminology-sidebar, .translation-memory-sidebar {
-                min-width: 300px;
-                max-width: 400px;
-            }
-        }
-
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .sidebar-content {
-            max-height: calc(100vh - 200px); /* Adjust based on header/footer */
-            overflow-y: auto;
-            padding-right: 0.5rem; /* For scrollbar space */
-        }
-
-        /* Styles for glossary specific inputs and buttons within sidebar */
-        .glossary-input-group label, .tm-input-group label {
-            white-space: nowrap;
-        }
-        .glossary-input-group input, .glossary-input-group select,
-        .tm-input-group input, .tm-input-group select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            margin-top: 4px;
-            color: #202020;
-            background-color: #fff;
-        }
-        .glossary-btn-primary, .tm-btn-primary {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-        .glossary-btn-primary:hover, .tm-btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .glossary-btn-secondary, .tm-btn-secondary {
-            background-color: #e0e0e0;
-            color: #333;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-        .glossary-btn-secondary:hover, .tm-btn-secondary:hover {
-            background-color: #d0d0d0;
-        }
-        .glossary-delete-btn, .tm-delete-btn {
-            background-color: #f44336;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .glossary-delete-btn:hover, .tm-delete-btn:hover {
-            background-color: #da190b;
-        }
-        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td {
-            padding: 8px 12px;
-            border: 1px solid #e0e0e0;
-            font-size: 0.9rem;
-        }
-        .glossary-table th, .tm-table th {
-            background-color: #f0f0f0;
-            font-weight: 600;
-        }
-        .glossary-info-box, .tm-info-box {
-            background-color: #f0f8ff;
-            border: 1px solid #d0e8f8;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            color: #333;
-        }
-
-        /* Glossary Highlight for text and rows */
-        .glossary-highlight {
-            background-color: #ffcc00; /* Yellow highlight for text */
-            padding: 0 2px;
-            border-radius: 3px;
-        }
-
-        .glossary-row-highlight {
-            background-color: #ffcc00 !important; /* Yellow highlight for glossary table rows */
-            transition: background-color 0.3s ease;
-        }
-
-        /* Active translation unit highlight */
-        .translation-unit-active {
-            border: 2px solid #3b82f6; /* Blue border for active unit */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Light blue glow */
-        }
-
-        /* Loading Overlay Styles */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001; /* Above modals */
-            font-size: 1.2rem;
-            color: #333;
-        }
-
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* TM Search Results Table Column Widths */
-        .tm-table th:nth-child(1), .tm-table td:nth-child(1) {
-            width: 10%; /* Percentage column narrower */
-            max-width: 60px; /* Max width to ensure it doesn't get too wide */
-            text-align: center;
-        }
-        .tm-table th:nth-child(2), .tm-table td:nth-child(2) {
-            width: 45%; /* Original column */
-        }
-        .tm-table th:nth-child(3), .tm-table td:nth-child(3) {
-            width: 45%; /* Translation column */
-        }
-
-        /* Highlight for active TM match in table */
-        .tm-best-match-highlight {
-            background-color: #d1fae5 !important; /* Light green */
-            border-color: #10b981 !important; /* Emerald-500 */
-            border-width: 2px;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); /* Light green glow */
-        }
-
-        /* Fixed width for dropArea - always 90% */
-        #dropArea {
-            width: 100%; /* Ensure it always tries to take full width */
-            max-width: 90%; /* Fixed max-width at 90% */
-            transition: none; /* No transition as width is fixed now */
-        }
-
-        /* Floating Sidebars - Always visible, controlled by transform */
-        .terminology-sidebar, .translation-memory-sidebar {
-            position: fixed;
-            top: 60px; /* Adjust as needed, e.g., below your header bar */
-            bottom: 20px;
-            width: 350px; /* Increased default width for sidebars */
-            z-index: 500;
-            background-color: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out, width 0.3s ease-in-out; /* Add width to transition */
-            opacity: 0; /* Hidden by default */
-            pointer-events: none; /* No interaction when hidden */
-            resize: horizontal; /* Enable horizontal resizing */
-            overflow: auto; /* Allow scrolling if content overflows during resize */
-            min-width: 300px; /* Minimum width for resizing */
-            max-width: 600px; /* Maximum width for resizing */
-        }
-
-        .terminology-sidebar {
-            left: 1rem; /* Position on the left with some margin */
-            transform: translateX(-100%); /* Start completely off-screen to the left */
-        }
-        .terminology-sidebar.show-sidebar {
-            transform: translateX(0); /* Slide into view */
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .translation-memory-sidebar {
-            right: 1rem; /* Position on the right with some margin */
-            transform: translateX(100%); /* Start completely off-screen to the right */
-        }
-        .translation-memory-sidebar.show-sidebar {
-            transform: translateX(0); /* Slide into view */
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        /* Adjust padding of main content when sidebars are open */
-        .editor-main-content {
-            padding-left: 1rem; /* Default padding */
-            padding-right: 1rem; /* Default padding */
-            transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out;
-            /* Keep max-height and overflow-y as before */
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        @media (min-width: 1024px) { /* Apply padding adjustments only on larger screens */
-            .editor-main-content.left-sidebar-active {
-                padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); /* Use CSS variable for dynamic padding */
-            }
-            .editor-main-content.right-sidebar-active {
-                padding-right: calc(var(--translation-memory-sidebar-width, 350px) + 2rem); /* Use CSS variable for dynamic padding */
-            }
-        }
-
-        /* Text size for main content divs */
-        .po-display-code, .msgstr-textarea {
-            font-size: 1rem; /* text-base */
-        }
-
-        /* Centering the top utility buttons */
-        .top-utility-buttons-container {
-            position: absolute;
-            top: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem; /* space-x-3 */
-            /* Ensure it can grow if needed, or enforce a min-width to prevent wrapping */
-            min-width: 400px; /* Example: adjust this based on desired button spacing and text length */
-        }
-        /* Style for the actual buttons within the container, reducing font size */
-        .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn {
-            font-size: 0.875rem; /* text-sm, to help fit text on one line */
-            white-space: nowrap; /* Prevent text from wrapping inside buttons */
-            padding-left: 0.75rem; /* px-3 */
-            padding-right: 0.75rem; /* px-3 */
-        }
-
-        /* NEW: Styles for the Project Dropdown Menu */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .dropdown-content {
             display: none;
-            position: absolute;
-            background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            border-radius: 0.375rem;
+            margin-left: 8px;
+            vertical-align: middle;
+            width: 20px;
+            height: 20px;
+            color: #22c55e;
         }
-        .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            font-size: 0.875rem;
+        .btn-load { background-color: #f48790; color: #000; }
+        .btn-load:hover { background-color: #e07a82; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .btn-save { background-color: #f7cf7e; color: #000; }
+        .btn-save:hover { background-color: #e3b76e; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .btn-validate { background-color: #f7cf7e; color: #000; }
+        .btn-validate:hover { background-color: #e3b76e; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .btn-edit { background-color: #f48790; color: #000; }
+        .btn-edit:hover { background-color: #e07a82; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .po-display-code { background-color: #e3e3e3; border: 1px solid #000; color: #202020; }
+        .msgstr-textarea { background-color: #ffffff; color: #000000; min-height: 80px; }
+        .translation-unit-bg { background-color: #f8f8f8; border-color: #e5e7eb; }
+        .text-on-light-contrast { color: #202020; }
+        .translation-row { display: flex; flex-direction: column; gap: 1rem; }
+        @media (min-width: 768px) {
+            .translation-row { flex-direction: row; }
+            .original-col, .translation-col { flex: 1; }
         }
-        .dropdown-content a:hover {
-            background-color: #f1f1f1;
-            cursor: pointer;
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: #fff; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 90%; width: 500px; }
+        #findReplaceModal .modal-content { width: 650px; max-width: 95%; }
+        .shortcut-icon { display: inline-block; width: 1em; height: 1em; vertical-align: middle; margin: 0 4px; }
+        .main-editor-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
+        @media (min-width: 1024px) {
+            .main-editor-layout { flex-direction: row; }
+            .editor-main-content { flex: 2; }
+            .terminology-sidebar, .translation-memory-sidebar { min-width: 300px; max-width: 400px; }
         }
-        .dropdown:hover .dropdown-content {
-            display: block;
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .sidebar-content { max-height: calc(100vh - 200px); overflow-y: auto; padding-right: 0.5rem; }
+        .glossary-input-group label, .tm-input-group label { white-space: nowrap; }
+        .glossary-input-group input, .glossary-input-group select, .tm-input-group input, .tm-input-group select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-top: 4px; color: #202020; background-color: #fff; }
+        .glossary-btn-primary, .tm-btn-primary { background-color: #007bff; color: white; padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
+        .glossary-btn-primary:hover, .tm-btn-primary:hover { background-color: #0056b3; }
+        .glossary-btn-secondary, .tm-btn-secondary { background-color: #e0e0e0; color: #333; padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
+        .glossary-btn-secondary:hover, .tm-btn-secondary:hover { background-color: #d0d0d0; }
+        .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; }
+        .glossary-delete-btn:hover, .tm-delete-btn:hover { background-color: #da190b; }
+        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 8px 12px; border: 1px solid #e0e0e0; font-size: 0.9rem; }
+        .glossary-table th, .tm-table th { background-color: #f0f0f0; font-weight: 600; }
+        .glossary-info-box, .tm-info-box { background-color: #f0f8ff; border: 1px solid #d0e8f8; padding: 10px; border-radius: 6px; font-size: 0.85rem; color: #333; }
+        .glossary-highlight { background-color: #ffcc00; padding: 0 2px; border-radius: 3px; }
+        .glossary-row-highlight { background-color: #ffcc00 !important; transition: background-color 0.3s ease; }
+        .translation-unit-active { border: 2px solid #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; font-size: 1.2rem; color: #333; }
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 10%; max-width: 60px; text-align: center; }
+        .tm-table th:nth-child(2), .tm-table td:nth-child(2) { width: 45%; }
+        .tm-table th:nth-child(3), .tm-table td:nth-child(3) { width: 45%; }
+        .tm-best-match-highlight { background-color: #d1fae5 !important; border-color: #10b981 !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); }
+        #dropArea { width: 100%; max-width: 90%; transition: none; }
+        .terminology-sidebar, .translation-memory-sidebar { position: fixed; top: 60px; bottom: 20px; width: 350px; z-index: 500; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out, width 0.3s ease-in-out; opacity: 0; pointer-events: none; resize: horizontal; overflow: auto; min-width: 300px; max-width: 600px; }
+        .terminology-sidebar { left: 1rem; transform: translateX(-100%); }
+        .terminology-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
+        .translation-memory-sidebar { right: 1rem; transform: translateX(100%); }
+        .translation-memory-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
+        .editor-main-content { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; max-height: 70vh; overflow-y: auto; }
+        @media (min-width: 1024px) {
+            .editor-main-content.left-sidebar-active { padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); }
+            .editor-main-content.right-sidebar-active { padding-right: calc(var(--translation-memory-sidebar-width, 350px) + 2rem); }
         }
-        .dropdown:hover .dropdown-btn {
-            background-color: #ccc;
+        .po-display-code, .msgstr-textarea { font-size: 1rem; }
+        .top-utility-buttons-container { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 0.75rem; min-width: 400px; }
+        .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn { font-size: 0.875rem; white-space: nowrap; padding-left: 0.75rem; padding-right: 0.75rem; }
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content { display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 0.375rem; }
+        .dropdown-content a { color: black; padding: 12px 16px; text-decoration: none; display: block; font-size: 0.875rem; }
+        .dropdown-content a:hover { background-color: #f1f1f1; cursor: pointer; }
+        .dropdown:hover .dropdown-content { display: block; }
+        .dropdown:hover .dropdown-btn { background-color: #ccc; }
+        #statsContainer { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
+        #statsContainer.show { transform: translateY(0); }
+        .diff-added { background-color: #e6ffed; color: #22863a; padding: 1px 2px; border-radius: 3px; }
+        .diff-removed { background-color: #ffebe9; color: #b31d28; text-decoration: line-through; padding: 1px 2px; border-radius: 3px; }
+        /* NEW: Backup indicator style */
+        #backupIndicator {
+            display: none;
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
         }
-
-
-        /* Styles for the new fixed statistics panel */
-        #statsContainer {
-            transform: translateY(100%);
-            transition: transform 0.3s ease-in-out;
-        }
-        #statsContainer.show {
-            transform: translateY(0);
-        }
-        
-        /* Styles for Diff highlighting in TM */
-        .diff-added {
-            background-color: #e6ffed; /* Light green background */
-            color: #22863a; /* Dark green text */
-            padding: 1px 2px;
-            border-radius: 3px;
-        }
-        .diff-removed {
-            background-color: #ffebe9; /* Light red background */
-            color: #b31d28; /* Dark red text */
-            text-decoration: line-through;
-            padding: 1px 2px;
-            border-radius: 3px;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
     </style>
 </head>
@@ -485,9 +132,8 @@
             <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
         </div>
 
-        <!-- Top Utility Buttons (Project, Shortcuts, Find/Replace, etc.) -->
+        <!-- Top Utility Buttons -->
         <div class="top-utility-buttons-container">
-            <!-- Project Dropdown Menu -->
             <div class="dropdown">
                 <button id="projectBtn" class="dropdown-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                     <span data-i18n="project_btn">Project</span>
@@ -498,55 +144,52 @@
                     <a id="saveProjectBtn" data-i18n="save_project_btn">Save Project</a>
                 </div>
             </div>
-
+            <!-- NEW: Backup Button -->
+            <button id="backupBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
+                <span data-i18n="backup_btn">Backup</span>
+                <span id="backupIndicator"></span>
+            </button>
             <button id="shortcutsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="shortcuts_btn" id="shortcutsBtnText"></span>
+                <span data-i18n="shortcuts_btn"></span>
             </button>
             <button id="findReplaceBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="find_replace_btn" id="findReplaceBtnText"></span>
+                <span data-i18n="find_replace_btn"></span>
             </button>
             <button id="terminologyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="terminology_btn" id="terminologyBtnText"></span>
+                <span data-i18n="terminology_btn"></span>
             </button>
             <button id="tmBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="tm_btn" id="tmBtnText"></span>
+                <span data-i18n="tm_btn"></span>
             </button>
             <button id="statsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="statistics_btn" id="statsBtnText"></span>
+                <span data-i18n="statistics_btn"></span>
             </button>
         </div>
 
         <div class="flex flex-col items-center mb-6 mt-12">
             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/poanda-logo-final.png" alt="Poanda Logo" class="max-w-xs h-auto mb-2">
-            <div data-i18n="tool_description" id="toolDescription" class="text-lg text-center text-on-light-contrast">
-            </div>
+            <div data-i18n="tool_description" id="toolDescription" class="text-lg text-center text-on-light-contrast"></div>
         </div>
 
-        <!-- Main file controls: Load and Save .po -->
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <label for="poFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
                 <span data-i18n="load_file" id="loadBtnText"></span>
                 <input type="file" id="poFile" accept=".po" class="hidden">
-                 <!-- Hidden input for opening project zip/poanda -->
                 <input type="file" id="projectFile" accept=".zip,.poanda" class="hidden">
+                <!-- NEW: Hidden input for loading backup file -->
+                <input type="file" id="backupFile" accept=".json,.poanda-backup" class="hidden">
             </label>
             <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
                 <span data-i18n="save_file" id="saveBtnText"></span>
             </button>
         </div>
 
-        <!-- Main Editor Layout (Translation content + Terminology Sidebar + Translation Memory Sidebar) -->
         <div class="main-editor-layout" id="mainEditorLayout">
-            <!-- Translation Content (Left Column) -->
             <div class="editor-main-content space-y-4 max-h-[70vh] overflow-y-auto pr-2" id="editorMainContent">
                 <div id="translationsContainer">
-                    <!-- Translations will be rendered here -->
-                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                    </div>
+                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md"></div>
                 </div>
             </div>
-
-            <!-- Terminology Sidebar (Left Floating) -->
             <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                 <div class="sidebar-header">
                     <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle"></h3>
@@ -555,94 +198,48 @@
                     </button>
                 </div>
                 <div class="sidebar-content">
-                    <!-- Language Configuration Section -->
                     <div id="terminologyLanguageConfigSection" class="space-y-4">
                         <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="config_lang_title" id="configLangTitle"></h4>
-                        <div class="glossary-info-box mb-4">
-                            <p data-i18n="config_lang_info" id="configLangInfo"></p>
-                        </div>
+                        <div class="glossary-info-box mb-4"><p data-i18n="config_lang_info" id="configLangInfo"></p></div>
                         <div class="flex flex-col space-y-2 mb-4">
-                            <div class="glossary-input-group">
-                                <label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel"></label>
-                                <input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full" />
-                            </div>
-                            <div class="glossary-input-group">
-                                <label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel"></label>
-                                <input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full" />
-                            </div>
+                            <div class="glossary-input-group"><label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel"></label><input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full" /></div>
+                            <div class="glossary-input-group"><label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel"></label><input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full" /></div>
                             <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" id="confirmLanguagesBtn" class="glossary-btn-primary w-full"></button>
                         </div>
                     </div>
-
-                    <!-- Terminology Editor Section (Initially hidden) -->
                     <div id="terminologyEditorSection" style="display:none;">
-                        <!-- Buttons: Import, Download, New Glossary -->
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
                             <button onclick="loadTBX()" data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
                             <button onclick="downloadTBX()" data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <button onclick="resetGlossary()" data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                         </div>
-
-
                         <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_lang_title" id="currentLangTitle"></h4>
                         <div class="flex space-x-2 mb-4">
-                            <div class="glossary-input-group flex-1">
-                                <label data-i18n="source_language" id="displaySourceLanguageLabel"></label>
-                                <input id="displaySrcLang" disabled class="block w-full" />
-                            </div>
-                            <div class="glossary-input-group flex-1">
-                                <label data-i18n="target_language" id="displayTargetLanguageLabel"></label>
-                                <input id="displayTgtLang" disabled class="block w-full" />
-                            </div>
+                            <div class="glossary-input-group flex-1"><label data-i18n="source_language" id="displaySourceLanguageLabel"></label><input id="displaySrcLang" disabled class="block w-full" /></div>
+                            <div class="glossary-input-group flex-1"><label data-i18n="target_language" id="displayTargetLanguageLabel"></label><input id="displayTgtLang" disabled class="block w-full" /></div>
                         </div>
-
-                        <!-- Add Term Accordion -->
                         <div class="accordion-item">
                             <div class="accordion-header flex justify-between items-center" id="addTermHeader">
                                 <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion"></h4>
                                 <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
-                            <div class="accordion-content collapsed" id="addTermContent"> <!-- Changed to 'collapsed' by default -->
+                            <div class="accordion-content collapsed" id="addTermContent">
                                 <div class="flex flex-col space-y-2 mb-4">
-                                    <div class="glossary-input-group">
-                                        <label for="srcTerm" data-i18n="term" id="termLabel"></label>
-                                        <input id="srcTerm" class="block w-full" />
-                                    </div>
-                                    <div class="glossary-input-group">
-                                        <label for="tgtTerm" data-i18n="translation" id="translationLabel"></label>
-                                        <input id="tgtTerm" class="block w-full" />
-                                    </div>
+                                    <div class="glossary-input-group"><label for="srcTerm" data-i18n="term" id="termLabel"></label><input id="srcTerm" class="block w-full" /></div>
+                                    <div class="glossary-input-group"><label for="tgtTerm" data-i18n="translation" id="translationLabel"></label><input id="tgtTerm" class="block w-full" /></div>
                                     <button onclick="addTerm()" data-i18n="add_button" id="addTermBtn" class="glossary-btn-primary w-full"></button>
                                 </div>
                             </div>
                         </div>
-                        <!-- End Add Term Accordion -->
-
                         <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="search_title" id="searchTitle"></h4>
-                        <div class="mb-4">
-                            <input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full" oninput="renderGlossary()" />
-                        </div>
-
+                        <div class="mb-4"><input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full" oninput="renderGlossary()" /></div>
                         <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle"></h4>
-                        <div class="overflow-x-auto">
-                            <table class="glossary-table w-full">
-                                <thead>
-                                    <tr>
-                                        <th data-i18n="source_term_col" id="sourceTermCol"></th>
-                                        <th data-i18n="target_term_col" id="targetTermCol"></th>
-                                        <th data-i18n="actions_col" id="actionsCol"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="glossaryTableBody"></tbody>
-                            </table>
-                        </div>
+                        <div class="overflow-x-auto"><table class="glossary-table w-full"><thead><tr><th data-i18n="source_term_col" id="sourceTermCol"></th><th data-i18n="target_term_col" id="targetTermCol"></th><th data-i18n="actions_col" id="actionsCol"></th></tr></thead><tbody id="glossaryTableBody"></tbody></table></div>
                     </div>
                 </div>
                 <datalist id="isoLanguages"></datalist>
             </div>
-
-            <!-- Translation Memory Sidebar (Right Floating) -->
             <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                 <div class="sidebar-header">
                     <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle"></h3>
@@ -651,190 +248,68 @@
                     </button>
                 </div>
                 <div class="sidebar-content">
-                    <!-- Internal TM message display -->
                     <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
-
-                    <!-- Language Configuration Section for TM -->
                     <div id="tmLanguageConfigSection" class="space-y-4">
                         <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="tm_config_lang_title" id="tmConfigLangTitle"></h4>
-                        <div class="tm-info-box mb-4">
-                            <p data-i18n="tm_config_lang_info" id="tmConfigLangInfo"></p>
-                        </div>
+                        <div class="tm-info-box mb-4"><p data-i18n="tm_config_lang_info" id="tmConfigLangInfo"></p></div>
                         <div class="flex flex-col space-y-2 mb-4">
-                            <div class="tm-input-group">
-                                <label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel"></label>
-                                <input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full" />
-                            </div>
-                            <div class="tm-input-group">
-                                <label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel"></label>
-                                <input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full" />
-                            </div>
+                            <div class="tm-input-group"><label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel"></label><input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full" /></div>
+                            <div class="tm-input-group"><label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel"></label><input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full" /></div>
                             <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" id="tmConfirmLanguagesBtn" class="tm-btn-primary w-full"></button>
                         </div>
                     </div>
-
-                    <!-- TM Editor Section (Initially hidden) -->
                     <div id="tmEditorSection" style="display:none;">
-                        <!-- TM File Controls -->
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
                             <button onclick="resetTM()" data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <label for="tmFileInput" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 tm-btn-secondary flex-1 text-sm text-center">
-                                <span data-i18n="import_tmx" id="importTmxBtnText"></span>
-                                <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
+                                <span data-i18n="import_tmx" id="importTmxBtnText"></span><input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
                             </label>
                             <button onclick="downloadTMX()" data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
                         </div>
-
                         <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_tm_lang_title" id="currentTmLangTitle"></h4>
                         <div class="flex space-x-2 mb-4">
-                            <div class="tm-input-group flex-1">
-                                <label data-i18n="source_language" id="displayTmSourceLanguageLabel"></label>
-                                <input id="displayTmSrcLang" disabled class="block w-full" />
-                            </div>
-                            <div class="tm-input-group flex-1">
-                                <label data-i18n="target_language" id="displayTmTargetLanguageLabel"></label>
-                                <input id="displayTmTgtLang" disabled class="block w-full" />
-                            </div>
+                            <div class="tm-input-group flex-1"><label data-i18n="source_language" id="displayTmSourceLanguageLabel"></label><input id="displayTmSrcLang" disabled class="block w-full" /></div>
+                            <div class="tm-input-group flex-1"><label data-i18n="target_language" id="displayTmTargetLanguageLabel"></label><input id="displayTmTgtLang" disabled class="block w-full" /></div>
                         </div>
-
-                        <!-- TM Search Section -->
                         <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle"></h4>
-                        <div class="mb-4">
-                            <input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="tmSearch()" />
-                        </div>
-
+                        <div class="mb-4"><input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="tmSearch()" /></div>
                         <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle"></h4>
-                        <div class="overflow-x-auto mb-4">
-                            <table class="tm-table w-full">
-                                <thead>
-                                    <tr>
-                                        <th data-i18n="tm_score_col" id="tmScoreCol"></th>
-                                        <th data-i18n="tm_original_col" id="tmOriginalCol"></th>
-                                        <th data-i18n="tm_translation_col" id="tmTranslationCol"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tmSearchResultsTableBody">
-                                    <!-- TM search results will be rendered here -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden">
-                        </div>
+                        <div class="overflow-x-auto mb-4"><table class="tm-table w-full"><thead><tr><th data-i18n="tm_score_col" id="tmScoreCol"></th><th data-i18n="tm_original_col" id="tmOriginalCol"></th><th data-i18n="tm_translation_col" id="tmTranslationCol"></th></tr></thead><tbody id="tmSearchResultsTableBody"></tbody></table></div>
+                        <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden"></div>
                     </div>
                 </div>
                 <datalist id="isoLanguages"></datalist>
             </div>
         </div>
 
-        <!-- Message Box Modal -->
-        <div id="messageBox" class="modal hidden">
+        <div id="messageBox" class="modal hidden"><div class="modal-content"><p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><button id="messageClose" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300"><span data-i18n="ok" id="okBtnText"></span></button></div></div>
+        <div id="shortcutsModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><ul class="list-disc list-inside text-on-light-contrast space-y-2"><li id="shortcutValidate"></li><li id="shortcutNext"></li><li id="shortcutPrev"></li><li id="shortcutAlt1"></li><li id="shortcutTmInsert"></li></ul><button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300"><span id="shortcutsCloseBtnText"></span></button></div></div>
+        <div id="findReplaceModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div><label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div class="flex items-center space-x-4"><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="caseSensitiveCheckbox" class="mr-2"><span data-i18n="case_sensitive" id="caseSensitiveText"></span></label><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="regexCheckbox" class="mr-2"><span data-i18n="regular_expression" id="regexText"></span></label></div><div class="flex justify-end space-x-2"><button data-i18n="find_prev" id="findPrevBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300"><span id="findPrevText"></span></button><button data-i18n="find_next" id="findNextBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300"><span id="findNextText"></span></button><button data-i18n="replace" id="replaceBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span id="replaceText"></span></button><button data-i18n="replace_all" id="replaceAllBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span id="replaceAllText"></span></button></div></div><button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full"><span id="findReplaceCloseBtnText"></span></button></div></div>
+        <div id="saveProjectModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div></div><div class="flex justify-end space-x-2 mt-6"><button id="saveProjectCancelBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="cancel_button"></span></button><button id="saveProjectConfirmBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="save_button"></span></button></div></div></div>
+        
+        <!-- NEW: Backup Modal -->
+        <div id="backupModal" class="modal hidden">
             <div class="modal-content">
-                <p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p>
-                <button id="messageClose" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300">
-                    <span data-i18n="ok" id="okBtnText"></span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Shortcuts Modal -->
-        <div id="shortcutsModal" class="modal hidden">
-            <div class="modal-content">
-                <h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
-                <ul class="list-disc list-inside text-on-light-contrast space-y-2">
-                    <li id="shortcutValidate"></li>
-                    <li id="shortcutNext"></li>
-                    <li id="shortcutPrev"></li>
-                    <li id="shortcutAlt1"></li>
-                    <li id="shortcutTmInsert"></li>
-                </ul>
-                <button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300">
-                    <span id="shortcutsCloseBtnText"></span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Find and Replace Modal -->
-        <div id="findReplaceModal" class="modal hidden">
-            <div class="modal-content">
-                <h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label>
-                        <input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
-                    </div>
-                    <div>
-                        <label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label>
-                        <input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <label class="flex items-center text-on-light-contrast">
-                            <input type="checkbox" id="caseSensitiveCheckbox" class="mr-2">
-                            <span data-i18n="case_sensitive" id="caseSensitiveText"></span>
-                        </label>
-                        <label class="flex items-center text-on-light-contrast">
-                            <input type="checkbox" id="regexCheckbox" class="mr-2">
-                            <span data-i18n="regular_expression" id="regexText"></span>
-                        </label>
-                    </div>
-                    <div class="flex justify-end space-x-2">
-                        <button data-i18n="find_prev" id="findPrevBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="findPrevText"></span>
-                        </button>
-                        <button data-i18n="find_next" id="findNextBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="findNextText"></span>
-                        </button>
-                        <button data-i18n="replace" id="replaceBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="replaceText"></span>
-                        </button>
-                        <button data-i18n="replace_all" id="replaceAllBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                            <span id="replaceAllText"></span>
-                        </button>
-                    </div>
+                <h2 data-i18n="backup_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
+                <p data-i18n="backup_info_text" class="text-on-light-contrast mb-4"></p>
+                <div class="bg-gray-100 p-3 rounded-md mb-6">
+                    <p class="text-sm text-gray-700"><strong data-i18n="last_backup_label"></strong> <span id="lastBackupTime"></span></p>
                 </div>
-                <button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full">
-                    <span id="findReplaceCloseBtnText"></span>
-                </button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="loadLocalBackupBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50" disabled><span data-i18n="load_local_backup_btn"></span></button>
+                    <button id="saveBackupToDiskBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50" disabled><span data-i18n="save_backup_to_disk_btn"></span></button>
+                    <label class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 cursor-pointer text-center"><span data-i18n="load_backup_from_disk_btn"></span><input type="file" id="loadBackupFromFileInput" class="hidden" accept=".json,.poanda-backup"/></label>
+                    <button id="deleteLocalBackupBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50" disabled><span data-i18n="delete_local_backup_btn"></span></button>
+                </div>
+                 <button id="backupCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full"><span data-i18n="close_btn"></span></button>
             </div>
         </div>
 
-        <!-- NEW: Save Project Modal -->
-        <div id="saveProjectModal" class="modal hidden">
-            <div class="modal-content">
-                <h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label>
-                        <input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button id="saveProjectCancelBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span data-i18n="cancel_button"></span>
-                    </button>
-                    <button id="saveProjectConfirmBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
-                        <span data-i18n="save_button"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
+        <div id="restoreBackupModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="restore_backup_title" id="restoreBackupTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><p data-i18n="restore_backup_info" id="restoreBackupInfo" class="text-on-light-contrast mb-6"></p><div class="flex justify-end space-x-2"><button id="discardBackupBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="discard_button"></span></button><button id="restoreBackupBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="restore_button"></span></button></div></div></div>
     </div>
 
-    <!-- Statistics Display (Fixed Panel) -->
-    <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]">
-        <div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2">
-            <p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p>
-            <p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p>
-            <p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p>
-        </div>
-    </div>
-
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="loading-spinner"></div>
-        <p id="loadingMessage"></p>
-    </div>
+    <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]"><div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2"><p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p><p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p><p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p></div></div>
+    <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"></div><p id="loadingMessage"></p></div>
 
     <script>
         // Global variables for Poanda editor
@@ -891,6 +366,23 @@
         const projectFilenameInput = document.getElementById('projectFilenameInput');
         const saveProjectConfirmBtn = document.getElementById('saveProjectConfirmBtn');
         const saveProjectCancelBtn = document.getElementById('saveProjectCancelBtn');
+
+        // Restore Backup Modal DOM elements
+        const restoreBackupModal = document.getElementById('restoreBackupModal');
+        const restoreBackupBtn = document.getElementById('restoreBackupBtn');
+        const discardBackupBtn = document.getElementById('discardBackupBtn');
+        
+        // Backup Modal DOM elements
+        const backupBtn = document.getElementById('backupBtn');
+        const backupIndicator = document.getElementById('backupIndicator');
+        const backupModal = document.getElementById('backupModal');
+        const lastBackupTime = document.getElementById('lastBackupTime');
+        const loadLocalBackupBtn = document.getElementById('loadLocalBackupBtn');
+        const saveBackupToDiskBtn = document.getElementById('saveBackupToDiskBtn');
+        const loadBackupFromFileInput = document.getElementById('loadBackupFromFileInput');
+        const deleteLocalBackupBtn = document.getElementById('deleteLocalBackupBtn');
+        const backupCloseBtn = document.getElementById('backupCloseBtn');
+        const backupFileInput = document.getElementById('backupFile');
 
 
         // Statistics DOM elements
@@ -1084,7 +576,24 @@
                 'filename_label': 'Filename:',
                 'save_button': 'Save',
                 'cancel_button': 'Cancel',
-                'enter_filename': 'Please enter a filename.'
+                'enter_filename': 'Please enter a filename.',
+                'restore_backup_title': 'Restore Session',
+                'restore_backup_info': 'We found a backup of your previous session. Would you like to restore it?',
+                'restore_button': 'Restore',
+                'discard_button': 'Discard',
+                'backup_btn': 'Backup',
+                'backup_title': 'Backup Management',
+                'backup_info_text': 'Poanda automatically saves a local backup of your entire session (PO file, TM, and glossary) to your browser every 10 seconds. You can restore this backup here or save it to a file for safekeeping.',
+                'last_backup_label': 'Last backup:',
+                'no_backup_available': 'No backup available.',
+                'load_local_backup_btn': 'Load Local Backup',
+                'save_backup_to_disk_btn': 'Save Backup to Disk',
+                'load_backup_from_disk_btn': 'Load Backup from Disk',
+                'delete_local_backup_btn': 'Delete Local Backup',
+                'backup_deleted': 'Local backup has been deleted.',
+                'backup_loaded_from_file': 'Backup loaded successfully from file.',
+                'error_loading_backup_file': 'Error loading backup file. Ensure it is a valid .poanda-backup file.',
+                'delete_local_backup_btn_confirm': 'Are you sure you want to delete the local backup? This action cannot be undone.'
             },
             'es': {
                 'title': 'Poanda',
@@ -1205,7 +714,24 @@
                 'filename_label': 'Nombre del archivo:',
                 'save_button': 'Guardar',
                 'cancel_button': 'Cancelar',
-                'enter_filename': 'Por favor, introduce un nombre de archivo.'
+                'enter_filename': 'Por favor, introduce un nombre de archivo.',
+                'restore_backup_title': 'Restaurar sesión',
+                'restore_backup_info': 'Hemos encontrado una copia de seguridad de tu sesión anterior. ¿Quieres restaurarla?',
+                'restore_button': 'Restaurar',
+                'discard_button': 'Descartar',
+                'backup_btn': 'Copia de seguridad',
+                'backup_title': 'Gestión de Copias de Seguridad',
+                'backup_info_text': 'Poanda guarda automáticamente una copia de seguridad local de toda tu sesión (archivo PO, MT y glosario) en tu navegador cada 10 segundos. Puedes restaurar esta copia aquí o guardarla en un archivo para mayor seguridad.',
+                'last_backup_label': 'Última copia:',
+                'no_backup_available': 'No hay ninguna copia de seguridad disponible.',
+                'load_local_backup_btn': 'Cargar copia local',
+                'save_backup_to_disk_btn': 'Guardar copia en disco',
+                'load_backup_from_disk_btn': 'Cargar copia del disco',
+                'delete_local_backup_btn': 'Eliminar copia local',
+                'backup_deleted': 'La copia de seguridad local ha sido eliminada.',
+                'backup_loaded_from_file': 'Copia de seguridad cargada con éxito desde el archivo.',
+                'error_loading_backup_file': 'Error al cargar el archivo de copia de seguridad. Asegúrate de que es un archivo .poanda-backup válido.',
+                'delete_local_backup_btn_confirm': '¿Seguro que quieres eliminar la copia de seguridad local? Esta acción no se puede deshacer.'
             }
         };
 
@@ -3397,7 +2923,7 @@
 
         // --- Loading Overlay Functions ---
         function showLoadingOverlay(message) {
-            if (loadingMessage && loadingOverlay) { // Added null checks
+            if (loadingMessage && loadingOverlay) { // Added null check
                 loadingMessage.textContent = message;
                 loadingOverlay.classList.remove('hidden');
             }
@@ -3519,6 +3045,7 @@
                 }
             }
             resetProjectState();
+            clearBackup(); // Clear backup when starting a new project
         }
 
         /**
@@ -3622,6 +3149,7 @@
                     throw new Error(translations[currentLanguage]['invalid_project_file']);
                 }
                 showMessage(translations[currentLanguage]['project_loaded']);
+                await clearBackup(); // Clear old backup after a new project is successfully loaded
 
             } catch (error) {
                 showMessage(translations[currentLanguage]['error_opening_project'] + ': ' + error.message);
@@ -3635,8 +3163,149 @@
             }
         }
 
+        // --- Backup and Restore (IndexedDB) ---
+        const DB_NAME = 'PoandaBackup';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'session';
+        let db;
+
+        function openDb() {
+            return new Promise((resolve, reject) => {
+                if (db) {
+                    resolve(db);
+                    return;
+                }
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject("Error opening IndexedDB.");
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        async function saveBackup() {
+            if (!db || poEntries.length === 0) return; // Don't save if DB isn't open or no data
+            const sessionData = {
+                id: 'currentSession',
+                poEntries,
+                currentFileName,
+                glossary,
+                glossarySourceLanguage,
+                glossaryTargetLanguage,
+                translationMemory,
+                tmSourceLanguage,
+                tmTargetLanguage,
+                timestamp: new Date()
+            };
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.put(sessionData);
+            request.onsuccess = () => {
+                 updateBackupStatusUI(); // Update indicator after successful save
+            };
+        }
+
+        async function loadBackup() {
+            if (!db) return null;
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get('currentSession');
+                request.onerror = () => reject("Error loading backup from DB.");
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+
+        async function clearBackup() {
+            if (!db) return;
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            store.clear();
+            updateBackupStatusUI();
+        }
+
+        async function checkForBackup() {
+            try {
+                await openDb();
+                const backup = await loadBackup();
+                if (backup && backup.poEntries && backup.poEntries.length > 0) {
+                    restoreBackupModal.classList.remove('hidden');
+                }
+                updateBackupStatusUI();
+            } catch (error) {
+                console.error("Backup check failed:", error);
+            }
+        }
+
+        async function restoreSession(backupData = null) {
+            showLoadingOverlay(translations[currentLanguage]['loading_project']);
+            try {
+                const backup = backupData || await loadBackup();
+                if (backup) {
+                    poEntries = backup.poEntries || [];
+                    currentFileName = backup.currentFileName || 'translations.po';
+                    glossary = backup.glossary || [];
+                    glossarySourceLanguage = backup.glossarySourceLanguage || '';
+                    glossaryTargetLanguage = backup.glossaryTargetLanguage || '';
+                    translationMemory = backup.translationMemory || [];
+                    tmSourceLanguage = backup.tmSourceLanguage || '';
+                    tmTargetLanguage = backup.tmTargetLanguage || '';
+
+                    // Restore UI
+                    renderTranslations(poEntries);
+                    
+                    if (glossarySourceLanguage && glossaryTargetLanguage) {
+                        showGlossaryEditorSection();
+                    } else {
+                        showLanguageConfigSection();
+                    }
+
+                    if (tmSourceLanguage && tmTargetLanguage) {
+                        showTMEditorSection();
+                    } else {
+                        showTMLanguageConfigSection();
+                    }
+                }
+            } catch (error) {
+                showMessage("Failed to restore session.");
+                console.error(error);
+            } finally {
+                restoreBackupModal.classList.add('hidden');
+                hideLoadingOverlay();
+            }
+        }
+
+        async function updateBackupStatusUI() {
+            try {
+                const backup = await loadBackup();
+                if (backup) {
+                    backupIndicator.style.display = 'inline-block';
+                    lastBackupTime.textContent = new Date(backup.timestamp).toLocaleString();
+                    loadLocalBackupBtn.disabled = false;
+                    saveBackupToDiskBtn.disabled = false;
+                    deleteLocalBackupBtn.disabled = false;
+                } else {
+                    backupIndicator.style.display = 'none';
+                    lastBackupTime.textContent = translations[currentLanguage]['no_backup_available'];
+                    loadLocalBackupBtn.disabled = true;
+                    saveBackupToDiskBtn.disabled = true;
+                    deleteLocalBackupBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error("Error updating backup UI:", error);
+            }
+        }
+
+
         // --- Initialization on page load ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             populateIsoLanguagesDatalist();
             
             // Add event listeners for language buttons
@@ -3656,6 +3325,77 @@
             saveProjectConfirmBtn.addEventListener('click', executeSaveProject);
             saveProjectCancelBtn.addEventListener('click', () => {
                 saveProjectModal.classList.add('hidden');
+            });
+
+            // Add event listeners for the restore backup modal
+            restoreBackupBtn.addEventListener('click', restoreSession);
+            discardBackupBtn.addEventListener('click', () => {
+                clearBackup();
+                restoreBackupModal.classList.add('hidden');
+            });
+            
+            // Add event listeners for the backup modal
+            backupBtn.addEventListener('click', () => {
+                updateBackupStatusUI();
+                backupModal.classList.remove('hidden');
+            });
+
+            backupCloseBtn.addEventListener('click', () => {
+                backupModal.classList.add('hidden');
+            });
+            
+            loadLocalBackupBtn.addEventListener('click', () => {
+                restoreSession();
+                backupModal.classList.add('hidden');
+            });
+
+            deleteLocalBackupBtn.addEventListener('click', async () => {
+                if (confirm(translations[currentLanguage]['delete_local_backup_btn_confirm'])) {
+                    await clearBackup();
+                    showMessage(translations[currentLanguage]['backup_deleted']);
+                }
+            });
+
+            saveBackupToDiskBtn.addEventListener('click', async () => {
+                const backup = await loadBackup();
+                if (backup) {
+                    const jsonString = JSON.stringify(backup, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `poanda_backup_${new Date().toISOString().slice(0,10)}.poanda-backup`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            });
+            
+            loadBackupFromFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.id === 'currentSession' && data.poEntries) {
+                            await restoreSession(data);
+                            await saveBackup();
+                            showMessage(translations[currentLanguage]['backup_loaded_from_file']);
+                            backupModal.classList.add('hidden');
+                        } else {
+                            throw new Error("Invalid backup file format.");
+                        }
+                    } catch (error) {
+                        showMessage(translations[currentLanguage]['error_loading_backup_file']);
+                        console.error("Error processing backup file:", error);
+                    } finally {
+                        loadBackupFromFileInput.value = '';
+                    }
+                };
+                reader.readAsText(file);
             });
 
 
@@ -3691,6 +3431,12 @@
             if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar'); // Added null check
 
             updateMainContentOffset(); // Set initial padding based on hidden state of sidebars
+
+            // Check for a backup on load
+            await checkForBackup();
+
+            // Start automatic backup interval
+            setInterval(saveBackup, 10000); // Save every 10 seconds
         });
     </script>
 </body>
