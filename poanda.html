@@ -11,10 +11,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* --- THEME COLORS --- */
+        :root {
+            --color-primary: #F48790; /* Pink */
+            --color-secondary: #F7CF7E; /* Yellow */
+            --color-dark: #373737; /* Dark Gray */
+            --color-light-gray: #f3f4f6;
+            --color-white: #ffffff;
+            --color-medium-gray: #e5e7eb;
+            --color-neutral-gray: #6b7280;
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
-            background-color: #f3f4f6;
-            color: #202020;
+            background-color: var(--color-light-gray);
+            color: var(--color-dark);
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         textarea {
@@ -33,28 +44,37 @@
             height: 20px;
             color: #22c55e;
         }
-        .btn-load { background-color: #f48790; color: #000; }
-        .btn-load:hover { background-color: #e07a82; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .btn-save { background-color: #f7cf7e; color: #000; }
-        .btn-save:hover { background-color: #e3b76e; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        /* NEW STYLE FOR MO BUTTON */
-        .btn-convert-mo { background-color: #a7f3d0; color: #000; }
-        .btn-convert-mo:hover { background-color: #6ee7b7; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .btn-validate { background-color: #f7cf7e; color: #000; }
-        .btn-validate:hover { background-color: #e3b76e; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .btn-edit { background-color: #f48790; color: #000; }
-        .btn-edit:hover { background-color: #e07a82; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .po-display-code { background-color: #e3e3e3; border: 1px solid #000; color: #202020; }
-        .msgstr-textarea { background-color: #ffffff; color: #000000; min-height: 80px; }
-        .translation-unit-bg { background-color: #f8f8f8; border-color: #e5e7eb; }
-        .text-on-light-contrast { color: #202020; }
+        /* --- THEMED BUTTONS --- */
+        .btn-load, .btn-edit { background-color: var(--color-primary); color: var(--color-dark); }
+        .btn-load:hover, .btn-edit:hover { background-color: #e07a82; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        
+        .btn-save, .btn-validate { background-color: var(--color-secondary); color: var(--color-dark); }
+        .btn-save:hover, .btn-validate:hover { background-color: #e3b76e; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        
+        .btn-convert-mo { background-color: var(--color-dark); color: var(--color-white); }
+        .btn-convert-mo:hover { background-color: #555555; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        
+        /* --- MODAL BUTTONS --- */
+        .btn-modal-primary { background-color: var(--color-primary); color: var(--color-dark); }
+        .btn-modal-primary:hover { background-color: #e07a82; }
+        .btn-modal-secondary { background-color: var(--color-secondary); color: var(--color-dark); }
+        .btn-modal-secondary:hover { background-color: #e3b76e; }
+        .btn-modal-dark { background-color: var(--color-dark); color: var(--color-white); }
+        .btn-modal-dark:hover { background-color: #555555; }
+        .btn-modal-neutral { background-color: var(--color-medium-gray); color: var(--color-dark); }
+        .btn-modal-neutral:hover { background-color: #d1d5db; }
+        
+        .po-display-code { background-color: var(--color-medium-gray); border: 1px solid #d1d5db; color: var(--color-dark); }
+        .msgstr-textarea { background-color: var(--color-white); color: var(--color-dark); min-height: 80px; }
+        .translation-unit-bg { background-color: var(--color-white); border-color: var(--color-medium-gray); }
+        .text-on-light-contrast { color: var(--color-dark); }
         .translation-row { display: flex; flex-direction: column; gap: 1rem; }
         @media (min-width: 768px) {
             .translation-row { flex-direction: row; }
             .original-col, .translation-col { flex: 1; }
         }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background-color: #fff; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 90%; width: 500px; }
+        .modal-content { background-color: var(--color-white); padding: 2rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 90%; width: 500px; }
         #findReplaceModal .modal-content { width: 650px; max-width: 95%; }
         .shortcut-icon { display: inline-block; width: 1em; height: 1em; vertical-align: middle; margin: 0 4px; }
         .main-editor-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
@@ -63,35 +83,55 @@
             .editor-main-content { flex: 2; }
             .terminology-sidebar, .translation-memory-sidebar { min-width: 300px; max-width: 400px; }
         }
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; cursor: move; user-select: none; }
         .sidebar-content { max-height: calc(100vh - 200px); overflow-y: auto; padding-right: 0.5rem; }
         .glossary-input-group label, .tm-input-group label { white-space: nowrap; }
-        .glossary-input-group input, .glossary-input-group select, .tm-input-group input, .tm-input-group select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-top: 4px; color: #202020; background-color: #fff; }
-        .glossary-btn-primary, .tm-btn-primary { background-color: #007bff; color: white; padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
-        .glossary-btn-primary:hover, .tm-btn-primary:hover { background-color: #0056b3; }
+        .glossary-input-group input, .glossary-input-group select, .tm-input-group input, .tm-input-group select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-top: 4px; color: var(--color-dark); background-color: var(--color-white); }
+        .glossary-btn-primary, .tm-btn-primary { background-color: var(--color-primary); color: var(--color-dark); padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
+        .glossary-btn-primary:hover, .tm-btn-primary:hover { background-color: #e07a82; }
         .glossary-btn-secondary, .tm-btn-secondary { background-color: #e0e0e0; color: #333; padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
         .glossary-btn-secondary:hover, .tm-btn-secondary:hover { background-color: #d0d0d0; }
         .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; }
         .glossary-delete-btn:hover, .tm-delete-btn:hover { background-color: #da190b; }
         .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 8px 12px; border: 1px solid #e0e0e0; font-size: 0.9rem; }
         .glossary-table th, .tm-table th { background-color: #f0f0f0; font-weight: 600; }
-        .glossary-info-box, .tm-info-box { background-color: #f0f8ff; border: 1px solid #d0e8f8; padding: 10px; border-radius: 6px; font-size: 0.85rem; color: #333; }
-        .glossary-highlight { background-color: #ffcc00; padding: 0 2px; border-radius: 3px; }
-        .glossary-row-highlight { background-color: #ffcc00 !important; transition: background-color 0.3s ease; }
-        .translation-unit-active { border: 2px solid #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); }
+        .glossary-info-box, .tm-info-box { background-color: #fef3c7; border: 1px solid var(--color-secondary); padding: 10px; border-radius: 6px; font-size: 0.85rem; color: var(--color-dark); }
+        .glossary-highlight { background-color: var(--color-secondary); padding: 0 2px; border-radius: 3px; }
+        .glossary-row-highlight { background-color: #fde68a !important; transition: background-color 0.3s ease; }
+        .translation-unit-active { border: 2px solid var(--color-primary); box-shadow: 0 0 0 3px rgba(244, 135, 144, 0.25); }
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; font-size: 1.2rem; color: #333; }
-        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--color-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 10%; max-width: 60px; text-align: center; }
         .tm-table th:nth-child(2), .tm-table td:nth-child(2) { width: 45%; }
         .tm-table th:nth-child(3), .tm-table td:nth-child(3) { width: 45%; }
-        .tm-best-match-highlight { background-color: #d1fae5 !important; border-color: #10b981 !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); }
+        .tm-best-match-highlight { background-color: #fce7f3 !important; border-color: var(--color-primary) !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(244, 135, 144, 0.25); }
         #dropArea { width: 100%; max-width: 90%; transition: none; }
-        .terminology-sidebar, .translation-memory-sidebar { position: fixed; top: 60px; bottom: 20px; width: 350px; z-index: 500; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out, width 0.3s ease-in-out; opacity: 0; pointer-events: none; resize: horizontal; overflow: auto; min-width: 300px; max-width: 600px; }
-        .terminology-sidebar { left: 1rem; transform: translateX(-100%); }
+        .terminology-sidebar, .translation-memory-sidebar { 
+            position: fixed; 
+            top: 60px; 
+            bottom: 20px; 
+            width: 350px; 
+            z-index: 500; 
+            background-color: var(--color-white); 
+            border: 1px solid var(--color-medium-gray); 
+            border-radius: 0.5rem; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+            transition: opacity 0.3s ease-in-out; 
+            opacity: 0; 
+            pointer-events: none; 
+            resize: both; /* Allow resizing */
+            overflow: auto; /* Required for resize */
+            min-width: 300px; 
+            max-width: 80vw;
+            min-height: 200px;
+            max-height: 90vh;
+        }
+        .terminology-sidebar { left: 1rem; transform: translateX(-110%); }
         .terminology-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
-        .translation-memory-sidebar { right: 1rem; transform: translateX(100%); }
+        .translation-memory-sidebar { right: 1rem; transform: translateX(110%); }
         .translation-memory-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
+        
         .editor-main-content { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; max-height: 70vh; overflow-y: auto; }
         @media (min-width: 1024px) {
             .editor-main-content.left-sidebar-active { padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); }
@@ -99,13 +139,15 @@
         }
         .po-display-code, .msgstr-textarea { font-size: 1rem; }
         .top-utility-buttons-container { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 0.75rem; min-width: 400px; }
-        .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn { font-size: 0.875rem; white-space: nowrap; padding-left: 0.75rem; padding-right: 0.75rem; }
+        .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn { font-size: 0.875rem; white-space: nowrap; padding-left: 0.75rem; padding-right: 0.75rem; background-color: var(--color-white); color: var(--color-dark); border: 1px solid #d1d5db; }
+        .top-utility-buttons-container button:hover, .top-utility-buttons-container .dropdown-btn:hover { background-color: #f9fafb; }
+        .utility-btn-active { background-color: var(--color-dark) !important; color: var(--color-white) !important; border-color: var(--color-dark) !important; }
         .dropdown { position: relative; display: inline-block; }
         .dropdown-content { display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 0.375rem; }
         .dropdown-content a { color: black; padding: 12px 16px; text-decoration: none; display: block; font-size: 0.875rem; }
         .dropdown-content a:hover { background-color: #f1f1f1; cursor: pointer; }
         .dropdown:hover .dropdown-content { display: block; }
-        .dropdown:hover .dropdown-btn { background-color: #ccc; }
+        .dropdown:hover .dropdown-btn { background-color: #f9fafb; }
         #statsContainer { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
         #statsContainer.show { transform: translateY(0); }
         .diff-added { background-color: #e6ffed; color: #22863a; padding: 1px 2px; border-radius: 3px; }
@@ -127,17 +169,18 @@
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
-        <!-- Language Switcher -->
-        <div class="absolute top-4 right-4 space-x-2">
-            <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
-            <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
-        </div>
+    
+    <!-- Language Switcher -->
+    <div class="absolute top-4 right-4 space-x-2 z-10">
+        <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
+        <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
+    </div>
 
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
         <!-- Top Utility Buttons -->
         <div class="top-utility-buttons-container">
             <div class="dropdown">
-                <button id="projectBtn" class="dropdown-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <button id="projectBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                     <span data-i18n="project_btn">Project</span>
                 </button>
                 <div class="dropdown-content">
@@ -146,23 +189,23 @@
                     <a id="saveProjectBtn" data-i18n="save_project_btn">Save Project</a>
                 </div>
             </div>
-            <button id="backupBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
+            <button id="backupBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
                 <span data-i18n="backup_btn">Backup</span>
                 <span id="backupIndicator"></span>
             </button>
-            <button id="shortcutsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+            <button id="shortcutsBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="shortcuts_btn"></span>
             </button>
-            <button id="findReplaceBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+            <button id="findReplaceBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="find_replace_btn"></span>
             </button>
-            <button id="terminologyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+            <button id="terminologyBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="terminology_btn"></span>
             </button>
-            <button id="tmBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+            <button id="tmBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="tm_btn"></span>
             </button>
-            <button id="statsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+            <button id="statsBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="statistics_btn"></span>
             </button>
         </div>
@@ -182,7 +225,6 @@
             <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
                 <span data-i18n="save_file" id="saveBtnText"></span>
             </button>
-            <!-- NEW: PO to MO Converter Button -->
             <button id="convertToMoButton" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-convert-mo" disabled>
                 <span data-i18n="convert_to_mo_btn"></span>
             </button>
@@ -286,10 +328,10 @@
             </div>
         </div>
 
-        <div id="messageBox" class="modal hidden"><div class="modal-content"><p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><button id="messageClose" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300"><span data-i18n="ok" id="okBtnText"></span></button></div></div>
-        <div id="shortcutsModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><ul class="list-disc list-inside text-on-light-contrast space-y-2"><li id="shortcutValidate"></li><li id="shortcutNext"></li><li id="shortcutPrev"></li><li id="shortcutAlt1"></li><li id="shortcutTmInsert"></li></ul><button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300"><span id="shortcutsCloseBtnText"></span></button></div></div>
-        <div id="findReplaceModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div><label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div class="flex items-center space-x-4"><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="caseSensitiveCheckbox" class="mr-2"><span data-i18n="case_sensitive" id="caseSensitiveText"></span></label><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="regexCheckbox" class="mr-2"><span data-i18n="regular_expression" id="regexText"></span></label></div><div class="flex justify-end space-x-2"><button data-i18n="find_prev" id="findPrevBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300"><span id="findPrevText"></span></button><button data-i18n="find_next" id="findNextBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300"><span id="findNextText"></span></button><button data-i18n="replace" id="replaceBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span id="replaceText"></span></button><button data-i18n="replace_all" id="replaceAllBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span id="replaceAllText"></span></button></div></div><button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full"><span id="findReplaceCloseBtnText"></span></button></div></div>
-        <div id="saveProjectModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div></div><div class="flex justify-end space-x-2 mt-6"><button id="saveProjectCancelBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="cancel_button"></span></button><button id="saveProjectConfirmBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="save_button"></span></button></div></div></div>
+        <div id="messageBox" class="modal hidden"><div class="modal-content"><p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><button id="messageClose" class="py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok" id="okBtnText"></span></button></div></div>
+        <div id="shortcutsModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><ul class="list-disc list-inside text-on-light-contrast space-y-2"><li id="shortcutValidate"></li><li id="shortcutNext"></li><li id="shortcutPrev"></li><li id="shortcutAlt1"></li><li id="shortcutTmInsert"></li></ul><button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 py-2 px-4 rounded-md transition duration-300 w-full btn-modal-neutral"><span id="shortcutsCloseBtnText"></span></button></div></div>
+        <div id="findReplaceModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div><label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div class="flex items-center space-x-4"><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="caseSensitiveCheckbox" class="mr-2"><span data-i18n="case_sensitive" id="caseSensitiveText"></span></label><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="regexCheckbox" class="mr-2"><span data-i18n="regular_expression" id="regexText"></span></label></div><div class="flex justify-end space-x-2"><button data-i18n="find_prev" id="findPrevBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span id="findPrevText"></span></button><button data-i18n="find_next" id="findNextBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span id="findNextText"></span></button><button data-i18n="replace" id="replaceBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-secondary"><span id="replaceText"></span></button><button data-i18n="replace_all" id="replaceAllBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span id="replaceAllText"></span></button></div></div><button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 py-2 px-4 rounded-md transition duration-300 w-full btn-modal-dark"><span id="findReplaceCloseBtnText"></span></button></div></div>
+        <div id="saveProjectModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div></div><div class="flex justify-end space-x-2 mt-6"><button id="saveProjectCancelBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="saveProjectConfirmBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="save_button"></span></button></div></div></div>
         
         <div id="backupModal" class="modal hidden">
             <div class="modal-content">
@@ -299,25 +341,24 @@
                     <p class="text-sm text-gray-700"><strong data-i18n="last_backup_label"></strong> <span id="lastBackupTime"></span></p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button id="loadLocalBackupBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50" disabled><span data-i18n="load_local_backup_btn"></span></button>
-                    <button id="saveBackupToDiskBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50" disabled><span data-i18n="save_backup_to_disk_btn"></span></button>
-                    <label class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 cursor-pointer text-center"><span data-i18n="load_backup_from_disk_btn"></span><input type="file" id="loadBackupFromFileInput" class="hidden" accept=".json,.poanda-backup"/></label>
-                    <button id="deleteLocalBackupBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50" disabled><span data-i18n="delete_local_backup_btn"></span></button>
+                    <button id="loadLocalBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50 btn-modal-primary" disabled><span data-i18n="load_local_backup_btn"></span></button>
+                    <button id="saveBackupToDiskBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50 btn-modal-secondary" disabled><span data-i18n="save_backup_to_disk_btn"></span></button>
+                    <label class="font-medium py-2 px-4 rounded-md transition duration-300 cursor-pointer text-center btn-modal-secondary"><span data-i18n="load_backup_from_disk_btn"></span><input type="file" id="loadBackupFromFileInput" class="hidden" accept=".json,.poanda-backup"/></label>
+                    <button id="deleteLocalBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50 btn-modal-dark" disabled><span data-i18n="delete_local_backup_btn"></span></button>
                 </div>
-                 <button id="backupCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full"><span data-i18n="close_btn"></span></button>
+                 <button id="backupCloseBtn" class="mt-6 py-2 px-4 rounded-md transition duration-300 w-full btn-modal-neutral"><span data-i18n="close_btn"></span></button>
             </div>
         </div>
 
-        <div id="restoreBackupModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="restore_backup_title" id="restoreBackupTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><p data-i18n="restore_backup_info" id="restoreBackupInfo" class="text-on-light-contrast mb-6"></p><div class="flex justify-end space-x-2"><button id="discardBackupBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="discard_button"></span></button><button id="restoreBackupBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="restore_button"></span></button></div></div></div>
+        <div id="restoreBackupModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="restore_backup_title" id="restoreBackupTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><p data-i18n="restore_backup_info" id="restoreBackupInfo" class="text-on-light-contrast mb-6"></p><div class="flex justify-end space-x-2"><button id="discardBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="discard_button"></span></button><button id="restoreBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="restore_button"></span></button></div></div></div>
 
-        <!-- NEW: PO to MO Converter Modal -->
         <div id="convertToMoModal" class="modal hidden">
             <div class="modal-content">
                 <h2 data-i18n="mo_converter_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
                 <p data-i18n="mo_converter_info" class="text-on-light-contrast mb-6"></p>
                 <div class="flex justify-end space-x-2">
-                    <button id="moConverterCloseBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="close_btn"></span></button>
-                    <button id="moConverterActionBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="mo_converter_action_btn"></span></button>
+                    <button id="moConverterCloseBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="close_btn"></span></button>
+                    <button id="moConverterActionBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="mo_converter_action_btn"></span></button>
                 </div>
             </div>
         </div>
@@ -1208,6 +1249,7 @@
                 savePoButton.disabled = true;
                 convertToMoButton.disabled = true; // NEW
                 statsContainer.classList.remove('show'); // Hide stats if no translations
+                updateUtilityButtonStates(); // NEW
                 return;
             }
 
@@ -1219,7 +1261,7 @@
 
                 const translationUnit = document.createElement('div');
                 translationUnit.id = `translation-unit-${entryIndex}`; // Added ID for highlighting
-                translationUnit.className = 'translation-unit-bg p-4 rounded-lg shadow-sm border border-gray-200 mb-6';
+                translationUnit.className = 'translation-unit-bg p-4 rounded-lg shadow-sm border';
 
                 if (entry.comments && entry.comments.length > 0) {
                     const commentsDiv = document.createElement('div');
@@ -1269,7 +1311,7 @@
 
                     const msgstrTextarea = document.createElement('textarea');
                     msgstrTextarea.id = `msgstr-${entryIndex}-${segmentIndex}`;
-                    msgstrTextarea.className = 'msgstr-textarea mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 text-base'; /* Changed text-sm to text-base */
+                    msgstrTextarea.className = 'msgstr-textarea mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500 text-base'; /* Changed text-sm to text-base */
                     msgstrTextarea.value = segment.translation;
                     msgstrTextarea.dataset.entryIndex = entryIndex;
                     msgstrTextarea.dataset.segmentIndex = segmentIndex;
@@ -1428,6 +1470,7 @@
             convertToMoButton.disabled = false; // NEW
             statsContainer.classList.add('show'); // Show stats container
             updateStatsDisplay(); // Initial stats display after rendering
+            updateUtilityButtonStates(); // NEW
 
             // Initial focus on the first editable translation if any (this will trigger its focus listener for highlight)
             const firstEditableSegment = getFirstEditableSegment();
@@ -1622,6 +1665,7 @@
                 savePoButton.disabled = true;
                 convertToMoButton.disabled = true; // NEW
                 statsContainer.classList.remove('show'); // Hide stats on error
+                updateUtilityButtonStates(); // NEW
              } finally {
                 hideLoadingOverlay();
              }
@@ -2036,25 +2080,31 @@
         function setLanguage(lang) {
             currentLanguage = lang;
             document.documentElement.lang = lang;
-            updateTextContent();
-            renderTranslations(poEntries);
-            renderGlossary();
-
+            
             const langEnBtn = document.getElementById('langEnBtn');
             const langEsBtn = document.getElementById('langEsBtn');
             
-            langEnBtn.classList.remove('bg-blue-500', 'text-white');
-            langEsBtn.classList.remove('bg-blue-500', 'text-white');
-            langEnBtn.classList.add('bg-gray-200', 'text-gray-800');
-            langEsBtn.classList.add('bg-gray-200', 'text-gray-800');
+            langEnBtn.classList.remove('active-lang');
+            langEsBtn.classList.remove('active-lang');
+            langEnBtn.style.backgroundColor = 'var(--color-medium-gray)';
+            langEnBtn.style.color = 'var(--color-dark)';
+            langEsBtn.style.backgroundColor = 'var(--color-medium-gray)';
+            langEsBtn.style.color = 'var(--color-dark)';
+
 
             if (lang === 'en') {
-                langEnBtn.classList.add('bg-blue-500', 'text-white');
-                langEnBtn.classList.remove('bg-gray-200', 'text-gray-800');
+                langEnBtn.classList.add('active-lang');
+                langEnBtn.style.backgroundColor = 'var(--color-dark)';
+                langEnBtn.style.color = 'var(--color-white)';
             } else {
-                langEsBtn.classList.add('bg-blue-500', 'text-white');
-                langEsBtn.classList.remove('bg-gray-200', 'text-gray-800');
+                langEsBtn.classList.add('active-lang');
+                langEsBtn.style.backgroundColor = 'var(--color-dark)';
+                langEsBtn.style.color = 'var(--color-white)';
             }
+
+            updateTextContent();
+            renderTranslations(poEntries);
+            renderGlossary();
         }
 
         function updateTextContent() {
@@ -2136,6 +2186,30 @@
             }
         }
 
+        // NEW: Function to update the visual state of utility buttons
+        function updateUtilityButtonStates() {
+            // Terminology button
+            if (terminologySidebar.classList.contains('show-sidebar')) {
+                terminologyBtn.classList.add('utility-btn-active');
+            } else {
+                terminologyBtn.classList.remove('utility-btn-active');
+            }
+
+            // TM button
+            if (translationMemorySidebar.classList.contains('show-sidebar')) {
+                tmBtn.classList.add('utility-btn-active');
+            } else {
+                tmBtn.classList.remove('utility-btn-active');
+            }
+
+            // Stats button
+            if (statsContainer.classList.contains('show')) {
+                statsBtn.classList.add('utility-btn-active');
+            } else {
+                statsBtn.classList.remove('utility-btn-active');
+            }
+        }
+
 
         // --- Terminology Sidebar Logic ---
         terminologyBtn.addEventListener('click', () => {
@@ -2146,6 +2220,7 @@
                 terminologySidebar.classList.remove('show-sidebar');
             }
             updateMainContentOffset(); // Update offset
+            updateUtilityButtonStates(); // Update button states
             // When sidebar opens, decide which section to show
             if (isHidden) { // If it was hidden and now shown
                 if (!glossarySourceLanguage || !glossaryTargetLanguage) {
@@ -2159,6 +2234,7 @@
         closeTerminologySidebarBtn.addEventListener('click', () => {
             terminologySidebar.classList.remove('show-sidebar'); // Use show-sidebar
             updateMainContentOffset(); // Update offset
+            updateUtilityButtonStates(); // Update button states
         });
 
         /**
@@ -2515,6 +2591,7 @@
                 translationMemorySidebar.classList.remove('show-sidebar');
             }
             updateMainContentOffset(); // Update offset
+            updateUtilityButtonStates(); // Update button states
             // When sidebar opens, decide which section to show
             if (isHidden) { // If it was hidden and now shown
                 if (!tmSourceLanguage || !tmTargetLanguage) {
@@ -2529,6 +2606,7 @@
         closeTranslationMemorySidebarBtn.addEventListener('click', () => {
             translationMemorySidebar.classList.remove('show-sidebar'); // Use show-sidebar
             updateMainContentOffset(); // Update offset
+            updateUtilityButtonStates(); // Update button states
         });
 
         tmFileInput.addEventListener('change', async (event) => {
@@ -2983,19 +3061,19 @@
             dropArea.addEventListener('dragover', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                dropArea.classList.add('border-blue-500'); // Visual feedback for drag over
+                dropArea.classList.add('border-red-500'); // Visual feedback for drag over
             });
 
             dropArea.addEventListener('dragleave', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                dropArea.classList.remove('border-blue-500');
+                dropArea.classList.remove('border-red-500');
             });
 
             dropArea.addEventListener('drop', async (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                dropArea.classList.remove('border-blue-500');
+                dropArea.classList.remove('border-red-500');
 
                 const files = event.dataTransfer.files;
                 if (files.length > 0) {
@@ -3027,35 +3105,6 @@
             });
         }
 
-
-        /**
-         * Adjusts the padding of the main editor content based on open sidebars.
-         * Applies only on screens wider than 1024px.
-         */
-        function updateMainContentOffset() {
-            const isTerminologyOpen = terminologySidebar.classList.contains('show-sidebar');
-            const isTranslationMemoryOpen = translationMemorySidebar.classList.contains('show-sidebar');
-
-            // Remove existing padding classes first
-            if (editorMainContent) { // Added null check for editorMainContent
-                editorMainContent.classList.remove('left-sidebar-active', 'right-sidebar-active');
-
-                // Apply new padding classes based on open sidebars
-                if (isTerminologyOpen) {
-                    editorMainContent.classList.add('left-sidebar-active');
-                    // Set CSS variable for current width
-                    document.documentElement.style.setProperty('--terminology-sidebar-width', terminologySidebar.offsetWidth + 'px');
-                }
-                if (isTranslationMemoryOpen) {
-                    editorMainContent.classList.add('right-sidebar-active');
-                    // Set CSS variable for current width
-                    document.documentElement.style.setProperty('--translation-memory-sidebar-width', translationMemorySidebar.offsetWidth + 'px');
-                }
-            } else {
-                console.warn("editorMainContent element not found for offset update.");
-            }
-        }
-
         // --- Project Management Functions ---
 
         /**
@@ -3075,7 +3124,9 @@
             // Hide sidebars if they are open
             terminologySidebar.classList.remove('show-sidebar');
             translationMemorySidebar.classList.remove('show-sidebar');
+            statsContainer.classList.remove('show');
             updateMainContentOffset();
+            updateUtilityButtonStates();
         }
 
         /**
@@ -3346,7 +3397,7 @@
             }
         }
 
-        // --- NEW: PO to MO Converter Logic ---
+        // --- PO to MO Converter Logic ---
 
         /**
          * Parses a PO file string specifically for MO compilation.
@@ -3514,6 +3565,57 @@
             return buffer;
         }
 
+        /**
+         * Makes a sidebar element draggable and resizable.
+         * @param {HTMLElement} sidebar The sidebar element to make interactive.
+         */
+        function makeDraggableAndResizable(sidebar) {
+            const header = sidebar.querySelector('.sidebar-header');
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+            header.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                // Get the mouse cursor position at startup
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                // Call a function whenever the cursor moves
+                document.onmousemove = elementDrag;
+                // When starting to drag, remove the transform property
+                // so that top/left positioning works correctly.
+                sidebar.style.transform = 'none';
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                // Calculate the new cursor position
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // Set the element's new position
+                sidebar.style.top = (sidebar.offsetTop - pos2) + "px";
+                sidebar.style.left = (sidebar.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                // Stop moving when mouse button is released
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+            
+            // Use ResizeObserver to update main content padding when sidebar is resized
+            const resizeObserver = new ResizeObserver(() => {
+                updateMainContentOffset();
+            });
+            resizeObserver.observe(sidebar);
+        }
+
+
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
             populateIsoLanguagesDatalist();
@@ -3608,7 +3710,7 @@
                 reader.readAsText(file);
             });
 
-            // NEW: Add event listeners for the MO converter modal
+            // Add event listeners for the MO converter modal
             convertToMoButton.addEventListener('click', () => {
                 if (poEntries.length > 0) {
                     convertToMoModal.classList.remove('hidden');
@@ -3647,6 +3749,10 @@
                 }
             });
 
+            // Make sidebars draggable and resizable
+            makeDraggableAndResizable(document.getElementById('terminologySidebar'));
+            makeDraggableAndResizable(document.getElementById('translationMemorySidebar'));
+
 
             setLanguage(currentLanguage); // Apply initial language (en) and content
 
@@ -3656,6 +3762,7 @@
             // Add event listener for the new stats button
             statsBtn.addEventListener('click', () => {
                 statsContainer.classList.toggle('show');
+                updateUtilityButtonStates(); // Update button states
             });
 
             // For first load, we ensure the "no_translations" message is shown.
@@ -3669,6 +3776,7 @@
             if (savePoButton) savePoButton.disabled = true; // Added null check
             if (convertToMoButton) convertToMoButton.disabled = true; // NEW
             if (statsContainer) statsContainer.classList.remove('show'); // Ensure stats are hidden on load
+            updateUtilityButtonStates(); // NEW
 
             // Ensure accordions are collapsed on initial load
             if (addTermContent && addTermAccordionIcon) {
