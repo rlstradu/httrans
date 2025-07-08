@@ -191,34 +191,50 @@
             border-color: #facc15;
         }
 
-        /* Sidebars */
-        .terminology-sidebar, .translation-memory-sidebar {
-            display: none;
-            flex-shrink: 0;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            resize: horizontal;
-            min-width: 300px;
-            transition: width 0.3s ease-in-out;
-        }
-        .terminology-sidebar.show-sidebar, .translation-memory-sidebar.show-sidebar {
+        /* --- START: Floating Panel Styles --- */
+        .floating-panel {
+            position: fixed;
+            top: 80px;
+            right: -550px; /* Start off-screen */
+            width: 480px;
+            min-width: 350px;
+            max-width: 80vw;
+            height: 75vh;
+            min-height: 300px;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 950;
+            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             display: flex;
             flex-direction: column;
-            flex: 1;
+            resize: both; /* Allow resizing from corner */
+            overflow: hidden; /* Important for resize */
         }
-        .sidebar-header {
+
+        .floating-panel.is-visible {
+            right: 20px; /* Slide into view */
+        }
+
+        .floating-panel .sidebar-header {
+            cursor: move; /* Draggable handle */
+            background-color: #f9fafb;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            user-select: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
         }
-        .sidebar-content {
+        
+        .floating-panel .sidebar-content {
             flex-grow: 1;
             overflow-y: auto;
-            padding-right: 0.5rem;
-            max-height: 40vh;
+            padding: 1rem;
         }
+        /* --- END: Floating Panel Styles --- */
+
 
         /* Glossary/TM specific styles */
         .glossary-input-group input, .glossary-input-group select,
@@ -327,8 +343,6 @@
         /* Main content area */
         .main-app-content { display: flex; flex-direction: column; flex-grow: 1; padding: 1rem; gap: 1rem; }
         .editor-and-sidebars-wrapper { display: flex; flex-direction: column; flex-grow: 1; gap: 1rem; }
-        #vertical-resizer { width: 100%; height: 10px; cursor: ns-resize; background-color: #e5e7eb; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db; }
-        #vertical-resizer:hover { background-color: #d1d5db; }
         #horizontal-resizer { width: 10px; height: auto; cursor: col-resize; background-color: #e5e7eb; border-left: 1px solid #d1d5db; border-right: 1px solid #d1d5db; }
         #horizontal-resizer:hover { background-color: #d1d5db; }
 
@@ -337,8 +351,10 @@
             .video-player-section { flex-shrink: 0; flex-basis: 33%; position: sticky; top: 60px; align-self: flex-start; }
             .right-panel-content { flex-grow: 1; display: flex; flex-direction: column; gap: 0; }
             .editor-and-sidebars-wrapper { flex-direction: column; flex-grow: 1; display: flex; }
-            .editor-main-content { flex-grow: 0; height: 25vh; overflow-y: auto; resize: vertical; min-height: 100px; }
-            .sidebars-container { flex-grow: 1; display: flex; flex-direction: row; gap: 1rem; overflow: auto; }
+            /* Let the editor grow to fill the available space */
+            .editor-main-content { flex-grow: 1; overflow-y: auto; }
+            /* Hide the old sidebar container and its resizer */
+            .sidebars-container, #vertical-resizer { display: none; }
         }
 
         /* Video player styles */
@@ -480,165 +496,167 @@
 
                 <div id="vertical-resizer"></div>
 
-                <!-- Sidebars Container -->
+                <!-- Sidebars Container (now empty, hidden by CSS) -->
                 <div class="sidebars-container">
-                    <!-- Terminology Sidebar -->
-                    <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
-                        <div class="sidebar-header">
-                            <h3 class="text-lg font-bold" data-i18n="terminology_sidebar_title">Terminología</h3>
-                            <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                        <div class="sidebar-content">
-                            <div id="terminologyLanguageConfigSection" class="space-y-4">
-                                <h4 class="text-md font-semibold mb-2" data-i18n="config_lang_title">Configurar idiomas del glosario</h4>
-                                <div class="glossary-info-box mb-4">
-                                    <p data-i18n="config_lang_info"></p>
-                                </div>
-                                <div class="flex flex-col space-y-2 mb-4">
-                                    <div class="glossary-input-group">
-                                        <label for="configSrcLang" data-i18n="source_language">Idioma de origen:</label>
-                                        <input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
-                                    </div>
-                                    <div class="glossary-input-group">
-                                        <label for="configTgtLang" data-i18n="target_language">Idioma de destino:</label>
-                                        <input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
-                                    </div>
-                                    <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" class="btn btn-primary w-full">Confirmar idiomas</button>
-                                </div>
-                            </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                            <div id="terminologyEditorSection" style="display:none;">
-                                <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                                    <button onclick="loadTBX()" data-i18n="import_tbx" class="btn btn-secondary flex-1 text-sm">Importar TBX</button>
-                                    <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
-                                    <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn btn-secondary flex-1 text-sm">Descargar TBX</button>
-                                    <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn btn-secondary flex-1 text-sm">Nuevo glosario</button>
-                                </div>
-                                <h4 class="text-md font-semibold mb-2" data-i18n="current_lang_title">Idiomas actuales del glosario</h4>
-                                <div class="flex space-x-2 mb-4">
-                                    <div class="glossary-input-group flex-1">
-                                        <label data-i18n="source_language">Idioma de origen:</label>
-                                        <input id="displaySrcLang" disabled class="block w-full rounded-md" />
-                                    </div>
-                                    <div class="glossary-input-group flex-1">
-                                        <label data-i18n="target_language">Idioma de destino:</label>
-                                        <input id="displayTgtLang" disabled class="block w-full rounded-md" />
-                                    </div>
-                                </div>
-                                <div class="accordion-item">
-                                    <div class="accordion-header" id="addTermHeader">
-                                        <h4 class="text-md font-semibold m-0" data-i18n="add_term_title">Añadir término</h4>
-                                        <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                    <div class="accordion-content collapsed" id="addTermContent">
-                                        <div class="flex flex-col space-y-2 mb-4">
-                                            <div class="glossary-input-group">
-                                                <label for="srcTerm" data-i18n="term">Término:</label>
-                                                <input id="srcTerm" class="block w-full rounded-md" />
-                                            </div>
-                                            <div class="glossary-input-group">
-                                                <label for="tgtTerm" data-i18n="translation">Traducción:</label>
-                                                <input id="tgtTerm" class="block w-full rounded-md" />
-                                            </div>
-                                            <button onclick="addTerm()" data-i18n="add_button" class="btn btn-primary w-full">Añadir</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="search_title">Buscar</h4>
-                                <div class="mb-4">
-                                    <input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="renderGlossary()" />
-                                </div>
-                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="glossary_list_title">Glosario</h4>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full">
-                                        <thead>
-                                            <tr>
-                                                <th data-i18n="source_term_col">Término de origen</th>
-                                                <th data-i18n="target_term_col">Término de destino</th>
-                                                <th data-i18n="actions_col">Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="glossaryTableBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        <datalist id="isoLanguages"></datalist>
+    <!-- Floating Panels (moved outside the main layout) -->
+    <!-- Terminology Panel -->
+    <div id="terminologySidebar" class="floating-panel">
+        <div class="sidebar-header">
+            <h3 class="text-lg font-bold" data-i18n="terminology_sidebar_title">Terminología</h3>
+            <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <div id="terminologyLanguageConfigSection" class="space-y-4">
+                <h4 class="text-md font-semibold mb-2" data-i18n="config_lang_title">Configurar idiomas del glosario</h4>
+                <div class="glossary-info-box mb-4">
+                    <p data-i18n="config_lang_info"></p>
+                </div>
+                <div class="flex flex-col space-y-2 mb-4">
+                    <div class="glossary-input-group">
+                        <label for="configSrcLang" data-i18n="source_language">Idioma de origen:</label>
+                        <input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
                     </div>
+                    <div class="glossary-input-group">
+                        <label for="configTgtLang" data-i18n="target_language">Idioma de destino:</label>
+                        <input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
+                    </div>
+                    <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" class="btn btn-primary w-full">Confirmar idiomas</button>
+                </div>
+            </div>
 
-                    <!-- Translation Memory Sidebar -->
-                    <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
-                        <div class="sidebar-header">
-                            <h3 class="text-lg font-bold" data-i18n="tm_sidebar_title">Memoria de traducción</h3>
-                            <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                        <div class="sidebar-content">
-                            <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
-                            <div id="tmLanguageConfigSection" class="space-y-4">
-                                <h4 class="text-md font-semibold mb-2" data-i18n="tm_config_lang_title">Configurar idiomas de la TM</h4>
-                                <div class="tm-info-box mb-4">
-                                    <p data-i18n="tm_config_lang_info"></p>
-                                </div>
-                                <div class="flex flex-col space-y-2 mb-4">
-                                    <div class="tm-input-group">
-                                        <label for="tmConfigSrcLang" data-i18n="source_language">Idioma de origen:</label>
-                                        <input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
-                                    </div>
-                                    <div class="tm-input-group">
-                                        <label for="tmConfigTgtLang" data-i18n="target_language">Idioma de destino:</label>
-                                        <input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
-                                    </div>
-                                    <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" class="btn btn-primary w-full">Confirmar idiomas</button>
-                                </div>
+            <div id="terminologyEditorSection" style="display:none;">
+                <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                    <button onclick="loadTBX()" data-i18n="import_tbx" class="btn btn-secondary flex-1 text-sm">Importar TBX</button>
+                    <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
+                    <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn btn-secondary flex-1 text-sm">Descargar TBX</button>
+                    <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn btn-secondary flex-1 text-sm">Nuevo glosario</button>
+                </div>
+                <h4 class="text-md font-semibold mb-2" data-i18n="current_lang_title">Idiomas actuales del glosario</h4>
+                <div class="flex space-x-2 mb-4">
+                    <div class="glossary-input-group flex-1">
+                        <label data-i18n="source_language">Idioma de origen:</label>
+                        <input id="displaySrcLang" disabled class="block w-full rounded-md" />
+                    </div>
+                    <div class="glossary-input-group flex-1">
+                        <label data-i18n="target_language">Idioma de destino:</label>
+                        <input id="displayTgtLang" disabled class="block w-full rounded-md" />
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <div class="accordion-header" id="addTermHeader">
+                        <h4 class="text-md font-semibold m-0" data-i18n="add_term_title">Añadir término</h4>
+                        <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="accordion-content collapsed" id="addTermContent">
+                        <div class="flex flex-col space-y-2 mb-4">
+                            <div class="glossary-input-group">
+                                <label for="srcTerm" data-i18n="term">Término:</label>
+                                <input id="srcTerm" class="block w-full rounded-md" />
                             </div>
-
-                            <div id="tmEditorSection" style="display:none;">
-                                <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                                    <button onclick="resetTM()" data-i18n="new_tm" class="btn btn-secondary flex-1 text-sm">Nueva TM</button>
-                                    <label for="tmFileInput" class="btn btn-secondary flex-1 text-sm text-center">
-                                        <span data-i18n="import_tmx">Importar TMX</span>
-                                        <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
-                                    </label>
-                                    <button onclick="downloadTMX()" data-i18n="download_tmx" class="btn btn-secondary flex-1 text-sm">Descargar TMX</button>
-                                </div>
-                                <h4 class="text-md font-semibold mb-2" data-i18n="current_tm_lang_title">Idiomas actuales de la TM</h4>
-                                <div class="flex space-x-2 mb-4">
-                                    <div class="tm-input-group flex-1">
-                                        <label data-i18n="source_language">Idioma de origen:</label>
-                                        <input id="displayTmSrcLang" disabled class="block w-full rounded-md" />
-                                    </div>
-                                    <div class="tm-input-group flex-1">
-                                        <label data-i18n="target_language">Idioma de destino:</label>
-                                        <input id="displayTmTgtLang" disabled class="block w-full rounded-md" />
-                                    </div>
-                                </div>
-                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="tm_search_title">Buscar en TM</h4>
-                                <div class="mb-4">
-                                    <input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="tmSearch()" />
-                                </div>
-                                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="tm_search_results_title">Resultados de búsqueda en TM</h4>
-                                <div class="overflow-x-auto mb-4">
-                                    <table class="tm-table w-full">
-                                        <thead>
-                                            <tr>
-                                                <th data-i18n="tm_score_col">%</th>
-                                                <th data-i18n="tm_original_col">Original</th>
-                                                <th data-i18n="tm_translation_col">Traducción</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="tmSearchResultsTableBody"></tbody>
-                                    </table>
-                                </div>
-                                <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden">
-                                    No se encontraron coincidencias en la TM.
-                                </div>
+                            <div class="glossary-input-group">
+                                <label for="tgtTerm" data-i18n="translation">Traducción:</label>
+                                <input id="tgtTerm" class="block w-full rounded-md" />
                             </div>
+                            <button onclick="addTerm()" data-i18n="add_button" class="btn btn-primary w-full">Añadir</button>
                         </div>
                     </div>
+                </div>
+                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="search_title">Buscar</h4>
+                <div class="mb-4">
+                    <input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="renderGlossary()" />
+                </div>
+                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="glossary_list_title">Glosario</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th data-i18n="source_term_col">Término de origen</th>
+                                <th data-i18n="target_term_col">Término de destino</th>
+                                <th data-i18n="actions_col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="glossaryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <datalist id="isoLanguages"></datalist>
+    </div>
+
+    <!-- Translation Memory Panel -->
+    <div id="translationMemorySidebar" class="floating-panel">
+        <div class="sidebar-header">
+            <h3 class="text-lg font-bold" data-i18n="tm_sidebar_title">Memoria de traducción</h3>
+            <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
+            <div id="tmLanguageConfigSection" class="space-y-4">
+                <h4 class="text-md font-semibold mb-2" data-i18n="tm_config_lang_title">Configurar idiomas de la TM</h4>
+                <div class="tm-info-box mb-4">
+                    <p data-i18n="tm_config_lang_info"></p>
+                </div>
+                <div class="flex flex-col space-y-2 mb-4">
+                    <div class="tm-input-group">
+                        <label for="tmConfigSrcLang" data-i18n="source_language">Idioma de origen:</label>
+                        <input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full rounded-md" />
+                    </div>
+                    <div class="tm-input-group">
+                        <label for="tmConfigTgtLang" data-i18n="target_language">Idioma de destino:</label>
+                        <input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full rounded-md" />
+                    </div>
+                    <button onclick="confirmTMLanguages()" data-i18n="confirm_languages" class="btn btn-primary w-full">Confirmar idiomas</button>
+                </div>
+            </div>
+
+            <div id="tmEditorSection" style="display:none;">
+                <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                    <button onclick="resetTM()" data-i18n="new_tm" class="btn btn-secondary flex-1 text-sm">Nueva TM</button>
+                    <label for="tmFileInput" class="btn btn-secondary flex-1 text-sm text-center">
+                        <span data-i18n="import_tmx">Importar TMX</span>
+                        <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
+                    </label>
+                    <button onclick="downloadTMX()" data-i18n="download_tmx" class="btn btn-secondary flex-1 text-sm">Descargar TMX</button>
+                </div>
+                <h4 class="text-md font-semibold mb-2" data-i18n="current_tm_lang_title">Idiomas actuales de la TM</h4>
+                <div class="flex space-x-2 mb-4">
+                    <div class="tm-input-group flex-1">
+                        <label data-i18n="source_language">Idioma de origen:</label>
+                        <input id="displayTmSrcLang" disabled class="block w-full rounded-md" />
+                    </div>
+                    <div class="tm-input-group flex-1">
+                        <label data-i18n="target_language">Idioma de destino:</label>
+                        <input id="displayTmTgtLang" disabled class="block w-full rounded-md" />
+                    </div>
+                </div>
+                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="tm_search_title">Buscar en TM</h4>
+                <div class="mb-4">
+                    <input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" oninput="tmSearch()" />
+                </div>
+                <h4 class="text-md font-semibold mt-4 mb-2" data-i18n="tm_search_results_title">Resultados de búsqueda en TM</h4>
+                <div class="overflow-x-auto mb-4">
+                    <table class="tm-table w-full">
+                        <thead>
+                            <tr>
+                                <th data-i18n="tm_score_col">%</th>
+                                <th data-i18n="tm_original_col">Original</th>
+                                <th data-i18n="tm_translation_col">Traducción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tmSearchResultsTableBody"></tbody>
+                    </table>
+                </div>
+                <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden">
+                    No se encontraron coincidencias en la TM.
                 </div>
             </div>
         </div>
@@ -2163,13 +2181,9 @@
 
         // --- Terminology Sidebar Logic ---
         terminologyBtn.addEventListener('click', () => {
-            const isHidden = !terminologySidebar.classList.contains('show-sidebar');
-            if (isHidden) {
-                terminologySidebar.classList.add('show-sidebar');
-            } else {
-                terminologySidebar.classList.remove('show-sidebar');
-            }
-            if (isHidden) {
+            translationMemorySidebar.classList.remove('is-visible');
+            terminologySidebar.classList.toggle('is-visible');
+            if (terminologySidebar.classList.contains('is-visible')) {
                 if (!glossarySourceLanguage || !glossaryTargetLanguage) {
                     showLanguageConfigSection();
                 } else {
@@ -2179,7 +2193,7 @@
         });
 
         closeTerminologySidebarBtn.addEventListener('click', () => {
-            terminologySidebar.classList.remove('show-sidebar');
+            closeFloatingPanel(terminologySidebar);
         });
 
         function populateIsoLanguagesDatalist() {
@@ -2429,13 +2443,9 @@
 
 
         tmBtn.addEventListener('click', () => {
-            const isHidden = !translationMemorySidebar.classList.contains('show-sidebar');
-            if (isHidden) {
-                translationMemorySidebar.classList.add('show-sidebar');
-            } else {
-                translationMemorySidebar.classList.remove('show-sidebar');
-            }
-            if (isHidden) {
+            terminologySidebar.classList.remove('is-visible');
+            translationMemorySidebar.classList.toggle('is-visible');
+            if (translationMemorySidebar.classList.contains('is-visible')) {
                 if (!tmSourceLanguage || !tmTargetLanguage) {
                     showTMLanguageConfigSection();
                 } else {
@@ -2446,7 +2456,7 @@
         });
 
         closeTranslationMemorySidebarBtn.addEventListener('click', () => {
-            translationMemorySidebar.classList.remove('show-sidebar');
+            closeFloatingPanel(translationMemorySidebar);
         });
 
         tmFileInput.addEventListener('change', async (event) => {
@@ -3087,6 +3097,77 @@
             confirmNewProjectModal.classList.add('hidden');
         }
 
+        // --- START: Floating Panel Logic (Drag, Resize, and Close) ---
+        function closeFloatingPanel(panel) {
+            panel.classList.remove('is-visible');
+            // Reset position styles so the CSS transition can take over.
+            // This is crucial because dragging sets inline 'left' and 'top' styles.
+            panel.style.left = '';
+            panel.style.top = '';
+            // We also clear right, so the default off-screen position is applied from the CSS.
+            panel.style.right = '';
+        }
+
+        function makePanelFloat(panel) {
+            const header = panel.querySelector('.sidebar-header');
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            header.addEventListener('mousedown', (e) => {
+                // Prevent dragging if the click is on a button inside the header
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                    return;
+                }
+                isDragging = true;
+                
+                // If the panel's position is defined by 'right', calculate 'left' before dragging
+                if (panel.style.right !== 'auto' && panel.style.right !== '') {
+                    panel.style.left = `${panel.offsetLeft}px`;
+                    panel.style.right = 'auto';
+                }
+
+                offsetX = e.clientX - panel.offsetLeft;
+                offsetY = e.clientY - panel.offsetTop;
+                
+                panel.style.transition = 'none';
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = 'move';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                let newX = e.clientX - offsetX;
+                let newY = e.clientY - offsetY;
+
+                // Constrain movement within the viewport
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const panelWidth = panel.offsetWidth;
+                const panelHeight = panel.offsetHeight;
+                const headerHeight = 60; // Height of the main app header
+
+                if (newX < 0) newX = 0;
+                if (newY < headerHeight) newY = headerHeight;
+                if (newX + panelWidth > viewportWidth) newX = viewportWidth - panelWidth;
+                if (newY + panelHeight > viewportHeight) newY = viewportHeight - panelHeight;
+
+                panel.style.left = `${newX}px`;
+                panel.style.top = `${newY}px`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.style.transition = 'right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // Re-enable CSS transitions
+                    document.body.style.userSelect = '';
+                    document.body.style.cursor = '';
+                }
+            });
+        }
+        // --- END: Floating Panel Logic ---
+
+
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
             await loadShortcuts();
@@ -3094,8 +3175,10 @@
             setLanguage('es'); 
             resetApplicationState();
 
-            if (terminologySidebar) terminologySidebar.classList.add('show-sidebar');
-            if (translationMemorySidebar) translationMemorySidebar.classList.add('show-sidebar');
+            // Initialize floating panels
+            makePanelFloat(document.getElementById('terminologySidebar'));
+            makePanelFloat(document.getElementById('translationMemorySidebar'));
+
             if (saveSrtButton) saveSrtButton.disabled = true;
             if (statsContainer) statsContainer.classList.add('hidden');
             if (videoPlayerContainer) videoPlayerContainer.classList.add('hidden');
@@ -3119,13 +3202,6 @@
             langEnBtn.addEventListener('click', () => setLanguage('en'));
 
             // Resizer logic
-            const verticalResizer = document.getElementById('vertical-resizer');
-            const editor = document.getElementById('editorMainContent');
-            let isVerticalResizing = false;
-            verticalResizer.addEventListener('mousedown', () => { isVerticalResizing = true; document.body.style.cursor = 'ns-resize'; });
-            document.addEventListener('mousemove', (e) => { if (isVerticalResizing) { const newHeight = e.clientY - editor.getBoundingClientRect().top; if (newHeight > 100) editor.style.height = `${newHeight}px`; } });
-            document.addEventListener('mouseup', () => { isVerticalResizing = false; document.body.style.cursor = ''; });
-
             const horizontalResizer = document.getElementById('horizontal-resizer');
             const videoSection = document.querySelector('.video-player-section');
             let isHorizontalResizing = false;
