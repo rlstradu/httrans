@@ -194,10 +194,8 @@
         /* --- START: Floating Panel Styles --- */
         .floating-panel {
             position: fixed;
-            /* Default starting position, will be overridden by JS */
-            top: 80px; 
-            right: 20px; 
-
+            top: 80px;
+            right: 20px; /* Default position */
             width: 480px;
             min-width: 350px;
             max-width: 80vw;
@@ -208,27 +206,34 @@
             border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             z-index: 950;
-            
-            /* New transition properties */
-            opacity: 0;
-            transform: scale(0.95);
-            pointer-events: none;
-            transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
-
             display: flex;
             flex-direction: column;
-            resize: both; /* Allow resizing from corner */
-            overflow: hidden; /* Important for resize */
+            resize: both;
+            overflow: hidden;
+
+            /* Animation properties for showing/hiding */
+            opacity: 0;
+            transform: translateX(110%);
+            pointer-events: none;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
         }
 
         .floating-panel.is-visible {
             opacity: 1;
-            transform: scale(1);
+            transform: translateX(0);
             pointer-events: auto;
         }
+        
+        /* Special state for fade-out when panel has been moved */
+        .floating-panel.is-fading-out {
+            opacity: 0 !important;
+            transform: scale(0.95) !important;
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out !important;
+        }
+
 
         .floating-panel .sidebar-header {
-            cursor: move; /* Draggable handle */
+            cursor: move;
             background-color: #f9fafb;
             padding: 0.75rem 1rem;
             border-bottom: 1px solid #e5e7eb;
@@ -237,7 +242,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .floating-panel .sidebar-content {
             flex-grow: 1;
             overflow-y: auto;
@@ -2190,6 +2195,20 @@
         }
 
         // --- Terminology Sidebar Logic ---
+        function setupPanel(panelId, buttonId, openCallback) {
+            const panel = document.getElementById(panelId);
+            const button = document.getElementById(buttonId);
+            const closeButton = panel.querySelector('button[id^="close"]');
+
+            button.addEventListener('click', () => {
+                openFloatingPanel(panel, openCallback);
+            });
+
+            closeButton.addEventListener('click', () => {
+                closeFloatingPanel(panel);
+            });
+        }
+
         function populateIsoLanguagesDatalist() {
             isoLanguagesDatalist.innerHTML = '';
             isoLanguagesData.forEach(lang => {
@@ -3066,53 +3085,61 @@
             confirmNewProjectModal.classList.add('hidden');
         }
 
-        // --- START: Floating Panel Logic ---
-        let panelStates = {
-            terminologySidebar: null,
-            translationMemorySidebar: null
-        };
-
-        function openFloatingPanel(panel) {
-            // Close the other panel if it's open
-            if (panel.id === 'terminologySidebar' && translationMemorySidebar.classList.contains('is-visible')) {
-                closeFloatingPanel(translationMemorySidebar);
-            } else if (panel.id === 'translationMemorySidebar' && terminologySidebar.classList.contains('is-visible')) {
-                closeFloatingPanel(terminologySidebar);
-            }
-
-            const state = panelStates[panel.id];
-            if (state) {
-                // Restore position and size from saved state
-                panel.style.top = state.top;
-                panel.style.left = state.left;
-                panel.style.width = state.width;
-                panel.style.height = state.height;
-                panel.style.right = 'auto'; // Ensure right is not used
-            } else {
-                // First time opening, use default position
-                panel.style.right = '20px';
-                panel.style.left = 'auto';
-                panel.style.top = '80px';
-            }
-            
-            // Use requestAnimationFrame to ensure styles are applied before adding the class for transition
-            requestAnimationFrame(() => {
-                panel.classList.add('is-visible');
-            });
-        }
-
+        // --- START: Floating Panel Logic (Drag, Resize, and Close) ---
         function closeFloatingPanel(panel) {
-            // Save the current state (position and size)
-            panelStates[panel.id] = {
-                top: `${panel.offsetTop}px`,
-                left: `${panel.offsetLeft}px`,
-                width: `${panel.offsetWidth}px`,
-                height: `${panel.offsetHeight}px`
-            };
-            
-            // Remove the visible class to trigger the fade-out animation
-            panel.classList.remove('is-visible');
+            // If the panel has been moved, use the fade-out animation
+            if (panel.dataset.moved) {
+                panel.classList.add('is-fading-out');
+                // Listen for the animation to end, then fully hide and reset
+                panel.addEventListener('transitionend', () => {
+                    panel.classList.remove('is-visible', 'is-fading-out');
+                }, { once: true });
+            } else {
+                // Otherwise, use the default slide-out animation
+                panel.classList.remove('is-visible');
+            }
         }
+
+        function openFloatingPanel(panelToOpen, callback) {
+             const allPanels = [terminologySidebar, translationMemorySidebar];
+            
+            allPanels.forEach(p => {
+                if (p !== panelToOpen) {
+                    p.classList.remove('is-visible', 'is-fading-out');
+                }
+            });
+
+            // If it's already visible, close it. Otherwise, open it.
+            if (panelToOpen.classList.contains('is-visible')) {
+                closeFloatingPanel(panelToOpen);
+                return;
+            }
+            
+            // Reset state before showing
+            panelToOpen.classList.remove('is-fading-out');
+            if (!panelToOpen.dataset.moved) {
+                panelToOpen.style.left = '';
+                panelToOpen.style.top = '';
+                panelToOpen.style.right = '20px';
+                panelToOpen.style.transform = 'translateX(110%)';
+            }
+            
+            // A tiny delay to allow the browser to apply the reset styles before transitioning
+            setTimeout(() => {
+                panelToOpen.classList.add('is-visible');
+                if (panelToOpen.dataset.moved) {
+                    panelToOpen.style.transform = 'scale(1)';
+                    panelToOpen.style.opacity = '1';
+                } else {
+                    panelToOpen.style.transform = 'translateX(0)';
+                }
+            }, 10);
+            
+            if (callback) {
+                callback();
+            }
+        }
+
 
         function makePanelFloat(panel) {
             const header = panel.querySelector('.sidebar-header');
@@ -3120,19 +3147,23 @@
             let offsetX, offsetY;
 
             header.addEventListener('mousedown', (e) => {
-                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
-                    return;
-                }
-                isDragging = true;
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
                 
-                // Switch from 'right' positioning to 'left' for dragging
-                panel.style.right = 'auto'; 
-                panel.style.left = `${panel.offsetLeft}px`;
-
+                isDragging = true;
+                panel.dataset.moved = 'true'; // Mark as moved
+                
+                // Switch to left/top positioning for dragging
+                if (!panel.style.left) {
+                     panel.style.left = `${panel.offsetLeft}px`;
+                     panel.style.top = `${panel.offsetTop}px`;
+                }
+                panel.style.right = 'auto';
+                panel.style.transform = 'none'; // Remove transform to use left/top
+                
                 offsetX = e.clientX - panel.offsetLeft;
                 offsetY = e.clientY - panel.offsetTop;
                 
-                panel.style.transition = 'none'; // Disable transition during drag for smoothness
+                panel.style.transition = 'none';
                 document.body.style.userSelect = 'none';
                 document.body.style.cursor = 'move';
             });
@@ -3143,12 +3174,11 @@
                 let newX = e.clientX - offsetX;
                 let newY = e.clientY - offsetY;
 
-                // Constrain movement within the viewport
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 const panelWidth = panel.offsetWidth;
                 const panelHeight = panel.offsetHeight;
-                const headerHeight = 60; // Height of the main app header
+                const headerHeight = 60;
 
                 if (newX < 0) newX = 0;
                 if (newY < headerHeight) newY = headerHeight;
@@ -3162,7 +3192,7 @@
             document.addEventListener('mouseup', () => {
                 if (isDragging) {
                     isDragging = false;
-                    panel.style.transition = ''; // Re-enable default CSS transitions
+                    panel.style.transition = ''; // Restore transitions
                     document.body.style.userSelect = '';
                     document.body.style.cursor = '';
                 }
@@ -3181,41 +3211,22 @@
             // Initialize floating panels
             makePanelFloat(document.getElementById('terminologySidebar'));
             makePanelFloat(document.getElementById('translationMemorySidebar'));
-
-            // Panel Button Listeners
-            terminologyBtn.addEventListener('click', () => {
-                if (terminologySidebar.classList.contains('is-visible')) {
-                    closeFloatingPanel(terminologySidebar);
+            
+            // Setup panel buttons
+            setupPanel('terminologySidebar', 'terminologyBtn', () => {
+                 if (!glossarySourceLanguage || !glossaryTargetLanguage) {
+                    showLanguageConfigSection();
                 } else {
-                    openFloatingPanel(terminologySidebar);
-                    if (!glossarySourceLanguage || !glossaryTargetLanguage) {
-                        showLanguageConfigSection();
-                    } else {
-                        showGlossaryEditorSection();
-                    }
+                    showGlossaryEditorSection();
                 }
             });
-
-            tmBtn.addEventListener('click', () => {
-                if (translationMemorySidebar.classList.contains('is-visible')) {
-                    closeFloatingPanel(translationMemorySidebar);
+            setupPanel('translationMemorySidebar', 'tmBtn', () => {
+                if (!tmSourceLanguage || !tmTargetLanguage) {
+                    showTMLanguageConfigSection();
                 } else {
-                    openFloatingPanel(translationMemorySidebar);
-                    if (!tmSourceLanguage || !tmTargetLanguage) {
-                        showTMLanguageConfigSection();
-                    } else {
-                        showTMEditorSection();
-                        tmSearch();
-                    }
+                    showTMEditorSection();
+                    tmSearch();
                 }
-            });
-
-            closeTerminologySidebarBtn.addEventListener('click', () => {
-                closeFloatingPanel(terminologySidebar);
-            });
-
-            closeTranslationMemorySidebarBtn.addEventListener('click', () => {
-                closeFloatingPanel(translationMemorySidebar);
             });
 
 
