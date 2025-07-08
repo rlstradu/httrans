@@ -138,7 +138,9 @@
         .translation-memory-sidebar { right: 1rem; transform: translateX(110%); }
         .translation-memory-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
         
-        .editor-main-content { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; max-height: 70vh; overflow-y: auto; }
+        .editor-main-content { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; }
+        .translations-container-scrolling { max-height: 70vh; overflow-y: auto; }
+
         @media (min-width: 1024px) {
             .editor-main-content.left-sidebar-active { padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); }
             .editor-main-content.right-sidebar-active { padding-right: calc(var(--translation-memory-sidebar-width, 350px) + 2rem); }
@@ -171,6 +173,12 @@
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        .search-highlight {
+            background-color: yellow;
+        }
+        .current-search-highlight {
+            background-color: orange;
         }
     </style>
 </head>
@@ -237,11 +245,21 @@
         </div>
 
         <div class="main-editor-layout" id="mainEditorLayout">
-            <div class="editor-main-content space-y-4 max-h-[70vh] overflow-y-auto pr-2" id="editorMainContent">
+            <!-- Central Column Wrapper -->
+            <div class="flex-1 flex flex-col">
                 <!-- PO Editor Search Bar -->
                 <div id="poSearchContainer" class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
-                    <input type="text" id="poSearchInput" data-i18n-placeholder="po_search_placeholder" class="w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white mb-2">
-                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="poSearchInput" data-i18n-placeholder="po_search_placeholder" class="flex-grow p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white">
+                        <button id="searchPrevBtn" class="p-1 rounded-md hover:bg-gray-200 disabled:opacity-50" disabled>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <button id="searchNextBtn" class="p-1 rounded-md hover:bg-gray-200 disabled:opacity-50" disabled>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <span id="searchResultCounter" class="text-sm text-gray-600 whitespace-nowrap">0 / 0</span>
+                    </div>
+                    <div class="flex items-center space-x-4 text-sm text-gray-600 mt-2">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" id="searchInOriginalCheckbox" checked class="mr-2">
                             <span data-i18n="search_in_original"></span>
@@ -252,11 +270,15 @@
                         </label>
                     </div>
                 </div>
-
-                <div id="translationsContainer">
-                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md"></div>
+                <!-- Scrolling Content Area -->
+                <div class="editor-main-content translations-container-scrolling pr-2" id="editorMainContent">
+                    <div id="translationsContainer" class="space-y-4">
+                        <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md"></div>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Sidebars -->
             <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                 <div class="sidebar-header">
                     <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle"></h3>
@@ -400,6 +422,8 @@
             useRegex: false,
             lastFound: null,
         };
+        let searchResults = [];
+        let currentSearchIndex = -1;
 
         // Global variable to keep track of terms found in the currently active/focused segment's original text
         let termsFoundInActiveSegment = new Set(); // Stores terms found in the currently focused original segment
@@ -437,6 +461,10 @@
         const poSearchInput = document.getElementById('poSearchInput');
         const searchInOriginalCheckbox = document.getElementById('searchInOriginalCheckbox');
         const searchInTranslationCheckbox = document.getElementById('searchInTranslationCheckbox');
+        const searchPrevBtn = document.getElementById('searchPrevBtn');
+        const searchNextBtn = document.getElementById('searchNextBtn');
+        const searchResultCounter = document.getElementById('searchResultCounter');
+
 
         // Project DOM elements
         const projectFileInput = document.getElementById('projectFile');
@@ -1505,37 +1533,113 @@
         }
 
         /**
-         * Filters the displayed PO entries based on the search input and checkboxes.
+         * Filters and highlights PO entries based on the search input.
          */
         function filterPOEntries() {
-            const query = poSearchInput.value.toLowerCase().trim();
+            const query = poSearchInput.value.trim();
             const searchInOriginal = searchInOriginalCheckbox.checked;
             const searchInTranslation = searchInTranslationCheckbox.checked;
+            
+            // Clear previous search state
+            searchResults = [];
+            currentSearchIndex = -1;
+            document.querySelectorAll('.search-highlight, .current-search-highlight').forEach(el => {
+                const parent = el.parentNode;
+                if (parent) {
+                    parent.innerHTML = parent.textContent; // Revert to plain text
+                }
+            });
 
+            if (!query) {
+                poEntries.forEach((entry, index) => {
+                    const unit = document.getElementById(`translation-unit-${index}`);
+                    if (unit) unit.style.display = 'block';
+                });
+                updateSearchCounter();
+                return;
+            }
+
+            const queryRegex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            
             poEntries.forEach((entry, index) => {
-                if (entry.isHeader) return; // Skip header
+                if (entry.isHeader) return;
 
                 const unit = document.getElementById(`translation-unit-${index}`);
                 if (!unit) return;
 
-                if (!query) { // If search is empty, show all
-                    unit.style.display = 'block';
-                    return;
-                }
-
                 let matchFound = false;
                 const fullMsgstr = entry.sentenceSegments.map(s => s.translation).join(' ');
 
-                if (searchInOriginal && entry.msgid && entry.msgid.toLowerCase().includes(query)) {
-                    matchFound = true;
+                // Highlight in original
+                if (searchInOriginal) {
+                    const msgidElements = unit.querySelectorAll('.original-col pre');
+                    msgidElements.forEach(el => {
+                        const originalText = el.textContent;
+                        if (originalText.match(queryRegex)) {
+                            matchFound = true;
+                            el.innerHTML = originalText.replace(queryRegex, match => `<span class="search-highlight">${match}</span>`);
+                        }
+                    });
                 }
 
-                if (!matchFound && searchInTranslation && fullMsgstr.toLowerCase().includes(query)) {
+                // Check for match in translation (without highlighting the textarea)
+                if (searchInTranslation && fullMsgstr.match(queryRegex)) {
                     matchFound = true;
                 }
 
                 unit.style.display = matchFound ? 'block' : 'none';
             });
+
+            // Populate searchResults array with all new highlights
+            searchResults = document.querySelectorAll('.search-highlight');
+            updateSearchCounter();
+        }
+        
+        /**
+         * Updates the search result counter and button states.
+         */
+        function updateSearchCounter() {
+            const total = searchResults.length;
+            const current = total > 0 ? currentSearchIndex + 1 : 0;
+            searchResultCounter.textContent = `${current} / ${total}`;
+            
+            searchPrevBtn.disabled = total === 0;
+            searchNextBtn.disabled = total === 0;
+        }
+
+        /**
+         * Navigates to the next or previous search result.
+         * @param {number} direction - 1 for next, -1 for previous.
+         */
+        function navigateToSearchResult(direction) {
+            if (searchResults.length === 0) return;
+
+            // Remove highlight from the current result
+            if (currentSearchIndex >= 0 && searchResults[currentSearchIndex]) {
+                searchResults[currentSearchIndex].classList.remove('current-search-highlight');
+                searchResults[currentSearchIndex].classList.add('search-highlight');
+            }
+
+            // Update index
+            currentSearchIndex += direction;
+
+            // Loop around
+            if (currentSearchIndex >= searchResults.length) {
+                currentSearchIndex = 0;
+            }
+            if (currentSearchIndex < 0) {
+                currentSearchIndex = searchResults.length - 1;
+            }
+
+            // Highlight the new current result
+            const currentResult = searchResults[currentSearchIndex];
+            if (currentResult) {
+                currentResult.classList.remove('search-highlight');
+                currentResult.classList.add('current-search-highlight');
+                currentResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            updateSearchCounter();
         }
 
 
@@ -1704,6 +1808,7 @@
                 renderTranslations(poEntries);
                 updateStatsDisplay();
                 poSearchInput.value = ''; // Clear search on new file
+                filterPOEntries(); // Apply empty filter to reset view
              } catch (error) {
                 showMessage(`${translations[currentLanguage]['error_reading_file']} ${error.message}`);
                 console.error("Error parsing file:", error);
@@ -3574,6 +3679,8 @@
             poSearchInput.addEventListener('input', filterPOEntries);
             searchInOriginalCheckbox.addEventListener('change', filterPOEntries);
             searchInTranslationCheckbox.addEventListener('change', filterPOEntries);
+            searchNextBtn.addEventListener('click', () => navigateToSearchResult(1));
+            searchPrevBtn.addEventListener('click', () => navigateToSearchResult(-1));
 
 
             setLanguage(currentLanguage);
