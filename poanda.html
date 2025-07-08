@@ -37,6 +37,9 @@
         .btn-load:hover { background-color: #e07a82; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         .btn-save { background-color: #f7cf7e; color: #000; }
         .btn-save:hover { background-color: #e3b76e; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        /* NEW STYLE FOR MO BUTTON */
+        .btn-convert-mo { background-color: #a7f3d0; color: #000; }
+        .btn-convert-mo:hover { background-color: #6ee7b7; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         .btn-validate { background-color: #f7cf7e; color: #000; }
         .btn-validate:hover { background-color: #e3b76e; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         .btn-edit { background-color: #f48790; color: #000; }
@@ -107,7 +110,6 @@
         #statsContainer.show { transform: translateY(0); }
         .diff-added { background-color: #e6ffed; color: #22863a; padding: 1px 2px; border-radius: 3px; }
         .diff-removed { background-color: #ffebe9; color: #b31d28; text-decoration: line-through; padding: 1px 2px; border-radius: 3px; }
-        /* NEW: Backup indicator style */
         #backupIndicator {
             display: none;
             width: 8px;
@@ -144,7 +146,6 @@
                     <a id="saveProjectBtn" data-i18n="save_project_btn">Save Project</a>
                 </div>
             </div>
-            <!-- NEW: Backup Button -->
             <button id="backupBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
                 <span data-i18n="backup_btn">Backup</span>
                 <span id="backupIndicator"></span>
@@ -176,11 +177,14 @@
                 <span data-i18n="load_file" id="loadBtnText"></span>
                 <input type="file" id="poFile" accept=".po" class="hidden">
                 <input type="file" id="projectFile" accept=".zip,.poanda" class="hidden">
-                <!-- NEW: Hidden input for loading backup file -->
                 <input type="file" id="backupFile" accept=".json,.poanda-backup" class="hidden">
             </label>
             <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
                 <span data-i18n="save_file" id="saveBtnText"></span>
+            </button>
+            <!-- NEW: PO to MO Converter Button -->
+            <button id="convertToMoButton" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-convert-mo" disabled>
+                <span data-i18n="convert_to_mo_btn"></span>
             </button>
         </div>
 
@@ -287,7 +291,6 @@
         <div id="findReplaceModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div><label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div class="flex items-center space-x-4"><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="caseSensitiveCheckbox" class="mr-2"><span data-i18n="case_sensitive" id="caseSensitiveText"></span></label><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="regexCheckbox" class="mr-2"><span data-i18n="regular_expression" id="regexText"></span></label></div><div class="flex justify-end space-x-2"><button data-i18n="find_prev" id="findPrevBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300"><span id="findPrevText"></span></button><button data-i18n="find_next" id="findNextBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300"><span id="findNextText"></span></button><button data-i18n="replace" id="replaceBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span id="replaceText"></span></button><button data-i18n="replace_all" id="replaceAllBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span id="replaceAllText"></span></button></div></div><button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition duration-300 w-full"><span id="findReplaceCloseBtnText"></span></button></div></div>
         <div id="saveProjectModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div></div><div class="flex justify-end space-x-2 mt-6"><button id="saveProjectCancelBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="cancel_button"></span></button><button id="saveProjectConfirmBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="save_button"></span></button></div></div></div>
         
-        <!-- NEW: Backup Modal -->
         <div id="backupModal" class="modal hidden">
             <div class="modal-content">
                 <h2 data-i18n="backup_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
@@ -306,6 +309,18 @@
         </div>
 
         <div id="restoreBackupModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="restore_backup_title" id="restoreBackupTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><p data-i18n="restore_backup_info" id="restoreBackupInfo" class="text-on-light-contrast mb-6"></p><div class="flex justify-end space-x-2"><button id="discardBackupBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="discard_button"></span></button><button id="restoreBackupBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="restore_button"></span></button></div></div></div>
+
+        <!-- NEW: PO to MO Converter Modal -->
+        <div id="convertToMoModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 data-i18n="mo_converter_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
+                <p data-i18n="mo_converter_info" class="text-on-light-contrast mb-6"></p>
+                <div class="flex justify-end space-x-2">
+                    <button id="moConverterCloseBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="close_btn"></span></button>
+                    <button id="moConverterActionBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300"><span data-i18n="mo_converter_action_btn"></span></button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]"><div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2"><p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p><p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p><p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p></div></div>
@@ -454,6 +469,11 @@
         // DOM element for main content editor, needed for padding adjustments
         const editorMainContent = document.getElementById('editorMainContent');
 
+        // NEW: PO to MO Converter DOM Elements
+        const convertToMoButton = document.getElementById('convertToMoButton');
+        const convertToMoModal = document.getElementById('convertToMoModal');
+        const moConverterCloseBtn = document.getElementById('moConverterCloseBtn');
+        const moConverterActionBtn = document.getElementById('moConverterActionBtn');
 
         // Translations object for EN and ES
         const translations = {
@@ -461,6 +481,7 @@
                 'title': 'Poanda',
                 'load_file': 'Load .po file',
                 'save_file': 'Save .po file',
+                'convert_to_mo_btn': 'Convert to .mo', // New
                 'original_msgid': 'Original (msgid):',
                 'translation_msgstr': 'Translation (msgstr):',
                 'context_msgctxt': 'Context (msgctxt):',
@@ -593,12 +614,19 @@
                 'backup_deleted': 'Local backup has been deleted.',
                 'backup_loaded_from_file': 'Backup loaded successfully from file.',
                 'error_loading_backup_file': 'Error loading backup file. Ensure it is a valid .poanda-backup file.',
-                'delete_local_backup_btn_confirm': 'Are you sure you want to delete the local backup? This action cannot be undone.'
+                'delete_local_backup_btn_confirm': 'Are you sure you want to delete the local backup? This action cannot be undone.',
+                'mo_converter_title': 'PO to MO Converter', // New
+                'mo_converter_info': 'This will compile the current .po file into a binary .mo file. The conversion happens entirely in your browser.', // New
+                'mo_converter_action_btn': 'Convert and Download .mo', // New
+                'mo_conversion_success': 'MO file converted and downloaded successfully.', // New
+                'mo_conversion_error': 'Error during MO conversion. Check the browser console (F12) for details.', // New
+                'no_file_to_convert': 'No .po file loaded to convert.', // New
             },
             'es': {
                 'title': 'Poanda',
                 'load_file': 'Cargar archivo .po',
                 'save_file': 'Guardar archivo .po',
+                'convert_to_mo_btn': 'Convertir a .mo', // New
                 'original_msgid': 'Original (msgid):',
                 'translation_msgstr': 'Traducción (msgstr):',
                 'context_msgctxt': 'Contexto (msgctxt):',
@@ -731,7 +759,13 @@
                 'backup_deleted': 'La copia de seguridad local ha sido eliminada.',
                 'backup_loaded_from_file': 'Copia de seguridad cargada con éxito desde el archivo.',
                 'error_loading_backup_file': 'Error al cargar el archivo de copia de seguridad. Asegúrate de que es un archivo .poanda-backup válido.',
-                'delete_local_backup_btn_confirm': '¿Seguro que quieres eliminar la copia de seguridad local? Esta acción no se puede deshacer.'
+                'delete_local_backup_btn_confirm': '¿Seguro que quieres eliminar la copia de seguridad local? Esta acción no se puede deshacer.',
+                'mo_converter_title': 'Convertidor de PO a MO', // New
+                'mo_converter_info': 'Esto compilará el archivo .po actual a un archivo binario .mo. La conversión se realiza completamente en tu navegador.', // New
+                'mo_converter_action_btn': 'Convertir y Descargar .mo', // New
+                'mo_conversion_success': 'Archivo .mo convertido y descargado con éxito.', // New
+                'mo_conversion_error': 'Error durante la conversión a MO. Revisa la consola del navegador (F12) para más detalles.', // New
+                'no_file_to_convert': 'No hay ningún archivo .po cargado para convertir.', // New
             }
         };
 
@@ -988,7 +1022,13 @@
             let poContent = '';
             entries.forEach(entry => {
                 if (entry.comments && entry.comments.length > 0) {
-                    poContent += entry.comments.join('\n') + '\n';
+                    // Filter out fuzzy comment if msgstr is not empty
+                    const commentsToKeep = entry.fuzzy && entry.msgstr && entry.msgstr.trim() !== '' 
+                        ? entry.comments.filter(c => !c.includes('#, fuzzy')) 
+                        : entry.comments;
+                    if(commentsToKeep.length > 0) {
+                        poContent += commentsToKeep.join('\n') + '\n';
+                    }
                 }
                 if (entry.msgctxt !== undefined) {
                     poContent += `msgctxt ${escapePoString(entry.msgctxt)}\n`;
@@ -1166,6 +1206,7 @@
                     </div>
                 `;
                 savePoButton.disabled = true;
+                convertToMoButton.disabled = true; // NEW
                 statsContainer.classList.remove('show'); // Hide stats if no translations
                 return;
             }
@@ -1384,6 +1425,7 @@
                 translationsContainer.appendChild(translationUnit);
             });
             savePoButton.disabled = false;
+            convertToMoButton.disabled = false; // NEW
             statsContainer.classList.add('show'); // Show stats container
             updateStatsDisplay(); // Initial stats display after rendering
 
@@ -1578,6 +1620,7 @@
                     </div>
                 `;
                 savePoButton.disabled = true;
+                convertToMoButton.disabled = true; // NEW
                 statsContainer.classList.remove('show'); // Hide stats on error
              } finally {
                 hideLoadingOverlay();
@@ -3303,6 +3346,173 @@
             }
         }
 
+        // --- NEW: PO to MO Converter Logic ---
+
+        /**
+         * Parses a PO file string specifically for MO compilation.
+         * Handles msgctxt, msgid_plural, and msgstr arrays correctly.
+         * @param {string} poText The full PO content as a string.
+         * @returns {Array<Object>} An array of message objects for the compiler.
+         */
+        function parsePoForMo(poText) {
+            const lines = poText.split('\n');
+            const messages = [];
+            let currentMsg = {};
+            let state = '';
+
+            const unescape = (str) => str.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine.startsWith('#')) continue;
+
+                if (trimmedLine.length === 0) {
+                    if (currentMsg.msgid !== undefined) {
+                        messages.push(currentMsg);
+                    }
+                    currentMsg = {};
+                    state = '';
+                    continue;
+                }
+
+                if (trimmedLine.startsWith('msgctxt')) {
+                    state = 'msgctxt';
+                    currentMsg.msgctxt = unescape(trimmedLine.substring(7).trim().slice(1, -1));
+                } else if (trimmedLine.startsWith('msgid_plural')) {
+                    state = 'msgid_plural';
+                    currentMsg.msgid_plural = unescape(trimmedLine.substring(12).trim().slice(1, -1));
+                } else if (trimmedLine.startsWith('msgid')) {
+                    state = 'msgid';
+                    currentMsg.msgid = unescape(trimmedLine.substring(5).trim().slice(1, -1));
+                } else if (trimmedLine.startsWith('msgstr[')) {
+                    const match = trimmedLine.match(/msgstr\[(\d+)\]/);
+                    state = `msgstr[${match[1]}]`;
+                    if (!currentMsg.msgstr) currentMsg.msgstr = [];
+                    currentMsg.msgstr[parseInt(match[1], 10)] = unescape(trimmedLine.substring(match[0].length).trim().slice(1, -1));
+                } else if (trimmedLine.startsWith('msgstr')) {
+                    state = 'msgstr';
+                    currentMsg.msgstr = [unescape(trimmedLine.substring(6).trim().slice(1, -1))];
+                } else if (trimmedLine.startsWith('"')) { // continuation line
+                    const str = unescape(trimmedLine.slice(1, -1));
+                    if (state === 'msgid') currentMsg.msgid += str;
+                    else if (state === 'msgid_plural') currentMsg.msgid_plural += str;
+                    else if (state === 'msgctxt') currentMsg.msgctxt += str;
+                    else if (state === 'msgstr') currentMsg.msgstr[0] += str;
+                    else if (state.startsWith('msgstr[')) {
+                        const match = state.match(/msgstr\[(\d+)\]/);
+                        const index = parseInt(match[1], 10);
+                        if(!currentMsg.msgstr[index]) currentMsg.msgstr[index] = '';
+                        currentMsg.msgstr[index] += str;
+                    }
+                }
+            }
+            if (currentMsg.msgid !== undefined) messages.push(currentMsg);
+            return messages;
+        }
+
+        /**
+         * Compiles an array of parsed PO messages into a binary MO file ArrayBuffer.
+         * @param {Array<Object>} messages The parsed messages from parsePoForMo.
+         * @returns {ArrayBuffer} The binary data of the .mo file.
+         */
+        function compileMo(messages) {
+            const textEncoder = new TextEncoder();
+            const MAGIC = 0x950412de;
+            const REVISION = 0;
+            
+            let header = messages.find(m => m.msgid === '');
+            if (header && header.msgstr && header.msgstr[0]) {
+                 if(!header.msgstr[0].includes('Content-Type')) {
+                    header.msgstr[0] += '\nContent-Type: text/plain; charset=UTF-8\n';
+                 }
+            } else {
+                 header = { msgid: "", msgstr: ["Content-Type: text/plain; charset=UTF-8\n"] };
+            }
+
+            const translations = messages.filter(m => m.msgid !== '');
+
+            translations.sort((a, b) => {
+                const keyA = (a.msgctxt || '') + '\u0004' + a.msgid;
+                const keyB = (b.msgctxt || '') + '\u0004' + b.msgid;
+                return keyA.localeCompare(keyB);
+            });
+
+            const stringCount = translations.length + 1; // +1 for header
+            const headerSize = 28;
+            const originalsTableOffset = headerSize;
+            const translationsTableOffset = headerSize + (stringCount * 8);
+            
+            let stringData = [];
+            let currentOffset = translationsTableOffset + (stringCount * 8);
+
+            // Header entry
+            stringData.push({
+                original: textEncoder.encode(""),
+                translation: textEncoder.encode(header.msgstr[0]),
+            });
+
+            // Translation entries
+            translations.forEach(msg => {
+                let originalStr;
+                if (msg.msgid_plural) {
+                    originalStr = (msg.msgctxt ? msg.msgctxt + '\u0004' : '') + msg.msgid + '\u0000' + msg.msgid_plural;
+                } else {
+                    originalStr = (msg.msgctxt ? msg.msgctxt + '\u0004' : '') + msg.msgid;
+                }
+                const translationStr = (msg.msgstr || []).join('\u0000');
+                stringData.push({
+                    original: textEncoder.encode(originalStr),
+                    translation: textEncoder.encode(translationStr),
+                });
+            });
+
+            const originalsTable = [];
+            const translationsTable = [];
+
+            stringData.forEach(data => {
+                originalsTable.push({ length: data.original.length, offset: currentOffset });
+                currentOffset += data.original.length + 1; // +1 for null terminator
+            });
+            stringData.forEach(data => {
+                translationsTable.push({ length: data.translation.length, offset: currentOffset });
+                currentOffset += data.translation.length + 1; // +1 for null terminator
+            });
+            
+            const buffer = new ArrayBuffer(currentOffset);
+            const view = new DataView(buffer);
+            let byteOffset = 0;
+
+            // Write header
+            view.setUint32(byteOffset, MAGIC, true); byteOffset += 4;
+            view.setUint32(byteOffset, REVISION, true); byteOffset += 4;
+            view.setUint32(byteOffset, stringCount, true); byteOffset += 4;
+            view.setUint32(byteOffset, originalsTableOffset, true); byteOffset += 4;
+            view.setUint32(byteOffset, translationsTableOffset, true); byteOffset += 4;
+            view.setUint32(byteOffset, 0, true); byteOffset += 4; // hash table size
+            view.setUint32(byteOffset, 0, true); byteOffset += 4; // hash table offset
+            
+            // Write tables
+            originalsTable.forEach(entry => {
+                view.setUint32(byteOffset, entry.length, true); byteOffset += 4;
+                view.setUint32(byteOffset, entry.offset, true); byteOffset += 4;
+            });
+            translationsTable.forEach(entry => {
+                view.setUint32(byteOffset, entry.length, true); byteOffset += 4;
+                view.setUint32(byteOffset, entry.offset, true); byteOffset += 4;
+            });
+
+            // Write string data
+            stringData.forEach(data => {
+                new Uint8Array(buffer, byteOffset).set(data.original);
+                byteOffset += data.original.length + 1;
+            });
+            stringData.forEach(data => {
+                new Uint8Array(buffer, byteOffset).set(data.translation);
+                byteOffset += data.translation.length + 1;
+            });
+
+            return buffer;
+        }
 
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -3398,6 +3608,45 @@
                 reader.readAsText(file);
             });
 
+            // NEW: Add event listeners for the MO converter modal
+            convertToMoButton.addEventListener('click', () => {
+                if (poEntries.length > 0) {
+                    convertToMoModal.classList.remove('hidden');
+                } else {
+                    showMessage(translations[currentLanguage]['no_file_to_convert']);
+                }
+            });
+
+            moConverterCloseBtn.addEventListener('click', () => {
+                convertToMoModal.classList.add('hidden');
+            });
+
+            moConverterActionBtn.addEventListener('click', () => {
+                try {
+                    const poContent = reconstructPo(poEntries);
+                    const messages = parsePoForMo(poContent);
+                    const moArrayBuffer = compileMo(messages);
+
+                    const blob = new Blob([moArrayBuffer], { type: 'application/octet-stream' });
+                    const outputFileName = currentFileName.replace(/\.po$/, '.mo');
+                    const link = document.createElement('a');
+
+                    link.href = URL.createObjectURL(blob);
+                    link.download = outputFileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+
+                    showMessage(translations[currentLanguage]['mo_conversion_success']);
+                } catch (error) {
+                    showMessage(translations[currentLanguage]['mo_conversion_error']);
+                    console.error("Error converting PO to MO:", error);
+                } finally {
+                    convertToMoModal.classList.add('hidden');
+                }
+            });
+
 
             setLanguage(currentLanguage); // Apply initial language (en) and content
 
@@ -3418,6 +3667,7 @@
                 `;
             }
             if (savePoButton) savePoButton.disabled = true; // Added null check
+            if (convertToMoButton) convertToMoButton.disabled = true; // NEW
             if (statsContainer) statsContainer.classList.remove('show'); // Ensure stats are hidden on load
 
             // Ensure accordions are collapsed on initial load
