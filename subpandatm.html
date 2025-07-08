@@ -194,8 +194,10 @@
         /* --- START: Floating Panel Styles --- */
         .floating-panel {
             position: fixed;
-            top: 80px;
-            right: -550px; /* Start off-screen */
+            /* Default starting position, will be overridden by JS */
+            top: 80px; 
+            right: 20px; 
+
             width: 480px;
             min-width: 350px;
             max-width: 80vw;
@@ -206,7 +208,13 @@
             border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             z-index: 950;
-            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            
+            /* New transition properties */
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+
             display: flex;
             flex-direction: column;
             resize: both; /* Allow resizing from corner */
@@ -214,7 +222,9 @@
         }
 
         .floating-panel.is-visible {
-            right: 20px; /* Slide into view */
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
         }
 
         .floating-panel .sidebar-header {
@@ -2180,22 +2190,6 @@
         }
 
         // --- Terminology Sidebar Logic ---
-        terminologyBtn.addEventListener('click', () => {
-            translationMemorySidebar.classList.remove('is-visible');
-            terminologySidebar.classList.toggle('is-visible');
-            if (terminologySidebar.classList.contains('is-visible')) {
-                if (!glossarySourceLanguage || !glossaryTargetLanguage) {
-                    showLanguageConfigSection();
-                } else {
-                    showGlossaryEditorSection();
-                }
-            }
-        });
-
-        closeTerminologySidebarBtn.addEventListener('click', () => {
-            closeFloatingPanel(terminologySidebar);
-        });
-
         function populateIsoLanguagesDatalist() {
             isoLanguagesDatalist.innerHTML = '';
             isoLanguagesData.forEach(lang => {
@@ -2440,31 +2434,6 @@
                 }
             }).join('');
         }
-
-
-        tmBtn.addEventListener('click', () => {
-            terminologySidebar.classList.remove('is-visible');
-            translationMemorySidebar.classList.toggle('is-visible');
-            if (translationMemorySidebar.classList.contains('is-visible')) {
-                if (!tmSourceLanguage || !tmTargetLanguage) {
-                    showTMLanguageConfigSection();
-                } else {
-                    showTMEditorSection();
-                    tmSearch();
-                }
-            }
-        });
-
-        closeTranslationMemorySidebarBtn.addEventListener('click', () => {
-            closeFloatingPanel(translationMemorySidebar);
-        });
-
-        tmFileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                await loadTMX(file);
-            }
-        });
 
         function showTMInternalMessage(msg, isError = false) {
             if (tmInternalMessage) {
@@ -3097,15 +3066,52 @@
             confirmNewProjectModal.classList.add('hidden');
         }
 
-        // --- START: Floating Panel Logic (Drag, Resize, and Close) ---
+        // --- START: Floating Panel Logic ---
+        let panelStates = {
+            terminologySidebar: null,
+            translationMemorySidebar: null
+        };
+
+        function openFloatingPanel(panel) {
+            // Close the other panel if it's open
+            if (panel.id === 'terminologySidebar' && translationMemorySidebar.classList.contains('is-visible')) {
+                closeFloatingPanel(translationMemorySidebar);
+            } else if (panel.id === 'translationMemorySidebar' && terminologySidebar.classList.contains('is-visible')) {
+                closeFloatingPanel(terminologySidebar);
+            }
+
+            const state = panelStates[panel.id];
+            if (state) {
+                // Restore position and size from saved state
+                panel.style.top = state.top;
+                panel.style.left = state.left;
+                panel.style.width = state.width;
+                panel.style.height = state.height;
+                panel.style.right = 'auto'; // Ensure right is not used
+            } else {
+                // First time opening, use default position
+                panel.style.right = '20px';
+                panel.style.left = 'auto';
+                panel.style.top = '80px';
+            }
+            
+            // Use requestAnimationFrame to ensure styles are applied before adding the class for transition
+            requestAnimationFrame(() => {
+                panel.classList.add('is-visible');
+            });
+        }
+
         function closeFloatingPanel(panel) {
+            // Save the current state (position and size)
+            panelStates[panel.id] = {
+                top: `${panel.offsetTop}px`,
+                left: `${panel.offsetLeft}px`,
+                width: `${panel.offsetWidth}px`,
+                height: `${panel.offsetHeight}px`
+            };
+            
+            // Remove the visible class to trigger the fade-out animation
             panel.classList.remove('is-visible');
-            // Reset position styles so the CSS transition can take over.
-            // This is crucial because dragging sets inline 'left' and 'top' styles.
-            panel.style.left = '';
-            panel.style.top = '';
-            // We also clear right, so the default off-screen position is applied from the CSS.
-            panel.style.right = '';
         }
 
         function makePanelFloat(panel) {
@@ -3114,22 +3120,19 @@
             let offsetX, offsetY;
 
             header.addEventListener('mousedown', (e) => {
-                // Prevent dragging if the click is on a button inside the header
                 if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
                     return;
                 }
                 isDragging = true;
                 
-                // If the panel's position is defined by 'right', calculate 'left' before dragging
-                if (panel.style.right !== 'auto' && panel.style.right !== '') {
-                    panel.style.left = `${panel.offsetLeft}px`;
-                    panel.style.right = 'auto';
-                }
+                // Switch from 'right' positioning to 'left' for dragging
+                panel.style.right = 'auto'; 
+                panel.style.left = `${panel.offsetLeft}px`;
 
                 offsetX = e.clientX - panel.offsetLeft;
                 offsetY = e.clientY - panel.offsetTop;
                 
-                panel.style.transition = 'none';
+                panel.style.transition = 'none'; // Disable transition during drag for smoothness
                 document.body.style.userSelect = 'none';
                 document.body.style.cursor = 'move';
             });
@@ -3159,7 +3162,7 @@
             document.addEventListener('mouseup', () => {
                 if (isDragging) {
                     isDragging = false;
-                    panel.style.transition = 'right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // Re-enable CSS transitions
+                    panel.style.transition = ''; // Re-enable default CSS transitions
                     document.body.style.userSelect = '';
                     document.body.style.cursor = '';
                 }
@@ -3178,6 +3181,43 @@
             // Initialize floating panels
             makePanelFloat(document.getElementById('terminologySidebar'));
             makePanelFloat(document.getElementById('translationMemorySidebar'));
+
+            // Panel Button Listeners
+            terminologyBtn.addEventListener('click', () => {
+                if (terminologySidebar.classList.contains('is-visible')) {
+                    closeFloatingPanel(terminologySidebar);
+                } else {
+                    openFloatingPanel(terminologySidebar);
+                    if (!glossarySourceLanguage || !glossaryTargetLanguage) {
+                        showLanguageConfigSection();
+                    } else {
+                        showGlossaryEditorSection();
+                    }
+                }
+            });
+
+            tmBtn.addEventListener('click', () => {
+                if (translationMemorySidebar.classList.contains('is-visible')) {
+                    closeFloatingPanel(translationMemorySidebar);
+                } else {
+                    openFloatingPanel(translationMemorySidebar);
+                    if (!tmSourceLanguage || !tmTargetLanguage) {
+                        showTMLanguageConfigSection();
+                    } else {
+                        showTMEditorSection();
+                        tmSearch();
+                    }
+                }
+            });
+
+            closeTerminologySidebarBtn.addEventListener('click', () => {
+                closeFloatingPanel(terminologySidebar);
+            });
+
+            closeTranslationMemorySidebarBtn.addEventListener('click', () => {
+                closeFloatingPanel(translationMemorySidebar);
+            });
+
 
             if (saveSrtButton) saveSrtButton.disabled = true;
             if (statsContainer) statsContainer.classList.add('hidden');
