@@ -95,6 +95,12 @@
         .glossary-delete-btn:hover, .tm-delete-btn:hover { background-color: #da190b; }
         .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 8px 12px; border: 1px solid #e0e0e0; font-size: 0.9rem; }
         .glossary-table th, .tm-table th { background-color: #f0f0f0; font-weight: 600; }
+        
+        .tm-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
         .glossary-info-box, .tm-info-box { background-color: #fef3c7; border: 1px solid var(--color-secondary); padding: 10px; border-radius: 6px; font-size: 0.85rem; color: var(--color-dark); }
         .glossary-highlight { background-color: var(--color-secondary); padding: 0 2px; border-radius: 3px; }
         .glossary-row-highlight { background-color: #fde68a !important; transition: background-color 0.3s ease; }
@@ -232,6 +238,21 @@
 
         <div class="main-editor-layout" id="mainEditorLayout">
             <div class="editor-main-content space-y-4 max-h-[70vh] overflow-y-auto pr-2" id="editorMainContent">
+                <!-- PO Editor Search Bar -->
+                <div id="poSearchContainer" class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
+                    <input type="text" id="poSearchInput" data-i18n-placeholder="po_search_placeholder" class="w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white mb-2">
+                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="searchInOriginalCheckbox" checked class="mr-2">
+                            <span data-i18n="search_in_original"></span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="searchInTranslationCheckbox" checked class="mr-2">
+                            <span data-i18n="search_in_translation"></span>
+                        </label>
+                    </div>
+                </div>
+
                 <div id="translationsContainer">
                     <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md"></div>
                 </div>
@@ -411,6 +432,12 @@
         const loadingMessage = document.getElementById('loadingMessage');
         const mainEditorLayout = document.getElementById('mainEditorLayout');
 
+        // PO Editor Search DOM elements
+        const poSearchContainer = document.getElementById('poSearchContainer');
+        const poSearchInput = document.getElementById('poSearchInput');
+        const searchInOriginalCheckbox = document.getElementById('searchInOriginalCheckbox');
+        const searchInTranslationCheckbox = document.getElementById('searchInTranslationCheckbox');
+
         // Project DOM elements
         const projectFileInput = document.getElementById('projectFile');
         const newProjectBtn = document.getElementById('newProjectBtn');
@@ -522,7 +549,7 @@
                 'title': 'Poanda',
                 'load_file': 'Load .po file',
                 'save_file': 'Save .po file',
-                'convert_to_mo_btn': 'Convert to .mo', // New
+                'convert_to_mo_btn': 'Convert to .mo',
                 'original_msgid': 'Original (msgid):',
                 'translation_msgstr': 'Translation (msgstr):',
                 'context_msgctxt': 'Context (msgctxt):',
@@ -656,18 +683,21 @@
                 'backup_loaded_from_file': 'Backup loaded successfully from file.',
                 'error_loading_backup_file': 'Error loading backup file. Ensure it is a valid .poanda-backup file.',
                 'delete_local_backup_btn_confirm': 'Are you sure you want to delete the local backup? This action cannot be undone.',
-                'mo_converter_title': 'PO to MO Converter', // New
-                'mo_converter_info': 'This will compile the current .po file into a binary .mo file. The conversion happens entirely in your browser.', // New
-                'mo_converter_action_btn': 'Convert and Download .mo', // New
-                'mo_conversion_success': 'MO file converted and downloaded successfully.', // New
-                'mo_conversion_error': 'Error during MO conversion. Check the browser console (F12) for details.', // New
-                'no_file_to_convert': 'No .po file loaded to convert.', // New
+                'mo_converter_title': 'PO to MO Converter',
+                'mo_converter_info': 'This will compile the current .po file into a binary .mo file. The conversion happens entirely in your browser.',
+                'mo_converter_action_btn': 'Convert and Download .mo',
+                'mo_conversion_success': 'MO file converted and downloaded successfully.',
+                'mo_conversion_error': 'Error during MO conversion. Check the browser console (F12) for details.',
+                'no_file_to_convert': 'No .po file loaded to convert.',
+                'po_search_placeholder': 'Search in file...',
+                'search_in_original': 'Search in original',
+                'search_in_translation': 'Search in translation',
             },
             'es': {
                 'title': 'Poanda',
                 'load_file': 'Cargar archivo .po',
                 'save_file': 'Guardar archivo .po',
-                'convert_to_mo_btn': 'Convertir a .mo', // New
+                'convert_to_mo_btn': 'Convertir a .mo',
                 'original_msgid': 'Original (msgid):',
                 'translation_msgstr': 'Traducción (msgstr):',
                 'context_msgctxt': 'Contexto (msgctxt):',
@@ -801,12 +831,15 @@
                 'backup_loaded_from_file': 'Copia de seguridad cargada con éxito desde el archivo.',
                 'error_loading_backup_file': 'Error al cargar el archivo de copia de seguridad. Asegúrate de que es un archivo .poanda-backup válido.',
                 'delete_local_backup_btn_confirm': '¿Seguro que quieres eliminar la copia de seguridad local? Esta acción no se puede deshacer.',
-                'mo_converter_title': 'Convertidor de PO a MO', // New
-                'mo_converter_info': 'Esto compilará el archivo .po actual a un archivo binario .mo. La conversión se realiza completamente en tu navegador.', // New
-                'mo_converter_action_btn': 'Convertir y Descargar .mo', // New
-                'mo_conversion_success': 'Archivo .mo convertido y descargado con éxito.', // New
-                'mo_conversion_error': 'Error durante la conversión a MO. Revisa la consola del navegador (F12) para más detalles.', // New
-                'no_file_to_convert': 'No hay ningún archivo .po cargado para convertir.', // New
+                'mo_converter_title': 'Convertidor de PO a MO',
+                'mo_converter_info': 'Esto compilará el archivo .po actual a un archivo binario .mo. La conversión se realiza completamente en tu navegador.',
+                'mo_converter_action_btn': 'Convertir y Descargar .mo',
+                'mo_conversion_success': 'Archivo .mo convertido y descargado con éxito.',
+                'mo_conversion_error': 'Error durante la conversión a MO. Revisa la consola del navegador (F12) para más detalles.',
+                'no_file_to_convert': 'No hay ningún archivo .po cargado para convertir.',
+                'po_search_placeholder': 'Buscar en el archivo...',
+                'search_in_original': 'Buscar en original',
+                'search_in_translation': 'Buscar en traducción',
             }
         };
 
@@ -1247,11 +1280,14 @@
                     </div>
                 `;
                 savePoButton.disabled = true;
-                convertToMoButton.disabled = true; // NEW
+                convertToMoButton.disabled = true; 
+                poSearchContainer.classList.add('hidden'); // Hide search bar
                 statsContainer.classList.remove('show'); // Hide stats if no translations
-                updateUtilityButtonStates(); // NEW
+                updateUtilityButtonStates(); 
                 return;
             }
+
+            poSearchContainer.classList.remove('hidden'); // Show search bar
 
             entries.forEach((entry, entryIndex) => {
                 // Skip rendering header entry explicitly in the main editor area, but keep in poEntries
@@ -1276,7 +1312,7 @@
                     translationUnit.appendChild(msgctxtLabel);
 
                     const msgctxtPre = document.createElement('pre');
-                    msgctxtPre.className = 'po-display-code p-2 rounded-md text-base overflow-auto max-h-32'; /* Changed text-sm to text-base */
+                    msgctxtPre.className = 'po-display-code p-2 rounded-md text-base overflow-auto max-h-32';
                     msgctxtPre.textContent = entry.msgctxt;
                     translationUnit.appendChild(msgctxtPre);
                 }
@@ -1296,7 +1332,7 @@
 
                     const msgidPre = document.createElement('pre');
                     msgidPre.id = `msgid-pre-${entryIndex}-${segmentIndex}`; // Added ID for easier lookup
-                    msgidPre.className = 'po-display-code p-2 rounded-md text-base overflow-auto max-h-32'; /* Changed text-sm to text-base */
+                    msgidPre.className = 'po-display-code p-2 rounded-md text-base overflow-auto max-h-32';
                     msgidPre.textContent = segment.original; // Initial text without highlight
                     originalCol.appendChild(msgidPre);
                     segmentRow.appendChild(originalCol);
@@ -1311,7 +1347,7 @@
 
                     const msgstrTextarea = document.createElement('textarea');
                     msgstrTextarea.id = `msgstr-${entryIndex}-${segmentIndex}`;
-                    msgstrTextarea.className = 'msgstr-textarea mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500 text-base'; /* Changed text-sm to text-base */
+                    msgstrTextarea.className = 'msgstr-textarea mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500 text-base';
                     msgstrTextarea.value = segment.translation;
                     msgstrTextarea.dataset.entryIndex = entryIndex;
                     msgstrTextarea.dataset.segmentIndex = segmentIndex;
@@ -1326,7 +1362,7 @@
 
                     const charCountSpan = document.createElement('span');
                     charCountSpan.id = `charCount-${entryIndex}-${segmentIndex}`;
-                    charCountSpan.className = 'inline-block text-sm font-semibold text-on-light-contrast'; /* Added inline-block for persistent visibility */
+                    charCountSpan.className = 'inline-block text-sm font-semibold text-on-light-contrast';
                     controlsContainer.appendChild(charCountSpan);
 
                     const actionButtonsContainer = document.createElement('div');
@@ -1370,63 +1406,55 @@
 
                         segment.translation = event.target.value;
                         segment.wordCountTranslation = countWords(event.target.value);
-                        segment.isTranslated = event.target.value.trim() !== ''; // Update translation status
+                        segment.isTranslated = event.target.value.trim() !== '';
 
                         const originalSegmentPre = originalCol.querySelector('pre');
                         autoResizeTextarea(event.target, originalSegmentPre);
                         updateCharCount(event.target, parseInt(event.target.dataset.originalLength));
-                        updateStatsDisplay(); // Update stats on every input
+                        updateStatsDisplay();
 
-                        // Re-evaluate glossary highlights on input as content changes
                         if (document.activeElement === msgstrTextarea) {
-                            // Force re-highlight by simulating blur then focus
-                            const tempOriginalText = segment.original; // Save original text
-                            originalCol.querySelector('pre').textContent = tempOriginalText; // Clear highlight
-                            termsFoundInActiveSegment.clear(); // Clear terms
-                            const highlightResult = applyGlossaryHighlightToText(tempOriginalText); // Re-apply highlight
+                            const tempOriginalText = segment.original;
+                            originalCol.querySelector('pre').textContent = tempOriginalText;
+                            termsFoundInActiveSegment.clear();
+                            const highlightResult = applyGlossaryHighlightToText(tempOriginalText);
                             originalCol.querySelector('pre').innerHTML = highlightResult.html;
                             highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
-                            updateGlossaryTableHighlights(); // Update glossary table
+                            updateGlossaryTableHighlights();
                         }
                     });
 
-                    // Add focus and blur event listeners for dynamic highlighting and active unit
                     msgstrTextarea.addEventListener('focus', (event) => {
-                        // Remove highlight from any previously active unit
                         document.querySelectorAll('.translation-unit-active').forEach(unit => {
                             unit.classList.remove('translation-unit-active');
                         });
-                        // Add highlight to the current unit
                         translationUnit.classList.add('translation-unit-active');
 
-                        termsFoundInActiveSegment.clear(); // Clear previous terms
+                        termsFoundInActiveSegment.clear();
                         const originalSegmentPre = document.getElementById(`msgid-pre-${entryIndex}-${segmentIndex}`);
                         if (originalSegmentPre && glossarySourceLanguage && glossary.length > 0) {
                             const highlightResult = applyGlossaryHighlightToText(segment.original);
                             originalSegmentPre.innerHTML = highlightResult.html;
                             highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
                         }
-                        updateGlossaryTableHighlights(); // Update glossary table based on current terms
-                        autoResizeTextarea(event.target, originalCol.querySelector('pre')); // Ensure resize on focus
-                        event.target.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll into view
+                        updateGlossaryTableHighlights();
+                        autoResizeTextarea(event.target, originalCol.querySelector('pre'));
+                        event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                        // TM: Find best match when segment is focused and update TM search results
                         const currentSegmentOriginal = poEntries[entryIndex].sentenceSegments[segmentIndex].original;
-                        tmBestMatchForActiveSegment = findBestTMMatch(currentSegmentOriginal); // Update global
-                        tmSearch(); // Re-render TM results, which will now show the active segment match
+                        tmBestMatchForActiveSegment = findBestTMMatch(currentSegmentOriginal);
+                        tmSearch();
                     });
 
                     msgstrTextarea.addEventListener('blur', (event) => {
                         const originalSegmentPre = document.getElementById(`msgid-pre-${entryIndex}-${segmentIndex}`);
                         if (originalSegmentPre) {
-                            originalSegmentPre.textContent = segment.original; // Revert to plain text on blur
+                            originalSegmentPre.textContent = segment.original;
                         }
-                        // Only remove active unit highlight if moving focus outside this unit.
-                        termsFoundInActiveSegment.clear(); // Clear terms when segment loses focus
-                        updateGlossaryTableHighlights(); // Remove table highlights
-                        // TM: Clear active segment match and refresh TM search results
+                        termsFoundInActiveSegment.clear();
+                        updateGlossaryTableHighlights();
                         tmBestMatchForActiveSegment = null;
-                        tmSearch(); // Refresh TM search results to remove the active segment match
+                        tmSearch();
                     });
 
 
@@ -1443,7 +1471,6 @@
                         const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
                         setTranslationEditableState(currentEntryIndex, currentSegmentIndex, false);
                         goToNextTranslation(currentEntryIndex, currentSegmentIndex);
-                        // Stats and TM update are handled inside setTranslationEditableState now
                     });
 
                     editButton.addEventListener('click', (event) => {
@@ -1452,7 +1479,6 @@
                         setTranslationEditableState(currentEntryIndex, currentSegmentIndex, true);
                     });
 
-                    // Call autoResizeTextarea on initial render for correct default height
                     autoResizeTextarea(msgstrTextarea, msgidPre);
                     updateCharCount(msgstrTextarea, segment.original.length);
                 });
@@ -1467,18 +1493,51 @@
                 translationsContainer.appendChild(translationUnit);
             });
             savePoButton.disabled = false;
-            convertToMoButton.disabled = false; // NEW
-            statsContainer.classList.add('show'); // Show stats container
-            updateStatsDisplay(); // Initial stats display after rendering
-            updateUtilityButtonStates(); // NEW
+            convertToMoButton.disabled = false;
+            statsContainer.classList.add('show');
+            updateStatsDisplay();
+            updateUtilityButtonStates();
 
-            // Initial focus on the first editable translation if any (this will trigger its focus listener for highlight)
             const firstEditableSegment = getFirstEditableSegment();
             if (firstEditableSegment) {
                 navigateToTranslation(firstEditableSegment.entryIndex, firstEditableSegment.segmentIndex);
             }
-            // The glossary table highlights will be updated by the initial navigateToTranslation call's focus event.
         }
+
+        /**
+         * Filters the displayed PO entries based on the search input and checkboxes.
+         */
+        function filterPOEntries() {
+            const query = poSearchInput.value.toLowerCase().trim();
+            const searchInOriginal = searchInOriginalCheckbox.checked;
+            const searchInTranslation = searchInTranslationCheckbox.checked;
+
+            poEntries.forEach((entry, index) => {
+                if (entry.isHeader) return; // Skip header
+
+                const unit = document.getElementById(`translation-unit-${index}`);
+                if (!unit) return;
+
+                if (!query) { // If search is empty, show all
+                    unit.style.display = 'block';
+                    return;
+                }
+
+                let matchFound = false;
+                const fullMsgstr = entry.sentenceSegments.map(s => s.translation).join(' ');
+
+                if (searchInOriginal && entry.msgid && entry.msgid.toLowerCase().includes(query)) {
+                    matchFound = true;
+                }
+
+                if (!matchFound && searchInTranslation && fullMsgstr.toLowerCase().includes(query)) {
+                    matchFound = true;
+                }
+
+                unit.style.display = matchFound ? 'block' : 'none';
+            });
+        }
+
 
         /**
          * Updates the display of translation progress and word counts.
@@ -1490,10 +1549,8 @@
             let totalWordsTranslated = 0;
 
             poEntries.forEach(entry => {
-                // Skip header entry
-                if (entry.isHeader) {
-                    return;
-                }
+                if (entry.isHeader) return;
+                
                 if (entry.sentenceSegments) {
                     entry.sentenceSegments.forEach(segment => {
                         totalSegments++;
@@ -1552,13 +1609,12 @@
         function navigateToTranslation(entryIndex, segmentIndex) {
             const targetTextarea = document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`);
             if (targetTextarea) {
-                // Blur the previously focused textarea to trigger its blur event if it's different
                 const currentlyFocusedTextarea = document.activeElement;
                 if (currentlyFocusedTextarea && currentlyFocusedTextarea.classList.contains('msgstr-textarea') && currentlyFocusedTextarea !== targetTextarea) {
-                    currentlyFocusedTextarea.blur(); // This will trigger the blur event listener
+                    currentlyFocusedTextarea.blur();
                 }
-                setTranslationEditableState(entryIndex, segmentIndex, true); // Make it editable and focus
-                targetTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll into view
+                setTranslationEditableState(entryIndex, segmentIndex, true);
+                targetTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
@@ -1573,7 +1629,6 @@
             let nextEntryIndex = currentEntryIndex;
             let nextSegmentIndex = currentSegmentIndex + 1;
 
-            // Loop to find the next *editable* segment
             while (true) {
                 if (nextEntryIndex >= poEntries.length) {
                     showMessage(translations[currentLanguage]['reached_last']);
@@ -1582,7 +1637,6 @@
 
                 const currentEntry = poEntries[nextEntryIndex];
                 if (currentEntry.isHeader || !currentEntry.sentenceSegments || currentEntry.sentenceSegments.length === 0) {
-                    // Skip header or entries with no segments
                     nextEntryIndex++;
                     nextSegmentIndex = 0;
                     continue;
@@ -1592,7 +1646,6 @@
                     navigateToTranslation(nextEntryIndex, nextSegmentIndex);
                     return;
                 } else {
-                    // Move to the next entry
                     nextEntryIndex++;
                     nextSegmentIndex = 0;
                 }
@@ -1610,7 +1663,6 @@
             let prevEntryIndex = currentEntryIndex;
             let prevSegmentIndex = currentSegmentIndex - 1;
 
-            // Loop to find the previous *editable* segment
             while (true) {
                 if (prevEntryIndex < 0) {
                     showMessage(translations[currentLanguage]['reached_first']);
@@ -1619,7 +1671,6 @@
 
                 const currentEntry = poEntries[prevEntryIndex];
                 if (currentEntry.isHeader || !currentEntry.sentenceSegments || currentEntry.sentenceSegments.length === 0) {
-                    // Skip header or entries with no segments
                     prevEntryIndex--;
                     prevSegmentIndex = (prevEntryIndex >= 0 && poEntries[prevEntryIndex].sentenceSegments) ? poEntries[prevEntryIndex].sentenceSegments.length - 1 : 0;
                     continue;
@@ -1629,7 +1680,6 @@
                     navigateToTranslation(prevEntryIndex, prevSegmentIndex);
                     return;
                 } else {
-                    // Move to the previous entry's last segment
                     prevEntryIndex--;
                     prevSegmentIndex = (prevEntryIndex >= 0 && poEntries[prevEntryIndex].sentenceSegments) ? poEntries[prevEntryIndex].sentenceSegments.length - 1 : 0;
                 }
@@ -1647,13 +1697,13 @@
             }
         });
 
-        // REFACTORED: Process PO file from content string
         function processPoContent(content) {
              showLoadingOverlay(translations[currentLanguage]['loading_file']);
              try {
-                poEntries = parsePoContent(content); // Now only calls parsePoContent
+                poEntries = parsePoContent(content);
                 renderTranslations(poEntries);
-                updateStatsDisplay(); // Ensure stats are updated after parsing and rendering
+                updateStatsDisplay();
+                poSearchInput.value = ''; // Clear search on new file
              } catch (error) {
                 showMessage(`${translations[currentLanguage]['error_reading_file']} ${error.message}`);
                 console.error("Error parsing file:", error);
@@ -1663,9 +1713,10 @@
                     </div>
                 `;
                 savePoButton.disabled = true;
-                convertToMoButton.disabled = true; // NEW
-                statsContainer.classList.remove('show'); // Hide stats on error
-                updateUtilityButtonStates(); // NEW
+                convertToMoButton.disabled = true;
+                poSearchContainer.classList.add('hidden');
+                statsContainer.classList.remove('show');
+                updateUtilityButtonStates();
              } finally {
                 hideLoadingOverlay();
              }
@@ -1704,24 +1755,22 @@
         }
 
         document.addEventListener('keydown', (event) => {
-            // Check if any modal is open. If so, prevent default shortcuts to avoid interference.
             if (!shortcutsModal.classList.contains('hidden') || !findReplaceModal.classList.contains('hidden') || !messageBox.classList.contains('hidden') || !saveProjectModal.classList.contains('hidden')) {
                 return;
             }
 
             const isNumberKey = event.key >= '1' && event.key <= '5';
-            const indexToInsert = parseInt(event.key) - 1; // 0-indexed
+            const indexToInsert = parseInt(event.key) - 1;
 
-            if (event.altKey && !event.ctrlKey) { // Only Alt + [1-5]
+            if (event.altKey && !event.ctrlKey) {
                 if (isNumberKey) {
-                    event.preventDefault(); // Prevent browser default action (e.g., opening dev tools)
+                    event.preventDefault();
                     const currentFocused = getCurrentFocusedIndex();
-                    if (!currentFocused) return; // Only if a textarea is focused
+                    if (!currentFocused) return;
 
                     const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
-                    if (!targetTextarea || targetTextarea.readOnly) return; // Only if editable textarea
+                    if (!targetTextarea || targetTextarea.readOnly) return;
 
-                    // ALT + [1-5]: Insert TM suggestion
                     if (currentTMLatestSearchResults.length > indexToInsert) {
                         const tmToInsert = currentTMLatestSearchResults[indexToInsert];
                         const textToInsert = tmToInsert.tgtText;
@@ -1734,26 +1783,23 @@
                                                textToInsert +
                                                currentValue.substring(end);
 
-                        // Move cursor to the end of inserted text
                         targetTextarea.selectionStart = targetTextarea.selectionEnd = start + textToInsert.length;
 
-                        // Trigger input event manually to update stats and char counts
                         const inputEvent = new Event('input', { bubbles: true });
                         targetTextarea.dispatchEvent(inputEvent);
                     } else {
                         showMessage(translations[currentLanguage]['tm_no_match_found']);
                     }
                 }
-            } else if (event.ctrlKey && event.altKey) { // Only Ctrl + Alt + [1-5]
+            } else if (event.ctrlKey && event.altKey) {
                  if (isNumberKey) {
-                    event.preventDefault(); // Prevent browser default action
+                    event.preventDefault();
                     const currentFocused = getCurrentFocusedIndex();
-                    if (!currentFocused) return; // Only if a textarea is focused
+                    if (!currentFocused) return;
 
                     const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
-                    if (!targetTextarea || targetTextarea.readOnly) return; // Only if editable textarea
+                    if (!targetTextarea || targetTextarea.readOnly) return;
 
-                    // CTRL + ALT + [1-5]: Insert Glossary term
                     if (currentGlossaryLatestResults.length > indexToInsert) {
                         const glossaryTermToInsert = currentGlossaryLatestResults[indexToInsert];
                         const termTextToInsert = glossaryTermToInsert.tgtTerm;
@@ -1766,17 +1812,15 @@
                                                termTextToInsert +
                                                currentValue.substring(end);
 
-                        // Move cursor to the end of inserted text
                         targetTextarea.selectionStart = targetTextarea.selectionEnd = start + termTextToInsert.length;
 
-                        // Trigger input event manually to update stats and char counts
                         const inputEvent = new Event('input', { bubbles: true });
                         targetTextarea.dispatchEvent(inputEvent);
                     } else {
-                        showMessage(translations[currentLanguage]['no_match_found']); // Reusing generic "no match found" for glossary
+                        showMessage(translations[currentLanguage]['no_match_found']);
                     }
                 }
-            } else if (event.ctrlKey) { // Standard Ctrl shortcuts (not Alt)
+            } else if (event.ctrlKey) {
                 const currentFocused = getCurrentFocusedIndex();
                 if (!currentFocused) return;
 
@@ -1798,7 +1842,6 @@
             }
         });
 
-        // --- Message Box Functions ---
         function showMessage(msg) {
             messageText.textContent = msg;
             messageBox.classList.remove('hidden');
@@ -1808,7 +1851,6 @@
             messageBox.classList.add('hidden');
         });
 
-        // --- Keyboard Shortcuts Modal ---
         shortcutsBtn.addEventListener('click', () => {
             shortcutsModal.classList.remove('hidden');
         });
@@ -1817,7 +1859,6 @@
             shortcutsModal.classList.add('hidden');
         });
 
-        // --- Find and Replace Modal ---
         findReplaceBtn.addEventListener('click', () => {
             findReplaceModal.classList.remove('hidden');
             findInput.focus();
@@ -1825,8 +1866,7 @@
 
         findReplaceCloseBtn.addEventListener('click', () => {
             findReplaceModal.classList.add('hidden');
-            findState.lastFound = null; // Clear last found state on close
-            // Clear any active selections
+            findState.lastFound = null;
             const currentFocused = getCurrentFocusedIndex();
             if (currentFocused) {
                 const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
@@ -1836,7 +1876,6 @@
             }
         });
 
-        // Find Next / Find Previous Logic
         findNextBtn.addEventListener('click', () => findAndNavigate(true));
         findPrevBtn.addEventListener('click', () => findAndNavigate(false));
         replaceBtn.addEventListener('click', replaceCurrentMatch);
@@ -1863,15 +1902,13 @@
 
             let startEntryIndex = 0;
             let startSegmentIndex = 0;
-            let startMatchIndex = 0; // Where to start searching within a segment
+            let startMatchIndex = 0;
 
-            // If a previous match exists, start from there
             if (findState.lastFound) {
                 startEntryIndex = findState.lastFound.entryIndex;
                 startSegmentIndex = findState.lastFound.segmentIndex;
-                startMatchIndex = forward ? findState.lastFound.matchEnd : findState.lastFound.matchStart - 1; // Start after for next, before for prev
+                startMatchIndex = forward ? findState.lastFound.matchEnd : findState.lastFound.matchStart - 1;
             } else {
-                // If no previous match, start from beginning (forward) or end (backward)
                 if (!forward) {
                     startEntryIndex = poEntries.length - 1;
                     if (poEntries[startEntryIndex] && poEntries[startEntryIndex].sentenceSegments) {
@@ -1879,7 +1916,7 @@
                     } else {
                         startSegmentIndex = 0;
                     }
-                    startMatchIndex = Infinity; // For backward search, search from end of string
+                    startMatchIndex = Infinity;
                 }
             }
 
@@ -1888,9 +1925,9 @@
             let currentSegmentIndex = startSegmentIndex;
             const totalEntries = poEntries.length;
 
-            for (let i = 0; i < totalEntries; i++) { // Outer loop for entries
+            for (let i = 0; i < totalEntries; i++) {
                 const entry = poEntries[currentEntryIndex];
-                if (!entry || entry.isHeader || !entry.sentenceSegments) { // Skip headers
+                if (!entry || entry.isHeader || !entry.sentenceSegments) {
                     currentEntryIndex = (currentEntryIndex + (forward ? 1 : -1) + totalEntries) % totalEntries;
                     currentSegmentIndex = forward ? 0 : (entry && entry.sentenceSegments ? entry.sentenceSegments.length - 1 : 0);
                     continue;
@@ -1901,36 +1938,32 @@
                 let segmentLoopEnd = forward ? totalSegments : -1;
                 let segmentLoopStep = forward ? 1 : -1;
 
-                if (currentEntryIndex === startEntryIndex) { // Adjust segment loop start if in the initial entry
+                if (currentEntryIndex === startEntryIndex) {
                     segmentLoopStart = startSegmentIndex;
                 }
 
 
-                for (let j = segmentLoopStart; forward ? (j < segmentLoopEnd) : (j >= segmentLoopEnd); j += segmentLoopStep) { // Inner loop for segments
+                for (let j = segmentLoopStart; forward ? (j < segmentLoopEnd) : (j >= segmentLoopEnd); j += segmentLoopStep) {
                     const segment = entry.sentenceSegments[j];
                     const text = segment.translation;
                     let match;
 
                     if (findState.useRegex) {
-                        regex.lastIndex = 0; // Always reset for new segment/start position
+                        regex.lastIndex = 0;
                         if (forward) {
-                            // If current segment is the start segment, begin search from startMatchIndex
                             let searchFrom = (currentEntryIndex === startEntryIndex && j === startSegmentIndex) ? startMatchIndex : 0;
-                            // Search only within the relevant part of the string
                             const subText = text.substring(searchFrom);
                             match = regex.exec(subText);
                             if (match) {
-                                match.index += searchFrom; // Adjust index relative to full string
+                                match.index += searchFrom;
                             }
                         } else {
-                            // Backward regex search is complex. Find all matches and then pick the relevant one.
                             let allMatches = [];
                             let tempRegex = new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g');
                             let tempMatch;
                             while((tempMatch = tempRegex.exec(text)) !== null) {
                                 allMatches.push(tempMatch);
                             }
-                            // If current segment is the start segment, search up to startMatchIndex
                             let searchUntil = (currentEntryIndex === startEntryIndex && j === startSegmentIndex) ? startMatchIndex : text.length;
                             match = allMatches.reverse().find(m => m.index < searchUntil);
                         }
@@ -1966,16 +1999,13 @@
                             targetTextarea.setSelectionRange(findState.lastFound.matchStart, findState.lastFound.matchEnd);
                         }
                         found = true;
-                        return; // Exit all loops
+                        return;
                     }
                 }
-                if (found) break; // Exit outer loop if found
+                if (found) break;
 
-                // Move to next/previous entry
                 currentEntryIndex = (currentEntryIndex + (forward ? 1 : -1) + totalEntries) % totalEntries;
                 currentSegmentIndex = forward ? 0 : (poEntries[currentEntryIndex].sentenceSegments ? poEntries[currentEntryIndex].sentenceSegments.length - 1 : 0);
-                // The `entry` in `entry && entry.sentenceSegments` above will be `poEntries[currentEntryIndex]`
-                // after the assignment.
             }
 
             if (!found) {
@@ -1997,29 +2027,25 @@
             let replacedText;
 
             if (findState.useRegex) {
-                 // Create a non-global regex for single replacement
                  const regex = new RegExp(findState.query, findState.caseSensitive ? '' : 'i');
                  replacedText = originalText.substring(0, matchStart) +
                                 originalText.substring(matchStart, matchEnd).replace(regex, findState.replace) +
-                                originalText.substring(Math.min(matchEnd, originalText.length)); // Ensure substring is within bounds
+                                originalText.substring(Math.min(matchEnd, originalText.length));
 
             } else {
                 replacedText = originalText.substring(0, matchStart) +
                                findState.replace +
-                               originalText.substring(Math.min(matchEnd, originalText.length)); // Ensure substring is within bounds
+                               originalText.substring(Math.min(matchEnd, originalText.length));
             }
 
             segment.translation = replacedText;
-            segment.wordCountTranslation = countWords(replacedText); // Update word count
-            segment.isTranslated = replacedText.trim() !== ''; // Update translation status
+            segment.wordCountTranslation = countWords(replacedText);
+            segment.isTranslated = replacedText.trim() !== '';
 
-            renderTranslations(poEntries); // Re-render to update UI
-            navigateToTranslation(entryIndex, segmentIndex); // Re-focus and scroll
-            updateStatsDisplay(); // Update stats
+            renderTranslations(poEntries);
+            navigateToTranslation(entryIndex, segmentIndex);
+            updateStatsDisplay();
 
-            // After replacement, clear lastFound to ensure next 'Find' starts fresh,
-            // or perform another 'Find Next' to select the next occurrence immediately.
-            // For now, clearing seems more straightforward for single replacement.
             findState.lastFound = null;
         }
 
@@ -2034,7 +2060,6 @@
             let replacedCount = 0;
             let regex;
             try {
-                // Ensure global flag 'g' for replaceAll
                 regex = new RegExp(query, (caseSensitiveCheckbox.checked ? '' : 'i') + 'g' + (regexCheckbox.checked ? '' : ''));
             } catch (e) {
                 showMessage(`Regular expression error: ${e.message}`);
@@ -2042,7 +2067,6 @@
             }
 
             poEntries.forEach(entry => {
-                // Skip header entry
                 if (entry.isHeader) {
                     return;
                 }
@@ -2054,29 +2078,27 @@
                     if (regexCheckbox.checked) {
                         newTranslation = originalTranslation.replace(regex, replaceWith);
                     } else {
-                        // For non-regex, a simple replaceAll (using regex internally with 'g' flag for simplicity)
-                        const searchStr = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape query for regex
+                        const searchStr = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                         const nonRegexRegex = new RegExp(searchStr, (caseSensitiveCheckbox.checked ? '' : 'i') + 'g');
                         newTranslation = originalTranslation.replace(nonRegexRegex, replaceWith);
                     }
 
                     if (originalTranslation !== newTranslation) {
                         segment.translation = newTranslation;
-                        segment.wordCountTranslation = countWords(newTranslation); // Update word count
-                        segment.isTranslated = newTranslation.trim() !== ''; // Update translation status
+                        segment.wordCountTranslation = countWords(newTranslation);
+                        segment.isTranslated = newTranslation.trim() !== '';
                         replacedCount++;
                     }
                 });
             });
 
-            renderTranslations(poEntries); // Re-render the whole thing to reflect all changes
+            renderTranslations(poEntries);
             showMessage(`${replacedCount} ${translations[currentLanguage]['replaced_all']}`);
-            findState.lastFound = null; // Clear last found state after replace all
-            updateStatsDisplay(); // Update stats after replace all
+            findState.lastFound = null;
+            updateStatsDisplay();
         }
 
 
-        // --- Language Change ---
         function setLanguage(lang) {
             currentLanguage = lang;
             document.documentElement.lang = lang;
@@ -2113,7 +2135,7 @@
             document.querySelectorAll('[data-i18n]').forEach(element => {
                 const key = element.getAttribute('data-i18n');
                 if (lang[key]) {
-                    if (element.tagName === 'INPUT' && element.hasAttribute('data-i18n-placeholder')) {
+                    if (element.hasAttribute('data-i18n-placeholder')) {
                         element.placeholder = lang[key];
                     } else {
                         element.textContent = lang[key];
@@ -2121,7 +2143,6 @@
                 }
             });
 
-            // Special cases for elements with dynamic content or innerHTML
             const shortcutValidateElement = document.getElementById('shortcutValidate');
             if (shortcutValidateElement) shortcutValidateElement.innerHTML = `<strong>Ctrl + Enter:</strong> ${lang['shortcut_validate'].substring(lang['shortcut_validate'].indexOf(':') + 1).trim()}`;
 
@@ -2137,7 +2158,6 @@
             const shortcutTmInsertElement = document.getElementById('shortcutTmInsert');
             if (shortcutTmInsertElement) shortcutTmInsertElement.innerHTML = `<strong>Ctrl + Alt + [1-5]:</strong> ${lang['shortcut_tm_insert'].substring(lang['shortcut_tm_insert'].indexOf(':') + 1).trim()}`;
             
-            // Labels that were missed
             const displaySourceLanguageLabel = document.getElementById('displaySourceLanguageLabel');
             if (displaySourceLanguageLabel) displaySourceLanguageLabel.textContent = lang['source_language'];
             
@@ -2150,7 +2170,6 @@
             const displayTmTargetLanguageLabel = document.getElementById('displayTmTargetLanguageLabel');
             if (displayTmTargetLanguageLabel) displayTmTargetLanguageLabel.textContent = lang['target_language'];
 
-            // Button texts inside other elements
             const shortcutsCloseBtnText = document.getElementById('shortcutsCloseBtnText');
             if(shortcutsCloseBtnText) shortcutsCloseBtnText.textContent = lang['close_btn'];
             
@@ -2158,27 +2177,19 @@
             if(findReplaceCloseBtnText) findReplaceCloseBtnText.textContent = lang['close_btn'];
         }
 
-        /**
-         * Adjusts the padding of the main editor content based on open sidebars.
-         * Applies only on screens wider than 1024px.
-         */
         function updateMainContentOffset() {
             const isTerminologyOpen = terminologySidebar.classList.contains('show-sidebar');
             const isTranslationMemoryOpen = translationMemorySidebar.classList.contains('show-sidebar');
 
-            // Remove existing padding classes first
-            if (editorMainContent) { // Added null check for editorMainContent
+            if (editorMainContent) {
                 editorMainContent.classList.remove('left-sidebar-active', 'right-sidebar-active');
 
-                // Apply new padding classes based on open sidebars
                 if (isTerminologyOpen) {
                     editorMainContent.classList.add('left-sidebar-active');
-                    // Set CSS variable for current width
                     document.documentElement.style.setProperty('--terminology-sidebar-width', terminologySidebar.offsetWidth + 'px');
                 }
                 if (isTranslationMemoryOpen) {
                     editorMainContent.classList.add('right-sidebar-active');
-                    // Set CSS variable for current width
                     document.documentElement.style.setProperty('--translation-memory-sidebar-width', translationMemorySidebar.offsetWidth + 'px');
                 }
             } else {
@@ -2186,23 +2197,19 @@
             }
         }
 
-        // NEW: Function to update the visual state of utility buttons
         function updateUtilityButtonStates() {
-            // Terminology button
             if (terminologySidebar.classList.contains('show-sidebar')) {
                 terminologyBtn.classList.add('utility-btn-active');
             } else {
                 terminologyBtn.classList.remove('utility-btn-active');
             }
 
-            // TM button
             if (translationMemorySidebar.classList.contains('show-sidebar')) {
                 tmBtn.classList.add('utility-btn-active');
             } else {
                 tmBtn.classList.remove('utility-btn-active');
             }
 
-            // Stats button
             if (statsContainer.classList.contains('show')) {
                 statsBtn.classList.add('utility-btn-active');
             } else {
@@ -2213,33 +2220,29 @@
 
         // --- Terminology Sidebar Logic ---
         terminologyBtn.addEventListener('click', () => {
-            const isHidden = !terminologySidebar.classList.contains('show-sidebar'); // Check current state
+            const isHidden = !terminologySidebar.classList.contains('show-sidebar');
             if (isHidden) {
                 terminologySidebar.classList.add('show-sidebar');
             } else {
                 terminologySidebar.classList.remove('show-sidebar');
             }
-            updateMainContentOffset(); // Update offset
-            updateUtilityButtonStates(); // Update button states
-            // When sidebar opens, decide which section to show
-            if (isHidden) { // If it was hidden and now shown
+            updateMainContentOffset();
+            updateUtilityButtonStates();
+            if (isHidden) {
                 if (!glossarySourceLanguage || !glossaryTargetLanguage) {
-                    showLanguageConfigSection(); // Show language config if not set
+                    showLanguageConfigSection();
                 } else {
-                    showGlossaryEditorSection(); // Show editor if languages are already set
+                    showGlossaryEditorSection();
                 }
             }
         });
 
         closeTerminologySidebarBtn.addEventListener('click', () => {
-            terminologySidebar.classList.remove('show-sidebar'); // Use show-sidebar
-            updateMainContentOffset(); // Update offset
-            updateUtilityButtonStates(); // Update button states
+            terminologySidebar.classList.remove('show-sidebar');
+            updateMainContentOffset();
+            updateUtilityButtonStates();
         });
 
-        /**
-         * Populates the datalist with ISO language codes.
-         */
         function populateIsoLanguagesDatalist() {
             isoLanguagesDatalist.innerHTML = '';
             isoLanguagesData.forEach(lang => {
@@ -2250,59 +2253,46 @@
             });
         }
 
-        /**
-         * Resets the glossary and UI to the initial "New Glossary" state.
-         */
         function resetGlossary() {
             glossary = [];
             glossarySourceLanguage = '';
             glossaryTargetLanguage = '';
-            if (configSrcLang) configSrcLang.value = 'en-US'; // Added null check
-            if (configTgtLang) configTgtLang.value = 'es-ES'; // Added null check
-            if (srcTermInput) srcTermInput.value = ""; // Added null check
-            if (tgtTermInput) tgtTermInput.value = ""; // Added null check
-            if (searchTermInput) searchTermInput.value = ""; // Added null check
+            if (configSrcLang) configSrcLang.value = 'en-US';
+            if (configTgtLang) configTgtLang.value = 'es-ES';
+            if (srcTermInput) srcTermInput.value = "";
+            if (tgtTermInput) tgtTermInput.value = "";
+            if (searchTermInput) searchTermInput.value = "";
 
-            if (terminologyLanguageConfigSection && terminologyEditorSection) { // Added null checks
+            if (terminologyLanguageConfigSection && terminologyEditorSection) {
                 terminologyLanguageConfigSection.style.display = 'block';
                 terminologyEditorSection.style.display = 'none';
             }
 
-            renderGlossary(); // Clear table
-            renderTranslations(poEntries); // Re-render main editor to remove any old highlights
-            updateStatsDisplay(); // Update stats display if glossary reset clears highlighting
+            renderGlossary();
+            renderTranslations(poEntries);
+            updateStatsDisplay();
         }
 
-        /**
-         * Shows the language configuration section and hides others.
-         */
         function showLanguageConfigSection() {
-            if (terminologyLanguageConfigSection && terminologyEditorSection) { // Added null checks
+            if (terminologyLanguageConfigSection && terminologyEditorSection) {
                 terminologyLanguageConfigSection.style.display = 'block';
                 terminologyEditorSection.style.display = 'none';
             }
         }
 
-        /**
-         * Shows the glossary editor section and hides others.
-         */
         function showGlossaryEditorSection() {
-            if (terminologyLanguageConfigSection && terminologyEditorSection && displaySrcLang && displayTgtLang) { // Added null checks
+            if (terminologyLanguageConfigSection && terminologyEditorSection && displaySrcLang && displayTgtLang) {
                 terminologyLanguageConfigSection.style.display = 'none';
                 terminologyEditorSection.style.display = 'block';
-                displaySrcLang.value = glossarySourceLanguage; // Set input value
-                displayTgtLang.value = glossaryTargetLanguage; // Set input value
+                displaySrcLang.value = glossarySourceLanguage;
+                displayTgtLang.value = glossaryTargetLanguage;
                 renderGlossary();
             }
         }
 
-        /**
-         * Confirms the glossary's source and target languages from user input.
-         * Enables the main editor section if languages are valid.
-         */
         function confirmGlossaryLanguages() {
-            const srcLang = configSrcLang ? configSrcLang.value.trim() : ''; // Added null check
-            const tgtLang = configTgtLang ? configTgtLang.value.trim() : ''; // Added null check
+            const srcLang = configSrcLang ? configSrcLang.value.trim() : '';
+            const tgtLang = configTgtLang ? configTgtLang.value.trim() : '';
 
             if (!srcLang || !tgtLang) {
                 showMessage(translations[currentLanguage]['lang_config_required']);
@@ -2312,16 +2302,13 @@
             glossarySourceLanguage = srcLang;
             glossaryTargetLanguage = tgtLang;
 
-            showGlossaryEditorSection(); // Show editor after confirming languages
-            renderTranslations(poEntries); // Re-render main editor to apply new highlights based on glossary
+            showGlossaryEditorSection();
+            renderTranslations(poEntries);
         }
 
-        /**
-         * Adds a new term to the glossary. Uses the globally configured languages.
-         */
         function addTerm() {
-            const srcTerm = srcTermInput ? srcTermInput.value.trim() : ''; // Added null check
-            const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : ''; // Added null check
+            const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
+            const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
 
             if (!srcTerm || !tgtTerm) {
                 showMessage(translations[currentLanguage]['both_terms_required']);
@@ -2334,58 +2321,47 @@
                 tgtLang: glossaryTargetLanguage,
                 tgtTerm: tgtTerm
             });
-            if (srcTermInput) srcTermInput.value = ""; // Added null check
-            if (tgtTermInput) tgtTermInput.value = ""; // Added null check
+            if (srcTermInput) srcTermInput.value = "";
+            if (tgtTermInput) tgtTermInput.value = "";
             renderGlossary();
-            renderTranslations(poEntries); // Re-render main editor to apply new highlights based on new term
+            renderTranslations(poEntries);
         }
 
-        /**
-         * Deletes a term from the glossary at the specified index.
-         * @param {number} index - The index of the term to delete.
-         */
         function deleteTerm(index) {
             glossary.splice(index, 1);
             renderGlossary();
-            renderTranslations(poEntries); // Re-render main editor to update highlights
+            renderTranslations(poEntries);
         }
 
-        /**
-         * Renders the glossary table, filtering terms based on the search input.
-         */
         function renderGlossary() {
-            if (!glossaryTableBody) { // Added null check
+            if (!glossaryTableBody) {
                 console.warn("glossaryTableBody element not found. Cannot render glossary.");
                 return;
             }
-            const search = searchTermInput ? searchTermInput.value.toLowerCase() : ''; // Added null check
+            const search = searchTermInput ? searchTermInput.value.toLowerCase() : '';
             glossaryTableBody.innerHTML = "";
 
-            // Filter the glossary first based on the search term
             const filteredGlossary = glossary.filter(entry =>
-                (entry.srcTerm && entry.srcTerm.toLowerCase().includes(search)) || // Added null check
-                (entry.tgtTerm && entry.tgtTerm.toLowerCase().includes(search)) // Added null check
+                (entry.srcTerm && entry.srcTerm.toLowerCase().includes(search)) ||
+                (entry.tgtTerm && entry.tgtTerm.toLowerCase().includes(search))
             );
 
             const highlightedTerms = [];
             const otherTerms = [];
 
-            // Separate terms into highlighted and non-highlighted groups based on termsFoundInActiveSegment
             filteredGlossary.forEach(entry => {
-                if (entry.srcTerm && termsFoundInActiveSegment.has(entry.srcTerm)) { // Added null check
+                if (entry.srcTerm && termsFoundInActiveSegment.has(entry.srcTerm)) {
                     highlightedTerms.push(entry);
                 } else {
                     otherTerms.push(entry);
                 }
             });
 
-            // Combine and sort all glossary results for shortcut access
             currentGlossaryLatestResults = [...highlightedTerms, ...otherTerms.sort((a, b) => a.srcTerm.localeCompare(b.srcTerm))];
 
-            // Render highlighted terms first
             highlightedTerms.forEach((entry, i) => {
                 const row = document.createElement("tr");
-                row.classList.add('glossary-row-highlight'); // Always highlight these
+                row.classList.add('glossary-row-highlight');
                 row.innerHTML = `
                     <td>${entry.srcTerm}</td>
                     <td>${entry.tgtTerm}</td>
@@ -2394,10 +2370,8 @@
                 glossaryTableBody.appendChild(row);
             });
 
-            // Then render other terms
             otherTerms.forEach((entry, i) => {
                 const row = document.createElement("tr");
-                // No highlight class for these
                 row.innerHTML = `
                     <td>${entry.srcTerm}</td>
                     <td>${entry.tgtTerm}</td>
@@ -2407,10 +2381,6 @@
             });
         }
 
-        /**
-         * Generates a TBX XML string from the current glossary data.
-         * @returns {string} The TBX XML content.
-         */
         function generateTBX() {
             const xml = [`<?xml version="1.0" encoding="UTF-8"?>`,
                 `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`,
@@ -2432,9 +2402,6 @@
             return xml.join("\n");
         }
 
-        /**
-         * Triggers a download of the generated TBX XML file.
-         */
         function downloadTBX() {
             if (glossary.length === 0 && (!glossarySourceLanguage || !glossaryTargetLanguage)) {
                 showMessage(translations[currentLanguage]['cannot_download_empty_or_unconfigured_glossary']);
@@ -2450,7 +2417,7 @@
                 document.body.appendChild(a);
                 a.click();
                 URL.revokeObjectURL(url);
-                showMessage(translations[currentLanguage]['file_saved_successfully']); // Reuse generic save success message
+                showMessage(translations[currentLanguage]['file_saved_successfully']);
             } catch (error) {
                 showMessage(`${translations[currentLanguage]['error_saving_file']} ${error.message}`);
                 console.error("Error downloading TBX:", error);
@@ -2459,11 +2426,8 @@
             }
         }
 
-        /**
-         * Loads TBX data from a user-selected XML/TBX file.
-         */
         function loadTBX() {
-            if (!tbxFileInput) { // Added null check
+            if (!tbxFileInput) {
                 console.warn("tbxFileInput element not found. Cannot load TBX.");
                 return;
             }
@@ -2473,10 +2437,9 @@
                 const content = await file.text();
                 processTBXContent(content);
             };
-            tbxFileInput.click(); // Trigger file input click
+            tbxFileInput.click();
         }
 
-        // REFACTORED: Process TBX file from content string
         function processTBXContent(content) {
             showLoadingOverlay(translations[currentLanguage]['loading_file']);
             try {
@@ -2540,7 +2503,6 @@
 
         // --- Translation Memory (TM) Logic ---
 
-        // Levenshtein distance function for fuzzy matching
         function levenshteinDistance(a, b) {
             const an = a.length;
             const bn = b.length;
@@ -2549,31 +2511,27 @@
 
             const matrix = [];
 
-            // increment along the first column of each row
             for (let i = 0; i <= bn; i++) {
                 matrix[i] = [i];
             }
 
-            // increment each column in the first row
             for (let j = 0; j <= an; j++) {
                 matrix[0][j] = j;
             }
 
-            // Fill in the rest of the matrix
             for (let i = 1; i <= bn; i++) {
                 for (let j = 1; j <= an; j++) {
                     const cost = (a[j - 1] === b[i - 1]) ? 0 : 1;
                     matrix[i][j] = Math.min(
-                        matrix[i - 1][j] + 1, // deletion
-                        matrix[i][j - 1] + 1, // insertion
-                        matrix[i - 1][j - 1] + cost // substitution
+                        matrix[i - 1][j] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j - 1] + cost
                     );
                 }
             }
             return matrix[bn][an];
         }
 
-        // Calculate similarity percentage based on Levenshtein distance
         function calculateSimilarity(s1, s2) {
             if (!s1 || !s2) return 0;
             const longerLength = Math.max(s1.length, s2.length);
@@ -2584,29 +2542,28 @@
 
 
         tmBtn.addEventListener('click', () => {
-            const isHidden = !translationMemorySidebar.classList.contains('show-sidebar'); // Check current state
+            const isHidden = !translationMemorySidebar.classList.contains('show-sidebar');
             if (isHidden) {
                 translationMemorySidebar.classList.add('show-sidebar');
             } else {
                 translationMemorySidebar.classList.remove('show-sidebar');
             }
-            updateMainContentOffset(); // Update offset
-            updateUtilityButtonStates(); // Update button states
-            // When sidebar opens, decide which section to show
-            if (isHidden) { // If it was hidden and now shown
+            updateMainContentOffset();
+            updateUtilityButtonStates();
+            if (isHidden) {
                 if (!tmSourceLanguage || !tmTargetLanguage) {
-                    showTMLanguageConfigSection(); // Show language config if not set
+                    showTMLanguageConfigSection();
                 } else {
-                    showTMEditorSection(); // Show editor if languages are already set
-                    tmSearch(); // Perform initial search when opening
+                    showTMEditorSection();
+                    tmSearch();
                 }
             }
         });
 
         closeTranslationMemorySidebarBtn.addEventListener('click', () => {
-            translationMemorySidebar.classList.remove('show-sidebar'); // Use show-sidebar
-            updateMainContentOffset(); // Update offset
-            updateUtilityButtonStates(); // Update button states
+            translationMemorySidebar.classList.remove('show-sidebar');
+            updateMainContentOffset();
+            updateUtilityButtonStates();
         });
 
         tmFileInput.addEventListener('change', async (event) => {
@@ -2617,19 +2574,14 @@
             }
         });
 
-        /**
-         * Displays an internal message within the TM sidebar.
-         * @param {string} msg The message to display.
-         * @param {boolean} isError If true, styles the message as an error.
-         */
         function showTMInternalMessage(msg, isError = false) {
-            if (tmInternalMessage) { // Added null check
+            if (tmInternalMessage) {
                 tmInternalMessage.textContent = msg;
-                tmInternalMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'border-red-500', 'bg-blue-100', 'text-blue-800', 'border-blue-500'); // Clear previous styles
+                tmInternalMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'border-red-500', 'bg-blue-100', 'text-blue-800', 'border-blue-500');
                 if (isError) {
                     tmInternalMessage.classList.add('bg-red-100', 'text-red-800', 'border-red-500');
                 } else {
-                    tmInternalMessage.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-500'); // Default info style
+                    tmInternalMessage.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-500');
                 }
                 tmInternalMessage.classList.remove('hidden');
             } else {
@@ -2637,85 +2589,62 @@
             }
         }
 
-        /**
-         * Hides the internal TM message.
-         */
         function hideTMInternalMessage() {
-            if (tmInternalMessage) { // Added null check
+            if (tmInternalMessage) {
                 tmInternalMessage.classList.add('hidden');
                 tmInternalMessage.textContent = '';
             }
         }
 
-        /**
-         * Resets the translation memory.
-         */
         function resetTM() {
             translationMemory = [];
             tmSourceLanguage = '';
             tmTargetLanguage = '';
-            if (tmSearchInput) tmSearchInput.value = ''; // Added null check
-            renderTMSearchResults([]); // Clear search results table
-            // Show config section for new TM
+            if (tmSearchInput) tmSearchInput.value = '';
+            renderTMSearchResults([]);
             showTMLanguageConfigSection();
-            showTMInternalMessage(translations[currentLanguage]['tm_initial_message']); // Inform user TM is empty
+            showTMInternalMessage(translations[currentLanguage]['tm_initial_message']);
         }
 
-        /**
-         * Shows the TM language configuration section and hides others.
-         */
         function showTMLanguageConfigSection() {
-            if (tmLanguageConfigSection && tmEditorSection) { // Added null checks
+            if (tmLanguageConfigSection && tmEditorSection) {
                 tmLanguageConfigSection.style.display = 'block';
                 tmEditorSection.style.display = 'none';
-                // Reset config inputs to default values for a new setup
-                if (tmConfigSrcLang) tmConfigSrcLang.value = 'en-US'; // Added null check
-                if (tmConfigTgtLang) tmConfigTgtLang.value = 'es-ES'; // Added null check
-                hideTMInternalMessage(); // Clear message when showing config
+                if (tmConfigSrcLang) tmConfigSrcLang.value = 'en-US';
+                if (tmConfigTgtLang) tmConfigTgtLang.value = 'es-ES';
+                hideTMInternalMessage();
             }
         }
 
-        /**
-         * Shows the TM editor section and hides others.
-         */
         function showTMEditorSection() {
-            if (tmLanguageConfigSection && tmEditorSection && displayTmSrcLang && displayTmTgtLang) { // Added null checks
+            if (tmLanguageConfigSection && tmEditorSection && displayTmSrcLang && displayTmTgtLang) {
                 tmLanguageConfigSection.style.display = 'none';
                 tmEditorSection.style.display = 'block';
                 displayTmSrcLang.value = tmSourceLanguage;
                 displayTmTgtLang.value = tmTargetLanguage;
-                tmSearch(); // Perform initial search when opening
-                hideTMInternalMessage(); // Clear message when showing editor
+                tmSearch();
+                hideTMInternalMessage();
             }
         }
 
-        /**
-         * Confirms the TM's source and target languages from user input.
-         * Enables the main TM editor section if languages are valid.
-         */
         function confirmTMLanguages() {
-            const srcLang = tmConfigSrcLang ? tmConfigSrcLang.value.trim() : ''; // Added null check
-            const tgtLang = tmConfigTgtLang ? tmConfigTgtLang.value.trim() : ''; // Added null check
+            const srcLang = tmConfigSrcLang ? tmConfigSrcLang.value.trim() : '';
+            const tgtLang = tmConfigTgtLang ? tmConfigTgtLang.value.trim() : '';
 
             if (!srcLang || !tgtLang) {
-                showTMInternalMessage(translations[currentLanguage]['lang_config_required'], true); // Show error message
+                showTMInternalMessage(translations[currentLanguage]['lang_config_required'], true);
                 return;
             }
 
             tmSourceLanguage = srcLang;
             tmTargetLanguage = tgtLang;
 
-            showTMEditorSection(); // Show editor after confirming languages
-            // No need to renderTranslations or updateStats here, as it's not directly affected by TM language change.
+            showTMEditorSection();
         }
 
-        /**
-         * Parses a TMX file content and populates the translationMemory array.
-         * @param {string} content The TMX file content string.
-         */
         function processTMXContent(content) {
             showLoadingOverlay(translations[currentLanguage]['loading_file']);
-            hideTMInternalMessage(); // Hide any previous internal message
+            hideTMInternalMessage();
 
             try {
                 const parser = new DOMParser();
@@ -2781,13 +2710,9 @@
             }
         }
 
-        /**
-         * Generates a TMX XML string from the current translation memory data.
-         * @returns {string} The TMX XML content.
-         */
         function generateTMX() {
             if (translationMemory.length === 0) {
-                return null; // Return null if nothing to generate
+                return null;
             }
 
             const header = `<?xml version="1.0" encoding="UTF-8"?>
@@ -2815,9 +2740,6 @@
             return xml.join("\n");
         }
 
-        /**
-         * Triggers a download of the generated TMX XML file.
-         */
         function downloadTMX() {
             const tmxContent = generateTMX();
             if (!tmxContent) {
@@ -2845,16 +2767,11 @@
             }
         }
 
-        /**
-         * Adds or updates an entry in the translation memory.
-         * @param {string} original The original segment text.
-         * @param {string} translation The translated segment text.
-         */
         function addOrUpdateTMEntry(original, translation) {
-            if (!original || !translation) return; // Only add valid pairs
+            if (!original || !translation) return;
             if (!tmSourceLanguage || !tmTargetLanguage) {
                 console.warn("TM languages not configured. Skipping TM update.");
-                return; // Cannot add/update without configured languages
+                return;
             }
 
             const existingIndex = translationMemory.findIndex(
@@ -2862,11 +2779,9 @@
             );
 
             if (existingIndex !== -1) {
-                // Update existing entry
                 translationMemory[existingIndex].tgtText = translation;
                 translationMemory[existingIndex].tgtWordCount = countWords(translation);
             } else {
-                // Add new entry
                 translationMemory.push({
                     srcLang: tmSourceLanguage,
                     srcText: original,
@@ -2876,30 +2791,24 @@
                     tgtWordCount: countWords(translation)
                 });
             }
-            tmSearch(); // Re-render TM search results to reflect changes
+            tmSearch();
         }
 
-        /**
-         * Finds the best matching TM entry for a given source segment.
-         * @param {string} sourceSegmentText The text of the current source segment.
-         * @returns {Object|null} The best matching TM entry with a score, or null if no match >= 70%.
-         */
         function findBestTMMatch(sourceSegmentText) {
             if (translationMemory.length === 0 || !sourceSegmentText.trim() || !tmSourceLanguage || !tmTargetLanguage) {
-                return null; // Return null if no TM data or languages not configured
+                return null;
             }
 
             let bestMatch = null;
             let highestScore = 0;
-            const MIN_FUZZY_THRESHOLD = 70; // 70% threshold
+            const MIN_FUZZY_THRESHOLD = 70;
 
             translationMemory.forEach(entry => {
-                // Only compare if languages match and source text is available
                 if (entry.srcLang === tmSourceLanguage && entry.tgtLang === tmTargetLanguage && entry.srcText.trim()) {
                     const score = calculateSimilarity(sourceSegmentText, entry.srcText);
                     if (score >= MIN_FUZZY_THRESHOLD && score > highestScore) {
                         highestScore = score;
-                        bestMatch = { ...entry, score: score.toFixed(0) }; // Store score with entry
+                        bestMatch = { ...entry, score: score.toFixed(0) };
                     }
                 }
             });
@@ -2907,84 +2816,62 @@
             return bestMatch;
         }
 
-        /**
-         * Performs a search on the translation memory and renders results.
-         * Integrates best match for active segment.
-         */
         function tmSearch() {
-            const query = tmSearchInput ? tmSearchInput.value.toLowerCase().trim() : ''; // Added null check
+            const query = tmSearchInput ? tmSearchInput.value.toLowerCase().trim() : '';
             let resultsToRender = [];
 
-            // Get the current active segment's original text
             const currentFocused = getCurrentFocusedIndex();
             let activeSegmentOriginalText = null;
-            if (currentFocused && poEntries[currentFocused.entryIndex] && poEntries[currentFocused.entryIndex].sentenceSegments && poEntries[currentFocused.entryIndex].sentenceSegments[currentFocused.segmentIndex]) { // Added null checks
+            if (currentFocused && poEntries[currentFocused.entryIndex] && poEntries[currentFocused.entryIndex].sentenceSegments && poEntries[currentFocused.entryIndex].sentenceSegments[currentFocused.segmentIndex]) {
                 activeSegmentOriginalText = poEntries[currentFocused.entryIndex].sentenceSegments[currentFocused.segmentIndex].original;
             }
 
-            // Find the best match for the active segment if any
-            tmBestMatchForActiveSegment = null; // Reset global best match
+            tmBestMatchForActiveSegment = null;
             if (activeSegmentOriginalText) {
                 tmBestMatchForActiveSegment = findBestTMMatch(activeSegmentOriginalText);
             }
 
-            // If there's a best match for the active segment AND no specific search query is entered,
-            // or if the search query matches the best match exactly, display it as the primary result.
-            // This prioritizes the segment-focused match over general search if applicable.
             if (tmBestMatchForActiveSegment && (query === '' || tmBestMatchForActiveSegment.srcText.toLowerCase().includes(query))) {
                 resultsToRender.push({ ...tmBestMatchForActiveSegment, isBestMatch: true });
             }
 
 
-            // Filter the entire TM based on the search query
             const filteredTM = translationMemory.filter(entry => {
-                // Exclude the best match if it's already added as the primary result AND
-                // it matches the primary result that's already in `resultsToRender`
                 if (tmBestMatchForActiveSegment && entry.srcText === tmBestMatchForActiveSegment.srcText && entry.tgtText === tmBestMatchForActiveSegment.tgtText) {
                     return false;
                 }
-                // Filter by query if a query is present
                 if (query) {
                     return (entry.srcText && entry.srcText.toLowerCase().includes(query)) ||
                            (entry.tgtText && entry.tgtText.toLowerCase().includes(query));
                 }
-                return true; // If no query, include all remaining entries
+                return true;
             });
 
-            // Add filtered results. Calculate score against search query if query exists.
             filteredTM.forEach(entry => {
                 let score = 0;
                 if (query) {
-                    score = calculateSimilarity(query, entry.srcText); // Score against the actual search query
+                    score = calculateSimilarity(query, entry.srcText);
                 } else if (activeSegmentOriginalText) {
-                    score = calculateSimilarity(activeSegmentOriginalText, entry.srcText); // Score against active segment if no query
+                    score = calculateSimilarity(activeSegmentOriginalText, entry.srcText);
                 }
                 resultsToRender.push({ ...entry, score: score.toFixed(0) });
             });
 
-            // Sort the search results (excluding the active best match if it's already first)
-            // Sort by score (descending) first, then alphabetically by source text for consistency
             resultsToRender.sort((a, b) => {
-                // Ensure best match stays at top if it was intentionally placed there
                 if (a.isBestMatch) return -1;
                 if (b.isBestMatch) return 1;
                 
                 if (b.score !== a.score) {
-                    return b.score - a.score; // Higher score first
+                    return b.score - a.score;
                 }
-                return a.srcText.localeCompare(b.srcText); // Alphabetical secondary sort
+                return a.srcText.localeCompare(b.srcText);
             });
 
-            currentTMLatestSearchResults = resultsToRender; // Store for shortcut
+            currentTMLatestSearchResults = resultsToRender;
             renderTMSearchResults(resultsToRender, activeSegmentOriginalText);
         }
 
 
-        /**
-         * Renders the TM search results in the table.
-         * @param {Array<Object>} results Array of TM entries to display.
-         * @param {string|null} activeSegmentOriginalText The original text of the currently active segment.
-         */
         function renderTMSearchResults(results, activeSegmentOriginalText) {
             if (!tmSearchResultsTableBody) {
                 console.warn("tmSearchResultsTableBody element not found. Cannot render TM search results.");
@@ -3009,7 +2896,6 @@
                 }
 
                 let originalCellHtml = '';
-                // If an active segment is focused, perform a diff. Otherwise, show plain text.
                 if (activeSegmentOriginalText) {
                     const differences = Diff.diffChars(entry.srcText, activeSegmentOriginalText);
                     originalCellHtml = differences.map(part => {
@@ -3042,26 +2928,24 @@
         }
 
 
-        // --- Loading Overlay Functions ---
         function showLoadingOverlay(message) {
-            if (loadingMessage && loadingOverlay) { // Added null check
+            if (loadingMessage && loadingOverlay) {
                 loadingMessage.textContent = message;
                 loadingOverlay.classList.remove('hidden');
             }
         }
 
         function hideLoadingOverlay() {
-            if (loadingOverlay) { // Added null check
+            if (loadingOverlay) {
                 loadingOverlay.classList.add('hidden');
             }
         }
 
-        // --- Drag and Drop functionality ---
-        if (dropArea) { // Added null check
+        if (dropArea) {
             dropArea.addEventListener('dragover', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                dropArea.classList.add('border-red-500'); // Visual feedback for drag over
+                dropArea.classList.add('border-red-500');
             });
 
             dropArea.addEventListener('dragleave', (event) => {
@@ -3089,7 +2973,6 @@
             });
         }
 
-        // --- Accordion Logic for Add Term ---
         if (addTermHeader && addTermContent && addTermAccordionIcon) {
             addTermHeader.addEventListener('click', () => {
                 const isCollapsed = addTermContent.classList.contains('collapsed');
@@ -3105,23 +2988,15 @@
             });
         }
 
-        // --- Project Management Functions ---
-
-        /**
-         * Resets the entire application to a clean state, without confirmation.
-         */
         function resetProjectState() {
-            // Reset PO file data
             poEntries = [];
             currentFileName = 'translations.po';
-            renderTranslations([]); // Clears the editor
+            renderTranslations([]);
             updateStatsDisplay();
 
-            // Reset sidebars
             resetGlossary();
             resetTM();
 
-            // Hide sidebars if they are open
             terminologySidebar.classList.remove('show-sidebar');
             translationMemorySidebar.classList.remove('show-sidebar');
             statsContainer.classList.remove('show');
@@ -3129,9 +3004,6 @@
             updateUtilityButtonStates();
         }
 
-        /**
-         * Starts a new project, asking for confirmation if there's unsaved work.
-         */
         function newProject() {
             if (poEntries.length > 0) {
                 if (!confirm(translations[currentLanguage]['new_project_confirm'])) {
@@ -3139,26 +3011,19 @@
                 }
             }
             resetProjectState();
-            clearBackup(); // Clear backup when starting a new project
+            clearBackup();
         }
 
-        /**
-         * Shows the modal to get a filename before saving the project.
-         */
         function showSaveProjectModal() {
             if (poEntries.length === 0) {
                 showMessage(translations[currentLanguage]['no_project_to_save']);
                 return;
             }
-            // Suggest a filename based on the current .po file name, without extension
             projectFilenameInput.value = currentFileName.replace(/\.po$/i, '');
             saveProjectModal.classList.remove('hidden');
             projectFilenameInput.focus();
         }
 
-        /**
-         * Executes the project save logic after getting the filename from the modal.
-         */
         async function executeSaveProject() {
             const filename = projectFilenameInput.value.trim();
             if (!filename) {
@@ -3170,23 +3035,19 @@
             try {
                 const zip = new JSZip();
 
-                // 1. Add .po file
                 const poContent = reconstructPo(poEntries);
                 zip.file(currentFileName, poContent);
 
-                // 2. Add .tmx file if TM has content
                 const tmxContent = generateTMX();
                 if (tmxContent) {
                     zip.file("memory.tmx", tmxContent);
                 }
 
-                // 3. Add .tbx file if glossary has content
                 if (glossary.length > 0) {
                     const tbxContent = generateTBX();
                     zip.file("glossary.tbx", tbxContent);
                 }
 
-                // Generate and download zip with .poanda extension
                 const zipBlob = await zip.generateAsync({ type: "blob" });
                 const url = URL.createObjectURL(zipBlob);
                 const a = document.createElement("a");
@@ -3208,16 +3069,11 @@
             }
         }
 
-        /**
-         * Opens a project from a .zip or .poanda file.
-         * @param {File} file The project file to open.
-         */
         async function openProject(file) {
             if (!file) return;
 
             showLoadingOverlay(translations[currentLanguage]['loading_project']);
             try {
-                // Reset current state silently before loading the new project
                 resetProjectState();
 
                 const zip = await JSZip.loadAsync(file);
@@ -3243,16 +3099,14 @@
                     throw new Error(translations[currentLanguage]['invalid_project_file']);
                 }
                 showMessage(translations[currentLanguage]['project_loaded']);
-                await clearBackup(); // Clear old backup after a new project is successfully loaded
+                await clearBackup();
 
             } catch (error) {
                 showMessage(translations[currentLanguage]['error_opening_project'] + ': ' + error.message);
                 console.error("Error opening project:", error);
-                // Reset again if loading failed, to ensure a clean state
                 resetProjectState();
             } finally {
                 hideLoadingOverlay();
-                // Reset file input value to allow opening the same file again
                 projectFileInput.value = '';
             }
         }
@@ -3285,7 +3139,7 @@
         }
 
         async function saveBackup() {
-            if (!db || poEntries.length === 0) return; // Don't save if DB isn't open or no data
+            if (!db || poEntries.length === 0) return;
             const sessionData = {
                 id: 'currentSession',
                 poEntries,
@@ -3302,7 +3156,7 @@
             const store = transaction.objectStore(STORE_NAME);
             const request = store.put(sessionData);
             request.onsuccess = () => {
-                 updateBackupStatusUI(); // Update indicator after successful save
+                 updateBackupStatusUI();
             };
         }
 
@@ -3352,7 +3206,6 @@
                     tmSourceLanguage = backup.tmSourceLanguage || '';
                     tmTargetLanguage = backup.tmTargetLanguage || '';
 
-                    // Restore UI
                     renderTranslations(poEntries);
                     
                     if (glossarySourceLanguage && glossaryTargetLanguage) {
@@ -3398,13 +3251,6 @@
         }
 
         // --- PO to MO Converter Logic ---
-
-        /**
-         * Parses a PO file string specifically for MO compilation.
-         * Handles msgctxt, msgid_plural, and msgstr arrays correctly.
-         * @param {string} poText The full PO content as a string.
-         * @returns {Array<Object>} An array of message objects for the compiler.
-         */
         function parsePoForMo(poText) {
             const lines = poText.split('\n');
             const messages = [];
@@ -3443,7 +3289,7 @@
                 } else if (trimmedLine.startsWith('msgstr')) {
                     state = 'msgstr';
                     currentMsg.msgstr = [unescape(trimmedLine.substring(6).trim().slice(1, -1))];
-                } else if (trimmedLine.startsWith('"')) { // continuation line
+                } else if (trimmedLine.startsWith('"')) {
                     const str = unescape(trimmedLine.slice(1, -1));
                     if (state === 'msgid') currentMsg.msgid += str;
                     else if (state === 'msgid_plural') currentMsg.msgid_plural += str;
@@ -3461,11 +3307,6 @@
             return messages;
         }
 
-        /**
-         * Compiles an array of parsed PO messages into a binary MO file ArrayBuffer.
-         * @param {Array<Object>} messages The parsed messages from parsePoForMo.
-         * @returns {ArrayBuffer} The binary data of the .mo file.
-         */
         function compileMo(messages) {
             const textEncoder = new TextEncoder();
             const MAGIC = 0x950412de;
@@ -3488,7 +3329,7 @@
                 return keyA.localeCompare(keyB);
             });
 
-            const stringCount = translations.length + 1; // +1 for header
+            const stringCount = translations.length + 1;
             const headerSize = 28;
             const originalsTableOffset = headerSize;
             const translationsTableOffset = headerSize + (stringCount * 8);
@@ -3496,13 +3337,11 @@
             let stringData = [];
             let currentOffset = translationsTableOffset + (stringCount * 8);
 
-            // Header entry
             stringData.push({
                 original: textEncoder.encode(""),
                 translation: textEncoder.encode(header.msgstr[0]),
             });
 
-            // Translation entries
             translations.forEach(msg => {
                 let originalStr;
                 if (msg.msgid_plural) {
@@ -3522,27 +3361,25 @@
 
             stringData.forEach(data => {
                 originalsTable.push({ length: data.original.length, offset: currentOffset });
-                currentOffset += data.original.length + 1; // +1 for null terminator
+                currentOffset += data.original.length + 1;
             });
             stringData.forEach(data => {
                 translationsTable.push({ length: data.translation.length, offset: currentOffset });
-                currentOffset += data.translation.length + 1; // +1 for null terminator
+                currentOffset += data.translation.length + 1;
             });
             
             const buffer = new ArrayBuffer(currentOffset);
             const view = new DataView(buffer);
             let byteOffset = 0;
 
-            // Write header
             view.setUint32(byteOffset, MAGIC, true); byteOffset += 4;
             view.setUint32(byteOffset, REVISION, true); byteOffset += 4;
             view.setUint32(byteOffset, stringCount, true); byteOffset += 4;
             view.setUint32(byteOffset, originalsTableOffset, true); byteOffset += 4;
             view.setUint32(byteOffset, translationsTableOffset, true); byteOffset += 4;
-            view.setUint32(byteOffset, 0, true); byteOffset += 4; // hash table size
-            view.setUint32(byteOffset, 0, true); byteOffset += 4; // hash table offset
+            view.setUint32(byteOffset, 0, true); byteOffset += 4;
+            view.setUint32(byteOffset, 0, true); byteOffset += 4;
             
-            // Write tables
             originalsTable.forEach(entry => {
                 view.setUint32(byteOffset, entry.length, true); byteOffset += 4;
                 view.setUint32(byteOffset, entry.offset, true); byteOffset += 4;
@@ -3552,7 +3389,6 @@
                 view.setUint32(byteOffset, entry.offset, true); byteOffset += 4;
             });
 
-            // Write string data
             stringData.forEach(data => {
                 new Uint8Array(buffer, byteOffset).set(data.original);
                 byteOffset += data.original.length + 1;
@@ -3565,10 +3401,6 @@
             return buffer;
         }
 
-        /**
-         * Makes a sidebar element draggable and resizable.
-         * @param {HTMLElement} sidebar The sidebar element to make interactive.
-         */
         function makeDraggableAndResizable(sidebar) {
             const header = sidebar.querySelector('.sidebar-header');
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -3578,37 +3410,29 @@
             function dragMouseDown(e) {
                 e = e || window.event;
                 e.preventDefault();
-                // Get the mouse cursor position at startup
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 document.onmouseup = closeDragElement;
-                // Call a function whenever the cursor moves
                 document.onmousemove = elementDrag;
-                // When starting to drag, remove the transform property
-                // so that top/left positioning works correctly.
                 sidebar.style.transform = 'none';
             }
 
             function elementDrag(e) {
                 e = e || window.event;
                 e.preventDefault();
-                // Calculate the new cursor position
                 pos1 = pos3 - e.clientX;
                 pos2 = pos4 - e.clientY;
                 pos3 = e.clientX;
                 pos4 = e.clientY;
-                // Set the element's new position
                 sidebar.style.top = (sidebar.offsetTop - pos2) + "px";
                 sidebar.style.left = (sidebar.offsetLeft - pos1) + "px";
             }
 
             function closeDragElement() {
-                // Stop moving when mouse button is released
                 document.onmouseup = null;
                 document.onmousemove = null;
             }
             
-            // Use ResizeObserver to update main content padding when sidebar is resized
             const resizeObserver = new ResizeObserver(() => {
                 updateMainContentOffset();
             });
@@ -3620,11 +3444,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             populateIsoLanguagesDatalist();
             
-            // Add event listeners for language buttons
             document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
             document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
 
-            // Add event listeners for project buttons
             newProjectBtn.addEventListener('click', newProject);
             saveProjectBtn.addEventListener('click', showSaveProjectModal);
             openProjectBtn.addEventListener('click', () => projectFileInput.click());
@@ -3633,20 +3455,17 @@
                 openProject(file);
             });
 
-            // Add event listeners for the save project modal
             saveProjectConfirmBtn.addEventListener('click', executeSaveProject);
             saveProjectCancelBtn.addEventListener('click', () => {
                 saveProjectModal.classList.add('hidden');
             });
 
-            // Add event listeners for the restore backup modal
             restoreBackupBtn.addEventListener('click', restoreSession);
             discardBackupBtn.addEventListener('click', () => {
                 clearBackup();
                 restoreBackupModal.classList.add('hidden');
             });
             
-            // Add event listeners for the backup modal
             backupBtn.addEventListener('click', () => {
                 updateBackupStatusUI();
                 backupModal.classList.remove('hidden');
@@ -3710,7 +3529,6 @@
                 reader.readAsText(file);
             });
 
-            // Add event listeners for the MO converter modal
             convertToMoButton.addEventListener('click', () => {
                 if (poEntries.length > 0) {
                     convertToMoModal.classList.remove('hidden');
@@ -3749,52 +3567,51 @@
                 }
             });
 
-            // Make sidebars draggable and resizable
             makeDraggableAndResizable(document.getElementById('terminologySidebar'));
             makeDraggableAndResizable(document.getElementById('translationMemorySidebar'));
 
+            // Add event listeners for the new PO search bar
+            poSearchInput.addEventListener('input', filterPOEntries);
+            searchInOriginalCheckbox.addEventListener('change', filterPOEntries);
+            searchInTranslationCheckbox.addEventListener('change', filterPOEntries);
 
-            setLanguage(currentLanguage); // Apply initial language (en) and content
 
-            resetGlossary(); // Start in the new glossary configuration mode (first step)
-            resetTM(); // Initialize TM - this will now show the language config for TM and its initial message
+            setLanguage(currentLanguage);
+
+            resetGlossary();
+            resetTM();
             
-            // Add event listener for the new stats button
             statsBtn.addEventListener('click', () => {
                 statsContainer.classList.toggle('show');
-                updateUtilityButtonStates(); // Update button states
+                updateUtilityButtonStates();
             });
 
-            // For first load, we ensure the "no_translations" message is shown.
-            if (translationsContainer) { // Added null check
+            if (translationsContainer) {
                 translationsContainer.innerHTML = `
                     <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
                         ${translations[currentLanguage]['no_translations']}
                     </div>
                 `;
             }
-            if (savePoButton) savePoButton.disabled = true; // Added null check
-            if (convertToMoButton) convertToMoButton.disabled = true; // NEW
-            if (statsContainer) statsContainer.classList.remove('show'); // Ensure stats are hidden on load
-            updateUtilityButtonStates(); // NEW
+            if (savePoButton) savePoButton.disabled = true;
+            if (convertToMoButton) convertToMoButton.disabled = true;
+            if (poSearchContainer) poSearchContainer.classList.add('hidden');
+            if (statsContainer) statsContainer.classList.remove('show');
+            updateUtilityButtonStates();
 
-            // Ensure accordions are collapsed on initial load
             if (addTermContent && addTermAccordionIcon) {
                 addTermContent.classList.add('collapsed');
                 addTermContent.classList.remove('expanded');
-                addTermAccordionIcon.classList.remove('rotated'); // Ensure it's not rotated initially
+                addTermAccordionIcon.classList.remove('rotated');
             }
 
-            // Ensure TM sidebar is hidden initially
-            if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar'); // Added null check
+            if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar');
 
-            updateMainContentOffset(); // Set initial padding based on hidden state of sidebars
+            updateMainContentOffset();
 
-            // Check for a backup on load
             await checkForBackup();
 
-            // Start automatic backup interval
-            setInterval(saveBackup, 10000); // Save every 10 seconds
+            setInterval(saveBackup, 10000);
         });
     </script>
 </body>
