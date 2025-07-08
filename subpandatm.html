@@ -313,9 +313,17 @@
         .accordion-content.expanded { max-height: 500px; padding-top: 1rem; padding-bottom: 1rem; }
 
         /* TM Table styles */
-        .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 10%; max-width: 60px; text-align: center; }
-        .tm-table th:nth-child(2), .tm-table td:nth-child(2) { width: 45%; }
-        .tm-table th:nth-child(3), .tm-table td:nth-child(3) { width: 45%; }
+        .tm-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+        .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 15%; text-align: center; }
+        .tm-table th:nth-child(2), .tm-table td:nth-child(2),
+        .tm-table th:nth-child(3), .tm-table td:nth-child(3) {
+            width: 42.5%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
         .tm-best-match-highlight { background-color: #d1fae5 !important; border-color: #10b981 !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); }
         
         /* Diff styles */
@@ -2681,7 +2689,12 @@
             results.forEach(entry => {
                 const row = document.createElement('tr');
                 if (entry.isBestMatch) row.classList.add('tm-best-match-highlight');
-                row.innerHTML = `<td>${entry.score}%</td><td><pre class="whitespace-pre-wrap word-break-all">${entry.diffHtml || entry.srcText}</pre></td><td><pre class="whitespace-pre-wrap word-break-all">${entry.tgtText}</pre></td>`;
+                
+                const originalContent = (entry.diffHtml || entry.srcText).replace(/\n/g, '<br>');
+                const translationContent = entry.tgtText.replace(/\n/g, '<br>');
+
+                row.innerHTML = `<td>${entry.score}%</td><td class="align-top">${originalContent}</td><td class="align-top">${translationContent}</td>`;
+                
                 row.addEventListener('click', () => {
                     const currentFocused = getCurrentFocusedIndex();
                     if (currentFocused) {
@@ -3087,28 +3100,33 @@
 
         // --- START: Floating Panel Logic (Drag, Resize, and Close) ---
         function closeFloatingPanel(panel) {
-            // If the panel has been moved, use the fade-out animation
+            // Immediately disable interactions to prevent the panel from getting "stuck"
+            panel.style.pointerEvents = 'none';
+        
+            // Remove the class that makes it visible, triggering the hide animation
+            panel.classList.remove('is-visible');
+        
+            // If the panel had been moved, we want a fade-out instead of a slide-out.
             if (panel.dataset.moved) {
                 panel.classList.add('is-fading-out');
-                // Listen for the animation to end, then fully hide and reset
-                panel.addEventListener('transitionend', () => {
-                    panel.classList.remove('is-visible', 'is-fading-out');
-                }, { once: true });
-            } else {
-                // Otherwise, use the default slide-out animation
-                panel.classList.remove('is-visible');
+                
+                // After the animation is complete, remove the animation class
+                // so it doesn't interfere with the next time the panel is opened.
+                setTimeout(() => {
+                    panel.classList.remove('is-fading-out');
+                }, 200); // This duration must match the transition duration in the CSS for .is-fading-out
             }
         }
 
         function openFloatingPanel(panelToOpen, callback) {
-            // Si el panel sobre el que se hace clic ya está visible, lo cerramos.
             if (panelToOpen.classList.contains('is-visible')) {
                 closeFloatingPanel(panelToOpen);
                 return;
             }
             
-            // Si no, procedemos a mostrarlo.
-            // Restablece el estado antes de mostrarlo
+            // Reset the inline pointer-events style so the CSS class rule can apply
+            panelToOpen.style.pointerEvents = ''; 
+
             panelToOpen.classList.remove('is-fading-out');
             if (!panelToOpen.dataset.moved) {
                 panelToOpen.style.left = '';
@@ -3117,7 +3135,6 @@
                 panelToOpen.style.transform = 'translateX(110%)';
             }
             
-            // Un pequeño retardo para que el navegador aplique los estilos antes de la transición
             setTimeout(() => {
                 panelToOpen.classList.add('is-visible');
                 if (panelToOpen.dataset.moved) {
@@ -3415,6 +3432,15 @@
             });
             saveProjectBtn.addEventListener('click', saveProject);
             projectFile.addEventListener('change', loadProject);
+            
+            // TMX File Input Listener
+            tmFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    loadTMX(file);
+                }
+                event.target.value = ''; // Reset input
+            });
 
             // New Project Confirmation Modal Listeners
             cancelNewProjectBtn.addEventListener('click', () => {
