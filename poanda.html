@@ -80,7 +80,7 @@
         .main-editor-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
         @media (min-width: 1024px) {
             .main-editor-layout { flex-direction: row; }
-            .editor-main-content { flex: 2; }
+            #central-column { flex: 2; }
             .terminology-sidebar, .translation-memory-sidebar { min-width: 300px; max-width: 400px; }
         }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; cursor: move; user-select: none; }
@@ -138,12 +138,12 @@
         .translation-memory-sidebar { right: 1rem; transform: translateX(110%); }
         .translation-memory-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
         
-        .editor-main-content { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; }
-        .translations-container-scrolling { max-height: 70vh; overflow-y: auto; }
+        #central-column { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; }
+        .translations-container-scrolling { max-height: calc(70vh - 50px); overflow-y: auto; } /* Adjusted height */
 
         @media (min-width: 1024px) {
-            .editor-main-content.left-sidebar-active { padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); }
-            .editor-main-content.right-sidebar-active { padding-right: calc(var(--translation-memory-sidebar-width, 350px) + 2rem); }
+            #central-column.left-sidebar-active { padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); }
+            #central-column.right-sidebar-active { padding-right: calc(var(--translation-memory-sidebar-width, 350px) + 2rem); }
         }
         .po-display-code, .msgstr-textarea { font-size: 1rem; }
         .top-utility-buttons-container { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 0.75rem; min-width: 400px; }
@@ -246,7 +246,7 @@
 
         <div class="main-editor-layout" id="mainEditorLayout">
             <!-- Central Column Wrapper -->
-            <div class="flex-1 flex flex-col">
+            <div id="central-column" class="flex-1 flex flex-col min-w-0">
                 <!-- PO Editor Search Bar -->
                 <div id="poSearchContainer" class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
                     <div class="flex items-center gap-2">
@@ -271,7 +271,7 @@
                     </div>
                 </div>
                 <!-- Scrolling Content Area -->
-                <div class="editor-main-content translations-container-scrolling pr-2" id="editorMainContent">
+                <div class="translations-container-scrolling pr-2">
                     <div id="translationsContainer" class="space-y-4">
                         <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md"></div>
                     </div>
@@ -563,7 +563,7 @@
         const tmInternalMessage = document.getElementById('tmInternalMessage'); // New TM internal message element
 
         // DOM element for main content editor, needed for padding adjustments
-        const editorMainContent = document.getElementById('editorMainContent');
+        const centralColumn = document.getElementById('central-column');
 
         // NEW: PO to MO Converter DOM Elements
         const convertToMoButton = document.getElementById('convertToMoButton');
@@ -2285,20 +2285,20 @@
         function updateMainContentOffset() {
             const isTerminologyOpen = terminologySidebar.classList.contains('show-sidebar');
             const isTranslationMemoryOpen = translationMemorySidebar.classList.contains('show-sidebar');
-
-            if (editorMainContent) {
-                editorMainContent.classList.remove('left-sidebar-active', 'right-sidebar-active');
+            
+            if (centralColumn) {
+                centralColumn.classList.remove('left-sidebar-active', 'right-sidebar-active');
 
                 if (isTerminologyOpen) {
-                    editorMainContent.classList.add('left-sidebar-active');
+                    centralColumn.classList.add('left-sidebar-active');
                     document.documentElement.style.setProperty('--terminology-sidebar-width', terminologySidebar.offsetWidth + 'px');
                 }
                 if (isTranslationMemoryOpen) {
-                    editorMainContent.classList.add('right-sidebar-active');
+                    centralColumn.classList.add('right-sidebar-active');
                     document.documentElement.style.setProperty('--translation-memory-sidebar-width', translationMemorySidebar.offsetWidth + 'px');
                 }
             } else {
-                console.warn("editorMainContent element not found for offset update.");
+                console.warn("central-column element not found for offset update.");
             }
         }
 
