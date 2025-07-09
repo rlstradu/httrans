@@ -84,7 +84,7 @@
             .terminology-sidebar, .translation-memory-sidebar { min-width: 300px; max-width: 400px; }
         }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; cursor: move; user-select: none; }
-        .sidebar-content { max-height: calc(100vh - 200px); overflow-y: auto; padding-right: 0.5rem; }
+        .sidebar-content { height: calc(100% - 60px); overflow-y: auto; padding-right: 0.5rem; }
         .glossary-input-group label, .tm-input-group label { white-space: nowrap; }
         .glossary-input-group input, .glossary-input-group select, .tm-input-group input, .tm-input-group select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-top: 4px; color: var(--color-dark); background-color: var(--color-white); }
         .glossary-btn-primary, .tm-btn-primary { background-color: var(--color-primary); color: var(--color-dark); padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
@@ -126,8 +126,7 @@
             transition: opacity 0.3s ease-in-out; 
             opacity: 0; 
             pointer-events: none; 
-            resize: both; /* Allow resizing */
-            overflow: auto; /* Required for resize */
+            overflow: hidden;
             min-width: 300px; 
             max-width: 80vw;
             min-height: 200px;
@@ -180,6 +179,19 @@
         .current-search-highlight {
             background-color: orange;
         }
+        .resizer {
+            position: absolute;
+            background: transparent;
+            z-index: 10;
+        }
+        .resizer-t { top: -5px; left: 0; right: 0; height: 10px; cursor: ns-resize; }
+        .resizer-r { top: 0; right: -5px; bottom: 0; width: 10px; cursor: ew-resize; }
+        .resizer-b { bottom: -5px; left: 0; right: 0; height: 10px; cursor: ns-resize; }
+        .resizer-l { top: 0; left: -5px; bottom: 0; width: 10px; cursor: ew-resize; }
+        .resizer-tl { top: -5px; left: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
+        .resizer-tr { top: -5px; right: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
+        .resizer-bl { bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
+        .resizer-br { bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
@@ -280,11 +292,18 @@
             
             <!-- Sidebars -->
             <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
+                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
                 <div class="sidebar-header">
                     <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle"></h3>
-                    <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 8.812A9.024 9.024 0 0112 4.5c4.97 0 9 4.03 9 9s-4.03 9-9 9a9.006 9.006 0 01-8.35-5.786"></path></svg>
+                        </button>
+                        <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="sidebar-content">
                     <div id="terminologyLanguageConfigSection" class="space-y-4">
@@ -330,11 +349,18 @@
                 <datalist id="isoLanguages"></datalist>
             </div>
             <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
+                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
                 <div class="sidebar-header">
                     <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle"></h3>
-                    <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 8.812A9.024 9.024 0 0112 4.5c4.97 0 9 4.03 9 9s-4.03 9-9 9a9.006 9.006 0 01-8.35-5.786"></path></svg>
+                        </button>
+                        <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="sidebar-content">
                     <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
@@ -3510,7 +3536,9 @@
             const header = sidebar.querySelector('.sidebar-header');
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 
-            header.onmousedown = dragMouseDown;
+            if(header) {
+                header.onmousedown = dragMouseDown;
+            }
 
             function dragMouseDown(e) {
                 e = e || window.event;
@@ -3538,6 +3566,83 @@
                 document.onmousemove = null;
             }
             
+            const resizers = sidebar.querySelectorAll('.resizer');
+            let currentResizer;
+
+            for (let resizer of resizers) {
+                resizer.addEventListener('mousedown', initResize, false);
+            }
+
+            function initResize(e) {
+                e.stopPropagation(); // Stop the event from bubbling up to the header
+                currentResizer = e.target;
+                let startX = e.clientX;
+                let startY = e.clientY;
+                let startWidth = parseInt(document.defaultView.getComputedStyle(sidebar).width, 10);
+                let startHeight = parseInt(document.defaultView.getComputedStyle(sidebar).height, 10);
+                let startLeft = sidebar.offsetLeft;
+                let startTop = sidebar.offsetTop;
+
+                function doResize(e) {
+                    const rect = sidebar.getBoundingClientRect();
+                    if (currentResizer.classList.contains('resizer-r')) {
+                        sidebar.style.width = (startWidth + e.clientX - startX) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-l')) {
+                        sidebar.style.width = (startWidth - (e.clientX - startX)) + 'px';
+                        sidebar.style.left = (startLeft + (e.clientX - startX)) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-b')) {
+                        sidebar.style.height = (startHeight + e.clientY - startY) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-t')) {
+                        sidebar.style.height = (startHeight - (e.clientY - startY)) + 'px';
+                        sidebar.style.top = (startTop + (e.clientY - startY)) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-br')) {
+                        sidebar.style.width = (startWidth + e.clientX - startX) + 'px';
+                        sidebar.style.height = (startHeight + e.clientY - startY) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-bl')) {
+                        sidebar.style.width = (startWidth - e.clientX + startX) + 'px';
+                        sidebar.style.left = (startLeft + e.clientX - startX) + 'px';
+                        sidebar.style.height = (startHeight + e.clientY - startY) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-tr')) {
+                        sidebar.style.width = (startWidth + e.clientX - startX) + 'px';
+                        sidebar.style.height = (startHeight - e.clientY + startY) + 'px';
+                        sidebar.style.top = (startTop + e.clientY - startY) + 'px';
+                    } else if (currentResizer.classList.contains('resizer-tl')) {
+                        sidebar.style.width = (startWidth - e.clientX + startX) + 'px';
+                        sidebar.style.left = (startLeft + e.clientX - startX) + 'px';
+                        sidebar.style.height = (startHeight - e.clientY + startY) + 'px';
+                        sidebar.style.top = (startTop + e.clientY - startY) + 'px';
+                    }
+                    updateMainContentOffset();
+                }
+
+                function stopResize() {
+                    window.removeEventListener('mousemove', doResize, false);
+                    window.removeEventListener('mouseup', stopResize, false);
+                }
+
+                window.addEventListener('mousemove', doResize, false);
+                window.addEventListener('mouseup', stopResize, false);
+            }
+            
+            const resetBtn = sidebar.querySelector('.reset-panel-btn');
+            if(resetBtn) {
+                resetBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    sidebar.style.removeProperty('top');
+                    sidebar.style.removeProperty('left');
+                    sidebar.style.removeProperty('right');
+                    sidebar.style.removeProperty('bottom');
+                    sidebar.style.removeProperty('width');
+                    sidebar.style.removeProperty('height');
+                    sidebar.style.removeProperty('transform');
+                    
+                    if (!sidebar.classList.contains('show-sidebar')) {
+                         sidebar.classList.add('show-sidebar');
+                    }
+                    updateMainContentOffset();
+                });
+            }
+
             const resizeObserver = new ResizeObserver(() => {
                 updateMainContentOffset();
             });
