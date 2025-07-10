@@ -145,10 +145,20 @@
             <!-- Filter Configuration Section -->
             <section class="section-card">
                 <h2 class="section-title"><span class="material-icons">filter_alt</span><span data-lang="filters_title">2. Configure filters</span></h2>
-                <div class="flex items-center space-x-4 mb-6">
+                <div class="flex items-center space-x-4 mb-6 flex-wrap gap-y-2">
                     <button id="toggleAllFiltersButton" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200" data-lang="toggle_filters">
                         Toggle All
                     </button>
+                    <button id="resetFiltersButton" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200" data-lang="reset_filters">
+                        Reset to default
+                    </button>
+                    <button id="saveFiltersButton" class="px-4 py-2 bg-blue-200 text-blue-800 font-semibold rounded-lg hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200" data-lang="save_filters">
+                        Save Filters
+                    </button>
+                    <button id="importFiltersButton" class="px-4 py-2 bg-blue-200 text-blue-800 font-semibold rounded-lg hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200" data-lang="import_filters">
+                        Import Filters
+                    </button>
+                    <input type="file" id="importFiltersInput" class="hidden" accept=".json">
                 </div>
                 <div id="filters-container" class="flex flex-col space-y-4 max-h-96 overflow-y-auto pr-2">
                     <!-- Filters will be populated by JS to support i18n -->
@@ -189,6 +199,23 @@
         </div>
     </div>
 
+    <!-- Generic Modal -->
+    <div id="genericModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-xl bg-white">
+            <div class="mt-3 text-center">
+                <h3 id="modalTitle" class="text-lg leading-6 font-medium text-gray-900"></h3>
+                <div class="mt-4 px-7 py-3">
+                    <label id="modalFileNameLabel" for="modalFileName" class="block text-sm font-medium text-gray-700 text-left mb-1"></label>
+                    <input type="text" id="modalFileName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-color focus:border-brand-color sm:text-sm">
+                </div>
+                <div class="items-center px-4 py-3 space-x-4">
+                    <button id="confirmModalButton" class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300" data-lang="export_modal_confirm">Confirm</button>
+                    <button id="cancelModalButton" class="px-4 py-2 bg-gray-400 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300" data-lang="export_modal_cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- LANGUAGE & TRANSLATION SETUP ---
         const translations = {
@@ -197,13 +224,24 @@
                 upload_title: "1. Upload subtitle file (.srt)",
                 filters_title: "2. Configure filters",
                 toggle_filters: "Toggle all",
+                reset_filters: "Reset to default",
+                save_filters: "Save Filters",
+                import_filters: "Import Filters",
                 check_button: "Check subtitles",
                 results_title: "3. Review results",
                 results_placeholder: 'Upload a subtitle file and press "Check subtitles" to see the errors here.',
+                result_subtitle_header: "Subtitle {index}",
                 no_errors: "Congratulations! No errors were found with the selected filters.",
                 export_title: "Export error report",
                 export_pdf: "Export to PDF",
                 export_table: "Export as HTML Table",
+                export_modal_title: "Export Report",
+                save_modal_title: "Save Filter Configuration",
+                export_modal_filename: "File name",
+                export_modal_confirm: "Confirm",
+                export_modal_cancel: "Cancel",
+                default_report_name: "SRT-Report",
+                default_filter_config_name: "filter-settings",
                 selected_file: "Selected file: {fileName}",
                 file_loaded: 'File loaded. Press "Check subtitles".',
                 no_valid_subs: "Could not parse valid subtitles from the file.",
@@ -224,6 +262,8 @@
                 filter_overlap: "Overlapping subtitles",
                 filter_no_space_after_period: "No space after period",
                 filter_unclosed_quotes: "Unclosed quotes",
+                filter_quote_period: "Quote punctuation",
+                filter_no_period_after_quote: "No period after quote",
                 filter_ellipsis: "Ellipsis linking errors",
                 filter_number_punctuation: "Number punctuation",
                 filter_units_format: "Measurement unit format",
@@ -233,7 +273,6 @@
                 filter_numbers_1_to_10: "Cardinal numbers as digits (1-10)",
                 filter_four_digit_separator: "Thousand separator in 4-digit numbers",
                 filter_semicolons: "Use of semicolons",
-                filter_quote_period: "Quote punctuation",
                 filter_ids_sfx_format: "SFX/description detection (brackets)",
                 desc_cps: "Detects subtitles exceeding the configured CPS.",
                 desc_wpm: "Detects subtitles exceeding the configured WPM.",
@@ -250,6 +289,8 @@
                 desc_overlap: "Detects subtitles that overlap with subsequent subtitles.",
                 desc_no_space_after_period: "Detects a period followed immediately by a word or letter, without an intervening space.",
                 desc_unclosed_quotes: "Identifies 'Unclosed single quote text' or \"Unclosed double quote text\".",
+                desc_quote_period: 'Detects if the final period of a quoted sentence is inside the closing quotes (e.g., "Text." instead of "Text".).',
+                desc_no_period_after_quote: 'Detects a closing quote (") at the end of a line that is not followed by a period.',
                 desc_ellipsis: 'Flags subtitles ending with "..." suggesting a continuation.',
                 desc_number_punctuation: 'Detects English-style punctuation "1,234.56" instead of "1.234,56".',
                 desc_units_format: 'Detects measurement units (e.g., "km.", "cms") ending in a period or in plural form.',
@@ -259,7 +300,6 @@
                 desc_numbers_1_to_10: 'Detects if numbers from 1 to 10 are written in digits instead of letters (e.g., "5 dogs" instead of "five dogs").',
                 desc_four_digit_separator: 'Detects if four-digit numbers have separators (e.g., "2,000" instead of "2000").',
                 desc_semicolons: "Detects the presence of a semicolon (;).",
-                desc_quote_period: 'Detects if the final period of a quoted sentence is inside the closing quotes (e.g., "Text." instead of "Text".).',
                 desc_ids_sfx_format: "Detects the presence of text enclosed in square brackets (e.g., [Music], [Applause]).",
                 errors: {
                     high_cps: "High reading speed: {cps} CPS (Max: {max})",
@@ -283,6 +323,8 @@
                     no_space_after_period: "A period is followed by a letter without a space.",
                     unclosed_single_quote: "Unclosed single quote (').",
                     unclosed_double_quote: "Unclosed double quote (\").",
+                    quote_punctuation: "Final period is inside the closing quotes.",
+                    no_period_after_quote: "The line ends with a quote but is not followed by a period.",
                     ellipsis_linking: "Contains ellipsis (...) at the end of a line (possible link).",
                     english_number_punctuation: "Uses English-style number punctuation (comma for thousands).",
                     incorrect_unit_format: "Incorrect unit format (period or plural).",
@@ -292,7 +334,6 @@
                     number_as_digit: "Number from 1-10 is written as a digit instead of a word.",
                     four_digit_separator: "Four-digit number has a thousand separator.",
                     semicolon_present: "Contains a semicolon (;).",
-                    quote_punctuation: "Final period is inside the closing quotes.",
                     sfx_brackets: "Contains SFX/description in brackets."
                 }
             },
@@ -301,13 +342,24 @@
                 upload_title: "1. Subir archivo de subtítulos (.srt)",
                 filters_title: "2. Configurar filtros",
                 toggle_filters: "Marcar/Desmarcar todas",
+                reset_filters: "Restablecer valores",
+                save_filters: "Guardar filtros",
+                import_filters: "Importar filtros",
                 check_button: "REVISAR SUBTÍTULOS",
                 results_title: "3. Resultados de la revisión",
                 results_placeholder: 'Sube un archivo de subtítulos y presiona "REVISAR SUBTÍTULOS" para ver los errores aquí.',
+                result_subtitle_header: "Subtítulo {index}",
                 no_errors: "¡Felicidades! No se encontraron errores con los filtros seleccionados.",
                 export_title: "Exportar informe de errores",
                 export_pdf: "Exportar a PDF",
                 export_table: "Exportar como Tabla HTML",
+                export_modal_title: "Exportar Informe",
+                save_modal_title: "Guardar Configuración de Filtros",
+                export_modal_filename: "Nombre del archivo",
+                export_modal_confirm: "Confirmar",
+                export_modal_cancel: "Cancelar",
+                default_report_name: "Informe-errores-SRT",
+                default_filter_config_name: "configuracion-filtros",
                 selected_file: "Archivo seleccionado: {fileName}",
                 file_loaded: 'Archivo cargado. Presiona "REVISAR SUBTÍTULOS".',
                 no_valid_subs: "No se pudieron analizar subtítulos válidos del archivo.",
@@ -328,6 +380,8 @@
                 filter_overlap: "Subtítulos superpuestos (overlaps)",
                 filter_no_space_after_period: "Ausencia de espacios después de un punto",
                 filter_unclosed_quotes: "Comillas sin cerrar",
+                filter_quote_period: "Puntuación de comillas",
+                filter_no_period_after_quote: "Sin punto después de comillas",
                 filter_ellipsis: "Errores en puntos suspensivos de enlace",
                 filter_number_punctuation: "Puntuación de cifras",
                 filter_units_format: "Formato de unidades de medida",
@@ -337,7 +391,6 @@
                 filter_numbers_1_to_10: "Números cardinales en cifras (1-10)",
                 filter_four_digit_separator: "Separador de miles en 4 dígitos",
                 filter_semicolons: "Uso de punto y coma",
-                filter_quote_period: "Puntuación de comillas",
                 filter_ids_sfx_format: "Detección de acotaciones o SFX (corchetes)",
                 desc_cps: "Detecta subtítulos que excedan los CPS que configures.",
                 desc_wpm: "Detecta subtítulos que excedan los WPM que configures.",
@@ -354,6 +407,8 @@
                 desc_overlap: "Detecta subtítulos que pisan o se superponen con otros subtítulos.",
                 desc_no_space_after_period: "Detecta un punto seguido directamente de una palabra o letra, sin espacio intermedio.",
                 desc_unclosed_quotes: 'Identifica "Texto de comillas simples sin cerrar\' o "Texto de comillas dobles sin cerrar".',
+                desc_quote_period: 'Detecta si el punto final de una oración citada se encuentra dentro de las comillas de cierre (ej. "Texto." en lugar de "Texto".).',
+                desc_no_period_after_quote: 'Detecta unas comillas de cierre (") al final de una línea que no van seguidas de un punto.',
                 desc_ellipsis: 'Marca subtítulos que terminan con "..." sugiriendo una continuación.',
                 desc_number_punctuation: 'Detecta la puntuación "1,234.56" típica del inglés en lugar de "1.234,56".',
                 desc_units_format: 'Detecta unidades de medida (ej. "km.", "cms") que terminan en punto o están en plural.',
@@ -363,7 +418,6 @@
                 desc_numbers_1_to_10: 'Detecta si los números del 1 al 10 están escritos en cifras en lugar de letras (ej. "5 perros" en lugar de "cinco perros").',
                 desc_four_digit_separator: 'Detecta si los números de cuatro dígitos tienen separadores (ej. "2.000" en lugar de "2000").',
                 desc_semicolons: "Detecta la presencia de punto y coma (;).",
-                desc_quote_period: 'Detecta si el punto final de una oración citada se encuentra dentro de las comillas de cierre (ej. "Texto." en lugar de "Texto".).',
                 desc_ids_sfx_format: "Detecta la presencia de texto encerrado entre corchetes (ej. [Música], [Aplausos]).",
                 errors: {
                     high_cps: "Velocidad de lectura alta: {cps} CPS (Máx: {max})",
@@ -387,6 +441,8 @@
                     no_space_after_period: "Un punto seguido directamente de una palabra o letra, sin espacio intermedio.",
                     unclosed_single_quote: "Comilla simple (') sin cerrar.",
                     unclosed_double_quote: "Comilla doble (\") sin cerrar.",
+                    quote_punctuation: "Punto final de cita se encuentra dentro de las comillas.",
+                    no_period_after_quote: "La línea termina con comillas pero no le sigue un punto.",
                     ellipsis_linking: "Contiene elipsis (...) al final de una línea (posiblemente un enlace).",
                     english_number_punctuation: "Usa puntuación de miles estilo inglés (coma como separador de miles).",
                     incorrect_unit_format: "Unidad de medida con formato incorrecto (punto o plural).",
@@ -396,7 +452,6 @@
                     number_as_digit: "Número del 1 al 10 escrito en cifra en lugar de letra.",
                     four_digit_separator: "Número de cuatro dígitos con separador de miles.",
                     semicolon_present: "Contiene punto y coma (;).",
-                    quote_punctuation: "Punto final de cita se encuentra dentro de las comillas.",
                     sfx_brackets: "Contiene acotaciones o efectos de sonido entre corchetes."
                 }
             }
@@ -441,6 +496,8 @@
             { id: 'filterOverlap', name: 'filter_overlap', desc: 'desc_overlap', inputs: [] },
             { id: 'filterNoSpaceAfterPeriod', name: 'filter_no_space_after_period', desc: 'desc_no_space_after_period', inputs: [] },
             { id: 'filterUnclosedQuotes', name: 'filter_unclosed_quotes', desc: 'desc_unclosed_quotes', inputs: [] },
+            { id: 'filterQuotePeriod', name: 'filter_quote_period', desc: 'desc_quote_period', inputs: [] },
+            { id: 'filterNoPeriodAfterQuote', name: 'filter_no_period_after_quote', desc: 'desc_no_period_after_quote', inputs: [] },
             { id: 'filterEllipsis', name: 'filter_ellipsis', desc: 'desc_ellipsis', inputs: [] },
             { id: 'filterNumberPunctuation', name: 'filter_number_punctuation', desc: 'desc_number_punctuation', inputs: [] },
             { id: 'filterUnitsFormat', name: 'filter_units_format', desc: 'desc_units_format', inputs: [] },
@@ -450,13 +507,26 @@
             { id: 'filterNumbers1to10', name: 'filter_numbers_1_to_10', desc: 'desc_numbers_1_to_10', inputs: [] },
             { id: 'filterFourDigitSeparator', name: 'filter_four_digit_separator', desc: 'desc_four_digit_separator', inputs: [] },
             { id: 'filterSemicolons', name: 'filter_semicolons', desc: 'desc_semicolons', inputs: [] },
-            { id: 'filterQuotePeriod', name: 'filter_quote_period', desc: 'desc_quote_period', inputs: [] },
             { id: 'filterIdsSfxFormat', name: 'filter_ids_sfx_format', desc: 'desc_ids_sfx_format', inputs: [] }
         ];
 
+        // --- STATE MANAGEMENT ---
         let filterStates = {};
-        filterDefinitions.forEach(f => filterStates[f.id] = true);
-        filterStates['filterWpm'] = false; // Unchecked by default
+        let filterValues = {};
+        let allFiltersCheckedState = true;
+        let currentModalAction = { type: null };
+
+        function initializeFilterDefaults() {
+            filterDefinitions.forEach(filter => {
+                // Set default checkbox state (all true except WPM)
+                filterStates[filter.id] = filter.id !== 'filterWpm';
+                // Set default input values
+                filter.inputs.forEach(input => {
+                    filterValues[input.id] = input.value;
+                });
+            });
+            allFiltersCheckedState = true;
+        }
 
         function renderFilters() {
             const container = document.getElementById('filters-container');
@@ -469,9 +539,9 @@
                 
                 let inputsHTML = '';
                 filter.inputs.forEach(input => {
-                    const value = document.getElementById(input.id) ? document.getElementById(input.id).value : input.value;
+                    const value = filterValues[input.id]; // Read from state
                     if(input.type === 'select') {
-                        inputsHTML += `<select id="${input.id}" class="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500">${input.options.map(o => `<option value="${o}" ${value === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+                        inputsHTML += `<select id="${input.id}" class="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500">${input.options.map(o => `<option value="${o}" ${value == o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
                     } else {
                         inputsHTML += `<input type="${input.type}" id="${input.id}" value="${value}" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="${input.title}" style="${input.style || ''}">`;
                     }
@@ -487,21 +557,35 @@
                 `;
                 container.appendChild(filterDiv);
 
+                // Add event listener for checkbox state
                 document.getElementById(filter.id).addEventListener('change', (e) => {
                     filterStates[filter.id] = e.target.checked;
                 });
+
+                // Add event listeners to update input values in state
+                filter.inputs.forEach(input => {
+                    const inputEl = document.getElementById(input.id);
+                    if (inputEl) {
+                        inputEl.addEventListener('change', (e) => {
+                            filterValues[input.id] = e.target.value;
+                        });
+                    }
+                });
             });
             
-            document.getElementById('gapUnit').addEventListener('change', function() {
-                document.getElementById('frameRate').style.display = this.value === 'frames' ? 'inline-block' : 'none';
-            });
-            document.getElementById('gapUnit').dispatchEvent(new Event('change'));
+            // Special logic for gap unit selector
+            const gapUnitEl = document.getElementById('gapUnit');
+            if (gapUnitEl) {
+                gapUnitEl.addEventListener('change', function() {
+                    document.getElementById('frameRate').style.display = this.value === 'frames' ? 'inline-block' : 'none';
+                });
+                gapUnitEl.dispatchEvent(new Event('change'));
+            }
         }
         
         // Global variables
         let subtitles = [];
         let errorsFound = [];
-        let allFiltersCheckedState = true;
 
         // DOM Elements
         const subtitleFile = document.getElementById('subtitleFile');
@@ -512,6 +596,17 @@
         const exportPdfButton = document.getElementById('exportPdfButton');
         const exportTableButton = document.getElementById('exportTableButton');
         const toggleAllFiltersButton = document.getElementById('toggleAllFiltersButton');
+        const resetFiltersButton = document.getElementById('resetFiltersButton');
+        const saveFiltersButton = document.getElementById('saveFiltersButton');
+        const importFiltersButton = document.getElementById('importFiltersButton');
+        const importFiltersInput = document.getElementById('importFiltersInput');
+        
+        const genericModal = document.getElementById('genericModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalFileNameLabel = document.getElementById('modalFileNameLabel');
+        const modalFileNameInput = document.getElementById('modalFileName');
+        const confirmModalButton = document.getElementById('confirmModalButton');
+        const cancelModalButton = document.getElementById('cancelModalButton');
 
         // --- Core Functions (Original Logic Preserved) ---
         function formatTime(ms) {
@@ -579,8 +674,8 @@
             }
         }
         
-        function getFilterValue(id) { return document.getElementById(id).value; }
-        function isFilterChecked(id) { return document.getElementById(id).checked; }
+        function getFilterValue(id) { return filterValues[id]; }
+        function isFilterChecked(id) { return filterStates[id]; }
         
         function getErrorMessage(key, params = {}) {
             let message = translations[currentLang].errors[key] || key;
@@ -655,7 +750,7 @@
                 }
                 if (isFilterChecked('filterUnclosedTags')) {
                     ['i', 'b', 'font'].forEach(tag => {
-                        const openCount = (sub.text.match(new RegExp(`<${tag}>`, 'g')) || []).length;
+                        const openCount = (sub.text.match(new RegExp(`<${tag}[^>]*>`, 'g')) || []).length;
                         const closeCount = (sub.text.match(new RegExp(`</${tag}>`, 'g')) || []).length;
                         if (openCount > closeCount) sub.errors.push(getErrorMessage('unclosed_tag', { tag: tag }));
                         if (closeCount > openCount) sub.errors.push(getErrorMessage('unopened_tag', { tag: tag }));
@@ -691,6 +786,14 @@
                     if ((sub.text.match(/'/g) || []).length % 2 !== 0) sub.errors.push(getErrorMessage('unclosed_single_quote'));
                     if ((sub.text.match(/"/g) || []).length % 2 !== 0) sub.errors.push(getErrorMessage('unclosed_double_quote'));
                 }
+                if (isFilterChecked('filterQuotePeriod') && sub.text.match(/"\.[ \n\r]*$/)) {
+                    sub.errors.push(getErrorMessage('quote_punctuation'));
+                }
+                if (isFilterChecked('filterNoPeriodAfterQuote')) {
+                    if (sub.originalLines.some(line => line.trim().endsWith('"'))) {
+                        sub.errors.push(getErrorMessage('no_period_after_quote'));
+                    }
+                }
                 if (isFilterChecked('filterEllipsis') && sub.originalLines.some(line => line.trim().endsWith('...'))) {
                     sub.errors.push(getErrorMessage('ellipsis_linking'));
                 }
@@ -720,9 +823,6 @@
                 if (isFilterChecked('filterSemicolons') && sub.text.includes(';')) {
                     sub.errors.push(getErrorMessage('semicolon_present'));
                 }
-                if (isFilterChecked('filterQuotePeriod') && sub.text.match(/"\.[ \n\r]*$/)) {
-                    sub.errors.push(getErrorMessage('quote_punctuation'));
-                }
                 if (isFilterChecked('filterIdsSfxFormat') && sub.text.match(/\[.*?\]/)) {
                     sub.errors.push(getErrorMessage('sfx_brackets'));
                 }
@@ -744,8 +844,9 @@
             errorsFound.forEach(sub => {
                 const subElement = document.createElement('div');
                 subElement.className = 'error-item';
+                const headerText = translations[currentLang].result_subtitle_header.replace('{index}', sub.index);
                 subElement.innerHTML = `
-                    <p class="font-bold text-lg text-red-700 mb-1">Subtitle ${sub.index} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})</p>
+                    <p class="font-bold text-lg text-red-700 mb-1">${headerText} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})</p>
                     <pre class="bg-white p-2 rounded-md border border-red-200 text-gray-900 text-sm whitespace-pre-wrap mb-2">${escapeHtml(sub.text)}</pre>
                     <ul class="list-disc list-inside text-red-600 font-semibold">${sub.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul>`;
                 resultsDiv.appendChild(subElement);
@@ -756,8 +857,30 @@
             return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
         }
         
-        function exportToPdf() {
-            if (errorsFound.length === 0) return;
+        // --- MODAL & EXPORT/IMPORT FUNCTIONS ---
+        function showModal(type) {
+            currentModalAction.type = type;
+            const langDict = translations[currentLang];
+
+            if (type === 'exportPdf' || type === 'exportTable') {
+                if (errorsFound.length === 0) return;
+                modalTitle.textContent = langDict.export_modal_title;
+                modalFileNameLabel.textContent = langDict.export_modal_filename;
+                modalFileNameInput.value = langDict.default_report_name;
+            } else if (type === 'saveFilters') {
+                modalTitle.textContent = langDict.save_modal_title;
+                modalFileNameLabel.textContent = langDict.export_modal_filename;
+                modalFileNameInput.value = langDict.default_filter_config_name;
+            }
+            
+            genericModal.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            genericModal.classList.add('hidden');
+        }
+
+        function exportToPdf(fileName) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let y = 20;
@@ -767,9 +890,10 @@
             y += 15;
             errorsFound.forEach(sub => {
                 if (y > 270) { doc.addPage(); y = 20; }
+                const headerText = translations[currentLang].result_subtitle_header.replace('{index}', sub.index);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(12);
-                doc.text(`Subtitle ${sub.index} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})`, 10, y);
+                doc.text(`${headerText} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})`, 10, y);
                 y += 7;
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(10);
@@ -785,25 +909,69 @@
                 doc.setTextColor(0, 0, 0);
                 y += 5;
             });
-            doc.save('SubPandaQA_Report.pdf');
+            doc.save(`${fileName || 'SubPandaQA_Report'}.pdf`);
         }
 
-        function exportToTable() {
-            if (errorsFound.length === 0) return;
+        function exportToTable(fileName) {
             let tableHtml = `<thead><tr><th>ID</th><th>Timestamps</th><th>Text</th><th>Errors</th></tr></thead><tbody>`;
             errorsFound.forEach(sub => {
-                tableHtml += `<tr><td>${sub.index}</td><td>${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)}</td><td><pre>${escapeHtml(sub.text)}</pre></td><td><ul>${sub.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></td></tr>`;
+                const headerText = translations[currentLang].result_subtitle_header.replace('{index}', sub.index);
+                tableHtml += `<tr><td>${headerText}</td><td>${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)}</td><td><pre>${escapeHtml(sub.text)}</pre></td><td><ul>${sub.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></td></tr>`;
             });
             const newWindow = window.open();
-            newWindow.document.write(`<style>body{font-family:sans-serif}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}tr:nth-child(even){background-color:#f2f2f2}pre{white-space:pre-wrap}</style><h2>Error Report</h2><table>${tableHtml}</tbody></table>`);
+            newWindow.document.write(`<style>body{font-family:sans-serif}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}tr:nth-child(even){background-color:#f2f2f2}pre{white-space:pre-wrap}</style><h2>${fileName || 'Error Report'}</h2><table>${tableHtml}</tbody></table>`);
             newWindow.document.close();
         }
+
+        function saveFiltersConfig(fileName) {
+            const settings = {
+                filterStates,
+                filterValues
+            };
+            const blob = new Blob([JSON.stringify(settings, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName || 'filter-settings'}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function handleImportFilters(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const settings = JSON.parse(e.target.result);
+                    if (settings.filterStates && settings.filterValues) {
+                        filterStates = settings.filterStates;
+                        filterValues = settings.filterValues;
+                        renderFilters();
+                    } else {
+                        alert('Invalid filter configuration file.');
+                    }
+                } catch (error) {
+                    alert('Error reading or parsing the file.');
+                }
+            };
+            reader.readAsText(file);
+            // Reset input value to allow re-importing the same file
+            event.target.value = '';
+        }
         
-        // --- Event Listeners ---
+        // --- EVENT LISTENERS ---
         subtitleFile.addEventListener('change', handleFileSelect);
         checkButton.addEventListener('click', checkSubtitles);
-        exportPdfButton.addEventListener('click', exportToPdf);
-        exportTableButton.addEventListener('click', exportToTable);
+        exportPdfButton.addEventListener('click', () => showModal('exportPdf'));
+        exportTableButton.addEventListener('click', () => showModal('exportTable'));
+        saveFiltersButton.addEventListener('click', () => showModal('saveFilters'));
+        importFiltersButton.addEventListener('click', () => importFiltersInput.click());
+        importFiltersInput.addEventListener('change', handleImportFilters);
+
         document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
         document.getElementById('lang-es').addEventListener('click', () => setLanguage('es'));
         
@@ -813,7 +981,31 @@
             renderFilters();
         });
 
+        resetFiltersButton.addEventListener('click', () => {
+            initializeFilterDefaults();
+            renderFilters();
+        });
+
+        // Modal listeners
+        cancelModalButton.addEventListener('click', hideModal);
+        confirmModalButton.addEventListener('click', () => {
+            const fileName = modalFileNameInput.value;
+            switch (currentModalAction.type) {
+                case 'exportPdf':
+                    exportToPdf(fileName);
+                    break;
+                case 'exportTable':
+                    exportToTable(fileName);
+                    break;
+                case 'saveFilters':
+                    saveFiltersConfig(fileName);
+                    break;
+            }
+            hideModal();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            initializeFilterDefaults();
             setLanguage('en'); // Set default language on load
         });
 
