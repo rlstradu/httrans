@@ -661,6 +661,146 @@
         customAlert('setTCRSuccess', 'modalConfirmAction', [timeCodeString]);
     }
 
+    function showLanguageSelectionModal() {
+        let optionsHtml = '<div class="space-y-2">';
+        Object.keys(translations).forEach(langCode => {
+            const langNameKey = `language${langCode.charAt(0).toUpperCase() + langCode.slice(1)}`;
+            const langName = translations[currentLanguage][langNameKey] || langCode;
+            const isChecked = langCode === currentLanguage ? 'checked' : '';
+            optionsHtml += `
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="radio" name="languageSelect" value="${langCode}" class="form-radio" ${isChecked}>
+                    <span class="ml-2">${langName}</span>
+                </label><br>
+            `;
+        });
+        optionsHtml += '</div>';
+
+        showModal(
+            translations[currentLanguage].changeLanguageButton,
+            translations[currentLanguage].chooseLanguageMessage,
+            [
+                { text: translations[currentLanguage].modalAccept, handler: () => {
+                    const selectedLang = document.querySelector('input[name="languageSelect"]:checked');
+                    if (selectedLang) {
+                        applyLanguage(selectedLang.value);
+                        localStorage.setItem('language', selectedLang.value);
+                    }
+                }, type: 'primary' },
+                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
+            ],
+            optionsHtml
+        );
+    }
+
+    function showExportFormatModal() {
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+        
+        let exportHtml = `
+            <div>
+                <label for="exportFilenameInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].exportFileMessage}</label>
+                <input type="text" id="exportFilenameInput" class="${inputClasses}" value="${translations[currentLanguage].exportFilenamePlaceholder}.txt" />
+                <label class="text-sm font-medium mb-1 block mt-4">${translations[currentLanguage].exportFormatLabel}</label>
+                <div class="space-y-2">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" name="exportFormat" value="txt" class="form-radio" checked>
+                        <span class="ml-2">${translations[currentLanguage].exportFormatTxt}</span>
+                    </label><br>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" name="exportFormat" value="html" class="form-radio">
+                        <span class="ml-2">${translations[currentLanguage].exportFormatHtml}</span>
+                    </label>
+                </div>
+            </div>
+        `;
+
+        showModal(
+            translations[currentLanguage].exportFileModalTitle, '',
+            [
+                { text: translations[currentLanguage].modalCancel, type: 'neutral' },
+                { text: translations[currentLanguage].exportButton, handler: () => {
+                    const filename = document.getElementById('exportFilenameInput').value;
+                    const format = document.querySelector('input[name="exportFormat"]:checked').value;
+                    exportText(format, filename);
+                }, type: 'primary' }
+            ],
+            exportHtml
+        );
+    }
+
+    function exportText(type, filename) {
+      let content;
+      let mimeType;
+      if (type === 'txt') {
+        content = editor.innerText; 
+        mimeType = 'text/plain;charset=utf-8';
+      } else if (type === 'html') {
+        content = `<!DOCTYPE html><html lang="${currentLanguage}"><head><meta charset="UTF-8"><title>Exported Transcription</title><style>body { font-family: sans-serif; } .timestamp { color: blue; }</style></head><body>${editor.innerHTML}</body></html>`;
+        mimeType = 'text/html;charset=utf-8';
+      } else { return; }
+
+      const blob = new Blob([content], { type: mimeType });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      link.remove();
+    }
+
+    function showFindModal() {
+        findReplaceState.isFinding = true;
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+        let findHtml = `
+            <div>
+                <label for="findQuery" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
+                <input type="text" id="findQuery" class="${inputClasses}" value="${findReplaceState.query}" />
+                <label class="inline-flex items-center mt-2">
+                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
+                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
+                </label>
+            </div>
+        `;
+        showModal(translations[currentLanguage].findModalTitle, '', [
+            { text: translations[currentLanguage].findPrevious, handler: findPrevious, type: 'neutral' },
+            { text: translations[currentLanguage].findNext, handler: findNext, type: 'primary' },
+            { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
+        ], findHtml);
+    }
+
+    function showReplaceModal() {
+        findReplaceState.isFinding = true;
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+        let replaceHtml = `
+            <div>
+                <label for="findQueryReplace" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
+                <input type="text" id="findQueryReplace" class="${inputClasses}" value="${findReplaceState.query}" />
+                <label for="replaceWith" class="text-sm font-medium mb-1 block">${translations[currentLanguage].replaceWithLabel}:</label>
+                <input type="text" id="replaceWith" class="${inputClasses}" value="${findReplaceState.replacement}" />
+                <label class="inline-flex items-center mt-2">
+                    <input type="checkbox" id="replaceCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
+                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
+                </label>
+            </div>
+        `;
+        showModal(translations[currentLanguage].replaceModalTitle, '', [
+            { text: translations[currentLanguage].findNext, handler: findNext, type: 'neutral' }, 
+            { text: translations[currentLanguage].replaceButtonInModal, handler: replaceCurrent, type: 'primary' },
+            { text: translations[currentLanguage].replaceAllButton, handler: replaceAll, type: 'danger' },
+            { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
+        ], replaceHtml);
+    }
+
+    function highlightAllMatches(query, caseSensitive) { /* ... */ }
+    function clearHighlights() { /* ... */ }
+    function goToMatch(index) { /* ... */ }
+    function findNext() { /* ... */ }
+    function findPrevious() { /* ... */ }
+    function replaceCurrent() { /* ... */ }
+    function replaceAll() { /* ... */ }
+
     // --- Lógica de Inicialización y Eventos ---
     
     document.addEventListener('DOMContentLoaded', () => {
@@ -683,6 +823,14 @@
           video.onerror = () => customAlert('mediaLoadErrorWithFileProtocolHint');
         });
 
+        textFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => { editor.innerHTML = event.target.result.replace(/\n/g, '<br>'); };
+            reader.readAsText(file);
+        });
+
         playPauseBtn.addEventListener('click', () => executeShortcut('playPause'));
         document.getElementById('speedUpBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.min(4.0, video.playbackRate + 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
         document.getElementById('speedDownBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.max(0.5, video.playbackRate - 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
@@ -692,7 +840,6 @@
         
         addRecurringTextBtn.addEventListener('click', () => addRecurringTextField());
         
-        // Menús
         function setupDropdown(button, dropdown) {
             button.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -710,15 +857,15 @@
         });
 
         importTextBtn.addEventListener('click', (e) => { e.preventDefault(); textFileInput.click(); });
-        exportBtn.addEventListener('click', (e) => { e.preventDefault(); /* showExportFormatModal(); */ });
+        exportBtn.addEventListener('click', (e) => { e.preventDefault(); showExportFormatModal(); });
         shortcutsBtn.addEventListener('click', (e) => { e.preventDefault(); showShortcutsModal(); });
         themeToggleBtn.addEventListener('click', (e) => { e.preventDefault(); applyTheme(isDarkMode ? 'light' : 'dark'); localStorage.setItem('theme', isDarkMode ? 'dark' : 'light'); });
-        languageToggleBtn.addEventListener('click', (e) => { e.preventDefault(); /* showLanguageSelectionModal(); */ });
+        languageToggleBtn.addEventListener('click', (e) => { e.preventDefault(); showLanguageSelectionModal(); });
 
         boldBtn.addEventListener('click', () => document.execCommand('bold'));
         italicBtn.addEventListener('click', () => document.execCommand('italic'));
-        findBtn.addEventListener('click', () => { /* showFindModal(); */ });
-        replaceBtn.addEventListener('click', () => { /* showReplaceModal(); */ });
+        findBtn.addEventListener('click', () => { showFindModal(); });
+        replaceBtn.addEventListener('click', () => { showReplaceModal(); });
 
         resizer.addEventListener('mousedown', (e) => {
             e.preventDefault();
