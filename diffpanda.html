@@ -66,13 +66,19 @@
             opacity: 0;
             padding-left: 0;
             padding-right: 0;
-            font-size: 0; /* CORRECTED: Collapse text content to prevent vertical expansion */
+            font-size: 0; /* Collapse text content to prevent vertical expansion */
             overflow: hidden;
         }
         #diffOutput.comments-active .comment-column {
             opacity: 1;
             padding: 0.5rem;
-            font-size: 0.875rem; /* CORRECTED: Restore font-size */
+            font-size: 0.875rem; /* Restore font-size */
+        }
+
+        /* FIX: Specifically target the hidden comment header to remove its height */
+        #diffOutput:not(.comments-active) .diff-header.comment-column {
+            padding: 0;
+            border: 0;
         }
 
         .comparison-cell { background-color: #f0f0f0; border: 1px dashed #ccc; }
