@@ -45,18 +45,24 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
+     .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: none;
+    }
     .btn-primary {
       background-color: #FF5F18; /* Naranja */
       color: #ffffff; /* Blanco */
     }
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       background-color: #E05215; /* Naranja más oscuro */
     }
     .btn-secondary {
       background-color: #202020; /* Gris oscuro */
       color: #ffffff; /* Blanco */
     }
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
       background-color: #404040; /* Gris más claro */
     }
      .btn-danger {
@@ -82,9 +88,9 @@
     .modal-content {
         background-color: #fefefe;
         margin: auto;
-        padding: 20px;
+        padding: 24px;
         border: 1px solid #888;
-        width: 80%;
+        width: 90%;
         max-width: 500px;
         border-radius: 0.5rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -176,15 +182,16 @@
 
     <!-- Sección del Editor (Inicialmente oculta) -->
     <div id="editorSection" class="hidden">
-      <!-- Info de Idiomas y Búsqueda -->
+      <!-- Info de Idiomas, Búsqueda y Deshacer -->
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg">
-        <div class="flex gap-4">
+        <div class="flex gap-4 items-center">
             <p class="text-sm"><strong data-i18n="source_language">Origen:</strong> <span id="displaySrcLang"></span></p>
             <p class="text-sm"><strong data-i18n="target_language">Destino:</strong> <span id="displayTgtLang"></span></p>
         </div>
         <div class="flex-grow max-w-md">
            <input id="searchTerm" data-i18n-placeholder="search_placeholder" placeholder="Buscar en origen o destino..." class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
         </div>
+         <button id="undoBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="undo">Deshacer</button>
       </div>
 
       <!-- Tabla de la Memoria de Traducción -->
@@ -214,13 +221,26 @@
   <!-- Datalist para códigos ISO -->
   <datalist id="isoLanguages"></datalist>
 
-  <!-- Modal para mensajes -->
+  <!-- Modal para mensajes genéricos -->
     <div id="messageBox" class="modal">
         <div class="modal-content">
-            <p id="messageText"></p>
-            <button id="messageCloseBtn" class="btn btn-primary">OK</button>
+            <p id="messageText" class="mb-4"></p>
+            <button id="messageCloseBtn" class="btn btn-primary min-w-[100px]">OK</button>
         </div>
     </div>
+    
+  <!-- Modal de confirmación para 'Crear TMX' -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirmTitle" class="text-xl font-bold mb-2" data-i18n="confirm_new_tmx_title">Confirmar creación</h3>
+            <p id="confirmText" class="mb-6 text-gray-600" data-i18n="confirm_new_tmx_text">Se perderán todos los datos no guardados. ¿Deseas continuar y crear una nueva memoria de traducción desde cero?</p>
+            <div class="flex justify-center gap-4">
+                 <button id="confirmCancelBtn" class="btn btn-secondary min-w-[120px]" data-i18n="cancel">Cancelar</button>
+                 <button id="confirmProceedBtn" class="btn btn-primary min-w-[120px]" data-i18n="proceed">Continuar</button>
+            </div>
+        </div>
+    </div>
+
 
   <script>
     // Variables globales
@@ -228,6 +248,7 @@
     let tmSourceLanguage = '';
     let tmTargetLanguage = '';
     let currentLanguage = 'es';
+    let historyStack = []; // Pila para el historial de cambios (función deshacer)
 
     // Traducciones
     const translations = {
@@ -236,6 +257,7 @@
             'download_tmx': 'Descargar TMX',
             'create_tmx': 'Crear TMX',
             'add_new_entry': 'Añadir nueva entrada',
+            'undo': 'Deshacer',
             'configure_tm_languages': 'Configurar idiomas de la memoria',
             'info_box_text': 'Define los idiomas de origen y destino para tu nueva memoria. Es importante que el código ISO sea correcto para que funcione bien en tu herramienta TAO.',
             'source_language': 'Idioma de origen:',
@@ -256,12 +278,18 @@
             'lang_not_configured': 'Los idiomas de origen y destino no están configurados.',
             'tm_saved_success': 'Memoria de traducción guardada con éxito.',
             'enter_lang_codes': 'Por favor, introduce los códigos de idioma de origen y destino.',
+            'confirm_new_tmx_title': 'Confirmar creación',
+            'confirm_new_tmx_text': 'Se perderán todos los datos no guardados. Si no quieres perderlos, pulsa "Cancelar" y luego "Descargar TMX". Si quieres crear un TMX desde cero, pulsa "Continuar".',
+            'cancel': 'Cancelar',
+            'proceed': 'Continuar',
+            'no_more_undo': 'No hay más acciones que deshacer.',
         },
         en: {
             'import_tmx': 'Import TMX',
             'download_tmx': 'Download TMX',
             'create_tmx': 'Create TMX',
             'add_new_entry': 'Add new entry',
+            'undo': 'Undo',
             'configure_tm_languages': 'Set Translation Memory Languages',
             'info_box_text': 'Define the source and target languages for your new memory. It is important that the ISO code is correct for it to work well in your CAT tool.',
             'source_language': 'Source language:',
@@ -282,6 +310,11 @@
             'lang_not_configured': 'Source and target languages are not configured.',
             'tm_saved_success': 'Translation memory saved successfully.',
             'enter_lang_codes': 'Please enter the source and target language codes.',
+            'confirm_new_tmx_title': 'Confirm Creation',
+            'confirm_new_tmx_text': 'All unsaved data will be lost. If you don\'t want to lose it, click "Cancel" and then "Download TMX". If you want to create a TMX from scratch, click "Proceed".',
+            'cancel': 'Cancel',
+            'proceed': 'Proceed',
+            'no_more_undo': 'No more actions to undo.',
         }
     };
 
@@ -303,11 +336,16 @@
     const isoLanguagesDatalist = document.getElementById('isoLanguages');
     const langEnBtn = document.getElementById('langEnBtn');
     const langEsBtn = document.getElementById('langEsBtn');
+    const undoBtn = document.getElementById('undoBtn');
 
-    // Modal
+    // Modales
     const messageBox = document.getElementById('messageBox');
     const messageText = document.getElementById('messageText');
     const messageCloseBtn = document.getElementById('messageCloseBtn');
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    const confirmProceedBtn = document.getElementById('confirmProceedBtn');
+
 
     // Lista de idiomas ISO
     const isoLanguagesData = [
@@ -322,17 +360,67 @@
     // --- Inicialización ---
     document.addEventListener('DOMContentLoaded', () => {
         populateIsoLanguagesDatalist();
-        setLanguage(currentLanguage); // Set initial language
-        newTmxBtn.addEventListener('click', resetTM);
+        setLanguage(currentLanguage);
+        newTmxBtn.addEventListener('click', handleNewTmxClick);
         confirmLanguagesBtn.addEventListener('click', confirmLanguages);
         tmxFileInput.addEventListener('change', handleFileLoad);
         downloadTmxBtn.addEventListener('click', downloadTMX);
-        searchTermInput.addEventListener('input', () => renderTM(translationMemory));
+        searchTermInput.addEventListener('input', () => renderTM(translationMemory, false)); // No guardar historial en búsqueda
         addEntryBtn.addEventListener('click', addEntry);
+        undoBtn.addEventListener('click', undoLastAction);
         messageCloseBtn.addEventListener('click', () => messageBox.style.display = 'none');
         langEnBtn.addEventListener('click', () => setLanguage('en'));
         langEsBtn.addEventListener('click', () => setLanguage('es'));
+        
+        // Atajo de teclado para deshacer
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                undoLastAction();
+            }
+        });
+        
+        // Listeners para el modal de confirmación
+        confirmCancelBtn.addEventListener('click', () => confirmModal.style.display = 'none');
+        confirmProceedBtn.addEventListener('click', () => {
+            confirmModal.style.display = 'none';
+            resetTM();
+        });
+        
+        updateUndoButton();
     });
+    
+    // --- Gestión del Historial (Undo) ---
+
+    /**
+     * Guarda el estado actual de la memoria de traducción en la pila de historial.
+     */
+    function saveStateToHistory() {
+        // Clonación profunda para evitar referencias
+        historyStack.push(JSON.parse(JSON.stringify(translationMemory)));
+        updateUndoButton();
+    }
+    
+    /**
+     * Deshace la última acción restaurando el estado anterior desde el historial.
+     */
+    function undoLastAction() {
+        if (historyStack.length > 0) {
+            translationMemory = historyStack.pop();
+            renderTM(translationMemory, false); // No guardar este "cambio" en el historial
+        } else {
+            showMessage(translations[currentLanguage]['no_more_undo']);
+        }
+        updateUndoButton();
+    }
+    
+     /**
+     * Habilita o deshabilita el botón de deshacer según el estado del historial.
+     */
+    function updateUndoButton() {
+        undoBtn.disabled = historyStack.length === 0;
+    }
+
 
     /**
      * Establece el idioma de la interfaz y actualiza los textos.
@@ -357,9 +445,8 @@
             }
         });
         
-        // Vuelve a renderizar la tabla para actualizar el texto de los botones "Eliminar"
         if (!editorSection.classList.contains('hidden')) {
-             renderTM(translationMemory);
+             renderTM(translationMemory, false);
         }
     }
 
@@ -384,12 +471,26 @@
         messageText.textContent = msg;
         messageBox.style.display = 'flex';
     }
+    
+     /**
+     * Maneja el clic en "Crear TMX", mostrando un modal de confirmación si hay datos.
+     */
+    function handleNewTmxClick() {
+        if (translationMemory.length > 0) {
+            confirmModal.style.display = 'flex';
+        } else {
+            resetTM(); // Si no hay datos, simplemente reinicia
+        }
+    }
+
 
     /**
      * Reinicia la interfaz para crear o cargar una nueva TM.
      */
     function resetTM() {
         translationMemory = [];
+        historyStack = [];
+        updateUndoButton();
         tmSourceLanguage = '';
         tmTargetLanguage = '';
         configSrcLangInput.value = 'en-US';
@@ -398,7 +499,7 @@
 
         languageConfigSection.style.display = 'block';
         editorSection.classList.add('hidden');
-        renderTM([]);
+        renderTM([], false);
     }
 
     /**
@@ -418,10 +519,13 @@
 
         displaySrcLangSpan.textContent = tmSourceLanguage;
         displayTgtLangSpan.textContent = tmTargetLanguage;
+        
+        historyStack = [];
+        updateUndoButton();
 
         languageConfigSection.style.display = 'none';
         editorSection.classList.remove('hidden');
-        renderTM([]);
+        renderTM([], false);
     }
 
     /**
@@ -437,9 +541,11 @@
             try {
                 const content = e.target.result;
                 parseTMX(content);
+                historyStack = []; // Reiniciar historial al cargar nuevo archivo
+                updateUndoButton();
                 languageConfigSection.style.display = 'none';
                 editorSection.classList.remove('hidden');
-                renderTM(translationMemory);
+                renderTM(translationMemory, false);
             } catch (error) {
                 showMessage(`${translations[currentLanguage]['error_processing_tmx']}${error.message}`);
                 console.error(error);
@@ -470,7 +576,6 @@
         if (!header) throw new Error(translations[currentLanguage]['no_header']);
         
         tmSourceLanguage = header.getAttribute("srclang");
-        // TMX puede tener múltiples idiomas de destino, tomamos el del primer 'tu' como referencia.
 
         const tuElements = xmlDoc.querySelectorAll("tu");
         if (tuElements.length === 0) {
@@ -479,27 +584,27 @@
             return;
         }
 
-        // Detectar idioma de destino del primer 'tu' si no está en la cabecera
         const firstTuvs = tuElements[0].querySelectorAll("tuv");
-        if (firstTuvs.length > 1 && !header.hasAttribute("targetlang")) {
-            tmTargetLanguage = firstTuvs[1].getAttribute("xml:lang");
+        if (firstTuvs.length > 1) {
+             tmTargetLanguage = Array.from(firstTuvs).find(tuv => tuv.getAttribute("xml:lang") !== tmSourceLanguage)?.getAttribute("xml:lang") || 'unknown';
         } else {
-            tmTargetLanguage = header.getAttribute("targetlang") || "unknown";
+            tmTargetLanguage = "unknown";
         }
 
 
         const newTM = [];
         tuElements.forEach(tu => {
             const tuvs = tu.querySelectorAll("tuv");
-            if (tuvs.length >= 2) {
-                const srcLang = tuvs[0].getAttribute("xml:lang");
-                const srcText = tuvs[0].querySelector("seg")?.textContent || '';
-                const tgtLang = tuvs[1].getAttribute("xml:lang");
-                const tgtText = tuvs[1].querySelector("seg")?.textContent || '';
+            let srcText = '', tgtText = '';
+            
+            const srcTuv = Array.from(tuvs).find(t => t.getAttribute("xml:lang") === tmSourceLanguage);
+            const tgtTuv = Array.from(tuvs).find(t => t.getAttribute("xml:lang") === tmTargetLanguage);
 
-                if (srcLang === tmSourceLanguage) {
-                     newTM.push({ srcText, tgtText });
-                }
+            if (srcTuv) srcText = srcTuv.querySelector("seg")?.textContent || '';
+            if (tgtTuv) tgtText = tgtTuv.querySelector("seg")?.textContent || '';
+            
+            if (srcTuv) { // Solo añadir si hay un segmento de origen
+                 newTM.push({ srcText, tgtText });
             }
         });
 
@@ -511,8 +616,13 @@
     /**
      * Renderiza la tabla de la memoria de traducción.
      * @param {Array<Object>} tm - El array de unidades de traducción a mostrar.
+     * @param {boolean} [saveHistory=true] - Si se debe guardar el estado en el historial.
      */
-    function renderTM(tm) {
+    function renderTM(tm, saveHistory = true) {
+        if (saveHistory) {
+            saveStateToHistory();
+        }
+    
         const filter = searchTermInput.value.toLowerCase();
         tmTableBody.innerHTML = '';
 
@@ -521,14 +631,11 @@
             entry.tgtText.toLowerCase().includes(filter)
         );
 
-        if (filteredTM.length === 0 && tm.length > 0) {
-            noResultsMessage.classList.remove('hidden');
-        } else {
-            noResultsMessage.classList.add('hidden');
-        }
+        noResultsMessage.classList.toggle('hidden', !(filteredTM.length === 0 && tm.length > 0));
 
-        filteredTM.forEach((entry, index) => {
-            const originalIndex = translationMemory.indexOf(entry);
+        filteredTM.forEach((entry) => {
+            // Buscamos el índice original para mantener la consistencia al editar/borrar
+            const originalIndex = translationMemory.findIndex(origEntry => origEntry === entry);
             const row = document.createElement('tr');
             row.className = "border-b";
             row.innerHTML = `
@@ -541,8 +648,8 @@
             tmTableBody.appendChild(row);
         });
 
-        // Añadir event listeners para edición y eliminación
         tmTableBody.querySelectorAll('.editable-cell').forEach(cell => {
+            cell.addEventListener('focus', saveStateToHistory); // Guardar estado justo antes de editar
             cell.addEventListener('input', updateEntry);
         });
         tmTableBody.querySelectorAll('.btn-danger').forEach(button => {
@@ -554,9 +661,9 @@
      * Añade una nueva entrada vacía a la memoria de traducción.
      */
     function addEntry() {
+        saveStateToHistory();
         translationMemory.unshift({ srcText: '', tgtText: '' });
-        renderTM(translationMemory);
-        // Enfocar la nueva celda
+        renderTM(translationMemory, false); // El estado ya se guardó
         const newCell = tmTableBody.querySelector('tr:first-child .editable-cell');
         if(newCell) {
             newCell.focus();
@@ -574,6 +681,8 @@
         if (translationMemory[index]) {
             translationMemory[index][field] = value;
         }
+        // No se guarda el historial aquí para evitar un guardado por cada tecla pulsada.
+        // El estado se guarda en el 'focus' del campo.
     }
 
     /**
@@ -581,14 +690,15 @@
      * @param {Event} event - El evento de click del botón de eliminar.
      */
     function deleteEntry(event) {
+        saveStateToHistory();
         const index = event.target.dataset.index;
         translationMemory.splice(index, 1);
-        renderTM(translationMemory);
+        renderTM(translationMemory, false); // El estado ya se guardó
     }
 
     /**
      * Genera el contenido XML para un archivo TMX.
-     * @returns {string} - El contenido TMX como string.
+     * @returns {string|null} - El contenido TMX como string o null si hay error.
      */
     function generateTMX() {
         if (!tmSourceLanguage || !tmTargetLanguage) {
@@ -602,7 +712,6 @@
         tmxString += `  <body>\n`;
 
         translationMemory.forEach(entry => {
-            // Escapar caracteres XML especiales
             const escapeXML = (str) => str.replace(/[<>&'"]/g, c => {
                 switch (c) {
                     case '<': return '&lt;';
@@ -613,8 +722,11 @@
                 }
             });
 
-            const src = escapeXML(entry.srcText);
-            const tgt = escapeXML(entry.tgtText);
+            const src = escapeXML(entry.srcText.trim());
+            const tgt = escapeXML(entry.tgtText.trim());
+
+            // No añadir entradas vacías al TMX final
+            if (!src && !tgt) return;
 
             tmxString += `    <tu>\n`;
             tmxString += `      <tuv xml:lang="${tmSourceLanguage}">\n`;
