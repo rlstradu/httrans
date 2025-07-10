@@ -52,9 +52,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             border: 1px solid transparent;
             white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
         .btn:hover {
             transform: translateY(-1px);
@@ -199,11 +196,13 @@
         /* --- START: Floating Panel Styles --- */
         .floating-panel {
             position: fixed;
+            top: 80px;
+            right: 20px; /* Default position */
             width: 480px;
-            min-width: 300px; /* Smaller min-width */
+            min-width: 350px;
             max-width: 80vw;
-            height: 400px; /* Default height */
-            min-height: 250px; /* Smaller min-height */
+            height: 75vh;
+            min-height: 300px;
             background-color: #ffffff;
             border: 1px solid #d1d5db;
             border-radius: 0.75rem;
@@ -211,22 +210,29 @@
             z-index: 950;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Changed from resize: both */
+            resize: both;
+            overflow: hidden;
+
+            /* Animation properties for showing/hiding */
             opacity: 0;
-            transform: scale(0.95);
+            transform: translateX(110%);
             pointer-events: none;
             transition: opacity 0.3s ease-out, transform 0.3s ease-out;
         }
 
         .floating-panel.is-visible {
             opacity: 1;
-            transform: scale(1);
+            transform: translateX(0);
             pointer-events: auto;
         }
+        
+        /* Special state for fade-out when panel has been moved */
+        .floating-panel.is-fading-out {
+            opacity: 0 !important;
+            transform: scale(0.95) !important;
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out !important;
+        }
 
-        /* Default position classes */
-        .panel-bottom-left { bottom: 20px; left: 20px; top: auto; right: auto; }
-        .panel-bottom-right { bottom: 20px; right: 20px; top: auto; left: auto; }
 
         .floating-panel .sidebar-header {
             cursor: move;
@@ -244,20 +250,6 @@
             overflow-y: auto;
             padding: 1rem;
         }
-
-        /* Resizer handles for floating panels */
-        .resizer {
-            position: absolute;
-            background: transparent;
-        }
-        .resizer-t { top: -5px; left: 0; right: 0; height: 10px; cursor: ns-resize; }
-        .resizer-b { bottom: -5px; left: 0; right: 0; height: 10px; cursor: ns-resize; }
-        .resizer-l { left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; }
-        .resizer-r { right: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; }
-        .resizer-tl { top: -5px; left: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
-        .resizer-tr { top: -5px; right: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
-        .resizer-bl { bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
-        .resizer-br { bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
         /* --- END: Floating Panel Styles --- */
 
 
@@ -375,36 +367,9 @@
 
         /* Main content area */
         .main-app-content { display: flex; flex-direction: column; flex-grow: 1; padding: 1rem; gap: 1rem; }
-        .editor-and-sidebars-wrapper { display: flex; flex-direction: column; flex-grow: 1; gap: 1rem; position: relative; }
+        .editor-and-sidebars-wrapper { display: flex; flex-direction: column; flex-grow: 1; gap: 1rem; }
         #horizontal-resizer { width: 10px; height: auto; cursor: col-resize; background-color: #e5e7eb; border-left: 1px solid #d1d5db; border-right: 1px solid #d1d5db; }
         #horizontal-resizer:hover { background-color: #d1d5db; }
-
-        /* Editor Scroll Arrow */
-        #editorScrollIndicator {
-            position: absolute;
-            bottom: 15px;
-            right: 5px; /* Adjust to not overlap with scrollbar */
-            width: 32px;
-            height: 32px;
-            background-color: rgba(7, 91, 162, 0.6);
-            color: white;
-            border-radius: 50%;
-            display: none; /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            z-index: 10;
-            animation: bounce 2s infinite;
-        }
-        .editor-main-content.is-scrollable #editorScrollIndicator {
-            display: flex;
-        }
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
-        }
-
 
         @media (min-width: 1024px) {
             .main-app-content { flex-direction: row; align-items: stretch; gap: 0; }
@@ -436,7 +401,7 @@
         <div class="header-main-actions">
             <!-- Project Dropdown Menu -->
             <div class="relative group">
-                <button class="btn btn-primary">
+                <button class="btn btn-primary inline-flex items-center">
                     <span data-i18n="project_menu">Proyecto</span>
                     <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
@@ -464,14 +429,8 @@
             <button id="saveSrt" class="btn btn-secondary" disabled>
                 <span data-i18n="export_srt">Exportar .srt</span>
             </button>
-            <button id="terminologyBtn" class="btn btn-secondary">
-                <span data-i18n="terminology_btn">Terminología</span>
-            </button>
-            <button id="tmBtn" class="btn btn-secondary">
-                <span data-i18n="tm_btn">Memoria de traducción</span>
-            </button>
-            <button id="findReplaceBtn" class="btn btn-secondary">
-                <span data-i18n="find_replace_btn">Buscar y reemplazar</span>
+            <button id="backupBtn" class="btn btn-secondary">
+                <span data-i18n="backup_btn">Copia de seguridad</span>
             </button>
             <button id="qaBtn" class="btn btn-secondary">
                 <span data-i18n="qa_btn">QA</span>
@@ -479,14 +438,14 @@
             <button id="shortcutsBtn" class="btn btn-secondary">
                 <span data-i18n="shortcuts_btn">Atajos</span>
             </button>
-            <button id="resetPanelsBtn" class="btn btn-secondary" title="Restaurar paneles">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/>
-                    <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/>
-                </svg>
+            <button id="findReplaceBtn" class="btn btn-secondary">
+                <span data-i18n="find_replace_btn">Buscar y reemplazar</span>
             </button>
-            <button id="backupBtn" class="btn btn-secondary">
-                <span data-i18n="backup_btn">Copia de seguridad</span>
+            <button id="terminologyBtn" class="btn btn-secondary">
+                <span data-i18n="terminology_btn">Terminología</span>
+            </button>
+            <button id="tmBtn" class="btn btn-secondary">
+                <span data-i18n="tm_btn">Memoria de traducción</span>
             </button>
         </div>
         <div class="header-lang-switcher">
@@ -559,12 +518,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Scroll Down Indicator -->
-                <div id="editorScrollIndicator">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
-                    </svg>
-                </div>
 
                 <div id="vertical-resizer"></div>
 
@@ -577,9 +530,7 @@
 
     <!-- Floating Panels (moved outside the main layout) -->
     <!-- Terminology Panel -->
-    <div id="terminologySidebar" class="floating-panel panel-bottom-left">
-        <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
-        <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
+    <div id="terminologySidebar" class="floating-panel">
         <div class="sidebar-header">
             <h3 class="text-lg font-bold" data-i18n="terminology_sidebar_title">Terminología</h3>
             <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
@@ -665,9 +616,7 @@
     </div>
 
     <!-- Translation Memory Panel -->
-    <div id="translationMemorySidebar" class="floating-panel panel-bottom-right">
-        <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
-        <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
+    <div id="translationMemorySidebar" class="floating-panel">
         <div class="sidebar-header">
             <h3 class="text-lg font-bold" data-i18n="tm_sidebar_title">Memoria de traducción</h3>
             <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
@@ -961,8 +910,6 @@
         const srtFile = document.getElementById('srtFile');
         const saveSrtButton = document.getElementById('saveSrt');
         const translationsContainer = document.getElementById('translationsContainer');
-        const editorMainContent = document.getElementById('editorMainContent');
-        const editorScrollIndicator = document.getElementById('editorScrollIndicator');
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
         const messageClose = document.getElementById('messageClose');
@@ -1067,7 +1014,6 @@
         const fileNameInputTmx = document.getElementById('fileNameInputTmx');
         const confirmSaveTmxBtn = document.getElementById('confirmSaveTmxBtn');
         const cancelSaveTmxBtn = document.getElementById('cancelSaveTmxBtn');
-        const resetPanelsBtn = document.getElementById('resetPanelsBtn');
         // Project elements
         const newProjectBtn = document.getElementById('newProjectBtn');
         const saveProjectBtn = document.getElementById('saveProjectBtn');
@@ -1439,17 +1385,6 @@
             renderGlossary();
         }
 
-        /**
-         * Checks if the editor is scrollable and updates the indicator arrow's visibility.
-         */
-        function checkEditorScroll() {
-            if (editorMainContent.scrollHeight > editorMainContent.clientHeight) {
-                editorMainContent.classList.add('is-scrollable');
-            } else {
-                editorMainContent.classList.remove('is-scrollable');
-            }
-        }
-
 
         /**
          * Renders subtitle entries in the user interface.
@@ -1466,7 +1401,6 @@
                 saveProjectBtn.disabled = true;
                 statsContainer.classList.add('hidden');
                 videoPlayerContainer.classList.add('hidden');
-                checkEditorScroll();
                 return;
             }
 
@@ -1559,7 +1493,6 @@
             statsContainer.classList.remove('hidden');
             videoPlayerContainer.classList.remove('hidden');
             updateStatsDisplay();
-            checkEditorScroll();
 
             const firstEditableSegment = getFirstEditableSegment();
             if (firstEditableSegment) {
@@ -2622,7 +2555,7 @@
                                     const srcTuv = tuvElements[0], tgtTuv = tuvElements[1];
                                     const srcLang = srcTuv.getAttribute("xml:lang"), tgtLang = tgtTuv.getAttribute("xml:lang");
                                     const srcSeg = srcTuv.getElementsByTagName("seg")[0]?.textContent || '', tgtSeg = tgtTuv.getElementsByTagName("seg")[0]?.textContent || '';
-                                    newTM.push({ srcLang, srcText: srcSeg, tgtLang, tgtSeg, srcWordCount: countWords(srcSeg), tgtWordCount: countWords(tgtSeg) });
+                                    newTM.push({ srcLang, srcText: srcSeg, tgtLang, tgtText: tgtSeg, srcWordCount: countWords(srcSeg), tgtWordCount: countWords(tgtSeg) });
                                 }
                             }
                             translationMemory = newTM;
@@ -3169,8 +3102,24 @@
 
         // --- START: Floating Panel Logic (Drag, Resize, and Close) ---
         function closeFloatingPanel(panel, triggerButton) {
+            // Immediately disable interactions to prevent the panel from getting "stuck"
+            panel.style.pointerEvents = 'none';
+        
+            // Remove the class that makes it visible, triggering the hide animation
             panel.classList.remove('is-visible');
         
+            // If the panel had been moved, we want a fade-out instead of a slide-out.
+            if (panel.dataset.moved) {
+                panel.classList.add('is-fading-out');
+                
+                // After the animation is complete, remove the animation class
+                // so it doesn't interfere with the next time the panel is opened.
+                setTimeout(() => {
+                    panel.classList.remove('is-fading-out');
+                }, 200); // This duration must match the transition duration in the CSS for .is-fading-out
+            }
+
+            // Change button color back to gray
             if (triggerButton) {
                 triggerButton.classList.remove('btn-primary');
                 triggerButton.classList.add('btn-secondary');
@@ -3182,19 +3131,29 @@
                 closeFloatingPanel(panelToOpen, triggerButton);
                 return;
             }
+            
+            // Reset the inline pointer-events style so the CSS class rule can apply
+            panelToOpen.style.pointerEvents = ''; 
 
+            panelToOpen.classList.remove('is-fading-out');
             if (!panelToOpen.dataset.moved) {
-                // Reset to default position class if it hasn't been moved by the user
                 panelToOpen.style.left = '';
                 panelToOpen.style.top = '';
-                panelToOpen.style.right = '';
-                panelToOpen.style.bottom = '';
-                panelToOpen.style.width = '';
-                panelToOpen.style.height = '';
+                panelToOpen.style.right = '20px';
+                panelToOpen.style.transform = 'translateX(110%)';
             }
             
-            panelToOpen.classList.add('is-visible');
+            setTimeout(() => {
+                panelToOpen.classList.add('is-visible');
+                if (panelToOpen.dataset.moved) {
+                    panelToOpen.style.transform = 'scale(1)';
+                    panelToOpen.style.opacity = '1';
+                } else {
+                    panelToOpen.style.transform = 'translateX(0)';
+                }
+            }, 10);
             
+            // Change button color to blue
             if (triggerButton) {
                 triggerButton.classList.remove('btn-secondary');
                 triggerButton.classList.add('btn-primary');
@@ -3205,7 +3164,8 @@
             }
         }
 
-        function makePanelDraggable(panel) {
+
+        function makePanelFloat(panel) {
             const header = panel.querySelector('.sidebar-header');
             let isDragging = false;
             let offsetX, offsetY;
@@ -3214,10 +3174,15 @@
                 if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
                 
                 isDragging = true;
-                panel.dataset.moved = 'true'; 
+                panel.dataset.moved = 'true'; // Mark as moved
                 
+                // Switch to left/top positioning for dragging
+                if (!panel.style.left) {
+                     panel.style.left = `${panel.offsetLeft}px`;
+                     panel.style.top = `${panel.offsetTop}px`;
+                }
                 panel.style.right = 'auto';
-                panel.style.bottom = 'auto';
+                panel.style.transform = 'none'; // Remove transform to use left/top
                 
                 offsetX = e.clientX - panel.offsetLeft;
                 offsetY = e.clientY - panel.offsetTop;
@@ -3251,98 +3216,11 @@
             document.addEventListener('mouseup', () => {
                 if (isDragging) {
                     isDragging = false;
-                    panel.style.transition = ''; 
+                    panel.style.transition = ''; // Restore transitions
                     document.body.style.userSelect = '';
                     document.body.style.cursor = '';
                 }
             });
-        }
-
-        function makePanelResizable(panel) {
-            const resizers = panel.querySelectorAll('.resizer');
-            let currentResizer;
-            let original_width = 0;
-            let original_height = 0;
-            let original_x = 0;
-            let original_y = 0;
-            let original_mouse_x = 0;
-            let original_mouse_y = 0;
-
-            resizers.forEach(resizer => {
-                resizer.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    currentResizer = e.target;
-                    original_width = parseFloat(getComputedStyle(panel, null).getPropertyValue('width').replace('px', ''));
-                    original_height = parseFloat(getComputedStyle(panel, null).getPropertyValue('height').replace('px', ''));
-                    original_x = panel.getBoundingClientRect().left;
-                    original_y = panel.getBoundingClientRect().top;
-                    original_mouse_x = e.pageX;
-                    original_mouse_y = e.pageY;
-                    panel.dataset.moved = 'true'; // Mark as moved/resized
-
-                    window.addEventListener('mousemove', resize);
-                    window.addEventListener('mouseup', stopResize);
-                });
-            });
-
-            function resize(e) {
-                if (currentResizer.classList.contains('resizer-br')) {
-                    const width = original_width + (e.pageX - original_mouse_x);
-                    const height = original_height + (e.pageY - original_mouse_y);
-                    if (width > panel.minWidth) panel.style.width = width + 'px';
-                    if (height > panel.minHeight) panel.style.height = height + 'px';
-                } else if (currentResizer.classList.contains('resizer-bl')) {
-                    const width = original_width - (e.pageX - original_mouse_x);
-                    const height = original_height + (e.pageY - original_mouse_y);
-                    if (width > panel.minWidth) {
-                        panel.style.width = width + 'px';
-                        panel.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
-                    }
-                    if (height > panel.minHeight) panel.style.height = height + 'px';
-                } else if (currentResizer.classList.contains('resizer-tr')) {
-                    const width = original_width + (e.pageX - original_mouse_x);
-                    const height = original_height - (e.pageY - original_mouse_y);
-                    if (width > panel.minWidth) panel.style.width = width + 'px';
-                    if (height > panel.minHeight) {
-                        panel.style.height = height + 'px';
-                        panel.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
-                    }
-                } else if (currentResizer.classList.contains('resizer-tl')) {
-                    const width = original_width - (e.pageX - original_mouse_x);
-                    const height = original_height - (e.pageY - original_mouse_y);
-                    if (width > panel.minWidth) {
-                        panel.style.width = width + 'px';
-                        panel.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
-                    }
-                    if (height > panel.minHeight) {
-                        panel.style.height = height + 'px';
-                        panel.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
-                    }
-                } else if (currentResizer.classList.contains('resizer-t')) {
-                    const height = original_height - (e.pageY - original_mouse_y);
-                    if (height > panel.minHeight) {
-                        panel.style.height = height + 'px';
-                        panel.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
-                    }
-                } else if (currentResizer.classList.contains('resizer-b')) {
-                    const height = original_height + (e.pageY - original_mouse_y);
-                    if (height > panel.minHeight) panel.style.height = height + 'px';
-                } else if (currentResizer.classList.contains('resizer-l')) {
-                    const width = original_width - (e.pageX - original_mouse_x);
-                    if (width > panel.minWidth) {
-                        panel.style.width = width + 'px';
-                        panel.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
-                    }
-                } else { // resizer-r
-                    const width = original_width + (e.pageX - original_mouse_x);
-                    if (width > panel.minWidth) panel.style.width = width + 'px';
-                }
-            }
-
-            function stopResize() {
-                window.removeEventListener('mousemove', resize);
-                window.removeEventListener('mouseup', stopResize);
-            }
         }
         // --- END: Floating Panel Logic ---
 
@@ -3355,10 +3233,8 @@
             resetApplicationState();
 
             // Initialize floating panels
-            makePanelDraggable(document.getElementById('terminologySidebar'));
-            makePanelDraggable(document.getElementById('translationMemorySidebar'));
-            makePanelResizable(document.getElementById('terminologySidebar'));
-            makePanelResizable(document.getElementById('translationMemorySidebar'));
+            makePanelFloat(document.getElementById('terminologySidebar'));
+            makePanelFloat(document.getElementById('translationMemorySidebar'));
             
             // Setup panel buttons
             setupPanel('terminologySidebar', 'terminologyBtn', () => {
@@ -3375,18 +3251,6 @@
                     showTMEditorSection();
                     tmSearch();
                 }
-            });
-
-            // Reset Panels Button
-            resetPanelsBtn.addEventListener('click', () => {
-                const panels = [terminologySidebar, translationMemorySidebar];
-                const buttons = [terminologyBtn, tmBtn];
-                panels.forEach((panel, index) => {
-                    closeFloatingPanel(panel, buttons[index]);
-                    // Clear custom styles and state
-                    panel.removeAttribute('style');
-                    panel.removeAttribute('data-moved');
-                });
             });
 
 
@@ -3420,11 +3284,6 @@
             document.addEventListener('mousemove', (e) => { if (isHorizontalResizing) { const container = document.querySelector('.main-app-content'); const newVideoWidthPercent = ((e.clientX - container.getBoundingClientRect().left) / container.offsetWidth) * 100; if (newVideoWidthPercent > 20 && newVideoWidthPercent < 80) videoSection.style.flexBasis = `${newVideoWidthPercent}%`; } });
             document.addEventListener('mouseup', () => { isHorizontalResizing = false; document.body.style.cursor = ''; });
             
-            // Editor scroll indicator logic
-            editorMainContent.addEventListener('scroll', checkEditorScroll);
-            new ResizeObserver(checkEditorScroll).observe(editorMainContent);
-
-
             // Backup Initialization
             try {
                 const backup = await db.projects.get(1);
