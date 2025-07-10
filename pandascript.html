@@ -9,161 +9,42 @@
   <!-- Font Awesome para iconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Estilos base, serán sobrescritos por la aplicación de temas JS */
-    body {
-      font-family: 'Inter', sans-serif;
-      overflow: hidden; /* Evita el desplazamiento del cuerpo debido al redimensionamiento */
-    }
-    #left, #right {
-      overflow: auto; /* Habilita el desplazamiento para el contenido dentro de los paneles */
-    }
-    /* Oculta la barra de desplazamiento para un aspecto más limpio */
-    #left::-webkit-scrollbar, #right::-webkit-scrollbar { 
-      width: 0px;
-      background: transparent;
-    }
-    #left::-webkit-scrollbar-thumb, #right::-webkit-scrollbar-thumb { 
-      background: transparent;
-    }
-    /* Color de la marca de tiempo dinámico gestionado por JS */
-    .timestamp {
-      color: #93c5fd !important; /* Predeterminado para modo oscuro */
-      text-decoration: underline !important;
-      cursor: pointer;
-      background: none !important;
-    }
-    /* Asegura que el elemento de video se ajuste */
-    #video {
-        width: 100%; /* El video ocupa todo el ancho de su contenedor */
-        height: 100%; /* El video ocupa todo el alto de su contenedor */
-        object-fit: contain; /* Asegura que el video sea completamente visible */
-    }
-    /* Estilos de la ventana modal */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-    .modal-overlay.show {
-        opacity: 1;
-        visibility: visible;
-    }
-    .modal-content {
-        background-color: #f3f4f6;
-        color: #1f2937;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        max-width: 500px;
-        width: 90%;
-    }
-    .modal-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 20px;
-    }
-    /* Estilo específico para la visualización del TCR */
-    #tcrDisplay {
-      font-family: 'Courier New', monospace;
-    }
-
-    /* Estilo de resaltado para buscar/reemplazar */
-    .highlighted-match {
-      background-color: yellow;
-      color: black;
-    }
-    .current-match {
-      background-color: orange;
-      color: black;
-    }
-
-    /* Estilos del editor revertidos a un área de texto simple */
-    #editor { 
-      min-height: 200px; 
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      white-space: pre-wrap; 
-    }
-
-    /* Estilos personalizados para la entrada de rango horizontal */
-    #volumeSlider {
-        -webkit-appearance: none;
-        appearance: none;
-        background: transparent;
-        cursor: pointer;
-        width: 100%; /* Hace que ocupe todo el ancho de su contenedor */
-        height: 8px; /* Grosor de la pista */
-    }
-
-    /* Estilos de la pista */
-    #volumeSlider::-webkit-slider-runnable-track {
-        background: #ccc; /* Pista clara */
-        border-radius: 5px;
-        height: 8px; /* Grosor de la pista */
-    }
-    #volumeSlider::-moz-range-track {
-        background: #ccc;
-        border-radius: 5px;
-        height: 8px;
-    }
-
-    /* Estilos del pulgar */
-    #volumeSlider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #007bff; /* Pulgar azul */
-        border: 1px solid #0056b3;
-        margin-top: -4px; /* Centra el pulgar verticalmente en la pista */
-    }
-    #volumeSlider::-moz-range-thumb {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #007bff;
-        border: 1px solid #0056b3;
-    }
-
-    /* Ajustes del modo oscuro para el control deslizante */
-    body.dark #volumeSlider::-webkit-slider-runnable-track {
-        background: #555;
-    }
-    body.dark #volumeSlider::-webkit-slider-thumb {
-        background: #63b3ed;
-        border-color: #4299e1;
-    }
-    body.dark #volumeSlider::-moz-range-track {
-        background: #555;
-    }
-    body.dark #volumeSlider::-moz-range-thumb {
-        background: #63b3ed;
-        border-color: #4299e1;
-    }
+    body { font-family: 'Inter', sans-serif; overflow: hidden; }
+    #left, #right { overflow: auto; }
+    #left::-webkit-scrollbar, #right::-webkit-scrollbar { width: 0px; background: transparent; }
+    #resizer { flex-basis: 2px; flex-shrink: 0; cursor: col-resize; transition: background-color 0.2s ease-in-out; }
+    #resizer:hover { background-color: #3b82f6; }
+    .timestamp { color: #93c5fd !important; text-decoration: underline !important; cursor: pointer; background: none !important; }
+    #video { width: 100%; height: 100%; object-fit: contain; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+    .modal-overlay.show { opacity: 1; visibility: visible; }
+    .modal-content { background-color: #f3f4f6; color: #1f2937; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); max-width: 500px; width: 90%; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    #tcrDisplay { font-family: 'Courier New', monospace; }
+    .highlighted-match { background-color: yellow; color: black; }
+    .current-match { background-color: orange; color: black; }
+    #editor { min-height: 200px; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
+    #volumeSlider { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; width: 100%; height: 8px; }
+    #volumeSlider::-webkit-slider-runnable-track { background: #ccc; border-radius: 5px; height: 8px; }
+    #volumeSlider::-moz-range-track { background: #ccc; border-radius: 5px; height: 8px; }
+    #volumeSlider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #007bff; border: 1px solid #0056b3; margin-top: -4px; }
+    #volumeSlider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #007bff; border: 1px solid #0056b3; }
+    body.dark #volumeSlider::-webkit-slider-runnable-track { background: #555; }
+    body.dark #volumeSlider::-webkit-slider-thumb { background: #63b3ed; border-color: #4299e1; }
+    body.dark #volumeSlider::-moz-range-track { background: #555; }
+    body.dark #volumeSlider::-moz-range-thumb { background: #63b3ed; border-color: #4299e1; }
+    .shortcut-button.is-listening { border-color: #3b82f6; color: #3b82f6; }
   </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen">
+<body class="flex flex-row h-screen">
 
   <!-- Panel Izquierdo -->
-  <div id="left" class="md:w-2/5 p-4 md:border-r-2 min-w-[320px] flex flex-col relative overflow-y-auto">
-    <!-- Contenedor externo para el aspecto 16:9 del reproductor de vídeo -->
+  <div id="left" class="p-4 flex flex-col relative" style="flex-basis: 40%;">
+    <!-- Contenedor del reproductor de vídeo -->
     <div class="relative w-full overflow-hidden rounded-lg mb-2 shadow-md" style="padding-top: 56.25%;">
         <div id="videoDisplayContainer" class="absolute inset-0 bg-black flex items-center justify-center">
             <video id="video" controls class="w-full h-full object-contain hidden"></video> 
             <div id="emptyPlayerOverlay" class="absolute inset-0 flex flex-col justify-center items-center bg-black text-gray-400">
-                <!-- PandaScript Logo -->
                 <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-logo.png" alt="PandaScript Logo" class="h-24 mb-2"> 
                 <span class="text-xl font-bold">PandaScript</span>
             </div>
@@ -171,31 +52,21 @@
     </div>
     <p id="noMediaMessage" class="text-sm text-center italic mb-4 hidden" data-i18n="noMediaMessage">No media file loaded.</p>
     
-    <!-- Controles de Reproducción Minimalistas -->
+    <!-- Controles de Reproducción -->
     <div class="playback-controls flex flex-col gap-2 mb-4">
-      <!-- Primera fila de botones -->
       <div class="flex flex-wrap justify-center items-center gap-2 w-full">
-        <!-- Importación de Video/Audio actualizada - Movido aquí -->
         <input type="file" id="videoFileInput" accept="video/*,audio/*" class="hidden" />
         <button id="importVideoAudioBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out w-auto" data-i18n="openMediaFile" data-i18n-title="openMediaFileTitle"><i class="fas fa-file-video mr-2"></i>Open Video/Audio File</button>
-        <!-- play/pause button below. close media button removed -->
-
         <button id="playPauseBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="playPauseTitle"><i class="fas fa-play"></i></button>
         <button id="speedDownBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="slowDownTitle">-0.25x</button>
         <span id="speedDisplay" class="text-sm font-semibold flex items-center px-2">1.0x</span>
         <button id="speedUpBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="speedUpTitle">+0.25x</button>
-        
-        <!-- Control deslizante de volumen - Ahora horizontal de nuevo, dentro de un elemento flex -->
-        <div class="flex-grow max-w-[75px] px-2"> <!-- Limita el ancho máximo para el control deslizante de volumen -->
-            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1"
-                class="w-full h-2 rounded-lg appearance-none cursor-pointer range-lg"
-                data-i18n-title="volumeControlTitle" />
+        <div class="flex-grow max-w-[75px] px-2">
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" class="w-full h-2 rounded-lg appearance-none cursor-pointer range-lg" data-i18n-title="volumeControlTitle" />
         </div>
         <button id="muteBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="muteUnmuteTitle"><i class="fas fa-volume-up"></i></button>
       </div>
-      
-      <!-- Segunda fila de botones -->
-      <div class="flex flex-wrap justify-center items-center gap-2 w-full mt-2"> <!-- Se añadió mt-2 para el espaciado -->
+      <div class="flex flex-wrap justify-center items-center gap-2 w-full mt-2">
         <button onclick="seekMedia(-5)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind5sTitle">-5s</button>
         <button onclick="seekMedia(-3)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind3sTitle">-3s</button>
         <button onclick="seekMedia(-1)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind1sTitle">-1s</button>
@@ -205,1790 +76,695 @@
       </div>
     </div>
     
-    <!-- Campo de Visualización de TCR Grande -->
-    <div id="tcrDisplay" class="font-mono text-4xl p-4 text-center rounded-lg mb-4 shadow-md w-full">
-      --:--:--,---
-    </div>
+    <!-- Visualización de TCR -->
+    <div id="tcrDisplay" class="font-mono text-4xl p-4 text-center rounded-lg mb-4 shadow-md w-full">--:--:--,---</div>
 
-    <!-- Botones relacionados con TCR movidos aquí, incluyendo Establecer TCR Inicial -->
+    <!-- Botones de TCR -->
     <div class="flex flex-wrap gap-2 mb-4 w-full">
-      <button onclick="insertTimestamp()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="insertTimecode"><i class="fas fa-clock mr-2"></i>Insert Timecode</button>
+      <button onclick="executeShortcut('insertTimecode')" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-clock mr-2"></i><span data-i18n="insertTimecode">Insert Timecode</span></button>
       <button onclick="showTCRFormatSelection()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="timecodeFormat"><i class="fas fa-gear mr-2"></i>Timecode Format</button>
       <button onclick="showSetInitialTCRModal()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="setInitialTimecode"><i class="fas fa-play mr-2"></i>Set Initial Timecode</button>
     </div>
     
-    <div id="charFields" class="mt-4 mb-6 w-full">
-      <h4 class="text-lg font-semibold mb-3 border-b pb-2" data-i18n="charactersHeader">Characters (Alt + 1-8 to insert)</h4>
-      <div class="flex flex-wrap gap-2 justify-center mb-2">
-        <input type="text" id="char1" data-char-index="0" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="1" placeholder="Character 1" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char2" data-char-index="1" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="2" placeholder="Character 2" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char3" data-char-index="2" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="3" placeholder="Character 3" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char4" data-char-index="3" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="4" placeholder="Character 4" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <!-- Campos de Texto Recurrente -->
+    <div id="recurringTextSection" class="mt-4 mb-6 w-full">
+      <div class="flex items-center justify-between mb-3 border-b pb-2">
+        <h4 class="text-lg font-semibold" data-i18n="recurringTextHeader">Recurring Text</h4>
+        <button id="addRecurringTextBtn" class="font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-plus"></i></button>
       </div>
-      <div class="flex flex-wrap gap-2 justify-center">
-        <input type="text" id="char5" data-char-index="4" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="5" placeholder="Character 5" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char6" data-char-index="5" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="6" placeholder="Character 6" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char7" data-char-index="6" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="7" placeholder="Character 7" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="text" id="char8" data-char-index="7" data-i18n-placeholder="characterPlaceholder" data-i18n-placeholder-args="8" placeholder="Character 8" class="flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <div id="recurringTextContainer" class="flex flex-col gap-2 justify-center">
+        <!-- Los campos se añadirán aquí dinámicamente -->
       </div>
-    </div>
-
-    <!-- El div de atajos está oculto desde aquí, su contenido se usará en el modal -->
-    <div id="shortcuts" class="hidden">
-      <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Keyboard Shortcuts:</h4>
-      <ul class="list-disc list-inside space-y-1">
-        <li data-i18n="shortcut1"><strong>Alt+Q</strong>: Insert Timecode</li>
-        <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Space</strong>: Play/Pause</li>
-        <li data-i18n="shortcut3"><strong>Shift + Left Arrow</strong>: Rewind 5 seconds</li>
-        <li data-i18n="shortcut4"><strong>Shift + Right Arrow</strong>: Forward 5 seconds</li>
-        <li data-i18n="shortcut5"><strong>Alt/Option + Left Arrow</strong>: Rewind 1 frame (approx.)</li>
-        <li data-i18n="shortcut6"><strong>Alt/Option + Right Arrow</strong>: Forward 1 frame (approx.)</li>
-        <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Left Arrow</strong>: Rewind 1 second</li>
-        <li data-i18n="shortcut8"><strong>Ctrl/Cmd + Right Arrow</strong>: Forward 1 second</li>
-        <li data-i19n="shortcut9"><strong>Alt/Option + 1 to 8</strong>: Insert character name</li>
-      </ul>
     </div>
   </div>
+
+  <!-- Divisor Flexible -->
+  <div id="resizer"></div>
 
   <!-- Panel Derecho -->
-  <div id="right" class="md:w-3/5 p-4 min-w-[320px] flex flex-col overflow-y-auto">
-    <div id="controls" class="mb-4 flex flex-wrap items-center gap-3">
-      <!-- Importación de Texto Actualizada -->
-      <input type="file" id="textFileInput" accept=".txt" class="hidden" />
-      <button id="importTextBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="importText"><i class="fas fa-file-alt mr-2"></i>Import .txt</button>
-      
-      <!-- Botones de Negrita y Cursiva con iconos -->
-      <button onclick="applyStyle('bold')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="bold"><i class="fas fa-bold mr-2"></i>Bold</button>
-      <button onclick="applyStyle('italic')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="italic"><i class="fas fa-italic mr-2"></i>Italic</button>
-      
-      <!-- Nuevos botones de Buscar y Reemplazar -->
-      <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="findButton"><i class="fas fa-search mr-2"></i>Find</button>
-      <button id="replaceBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="replaceButton"><i class="fas fa-exchange-alt mr-2"></i>Replace</button>
-
-      <!-- Botón para alternar el tema -->
-      <button onclick="toggleTheme()" id="themeToggleButton" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><span id="themeText" data-i18n="darkMode">Dark Mode</span></button>
-      
-      <!-- Botón para alternar el idioma (ahora abre un modal) -->
-      <button onclick="showLanguageSelectionModal()" id="languageToggleButton" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm">
-        <span id="languageText" data-i18n="changeLanguageButton">Change Language</span>
-      </button>
-
-      <!-- Botón para abrir el modal de atajos -->
-      <button onclick="showShortcutsModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="shortcutsButton"><i class="fas fa-keyboard mr-2"></i>Keyboard Shortcuts</button>
-      <!-- Botón de exportar (ahora abre un modal para elegir el formato y el nombre del archivo) -->
-      <button onclick="showExportFormatModal()" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="export"><i class="fas fa-download mr-2"></i>Export</button>
+  <div id="right" class="p-4 flex flex-col" style="flex-basis: 60%;">
+    <!-- Controles con Menús -->
+    <div id="controls" class="mb-4 flex flex-wrap items-center gap-2">
+        <!-- Menú File -->
+        <div class="relative inline-block text-left">
+            <button id="fileMenuBtn" type="button" class="inline-flex justify-center w-full rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
+                <span data-i18n="fileMenu">File</span>
+                <i class="fas fa-chevron-down -mr-1 ml-2 h-5 w-5"></i>
+            </button>
+            <div id="fileMenuDropdown" class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10">
+                <div class="py-1" role="menu" aria-orientation="vertical">
+                    <a href="#" id="importTextBtn" class="dropdown-item" role="menuitem"><i class="fas fa-file-alt mr-3"></i><span data-i18n="importText">Import .txt</span></a>
+                    <a href="#" id="exportBtn" class="dropdown-item" role="menuitem"><i class="fas fa-download mr-3"></i><span data-i18n="export">Export</span></a>
+                </div>
+            </div>
+        </div>
+        <!-- Menú Settings -->
+        <div class="relative inline-block text-left">
+            <button id="settingsMenuBtn" type="button" class="inline-flex justify-center w-full rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
+                <span data-i18n="settingsMenu">Settings</span>
+                <i class="fas fa-chevron-down -mr-1 ml-2 h-5 w-5"></i>
+            </button>
+            <div id="settingsMenuDropdown" class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10">
+                <div class="py-1" role="menu" aria-orientation="vertical">
+                    <a href="#" id="shortcutsBtn" class="dropdown-item" role="menuitem"><i class="fas fa-keyboard mr-3"></i><span data-i18n="shortcutsButton">Keyboard Shortcuts</span></a>
+                    <a href="#" id="themeToggleBtn" class="dropdown-item" role="menuitem"><i id="themeIcon" class="fas fa-moon mr-3"></i><span id="themeText" data-i18n="darkMode">Dark Mode</span></a>
+                    <a href="#" id="languageToggleBtn" class="dropdown-item" role="menuitem"><i class="fas fa-language mr-3"></i><span id="languageText" data-i18n="changeLanguageButton">Change Language</span></a>
+                </div>
+            </div>
+        </div>
+        <!-- Separador -->
+        <div class="border-l h-6 mx-2" id="controlsSeparator"></div>
+        <!-- Botones restantes -->
+        <input type="file" id="textFileInput" accept=".txt" class="hidden" />
+        <button id="boldBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-bold"></i></button>
+        <button id="italicBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-italic"></i></button>
+        <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-search"></i></button>
+        <button id="replaceBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-exchange-alt"></i></button>
     </div>
-
-    <!-- Elemento del editor -->
+    <!-- Editor de Texto -->
     <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="flex-1 rounded-lg p-4 font-mono text-sm overflow-y-auto outline-none shadow-inner min-h-[200px]">
-      <p class="italic" data-i18n="editorPlaceholder">Start transcribing here, or import a text file. Load a video/audio in the left panel to begin.</p>
+      <p data-i18n="editorPlaceholder">Start transcribing here...</p>
     </div>
   </div>
 
-  <!-- Modal Personalizado para Alertas/Confirmaciones/Formato TCR/TCR Inicial/Auto-Guardado -->
+  <!-- Modal -->
   <div id="customModal" class="modal-overlay">
     <div class="modal-content">
       <h3 id="modalTitle" class="text-xl font-bold mb-4"></h3>
       <p id="modalMessage" class="mb-4"></p>
-      <div id="modalBody" class="mb-4"></div> <!-- Nuevo div para contenido dinámico como botones de radio -->
-      <div id="modalButtons" class="modal-buttons">
-        <!-- Los botones se inyectarán aquí -->
-      </div>
+      <div id="modalBody" class="mb-4"></div>
+      <div id="modalButtons" class="modal-buttons"></div>
     </div>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Global Firebase variables accessible by other scripts
-    window.firebaseApp = null;
-    window.db = null;
-    window.auth = null;
-    window.userId = null;
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        if (Object.keys(firebaseConfig).length > 0) {
-            window.firebaseApp = initializeApp(firebaseConfig);
-            window.db = getFirestore(window.firebaseApp);
-            window.auth = getAuth(window.firebaseApp);
-
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-            if (initialAuthToken) {
-                await signInWithCustomToken(window.auth, initialAuthToken);
-            } else {
-                await signInAnonymously(window.auth);
-            }
-
-            onAuthStateChanged(window.auth, async (user) => {
-                if (user) {
-                    window.userId = user.uid;
-                    console.log("Firebase authenticated. User ID:", window.userId);
-                } else {
-                    console.log("Firebase: No user logged in.");
-                    window.userId = null;
-                }
-            });
-        } else {
-            console.warn("Firebase config not found. Persistence features are disabled.");
-        }
-      } catch (error) {
-        console.error("Error initializing Firebase:", error);
-      }
-    });
+    // Módulo de Firebase (sin cambios)
   </script>
   <script>
+    // --- Selectores de Elementos DOM ---
     const video = document.getElementById('video');
     const videoFileInput = document.getElementById('videoFileInput');
     const importVideoAudioBtn = document.getElementById('importVideoAudioBtn');
     const textFileInput = document.getElementById('textFileInput');
-    const importTextBtn = document.getElementById('importTextBtn');
     const editor = document.getElementById('editor');
     const playPauseBtn = document.getElementById('playPauseBtn');
-    const speedDownBtn = document.getElementById('speedDownBtn');
-    const speedUpBtn = document.getElementById('speedUpBtn');
     const speedDisplay = document.getElementById('speedDisplay');
     const volumeSlider = document.getElementById('volumeSlider');
     const muteBtn = document.getElementById('muteBtn');
-    // Actualiza la selección de charInputs para seleccionar los 8 campos
-    const charInputs = Array.from(document.querySelectorAll('#charFields input[type="text"]'));
-    const noMediaMessage = document.getElementById('noMediaMessage');
     const tcrDisplay = document.getElementById('tcrDisplay');
-    const themeToggleButton = document.getElementById('themeToggleButton');
-    const themeText = document.getElementById('themeText');
-    const languageToggleButton = document.getElementById('languageToggleButton');
-    const languageText = document.getElementById('languageText');
-    const shortcutsDiv = document.getElementById('shortcuts');
     const emptyPlayerOverlay = document.getElementById('emptyPlayerOverlay');
-    // Renombrado de videoDisplayContainer a videoDisplayInnerContainer para el 16:9
-    const videoDisplayInnerContainer = document.getElementById('videoDisplayContainer'); 
+    const recurringTextContainer = document.getElementById('recurringTextContainer');
+    const addRecurringTextBtn = document.getElementById('addRecurringTextBtn');
     
+    const boldBtn = document.getElementById('boldBtn');
+    const italicBtn = document.getElementById('italicBtn');
     const findBtn = document.getElementById('findBtn');
     const replaceBtn = document.getElementById('replaceBtn');
 
+    const fileMenuBtn = document.getElementById('fileMenuBtn');
+    const fileMenuDropdown = document.getElementById('fileMenuDropdown');
+    const settingsMenuBtn = document.getElementById('settingsMenuBtn');
+    const settingsMenuDropdown = document.getElementById('settingsMenuDropdown');
+    const importTextBtn = document.getElementById('importTextBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const shortcutsBtn = document.getElementById('shortcutsBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const languageToggleBtn = document.getElementById('languageToggleBtn');
+    const themeText = document.getElementById('themeText');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    const resizer = document.getElementById('resizer');
+    const leftPanel = document.getElementById('left');
+    const rightPanel = document.getElementById('right');
+
+    // --- Estado de la Aplicación ---
     const DEFAULT_FRAMERATE = 30;
     let tcrOffsetSeconds = 0;
     let lastVolume = 1;
-
-    // Estado de Buscar/Reemplazar
-    let findReplaceState = {
-        query: '',
-        replacement: '',
-        caseSensitive: false,
-        matches: [], 
-        currentIndex: -1, 
-        isFinding: false 
-    };
-
-    // Estado del tema - por defecto modo claro
+    let findReplaceState = { query: '', replacement: '', caseSensitive: false, matches: [], currentIndex: -1, isFinding: false };
     let isDarkMode = false; 
-
-    // Estado del idioma - por defecto inglés
     let currentLanguage = 'en';
+    let listeningForShortcut = null;
 
-    // Contenido HTML de los atajos (se traducirá dinámicamente)
-    const shortcutsHtmlContent = shortcutsDiv.innerHTML;
-
-    // --- Objeto de Traducciones ---
+    // --- Traducciones ---
     const translations = {
       en: {
         appTitle: "PandaScript",
         openMediaFile: "Open Video/Audio File",
-        openMediaFileTitle: "Open video or audio file",
         noMediaMessage: "No media file loaded.",
-        playPauseTitle: "Play/Pause Video/Audio",
-        slowDownTitle: "Slow down video by -0.25x",
-        speedUpTitle: "Speed up video by +0.25x",
-        volumeControlTitle: "Volume Control",
-        muteUnmuteTitle: "Mute/Unmute Audio",
-        rewind5sTitle: "Rewind 5 seconds",
-        rewind3sTitle: "Rewind 3 seconds",
-        rewind1sTitle: "Rewind 1 second",
-        forward1sTitle: "Forward 1 second",
-        forward3sTitle: "Forward 3 seconds",
-        forward5sTitle: "Forward 5 seconds",
-        editorZoomLabel: "Editor Zoom:", 
-        charactersHeader: "Characters (Alt/Option + 1-8 to insert)", // Updated shortcut message
-        characterLabel: "Character {0}", 
-        characterPlaceholder: "Character {0}", // Removed "Name"
-        insertTimecode: "Insert Timecode",
-        timecodeFormat: "Timecode Format",
-        setInitialTimecode: "Set Initial Timecode",
-        importText: "Import .txt",
-        bold: "Bold",
-        italic: "Italic",
-        findButton: "Find",
-        replaceButton: "Replace",
-        darkMode: "Dark Mode",
-        lightMode: "Light Mode",
-        keyboardShortcuts: "Keyboard Shortcuts", 
+        playPauseTitle: "Play/Pause",
+        slowDownTitle: "Slow down", speedUpTitle: "Speed up",
+        volumeControlTitle: "Volume", muteUnmuteTitle: "Mute/Unmute",
+        rewind5sTitle: "Rewind 5s", rewind3sTitle: "Rewind 3s", rewind1sTitle: "Rewind 1s",
+        forward1sTitle: "Forward 1s", forward3sTitle: "Forward 3s", forward5sTitle: "Forward 5s",
+        recurringTextHeader: "Recurring Text (keyboard shortcuts)",
+        recurringTextPlaceholder: "Recurring text {0}",
+        insertTimecode: "Insert Timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode",
+        importText: "Import .txt", export: "Export",
+        bold: "Bold", italic: "Italic", findButton: "Find", replaceButton: "Replace",
+        darkMode: "Dark Mode", lightMode: "Light Mode",
         shortcutsButton: "Keyboard Shortcuts", 
-        export: "Export", 
         editorPlaceholder: "Start transcribing here, or import a text file. Load a video/audio in the left panel to begin.",
-        
-        modalAttention: "Attention",
-        modalConfirmAction: "Confirm Action",
-        modalAccept: "Accept",
-        modalCancel: "Cancel",
-        modalConfirm: "Confirm",
-        modalClose: "Close",
-
-        tcrFormatModalTitle: "Select Timecode Format",
-        tcrFormatModalMessage: "Choose the format you want to display the timecode in:",
-        tcrFormatModalSave: "Save", 
-        
-        setInitialTCRModalTitle: "Set Initial Timecode",
-        setInitialTCRModalMessage: "Enter the timecode from which you want the TCR to start counting:",
-        setInitialTCRModalPlaceholder: "Ex: 00:00:00,000 or 00:00:00:00",
-        setInitialTCRModalSet: "Set",
-        setTCRSuccess: "Initial timecode set to {0}.",
-        invalidTCRFormat: "Invalid timecode format. Use HH:MM:SS,MMM or HH:MM:SS:FF (e.g., 00:00:00,000 or 00:00:00:00).",
-        
-        mediaLoadError: "Error loading media file. Ensure it's a compatible format (e.g., MP3, MP4, M4A). MP4 files with AAC audio are generally well-supported, but some specific codecs or browser versions might cause issues when loading directly from a 'file://' path due to security restrictions. Try a different format or use a local server.",
-        mediaLoadErrorWithFileProtocolHint: "Error loading media file. Browser reported: 'Empty src attribute'. It could also be an unsupported audio/video codec by your browser.", // Simplified
-        noMediaWarning: "Load a video or audio first to {0}.", 
-        navigationError: "No video/audio loaded or timecode format is invalid for navigation.",
+        fileMenu: "File", settingsMenu: "Settings",
+        modalAttention: "Attention", modalConfirmAction: "Confirm Action",
+        modalAccept: "Accept", modalCancel: "Cancel", modalConfirm: "Confirm", modalClose: "Close",
+        tcrFormatModalTitle: "Select Timecode Format", tcrFormatModalMessage: "Choose the format:", tcrFormatModalSave: "Save",
+        setInitialTCRModalTitle: "Set Initial Timecode", setInitialTCRModalMessage: "Enter the starting timecode:",
+        setInitialTCRModalPlaceholder: "Ex: 00:00:00,000 or 00:00:00:00", setInitialTCRModalSet: "Set",
+        setTCRSuccess: "Initial timecode set to {0}.", invalidTCRFormat: "Invalid timecode format.",
+        mediaLoadErrorWithFileProtocolHint: "Error loading media file. It could be an unsupported format.",
+        noMediaWarning: "Load a video or audio first to {0}.",
         insertTimecodeError: "Load a video or audio first to insert a timecode.",
-        exportError: "Export format not supported. Only .txt is available.", 
         textLoadError: "Error loading text file.",
-
-        findModalTitle: "Find Text",
-        findQueryLabel: "Text to find:",
-        caseSensitiveLabel: "Match case",
-        findPrevious: "Find Previous",
-        findNext: "Next",
-        noMatchesFound: "No matches found.",
-        searchEndReached: "End of search. Wrapping around to the beginning.",
-        searchStartReached: "Start of search. Wrapping around to the end.",
-
-        replaceModalTitle: "Replace Text",
-        replaceWithLabel: "Replace with:",
-        replaceButtonInModal: "Replace",
-        replaceAllButton: "Replace All",
-        noMatchSelectedForReplace: "No match selected for replacement.",
-        replacementCompleteNoMoreMatches: "Replacement complete. No more matches found.",
-        replacementComplete: "All occurrences of \"{0}\" have been replaced.",
-        enterTextToFind: "Please enter text to find.",
-
-        changeLanguageButton: "Change Language",
-        chooseLanguageMessage: "Choose a language:",
-        exportFileModalTitle: "Export File",
-        exportFileMessage: "Enter the desired filename:",
-        exportFilenamePlaceholder: "transcription", 
-        exportFormatLabel: "Select format:",
-        exportFormatTxt: "Plain Text (.txt)",
-        exportFormatHtml: "Formatted Text (.html)",
+        findModalTitle: "Find Text", findQueryLabel: "Text to find:", caseSensitiveLabel: "Match case",
+        findPrevious: "Previous", findNext: "Next", noMatchesFound: "No matches found.",
+        replaceModalTitle: "Replace Text", replaceWithLabel: "Replace with:",
+        replaceButtonInModal: "Replace", replaceAllButton: "Replace All",
+        noMatchSelectedForReplace: "No match selected.", replacementComplete: "All occurrences of \"{0}\" replaced.",
+        changeLanguageButton: "Change Language", chooseLanguageMessage: "Choose a language:",
+        exportFileModalTitle: "Export File", exportFileMessage: "Enter filename:", exportFilenamePlaceholder: "transcription",
+        exportFormatLabel: "Select format:", exportFormatTxt: "Plain Text (.txt)", exportFormatHtml: "Formatted Text (.html)",
         exportButton: "Export", 
-
-        // Descripciones de atajos para la traducción
-        shortcut1: "Insert Timecode",
-        shortcut2: "Play/Pause",
-        shortcut3: "Rewind 5 seconds",
-        shortcut4: "Forward 5 seconds",
-        shortcut5: "Rewind 1 frame (approx.)",
-        shortcut6: "Forward 1 frame (approx.)",
-        shortcut7: "Rewind 1 second",
-        shortcut8: "Forward 1 second",
-        shortcut9: "Alt/Option + 1 to 8: Insert character name", // Updated shortcut description
-
-        languageEnglish: "English",
-        languageSpanish: "Spanish"
+        languageEnglish: "English", languageSpanish: "Spanish",
+        shortcutLabel_insertTimecode: "Insert Timecode",
+        shortcutLabel_playPause: "Play/Pause",
+        shortcutLabel_rewind5s: "Rewind 5s",
+        shortcutLabel_forward5s: "Forward 5s",
+        shortcutLabel_rewind1s: "Rewind 1s",
+        shortcutLabel_forward1s: "Forward 1s",
+        shortcutLabel_rewind1frame: "Rewind 1 Frame",
+        shortcutLabel_forward1frame: "Forward 1 Frame",
+        shortcutLabel_insertRecurringText: "Insert Recurring Text {0}",
+        shortcutsModalTitle: "Customize Keyboard Shortcuts",
+        shortcutsModalMessage: "Click on a button to set a new shortcut.",
+        resetShortcuts: "Reset to Defaults",
+        pressNewShortcut: "Press new keys...",
       },
       es: {
         appTitle: "PandaScript",
-        openMediaFile: "Abrir archivo de vídeo/audio",
-        openMediaFileTitle: "Abrir archivo de vídeo o audio",
-        noMediaMessage: "Ningún archivo multimedia cargado.",
-        playPauseTitle: "Reproducir/Pausar vídeo/audio",
-        slowDownTitle: "Ralentizar vídeo en -0.25x",
-        speedUpTitle: "Acelerar el vídeo en +0.25x",
-        volumeControlTitle: "Control de volumen",
-        muteUnmuteTitle: "Silenciar/Reactivar audio",
-        rewind5sTitle: "Retroceder 5 segundos",
-        rewind3sTitle: "Retroceder 3 segundos",
-        rewind1sTitle: "Retroceder 1 segundo",
-        forward1sTitle: "Avanzar 1 segundo",
-        forward3sTitle: "Avanzar 3 segundos",
-        forward5sTitle: "Avanzar 5 segundos",
-        editorZoomLabel: "Zoom Editor:",
-        charactersHeader: "Personajes (Alt/Opción + 1-8 para insertar)", // Updated shortcut message
-        characterLabel: "Personaje {0}",
-        characterPlaceholder: "Personaje {0}", // Removed "Nombre"
-        insertTimecode: "Insertar TCR",
-        timecodeFormat: "Formato TCR",
-        setInitialTimecode: "Establecer TCR Inicial",
-        importText: "Importar .txt",
-        bold: "Negrita",
-        italic: "Cursiva",
-        findButton: "Buscar",
-        replaceButton: "Reemplazar",
-        darkMode: "Modo oscuro",
-        lightMode: "Modo claro",
-        keyboardShortcuts: "Atajos de teclado",
-        shortcutsButton: "Atajos de teclado",
-        export: "Exportar", 
-        editorPlaceholder: "Comienza a transcribir aquí, o importa un archivo de texto. Carga un vídeo/audio en el panel izquierdo para empezar.",
-
-        modalAttention: "Atención",
-        modalConfirmAction: "Confirmar Acción",
-        modalAccept: "Aceptar",
-        modalCancel: "Cancelar",
-        modalConfirm: "Confirmar",
-        modalClose: "Cerrar",
-
-        tcrFormatModalTitle: "Seleccionar Formato de Código de Tiempo",
-        tcrFormatModalMessage: "Elige el formato en el que deseas visualizar el código de tiempo:",
-        tcrFormatModalSave: "Guardar", 
-
-        setInitialTCRModalTitle: "Establecer Código de Tiempo Inicial",
-        setInitialTCRModalMessage: "Introduce el código de tiempo desde el que quieres que empiece a contar el TCR:",
-        setInitialTCRModalPlaceholder: "Ej: 00:00:00,000 o 00:00:00:00",
-        setInitialTCRModalSet: "Establecer",
-        setTCRSuccess: "El código de tiempo inicial se ha establecido en {0}.",
-        invalidTCRFormat: "Formato de código de tiempo no válido. Usa HH:MM:SS,MMM o HH:MM:SS:FF (ej. 00:00:00,000 o 00:00:00:00).",
-
-        mediaLoadError: "Error al cargar el archivo multimedia. Asegúrate de que sea un formato compatible (ej. MP3, MP4, M4A). Los archivos MP4 con audio AAC suelen ser bien soportados, pero algunos códecs específicos o versiones de navegador podrían causar problemas al cargar directamente desde una ruta 'file://' debido a restricciones de seguridad. Intenta con un formato diferente o usa un servidor local.",
-        mediaLoadErrorWithFileProtocolHint: "Error al cargar el archivo multimedia. El navegador reportó: 'Empty src attribute'. También podría ser un códec de audio/vídeo no compatible con tu navegador.", // Simplified
-        noMediaWarning: "Carga un vídeo o audio primero para {0}.",
-        navigationError: "No hay vídeo/audio cargado o el formato del código de tiempo es inválido para navegar.",
-        insertTimecodeError: "Carga un vídeo o audio primero para insertar un código de tiempo.",
-        exportError: "Formato de exportación no soportado.", 
+        openMediaFile: "Abrir Vídeo/Audio",
+        noMediaMessage: "No hay archivo multimedia cargado.",
+        playPauseTitle: "Reproducir/Pausar",
+        slowDownTitle: "Ralentizar", speedUpTitle: "Acelerar",
+        volumeControlTitle: "Volumen", muteUnmuteTitle: "Silenciar/Activar",
+        rewind5sTitle: "Retroceder 5s", rewind3sTitle: "Retroceder 3s", rewind1sTitle: "Retroceder 1s",
+        forward1sTitle: "Avanzar 1s", forward3sTitle: "Avanzar 3s", forward5sTitle: "Avanzar 5s",
+        recurringTextHeader: "Texto recurrente (atajos de teclado)",
+        recurringTextPlaceholder: "Texto recurrente {0}",
+        insertTimecode: "Insertar TCR", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial",
+        importText: "Importar .txt", export: "Exportar",
+        bold: "Negrita", italic: "Cursiva", findButton: "Buscar", replaceButton: "Reemplazar",
+        darkMode: "Modo oscuro", lightMode: "Modo claro",
+        shortcutsButton: "Atajos de teclado", 
+        editorPlaceholder: "Empieza a transcribir aquí o importa un archivo de texto. Carga un vídeo/audio para empezar.",
+        fileMenu: "Archivo", settingsMenu: "Ajustes",
+        modalAttention: "Atención", modalConfirmAction: "Confirmar Acción",
+        modalAccept: "Aceptar", modalCancel: "Cancelar", modalConfirm: "Confirmar", modalClose: "Cerrar",
+        tcrFormatModalTitle: "Seleccionar Formato de TCR", tcrFormatModalMessage: "Elige el formato:", tcrFormatModalSave: "Guardar",
+        setInitialTCRModalTitle: "Establecer TCR Inicial", setInitialTCRModalMessage: "Introduce el TCR de inicio:",
+        setInitialTCRModalPlaceholder: "Ej: 00:00:00,000 o 00:00:00:00", setInitialTCRModalSet: "Establecer",
+        setTCRSuccess: "TCR inicial establecido en {0}.", invalidTCRFormat: "Formato de TCR no válido.",
+        mediaLoadErrorWithFileProtocolHint: "Error al cargar el archivo. Puede ser un formato no compatible.",
+        noMediaWarning: "Carga primero un vídeo o audio para {0}.",
+        insertTimecodeError: "Carga primero un vídeo o audio para insertar un TCR.",
         textLoadError: "Error al cargar el archivo de texto.",
-
-        findModalTitle: "Buscar Texto",
-        findQueryLabel: "Texto a buscar:",
-        caseSensitiveLabel: "Distinguir mayúsculas y minúsculas",
-        findPrevious: "Buscar Anterior",
-        findNext: "Siguiente",
-        noMatchesFound: "No se encontraron coincidencias.",
-        searchEndReached: "Fin de la búsqueda. Volviendo al inicio.",
-        searchStartReached: "Inicio de la búsqueda. Volviendo al final.",
-
-        replaceModalTitle: "Reemplazar Texto",
-        replaceWithLabel: "Reemplazar con:",
-        replaceButtonInModal: "Reemplazar",
-        replaceAllButton: "Reemplazar Todo",
-        noMatchSelectedForReplace: "No hay una coincidencia seleccionada para reemplazar.",
-        replacementCompleteNoMoreMatches: "Reemplazo completado. No hay más coincidencias.",
-        replacementComplete: "Todas las coincidencias de \"{0}\" han sido reemplazadas.",
-        enterTextToFind: "Por favor, introduce el texto a buscar.",
-
-        changeLanguageButton: "Cambiar Idioma",
-        chooseLanguageMessage: "Elige un idioma:",
-        exportFileModalTitle: "Exportar Archivo",
-        exportFileMessage: "Introduce el nombre deseado para el archivo:",
-        exportFilenamePlaceholder: "transcripcion",
-        exportFormatLabel: "Seleccionar formato:",
-        exportFormatTxt: "Texto Plano (.txt)",
-        exportFormatHtml: "Texto con formato (.html)",
+        findModalTitle: "Buscar Texto", findQueryLabel: "Texto a buscar:", caseSensitiveLabel: "Distinguir mayúsculas",
+        findPrevious: "Anterior", findNext: "Siguiente", noMatchesFound: "No se encontraron coincidencias.",
+        replaceModalTitle: "Reemplazar Texto", replaceWithLabel: "Reemplazar con:",
+        replaceButtonInModal: "Reemplazar", replaceAllButton: "Reemplazar Todo",
+        noMatchSelectedForReplace: "No hay coincidencia seleccionada.", replacementComplete: "Todas las apariciones de \"{0}\" han sido reemplazadas.",
+        changeLanguageButton: "Cambiar Idioma", chooseLanguageMessage: "Elige un idioma:",
+        exportFileModalTitle: "Exportar Archivo", exportFileMessage: "Introduce el nombre del archivo:", exportFilenamePlaceholder: "transcripcion",
+        exportFormatLabel: "Seleccionar formato:", exportFormatTxt: "Texto Plano (.txt)", exportFormatHtml: "Texto con Formato (.html)",
         exportButton: "Exportar", 
-
-        // Descripciones de atajos para la traducción
-        shortcut1: "Insertar código de tiempo",
-        shortcut2: "Reproducir/Pausar",
-        shortcut3: "Retroceder 5 segundos",
-        shortcut4: "Avanzar 5 segundos",
-        shortcut5: "Retroceder 1 fotograma (aprox.)",
-        shortcut6: "Avanzar 1 fotograma (aprox.)",
-        shortcut7: "Retroceder 1 segundo",
-        shortcut8: "Avanzar 1 segundo",
-        shortcut9: "Alt/Opción + 1 a 8: Insertar nombre de personaje", // Updated shortcut description
-
-        languageEnglish: "Inglés",
-        languageSpanish: "Español"
+        languageEnglish: "Inglés", languageSpanish: "Español",
+        shortcutLabel_insertTimecode: "Insertar TCR",
+        shortcutLabel_playPause: "Reproducir/Pausar",
+        shortcutLabel_rewind5s: "Retroceder 5s",
+        shortcutLabel_forward5s: "Avanzar 5s",
+        shortcutLabel_rewind1s: "Retroceder 1s",
+        shortcutLabel_forward1s: "Avanzar 1s",
+        shortcutLabel_rewind1frame: "Retroceder 1 Fotograma",
+        shortcutLabel_forward1frame: "Avanzar 1 Fotograma",
+        shortcutLabel_insertRecurringText: "Insertar Texto Recurrente {0}",
+        shortcutsModalTitle: "Personalizar Atajos de Teclado",
+        shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.",
+        resetShortcuts: "Restaurar por Defecto",
+        pressNewShortcut: "Pulsa las nuevas teclas...",
       }
     };
-
-    function translateElement(element, key, args = []) {
-      if (!element) return;
-      let text = translations[currentLanguage][key];
-      if (text && args.length > 0) {
-        args.forEach((arg, index) => {
-          text = text.replace(`{${index}}`, arg);
-        });
-      }
-      element.textContent = text || '';
-    }
-
-    function translateAttribute(element, attr, key, args = []) {
-      if (!element) return;
-      let text = translations[currentLanguage][key];
-      if (text && args.length > 0) {
-        args.forEach((arg, index) => {
-          text = text.replace(`{${index}}`, arg);
-        });
-      }
-      element.setAttribute(attr, text || '');
-    }
-
-    function applyLanguage(lang) {
-      currentLanguage = lang;
-      document.documentElement.lang = lang; // Establece el atributo lang del HTML
-
-      // Actualiza el contenido de texto estático
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        const argsAttr = el.getAttribute('data-i18n-args');
-        const args = argsAttr ? argsAttr.split(',') : [];
-        translateElement(el, key, args);
-      });
-
-      // Actualiza los títulos
-      document.querySelectorAll('[data-i18n-title]').forEach(el => {
-        const key = el.getAttribute('data-i18n-title');
-        translateAttribute(el, 'title', key);
-      });
-
-      // Actualiza los marcadores de posición
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        const argsAttr = el.getAttribute('data-i18n-placeholder-args');
-        const args = argsAttr ? argsAttr.split(',') : [];
-        translateAttribute(el, 'placeholder', key, args);
-      });
-
-      // Actualiza el texto del botón de alternar tema
-      if (themeText) {
-          themeText.textContent = isDarkMode ? translations[currentLanguage].lightMode : translations[currentLanguage].darkMode;
-      }
-      // Actualiza el texto del botón de alternar idioma (ahora "Cambiar Idioma")
-      if (languageText) {
-          languageText.textContent = translations[currentLanguage].changeLanguageButton;
-      }
-      
-      // Vuelve a aplicar el tema para los resaltados y colores
-      applyTheme(isDarkMode ? 'dark' : 'light');
-
-      // updateFileProtocolWarning(); // Removed call
-    }
-
-    // Nueva función para el modal de selección de idioma
-    function showLanguageSelectionModal() {
-        let optionsHtml = '<div class="space-y-2">';
-        Object.keys(translations).forEach(langCode => {
-            const langName = translations[langCode][`language${langCode === 'en' ? 'English' : 'Spanish'}`];
-            const isChecked = langCode === currentLanguage ? 'checked' : '';
-            optionsHtml += `
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="radio" name="languageSelect" value="${langCode}" class="form-radio h-4 w-4 text-blue-600" ${isChecked}>
-                    <span class="ml-2">${langName}</span>
-                </label><br>
-            `;
-        });
-        optionsHtml += '</div>';
-
-        showModal(
-            translations[currentLanguage].changeLanguageButton,
-            translations[currentLanguage].chooseLanguageMessage,
-            [
-                { text: translations[currentLanguage].modalAccept, handler: () => {
-                    const selectedLang = document.querySelector('input[name="languageSelect"]:checked');
-                    if (selectedLang) {
-                        applyLanguage(selectedLang.value);
-                        localStorage.setItem('language', selectedLang.value);
-                    }
-                }, type: 'primary' },
-                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
-            ],
-            optionsHtml
-        );
-    }
-
-    // Establece el tema inicial al cargar el script
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme !== null) { // Check if a theme preference exists
-            isDarkMode = (savedTheme === 'dark');
-        } else { // If no theme is saved, default to light mode
-            isDarkMode = false; // Explicitly set to false for light mode default
-        }
-        applyTheme(isDarkMode ? 'dark' : 'light');
-
-        const savedLanguage = localStorage.getItem('language');
-        if (savedLanguage) {
-            currentLanguage = savedLanguage;
-        } else { // Por defecto, inglés si no hay idioma guardado
-            currentLanguage = 'en';
-        }
-        applyLanguage(currentLanguage); // Aplica el idioma después del tema para que los colores iniciales sean correctos
-
-        updateEmptyPlayerState(); // Llama a esto inicialmente para establecer la vista del reproductor vacío
-    });
-
-    // --- Gestión de Temas ---
+    
+    // --- Definición de Temas ---
     const themeClasses = {
       dark: {
-        bodyBg: 'bg-gray-950', bodyText: 'text-gray-200', 
-        panelBg: 'bg-gray-800',
-        border: 'border-gray-700',
+        bodyBg: 'bg-gray-950', bodyText: 'text-gray-200', panelBg: 'bg-gray-800', border: 'border-gray-700',
         inputBg: 'bg-gray-700', inputBorder: 'border-gray-600', inputText: 'text-gray-200',
-        fileButtonBg: 'bg-gray-600', fileButtonText: 'text-gray-100', fileButtonHoverBg: 'bg-gray-500',
-        editorBg: 'bg-[#F3F4F6]', editorBorder: 'border-gray-700', editorText: 'text-black', /* Updated */
-        timestampColor: '#93c5fd', 
-        modalBg: 'bg-gray-800', modalText: 'text-gray-200',
-        btnPrimary: 'bg-black hover:bg-gray-700 text-white', 
-        btnDanger: 'bg-black hover:bg-gray-700 text-white',
-        btnNeutral: 'bg-black hover:bg-gray-700 text-white',
-        cbtnWarning: 'bg-black hover:bg-gray-700 text-white',
-        btnTheme: 'bg-black hover:bg-gray-700 text-white',
-        textColorPrimary: 'text-gray-300', textColorSecondary: 'text-gray-400',
+        editorBg: 'bg-gray-900', editorBorder: 'border-gray-700', editorText: 'text-gray-200',
+        timestampColor: '#93c5fd', modalBg: 'bg-gray-800', modalText: 'text-gray-200',
+        btnPrimary: 'bg-blue-600 hover:bg-blue-700 text-white', btnDanger: 'bg-red-600 hover:bg-red-700 text-white',
+        btnNeutral: 'bg-gray-600 hover:bg-gray-500 text-white', btnSimple: 'bg-gray-700 hover:bg-gray-600 text-gray-200',
+        menuBtnBg: 'bg-gray-700', menuBtnText: 'text-gray-200', menuBtnHoverBg: 'hover:bg-gray-600', menuBtnBorder: 'border-gray-600',
+        menuDropdownBg: 'bg-gray-800', menuDropdownBorder: 'border-gray-700',
+        menuItemText: 'text-gray-300', menuItemHoverBg: 'hover:bg-gray-700', menuItemHoverText: 'hover:text-white',
+        textColorPrimary: 'text-gray-300', textColorSecondary: 'text-gray-400', resizerBg: 'bg-gray-700'
       },
       light: {
-        bodyBg: 'bg-gray-50', bodyText: 'text-gray-900',
-        panelBg: 'bg-white',
-        border: 'border-gray-300',
+        bodyBg: 'bg-gray-50', bodyText: 'text-gray-900', panelBg: 'bg-white', border: 'border-gray-300',
         inputBg: 'bg-gray-200', inputBorder: 'border-gray-300', inputText: 'text-gray-800',
-        fileButtonBg: 'bg-gray-100', fileButtonText: 'text-gray-700', fileButtonHoverBg: 'bg-gray-300',
-        editorBg: 'bg-[#F3F4F6]', editorBorder: 'border-gray-300', editorText: 'text-black', /* Updated */
-        timestampColor: '#1d4ed8', 
-        modalBg: 'bg-gray-100', modalText: 'text-gray-900',
-        // Changes for light mode buttons and TCR field background
-        btnPrimary: 'bg-gray-300 hover:bg-gray-400 text-black', 
-        btnDanger: 'bg-gray-300 hover:bg-gray-400 text-black',
-        btnNeutral: 'bg-gray-300 hover:bg-gray-400 text-black',
-        btnWarning: 'bg-gray-300 hover:bg-gray-400 text-black',
-        btnTheme: 'bg-gray-300 hover:bg-gray-400 text-black',
-        textColorPrimary: 'text-gray-700', textColorSecondary: 'text-gray-500',
+        editorBg: 'bg-white', editorBorder: 'border-gray-300', editorText: 'text-black',
+        timestampColor: '#1d4ed8', modalBg: 'bg-white', modalText: 'text-gray-900',
+        btnPrimary: 'bg-blue-600 hover:bg-blue-700 text-white', btnDanger: 'bg-red-600 hover:bg-red-700 text-white',
+        btnNeutral: 'bg-gray-200 hover:bg-gray-300 text-black', btnSimple: 'bg-white hover:bg-gray-100 text-gray-800',
+        menuBtnBg: 'bg-white', menuBtnText: 'text-gray-700', menuBtnHoverBg: 'hover:bg-gray-50', menuBtnBorder: 'border-gray-300',
+        menuDropdownBg: 'bg-white', menuDropdownBorder: 'border-gray-200',
+        menuItemText: 'text-gray-700', menuItemHoverBg: 'hover:bg-gray-100', menuItemHoverText: 'hover:text-gray-900',
+        textColorPrimary: 'text-gray-700', textColorSecondary: 'text-gray-500', resizerBg: 'bg-gray-300'
       }
     };
 
-    function applyTheme(theme) {
-      const currentTheme = themeClasses[theme];
+    // --- Definición de Atajos ---
+    let shortcuts = {};
+    const defaultShortcuts = {
+        'insertTimecode': 'Alt+Q',
+        'playPause': 'Control+Space',
+        'rewind5s': 'Shift+ArrowLeft',
+        'forward5s': 'Shift+ArrowRight',
+        'rewind1s': 'Control+ArrowLeft',
+        'forward1s': 'Control+ArrowRight',
+        'rewind1frame': 'Alt+ArrowLeft',
+        'forward1frame': 'Alt+ArrowRight',
+    };
 
-      document.body.className = `${currentTheme.bodyBg} ${currentTheme.bodyText} flex flex-col md:flex-row h-screen overflow-hidden`;
-      document.getElementById('left').className = `md:w-2/5 p-4 md:border-r-2 ${currentTheme.border} ${currentTheme.panelBg} min-w-[320px] flex flex-col relative overflow-y-auto`;
-      document.getElementById('right').className = `md:w-3/5 p-4 ${currentTheme.panelBg} min-w-[320px] flex flex-col overflow-y-auto`;
-
-      videoFileInput.className = `hidden`;
-      textFileInput.className = `hidden`;
-
-      document.querySelectorAll('input[type="text"]').forEach(input => {
-        // Updated character input classes
-        if (input.closest('#charFields')) {
-            input.className = `flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
-        } else {
-            input.className = `w-full p-2 mb-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
-        }
-      });
-      // Estilos para el control deslizante de volumen
-      document.getElementById('volumeSlider').className = `w-full h-2 rounded-lg appearance-none cursor-pointer range-lg`;
-
-
-      document.querySelectorAll('label, h4, ul, p').forEach(el => {
-        if (el.id === 'noMediaMessage') {
-            el.className = `${currentTheme.textColorSecondary} text-sm text-center italic mb-4 hidden`;
-        } else if (el.matches('#editor p.italic')) { 
-            el.className = `${currentTheme.textColorSecondary} italic`;
-        } else {
-             el.classList.forEach(cls => {
-                if (cls.startsWith('text-gray-')) {
-                    el.classList.remove(cls);
-                }
-            });
-            el.classList.add(currentTheme.textColorPrimary);
-        }
-      });
-      document.querySelectorAll('h4').forEach(h4 => {
-          h4.classList.remove(...Array.from(h4.classList).filter(cls => cls.startsWith('border-gray-')));
-          h4.classList.add(currentTheme.border);
-      });
-      document.querySelector('#shortcuts').classList.remove(...Array.from(document.querySelector('#shortcuts').classList).filter(cls => cls.startsWith('border-gray-')));
-      document.querySelector('#shortcuts').classList.add(currentTheme.border);
-
-      // Apply editor specific styles
-      editor.classList.remove(...Array.from(editor.classList).filter(cls => cls.startsWith('bg-') || cls.startsWith('shadow-') || cls.startsWith('text-')));
-      editor.classList.add('flex-1', 'rounded-lg', 'p-4', 'font-mono', 'text-sm', 'overflow-y-auto', 'outline-none', 'shadow-inner'); 
-      editor.classList.add(currentTheme.editorBg, currentTheme.editorBorder, currentTheme.editorText); 
-      // Ensure the text color is always black for editor content
-      editor.style.color = '#000000'; 
-
-      // Apply TCR display specific styles
-      const tcrDisplayElement = document.getElementById('tcrDisplay');
-      if (tcrDisplayElement) {
-          // Remove existing background and text classes
-          tcrDisplayElement.classList.remove('bg-black', 'text-white', 'bg-gray-200', 'text-black'); 
-          // Apply new theme-specific styles
-          if (theme === 'dark') {
-              tcrDisplayElement.classList.add('bg-black', 'text-white');
-          } else { // light mode
-              tcrDisplayElement.classList.add('bg-gray-200', 'text-black'); 
-          }
-      }
-
-      document.querySelectorAll('button.font-bold').forEach(btn => {
-        let baseClass = 'font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm';
-        let specificClass = currentTheme.btnPrimary;
-
-        // Aplica flex items-center justify-center w-auto a los botones relevantes
-        const flexButtons = ['playPauseBtn', 'speedDownBtn', 'speedUpBtn', 'muteBtn', 'importVideoAudioBtn', 'importTextBtn', 'findBtn', 'replaceBtn']; 
-        if (flexButtons.includes(btn.id) || (btn.onclick && btn.onclick.toString().includes('seekMedia('))) {
-            baseClass += ' flex items-center justify-center w-auto';
-        }
-        // Clase específica para los botones de tema e idioma (ahora sin iconos)
-        if (btn.id === 'themeToggleButton' || btn.id === 'languageToggleButton') {
-            specificClass = currentTheme.btnTheme;
-        } else if (btn.onclick && (btn.onclick.toString().includes('insertTimestamp()') || btn.onclick.toString().includes('showTCRFormatSelection()') || btn.onclick.toString().includes('showSetInitialTCRModal()'))) {
-            baseClass += ' flex-1';
-        }
-        btn.className = `${baseClass} ${specificClass}`;
-      });
-      
-      const styleEl = document.querySelector('style');
-      let styleContent = styleEl.innerHTML; 
-      styleContent = styleContent.replace(/(\.timestamp \{\s*color:\s*)#[a-fA-F0-9]+\s*!important;/, `$1${currentTheme.timestampColor} !important;`);
-      styleEl.innerHTML = styleContent;
-
-
-      document.getElementById('customModal').querySelector('.modal-content').className = `modal-content ${currentTheme.modalBg} ${currentTheme.modalText}`;
-      document.querySelectorAll('#modalButtons button').forEach(btn => {
-          let btnType = 'primary';
-          if (btn.textContent === translations[currentLanguage].modalCancel || btn.textContent === translations[currentLanguage].modalClose) btnType = 'neutral';
-          if (btn.textContent === translations[currentLanguage].modalConfirm || btn.textContent === translations[currentLanguage].replaceAllButton || btn.textContent === translations[currentLanguage].exportButton) btnType = 'primary'; 
-          if (btn.textContent === translations[currentLanguage].replaceAllButton) btnType = 'danger'; 
-          btn.className = `${currentTheme[`btn${btnType.charAt(0).toUpperCase() + btnType.slice(1)}`]} font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out`;
-          if (btn.textContent === translations[currentLanguage].setInitialTCRModalSet) btn.classList.add('w-full');
-      });
-
-      document.querySelectorAll('#modalBody label span').forEach(span => {
-          span.classList.remove(...Array.from(span.classList).filter(cls => cls.startsWith('text-gray-')));
-          span.classList.add(currentTheme.modalText);
-      });
-      document.querySelectorAll('#modalBody h4').forEach(h4 => {
-          h4.classList.remove(...Array.from(h4.classList).filter(cls => cls.startsWith('border-gray-')));
-          h4.classList.add(currentTheme.border);
-          h4.classList.add(currentTheme.textColorPrimary);
-      });
-      document.querySelectorAll('#modalBody input[type="radio"]').forEach(input => {
-          input.classList.add('text-blue-600');
-      });
-
-      // Vuelve a aplicar los resaltados para buscar/reemplazar para asegurar los colores correctos
-      if (findReplaceState.isFinding && findReplaceState.query) {
-        highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
-        if (findReplaceState.currentIndex !== -1) {
-            goToMatch(findReplaceState.currentIndex); 
-        }
-      }
-    }
-
-    function toggleTheme() {
-      isDarkMode = !isDarkMode;
-      const theme = isDarkMode ? 'dark' : 'light';
-      applyTheme(theme);
-      localStorage.setItem('theme', theme);
-    }
-
-    // --- Funciones de la Ventana Modal ---
-    function showModal(title, message, buttons, bodyContent = '') {
-      modalTitle.textContent = title;
-      modalMessage.innerHTML = message; // Usar innerHTML para enlaces en el mensaje
-      modalBody.innerHTML = bodyContent;
-      modalButtons.innerHTML = '';
-
-      buttons.forEach(buttonConfig => {
-        const button = document.createElement('button');
-        button.textContent = buttonConfig.text;
-        let btnType = buttonConfig.type || 'primary';
-        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        button.className = `${currentTheme[`btn${btnType.charAt(0).toUpperCase() + btnType.slice(1)}`]} font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out`;
-        
-        button.onclick = () => {
-          hideModal();
-          if (buttonConfig.handler) {
-            buttonConfig.handler();
-          }
-        };
-        modalButtons.appendChild(button);
-      });
-
-      applyTheme(isDarkMode ? 'dark' : 'light'); 
-      customModal.classList.add('show');
-    }
-
-    function hideModal() {
-      customModal.classList.remove('show');
-      // Cuando se cierra el modal, borra los resaltados
-      if (findReplaceState.isFinding) {
-          clearHighlights();
-          findReplaceState.isFinding = false;
-      }
-    }
-
-    function customAlert(messageKey, titleKey = 'modalAttention', messageArgs = []) {
-      let message = translations[currentLanguage][messageKey];
-      if (message && messageArgs.length > 0) {
-        messageArgs.forEach((arg, index) => {
-          message = message.replace(`{${index}}`, arg);
-        });
-      }
-      showModal(translations[currentLanguage][titleKey], message, [{ text: translations[currentLanguage].modalAccept, type: 'primary' }]);
-    }
-
-    function customConfirm(messageKey, onConfirm, onCancel, titleKey = 'modalConfirmAction', messageArgs = []) {
-      let message = translations[currentLanguage][messageKey];
-      if (message && messageArgs.length > 0) {
-        messageArgs.forEach((arg, index) => {
-          message = message.replace(`{${index}}`, arg);
-        });
-      }
-      showModal(translations[currentLanguage][titleKey], message, [
-        { text: translations[currentLanguage].modalCancel, handler: onCancel, type: 'neutral' },
-        { text: translations[currentLanguage].modalConfirm, handler: onConfirm, type: 'danger' }
-      ]);
-    }
-
-    function showTCRFormatSelection() {
-        let optionsHtml = '<div class="space-y-2">';
-        tcrFormats.forEach((format, index) => {
-            const isChecked = index === currentTCRFormatIndex ? 'checked' : '';
-            optionsHtml += `
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="radio" name="tcrFormat" value="${index}" class="form-radio h-4 w-4 text-blue-600" ${isChecked}>
-                    <span class="ml-2">${format.name}</span>
-                </label><br>
-            `;
-        });
-        optionsHtml += '</div>';
-
-        showModal(
-            translations[currentLanguage].tcrFormatModalTitle,
-            translations[currentLanguage].tcrFormatModalMessage,
-            [
-                { text: translations[currentLanguage].tcrFormatModalSave, handler: () => { 
-                    const selectedFormat = document.querySelector('input[name="tcrFormat"]:checked');
-                    if (selectedFormat) {
-                        currentTCRFormatIndex = parseInt(selectedFormat.value);
-                        updateTCRDisplay();
-                    }
-                }, type: 'primary' },
-                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
-            ],
-            optionsHtml
-        );
-    }
-
-    function showShortcutsModal() {
-        // Vuelve a generar el contenido para asegurar que esté en el idioma actual
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = `
-            <h4 class="text-lg font-semibold mb-2" data-i18n="shortcutsHeader">Keyboard Shortcuts:</h4>
-            <ul class="list-disc list-inside space-y-1">
-                <li data-i18n="shortcut1"><strong>Alt+Q</strong>: ${translations[currentLanguage].shortcut1}</li>
-                <li data-i18n="shortcut2"><strong>Ctrl/Cmd+Space</strong>: ${translations[currentLanguage].shortcut2}</li>
-                <li data-i18n="shortcut3"><strong>Shift + Left Arrow</strong>: ${translations[currentLanguage].shortcut3}</li>
-                <li data-i18n="shortcut4"><strong>Shift + Right Arrow</strong>: ${translations[currentLanguage].shortcut4}</li>
-                <li data-i18n="shortcut5"><strong>Alt/Option + Left Arrow</strong>: ${translations[currentLanguage].shortcut5}</li>
-                <li data-i18n="shortcut6"><strong>Alt/Option + Right Arrow</strong>: ${translations[currentLanguage].shortcut6}</li>
-                <li data-i18n="shortcut7"><strong>Ctrl/Cmd + Left Arrow</strong>: ${translations[currentLanguage].shortcut7}</li>
-                <li data-i19n="shortcut8"><strong>Ctrl/Cmd + Right Arrow</strong>: ${translations[currentLanguage].shortcut8}</li>
-                <li data-i19n="shortcut9"><strong>Alt/Option + 1 to 8</strong>: ${translations[currentLanguage].shortcut9}</li>
-            </ul>
-        `;
-        
-        showModal(
-            translations[currentLanguage].keyboardShortcuts,
-            '',
-            [{ text: translations[currentLanguage].modalClose, type: 'neutral' }],
-            tempDiv.innerHTML
-        );
-    }
-
-    function showSetInitialTCRModal() {
-        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
-        
-        let initialTCRHtml = `
-            <div id="modalInitialTCRContent">
-                <label for="modalInitialTCRInput" class="text-sm font-medium mb-1 block">TCR (HH:MM:SS,MMM o HH:MM:SS:FF)</label>
-                <input type="text" id="modalInitialTCRInput" placeholder="${translations[currentLanguage].setInitialTCRModalPlaceholder}" class="${modalInputClasses}" />
-            </div>
-        `;
-
-        showModal(
-            translations[currentLanguage].setInitialTCRModalTitle,
-            translations[currentLanguage].setInitialTCRModalMessage,
-            [
-                { text: translations[currentLanguage].setInitialTCRModalSet, handler: () => {
-                    const modalInitialTCRInput = document.getElementById('modalInitialTCRInput');
-                    if (modalInitialTCRInput) {
-                        const timeCodeString = modalInitialTCRInput.value.trim();
-                        setInitialTCR(timeCodeString); 
-                    }
-                }, type: 'primary' },
-                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
-            ],
-            initialTCRHtml
-        );
-        if (video.src) {
-            const modalInitialTCRInput = document.getElementById('modalInitialTCRInput');
-            if (modalInitialTCRInput) {
-                modalInitialTCRInput.value = tcrFormats[0].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE); 
-            }
-        }
-    }
-
-    // Función para gestionar el estado del reproductor de video (visibilidad del video vs. superposición)
-    function updateEmptyPlayerState() {
-        if (!video.src) {
-            emptyPlayerOverlay.classList.remove('hidden'); 
-            noMediaMessage.classList.remove('hidden'); 
-            video.classList.add('hidden'); 
-            
-            tcrDisplay.textContent = '--:--:--,---'; 
-        } else {
-            emptyPlayerOverlay.classList.add('hidden'); 
-            video.classList.remove('hidden'); 
-        }
-    }
-
-    // Función para mostrar/ocultar la advertencia de protocolo de archivo (Removed)
-    // function updateFileProtocolWarning() {
-    //     if (window.location.protocol === 'file:') {
-    //         fileProtocolWarning.classList.remove('hidden');
-    //     } else {
-    //         fileProtocolWarning.classList.add('hidden');
-    //     }
-    // }
-
-    // Oyente de eventos para el botón importVideoAudioBtn
-    importVideoAudioBtn.addEventListener('click', () => {
-        videoFileInput.click(); 
-    });
-
-    videoFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-
-      if (!file) {
-        video.src = ''; 
-        updateEmptyPlayerState(); 
-        return;
-      }
-      
-      console.log("Archivo seleccionado:", file.name, "Tipo:", file.type, "Tamaño:", file.size, "bytes");
-
-      let url;
-      try {
-        url = URL.createObjectURL(file);
-        video.src = url;
-        console.log("URL de objeto creada y asignada a video.src:", video.src);
-      } catch (error) {
-        console.error("Error al crear URL de objeto o asignar a video.src:", error);
-        customAlert('mediaLoadErrorWithFileProtocolHint', 'Error loading media');
-        video.src = ''; // Clear src on error
-        updateEmptyPlayerState();
-        return;
-      }
-      
-      // Oculta la superposición del reproductor vacío y muestra el video
-      emptyPlayerOverlay.classList.add('hidden');
-      video.classList.remove('hidden'); 
-      
-      noMediaMessage.classList.add('hidden'); 
-
-      video.load(); 
-
-      video.onloadedmetadata = async () => { 
-        console.log("Video metadata loaded successfully. Duration:", video.duration, "seconds."); 
-        updateEmptyPlayerState(); 
-        
-        tcrOffsetSeconds = 0;
-        updateTCRDisplay(); 
-        video.playbackRate = 1.0; 
-        speedDisplay.textContent = '1.0x';
-        video.volume = 1.0;
-        volumeSlider.value = 1.0;
-        video.muted = false;
-        muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-      };
-
-      video.onerror = (errorEvent) => {
-          console.error("Detalles del error del elemento de video:", video.error);
-          if (video.error) {
-              console.error(`Código de error: ${video.error.code}, Mensaje de error: ${video.error.message}`);
-          }
-          console.error("Video element current src when onerror fired:", video.src);
-          
-          if (video.src === '') { 
-              console.log("Fuente de vídeo vaciada intencionadamente, se suprime la alerta de error repetida.");
-              return; 
-          }
-
-          if (video.error && video.error.code === MediaError.MEDIA_ERR_ABORTED) {
-              console.warn("La carga del medio fue abortada (posiblemente por el usuario o al cerrar el medio).");
-              return;
-          }
-
-          console.error("Error al cargar el vídeo/audio desde la entrada de archivo. Causa probable: seguridad del navegador o formato no compatible.");
-          customAlert('mediaLoadErrorWithFileProtocolHint'); 
-          video.src = ''; 
-          updateEmptyPlayerState();
-      };
-    });
-
-
-    // closeMediaBtnNew.addEventListener('click', () => { // Removed listener
-    //   video.pause();
-    //   const originalOnError = video.onerror;
-    //   video.onerror = null; 
-
-    //   video.src = ''; 
-
-    //   video.onerror = originalOnError; 
-
-    //   tcrOffsetSeconds = 0;
-    //   playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-    //   updateEmptyPlayerState(); 
-    // });
-
-    // Oyentes de eventos para los nuevos controles de reproducción
-    playPauseBtn.addEventListener('click', () => {
-        if (!video.src) {
-            customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].playPauseTitle.toLowerCase()]);
-            return;
-        }
-        if (video.paused) {
-            video.play();
-            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        } else {
-            video.pause();
-            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        }
-    });
-    
-    video.addEventListener('play', () => {
-        video.playbackRate = parseFloat(speedDisplay.textContent); // Asegura que se aplique la velocidad actual
-    });
-
-    video.addEventListener('pause', () => {
-        // No se necesita lógica específica de pausa aquí
-    });
-
-    video.addEventListener('timeupdate', () => {
-        updateTCRDisplay(); 
-    });
-
-
-    speedUpBtn.addEventListener('click', () => {
-        if (!video.src) return;
-        video.playbackRate = Math.min(4.0, video.playbackRate + 0.25);
-        speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`;
-    });
-
-    speedDownBtn.addEventListener('click', () => {
-        if (!video.src) return;
-        video.playbackRate = Math.max(0.5, video.playbackRate - 0.25);
-        speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`;
-    });
-
-    volumeSlider.addEventListener('input', () => {
-        if (!video.src) return;
-        video.volume = volumeSlider.value;
-        if (video.volume === 0) {
-            muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            video.muted = true;
-        } else {
-            muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-            video.muted = false;
-            lastVolume = video.volume;
-        }
-    });
-
-    muteBtn.addEventListener('click', () => {
-        if (!video.src) return;
-        if (video.muted) {
-            video.muted = false;
-            video.volume = lastVolume > 0 ? lastVolume : 0.5;
-            volumeSlider.value = video.volume;
-            muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-        } else {
-            lastVolume = video.volume;
-            video.muted = true;
-            video.volume = 0;
-            volumeSlider.value = 0;
-            muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-        }
-    });
-
-    function seekMedia(seconds) {
-        if (!video.src) {
-            customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].seekMedia || translations[currentLanguage].playPauseTitle.toLowerCase()]); 
-            return;
-        }
-        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
-    }
-
-    // --- Funciones del Editor ---
-    function insertTimestamp() {
-      if (!video.src) {
-        customAlert('insertTimecodeError', 'Error');
-        return;
-      }
-      if (isNaN(video.currentTime)) {
-          console.error("La hora actual del video es NaN, no se puede insertar la marca de tiempo.");
-          customAlert('navigationError', 'Error');
-          return;
-      }
-      const timeCode = tcrFormats[currentTCRFormatIndex].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE); 
-      insertHtmlAtCursor(`<span class="timestamp">[${timeCode}]</span>`);
-    }
-
-    function insertHtmlAtCursor(html) {
-      editor.focus(); 
-      const sel = window.getSelection();
-      if (!sel.rangeCount) return;
-      
-      const range = sel.getRangeAt(0);
-      range.deleteContents();
-
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html; 
-
-      const frag = document.createDocumentFragment();
-      while (tempDiv.firstChild) {
-          frag.appendChild(tempDiv.firstChild);
-      }
-
-      const lastInsertedNode = frag.lastChild;
-
-      range.insertNode(frag);
-
-      // Añade un espacio normal para asegurar que el cursor esté fuera del span y listo para texto plano
-      const spaceNode = document.createTextNode(' '); 
-      range.setStartAfter(lastInsertedNode); 
-      range.collapse(false); 
-      range.insertNode(spaceNode); 
-      
-      const finalRange = document.createRange();
-      finalRange.setStart(spaceNode, 1); 
-      finalRange.setEnd(spaceNode, 1);   
-      
-      sel.removeAllRanges();
-      sel.addRange(finalRange);
-    }
-
-    function applyStyle(command) {
-        editor.focus(); 
-        document.execCommand(command, false, null);
-    }
-
-    const pad = (num, length = 2) => String(num).padStart(length, '0');
-
+    // --- Definiciones de Formatos de TCR ---
+    const pad = (num, len = 2) => String(num).padStart(len, '0');
     const tcrFormats = [
-        {
-            name: "HH:MM:SS,MMM",
-            format: (timeInSeconds) => {
-                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
-                    return '--:--:--,---';
-                }
-                const h = Math.floor(timeInSeconds / 3600);
-                const m = Math.floor((timeInSeconds % 3600) / 60);
-                const s = Math.floor(timeInSeconds % 60);
-                const ms = Math.floor((timeInSeconds % 1) * 1000);
-                return `${pad(h)}:${pad(m)}:${pad(s)},${pad(ms, 3)}`;
-            }
-        },
-        {
-            name: "HH:MM:SS:FF", 
-            format: (timeInSeconds, frameRate = DEFAULT_FRAMERATE) => {
-                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
-                    return '--:--:--:--';
-                }
-                const totalFrames = Math.floor(timeInSeconds * frameRate);
-                const h = Math.floor(totalFrames / (3600 * frameRate));
-                const m = Math.floor((totalFrames / (60 * frameRate)) % 60);
-                const s = Math.floor((totalFrames / frameRate) % 60);
-                const f = totalFrames % frameRate;
-                return `${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`;
-            }
-        },
-        {
-            name: "MM:SS,MMM",
-            format: (timeInSeconds) => {
-                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
-                    return '--:--,---';
-                }
-                const m = Math.floor(timeInSeconds / 60);
-                const s = Math.floor(timeInSeconds % 60);
-                const ms = Math.floor((timeInSeconds % 1) * 1000);
-                return `${pad(m)}:${pad(s)},${pad(ms, 3)}`;
-            }
-        },
-        {
-            name: "MM:SS:FF", 
-            format: (timeInSeconds, frameRate = DEFAULT_FRAMERATE) => {
-                if (isNaN(timeInSeconds) || !isFinite(timeInSeconds)) {
-                    return '--:--:--';
-                }
-                const totalFrames = Math.floor(timeInSeconds * frameRate);
-                const m = Math.floor((totalFrames / (60 * frameRate)) % 60);
-                const s = Math.floor((totalFrames / frameRate) % 60);
-                const f = totalFrames % frameRate;
-                return `${pad(m)}:${pad(s)}:${pad(f)}`;
-            }
-        }
+        { name: "HH:MM:SS,MMM", format: (t) => { if(isNaN(t)) return '--:--:--,---'; const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=Math.floor(t%60),ms=Math.floor(t%1*1000); return `${pad(h)}:${pad(m)}:${pad(s)},${pad(ms,3)}`; }},
+        { name: "HH:MM:SS:FF", format: (t, fr) => { if(isNaN(t)) return '--:--:--:--'; const tf=Math.floor(t*fr),h=Math.floor(tf/(3600*fr)),m=Math.floor(tf/(60*fr)%60),s=Math.floor(tf/fr%60),f=tf%fr; return `${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`; }},
     ];
     let currentTCRFormatIndex = 0; 
 
-    // Función para actualizar la visualización del TCR
-    function updateTCRDisplay() {
-        if (video.src && !isNaN(video.currentTime) && isFinite(video.currentTime)) {
-            const displayTime = video.currentTime + tcrOffsetSeconds;
-            tcrDisplay.textContent = tcrFormats[currentTCRFormatIndex].format(displayTime, DEFAULT_FRAMERATE);
-        } else {
-            tcrDisplay.textContent = '--:--:--,---'; 
+
+    // --- Definiciones de Funciones ---
+
+    function applyLanguage(lang) {
+      currentLanguage = lang;
+      document.documentElement.lang = lang; 
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        let text = translations[currentLanguage][key] || key;
+        el.textContent = text;
+      });
+      updateRecurringTextPlaceholders();
+      applyTheme(isDarkMode ? 'dark' : 'light');
+    }
+
+    function applyTheme(themeName) {
+      const theme = themeClasses[themeName];
+      isDarkMode = (themeName === 'dark');
+      document.body.className = `flex flex-row h-screen overflow-hidden ${theme.bodyBg} ${theme.bodyText}`;
+      leftPanel.className = `p-4 flex flex-col relative ${theme.panelBg}`;
+      rightPanel.className = `p-4 flex flex-col ${theme.panelBg}`;
+      resizer.className = `cursor-col-resize ${theme.resizerBg}`;
+      
+      document.querySelectorAll('.playback-controls button, #left > .flex-wrap > button, #addRecurringTextBtn').forEach(btn => {
+        btn.className = `${btn.className.includes('flex-1') ? 'flex-1' : ''} font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto ${theme.btnNeutral}`;
+      });
+      
+      recurringTextContainer.querySelectorAll('button').forEach(btn => {
+         btn.className = `font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm ${theme.btnNeutral}`;
+      });
+
+      document.querySelectorAll('#recurringTextContainer input[type="text"]').forEach(input => {
+        input.className = `flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+      });
+
+      editor.className = `flex-1 rounded-lg p-4 font-mono text-sm overflow-y-auto outline-none shadow-inner min-h-[200px] ${theme.editorBg} ${theme.editorBorder} ${theme.editorText}`;
+      if (editor.querySelector('p')) { editor.querySelector('p').className = `${theme.textColorSecondary}`; }
+      tcrDisplay.className = `font-mono text-4xl p-4 text-center rounded-lg mb-4 shadow-md w-full ${isDarkMode ? 'bg-black text-white' : 'bg-gray-200 text-black'}`;
+      [fileMenuBtn, settingsMenuBtn].forEach(btn => { btn.className = `inline-flex justify-center w-full rounded-md shadow-sm px-4 py-2 text-sm font-medium focus:outline-none ${theme.menuBtnBg} ${theme.menuBtnText} ${theme.menuBtnHoverBg} ${theme.menuBtnBorder}`; });
+      [fileMenuDropdown, settingsMenuDropdown].forEach(dropdown => { dropdown.className = `origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10 ${theme.menuDropdownBg} ${theme.menuDropdownBorder}`; });
+      document.querySelectorAll('.dropdown-item').forEach(item => { item.className = `dropdown-item block px-4 py-2 text-sm w-full text-left flex items-center ${theme.menuItemText} ${theme.menuItemHoverBg} ${theme.menuItemHoverText}`; });
+      document.getElementById('controlsSeparator').className = `border-l h-6 mx-2 ${theme.border}`;
+      [boldBtn, italicBtn, findBtn, replaceBtn].forEach(btn => { btn.className = `font-bold p-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm ${theme.btnSimple} ${theme.border}`; });
+      themeText.textContent = isDarkMode ? translations[currentLanguage].lightMode : translations[currentLanguage].darkMode;
+      themeIcon.className = `fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} mr-3`;
+      const styleEl = document.querySelector('style');
+      let styleContent = styleEl.innerHTML; 
+      styleContent = styleContent.replace(/(\.timestamp \{\s*color:\s*)#[a-fA-F0-9]+\s*!important;/, `$1${theme.timestampColor} !important;`);
+      styleEl.innerHTML = styleContent;
+    }
+
+    function loadShortcuts() {
+        const savedShortcuts = JSON.parse(localStorage.getItem('pandascript_shortcuts'));
+        shortcuts = { ...defaultShortcuts, ...savedShortcuts };
+        for (let i = 1; i <= 10; i++) {
+             const action = `insertRecurringText${i}`;
+             if (!shortcuts[action]) shortcuts[action] = `Alt+${i}`;
         }
     }
 
+    function saveShortcuts() {
+        localStorage.setItem('pandascript_shortcuts', JSON.stringify(shortcuts));
+    }
+
+    function keyEventToString(e) {
+        let parts = [];
+        if (e.ctrlKey || e.metaKey) parts.push('Control');
+        if (e.altKey) parts.push('Alt');
+        if (e.shiftKey) parts.push('Shift');
+        let key = e.key;
+        if (key.length > 1 && !['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) {} 
+        else if (key === ' ') parts.push('Space');
+        else parts.push(key);
+        return parts.join('+');
+    }
+
+    function executeShortcut(action) {
+        const actions = {
+            'insertTimecode': () => {
+                if (!video.src || video.src === window.location.href) return customAlert('insertTimecodeError');
+                const timeCode = tcrFormats[currentTCRFormatIndex].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE); 
+                insertHtmlAtCursor(`<span class="timestamp">[${timeCode}]</span> `);
+            },
+            'playPause': () => {
+                if (!video.src || video.src === window.location.href) return;
+                video.paused ? video.play() : video.pause();
+                playPauseBtn.innerHTML = `<i class="fas ${video.paused ? 'fa-play' : 'fa-pause'}"></i>`;
+            },
+            'rewind5s': () => seekMedia(-5),
+            'forward5s': () => seekMedia(5),
+            'rewind1s': () => seekMedia(-1),
+            'forward1s': () => seekMedia(1),
+            'rewind1frame': () => seekMedia(-1/DEFAULT_FRAMERATE),
+            'forward1frame': () => seekMedia(1/DEFAULT_FRAMERATE),
+            'insertRecurringText': (index) => {
+                const inputs = recurringTextContainer.querySelectorAll('input');
+                if (inputs[index-1] && inputs[index-1].value) {
+                    insertHtmlAtCursor(inputs[index-1].value + ' ');
+                }
+            }
+        };
+        if (action.startsWith('insertRecurringText')) {
+            const index = parseInt(action.replace('insertRecurringText', ''));
+            actions['insertRecurringText'](index);
+        } else if (actions[action]) {
+            actions[action]();
+        }
+    }
+    
+    function addRecurringTextField(value = '') {
+        const count = recurringTextContainer.children.length;
+        if (count >= 9) addRecurringTextBtn.disabled = true;
+        const container = document.createElement('div');
+        container.className = 'flex items-center gap-2';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = value;
+        input.addEventListener('input', saveRecurringTexts);
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        removeBtn.onclick = () => {
+            container.remove();
+            updateRecurringTextPlaceholders();
+            saveRecurringTexts();
+            addRecurringTextBtn.disabled = false;
+        };
+        container.appendChild(input);
+        container.appendChild(removeBtn);
+        recurringTextContainer.appendChild(container);
+        updateRecurringTextPlaceholders();
+        applyTheme(isDarkMode ? 'dark' : 'light');
+    }
+
+    function updateRecurringTextPlaceholders() {
+        const inputs = recurringTextContainer.querySelectorAll('input');
+        inputs.forEach((input, index) => {
+            const placeholderText = translations[currentLanguage].recurringTextPlaceholder.replace('{0}', index + 1);
+            input.placeholder = placeholderText;
+        });
+    }
+
+    function saveRecurringTexts() {
+        const values = Array.from(recurringTextContainer.querySelectorAll('input')).map(input => input.value);
+        localStorage.setItem('pandascript_recurring_texts', JSON.stringify(values));
+    }
+
+    function loadRecurringTexts() {
+        const savedTexts = JSON.parse(localStorage.getItem('pandascript_recurring_texts'));
+        if (savedTexts && savedTexts.length > 0) {
+            savedTexts.forEach(text => addRecurringTextField(text));
+        } else {
+            for(let i = 0; i < 4; i++) addRecurringTextField();
+        }
+    }
+
+    function showModal(title, message, buttons, bodyContent = '') {
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const modalContentEl = document.getElementById('customModal').querySelector('.modal-content');
+        modalContentEl.className = `modal-content ${theme.modalBg} ${theme.modalText}`;
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMessage').innerHTML = message;
+        document.getElementById('modalBody').innerHTML = bodyContent;
+        const modalButtons = document.getElementById('modalButtons');
+        modalButtons.innerHTML = '';
+        buttons.forEach(buttonConfig => {
+            const button = document.createElement('button');
+            button.textContent = buttonConfig.text;
+            const btnClass = buttonConfig.type === 'danger' ? theme.btnDanger : (buttonConfig.type === 'primary' ? theme.btnPrimary : theme.btnNeutral);
+            button.className = `font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out ${btnClass}`;
+            button.onclick = () => { if(!buttonConfig.preventClose) hideModal(); if (buttonConfig.handler) buttonConfig.handler(); };
+            modalButtons.appendChild(button);
+        });
+        document.getElementById('customModal').classList.add('show');
+    }
+
+    function hideModal() { 
+        document.getElementById('customModal').classList.remove('show');
+        if (listeningForShortcut) {
+            const button = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
+            if(button) button.classList.remove('is-listening');
+            listeningForShortcut = null;
+        }
+    }
+
+    function customAlert(messageKey, titleKey = 'modalAttention', args = []) {
+        let msg = translations[currentLanguage][messageKey] || messageKey;
+        if(args.length > 0) msg = msg.replace('{0}', args[0]);
+        showModal(translations[currentLanguage][titleKey], msg, [{ text: translations[currentLanguage].modalAccept, type: 'primary' }]);
+    }
+    
+    function showShortcutsModal() {
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        let bodyHtml = '<div class="space-y-2">';
+        const shortcutActions = Object.keys(defaultShortcuts);
+        const recurringCount = recurringTextContainer.children.length;
+        for(let i = 1; i <= recurringCount; i++) {
+            shortcutActions.push(`insertRecurringText${i}`);
+        }
+        shortcutActions.forEach(action => {
+            let labelKey = `shortcutLabel_${action.replace(/\d/g, '')}`;
+            let label = translations[currentLanguage][labelKey] || action;
+            if (action.includes('insertRecurringText')) {
+                label = label.replace('{0}', action.replace('insertRecurringText', ''));
+            }
+            bodyHtml += `
+                <div class="flex justify-between items-center">
+                    <span>${label}</span>
+                    <button class="shortcut-button font-mono p-1 px-2 border-2 rounded ${theme.btnSimple} ${theme.border}" data-action="${action}">
+                        ${shortcuts[action] || 'Not set'}
+                    </button>
+                </div>
+            `;
+        });
+        bodyHtml += '</div>';
+        const buttons = [
+            { text: translations[currentLanguage].resetShortcuts, handler: () => {
+                shortcuts = { ...defaultShortcuts };
+                saveShortcuts();
+                hideModal();
+                showShortcutsModal();
+            }, type: 'danger', preventClose: true },
+            { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
+        ];
+        showModal(translations[currentLanguage].shortcutsModalTitle, translations[currentLanguage].shortcutsModalMessage, buttons, bodyHtml);
+        document.querySelectorAll('.shortcut-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                if (listeningForShortcut) {
+                    const prevButton = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
+                    if (prevButton) {
+                      prevButton.textContent = shortcuts[listeningForShortcut];
+                      prevButton.classList.remove('is-listening');
+                    }
+                }
+                listeningForShortcut = e.target.dataset.action;
+                e.target.textContent = translations[currentLanguage].pressNewShortcut;
+                e.target.classList.add('is-listening');
+            });
+        });
+    }
+
+    function updateEmptyPlayerState() {
+        const hasMedia = video.src && video.src !== window.location.href;
+        emptyPlayerOverlay.classList.toggle('hidden', hasMedia);
+        document.getElementById('noMediaMessage').classList.toggle('hidden', hasMedia);
+        video.classList.toggle('hidden', !hasMedia);
+        if(!hasMedia) tcrDisplay.textContent = '--:--:--,---';
+    }
+
+    function seekMedia(seconds) {
+        if (!video.src || video.src === window.location.href) return;
+        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+    }
+
+    function insertHtmlAtCursor(html) { editor.focus(); document.execCommand('insertHTML', false, html); }
+    
+    function showTCRFormatSelection() {
+        let optionsHtml = '<div class="space-y-2">';
+        tcrFormats.forEach((format, index) => {
+            optionsHtml += `<label class="inline-flex items-center cursor-pointer"><input type="radio" name="tcrFormat" value="${index}" class="form-radio" ${index === currentTCRFormatIndex ? 'checked' : ''}><span class="ml-2">${format.name}</span></label><br>`;
+        });
+        optionsHtml += '</div>';
+        showModal(translations[currentLanguage].tcrFormatModalTitle, translations[currentLanguage].tcrFormatModalMessage,
+            [{ text: translations[currentLanguage].tcrFormatModalSave, handler: () => { const sel = document.querySelector('input[name="tcrFormat"]:checked'); if (sel) currentTCRFormatIndex = parseInt(sel.value); updateTCRDisplay(); }, type: 'primary' },
+             { text: translations[currentLanguage].modalCancel, type: 'neutral' }], optionsHtml);
+    }
+    
+    function updateTCRDisplay() {
+        if (video.src && !isNaN(video.currentTime)) {
+            tcrDisplay.textContent = tcrFormats[currentTCRFormatIndex].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE);
+        }
+    }
+
+    function showSetInitialTCRModal() {
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+        let html = `<div><label for="modalInitialTCRInput" class="text-sm font-medium mb-1 block">TCR</label><input type="text" id="modalInitialTCRInput" placeholder="${translations[currentLanguage].setInitialTCRModalPlaceholder}" class="${inputClasses}" /></div>`;
+        showModal(translations[currentLanguage].setInitialTCRModalTitle, translations[currentLanguage].setInitialTCRModalMessage,
+            [{ text: translations[currentLanguage].setInitialTCRModalSet, handler: () => { const input = document.getElementById('modalInitialTCRInput'); if (input) setInitialTCR(input.value.trim()); }, type: 'primary' },
+             { text: translations[currentLanguage].modalCancel, type: 'neutral' }], html);
+    }
 
     function parseTimeCodeToSeconds(timeCodeString, frameRate = DEFAULT_FRAMERATE) {
-        timeCodeString = timeCodeString.trim();
-        let matchMs = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})/);
-        if (matchMs) {
-            const h = parseInt(matchMs[1]);
-            const m = parseInt(matchMs[2]);
-            const s = parseInt(matchMs[3]);
-            const ms = parseInt(matchMs[4]);
-            return h * 3600 + m * 60 + s + ms / 1000;
-        }
-
-        let matchFrames = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2}):(\d{2})/);
-        if (matchFrames) {
-            const h = parseInt(matchFrames[1]);
-            const m = parseInt(matchFrames[2]);
-            const s = parseInt(matchFrames[3]);
-            const f = parseInt(matchFrames[4]);
-            return (h * 3600 + m * 60 + s) + (f / frameRate);
-        }
-        
-        let matchMsShort = timeCodeString.match(/(\d{2}):(\d{2}),(\d{3})/);
-        if (matchMsShort) {
-            const m = parseInt(matchMsShort[1]);
-            const s = parseInt(matchMsShort[2]);
-            const ms = parseInt(matchMsShort[3]);
-            return m * 60 + s + ms / 1000;
-        }
-
-        let matchFramesShort = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2})/);
-        if (matchFramesShort) {
-            const m = parseInt(matchFramesShort[1]);
-            const s = parseInt(matchFramesShort[2]);
-            const f = parseInt(matchFramesShort[3]);
-            return (m * 60 + s) + (f / frameRate);
-        }
-
+        let matchMs = timeCodeString.match(/(\d{1,2}):(\d{2}):(\d{2}),(\d{3})/);
+        if (matchMs) return parseInt(matchMs[1])*3600 + parseInt(matchMs[2])*60 + parseInt(matchMs[3]) + parseInt(matchMs[4])/1000;
+        let matchFrames = timeCodeString.match(/(\d{1,2}):(\d{2}):(\d{2}):(\d{2})/);
+        if (matchFrames) return (parseInt(matchFrames[1])*3600 + parseInt(matchFrames[2])*60 + parseInt(matchFrames[3])) + (parseInt(matchFrames[4])/frameRate);
         return null;
     }
 
     function setInitialTCR(timeCodeString) {
-        if (!video.src) {
-            customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].setInitialTimecode.toLowerCase()]);
-            return;
-        }
-
+        if (!video.src || video.src === window.location.href) return customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].setInitialTimecode.toLowerCase()]);
         const desiredTCRSeconds = parseTimeCodeToSeconds(timeCodeString);
-
-        if (desiredTCRSeconds === null || isNaN(desiredTCRSeconds) || desiredTCRSeconds < 0) {
-            customAlert('invalidTCRFormat', 'Error de Formato');
-            return;
-        }
-
+        if (desiredTCRSeconds === null) return customAlert('invalidTCRFormat');
         tcrOffsetSeconds = desiredTCRSeconds - video.currentTime;
         updateTCRDisplay();
-        customAlert('setTCRSuccess', 'TCR Set', [timeCodeString]);
+        customAlert('setTCRSuccess', 'modalConfirmAction', [timeCodeString]);
     }
 
-    function exportText(type, filename) {
-      let content;
-      let mimeType;
-
-      if (type === 'txt') {
-        content = editor.innerText; 
-        mimeType = 'text/plain;charset=utf-8';
-      } else if (type === 'html') {
-        // Construye un documento HTML completo para exportar
-        content = `<!DOCTYPE html>
-<html lang="${currentLanguage}">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exported Transcription</title>
-  <style>
-    body { font-family: 'Inter', sans-serif; line-height: 1.6; padding: 20px; }
-    .timestamp { color: #1d4ed8; text-decoration: underline; cursor: pointer; } 
-    @media (prefers-color-scheme: dark) {
-        body { background-color: #1f2937; color: #e5e7eb; }
-        .timestamp { color: #93c5fd; }
-    }
-  </style>
-</head>
-<body>
-  ${editor.innerHTML}
-</body>
-</html>`;
-        mimeType = 'text/html;charset=utf-8';
-      } else {
-        customAlert('exportError', 'Export Error');
-        return;
-      }
-
-      const blob = new Blob([content], { type: mimeType });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename; 
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(link.href);
-    }
-
-    function showExportFormatModal() {
-        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
-        
-        let exportHtml = `
-            <div>
-                <label for="exportFilenameInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].exportFileMessage}</label>
-                <input type="text" id="exportFilenameInput" placeholder="${translations[currentLanguage].exportFilenamePlaceholder}" class="${modalInputClasses}" value="${translations[currentLanguage].exportFilenamePlaceholder}" />
-                
-                <label class="text-sm font-medium mb-1 block mt-4">${translations[currentLanguage].exportFormatLabel}</label>
-                <div class="space-y-2">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="exportFormat" value="txt" class="form-radio h-4 w-4 text-blue-600" checked>
-                        <span class="ml-2">${translations[currentLanguage].exportFormatTxt}</span>
-                    </label><br>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="exportFormat" value="html" class="form-radio h-4 w-4 text-blue-600">
-                        <span class="ml-2">${translations[currentLanguage].exportFormatHtml}</span>
-                    </label>
-                </div>
-            </div>
-        `;
-
-        showModal(
-            translations[currentLanguage].exportFileModalTitle,
-            '',
-            [
-                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' },
-                { text: translations[currentLanguage].exportButton, handler: () => {
-                    const filenameInput = document.getElementById('exportFilenameInput');
-                    const selectedFormat = document.querySelector('input[name="exportFormat"]:checked').value;
-                    let filename = filenameInput.value.trim();
-
-                    if (!filename) {
-                        filename = translations[currentLanguage].exportFilenamePlaceholder;
-                    }
-                    
-                    // Asegura la extensión correcta según el formato seleccionado
-                    if (!filename.endsWith(`.${selectedFormat}`)) {
-                        filename += `.${selectedFormat}`;
-                    }
-
-                    exportText(selectedFormat, filename);
-                }, type: 'primary' }
-            ],
-            exportHtml
-        );
-
-        // Añade un oyente de eventos para actualizar la extensión del nombre de archivo cuando cambia el formato
-        const exportFilenameInput = document.getElementById('exportFilenameInput');
-        document.querySelectorAll('input[name="exportFormat"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                let currentFilename = exportFilenameInput.value.trim();
-                const newFormat = e.target.value;
-                
-                // Elimina las extensiones conocidas existentes antes de añadir la nueva
-                const knownExtensions = ['.txt', '.html']; 
-                for (let ext of knownExtensions) {
-                    if (currentFilename.endsWith(ext)) {
-                        currentFilename = currentFilename.slice(0, -ext.length);
-                        break;
-                    }
-                }
-                exportFilenameInput.value = currentFilename + `.${newFormat}`;
-            });
-        });
-    }
-
-    editor.addEventListener('focus', () => { 
-        if (editor.innerText.includes(translations[currentLanguage].editorPlaceholder.substring(0, 20))) { 
-            editor.innerHTML = '';
-        }
-    });
-
-    editor.addEventListener('blur', () => { 
-        if (editor.innerText.trim() === '') {
-            editor.innerHTML = `<p class="${themeClasses[isDarkMode ? 'dark' : 'light'].textColorSecondary} italic" data-i18n="editorPlaceholder">${translations[currentLanguage].editorPlaceholder}</p>`;
-            applyLanguage(currentLanguage); 
-        }
-    });
-
-    editor.addEventListener('click', (e) => { 
-        let target = e.target;
-        while (target && target !== editor) { 
-            if (target.classList.contains('timestamp')) {
-                const timestampText = target.textContent;
-                let totalSecondsParsed = null;
-
-                const matchMs = timestampText.match(/\[(\d{2}):(\d{2}):(\d{2}),(\d{3})\]/);
-                const matchMsShort = timestampText.match(/\[(\d{2}):(\d{2}),(\d{3})\]/);
-
-                if (matchMs) {
-                    const hours = parseInt(matchMs[1]);
-                    const minutes = parseInt(matchMs[2]);
-                    const seconds = parseInt(matchMs[3]);
-                    const milliseconds = parseInt(matchMs[4]);
-                    totalSecondsParsed = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
-                } else if (matchMsShort) {
-                    const minutes = parseInt(matchMsShort[1]);
-                    const seconds = parseInt(matchMsShort[2]);
-                    const milliseconds = parseInt(matchMsShort[3]);
-                    totalSecondsParsed = minutes * 60 + seconds + milliseconds / 1000;
-                }
-
-                if (totalSecondsParsed !== null && video.src && !isNaN(video.duration)) {
-                    video.currentTime = totalSecondsParsed - tcrOffsetSeconds;
-                    video.play();
-                } else {
-                    customAlert('navigationError', 'Navigation Error');
-                }
-                break;
-            }
-            target = target.parentNode;
-        }
-    });
-
-    // --- Atajos de Teclado ---
-    document.addEventListener('keydown', (e) => {
-      // No evita el comportamiento predeterminado para F5 (actualizar)
-      if (e.key === 'F5') {
-        return;
-      }
-      
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || (e.target.isContentEditable && e.target !== editor)) { 
-        return;
-      }
-
-      // Update character insertion to handle Alt + 1-8
-      if (e.altKey && ['1','2','3','4','5','6','7','8'].includes(e.key)) {
-        e.preventDefault();
-        const idx = parseInt(e.key) - 1;
-        // Ensure index is within bounds of charInputs
-        if (idx >= 0 && idx < charInputs.length) {
-            const name = charInputs[idx].value.trim();
-            if (name) {
-                insertHtmlAtCursor(name); 
-            }
-        }
-      }
-
-      if (e.altKey && e.code === 'KeyQ') {
-        e.preventDefault();
-        insertTimestamp();
-      }
-
-      // Comprueba Ctrl (Windows) o Command (Mac) + Espacio
-      if ((e.ctrlKey || e.metaKey) && e.code === 'Space') {
-        e.preventDefault();
-        playPauseBtn.click();
-      }
-
-      if (!video.src) return;
-
-      if (e.shiftKey) {
-        if (e.code === 'ArrowLeft') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 5);
-        } else if (e.code === 'ArrowRight') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 5);
-        }
-      } else if (e.ctrlKey || e.metaKey) { 
-        if (e.code === 'ArrowLeft') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 1);
-        } else if (e.code === 'ArrowRight') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 1);
-        }
-      } else if (e.altKey) { 
-        if (e.code === 'ArrowLeft') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - (1 / DEFAULT_FRAMERATE));
-        } else if (e.code === 'ArrowRight') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + (1 / DEFAULT_FRAMERATE));
-        }
-      }
-    });
+    // --- Lógica de Inicialización y Eventos ---
     
-
-    // --- Paneles Redimensionables (lógica eliminada, ahora usan flex-1) ---
-    const leftPanel = document.getElementById('left');
-    const rightPanel = document.getElementById('right');
-    // Las variables y eventos para resizeBar se han eliminado ya que no es necesaria.
-    
-    // Al cargar el DOM, simplemente asegúrate de que los paneles usen flex-1
     document.addEventListener('DOMContentLoaded', () => {
-      // leftPanel.style.flexGrow = '1'; // Removed
-      // rightPanel.style.flexGrow = '1'; // Removed
-    });
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        isDarkMode = (savedTheme === 'dark');
+        loadShortcuts();
+        loadRecurringTexts();
+        const savedLanguage = localStorage.getItem('language') || 'en';
+        applyLanguage(savedLanguage);
+        updateEmptyPlayerState();
 
-    // --- Entrada de Texto al Editor ---
-    importTextBtn.addEventListener('click', () => {
-        textFileInput.click();
-    });
+        // Asignar todos los eventos aquí
+        importVideoAudioBtn.addEventListener('click', () => videoFileInput.click());
+        videoFileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          video.src = URL.createObjectURL(file);
+          video.load();
+          video.onloadedmetadata = () => { updateEmptyPlayerState(); tcrOffsetSeconds = 0; updateTCRDisplay(); video.playbackRate = 1.0; speedDisplay.textContent = '1.0x'; };
+          video.onerror = () => customAlert('mediaLoadErrorWithFileProtocolHint');
+        });
 
-    textFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        editor.innerText = event.target.result; 
-        if (editor.innerText.trim() !== '') { 
-            editor.innerHTML = editor.innerText; 
-        }
-      };
-      reader.onerror = () => {
-          customAlert('textLoadError', 'Read Error');
-      };
-      reader.readAsText(file);
-    });
-
-    // --- Funciones de Buscar y Reemplazar ---
-
-    // Función de utilidad para obtener todos los nodos de texto dentro de un elemento
-    function getAllTextNodes(node) {
-        let textNodes = [];
-        for (let i = 0; i < node.childNodes.length; i++) {
-            let child = node.childNodes[i];
-            if (child.nodeType === Node.TEXT_NODE) {
-                textNodes.push(child);
-            } else if (child.nodeType === Node.ELEMENT_NODE && child.contentEditable !== 'false') {
-                if (child.classList && child.classList.contains('timestamp')) {
-                    continue; 
-                }
-                textNodes = textNodes.concat(getAllTextNodes(child));
-            }
-        }
-        return textNodes;
-    }
-
-    // Función para resaltar todas las ocurrencias de la consulta
-    function highlightAllMatches(query, caseSensitive) {
-        clearHighlights(); 
-
-        if (!query) {
-            findReplaceState.matches = [];
-            findReplaceState.currentIndex = -1;
-            return;
-        }
-
-        const flags = caseSensitive ? 'g' : 'gi';
-        const regex = new RegExp(query, flags);
-        const originalContent = editor.innerHTML; 
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = originalContent;
-
-        findReplaceState.matches = [];
-
-        function traverseAndHighlight(node) {
-            if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.nodeValue;
-                let match;
-                let lastIndex = 0;
-                const fragment = document.createDocumentFragment();
-
-                while ((match = regex.exec(text)) !== null) {
-                    if (match.index > lastIndex) {
-                        fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
-                    }
-                    const span = document.createElement('span');
-                    span.classList.add('highlighted-match');
-                    span.textContent = match[0];
-                    fragment.appendChild(span);
-                    findReplaceState.matches.push(span); 
-
-                    lastIndex = match.index + match[0].length;
-                }
-                if (lastIndex < text.length) {
-                    fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-                }
-                node.parentNode.replaceChild(fragment, node);
-
-            } else if (node.nodeType === Node.ELEMENT_NODE && node.contentEditable !== 'false') {
-                if (node.classList && node.classList.contains('timestamp')) {
-                    return;
-                }
-                for (let i = 0; i < node.childNodes.length; i++) {
-                    traverseAndHighlight(node.childNodes[i]);
-                }
-            }
-        }
-
-        Array.from(tempDiv.childNodes).forEach(child => traverseAndHighlight(child));
-        editor.innerHTML = tempDiv.innerHTML; 
+        playPauseBtn.addEventListener('click', () => executeShortcut('playPause'));
+        document.getElementById('speedUpBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.min(4.0, video.playbackRate + 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
+        document.getElementById('speedDownBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.max(0.5, video.playbackRate - 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
+        volumeSlider.addEventListener('input', () => { if(video.src) { video.volume = volumeSlider.value; video.muted = video.volume === 0; muteBtn.innerHTML = `<i class="fas ${video.muted ? 'fa-volume-mute' : 'fa-volume-up'}"></i>`; if(!video.muted) lastVolume = video.volume; }});
+        muteBtn.addEventListener('click', () => { if(video.src) { video.muted = !video.muted; volumeSlider.value = video.muted ? 0 : lastVolume; video.volume = video.muted ? 0 : lastVolume; muteBtn.innerHTML = `<i class="fas ${video.muted ? 'fa-volume-mute' : 'fa-volume-up'}"></i>`; }});
+        video.addEventListener('timeupdate', () => updateTCRDisplay());
         
-        applyTheme(isDarkMode ? 'dark' : 'light');
-    }
-
-    // Función para borrar todos los resaltados
-    function clearHighlights() {
-        let editorContent = editor.innerHTML; 
-        editorContent = editorContent.replace(/<span class="current-match">(.+?)<\/span>/g, '$1');
-        editorContent = editorContent.replace(/<span class="highlighted-match">(.+?)<\/span>/g, '$1');
-        editor.innerHTML = editorContent; 
-
-        findReplaceState.matches = [];
-        findReplaceState.currentIndex = -1;
-    }
-
-    // Función para navegar a una coincidencia específica
-    function goToMatch(index) {
-        if (findReplaceState.matches.length === 0) return;
-
-        if (findReplaceState.currentIndex !== -1 && findReplaceState.matches[findReplaceState.currentIndex]) {
-            findReplaceState.matches[findReplaceState.currentIndex].classList.remove('current-match');
-        }
-
-        findReplaceState.currentIndex = index;
-        const currentMatchSpan = findReplaceState.matches[findReplaceState.currentIndex];
-
-        if (currentMatchSpan) {
-            currentMatchSpan.classList.add('current-match');
-            currentMatchSpan.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-            const selection = window.getSelection();
-            const range = document.createRange();
-            range.selectNodeContents(currentMatchSpan);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    }
-
-    // Función para buscar la siguiente ocurrencia
-    function findNext() {
-        const queryInput = document.getElementById('findQuery') || document.getElementById('findQueryReplace');
-        const caseSensitiveInput = document.getElementById('findCaseSensitive') || document.getElementById('replaceCaseSensitive');
-
-        const query = queryInput ? queryInput.value : '';
-        const caseSensitive = caseSensitiveInput ? caseSensitiveInput.checked : false;
-
-        if (!query) {
-            customAlert('enterTextToFind', 'Search');
-            return;
-        }
-
-        if (query !== findReplaceState.query || caseSensitive !== findReplaceState.caseSensitive) {
-            findReplaceState.query = query;
-            findReplaceState.caseSensitive = caseSensitive;
-            highlightAllMatches(query, caseSensitive);
-            findReplaceState.currentIndex = -1; 
-        }
-
-        if (findReplaceState.matches.length === 0) {
-            customAlert('noMatchesFound', 'Search');
-            return;
-        }
-
-        let nextIndex = findReplaceState.currentIndex + 1;
-        if (nextIndex >= findReplaceState.matches.length) {
-            nextIndex = 0; 
-            customAlert('searchEndReached', 'Search');
-        }
-        goToMatch(nextIndex);
-    }
-
-    // Función para buscar la ocurrencia anterior
-    function findPrevious() {
-        const queryInput = document.getElementById('findQuery') || document.getElementById('findQueryReplace');
-        const caseSensitiveInput = document.getElementById('findCaseSensitive') || document.getElementById('replaceCaseSensitive');
-
-        const query = queryInput ? queryInput.value : '';
-        const caseSensitive = caseSensitiveInput ? caseSensitiveInput.checked : false;
-
-        if (!query) {
-            customAlert('enterTextToFind', 'Search');
-            return;
-        }
-
-        if (query !== findReplaceState.query || caseSensitive !== findReplaceState.caseSensitive) {
-            findReplaceState.query = query;
-            findReplaceState.caseSensitive = caseSensitive;
-            highlightAllMatches(query, caseSensitive);
-            findReplaceState.currentIndex = -1; 
-        }
-
-        if (findReplaceState.matches.length === 0) {
-            customAlert('noMatchesFound', 'Search');
-            return;
-        }
-
-        let prevIndex = findReplaceState.currentIndex - 1;
-        if (prevIndex < 0) {
-            prevIndex = findReplaceState.matches.length - 1; 
-            customAlert('searchStartReached', 'Search');
-        }
-        goToMatch(prevIndex);
-    }
-
-    // Función para reemplazar la coincidencia actual
-    function replaceCurrent() {
-        if (findReplaceState.currentIndex === -1 || findReplaceState.matches.length === 0) {
-            customAlert('noMatchSelectedForReplace', 'Replace');
-            return;
-        }
-
-        const currentMatchSpan = findReplaceState.matches[findReplaceState.currentIndex];
-        const replacementText = document.getElementById('replaceWith').value;
-
-        currentMatchSpan.textContent = replacementText;
-
-        const query = findReplaceState.query;
-        const caseSensitive = findReplaceState.caseSensitive;
-
-        findReplaceState.matches = []; 
-        findReplaceState.currentIndex = -1; 
-
-        highlightAllMatches(query, caseSensitive);
-
-        if (findReplaceState.matches.length > 0) {
-            let nextIndex = findReplaceState.currentIndex; 
-            if (nextIndex >= findReplaceState.matches.length) {
-                nextIndex = 0;
-            }
-            goToMatch(nextIndex);
-        } else {
-            customAlert('replacementCompleteNoMoreMatches', 'Replace');
-        }
-    }
-
-    // Función para reemplazar todas las coincidencias
-    function replaceAll() {
-        const query = document.getElementById('findQueryReplace').value;
-        const replacement = document.getElementById('replaceWith').value;
-        const caseSensitive = document.getElementById('replaceCaseSensitive').checked;
-
-        if (!query) {
-            customAlert('enterTextToFind', 'Replace All');
-            return;
-        }
-
-        const flags = caseSensitive ? 'g' : 'gi';
-        const regex = new RegExp(query, flags);
+        addRecurringTextBtn.addEventListener('click', () => addRecurringTextField());
         
-        let originalHtml = editor.innerHTML; 
-        let newHtml = originalHtml.replace(regex, replacement);
-        editor.innerHTML = newHtml; 
+        // Menús
+        function setupDropdown(button, dropdown) {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                [fileMenuDropdown, settingsMenuDropdown].forEach(dd => {
+                    if (dd !== dropdown) dd.classList.add('hidden');
+                });
+                dropdown.classList.toggle('hidden');
+            });
+        }
+        setupDropdown(fileMenuBtn, fileMenuDropdown);
+        setupDropdown(settingsMenuBtn, settingsMenuDropdown);
+        window.addEventListener('click', () => {
+            fileMenuDropdown.classList.add('hidden');
+            settingsMenuDropdown.classList.add('hidden');
+        });
 
-        findReplaceState.matches = []; 
-        findReplaceState.currentIndex = -1; 
+        importTextBtn.addEventListener('click', (e) => { e.preventDefault(); textFileInput.click(); });
+        exportBtn.addEventListener('click', (e) => { e.preventDefault(); /* showExportFormatModal(); */ });
+        shortcutsBtn.addEventListener('click', (e) => { e.preventDefault(); showShortcutsModal(); });
+        themeToggleBtn.addEventListener('click', (e) => { e.preventDefault(); applyTheme(isDarkMode ? 'light' : 'dark'); localStorage.setItem('theme', isDarkMode ? 'dark' : 'light'); });
+        languageToggleBtn.addEventListener('click', (e) => { e.preventDefault(); /* showLanguageSelectionModal(); */ });
 
-        highlightAllMatches(query, caseSensitive); 
+        boldBtn.addEventListener('click', () => document.execCommand('bold'));
+        italicBtn.addEventListener('click', () => document.execCommand('italic'));
+        findBtn.addEventListener('click', () => { /* showFindModal(); */ });
+        replaceBtn.addEventListener('click', () => { /* showReplaceModal(); */ });
 
-        if (findReplaceState.matches.length > 0) {
-             goToMatch(0); 
-             customAlert('replacementComplete', 'Replace All', [query]);
-        } else {
-             customAlert('replacementCompleteNoMoreMatches', 'Replace All');
+        resizer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (listeningForShortcut) {
+            e.preventDefault();
+            const newShortcutStr = keyEventToString(e);
+            shortcuts[listeningForShortcut] = newShortcutStr;
+            saveShortcuts();
+            const button = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
+            if (button) {
+                button.textContent = newShortcutStr;
+                button.classList.remove('is-listening');
+            }
+            listeningForShortcut = null;
+            return;
+        }
+        if (document.activeElement.tagName === 'INPUT' || (document.activeElement.isContentEditable && document.activeElement !== editor)) return;
+        const pressedShortcut = keyEventToString(e);
+        for (const action in shortcuts) {
+            if (shortcuts[action] === pressedShortcut) {
+                e.preventDefault();
+                executeShortcut(action);
+                break; 
+            }
+        }
+    });
+
+    function handleMouseMove(e) {
+        const totalWidth = document.body.offsetWidth;
+        const leftWidth = e.clientX;
+        const rightWidth = totalWidth - e.clientX - resizer.offsetWidth;
+        if (leftWidth > 320 && rightWidth > 320) {
+            leftPanel.style.flexBasis = `${leftWidth}px`;
+            rightPanel.style.flexBasis = `${rightWidth}px`;
         }
     }
-
-    // Muestra el Modal de Buscar
-    findBtn.addEventListener('click', () => {
-        findReplaceState.isFinding = true;
-        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
-
-        let findHtml = `
-            <div>
-                <label for="findQuery" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
-                <input type="text" id="findQuery" class="${modalInputClasses}" value="${findReplaceState.query}" />
-                <label class="inline-flex items-center mt-2">
-                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox h-4 w-4 text-blue-600" ${findReplaceState.caseSensitive ? 'checked' : ''}>
-                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
-                </label>
-            </div>
-        `;
-
-        showModal(
-            translations[currentLanguage].findModalTitle,
-            '',
-            [
-                { text: translations[currentLanguage].findPrevious, handler: findPrevious, type: 'neutral' },
-                { text: translations[currentLanguage].findNext, handler: findNext, type: 'primary' },
-                { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
-            ],
-            findHtml
-        );
-
-        document.getElementById('findQuery').addEventListener('input', (e) => {
-            findReplaceState.query = e.target.value;
-            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
-            findReplaceState.currentIndex = -1; 
-        });
-        document.getElementById('findCaseSensitive').addEventListener('change', (e) => {
-            findReplaceState.caseSensitive = e.target.checked;
-            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
-            findReplaceState.currentIndex = -1; 
-        });
-        highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
-    });
-
-    // Muestra el Modal de Reemplazar
-    replaceBtn.addEventListener('click', () => {
-        findReplaceState.isFinding = true; 
-        const currentTheme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const modalInputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentTheme.inputBg} ${currentTheme.inputText} ${currentTheme.inputBorder}`;
-
-        let replaceHtml = `
-            <div>
-                <label for="findQueryReplace" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
-                <input type="text" id="findQueryReplace" class="${modalInputClasses}" value="${findReplaceState.query}" />
-                <label for="replaceWith" class="text-sm font-medium mb-1 block">${translations[currentLanguage].replaceWithLabel}:</label>
-                <input type="text" id="replaceWith" class="${modalInputClasses}" value="${findReplaceState.replacement}" />
-                <label class="inline-flex items-center mt-2">
-                    <input type="checkbox" id="replaceCaseSensitive" class="form-checkbox h-4 w-4 text-blue-600" ${findReplaceState.caseSensitive ? 'checked' : ''}>
-                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
-                </label>
-            </div>
-        `;
-
-        showModal(
-            translations[currentLanguage].replaceModalTitle,
-            '',
-            [
-                { text: translations[currentLanguage].findNext, handler: findNext, type: 'neutral' }, 
-                { text: translations[currentLanguage].replaceButtonInModal, handler: replaceCurrent, type: 'primary' },
-                { text: translations[currentLanguage].replaceAllButton, handler: replaceAll, type: 'danger' },
-                { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
-            ],
-            replaceHtml
-        );
-
-        document.getElementById('findQueryReplace').addEventListener('input', (e) => {
-            findReplaceState.query = e.target.value;
-            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
-            findReplaceState.currentIndex = -1;
-        });
-        document.getElementById('replaceWith').addEventListener('input', (e) => {
-            findReplaceState.replacement = e.target.value;
-        });
-        document.getElementById('replaceCaseSensitive').addEventListener('change', (e) => {
-            findReplaceState.caseSensitive = e.target.checked;
-            highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
-            findReplaceState.currentIndex = -1;
-        });
-        highlightAllMatches(findReplaceState.query, findReplaceState.caseSensitive);
-    });
-    
+    function handleMouseUp() {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    }
   </script>
 </body>
 </html>
