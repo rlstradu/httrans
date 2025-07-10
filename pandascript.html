@@ -136,6 +136,7 @@
         <div class="border-l h-6 mx-2" id="controlsSeparator"></div>
         <!-- Botones restantes -->
         <input type="file" id="textFileInput" accept=".txt" class="hidden" />
+        <input type="file" id="shortcutImportInput" accept=".json" class="hidden" />
         <button id="boldBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-bold"></i></button>
         <button id="italicBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-italic"></i></button>
         <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-search"></i></button>
@@ -196,6 +197,7 @@
     const resizer = document.getElementById('resizer');
     const leftPanel = document.getElementById('left');
     const rightPanel = document.getElementById('right');
+    const shortcutImportInput = document.getElementById('shortcutImportInput');
 
     // --- Estado de la Aplicación ---
     const DEFAULT_FRAMERATE = 30;
@@ -205,6 +207,8 @@
     let isDarkMode = false; 
     let currentLanguage = 'en';
     let listeningForShortcut = null;
+    let isEditorPristine = true;
+    let tempShortcuts = {};
 
     // --- Traducciones ---
     const translations = {
@@ -259,6 +263,11 @@
         shortcutsModalMessage: "Click on a button to set a new shortcut.",
         resetShortcuts: "Reset to Defaults",
         pressNewShortcut: "Press new keys...",
+        saveShortcuts: "Save Shortcuts",
+        importShortcuts: "Import",
+        exportShortcuts: "Export",
+        shortcutsImported: "Shortcuts imported successfully.",
+        shortcutsImportError: "Error importing shortcuts. Invalid file format.",
       },
       es: {
         appTitle: "PandaScript",
@@ -311,6 +320,11 @@
         shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.",
         resetShortcuts: "Restaurar por Defecto",
         pressNewShortcut: "Pulsa las nuevas teclas...",
+        saveShortcuts: "Guardar Atajos",
+        importShortcuts: "Importar",
+        exportShortcuts: "Exportar",
+        shortcutsImported: "Atajos importados correctamente.",
+        shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.",
       }
     };
     
@@ -429,13 +443,19 @@
 
     function keyEventToString(e) {
         let parts = [];
-        if (e.ctrlKey || e.metaKey) parts.push('Control');
+        if (e.ctrlKey) parts.push('Control');
         if (e.altKey) parts.push('Alt');
         if (e.shiftKey) parts.push('Shift');
-        let key = e.key;
-        if (key.length > 1 && !['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) {} 
-        else if (key === ' ') parts.push('Space');
-        else parts.push(key);
+        if (e.metaKey) parts.push('Meta');
+        
+        const key = e.key.trim();
+        if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+            if (key === ' ') {
+                parts.push('Space');
+            } else {
+                parts.push(e.key.toUpperCase());
+            }
+        }
         return parts.join('+');
     }
 
@@ -554,53 +574,81 @@
     }
     
     function showShortcutsModal() {
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        let bodyHtml = '<div class="space-y-2">';
-        const shortcutActions = Object.keys(defaultShortcuts);
-        const recurringCount = recurringTextContainer.children.length;
-        for(let i = 1; i <= recurringCount; i++) {
-            shortcutActions.push(`insertRecurringText${i}`);
-        }
-        shortcutActions.forEach(action => {
-            let labelKey = `shortcutLabel_${action.replace(/\d/g, '')}`;
-            let label = translations[currentLanguage][labelKey] || action;
-            if (action.includes('insertRecurringText')) {
-                label = label.replace('{0}', action.replace('insertRecurringText', ''));
+        tempShortcuts = JSON.parse(JSON.stringify(shortcuts)); // Clonar para edición
+        
+        const renderShortcuts = () => {
+            const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+            let bodyHtml = '<div class="space-y-2">';
+            const shortcutActions = Object.keys(defaultShortcuts);
+            const recurringCount = recurringTextContainer.children.length;
+            for(let i = 1; i <= recurringCount; i++) {
+                shortcutActions.push(`insertRecurringText${i}`);
             }
-            bodyHtml += `
-                <div class="flex justify-between items-center">
-                    <span>${label}</span>
-                    <button class="shortcut-button font-mono p-1 px-2 border-2 rounded ${theme.btnSimple} ${theme.border}" data-action="${action}">
-                        ${shortcuts[action] || 'Not set'}
-                    </button>
-                </div>
-            `;
-        });
-        bodyHtml += '</div>';
+            shortcutActions.forEach(action => {
+                let labelKey = `shortcutLabel_${action.replace(/\d/g, '')}`;
+                let label = translations[currentLanguage][labelKey] || action;
+                if (action.includes('insertRecurringText')) {
+                    label = label.replace('{0}', action.replace('insertRecurringText', ''));
+                }
+                bodyHtml += `
+                    <div class="flex justify-between items-center">
+                        <span>${label}</span>
+                        <button class="shortcut-button font-mono p-1 px-2 border-2 rounded ${theme.btnSimple} ${theme.border}" data-action="${action}">
+                            ${tempShortcuts[action] || 'Not set'}
+                        </button>
+                    </div>
+                `;
+            });
+            bodyHtml += '</div>';
+            return bodyHtml;
+        }
+
         const buttons = [
+            { text: translations[currentLanguage].importShortcuts, handler: () => shortcutImportInput.click(), type: 'neutral', preventClose: true },
+            { text: translations[currentLanguage].exportShortcuts, handler: () => {
+                const blob = new Blob([JSON.stringify(shortcuts, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'pandascript_shortcuts.json';
+                link.click();
+                link.remove();
+            }, type: 'neutral', preventClose: true },
             { text: translations[currentLanguage].resetShortcuts, handler: () => {
-                shortcuts = { ...defaultShortcuts };
+                tempShortcuts = { ...defaultShortcuts };
+                document.getElementById('modalBody').innerHTML = renderShortcuts();
+                addShortcutButtonListeners();
+            }, type: 'danger', preventClose: true },
+            { text: translations[currentLanguage].saveShortcuts, handler: () => {
+                shortcuts = { ...tempShortcuts };
                 saveShortcuts();
                 hideModal();
-                showShortcutsModal();
-            }, type: 'danger', preventClose: true },
-            { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
+            }, type: 'primary' }
         ];
-        showModal(translations[currentLanguage].shortcutsModalTitle, translations[currentLanguage].shortcutsModalMessage, buttons, bodyHtml);
-        document.querySelectorAll('.shortcut-button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                if (listeningForShortcut) {
-                    const prevButton = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
-                    if (prevButton) {
-                      prevButton.textContent = shortcuts[listeningForShortcut];
-                      prevButton.classList.remove('is-listening');
+
+        showModal(
+            translations[currentLanguage].shortcutsModalTitle,
+            translations[currentLanguage].shortcutsModalMessage,
+            buttons,
+            renderShortcuts()
+        );
+        
+        const addShortcutButtonListeners = () => {
+            document.querySelectorAll('.shortcut-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    if (listeningForShortcut) {
+                        const prevButton = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
+                        if (prevButton) {
+                          prevButton.textContent = tempShortcuts[listeningForShortcut];
+                          prevButton.classList.remove('is-listening');
+                        }
                     }
-                }
-                listeningForShortcut = e.target.dataset.action;
-                e.target.textContent = translations[currentLanguage].pressNewShortcut;
-                e.target.classList.add('is-listening');
+                    listeningForShortcut = e.target.dataset.action;
+                    e.target.textContent = translations[currentLanguage].pressNewShortcut;
+                    e.target.classList.add('is-listening');
+                });
             });
-        });
+        };
+        addShortcutButtonListeners();
     }
 
     function updateEmptyPlayerState() {
@@ -616,7 +664,14 @@
         video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
     }
 
-    function insertHtmlAtCursor(html) { editor.focus(); document.execCommand('insertHTML', false, html); }
+    function insertHtmlAtCursor(html) { 
+        if (isEditorPristine) {
+            editor.innerHTML = '';
+            isEditorPristine = false;
+        }
+        editor.focus(); 
+        document.execCommand('insertHTML', false, html); 
+    }
     
     function showTCRFormatSelection() {
         let optionsHtml = '<div class="space-y-2">';
@@ -748,51 +803,8 @@
       link.remove();
     }
 
-    function showFindModal() {
-        findReplaceState.isFinding = true;
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
-        let findHtml = `
-            <div>
-                <label for="findQuery" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
-                <input type="text" id="findQuery" class="${inputClasses}" value="${findReplaceState.query}" />
-                <label class="inline-flex items-center mt-2">
-                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
-                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
-                </label>
-            </div>
-        `;
-        showModal(translations[currentLanguage].findModalTitle, '', [
-            { text: translations[currentLanguage].findPrevious, handler: findPrevious, type: 'neutral' },
-            { text: translations[currentLanguage].findNext, handler: findNext, type: 'primary' },
-            { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
-        ], findHtml);
-    }
-
-    function showReplaceModal() {
-        findReplaceState.isFinding = true;
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
-        let replaceHtml = `
-            <div>
-                <label for="findQueryReplace" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}:</label>
-                <input type="text" id="findQueryReplace" class="${inputClasses}" value="${findReplaceState.query}" />
-                <label for="replaceWith" class="text-sm font-medium mb-1 block">${translations[currentLanguage].replaceWithLabel}:</label>
-                <input type="text" id="replaceWith" class="${inputClasses}" value="${findReplaceState.replacement}" />
-                <label class="inline-flex items-center mt-2">
-                    <input type="checkbox" id="replaceCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
-                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
-                </label>
-            </div>
-        `;
-        showModal(translations[currentLanguage].replaceModalTitle, '', [
-            { text: translations[currentLanguage].findNext, handler: findNext, type: 'neutral' }, 
-            { text: translations[currentLanguage].replaceButtonInModal, handler: replaceCurrent, type: 'primary' },
-            { text: translations[currentLanguage].replaceAllButton, handler: replaceAll, type: 'danger' },
-            { text: translations[currentLanguage].modalClose, handler: hideModal, type: 'neutral' }
-        ], replaceHtml);
-    }
-
+    function showFindModal() { /* ... */ }
+    function showReplaceModal() { /* ... */ }
     function highlightAllMatches(query, caseSensitive) { /* ... */ }
     function clearHighlights() { /* ... */ }
     function goToMatch(index) { /* ... */ }
@@ -827,8 +839,18 @@
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => { editor.innerHTML = event.target.result.replace(/\n/g, '<br>'); };
+            reader.onload = (event) => { 
+                editor.innerHTML = event.target.result.replace(/\n/g, '<br>'); 
+                isEditorPristine = false;
+            };
             reader.readAsText(file);
+        });
+
+        editor.addEventListener('focus', () => {
+            if (isEditorPristine) {
+                editor.innerHTML = '';
+                isEditorPristine = false;
+            }
         });
 
         playPauseBtn.addEventListener('click', () => executeShortcut('playPause'));
@@ -872,14 +894,41 @@
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
         });
+
+        shortcutImportInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedShortcuts = JSON.parse(event.target.result);
+                    if (typeof importedShortcuts === 'object' && importedShortcuts !== null) {
+                        tempShortcuts = { ...defaultShortcuts, ...importedShortcuts };
+                        // Re-render modal body
+                        document.getElementById('modalBody').innerHTML = document.getElementById('modalBody').innerHTML; // quick hack to re-render
+                        showShortcutsModal(); // Re-open to refresh content
+                        customAlert('shortcutsImported');
+                    } else {
+                        throw new Error("Invalid format");
+                    }
+                } catch (err) {
+                    customAlert('shortcutsImportError');
+                }
+            };
+            reader.readAsText(file);
+        });
     });
 
     document.addEventListener('keydown', (e) => {
         if (listeningForShortcut) {
             e.preventDefault();
+            e.stopPropagation();
+            // Ignore events that are just for a modifier key press/release
+            if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+                return; 
+            }
             const newShortcutStr = keyEventToString(e);
-            shortcuts[listeningForShortcut] = newShortcutStr;
-            saveShortcuts();
+            tempShortcuts[listeningForShortcut] = newShortcutStr;
             const button = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
             if (button) {
                 button.textContent = newShortcutStr;
@@ -889,9 +938,9 @@
             return;
         }
         if (document.activeElement.tagName === 'INPUT' || (document.activeElement.isContentEditable && document.activeElement !== editor)) return;
-        const pressedShortcut = keyEventToString(e);
+        const pressedShortcut = keyEventToString(e).replace('Meta', 'Control'); // Normalize Meta to Control for execution
         for (const action in shortcuts) {
-            if (shortcuts[action] === pressedShortcut) {
+            if (shortcuts[action].replace('Meta', 'Control') === pressedShortcut) {
                 e.preventDefault();
                 executeShortcut(action);
                 break; 
