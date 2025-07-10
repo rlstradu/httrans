@@ -1694,7 +1694,7 @@
             });
 
             const percentage = totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
-            segmentsProgress.textContent = `${translatedSegments}/${totalSegments} segments (${percentage}%)`;
+            segmentsProgress.textContent = `${translatedSegments} / ${totalSegments} segments (${percentage}%)`;
             wordsTranslated.textContent = `${totalWordsTranslated}`;
             wordsTotal.textContent = `${totalWordsOriginal}`;
             wordsRemaining.textContent = `${totalWordsOriginal - totalWordsTranslated}`;
