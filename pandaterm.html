@@ -537,7 +537,10 @@
         new_glossary_confirm_title: "Confirm New Glossary",
         new_glossary_confirm_text: "All current glossary data will be lost. If you don't want to lose it, click cancel and export it as a TBX file. Click confirm to create a new glossary from scratch.",
         confirm_button: "Confirm",
-        cancel_button: "Cancel"
+        cancel_button: "Cancel",
+        download_dialog_title: "Enter filename",
+        download_dialog_placeholder: "glossary",
+        save_button: "Save"
       },
       es: {
         title: "PandaTerm",
@@ -572,7 +575,10 @@
         new_glossary_confirm_title: "Confirmar nuevo glosario",
         new_glossary_confirm_text: "Se perderá toda la información del glosario actual. Si no quieres perderlo, haz clic en cancelar y expórtalo como archivo TBX. Haz clic en confirmar para crear un glosario nuevo desde cero.",
         confirm_button: "Confirmar",
-        cancel_button: "Cancelar"
+        cancel_button: "Cancelar",
+        download_dialog_title: "Introducir nombre de archivo",
+        download_dialog_placeholder: "glosario",
+        save_button: "Guardar"
       }
     };
 
@@ -785,13 +791,19 @@
         showMessageBox(translations[currentUILanguage]["Cannot download empty or unconfigured glossary."]);
         return;
       }
-      const blob = new Blob([generateTBX()], { type: "application/xml" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "glossary.tbx";
-      a.click();
-      URL.revokeObjectURL(url);
+
+      const title = translations[currentUILanguage]['download_dialog_title'];
+      const placeholder = translations[currentUILanguage]['download_dialog_placeholder'];
+
+      showInputDialog(title, '', placeholder, (filename) => {
+        const blob = new Blob([generateTBX()], { type: "application/xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename.endsWith('.tbx') ? filename : `${filename}.tbx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
     }
 
     function loadTBX() {
@@ -816,7 +828,6 @@
             const langCounts = {};
 
             for (let entry of entries) {
-              // Use getElementsByTagName with the correct casing for XML.
               const sets = entry.getElementsByTagName("LangSet");
               if (sets.length >= 2) {
                 const lang1 = sets[0].getAttribute("xml:lang");
@@ -939,6 +950,70 @@
       messageBox.appendChild(messageText);
       messageBox.appendChild(buttonContainer);
       document.body.appendChild(messageBox);
+    }
+
+    function showInputDialog(title, message, placeholder, onConfirm) {
+      const existingMessageBox = document.querySelector('.message-box');
+      if (existingMessageBox) {
+        existingMessageBox.remove();
+      }
+
+      const messageBox = document.createElement('div');
+      messageBox.className = 'message-box';
+
+      const titleEl = document.createElement('h3');
+      titleEl.textContent = title;
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = placeholder;
+      input.style.width = '100%';
+      input.style.padding = '10px';
+      input.style.boxSizing = 'border-box';
+      input.style.marginTop = '10px';
+      input.style.borderRadius = '8px';
+      input.style.border = '1px solid var(--input-border)';
+      input.style.backgroundColor = 'var(--card-background)';
+      input.style.color = 'var(--text-color)';
+
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'dialog-buttons';
+
+      const confirmButton = document.createElement('button');
+      confirmButton.textContent = translations[currentUILanguage]['save_button'] || 'Save';
+      confirmButton.className = 'btn-primary';
+      confirmButton.onclick = () => {
+        const filename = input.value.trim();
+        if (filename) {
+          onConfirm(filename);
+          document.body.removeChild(messageBox);
+        }
+      };
+
+      const cancelButton = document.createElement('button');
+      cancelButton.textContent = translations[currentUILanguage]['cancel_button'] || 'Cancel';
+      cancelButton.className = 'btn-secondary';
+      cancelButton.onclick = () => document.body.removeChild(messageBox);
+
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          confirmButton.click();
+        }
+      });
+
+      buttonContainer.appendChild(cancelButton);
+      buttonContainer.appendChild(confirmButton);
+
+      messageBox.appendChild(titleEl);
+      if (message) {
+          const messageText = document.createElement('p');
+          messageText.textContent = message;
+          messageBox.appendChild(messageText);
+      }
+      messageBox.appendChild(input);
+      messageBox.appendChild(buttonContainer);
+      document.body.appendChild(messageBox);
+      input.focus();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
