@@ -8,10 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- jsPDF CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- html2canvas CDN (for PDF export) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- pdfmake CDN (New PDF library) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js" xintegrity="sha512-w61kvDEdEh9PzJIZhJ4JStB3PAmDk3y3T1XJ3yVFx2geZ0l3KL/2SgVOQSlnoR22X/CChI93L2D8B3o2BI3LwA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js" xintegrity="sha512-nNkHPz+lD0W90LOsCRoAifUUbB+k8CDAmpAU03_vV3l93GzSjGe_n2mQAb2coH532xB43TvL1vZ2P2Wk/sYNLA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         /* Custom styles for Diffpanda */
         body {
@@ -40,22 +39,36 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* 4-column grid layout */
+        /* Grid layout for results */
         #diffOutput {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Four equal columns */
+            /* Start with 3 columns, comments column will expand */
+            grid-template-columns: repeat(3, 1fr) 0fr;
             gap: 1rem; font-size: 0.875rem; line-height: 1.5;
             max-height: 24rem; overflow-y: auto;
             white-space: pre-wrap; word-break: break-word;
+            transition: grid-template-columns 0.5s ease-in-out;
         }
+        /* When comments are active, expand the 4th column */
+        #diffOutput.comments-active {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
         #diffOutput > div {
             padding: 0.5rem; border-radius: 0.25rem;
             min-height: 2rem; word-break: break-word;
+            transition: opacity 0.5s ease-in-out, padding 0.5s ease-in-out;
         }
-        .diff-header {
-            font-weight: bold; color: #373737; border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 0.5rem; margin-bottom: 0.5rem;
+        .comment-column {
+            opacity: 0;
+            padding: 0 0.5rem; /* Maintain vertical padding when collapsed */
+            overflow: hidden;
         }
+        #diffOutput.comments-active .comment-column {
+            opacity: 1;
+            padding: 0.5rem;
+        }
+
         .comparison-cell { background-color: #f0f0f0; border: 1px dashed #ccc; }
         .comment-cell textarea {
             width: 100%; height: 100%; min-height: 40px;
@@ -96,7 +109,7 @@
         </div>
     </div>
 
-    <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-6xl"> <!-- Increased max-width for 4 columns -->
+    <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-6xl">
         <header class="flex flex-col items-center justify-center mb-8 relative">
             <div class="flex space-x-2 absolute top-0 right-0 mt-4 mr-4">
                 <button id="langEsBtn" class="font-bold py-2 px-4 rounded-lg transition-colors duration-200">ES</button>
@@ -121,15 +134,16 @@
             </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
             <button id="compareBtn" class="bg-[#ECA5E5] text-[#373737] font-bold py-3 px-6 rounded-lg shadow-md hover:bg-[#d494d4] transition-all" data-key="compareButton">Comparar textos</button>
+            <button id="toggleCommentsBtn" class="bg-blue-200 text-blue-800 font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-300 transition-all hidden" data-key="addCommentsButton">Añadir comentarios</button>
             <button id="exportHtmlBtn" class="bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-300 transition-all" data-key="exportHtmlButton">Exportar a HTML</button>
             <button id="exportPdfBtn" class="bg-red-200 text-red-800 font-bold py-3 px-6 rounded-lg shadow-md hover:bg-red-300 transition-all" data-key="exportPdfButton">Exportar a PDF</button>
         </div>
 
         <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
             <h2 class="text-2xl font-semibold text-[#373737] mb-4" data-key="resultsHeader">Resultados de la comparación:</h2>
-            <div id="diffOutput" class="whitespace-pre-wrap text-sm leading-relaxed max-h-96 overflow-y-auto">
+            <div id="diffOutput">
                 <p class="text-gray-500 col-span-4" data-key="initialMessage">Haz clic en "comparar textos" para ver las diferencias.</p>
             </div>
         </div>
@@ -140,6 +154,7 @@
         const text1El = document.getElementById('text1');
         const text2El = document.getElementById('text2');
         const compareBtn = document.getElementById('compareBtn');
+        const toggleCommentsBtn = document.getElementById('toggleCommentsBtn');
         const exportHtmlBtn = document.getElementById('exportHtmlBtn');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
         const diffOutputEl = document.getElementById('diffOutput');
@@ -156,6 +171,10 @@
         const saveExportBtn = document.getElementById('saveExportBtn');
         const cancelExportBtn = document.getElementById('cancelExportBtn');
 
+        // App state
+        let currentLang = 'es';
+        let commentsAreVisible = false;
+
         // Localization
         const texts = {
             es: {
@@ -164,6 +183,8 @@
                 originalTextLabel: "Texto original:",
                 modifiedTextLabel: "Texto revisado:",
                 compareButton: "Comparar textos",
+                addCommentsButton: "Añadir comentarios",
+                removeCommentsButton: "Quitar comentarios",
                 exportHtmlButton: "Exportar a HTML",
                 exportPdfButton: "Exportar a PDF",
                 resultsHeader: "Resultados de la comparación:",
@@ -171,7 +192,6 @@
                 comparisonCompleted: "Comparación completada.",
                 htmlReportTitle: "Informe de diferencias - Diffpanda",
                 pdfReportTitle: "Informe de diferencias - Diffpanda",
-                pdfLibrariesError: "Error: Librerías de PDF no cargadas.",
                 pdfGenerationError: "Error al generar el informe PDF.",
                 htmlReportGenerated: "Informe HTML generado.",
                 pdfReportGenerated: "Informe PDF generado.",
@@ -188,7 +208,8 @@
                 exportModalTitle: "Exportar Informe",
                 fileNameLabel: "Nombre del archivo:",
                 saveButton: "Guardar",
-                cancelButton: "Cancelar"
+                cancelButton: "Cancelar",
+                defaultFileName: "Informe"
             },
             en: {
                 documentTitle: "Diffpanda - Text Comparator",
@@ -196,6 +217,8 @@
                 originalTextLabel: "Original text:",
                 modifiedTextLabel: "Revised text:",
                 compareButton: "Compare texts",
+                addCommentsButton: "Add comments",
+                removeCommentsButton: "Remove comments",
                 exportHtmlButton: "Export to HTML",
                 exportPdfButton: "Export to PDF",
                 resultsHeader: "Comparison results:",
@@ -203,7 +226,6 @@
                 comparisonCompleted: "Comparison completed.",
                 htmlReportTitle: "Difference Report - Diffpanda",
                 pdfReportTitle: "Difference Report - Diffpanda",
-                pdfLibrariesError: "Error: PDF libraries not loaded.",
                 pdfGenerationError: "Error generating PDF report.",
                 htmlReportGenerated: "HTML report generated.",
                 pdfReportGenerated: "PDF report generated.",
@@ -220,10 +242,10 @@
                 exportModalTitle: "Export Report",
                 fileNameLabel: "File name:",
                 saveButton: "Save",
-                cancelButton: "Cancel"
+                cancelButton: "Cancel",
+                defaultFileName: "Report"
             }
         };
-        let currentLang = 'es';
 
         function updateUI(lang) {
             currentLang = lang;
@@ -237,11 +259,16 @@
                     }
                 }
             });
+            // Update toggle comments button text based on state
+            toggleCommentsBtn.textContent = commentsAreVisible ? texts[currentLang].removeCommentsButton : texts[currentLang].addCommentsButton;
+
             text1El.placeholder = texts[lang].placeholderText1;
             text2El.placeholder = texts[lang].placeholderText2;
             langEsBtn.className = `font-bold py-2 px-4 rounded-lg transition-colors duration-200 ${lang === 'es' ? 'bg-[#373737] text-[#ECA5E5]' : 'bg-[#ECA5E5] text-[#373737]'}`;
             langEnBtn.className = `font-bold py-2 px-4 rounded-lg transition-colors duration-200 ${lang === 'en' ? 'bg-[#373737] text-[#ECA5E5]' : 'bg-[#ECA5E5] text-[#373737]'}`;
-            compareTexts();
+            if (diffOutputEl.children.length > 1) {
+                 compareTexts();
+            }
         }
 
         function showMessage(message, duration = 3000) {
@@ -252,7 +279,7 @@
         function showLoading() { loadingSpinner.style.display = 'block'; }
         function hideLoading() { loadingSpinner.style.display = 'none'; }
 
-        // File Parsing Functions (unchanged)
+        // File Parsing Functions
         function parseSrt(srtContent) { return srtContent.replace(/^\d+\s*$/gm, '').replace(/^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}\s*$/gm, '').replace(/^\s*[\r\n]+/gm, '').trim(); }
         function parsePo(poContent) { const lines = poContent.split('\n'); let extractedText = []; let inMsgstr = false; for (const line of lines) { const trimmedLine = line.trim(); if (trimmedLine.startsWith('msgstr')) { inMsgstr = true; const match = trimmedLine.match(/^msgstr\s+"(.*)"$/); if (match && match[1]) { extractedText.push(match[1]); } } else if (inMsgstr && trimmedLine.startsWith('"') && trimmedLine.endsWith('"')) { extractedText.push(trimmedLine.slice(1, -1)); } else { inMsgstr = false; } } return extractedText.join('\n'); }
         function parseTmx(tmxContent) { let extractedText = []; try { const parser = new DOMParser(); const xmlDoc = parser.parseFromString(tmxContent, "text/xml"); const errorNode = xmlDoc.querySelector('parsererror'); if (errorNode) { console.error('Error parsing TMX XML:', errorNode.textContent); showMessage(texts[currentLang].fileReadError, 5000); return ''; } xmlDoc.querySelectorAll('tuv seg').forEach(seg => { extractedText.push(seg.textContent.trim()); }); } catch (e) { console.error('Error parsing TMX:', e); showMessage(texts[currentLang].fileReadError, 5000); return ''; } return extractedText.join('\n'); }
@@ -313,16 +340,22 @@
         function compareTexts() {
             showLoading();
             const text1 = text1El.value, text2 = text2El.value;
+            if (!text1 && !text2) {
+                diffOutputEl.innerHTML = `<p class="text-gray-500 col-span-4" data-key="initialMessage">${texts[currentLang].initialMessage}</p>`;
+                toggleCommentsBtn.classList.add('hidden');
+                hideLoading();
+                return;
+            }
             const lines1 = text1.split('\n'), lines2 = text2.split('\n');
             let diffHtml = `<div class="diff-header">${texts[currentLang].originalColumn}</div>
                             <div class="diff-header">${texts[currentLang].revisedColumn}</div>
                             <div class="diff-header">${texts[currentLang].comparisonColumn}</div>
-                            <div class="diff-header">${texts[currentLang].commentsColumn}</div>`;
+                            <div class="diff-header comment-column">${texts[currentLang].commentsColumn}</div>`;
             let i = 0, j = 0;
             while (i < lines1.length || j < lines2.length) {
                 const line1 = lines1[i] !== undefined ? lines1[i] : null;
                 const line2 = lines2[j] !== undefined ? lines2[j] : null;
-                const commentBox = `<div class="comment-cell"><textarea class="border rounded p-1 w-full" placeholder="${texts[currentLang].commentsColumn}..."></textarea></div>`;
+                const commentBox = `<div class="comment-cell comment-column"><textarea placeholder="${texts[currentLang].commentsColumn}..."></textarea></div>`;
                 if (line1 === line2 && line1 !== null) {
                     diffHtml += `<div class="diff-unchanged">${line1}</div>
                                  <div class="diff-unchanged">${line2}</div>
@@ -356,23 +389,31 @@
                     } else { i++; j++; }
                 }
             }
-            if (diffOutputEl.children.length <= 4) {
-                diffHtml += `<p class="text-gray-500 col-span-4">${texts[currentLang].initialMessage}</p>`;
-            }
             diffOutputEl.innerHTML = diffHtml;
+            toggleCommentsBtn.classList.remove('hidden');
             hideLoading();
             showMessage(texts[currentLang].comparisonCompleted);
+        }
+
+        function toggleComments() {
+            commentsAreVisible = !commentsAreVisible;
+            diffOutputEl.classList.toggle('comments-active', commentsAreVisible);
+            toggleCommentsBtn.textContent = commentsAreVisible ? texts[currentLang].removeCommentsButton : texts[currentLang].addCommentsButton;
+            // Update the data-key for localization changes
+            toggleCommentsBtn.dataset.key = commentsAreVisible ? 'removeCommentsButton' : 'addCommentsButton';
         }
 
         // --- EXPORT FUNCTIONS ---
         let currentExportHandler = null;
         function showExportModal(exportType) {
             const today = new Date().toISOString().slice(0, 10);
-            fileNameInput.value = `Reporte-${today}`;
+            const defaultName = texts[currentLang].defaultFileName || 'Report';
+            fileNameInput.value = `${defaultName}-${today}`;
             exportModal.style.display = 'flex';
             currentExportHandler = (event) => {
                 event.preventDefault();
-                const filename = fileNameInput.value.trim() || `Reporte-${today}`;
+                const finalDefaultName = texts[currentLang].defaultFileName || 'Report';
+                const filename = fileNameInput.value.trim() || `${finalDefaultName}-${today}`;
                 if (exportType === 'html') {
                     exportToHtml(filename);
                 } else if (exportType === 'pdf') {
@@ -393,6 +434,12 @@
 
         function getExportableHtml() {
             const reportClone = diffOutputEl.cloneNode(true);
+            
+            // If comments are not visible, remove them from the clone
+            if (!commentsAreVisible) {
+                reportClone.querySelectorAll('.comment-column').forEach(el => el.remove());
+            }
+
             const textareas = reportClone.querySelectorAll('textarea');
             textareas.forEach(ta => {
                 const commentText = ta.value;
@@ -408,7 +455,8 @@
         function exportToHtml(filename) {
             showLoading();
             const reportContent = getExportableHtml();
-            const htmlContent = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${texts[currentLang].htmlReportTitle}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;margin:20px;color:#373737}.diff-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;font-size:0.9rem;white-space:pre-wrap;word-break:break-word}.diff-grid>div{padding:0.5rem;border-radius:0.25rem;min-height:2rem}.diff-header{font-weight:bold;border-bottom:2px solid #e5e7eb;padding-bottom:0.5rem}.diff-unchanged{background-color:#f9fafb;border-left:4px solid #cbd5e1}.diff-added{background-color:#d1fae5;border-left:4px solid #34d399}.diff-removed{background-color:#fee2e2;border-left:4px solid #ef4444}.diff-changed-word-added{background-color:#a7f3d0;border-radius:4px}.diff-changed-word-removed{background-color:#fecaca;border-radius:4px;text-decoration:line-through}.comparison-cell{background-color:#f0f0f0;border:1px dashed #ccc}.comment-cell{background-color:#fafad2}</style></head><body><h1>${texts[currentLang].htmlReportTitle}</h1><div class="diff-grid">${reportContent}</div></body></html>`;
+            const gridStyle = commentsAreVisible ? 'grid-template-columns:repeat(4,1fr);' : 'grid-template-columns:repeat(3,1fr);';
+            const htmlContent = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${texts[currentLang].htmlReportTitle}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;margin:20px;color:#373737}.diff-grid{display:grid;${gridStyle}gap:1rem;font-size:0.9rem;white-space:pre-wrap;word-break:break-word}.diff-grid>div{padding:0.5rem;border-radius:0.25rem;min-height:2rem}.diff-header{font-weight:bold;border-bottom:2px solid #e5e7eb;padding-bottom:0.5rem}.diff-unchanged{background-color:#f9fafb;border-left:4px solid #cbd5e1}.diff-added{background-color:#d1fae5;border-left:4px solid #34d399}.diff-removed{background-color:#fee2e2;border-left:4px solid #ef4444}.diff-changed-word-added{background-color:#a7f3d0;border-radius:4px}.diff-changed-word-removed{background-color:#fecaca;border-radius:4px;text-decoration:line-through}.comparison-cell{background-color:#f0f0f0;border:1px dashed #ccc}.comment-cell{background-color:#fafad2}</style></head><body><h1>${texts[currentLang].htmlReportTitle}</h1><div class="diff-grid">${reportContent}</div></body></html>`;
             const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -422,81 +470,117 @@
 
         async function exportToPdf(filename) {
             showLoading();
-            if (typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
-                showMessage(texts[currentLang].pdfLibrariesError, 5000);
-                hideLoading();
-                return;
-            }
             try {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-                
-                // Create a temporary, visible container for rendering
-                const pdfRenderContainer = document.createElement('div');
-                pdfRenderContainer.style.position = 'absolute';
-                pdfRenderContainer.style.left = '-9999px'; // Move it off-screen
-                pdfRenderContainer.style.width = '1200px'; // Provide ample width for landscape rendering
-                pdfRenderContainer.style.background = '#fff';
-                pdfRenderContainer.innerHTML = `<div style="padding:20px; font-family: 'Inter', sans-serif;">
-                    <h1 style="text-align:center;">${texts[currentLang].pdfReportTitle}</h1>
-                    <div class="diff-grid">${getExportableHtml()}</div>
-                </div>`;
-                document.body.appendChild(pdfRenderContainer);
-
-                // Apply styles dynamically for rendering
-                const style = document.createElement('style');
-                style.innerHTML = `
-                    .diff-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;font-size:9pt;white-space:pre-wrap;word-break:break-word}
-                    .diff-grid>div{padding:0.5rem;border-radius:0.25rem;min-height:2rem}
-                    .diff-header{font-weight:bold;border-bottom:2px solid #e5e7eb;padding-bottom:0.5rem}
-                    .diff-unchanged{background-color:#f9fafb!important;border-left:4px solid #cbd5e1!important}
-                    .diff-added{background-color:#d1fae5!important;border-left:4px solid #34d399!important}
-                    .diff-removed{background-color:#fee2e2!important;border-left:4px solid #ef4444!important}
-                    .diff-changed-word-added{background-color:#a7f3d0!important;border-radius:4px}
-                    .diff-changed-word-removed{background-color:#fecaca!important;border-radius:4px;text-decoration:line-through}
-                    .comparison-cell{background-color:#f0f0f0!important;border:1px dashed #ccc!important}
-                    .comment-cell{background-color:#fafad2!important}
-                    /* Crucial for html2canvas to render colors */
-                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                `;
-                pdfRenderContainer.appendChild(style);
-
-                const canvas = await html2canvas(pdfRenderContainer, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                });
-                
-                document.body.removeChild(pdfRenderContainer); // Clean up
-
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = pdf.internal.pageSize.getWidth() - 40;
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 20;
-
-                pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
-                heightLeft -= (pdf.internal.pageSize.getHeight() - 40);
-
-                while (heightLeft > 0) {
-                    position = -heightLeft + 20;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
-                    heightLeft -= (pdf.internal.pageSize.getHeight() - 40);
+                const diffRows = [];
+                const headers = [
+                    { text: texts[currentLang].originalColumn, bold: true, style: 'tableHeader' },
+                    { text: texts[currentLang].revisedColumn, bold: true, style: 'tableHeader' },
+                    { text: texts[currentLang].comparisonColumn, bold: true, style: 'tableHeader' }
+                ];
+                if (commentsAreVisible) {
+                    headers.push({ text: texts[currentLang].commentsColumn, bold: true, style: 'tableHeader' });
                 }
-                pdf.save(`${filename}.pdf`);
+                diffRows.push(headers);
+
+                for (let i = 4; i < diffOutputEl.children.length; i += 4) {
+                    const originalCell = diffOutputEl.children[i];
+                    const revisedCell = diffOutputEl.children[i + 1];
+                    const comparisonCell = diffOutputEl.children[i + 2];
+                    
+                    const row = [
+                        { text: originalCell.textContent, style: getClassStyle(originalCell.className) },
+                        { text: revisedCell.textContent, style: getClassStyle(revisedCell.className) },
+                        buildComparisonCell(comparisonCell.innerHTML)
+                    ];
+
+                    if (commentsAreVisible) {
+                        const commentText = diffOutputEl.children[i + 3].querySelector('textarea').value;
+                        row.push({ text: commentText });
+                    }
+                    diffRows.push(row);
+                }
+
+                const tableWidths = commentsAreVisible ? ['*', '*', '*', '*'] : ['*', '*', '*'];
+                const docDefinition = {
+                    pageSize: 'A4',
+                    pageOrientation: 'landscape',
+                    content: [
+                        { text: texts[currentLang].pdfReportTitle, style: 'header' },
+                        {
+                            style: 'diffTable',
+                            table: {
+                                headerRows: 1,
+                                widths: tableWidths,
+                                body: diffRows
+                            },
+                            layout: {
+                                fillColor: function (rowIndex, node, columnIndex) {
+                                    if (rowIndex === 0) return '#eeeeee';
+                                    const cellNode = node.table.body[rowIndex][columnIndex];
+                                    if (cellNode.style && cellNode.style.includes('added')) return '#d1fae5';
+                                    if (cellNode.style && cellNode.style.includes('removed')) return '#fee2e2';
+                                    if (cellNode.style && cellNode.style.includes('unchanged')) return '#f9fafb';
+                                    return null;
+                                }
+                            }
+                        }
+                    ],
+                    styles: {
+                        header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+                        tableHeader: { fillColor: '#eeeeee' },
+                        diffTable: { margin: [0, 5, 0, 15], fontSize: 9 },
+                        diff_added: { color: '#065f46' },
+                        diff_removed: { color: '#991b1b' },
+                        diff_unchanged: { color: '#373737' }
+                    },
+                    defaultStyle: { font: 'Roboto' }
+                };
+
+                pdfMake.createPdf(docDefinition).download(`${filename}.pdf`);
                 showMessage(texts[currentLang].pdfReportGenerated);
+
             } catch (error) {
-                console.error('Error generating PDF:', error);
+                console.error('Error generating PDF with pdfmake:', error);
                 showMessage(texts[currentLang].pdfGenerationError, 5000);
             } finally {
                 hideLoading();
             }
         }
 
+        // --- HELPER FUNCTIONS FOR PDFMAKE ---
+        function getClassStyle(className) {
+            if (className.includes('diff-added')) return 'diff_added';
+            if (className.includes('diff-removed')) return 'diff_removed';
+            if (className.includes('diff-unchanged')) return 'diff_unchanged';
+            return '';
+        }
+
+        function buildComparisonCell(innerHTML) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = innerHTML;
+            const content = Array.from(tempDiv.childNodes).map(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return { text: node.textContent };
+                }
+                if (node.tagName === 'SPAN') {
+                    const style = {};
+                    if (node.className.includes('diff-changed-word-added')) {
+                        style.background = '#a7f3d0';
+                    } else if (node.className.includes('diff-changed-word-removed')) {
+                        style.background = '#fecaca';
+                        style.decoration = 'lineThrough';
+                    }
+                    return { text: node.textContent, ...style };
+                }
+                return { text: '' };
+            });
+            return { text: content };
+        }
+
+
         // Event Listeners
         compareBtn.addEventListener('click', compareTexts);
+        toggleCommentsBtn.addEventListener('click', toggleComments);
         exportHtmlBtn.addEventListener('click', () => showExportModal('html'));
         exportPdfBtn.addEventListener('click', () => showExportModal('pdf'));
         langEsBtn.addEventListener('click', () => updateUI('es'));
