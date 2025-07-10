@@ -1183,11 +1183,18 @@
          * @param {number} durationMs The duration of the subtitle in milliseconds.
          * @returns {number} CPS value.
          */
-        function calculateCPS(text, durationMs) {
-            if (durationMs <= 0) return 0;
-            const textWithoutTags = text.replace(/<\/?(b|i)>/gi, '');
-            return (textWithoutTags.length / (durationMs / 1000)).toFixed(2);
-        }
+   function calculateCPS(text, durationMs) {
+    if (durationMs <= 0) return 0;
+
+    // Elimina TODAS las etiquetas HTML
+    const noTags = text.replace(/<[^>]+>/g, '');
+
+    // Sustituye entidades &nbsp; por espacios
+    const cleanText = noTags.replace(/&nbsp;/gi, ' ');
+
+    // Divide por segundos
+    return (cleanText.length / (durationMs / 1000)).toFixed(2);
+}
 
         /**
          * Parses the content of an SRT file.
