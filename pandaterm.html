@@ -767,12 +767,12 @@
 
       glossary.forEach(entry => {
         xml.push(`      <termEntry>`);
-        xml.push(`        <langSet xml:lang="${entry.srcLang}">`);
+        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`);
         xml.push(`          <tig><term>${entry.srcTerm}</term></tig>`);
-        xml.push(`        </langSet>`);
-        xml.push(`        <langSet xml:lang="${entry.tgtLang}">`);
+        xml.push(`        </LangSet>`);
+        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`);
         xml.push(`          <tig><term>${entry.tgtTerm}</term></tig>`);
-        xml.push(`        </langSet>`);
+        xml.push(`        </LangSet>`);
         xml.push(`      </termEntry>`);
       });
 
@@ -803,49 +803,63 @@
         const reader = new FileReader();
         reader.onload = () => {
           try {
-            saveState(); // Save current state before loading new one
-            
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(reader.result, "application/xml");
-            
+
             const parserError = xmlDoc.querySelector("parsererror");
             if (parserError) {
-                throw new Error("Parsing error");
+                throw new Error("Parsing error: The file is not a valid XML.");
             }
 
             const entries = xmlDoc.getElementsByTagName("termEntry");
-            
-            glossary = []; // Clear current glossary
-            let firstEntryLangs = { src: '', tgt: '' };
-
-            const martif = xmlDoc.getElementsByTagName("martif")[0];
-            const headerLang = martif ? martif.getAttribute("xml:lang") : '';
+            const newGlossary = [];
+            const langCounts = {};
 
             for (let entry of entries) {
-              const sets = entry.getElementsByTagName("langSet");
+              // Use getElementsByTagName with the correct casing for XML.
+              const sets = entry.getElementsByTagName("LangSet");
               if (sets.length >= 2) {
                 const lang1 = sets[0].getAttribute("xml:lang");
-                const term1 = sets[0].getElementsByTagName("term")[0].textContent;
+                const term1 = sets[0].getElementsByTagName("term")[0]?.textContent || '';
                 const lang2 = sets[1].getAttribute("xml:lang");
-                const term2 = sets[1].getElementsByTagName("term")[0].textContent;
-                glossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2 });
+                const term2 = sets[1].getElementsByTagName("term")[0]?.textContent || '';
+
+                if (lang1 && lang2) {
+                    langCounts[lang1] = (langCounts[lang1] || 0) + 1;
+                    langCounts[lang2] = (langCounts[lang2] || 0) + 1;
+                    newGlossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2 });
+                }
               }
             }
 
-            if (glossary.length > 0) {
-                glossarySourceLanguage = glossary[0].srcLang;
-                glossaryTargetLanguage = glossary[0].tgtLang;
-            } else if (headerLang) {
-                glossarySourceLanguage = headerLang;
-                glossaryTargetLanguage = ''; 
+            const sortedLangs = Object.keys(langCounts).sort((a, b) => langCounts[b] - langCounts[a]);
+            let detectedSrcLang, detectedTgtLang;
+
+            if (sortedLangs.length >= 2) {
+                detectedSrcLang = sortedLangs[0];
+                detectedTgtLang = sortedLangs[1];
+
+                newGlossary.forEach(entry => {
+                    if (entry.srcLang !== detectedSrcLang) {
+                        [entry.srcLang, entry.tgtLang] = [entry.tgtLang, entry.srcLang];
+                        [entry.srcTerm, entry.tgtTerm] = [entry.tgtTerm, entry.srcTerm];
+                    }
+                });
             } else {
-                glossarySourceLanguage = 'en-US';
-                glossaryTargetLanguage = 'es-ES';
-                if (reader.result.includes('<termEntry')) {
-                    showMessageBox(translations[currentUILanguage]["No valid language pairs found in TBX. Defaulting to en-US/es-ES."]);
+                const martif = xmlDoc.getElementsByTagName("martif")[0];
+                const headerLang = martif ? martif.getAttribute("xml:lang") : '';
+                detectedSrcLang = headerLang || (sortedLangs.length > 0 ? sortedLangs[0] : 'en-US');
+                detectedTgtLang = 'es-ES';
+                if (newGlossary.length > 0) {
+                     showMessageBox(translations[currentUILanguage]["No valid language pairs found in TBX. Defaulting to en-US/es-ES."]);
                 }
             }
-            
+
+            saveState();
+            glossary = newGlossary;
+            glossarySourceLanguage = detectedSrcLang;
+            glossaryTargetLanguage = detectedTgtLang;
+
             document.getElementById('configSrcLang').value = glossarySourceLanguage;
             document.getElementById('configTgtLang').value = glossaryTargetLanguage;
             document.getElementById('displaySrcLang').value = glossarySourceLanguage;
@@ -853,10 +867,10 @@
             
             showSection('editorSection');
             renderGlossary();
+
           } catch (error) {
             console.error("Error loading TBX file:", error);
             showMessageBox(translations[currentUILanguage]["Error loading TBX file. Please ensure it's a valid XML/TBX."]);
-            undo(); // Revert to previous state if loading fails
           }
         };
         reader.readAsText(file);
