@@ -237,6 +237,14 @@
         border-color: var(--primary-color);
     }
 
+    .btn-danger {
+      background-color: var(--btn-danger-bg);
+      color: white;
+    }
+    .btn-danger:hover {
+      background-color: var(--btn-danger-hover-bg);
+    }
+
     .delete-btn {
       background-color: var(--btn-danger-bg);
       color: white;
@@ -349,9 +357,23 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       z-index: 1000;
       text-align: center;
-      max-width: 320px;
+      max-width: 400px;
       color: var(--text-color);
       border-top: 4px solid var(--primary-color);
+      animation: popIn 0.3s ease-out;
+    }
+
+    .message-box h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .message-box .dialog-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
     }
 
     .info-box {
@@ -396,6 +418,7 @@
       <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn-secondary">Descargar TBX</button>
       <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn-secondary">Nuevo glosario</button>
       <button onclick="toggleTheme()" id="themeToggleButton" data-i18n="toggle_theme" class="btn-secondary">Cambiar tema</button>
+      <button onclick="undo()" id="undoButton" data-i18n="undo_button" class="btn-secondary" disabled>Deshacer</button>
     </div>
 
     <div id="languageConfigSection">
@@ -469,6 +492,8 @@
   <script>
     // Global array to store glossary terms
     let glossary = [];
+    // Action history for undo functionality
+    let history = [];
     // Get current UI language from local storage, default to English
     let currentUILanguage = localStorage.getItem('language') || 'en';
     // Get current theme from local storage, default to light
@@ -487,6 +512,7 @@
         download_tbx: "Download TBX",
         new_glossary: "New glossary",
         toggle_theme: "Toggle theme",
+        undo_button: "Undo",
         config_lang_title: "Configure glossary languages",
         config_lang_info: "Define the source and target languages for your glossary. You can type the ISO code directly or select from the suggestions. It is important that the ISO code is correct for it to work well in your CAT tool.",
         confirm_languages: "Confirm languages",
@@ -507,7 +533,11 @@
         lang_config_required: "Please configure source and target languages for the glossary.",
         "Cannot download empty or unconfigured glossary.": "Cannot download empty or unconfigured glossary.",
         "No valid language pairs found in TBX. Defaulting to en-US/es-ES.": "No valid language pairs found in TBX. Defaulting to en-US/es-ES.",
-        "Error loading TBX file. Please ensure it's a valid XML/TBX.": "Error loading TBX file. Please ensure it's a valid XML/TBX."
+        "Error loading TBX file. Please ensure it's a valid XML/TBX.": "Error loading TBX file. Please ensure it's a valid XML/TBX.",
+        new_glossary_confirm_title: "Confirm New Glossary",
+        new_glossary_confirm_text: "All current glossary data will be lost. If you don't want to lose it, click cancel and export it as a TBX file. Click confirm to create a new glossary from scratch.",
+        confirm_button: "Confirm",
+        cancel_button: "Cancel"
       },
       es: {
         title: "PandaTerm",
@@ -517,6 +547,7 @@
         download_tbx: "Descargar TBX",
         new_glossary: "Nuevo glosario",
         toggle_theme: "Cambiar tema",
+        undo_button: "Deshacer",
         config_lang_title: "Configurar idiomas del glosario",
         config_lang_info: "Define los idiomas de origen y destino de tu glosario. Puedes introducir el código ISO directamente o seleccionarlo de las sugerencias. Es fundamental que el código ISO sea correcto para que funcione correctamente con tu herramienta TAO.",
         confirm_languages: "Confirmar idiomas",
@@ -537,12 +568,16 @@
         lang_config_required: "Por favor, configura los idiomas de origen y destino para el glosario.",
         "Cannot download empty or unconfigured glossary.": "No se puede descargar un glosario vacío o sin configurar.",
         "No valid language pairs found in TBX. Defaulting to en-US/es-ES.": "No se encontraron pares de idioma válidos en TBX. Se utiliza en-US/es-ES por defecto.",
-        "Error loading TBX file. Please ensure it's a valid XML/TBX.": "Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido."
+        "Error loading TBX file. Please ensure it's a valid XML/TBX.": "Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.",
+        new_glossary_confirm_title: "Confirmar nuevo glosario",
+        new_glossary_confirm_text: "Se perderá toda la información del glosario actual. Si no quieres perderlo, haz clic en cancelar y expórtalo como archivo TBX. Haz clic en confirmar para crear un glosario nuevo desde cero.",
+        confirm_button: "Confirmar",
+        cancel_button: "Cancelar"
       }
     };
 
     const isoLanguagesData = [
-      { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" }, { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" }, { code: "es-AR", name: "Español (Argentina)" }, { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" }, { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" }, { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" }, { code: "sv", name: "Svenska" }, { code: "da", name: "Dansk" }, { code: "no", name: "Norsk" }, { code: "fi", name: "Suomi" }, { code: "tr", name: "Türkçe" }, { code: "pl", name: "Polski" }, { code: "ca", name: "Català" }, { code: "eu", name: "Euskara" }, { code: "gl", name: "Galego" }
+      { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" }, { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" }, { code: "es-AR", name: "Español (Argentina)" }, { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" }, { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" }, { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" }, { code: "sv", name: "Svenska" }, { code: "da", name: "Dansk" }, { code: "no", name: "Norsk" }, { code: "fi", name: "Suomi" }, { code: "tr", name: "Türkçe" }, { code: "pl", "name": "Polski" }, { code: "ca", name: "Català" }, { code: "eu", name: "Euskara" }, { code: "gl", name: "Galego" }
     ];
 
     function populateIsoLanguagesDatalist() {
@@ -602,15 +637,46 @@
         sectionToHide.classList.add('hidden-section');
         sectionToShow.classList.remove('hidden-section');
     }
+    
+    function updateUndoButtonState() {
+      const undoButton = document.getElementById('undoButton');
+      if(undoButton) {
+        undoButton.disabled = history.length === 0;
+      }
+    }
 
-    function resetGlossary() {
+    function saveState() {
+      // Save a deep copy of the current glossary state
+      history.push(JSON.parse(JSON.stringify(glossary)));
+      updateUndoButtonState();
+    }
+
+    function undo() {
+      if (history.length > 0) {
+        glossary = history.pop();
+        renderGlossary();
+        updateUndoButtonState();
+      }
+    }
+
+    function performResetGlossary() {
+      saveState();
       glossary = [];
       glossarySourceLanguage = '';
       glossaryTargetLanguage = '';
       document.getElementById('configSrcLang').value = 'en-US';
       document.getElementById('configTgtLang').value = 'es-ES';
+      document.getElementById('srcTerm').value = '';
+      document.getElementById('tgtTerm').value = '';
+      document.getElementById('searchTerm').value = '';
       showSection('languageConfigSection');
       renderGlossary();
+    }
+
+    function resetGlossary() {
+      const title = translations[currentUILanguage]['new_glossary_confirm_title'];
+      const message = translations[currentUILanguage]['new_glossary_confirm_text'];
+      showConfirmationDialog(title, message, performResetGlossary);
     }
 
     function confirmGlossaryLanguages() {
@@ -628,16 +694,24 @@
       document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
       showSection('editorSection');
       renderGlossary();
+      
+      // Clear history when starting a new glossary configuration
+      history = [];
+      updateUndoButtonState();
     }
 
     function addTerm() {
-      const srcTerm = document.getElementById("srcTerm").value.trim();
-      const tgtTerm = document.getElementById("tgtTerm").value.trim();
+      const srcTermInput = document.getElementById("srcTerm");
+      const tgtTermInput = document.getElementById("tgtTerm");
+      const srcTerm = srcTermInput.value.trim();
+      const tgtTerm = tgtTermInput.value.trim();
 
       if (!srcTerm || !tgtTerm) {
         showMessageBox(translations[currentUILanguage]['both_terms_required']);
         return;
       }
+      
+      saveState();
 
       glossary.push({
         srcLang: glossarySourceLanguage,
@@ -645,12 +719,14 @@
         tgtLang: glossaryTargetLanguage,
         tgtTerm: tgtTerm
       });
-      document.getElementById("srcTerm").value = "";
-      document.getElementById("tgtTerm").value = "";
+      srcTermInput.value = "";
+      tgtTermInput.value = "";
+      srcTermInput.focus();
       renderGlossary(true); // Pass true to animate the last row
     }
 
     function deleteTerm(index) {
+      saveState();
       glossary.splice(index, 1);
       renderGlossary();
     }
@@ -691,12 +767,12 @@
 
       glossary.forEach(entry => {
         xml.push(`      <termEntry>`);
-        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`);
+        xml.push(`        <langSet xml:lang="${entry.srcLang}">`);
         xml.push(`          <tig><term>${entry.srcTerm}</term></tig>`);
-        xml.push(`        </LangSet>`);
-        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`);
+        xml.push(`        </langSet>`);
+        xml.push(`        <langSet xml:lang="${entry.tgtLang}">`);
         xml.push(`          <tig><term>${entry.tgtTerm}</term></tig>`);
-        xml.push(`        </LangSet>`);
+        xml.push(`        </langSet>`);
         xml.push(`      </termEntry>`);
       });
 
@@ -705,14 +781,14 @@
     }
 
     function downloadTBX() {
-      if (glossary.length === 0 && (!glossarySourceLanguage || !glossaryTargetLanguage)) {
+      if (glossary.length === 0 || !glossarySourceLanguage || !glossaryTargetLanguage) {
         showMessageBox(translations[currentUILanguage]["Cannot download empty or unconfigured glossary."]);
         return;
       }
       const blob = new Blob([generateTBX()], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-a.href = url;
+      a.href = url;
       a.download = "glossary.tbx";
       a.click();
       URL.revokeObjectURL(url);
@@ -727,24 +803,27 @@ a.href = url;
         const reader = new FileReader();
         reader.onload = () => {
           try {
+            saveState(); // Save current state before loading new one
+            
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(reader.result, "application/xml");
-            const entries = xmlDoc.getElementsByTagName("termEntry");
-
-            glossary = [];
-            let firstEntryLangs = { src: '', tgt: '' };
-
-            if (entries.length > 0) {
-              const firstSets = entries[0].getElementsByTagName("LangSet");
-              if (firstSets.length >= 2) {
-                firstEntryLangs.src = firstSets[0].getAttribute("xml:lang");
-                firstEntryLangs.tgt = firstSets[1].getAttribute("xml:lang");
-              }
+            
+            const parserError = xmlDoc.querySelector("parsererror");
+            if (parserError) {
+                throw new Error("Parsing error");
             }
 
+            const entries = xmlDoc.getElementsByTagName("termEntry");
+            
+            glossary = []; // Clear current glossary
+            let firstEntryLangs = { src: '', tgt: '' };
+
+            const martif = xmlDoc.getElementsByTagName("martif")[0];
+            const headerLang = martif ? martif.getAttribute("xml:lang") : '';
+
             for (let entry of entries) {
-              const sets = entry.getElementsByTagName("LangSet");
-              if (sets.length === 2) {
+              const sets = entry.getElementsByTagName("langSet");
+              if (sets.length >= 2) {
                 const lang1 = sets[0].getAttribute("xml:lang");
                 const term1 = sets[0].getElementsByTagName("term")[0].textContent;
                 const lang2 = sets[1].getAttribute("xml:lang");
@@ -753,26 +832,35 @@ a.href = url;
               }
             }
 
-            if (glossary.length > 0 && firstEntryLangs.src && firstEntryLangs.tgt) {
-                glossarySourceLanguage = firstEntryLangs.src;
-                glossaryTargetLanguage = firstEntryLangs.tgt;
+            if (glossary.length > 0) {
+                glossarySourceLanguage = glossary[0].srcLang;
+                glossaryTargetLanguage = glossary[0].tgtLang;
+            } else if (headerLang) {
+                glossarySourceLanguage = headerLang;
+                glossaryTargetLanguage = ''; 
             } else {
                 glossarySourceLanguage = 'en-US';
                 glossaryTargetLanguage = 'es-ES';
-                showMessageBox(translations[currentUILanguage]["No valid language pairs found in TBX. Defaulting to en-US/es-ES."]);
+                if (reader.result.includes('<termEntry')) {
+                    showMessageBox(translations[currentUILanguage]["No valid language pairs found in TBX. Defaulting to en-US/es-ES."]);
+                }
             }
-
+            
+            document.getElementById('configSrcLang').value = glossarySourceLanguage;
+            document.getElementById('configTgtLang').value = glossaryTargetLanguage;
             document.getElementById('displaySrcLang').value = glossarySourceLanguage;
             document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
+            
             showSection('editorSection');
             renderGlossary();
           } catch (error) {
             console.error("Error loading TBX file:", error);
             showMessageBox(translations[currentUILanguage]["Error loading TBX file. Please ensure it's a valid XML/TBX."]);
-            resetGlossary();
+            undo(); // Revert to previous state if loading fails
           }
         };
         reader.readAsText(file);
+        event.target.value = '';
       };
     }
 
@@ -799,15 +887,73 @@ a.href = url;
       document.body.appendChild(messageBox);
     }
 
+    function showConfirmationDialog(title, message, onConfirm) {
+      const existingMessageBox = document.querySelector('.message-box');
+      if (existingMessageBox) {
+        existingMessageBox.remove();
+      }
+
+      const messageBox = document.createElement('div');
+      messageBox.className = 'message-box';
+
+      const titleEl = document.createElement('h3');
+      titleEl.textContent = title;
+
+      const messageText = document.createElement('p');
+      messageText.textContent = message;
+
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'dialog-buttons';
+
+      const confirmButton = document.createElement('button');
+      confirmButton.textContent = translations[currentUILanguage]['confirm_button'] || 'Confirm';
+      confirmButton.className = 'btn-danger';
+      confirmButton.onclick = () => {
+        onConfirm();
+        document.body.removeChild(messageBox);
+      };
+
+      const cancelButton = document.createElement('button');
+      cancelButton.textContent = translations[currentUILanguage]['cancel_button'] || 'Cancel';
+      cancelButton.className = 'btn-secondary';
+      cancelButton.onclick = () => document.body.removeChild(messageBox);
+
+      buttonContainer.appendChild(cancelButton);
+      buttonContainer.appendChild(confirmButton);
+
+      messageBox.appendChild(titleEl);
+      messageBox.appendChild(messageText);
+      messageBox.appendChild(buttonContainer);
+      document.body.appendChild(messageBox);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      // Set initial language if not already set
       if (!localStorage.getItem('language')) {
         localStorage.setItem('language', 'en');
         currentUILanguage = 'en';
       }
+      // Apply theme and language
       applyTheme(currentTheme);
       setUILanguage(currentUILanguage);
+      // Populate language list for inputs
       populateIsoLanguagesDatalist();
-      resetGlossary();
+      // Start with the initial configuration screen
+      showSection('languageConfigSection');
+      // Set initial state for undo button
+      updateUndoButtonState();
+
+      // Add key listeners
+      document.getElementById('srcTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('tgtTerm').focus(); });
+      document.getElementById('tgtTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTerm(); });
+      
+      // Add undo shortcut
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+          e.preventDefault(); // Prevent browser's default undo action
+          undo();
+        }
+      });
     });
   </script>
 </body>
