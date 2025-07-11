@@ -408,52 +408,13 @@
         #videoPlayerContainer { width: 100%; background-color: #000; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; gap: 1rem; }
         #videoPlayerWrapper { position: relative; width: 100%; line-height: 0; background-color: #000; border-radius: 0.5rem; min-height: 250px; }
         #videoPlayer { width: 100%; height: auto; max-height: 60vh; border-radius: 0.5rem; }
-        #subtitlePreviewOverlay { position: absolute; bottom: 10%; left: 0; right: 0; padding: 1rem; text-align: center; pointer-events: none; transition: opacity 0.3s ease; }
-        #subtitlePreviewText { font-weight: 500; font-size: var(--user-font-size); color: white; padding: 0.10em 0.10em; background-color: rgba(0, 0, 0, 0.4); border-radius: 0.25rem; line-height: 1.4; text-shadow: 0px 0px 3px rgba(0,0,0,1); white-space: pre-wrap; }
+        #subtitlePreviewOverlay { position: absolute; bottom: 5%; left: 0; right: 0; padding: 1rem; text-align: center; pointer-events: none; transition: opacity 0.3s ease; }
+        #subtitlePreviewText { font-weight: bold; color: white; background-color: rgba(0, 0, 0, 0.6); padding: 0.25em 0.5em; border-radius: 0.25rem; line-height: 1.4; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); white-space: pre-wrap; }
         #videoFileInput { display: none; }
 
         /* Animation for Restore button */
         @keyframes pulse-yellow { 0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 50% { box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); } }
         .animate-pulse-yellow { animation: pulse-yellow 2s infinite; }
-
-        /* --- START: Custom Video Controls Styles --- */
-        #videoPlayerWrapper:fullscreen #subtitlePreviewText {
-            font-size: calc(var(--user-font-size) + 1.5vw);
-        }
-        #videoPlayerWrapper:fullscreen #subtitlePreviewOverlay {
-            bottom: 12%; /* Adjust position in fullscreen */
-        }
-        #videoPlayerWrapper:fullscreen #videoPlayer {
-            max-height: 100vh;
-        }
-
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
-        }
-        input[type=range]:focus {
-            outline: none;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 8px;
-            cursor: pointer;
-            background: #4a5568;
-            border-radius: 5px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #ffffff;
-            cursor: pointer;
-            -webkit-appearance: none;
-            margin-top: -4px; /* Center thumb on track */
-        }
-        input[type=range]:focus::-webkit-slider-runnable-track {
-            background: #2d3748;
-        }
-        /* --- END: Custom Video Controls Styles --- */
     </style>
 </head>
 <body class="bg-gray-100">
@@ -513,41 +474,15 @@
     </header>
 
     <div class="main-app-content">
-         <div class="video-player-section flex flex-col items-center justify-center p-4">
+        <div class="video-player-section flex flex-col items-center justify-center p-4">
             <div id="videoPlayerContainer" class="w-full hidden">
-                <div id="videoPlayerWrapper" class="relative bg-black rounded-lg group">
-                    <video id="videoPlayer" class="w-full h-auto max-h-[60vh] rounded-lg"></video>
+                <div id="videoPlayerWrapper" class="relative bg-black rounded-lg">
+                    <video id="videoPlayer" controls class="w-full h-auto max-h-[60vh] rounded-lg"></video>
                     <div id="videoLogoPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
+                         <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
                     </div>
                     <div id="subtitlePreviewOverlay">
                         <span id="subtitlePreviewText"></span>
-                    </div>
-
-                    <div id="customControlsContainer" class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div class="flex items-center gap-3 text-white">
-                            <button id="playPauseBtn">
-                                <svg id="playIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-                                <svg id="pauseIcon" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
-                            </button>
-                            <input type="range" id="seekBar" value="0" step="0.1" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                            <span id="timeDisplay" class="text-xs font-mono whitespace-nowrap">00:00 / 00:00</span>
-                            <div class="flex items-center gap-1">
-                                <button id="volumeBtn">
-                                    <svg id="volumeHighIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
-                                    <svg id="volumeMuteIcon" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
-                                </button>
-                                <input type="range" id="volumeBar" min="0" max="1" step="0.1" value="1" class="w-20 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                            </div>
-                             <div class="flex items-center gap-2 text-sm text-white">
-                        <label for="subtitleFontSize" class="font-medium" data-i18n="preview_size">Tamaño:</label>
-                        <input type="range" id="subtitleFontSize" min="12" max="48" value="24" class="w-24">
-                    </div>
-                            <button id="fullscreenBtn">
-                                <svg id="fullscreenOpenIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg>
-                                <svg id="fullscreenCloseIcon" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg>
-                            </button>
-                        </div>
                     </div>
                 </div>
                 <div id="videoControls" class="w-full mt-4 flex flex-col items-center gap-4">
@@ -555,9 +490,12 @@
                         <span data-i18n="load_video">Cargar vídeo</span>
                         <input type="file" id="videoFileInput" accept="video/*" class="hidden">
                     </label>
-                   
-                    <div class="flex items-center gap-2 text-sm text-white">
-                        <label for="subtitlePreviewSource" class="font-medium" data-i18n="preview_source">Mostrar:</label>
+                    <div class="flex items-center gap-2 text-white">
+                        <label for="subtitleFontSize" class="text-sm font-medium" data-i18n="preview_size">Tamaño:</label>
+                        <input type="range" id="subtitleFontSize" min="12" max="48" value="24" class="w-24">
+                    </div>
+                    <div class="flex items-center gap-2 text-white">
+                        <label for="subtitlePreviewSource" class="text-sm font-medium" data-i18n="preview_source">Mostrar:</label>
                         <select id="subtitlePreviewSource" class="bg-gray-700 text-white text-sm rounded-md p-1 border border-gray-500">
                             <option value="translation" data-i18n="translation_text_option">Traducción</option>
                             <option value="original" data-i18n="original_text_option">Original</option>
@@ -565,11 +503,6 @@
                     </div>
                 </div>
             </div>
-     
-   
-               
-                    <!-- END: Custom Video Controls -->
-              
             <div id="statsContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 relative hidden">
                 <div class="accordion-item">
                     <div class="accordion-header" id="statsAccordionHeader">
@@ -1128,28 +1061,13 @@
         const continueWithoutSavingBtn = document.getElementById('continueWithoutSavingBtn');
         const saveAndContinueBtn = document.getElementById('saveAndContinueBtn');
         
+        // *** CODE CORRECTION 1: Add variable declarations for new modals ***
         const confirmResetGlossaryModal = document.getElementById('confirmResetGlossaryModal');
         const confirmResetGlossaryBtn = document.getElementById('confirmResetGlossaryBtn');
         const cancelResetGlossaryBtn = document.getElementById('cancelResetGlossaryBtn');
         const confirmResetTmModal = document.getElementById('confirmResetTmModal');
         const confirmResetTmBtn = document.getElementById('confirmResetTmBtn');
         const cancelResetTmBtn = document.getElementById('cancelResetTmBtn');
-
-        // --- Custom Video Controls Elements ---
-        const videoPlayerWrapper = document.getElementById('videoPlayerWrapper');
-        const customControlsContainer = document.getElementById('customControlsContainer');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const playIcon = document.getElementById('playIcon');
-        const pauseIcon = document.getElementById('pauseIcon');
-        const seekBar = document.getElementById('seekBar');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const volumeBtn = document.getElementById('volumeBtn');
-        const volumeHighIcon = document.getElementById('volumeHighIcon');
-        const volumeMuteIcon = document.getElementById('volumeMuteIcon');
-        const volumeBar = document.getElementById('volumeBar');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const fullscreenOpenIcon = document.getElementById('fullscreenOpenIcon');
-        const fullscreenCloseIcon = document.getElementById('fullscreenCloseIcon');
 
         // --- I18N & SHORTCUTS SETUP ---
 
@@ -1168,6 +1086,7 @@
                 'find_replace_title': 'Find and Replace', 'find_label': 'Find:', 'replace_label': 'Replace with:', 'case_sensitive': 'Case sensitive', 'regular_expression': 'Regular expression', 'find_prev': 'Find previous', 'find_next': 'Find next', 'replace': 'Replace', 'replace_all': 'Replace all', 'save_srt_title': 'Export SRT File', 'save_tbx_title': 'Export TBX File', 'save_tmx_title': 'Export TMX File', 'file_name_label': 'File name:', 'backup_modal_title': 'Backup', 'restore_backup_info': 'A backup of an unsaved session has been found.', 'file_label': 'File:', 'last_modified_label': 'Last modified:', 'export_srt_btn': 'Export SRT', 'delete_backup_btn': 'Delete Backup', 'restore_btn': 'Restore', 'no_backup_found_info': 'No automatic backup has been found.', 'qa_modal_title': 'QA Settings', 'cps_limit_label': 'CPS Limit:', 'chars_per_line_limit_label': 'Characters per line limit:', 'save_and_apply_btn': 'Save and apply', 'qa_error_list_title': 'QA Error List', 'qa_errors_found': '{0} QA errors found', 'qa_no_errors': 'No QA errors found.', 'terminology_sidebar_title': 'Terminology', 'config_lang_title': 'Set up glossary languages', 'config_lang_info': 'Define the source and target languages for your glossary. The ISO code must be correct. After setting the language, you can import or create a glossary from scratch.', 'source_language': 'Source language:', 'target_language': 'Target language:', 'confirm_languages': 'Confirm languages', 'current_lang_title': 'Current glossary languages', 'add_term_title': 'Add term', 'term': 'Term:', 'translation': 'Translation:', 'add_button': 'Add', 'search_title': 'Search', 'search_placeholder': 'Search term...', 'import_tbx': 'Import TBX', 'download_tbx': 'Download TBX', 'new_glossary': 'New glossary', 'glossary_list_title': 'Glossary', 'source_term_col': 'Source term', 'target_term_col': 'Target term', 'actions_col': 'Actions', 'delete_button': 'Delete', 'tm_sidebar_title': 'Translation Memory', 'tm_config_lang_title': 'Set up TM languages', 'tm_config_lang_info': 'Define the source and target languages for your translation memory. The ISO code must be correct. After setting the language, you can import or create a memory from scratch.', 'current_tm_lang_title': 'Current TM languages', 'new_tm': 'New TM', 'import_tmx': 'Import TMX', 'download_tmx': 'Download TMX', 'tm_search_title': 'Search TM', 'tm_search_placeholder': 'Search in memory...', 'tm_search_results_title': 'TM Search Results', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Translation', 'tm_no_match_found': 'No matches found in the TM.',
                 'import_shortcuts_btn': 'Import', 'export_shortcuts_btn': 'Export', 'restore_defaults_btn': 'Restore Defaults', 'edit_shortcut_btn': 'Edit', 'recording_shortcut_text': 'Press key...',
                 'project_menu': 'Project', 'load_project': 'Load project', 'save_project': 'Save project', 'new_project': 'New project', 'reselect_video_title': 'Select Video', 'reselect_video_info': 'Project loaded. To sync the video, please select the original video file:', 'reselect_video_prompt': 'Project loaded. Please select the original video file: {0}', 'skip_btn': 'Skip', 'confirm_new_project_title': 'Create new project', 'confirm_new_project_message': 'You have unsaved changes. Do you want to save the current project before continuing?',
+                // *** CODE CORRECTION 2: Add missing commas ***
                 'continue_without_saving_btn': 'Continue without saving', 
                 'save_and_continue_btn': 'Save and continue',
                 'confirm_new_glossary_title': 'Confirm New Glossary',
@@ -1175,7 +1094,7 @@
                 'confirm_new_tm_title': 'Confirm New TM',
                 'confirm_new_tm_message': 'You can only have one active Translation Memory (TM). If you continue, all data from the current TM will be deleted. To avoid losing your work, make sure to export it as a TMX file first.',
                 'continue_btn': 'Continue', 
-                'productive_documentation': 'Productivity Documentation',
+                'productive_documentation': 'Productive Lookup',
                 'doc_resource_placeholder': 'E.g., https://www.wordreference.com/es/en/{word}'
             }
         };
@@ -1806,7 +1725,7 @@
 
             videoPlayer.pause();
             videoPlayer.src = '';
-            videoPlayer.classList.remove('hidden');
+            videoPlayer.classList.add('hidden');
             document.getElementById('videoLogoPlaceholder').classList.remove('hidden');
             
             const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
@@ -2122,6 +2041,7 @@
             window.removeEventListener('keydown', recordShortcutHandler, true);
             document.querySelectorAll('.shortcut-input.recording').forEach(el => {
                 const prevAction = el.id.replace('shortcut-display-', '');
+                el.classList.remove('recording');
                 let shortcutToFormat;
                 if (prevAction.startsWith('doc_')) {
                     const index = parseInt(prevAction.split('_')[1]);
@@ -3353,7 +3273,7 @@
             
             videoPlayer.pause();
             videoPlayer.src = '';
-            videoPlayer.classList.remove('hidden');
+            videoPlayer.classList.add('hidden');
             document.getElementById('videoLogoPlaceholder').classList.remove('hidden');
             const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
             if (loadVideoBtnSpan) {
@@ -3573,9 +3493,9 @@
             if (statsAccordionContent) statsAccordionContent.classList.add('collapsed');
             
             subtitleFontSize.addEventListener('input', (event) => {
-    subtitlePreviewText.style.setProperty('--user-font-size', `${event.target.value}px`);
-});
-subtitlePreviewText.style.setProperty('--user-font-size', `${subtitleFontSize.value}px`);
+                subtitlePreviewText.style.fontSize = `${event.target.value}px`;
+            });
+            subtitlePreviewText.style.fontSize = `${subtitleFontSize.value}px`;
 
             videoPlayer.addEventListener('timeupdate', updateSubtitlePreview);
             
@@ -3780,7 +3700,8 @@ subtitlePreviewText.style.setProperty('--user-font-size', `${subtitleFontSize.va
                 resetApplicationState();
             });
 
-      reselectVideoInput.addEventListener('change', (event) => {
+
+            reselectVideoInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) {
                     videoFileName = file.name;
@@ -3804,7 +3725,7 @@ subtitlePreviewText.style.setProperty('--user-font-size', `${subtitleFontSize.va
                 reselectVideoModal.classList.add('hidden');
             });
 
-            // Lógica para los modales de confirmación de reseteo
+            // New Modal Logic
             confirmResetGlossaryBtn.addEventListener('click', () => {
                 resetGlossary();
                 confirmResetGlossaryModal.classList.add('hidden');
@@ -3822,102 +3743,9 @@ subtitlePreviewText.style.setProperty('--user-font-size', `${subtitleFontSize.va
             cancelResetTmBtn.addEventListener('click', () => {
                 confirmResetTmModal.classList.add('hidden');
             });
-
-            // --- INICIO: Lógica para Controles de Vídeo Personalizados ---
-            function formatTimeForDisplay(timeInSeconds) {
-                const floor = Math.floor;
-                if (isNaN(timeInSeconds)) return '00:00';
-                const minutes = floor(timeInSeconds / 60);
-                const seconds = floor(timeInSeconds % 60);
-                return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            }
-
-            function updateVideoTime() {
-                const currentTime = formatTimeForDisplay(videoPlayer.currentTime);
-                const totalTime = formatTimeForDisplay(videoPlayer.duration);
-                timeDisplay.textContent = `${currentTime} / ${totalTime}`;
-            }
-
-            // Lógica Play/Pause
-            playPauseBtn.addEventListener('click', () => {
-                if (videoPlayer.paused) {
-                    videoPlayer.play();
-                } else {
-                    videoPlayer.pause();
-                }
-            });
-            videoPlayer.addEventListener('click', () => playPauseBtn.click());
-
-            videoPlayer.addEventListener('play', () => {
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
-            });
-
-            videoPlayer.addEventListener('pause', () => {
-                pauseIcon.classList.add('hidden');
-                playIcon.classList.remove('hidden');
-            });
-
-            // Lógica de la barra de progreso (SeekBar)
-            videoPlayer.addEventListener('loadedmetadata', () => {
-                seekBar.max = videoPlayer.duration;
-                updateVideoTime();
-            });
-
-            videoPlayer.addEventListener('timeupdate', () => {
-                seekBar.value = videoPlayer.currentTime;
-                updateVideoTime();
-            });
-
-            seekBar.addEventListener('input', () => {
-                videoPlayer.currentTime = seekBar.value;
-            });
-
-            // Lógica de Volumen
-            volumeBtn.addEventListener('click', () => {
-                videoPlayer.muted = !videoPlayer.muted;
-            });
-
-            videoPlayer.addEventListener('volumechange', () => {
-                volumeBar.value = videoPlayer.volume;
-                if (videoPlayer.muted || videoPlayer.volume === 0) {
-                    volumeHighIcon.classList.add('hidden');
-                    volumeMuteIcon.classList.remove('hidden');
-                } else {
-                    volumeMuteIcon.classList.add('hidden');
-                    volumeHighIcon.classList.remove('hidden');
-                }
-            });
-
-            volumeBar.addEventListener('input', (e) => {
-                videoPlayer.volume = e.target.value;
-                videoPlayer.muted = e.target.value == 0;
-            });
-
-            // Lógica de Pantalla Completa
-            fullscreenBtn.addEventListener('click', () => {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                } else {
-                    videoPlayerWrapper.requestFullscreen().catch(err => {
-                        showMessage(`Error al entrar en pantalla completa: ${err.message}`);
-                    });
-                }
-            });
-
-            document.addEventListener('fullscreenchange', () => {
-                if (document.fullscreenElement) {
-                    fullscreenOpenIcon.classList.add('hidden');
-                    fullscreenCloseIcon.classList.remove('hidden');
-                } else {
-                    fullscreenCloseIcon.classList.add('hidden');
-                    fullscreenOpenIcon.classList.remove('hidden');
-                }
-            });
-            // --- FIN: Lógica para Controles de Vídeo Personalizados ---
         });
 
-        // Funciones para mostrar los modales de confirmación
+        // Functions to show the new modals
         function showConfirmResetGlossary() {
             if (glossary.length === 0) {
                 resetGlossary();
