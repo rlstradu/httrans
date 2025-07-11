@@ -453,7 +453,148 @@
         input[type=range]:focus::-webkit-slider-runnable-track {
             background: #2d3748;
         }
+
+          .volume-control {
+            position: relative;
+            /* Añadimos padding para crear un "puente" para el hover */
+            padding-bottom: 0.5rem;
+            margin-bottom: -0.5rem; /* Compensamos el padding para no mover otros elementos */
+        }
+
+        .volume-slider-container {
+            position: absolute;
+            /* Ajustamos la posición para que quede justo encima del botón */
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(17, 24, 39, 0.75);
+            padding: 1rem 0.75rem;
+            border-radius: 0.75rem;
+            display: none;
+        }
+
+        .volume-control:hover .volume-slider-container {
+            display: block;
+        }
+
+        #volumeBar {
+            -webkit-appearance: slider-vertical;
+            writing-mode: bt-lr;
+            background-color: transparent;
+            width: 15px;
+            height: 96px;
+        }
+
+
         /* --- END: Custom Video Controls Styles --- */
+
+/* --- START: Vertical Size Control Styles --- */
+.size-control {
+    position: relative;
+    padding-bottom: 0.5rem;
+    margin-bottom: -0.5rem;
+}
+
+.size-slider-container {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17, 24, 39, 0.75);
+    padding: 1rem 0.75rem;
+    border-radius: 0.75rem;
+    display: none;
+}
+
+.size-control:hover .size-slider-container {
+    display: block;
+}
+
+#subtitleFontSize {
+    -webkit-appearance: slider-vertical;
+    writing-mode: bt-lr;
+    background-color: transparent;
+    width: 15px;
+    height: 96px;
+    cursor: pointer;
+}
+
+#subtitleFontSize::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    margin-top: 0;
+    margin-left: -4px;
+}
+
+/* --- START: Subtitle Source Control Styles --- */
+.source-control {
+    position: relative;
+    padding-bottom: 0.5rem;
+    margin-bottom: -0.5rem; /* Puente para el hover */
+}
+
+.source-options-container {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17, 24, 39, 0.75);
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    display: none; /* Oculto por defecto */
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 120px; /* Ancho fijo para el menú */
+}
+
+.source-control:hover .source-options-container {
+    display: flex; /* Se muestra al hacer hover */
+}
+
+.source-option {
+    background-color: transparent;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    width: 100%;
+    transition: background-color 0.2s ease;
+}
+
+.source-option:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.source-option.active {
+    background-color: #075BA2; /* Color primario para la opción activa */
+    font-weight: 700;
+}
+/* --- END: Subtitle Source Control Styles --- */
+
+/* --- START: Load Video Button Hover Logic (Simple Version) --- */
+#loadVideoBtn {
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Si el contenedor del vídeo :has() un elemento <video> 
+  cuyo atributo 'src' :not() está vacío, entonces...
+*/
+#videoPlayerWrapper:has(video:not([src=""])) #loadVideoBtn {
+    /* ...oculta el botón por defecto. */
+    opacity: 0;
+}
+
+/* Y cuando el ratón esté sobre el contenedor, muéstralo. */
+#videoPlayerWrapper:has(video:not([src=""])):hover #loadVideoBtn {
+    opacity: 1;
+}
+/* --- END: Load Video Button Hover Logic (Simple Version) --- */
+
     </style>
 </head>
 <body class="bg-gray-100">
@@ -515,23 +656,14 @@
     <div class="main-app-content">
          <div class="video-player-section flex flex-col items-center justify-center p-4">
             
-            <div id="videoControls" class="w-full mb-4 flex flex-col items-center gap-4">
-                <label for="videoFileInput" id="loadVideoBtn" class="btn btn-primary">
-                    <span data-i18n="load_video">Cargar vídeo</span>
-                    <input type="file" id="videoFileInput" accept="video/*" class="hidden">
-                </label>
-               
-                <div class="flex items-center gap-2 text-sm text-gray-600">
-                    <label for="subtitlePreviewSource" class="font-medium" data-i18n="preview_source">Mostrar:</label>
-                    <select id="subtitlePreviewSource" class="bg-gray-200 text-black text-sm rounded-md p-1 border border-gray-400">
-                        <option value="translation" data-i18n="translation_text_option">Traducción</option>
-                        <option value="original" data-i18n="original_text_option">Original</option>
-                    </select>
-                </div>
-            </div>
+  
 
             <div id="videoPlayerContainer" class="w-full">
                 <div id="videoPlayerWrapper" class="relative bg-black rounded-lg group">
+<label for="videoFileInput" id="loadVideoBtn" class="btn btn-primary absolute top-4 left-4 z-10 py-2">
+    <span data-i18n="load_video">Cargar vídeo</span>
+    <input type="file" id="videoFileInput" accept="video/*" class="hidden">
+</label>
                     <video id="videoPlayer" class="w-full h-auto max-h-[60vh] rounded-lg"></video>
                     <div id="videoLogoPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
@@ -548,17 +680,40 @@
                             </button>
                             <input type="range" id="seekBar" value="0" step="0.1" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
                             <span id="timeDisplay" class="text-xs font-mono whitespace-nowrap">00:00 / 00:00</span>
-                            <div class="flex items-center gap-1">
-                                <button id="volumeBtn">
-                                    <svg id="volumeHighIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
-                                    <svg id="volumeMuteIcon" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
-                                </button>
-                                <input type="range" id="volumeBar" min="0" max="1" step="0.1" value="1" class="w-20 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                            </div>
-                             <div class="flex items-center gap-2 text-sm text-white">
-                        <label for="subtitleFontSize" class="font-medium" data-i18n="preview_size">Tamaño:</label>
-                        <input type="range" id="subtitleFontSize" min="12" max="48" value="24" class="w-24">
-                    </div>
+                            
+<div class="volume-control">
+    <button id="volumeBtn">
+        <svg id="volumeHighIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+        <svg id="volumeMuteIcon" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
+    </button>
+    <div class="volume-slider-container">
+        <input type="range" id="volumeBar" min="0" max="1" step="0.1" value="1">
+    </div>
+</div>
+
+                          
+<div class="size-control">
+    <button id="sizeBtn" class="text-white">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.5 4v3h5v12h3V7h5V4h-13zm19 5h-9v3h3v7h3v-7h3V9z"/>
+        </svg>
+    </button>
+    <div class="size-slider-container">
+        <input type="range" id="subtitleFontSize" min="12" max="48" value="24">
+    </div>
+</div>
+<div class="source-control">
+    <button id="sourceBtn" class="text-white">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 14H6v-2h2v2zm0-3H6V9h2v2zm0-3H6V6h2v2zm7 6h-5v-2h5v2zm3-3h-8V9h8v2zm0-3h-8V6h8v2z"></path>
+</svg>
+
+    </button>
+    <div class="source-options-container">
+        <button id="setSourceTranslation" class="source-option active" data-source="translation" data-i18n="translation_text_option">Traducción</button>
+        <button id="setSourceOriginal" class="source-option" data-source="original" data-i18n="original_text_option">Original</button>
+    </div>
+</div>
                             <button id="fullscreenBtn">
                                 <svg id="fullscreenOpenIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg>
                                 <svg id="fullscreenCloseIcon" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg>
@@ -3564,10 +3719,30 @@ subtitlePreviewText.style.setProperty('--user-font-size', `${subtitleFontSize.va
 
             videoPlayer.addEventListener('timeupdate', updateSubtitlePreview);
             
-            subtitlePreviewSource.addEventListener('change', (event) => {
-                previewSource = event.target.value;
-                updateSubtitlePreview();
-            });
+            // --- INICIO: Lógica para el nuevo control de fuente de subtítulos ---
+const setSourceTranslationBtn = document.getElementById('setSourceTranslation');
+const setSourceOriginalBtn = document.getElementById('setSourceOriginal');
+
+const handleSourceChange = (newSource) => {
+    previewSource = newSource;
+    updateSubtitlePreview();
+
+    // Actualiza cuál botón se ve como "activo"
+    setSourceTranslationBtn.classList.toggle('active', newSource === 'translation');
+    setSourceOriginalBtn.classList.toggle('active', newSource === 'original');
+};
+
+// Añade los listeners a los nuevos botones
+if (setSourceTranslationBtn && setSourceOriginalBtn) {
+    setSourceTranslationBtn.addEventListener('click', () => {
+        handleSourceChange('translation');
+    });
+
+    setSourceOriginalBtn.addEventListener('click', () => {
+        handleSourceChange('original');
+    });
+}
+// --- FIN: Lógica para el nuevo control ---
 
             // Language switcher events
             langEsBtn.addEventListener('click', () => setLanguage('es'));
@@ -3899,6 +4074,54 @@ return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
                     fullscreenOpenIcon.classList.remove('hidden');
                 }
             });
+
+// --- INICIO: Control de volumen con la rueda del ratón ---
+            const volumeControl = document.querySelector('.volume-control');
+            if (volumeControl) {
+                volumeControl.addEventListener('wheel', (event) => {
+                    // Previene que la página se desplace al usar la rueda
+                    event.preventDefault();
+
+                    // Define cuánto cambiará el volumen con cada paso de la rueda
+                    const volumeStep = 0.05;
+
+                    // Si la rueda va hacia arriba (deltaY es negativo), sube el volumen
+                    if (event.deltaY < 0) {
+                        videoPlayer.volume = Math.min(1, videoPlayer.volume + volumeStep);
+                    } else {
+                    // Si la rueda va hacia abajo, baja el volumen
+                        videoPlayer.volume = Math.max(0, videoPlayer.volume - volumeStep);
+                    }
+                });
+            }
+            // --- FIN: Control de volumen con la rueda del ratón ---
+
+
+// --- INICIO: Control de tamaño con la rueda del ratón ---
+const sizeControl = document.querySelector('.size-control');
+if (sizeControl) {
+    sizeControl.addEventListener('wheel', (event) => {
+        event.preventDefault();
+
+        const sizeStep = 1; // Cambia 1px cada vez
+        let currentValue = parseInt(subtitleFontSize.value, 10);
+
+        if (event.deltaY < 0) {
+            currentValue += sizeStep; // Sube el tamaño
+        } else {
+            currentValue -= sizeStep; // Baja el tamaño
+        }
+
+        // Asegura que el valor se mantenga en el rango min/max
+        const minSize = parseInt(subtitleFontSize.min, 10);
+        const maxSize = parseInt(subtitleFontSize.max, 10);
+        subtitleFontSize.value = Math.max(minSize, Math.min(maxSize, currentValue));
+
+        // Dispara el evento 'input' para que la vista previa se actualice
+        subtitleFontSize.dispatchEvent(new Event('input'));
+    });
+}
+
             // --- FIN: Lógica para Controles de Vídeo Personalizados ---
         });
 
