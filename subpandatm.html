@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -477,7 +478,7 @@
         <div class="video-player-section flex flex-col items-center justify-center p-4">
             <div id="videoPlayerContainer" class="w-full hidden">
                 <div id="videoPlayerWrapper" class="relative bg-black rounded-lg">
-                    <video id="videoPlayer" controls class="w-full h-auto max-h-[60vh] rounded-lg"></video>
+                    <video id="videoPlayer" controls class="hidden w-full h-auto max-h-[60vh] rounded-lg"></video>
                     <div id="videoLogoPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
                          <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
                     </div>
@@ -577,7 +578,7 @@
                     <button onclick="loadTBX()" data-i18n="import_tbx" class="btn btn-secondary flex-1 text-sm">Importar TBX</button>
                     <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
                     <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn btn-secondary flex-1 text-sm">Descargar TBX</button>
-                    <button onclick="showConfirmResetGlossary()" data-i18n="new_glossary" class="btn btn-secondary flex-1 text-sm">Nuevo glosario</button>
+                    <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn btn-secondary flex-1 text-sm">Nuevo glosario</button>
                 </div>
                 <h4 class="text-md font-semibold mb-2" data-i18n="current_lang_title">Idiomas actuales del glosario</h4>
                 <div class="flex space-x-2 mb-4">
@@ -665,7 +666,7 @@
 
             <div id="tmEditorSection" style="display:none;">
                 <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                    <button onclick="showConfirmResetTm()" data-i18n="new_tm" class="btn btn-secondary flex-1 text-sm">Nueva TM</button>
+                    <button onclick="resetTM()" data-i18n="new_tm" class="btn btn-secondary flex-1 text-sm">Nueva TM</button>
                     <label for="tmFileInput" class="btn btn-secondary flex-1 text-sm text-center">
                         <span data-i18n="import_tmx">Importar TMX</span>
                         <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
@@ -881,27 +882,6 @@
         </div>
     </div>
 
-    <div id="confirmResetGlossaryModal" class="modal hidden">
-        <div class="modal-content">
-            <h2 data-i18n="confirm_new_glossary_title" class="text-xl font-bold mb-4">Confirmar nuevo glosario</h2>
-            <p data-i18n="confirm_new_glossary_message" class="mb-6">Solo puedes tener un glosario activo. Si continúas, se borrarán todos los datos del glosario actual. Para evitar perder tu trabajo, asegúrate de exportarlo primero como un archivo TBX.</p>
-            <div class="flex justify-end space-x-2">
-                <button id="cancelResetGlossaryBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
-                <button id="confirmResetGlossaryBtn" class="btn btn-destructive" data-i18n="continue_btn">Continuar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="confirmResetTmModal" class="modal hidden">
-        <div class="modal-content">
-            <h2 data-i18n="confirm_new_tm_title" class="text-xl font-bold mb-4">Confirmar nueva TM</h2>
-            <p data-i18n="confirm_new_tm_message" class="mb-6">Solo puedes tener una memoria de traducción (TM) activa. Si continúas, se borrarán todos los datos de la TM actual. Para evitar perder tu trabajo, asegúrate de exportarla primero como un archivo TMX.</p>
-            <div class="flex justify-end space-x-2">
-                <button id="cancelResetTmBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
-                <button id="confirmResetTmBtn" class="btn btn-destructive" data-i18n="continue_btn">Continuar</button>
-            </div>
-        </div>
-    </div>
 
     <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="loading-spinner"></div>
@@ -1060,14 +1040,6 @@
         const cancelNewProjectBtn = document.getElementById('cancelNewProjectBtn');
         const continueWithoutSavingBtn = document.getElementById('continueWithoutSavingBtn');
         const saveAndContinueBtn = document.getElementById('saveAndContinueBtn');
-        
-        // *** CODE CORRECTION 1: Add variable declarations for new modals ***
-        const confirmResetGlossaryModal = document.getElementById('confirmResetGlossaryModal');
-        const confirmResetGlossaryBtn = document.getElementById('confirmResetGlossaryBtn');
-        const cancelResetGlossaryBtn = document.getElementById('cancelResetGlossaryBtn');
-        const confirmResetTmModal = document.getElementById('confirmResetTmModal');
-        const confirmResetTmBtn = document.getElementById('confirmResetTmBtn');
-        const cancelResetTmBtn = document.getElementById('cancelResetTmBtn');
 
         // --- I18N & SHORTCUTS SETUP ---
 
@@ -1076,26 +1048,15 @@
                 'title': 'subpandaTM', 'import_srt': 'Importar .srt', 'export_srt': 'Exportar .srt', 'backup_btn': 'Copia de seguridad', 'qa_btn': 'QA', 'shortcuts_btn': 'Atajos', 'find_replace_btn': 'Buscar y reemplazar', 'terminology_btn': 'Terminología', 'tm_btn': 'Memoria de traducción', 'load_video': 'Cargar vídeo', 'change_video': 'Cambiar vídeo', 'preview_size': 'Tamaño:', 'preview_source': 'Mostrar:', 'translation_text_option': 'Traducción', 'original_text_option': 'Original', 'translation_stats_title': 'Estadísticas', 'segments_progress_text': '{0}/{1} subtítulos traducidos ({2}%)', 'words_translated_text': '{0} palabras traducidas', 'words_total_text': '{0} palabras originales totales', 'words_remaining_text': '{0} palabras pendientes', 'no_translations': 'Importa un archivo .srt y un vídeo para empezar a trabajar. Si lo deseas, puedes trabajar con una memoria de traducción TMX y un glosario TBX, que puedes importar o crear desde cero.', 'time_codes': 'Códigos de tiempo:', 'original_text': 'Original:', 'translation_text': 'Traducción:', 'validate': 'Validar', 'edit': 'Editar', 'char_count_original': 'Original: ', 'char_count_translation': 'Traducción: ', 'char_units': ' caracteres', 'cps': ' CPS', 'ok': 'OK', 'close_btn': 'Cerrar', 'save_btn': 'Guardar', 'cancel_btn': 'Cancelar', 'shortcuts_title': 'Atajos de teclado',
                 'shortcut_desc_validateAndNext': 'Validar traducción y pasar a la siguiente', 'shortcut_desc_goToNext': 'Ir al siguiente subtítulo', 'shortcut_desc_goToPrevious': 'Ir al subtítulo anterior', 'shortcut_desc_insertTM1': 'Insertar 1ª sugerencia de la MT', 'shortcut_desc_insertTM2': 'Insertar 2ª sugerencia de la MT', 'shortcut_desc_insertTM3': 'Insertar 3ª sugerencia de la MT', 'shortcut_desc_insertTM4': 'Insertar 4ª sugerencia de la MT', 'shortcut_desc_insertTM5': 'Insertar 5ª sugerencia de la MT', 'shortcut_desc_insertGloss1': 'Insertar 1er término del glosario', 'shortcut_desc_insertGloss2': 'Insertar 2º término del glosario', 'shortcut_desc_insertGloss3': 'Insertar 3er término del glosario', 'shortcut_desc_insertGloss4': 'Insertar 4º término del glosario', 'shortcut_desc_insertGloss5': 'Insertar 5º término del glosario', 'shortcut_desc_jumpToTime': 'Saltar al tiempo de inicio del subtítulo actual', 'shortcut_desc_playSegment': 'Reproducir el subtítulo actual', 'shortcut_desc_playPause': 'Reproducir/pausar vídeo', 'shortcut_desc_seekForward': 'Avanzar 3 segundos', 'shortcut_desc_seekBackward': 'Retroceder 3 segundos', 'shortcut_desc_seekForwardFast': 'Avanzar 5 segundos', 'shortcut_desc_seekBackwardFast': 'Retroceder 5 segundos', 'shortcut_desc_bold': 'Aplicar negrita', 'shortcut_desc_italic': 'Aplicar cursiva',
                 'find_replace_title': 'Buscar y reemplazar', 'find_label': 'Buscar:', 'replace_label': 'Reemplazar con:', 'case_sensitive': 'Distinguir mayúsculas y minúsculas', 'regular_expression': 'Expresión regular', 'find_prev': 'Buscar anterior', 'find_next': 'Buscar siguiente', 'replace': 'Reemplazar', 'replace_all': 'Reemplazar todo', 'save_srt_title': 'Exportar Archivo SRT', 'save_tbx_title': 'Exportar Archivo TBX', 'save_tmx_title': 'Exportar Archivo TMX', 'file_name_label': 'Nombre del archivo:', 'backup_modal_title': 'Copia de Seguridad', 'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.', 'file_label': 'Archivo:', 'last_modified_label': 'Última modificación:', 'export_srt_btn': 'Exportar SRT', 'delete_backup_btn': 'Borrar Backup', 'restore_btn': 'Restaurar', 'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.', 'qa_modal_title': 'Configuración de QA', 'cps_limit_label': 'Límite de CPS:', 'chars_per_line_limit_label': 'Límite de caracteres por línea:', 'save_and_apply_btn': 'Guardar y aplicar', 'qa_error_list_title': 'Lista de Errores de QA', 'qa_errors_found': '{0} errores de QA encontrados', 'qa_no_errors': 'No se han encontrado errores de QA.', 'terminology_sidebar_title': 'Terminología', 'config_lang_title': 'Configurar idiomas del glosario', 'config_lang_info': 'Define los idiomas de origen y destino de tu glosario. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear un glosario desde cero.', 'source_language': 'Idioma de origen:', 'target_language': 'Idioma de destino:', 'confirm_languages': 'Confirmar idiomas', 'current_lang_title': 'Idiomas actuales del glosario', 'add_term_title': 'Añadir término', 'term': 'Término:', 'translation': 'Traducción:', 'add_button': 'Añadir', 'search_title': 'Buscar', 'search_placeholder': 'Buscar término...', 'import_tbx': 'Importar TBX', 'download_tbx': 'Descargar TBX', 'new_glossary': 'Nuevo glosario', 'glossary_list_title': 'Glosario', 'source_term_col': 'Término de origen', 'target_term_col': 'Término de destino', 'actions_col': 'Acciones', 'delete_button': 'Eliminar', 'tm_sidebar_title': 'Memoria de traducción', 'tm_config_lang_title': 'Configurar idiomas de la TM', 'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.', 'current_tm_lang_title': 'Idiomas actuales de la TM', 'new_tm': 'Nueva TM', 'import_tmx': 'Importar TMX', 'download_tmx': 'Descargar TMX', 'tm_search_title': 'Buscar en TM', 'tm_search_placeholder': 'Buscar en la memoria...', 'tm_search_results_title': 'Resultados de búsqueda en TM', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Traducción', 'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
-                'import_shortcuts_btn': 'Importar', 'export_shortcuts_btn': 'Exportar', 'restore_defaults_btn': 'Restaurar valores por defecto', 'edit_shortcut_btn': 'Editar', 'recording_shortcut_text': 'Pulsar tecla...', 'project_menu': 'Proyecto', 'load_project': 'Cargar proyecto', 'save_project': 'Guardar proyecto', 'new_project': 'Nuevo proyecto', 'reselect_video_title': 'Seleccionar vídeo', 'reselect_video_info': 'Proyecto cargado. Para sincronizar el vídeo, por favor, selecciona el archivo de vídeo original:', 'reselect_video_prompt': 'Proyecto cargado. Por favor, selecciona el archivo de vídeo original: {0}', 'skip_btn': 'Omitir', 'confirm_new_project_title': 'Crear nuevo proyecto', 'confirm_new_project_message': 'Tienes cambios sin guardar. ¿Quieres guardar el proyecto actual antes de continuar?', 'continue_without_saving_btn': 'Continuar sin guardar',  'save_and_continue_btn': 'Guardar y continuar',
-                'confirm_new_glossary_title': 'Confirmar nuevo glosario', 'confirm_new_glossary_message': 'Solo puedes tener un glosario activo. Si continúas, se borrarán todos los datos del glosario actual. Para evitar perder tu trabajo, asegúrate de exportarlo primero como un archivo TBX.','confirm_new_tm_title': 'Confirmar nueva TM','confirm_new_tm_message': 'Solo puedes tener una memoria de traducción (TM) activa. Si continúas, se borrarán todos los datos de la TM actual. Para evitar perder tu trabajo, asegúrate de exportarla primero como un archivo TMX.', 'continue_btn': 'Continuar',
-                'productive_documentation': 'Documentación productiva', 'doc_resource_placeholder': 'Ej: https://dle.rae.es/{word}'
+                'import_shortcuts_btn': 'Importar', 'export_shortcuts_btn': 'Exportar', 'restore_defaults_btn': 'Restaurar valores por defecto', 'edit_shortcut_btn': 'Editar', 'recording_shortcut_text': 'Pulsar tecla...',
+                'project_menu': 'Proyecto', 'load_project': 'Cargar proyecto', 'save_project': 'Guardar proyecto', 'new_project': 'Nuevo proyecto', 'reselect_video_title': 'Seleccionar vídeo', 'reselect_video_info': 'Proyecto cargado. Para sincronizar el vídeo, por favor, selecciona el archivo de vídeo original:', 'reselect_video_prompt': 'Proyecto cargado. Por favor, selecciona el archivo de vídeo original: {0}', 'skip_btn': 'Omitir', 'confirm_new_project_title': 'Crear nuevo proyecto', 'confirm_new_project_message': 'Tienes cambios sin guardar. ¿Quieres guardar el proyecto actual antes de continuar?', 'continue_without_saving_btn': 'Continuar sin guardar', 'save_and_continue_btn': 'Guardar y continuar'
             },
             'en': {
                 'title': 'subpandaTM', 'import_srt': 'Import .srt', 'export_srt': 'Export .srt', 'backup_btn': 'Backup', 'qa_btn': 'QA', 'shortcuts_btn': 'Shortcuts', 'find_replace_btn': 'Find & Replace', 'terminology_btn': 'Terminology', 'tm_btn': 'Translation Memory', 'load_video': 'Load Video', 'change_video': 'Change Video', 'preview_size': 'Size:', 'preview_source': 'Show:', 'translation_text_option': 'Translation', 'original_text_option': 'Original', 'translation_stats_title': 'Statistics', 'segments_progress_text': '{0}/{1} subtitles translated ({2}%)', 'words_translated_text': '{0} words translated', 'words_total_text': '{0} total original words', 'words_remaining_text': '{0} words remaining', 'no_translations': 'Import an .srt file and a video to start working. If you wish, you can work with a TMX translation memory and a TBX glossary, which you can import or create from scratch.', 'time_codes': 'Time codes:', 'original_text': 'Original:', 'translation_text': 'Translation:', 'validate': 'Validate', 'edit': 'Edit', 'char_count_original': 'Original: ', 'char_count_translation': 'Translation: ', 'char_units': ' characters', 'cps': ' CPS', 'ok': 'OK', 'close_btn': 'Close', 'save_btn': 'Save', 'cancel_btn': 'Cancel', 'shortcuts_title': 'Keyboard Shortcuts',
                 'shortcut_desc_validateAndNext': 'Validate translation and move to next', 'shortcut_desc_goToNext': 'Go to next subtitle', 'shortcut_desc_goToPrevious': 'Go to previous subtitle', 'shortcut_desc_insertTM1': 'Insert 1st TM suggestion', 'shortcut_desc_insertTM2': 'Insert 2nd TM suggestion', 'shortcut_desc_insertTM3': 'Insert 3rd TM suggestion', 'shortcut_desc_insertTM4': 'Insert 4th TM suggestion', 'shortcut_desc_insertTM5': 'Insert 5th TM suggestion', 'shortcut_desc_insertGloss1': 'Insert 1st glossary term', 'shortcut_desc_insertGloss2': 'Insert 2nd glossary term', 'shortcut_desc_insertGloss3': 'Insert 3rd glossary term', 'shortcut_desc_insertGloss4': 'Insert 4th glossary term', 'shortcut_desc_insertGloss5': 'Insert 5th glossary term', 'shortcut_desc_jumpToTime': 'Jump to current subtitle start time', 'shortcut_desc_playSegment': 'Play current subtitle', 'shortcut_desc_playPause': 'Play/pause video', 'shortcut_desc_seekForward': 'Seek forward 3 seconds', 'shortcut_desc_seekBackward': 'Seek backward 3 seconds', 'shortcut_desc_seekForwardFast': 'Seek forward 5 seconds', 'shortcut_desc_seekBackwardFast': 'Seek backward 5 seconds', 'shortcut_desc_bold': 'Apply bold', 'shortcut_desc_italic': 'Apply italics',
                 'find_replace_title': 'Find and Replace', 'find_label': 'Find:', 'replace_label': 'Replace with:', 'case_sensitive': 'Case sensitive', 'regular_expression': 'Regular expression', 'find_prev': 'Find previous', 'find_next': 'Find next', 'replace': 'Replace', 'replace_all': 'Replace all', 'save_srt_title': 'Export SRT File', 'save_tbx_title': 'Export TBX File', 'save_tmx_title': 'Export TMX File', 'file_name_label': 'File name:', 'backup_modal_title': 'Backup', 'restore_backup_info': 'A backup of an unsaved session has been found.', 'file_label': 'File:', 'last_modified_label': 'Last modified:', 'export_srt_btn': 'Export SRT', 'delete_backup_btn': 'Delete Backup', 'restore_btn': 'Restore', 'no_backup_found_info': 'No automatic backup has been found.', 'qa_modal_title': 'QA Settings', 'cps_limit_label': 'CPS Limit:', 'chars_per_line_limit_label': 'Characters per line limit:', 'save_and_apply_btn': 'Save and apply', 'qa_error_list_title': 'QA Error List', 'qa_errors_found': '{0} QA errors found', 'qa_no_errors': 'No QA errors found.', 'terminology_sidebar_title': 'Terminology', 'config_lang_title': 'Set up glossary languages', 'config_lang_info': 'Define the source and target languages for your glossary. The ISO code must be correct. After setting the language, you can import or create a glossary from scratch.', 'source_language': 'Source language:', 'target_language': 'Target language:', 'confirm_languages': 'Confirm languages', 'current_lang_title': 'Current glossary languages', 'add_term_title': 'Add term', 'term': 'Term:', 'translation': 'Translation:', 'add_button': 'Add', 'search_title': 'Search', 'search_placeholder': 'Search term...', 'import_tbx': 'Import TBX', 'download_tbx': 'Download TBX', 'new_glossary': 'New glossary', 'glossary_list_title': 'Glossary', 'source_term_col': 'Source term', 'target_term_col': 'Target term', 'actions_col': 'Actions', 'delete_button': 'Delete', 'tm_sidebar_title': 'Translation Memory', 'tm_config_lang_title': 'Set up TM languages', 'tm_config_lang_info': 'Define the source and target languages for your translation memory. The ISO code must be correct. After setting the language, you can import or create a memory from scratch.', 'current_tm_lang_title': 'Current TM languages', 'new_tm': 'New TM', 'import_tmx': 'Import TMX', 'download_tmx': 'Download TMX', 'tm_search_title': 'Search TM', 'tm_search_placeholder': 'Search in memory...', 'tm_search_results_title': 'TM Search Results', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Translation', 'tm_no_match_found': 'No matches found in the TM.',
                 'import_shortcuts_btn': 'Import', 'export_shortcuts_btn': 'Export', 'restore_defaults_btn': 'Restore Defaults', 'edit_shortcut_btn': 'Edit', 'recording_shortcut_text': 'Press key...',
-                'project_menu': 'Project', 'load_project': 'Load project', 'save_project': 'Save project', 'new_project': 'New project', 'reselect_video_title': 'Select Video', 'reselect_video_info': 'Project loaded. To sync the video, please select the original video file:', 'reselect_video_prompt': 'Project loaded. Please select the original video file: {0}', 'skip_btn': 'Skip', 'confirm_new_project_title': 'Create new project', 'confirm_new_project_message': 'You have unsaved changes. Do you want to save the current project before continuing?',
-                // *** CODE CORRECTION 2: Add missing commas ***
-                'continue_without_saving_btn': 'Continue without saving', 
-                'save_and_continue_btn': 'Save and continue',
-                'confirm_new_glossary_title': 'Confirm New Glossary',
-                'confirm_new_glossary_message': 'You can only have one active glossary. If you continue, all data from the current glossary will be deleted. To avoid losing your work, make sure to export it as a TBX file first.',
-                'confirm_new_tm_title': 'Confirm New TM',
-                'confirm_new_tm_message': 'You can only have one active Translation Memory (TM). If you continue, all data from the current TM will be deleted. To avoid losing your work, make sure to export it as a TMX file first.',
-                'continue_btn': 'Continue', 
-                'productive_documentation': 'Productive Lookup',
-                'doc_resource_placeholder': 'E.g., https://www.wordreference.com/es/en/{word}'
+                'project_menu': 'Project', 'load_project': 'Load project', 'save_project': 'Save project', 'new_project': 'New project', 'reselect_video_title': 'Select Video', 'reselect_video_info': 'Project loaded. To sync the video, please select the original video file:', 'reselect_video_prompt': 'Project loaded. Please select the original video file: {0}', 'skip_btn': 'Skip', 'confirm_new_project_title': 'Create new project', 'confirm_new_project_message': 'You have unsaved changes. Do you want to save the current project before continuing?', 'continue_without_saving_btn': 'Continue without saving', 'save_and_continue_btn': 'Save and continue'
             }
         };
 
@@ -1135,7 +1096,6 @@
             seekBackwardFast: { ctrlKey: true, altKey: true, shiftKey: false, key: 'arrowleft', descriptionKey: 'shortcut_desc_seekBackwardFast' },
             bold: { ctrlKey: true, altKey: false, shiftKey: false, key: 'b', descriptionKey: 'shortcut_desc_bold' },
             italic: { ctrlKey: true, altKey: false, shiftKey: false, key: 'i', descriptionKey: 'shortcut_desc_italic' },
-            docResources: [] // Add array for documentation resources
         };
         let shortcuts = { ...defaultShortcuts };
 
@@ -1176,14 +1136,14 @@
          * @param {string} text The text to count.
          * @returns {number} The character count without tags.
          */
-        function countCharactersWithoutTags(text) {
-            if (!text) return 0;
-            // Remove all HTML tags
-            const noTags = text.replace(/<[^>]+>/g, '');
-            // Convert entities like &nbsp; to space
-            const cleanText = noTags.replace(/&nbsp;/gi, ' ');
-            return cleanText.length;
-        }
+    function countCharactersWithoutTags(text) {
+    if (!text) return 0;
+    // Elimina todas las etiquetas HTML
+    const noTags = text.replace(/<[^>]+>/g, '');
+    // Convierte entidades como &nbsp; a espacio
+    const cleanText = noTags.replace(/&nbsp;/gi, ' ');
+    return cleanText.length;
+}
 
         /**
          * Converts milliseconds to SRT time format (HH:MM:SS,ms).
@@ -1223,18 +1183,18 @@
          * @param {number} durationMs The duration of the subtitle in milliseconds.
          * @returns {number} CPS value.
          */
-        function calculateCPS(text, durationMs) {
-            if (durationMs <= 0) return 0;
+   function calculateCPS(text, durationMs) {
+    if (durationMs <= 0) return 0;
 
-            // Remove ALL HTML tags
-            const noTags = text.replace(/<[^>]+>/g, '');
+    // Elimina TODAS las etiquetas HTML
+    const noTags = text.replace(/<[^>]+>/g, '');
 
-            // Replace &nbsp; entities with spaces
-            const cleanText = noTags.replace(/&nbsp;/gi, ' ');
+    // Sustituye entidades &nbsp; por espacios
+    const cleanText = noTags.replace(/&nbsp;/gi, ' ');
 
-            // Divide by seconds
-            return (cleanText.length / (durationMs / 1000)).toFixed(2);
-        }
+    // Divide por segundos
+    return (cleanText.length / (durationMs / 1000)).toFixed(2);
+}
 
         /**
          * Parses the content of an SRT file.
@@ -1358,7 +1318,7 @@
         }
 
         /**
-         * Configures the editable state of a translation entry (editable/read-only).
+         * Configures the editable state of a translation entry (editable/solo lectura).
          * @param {number} entryIndex The index of the SRT entry.
          * @param {boolean} isEditable True to make it editable, false for read-only.
          */
@@ -1779,9 +1739,6 @@
             
             // Find which shortcut was triggered
             const triggeredAction = Object.keys(shortcuts).find(action => {
-                // Ignore docResources in this check, they are handled separately
-                if (action === 'docResources') return false;
-
                 const shortcut = shortcuts[action];
                 // Handle space key correctly
                 const keyMatch = (shortcut.key === ' ' && event.code === 'Space') || (shortcut.key.toLowerCase() === event.key.toLowerCase());
@@ -1850,29 +1807,8 @@
                             }
                         }
                         break;
-            
                 }
             }
-
-            // Check for documentation resource shortcuts
-            shortcuts.docResources.forEach(resource => {
-                if (!resource.url || !resource.shortcut) return;
-
-                const shortcut = resource.shortcut;
-                const keyMatch = (shortcut.key.toLowerCase() === event.key.toLowerCase());
-
-                if (keyMatch && shortcut.ctrlKey === event.ctrlKey && shortcut.altKey === event.altKey && shortcut.shiftKey === event.shiftKey) {
-                    event.preventDefault();
-
-                    const selectedText = window.getSelection().toString().trim();
-                    if (selectedText) {
-                        // Replace {word} in the URL with the selected text, encoded for safety
-                        const finalUrl = resource.url.replace('{word}', encodeURIComponent(selectedText));
-                        // Open the URL in a new tab
-                        window.open(finalUrl, '_blank');
-                    }
-                }
-            });
         });
 
         // --- Message Box Functions ---
@@ -1914,8 +1850,6 @@
             shortcutsList.innerHTML = '';
             const t = translations[currentLanguage];
             for (const action in shortcuts) {
-                if (action === 'docResources') continue; // Skip the array itself
-
                 const shortcut = shortcuts[action];
                 const row = document.createElement('div');
                 row.className = 'flex justify-between items-center p-2 border-b';
@@ -1932,50 +1866,7 @@
                 shortcutsList.appendChild(row);
             }
 
-            const docSection = document.createElement('div');
-            docSection.className = 'mt-6 pt-4 border-t';
-            docSection.innerHTML = `<h3 class="text-lg font-bold mb-3" data-i18n="productive_documentation">${t.productive_documentation}</h3>`;
-
-            shortcuts.docResources.forEach((resource, index) => {
-                const row = document.createElement('div');
-                row.className = 'flex justify-between items-center p-2 gap-4';
-
-                // URL Input
-                const urlInput = document.createElement('input');
-                urlInput.type = 'text';
-                urlInput.className = 'w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white';
-                urlInput.placeholder = t.doc_resource_placeholder;
-                urlInput.value = resource.url;
-                urlInput.oninput = (e) => {
-                    shortcuts.docResources[index].url = e.target.value;
-                    saveShortcuts();
-                };
-
-                // Shortcut container
-                const shortcutContainer = document.createElement('div');
-                shortcutContainer.className = 'flex items-center gap-2';
-                const shortcutDisplay = document.createElement('span');
-                shortcutDisplay.id = `shortcut-display-doc_${index}`;
-                shortcutDisplay.className = 'shortcut-input font-mono';
-                shortcutDisplay.textContent = resource.shortcut ? formatShortcut(resource.shortcut) : '...';
-
-                const editButton = document.createElement('button');
-                editButton.className = 'btn btn-secondary text-sm';
-                editButton.dataset.action = `doc_${index}`; // Unique ID for this shortcut
-                editButton.textContent = t.edit_shortcut_btn;
-
-                shortcutContainer.appendChild(shortcutDisplay);
-                shortcutContainer.appendChild(editButton);
-
-                row.appendChild(urlInput);
-                row.appendChild(shortcutContainer);
-
-                docSection.appendChild(row);
-            });
-
-            shortcutsList.appendChild(docSection);
-
-            // Add event listeners to all edit buttons
+            // Add event listeners to the new edit buttons
             shortcutsList.querySelectorAll('button[data-action]').forEach(button => {
                 button.addEventListener('click', () => startRecording(button.dataset.action));
             });
@@ -2002,33 +1893,18 @@
                 shiftKey: e.shiftKey
             };
         
-            // Check for conflicts
-            let conflict = Object.keys(shortcuts).some(action => {
-                if (action === 'docResources' || action === recordingAction) return false;
-                const sc = shortcuts[action];
-                return sc.key === newShortcut.key && sc.ctrlKey === newShortcut.ctrlKey && sc.altKey === newShortcut.altKey && sc.shiftKey === newShortcut.shiftKey;
-            });
-
-            if (!conflict) {
-                conflict = shortcuts.docResources.some((res, i) => {
-                    const actionId = `doc_${i}`;
-                    if (!res.shortcut || actionId === recordingAction) return false;
-                    const sc = res.shortcut;
-                    return sc.key === newShortcut.key && sc.ctrlKey === newShortcut.ctrlKey && sc.altKey === newShortcut.altKey && sc.shiftKey === newShortcut.shiftKey;
-                });
-            }
-
+            const conflict = Object.keys(shortcuts).find(action => 
+                action !== recordingAction &&
+                shortcuts[action].key === newShortcut.key &&
+                shortcuts[action].ctrlKey === newShortcut.ctrlKey &&
+                shortcuts[action].altKey === newShortcut.altKey &&
+                shortcuts[action].shiftKey === newShortcut.shiftKey
+            );
+        
             if (conflict) {
                 showMessage(errorMessages[currentLanguage].shortcut_conflict);
             } else {
-                if (recordingAction.startsWith('doc_')) {
-                    // It's a documentation shortcut
-                    const index = parseInt(recordingAction.split('_')[1]);
-                    shortcuts.docResources[index].shortcut = newShortcut;
-                } else {
-                    // It's a regular application shortcut
-                    shortcuts[recordingAction] = { ...shortcuts[recordingAction], ...newShortcut };
-                }
+                shortcuts[recordingAction] = { ...shortcuts[recordingAction], ...newShortcut };
                 saveShortcuts();
             }
         
@@ -2037,19 +1913,11 @@
         };
 
         function startRecording(action) {
-            // Clear any previous recording state
             window.removeEventListener('keydown', recordShortcutHandler, true);
             document.querySelectorAll('.shortcut-input.recording').forEach(el => {
                 const prevAction = el.id.replace('shortcut-display-', '');
                 el.classList.remove('recording');
-                let shortcutToFormat;
-                if (prevAction.startsWith('doc_')) {
-                    const index = parseInt(prevAction.split('_')[1]);
-                    shortcutToFormat = shortcuts.docResources[index].shortcut;
-                } else {
-                    shortcutToFormat = shortcuts[prevAction];
-                }
-                el.textContent = shortcutToFormat ? formatShortcut(shortcutToFormat) : '...';
+                el.textContent = formatShortcut(shortcuts[prevAction]);
             });
 
             recordingAction = action;
@@ -2070,42 +1938,18 @@
 
         async function loadShortcuts() {
             try {
-                const savedSettings = await db.settings.get('shortcuts');
-                if (savedSettings && savedSettings.value) {
-                    // Merge saved shortcuts with defaults to avoid losing any
-                    shortcuts = { ...defaultShortcuts, ...savedSettings.value };
-                } else {
-                    shortcuts = { ...defaultShortcuts };
-                }
-
-                // Ensure docResources exists and has 5 elements
-                if (!shortcuts.docResources || !Array.isArray(shortcuts.docResources) || shortcuts.docResources.length !== 5) {
-                    shortcuts.docResources = [];
-                    for (let i = 0; i < 5; i++) {
-                        shortcuts.docResources.push({
-                            url: '',
-                            shortcut: null // Shortcut is empty by default
-                        });
-                    }
+                const savedShortcuts = await db.settings.get('shortcuts');
+                if (savedShortcuts && savedShortcuts.value) {
+                    shortcuts = { ...defaultShortcuts, ...savedShortcuts.value };
                 }
             } catch (error) {
                 console.error("Failed to load shortcuts, using defaults:", error);
                 shortcuts = { ...defaultShortcuts };
-                 // Ensure docResources is initialized even on error
-                shortcuts.docResources = [];
-                for (let i = 0; i < 5; i++) {
-                    shortcuts.docResources.push({ url: '', shortcut: null });
-                }
             }
         }
         
         restoreShortcutsBtn.addEventListener('click', async () => {
-            shortcuts = JSON.parse(JSON.stringify(defaultShortcuts)); // Deep copy
-            // Re-initialize docResources
-            shortcuts.docResources = [];
-            for (let i = 0; i < 5; i++) {
-                shortcuts.docResources.push({ url: '', shortcut: null });
-            }
+            shortcuts = { ...defaultShortcuts };
             await saveShortcuts();
             renderShortcutsModal();
         });
@@ -2130,7 +1974,6 @@
                     const importedShortcuts = JSON.parse(e.target.result);
                     if (typeof importedShortcuts === 'object' && importedShortcuts !== null) {
                         shortcuts = { ...defaultShortcuts, ...importedShortcuts };
-                        await loadShortcuts(); // Re-run load to ensure docResources is validated
                         await saveShortcuts();
                         renderShortcutsModal();
                     } else {
@@ -3724,43 +3567,7 @@
             skipReselectVideoBtn.addEventListener('click', () => {
                 reselectVideoModal.classList.add('hidden');
             });
-
-            // New Modal Logic
-            confirmResetGlossaryBtn.addEventListener('click', () => {
-                resetGlossary();
-                confirmResetGlossaryModal.classList.add('hidden');
-            });
-
-            cancelResetGlossaryBtn.addEventListener('click', () => {
-                confirmResetGlossaryModal.classList.add('hidden');
-            });
-
-            confirmResetTmBtn.addEventListener('click', () => {
-                resetTM();
-                confirmResetTmModal.classList.add('hidden');
-            });
-
-            cancelResetTmBtn.addEventListener('click', () => {
-                confirmResetTmModal.classList.add('hidden');
-            });
         });
-
-        // Functions to show the new modals
-        function showConfirmResetGlossary() {
-            if (glossary.length === 0) {
-                resetGlossary();
-                return;
-            }
-            confirmResetGlossaryModal.classList.remove('hidden');
-        }
-
-        function showConfirmResetTm() {
-            if (translationMemory.length === 0) {
-                resetTM();
-                return;
-            }
-            confirmResetTmModal.classList.remove('hidden');
-        }
     </script>
 </body>
 </html>
