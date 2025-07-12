@@ -1143,45 +1143,51 @@
          * @param {string} fileName - The desired name for the PDF file.
          */
         function generatePdf(fileName) {
-            const doc = new jsPDF();
+            const doc = new jsPDF('p', 'pt', 'a4'); // 'p' for portrait, 'pt' for points, 'a4' for size
 
             // Define consistent margins
-            const pdfMarginX = 15; // Margen izquierdo
+            const pdfMarginX = 40; // Margen izquierdo y derecho en puntos
             const pdfPageWidth = doc.internal.pageSize.getWidth();
             const pdfRightAlignedX = pdfPageWidth - pdfMarginX; // Coordenada X alineada a la derecha
-            let currentY = 20; // Y inicial para elementos superiores (margen superior más estrecho)
+            let currentY = 40; // Y inicial para elementos superiores
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
 
-            // Number of invoice and date
+            // --- Draw Header Content for the FIRST PAGE ONLY ---
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
             doc.text(`${toSentenceCase(invoiceNumberLabelInput.value)} ${invoiceNumberInput.value}`, pdfRightAlignedX, currentY, null, null, "right");
-            currentY += 7; // Pequeño incremento para la siguiente línea
-            doc.text(`${toSentenceCase(invoiceDateLabelInput.value)} ${invoiceDateInput.value}`, pdfRightAlignedX, currentY, null, null, "right");
-            currentY += 10; // Reducido espacio después de número de factura/fecha antes de datos de cliente/emisor
+            let yAfterInvoiceNumber = currentY + 15; // Espacio después del número de factura
 
-            // Client Data (left)
             doc.setFont("helvetica", "bold");
-            doc.text(toSentenceCase(clientDataLabelInput.value), pdfMarginX, currentY); // Título para datos del cliente
+            doc.text(toSentenceCase(clientDataLabelInput.value), pdfMarginX, currentY);
             doc.setFont("helvetica", "normal");
-            const clientDataFinalY = addMultiLineText(doc, clientDataInput.value, pdfMarginX, currentY + 7, 80, "left"); // currentY + 7 para un pequeño espacio
+            let yAfterClientData = addMultiLineText(doc, clientDataInput.value, pdfMarginX, currentY + 15, 200, "left");
 
-            // Sender Data (right)
+            // Calcular la altura de los datos del emisor para un posicionamiento dinámico
+            const senderDataLines = doc.splitTextToSize(senderDataInput.value, 200); // 200 es el ancho máximo para los datos del emisor
+            const senderDataHeight = senderDataLines.length * doc.getLineHeight();
+            
+            // Posicionar la etiqueta de los datos del emisor. Debe estar debajo del bloque de número de factura/fecha,
+            // y también dejar espacio suficiente.
+            let senderLabelY = Math.max(yAfterInvoiceNumber + 15, 70); // 15pt de buffer, y al menos 70pt desde arriba
+            
             doc.setFont("helvetica", "bold");
-            doc.text(toSentenceCase(senderDataLabelInput.value), pdfRightAlignedX, currentY, null, null, "right"); // Título para datos del emisor
+            doc.text(toSentenceCase(senderDataLabelInput.value), pdfRightAlignedX, senderLabelY, null, null, "right");
             doc.setFont("helvetica", "normal");
-            const senderDataFinalY = addMultiLineText(doc, senderDataInput.value, pdfRightAlignedX, currentY + 7, 80, "right"); // currentY + 7 para un pequeño espacio
+            let yAfterSenderData = addMultiLineText(doc, senderDataInput.value, pdfRightAlignedX, senderLabelY + 15, 200, "right");
 
-            // Determinar la posición Y para el inicio de la tabla (después del bloque de texto más largo)
-            let tableStartY = Math.max(clientDataFinalY, senderDataFinalY) + 5; // Ajustado para que esté más arriba
+            // Determinar la posición Y para el título "Servicios". Debe estar debajo de ambos bloques de datos (cliente y emisor).
+            let yForServicesTitle = Math.max(yAfterClientData, yAfterSenderData) + 20; // 20pt de buffer
 
-            // Title of services (editable)
             doc.setFont("helvetica", "bold");
             doc.setFontSize(16);
-            doc.text(toSentenceCase(servicesTitleInput.value), pdfMarginX, tableStartY); // Usa el valor del input editable
+            doc.text(toSentenceCase(servicesTitleInput.value), pdfMarginX, yForServicesTitle);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
-            tableStartY += 10; // Espacio entre título y tabla
+
+            currentY = yForServicesTitle + 20; // Iniciar la tabla debajo del título de servicios con un buffer
 
             const headers = [
                 tableHeaderProjectInput.value,
@@ -1193,72 +1199,36 @@
 
             document.querySelectorAll('#invoiceItems tr').forEach(row => {
                 const rowData = [];
-                const projectContent = row.querySelector('td:nth-child(1) textarea').value;
-                rowData.push(projectContent);
-                // For rate and quantity, check if single price is active. If so, they might be hidden, push empty string.
+                const projectTextarea = row.querySelector('td:nth-child(1) textarea');
                 const rateInput = row.querySelector('.item-rate');
                 const quantityInput = row.querySelector('.item-quantity');
+                const itemTotalSpan = row.querySelector('.item-total');
                 const singlePriceToggle = row.querySelector('.single-price-toggle');
 
+                rowData.push(projectTextarea.value);
+                
                 if (singlePriceToggle && singlePriceToggle.checked) {
-                    rowData.push(''); // Empty for Rate
-                    rowData.push(''); // Empty for Quantity
+                    rowData.push(''); // Vacío para Tarifa
+                    rowData.push(''); // Vacío para Volumen
                 } else {
                     rowData.push(rateInput.value);
                     rowData.push(quantityInput.value);
                 }
                 
-                rowData.push(row.querySelector('.item-total').textContent); // Always get from the span (which holds the final value)
+                rowData.push(itemTotalSpan.textContent); // Siempre obtiene del span (que contiene el valor final)
                 data.push(rowData);
             });
 
-            const foot = [];
-            const whiteFootCellStyles = {
-                fillColor: [255, 255, 255], // White background
-                textColor: [0, 0, 0],       // Black text
-                lineColor: [255, 255, 255], // White border
-                lineWidth: 0.5              // Thin border for separation, but visually "white on white"
-            };
-            
             const availableWidth = pdfPageWidth - (2 * pdfMarginX);
             const colWidthProject = availableWidth * 0.50;
             const colWidthRate = availableWidth * 0.1667;
             const colWidthQuantity = availableWidth * 0.1667;
             const colWidthTotal = availableWidth * 0.1667;
 
-            const emptyColSpanForAlignment = 2;
-            const labelColSpanForValues = 1;
-
-            foot.push([
-                { content: '', colSpan: emptyColSpanForAlignment, styles: whiteFootCellStyles },
-                { content: toSentenceCase(translations[currentLanguage].subtotalLabel), styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold' } },
-                { content: subTotalAmountSpan.textContent, styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold' } }
-            ]);
-
-            document.querySelectorAll('.tax-row').forEach(taxRow => {
-                const taxName = taxRow.querySelector('.tax-name-input').value;
-                const taxPercentage = taxRow.querySelector('.tax-percentage-input').value;
-                const taxAmount = taxRow.querySelector('.tax-amount').textContent;
-                const taxOperation = taxRow.querySelector('.tax-operation-btn').dataset.operation;
-
-                foot.push([
-                    { content: '', colSpan: emptyColSpanForAlignment, styles: whiteFootCellStyles },
-                    { content: `${taxName.toUpperCase()} (${formatNumber(parseNumber(taxPercentage), 0)}%)${taxOperation === '-' ? ' (-)' : ''}:`, styles: { ...whiteFootCellStyles, halign: 'right' } },
-                    { content: taxAmount, styles: { ...whiteFootCellStyles, halign: 'right' } }
-                ]);
-            });
-
-            foot.push([
-                { content: '', colSpan: emptyColSpanForAlignment, styles: whiteFootCellStyles },
-                { content: toSentenceCase(translations[currentLanguage].finalTotalLabel), styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } },
-                { content: grandTotalSpan.textContent, styles: { ...whiteFootCellStyles, halign: 'right', fontStyle: 'bold', fontSize: 12 } }
-            ]);
-
             doc.autoTable({
-                startY: tableStartY,
+                startY: currentY,
                 head: [headers],
                 body: data,
-                foot: foot,
                 styles: { fontSize: 10, cellPadding: 3, halign: 'left' },
                 headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255] },
                 alternateRowStyles: { fillColor: [248, 250, 252] },
@@ -1269,16 +1239,80 @@
                     2: { cellWidth: colWidthQuantity, halign: 'center' },
                     3: { cellWidth: colWidthTotal, halign: 'right' }
                 },
-                footStyles: {
-                    lineColor: [255, 255, 255],
-                    lineWidth: 0.5,
-                    fontStyle: 'normal',
+                didDrawPage: function (data) {
+                    // Solo añadir el número de página en el pie de cada página
+                    doc.setFontSize(8);
+                    doc.text("Página " + doc.internal.getNumberOfPages(), pdfPageWidth / 2, doc.internal.pageSize.height - 20, { align: 'center' });
                 }
             });
 
             let finalY = doc.autoTable.previous.finalY;
 
+            // --- Dibujar la sección de Totales manualmente ---
+            const totalsSectionWidth = 250; // Ancho para la sección de totales
+            const totalsSectionX = pdfPageWidth - pdfMarginX - totalsSectionWidth; // Alineado a la derecha
+
+            // Calcular la altura necesaria para la sección de totales
+            let totalsHeight = 0;
+            totalsHeight += doc.getLineHeight(); // Subtotal
+            document.querySelectorAll('.tax-row').forEach(() => {
+                totalsHeight += doc.getLineHeight(); // Cada fila de impuestos
+            });
+            totalsHeight += doc.getLineHeight() * 2; // Total final (con algo de padding extra)
+
+            // Comprobar si hay suficiente espacio para los totales en la página actual
+            if (finalY + 20 + totalsHeight > doc.internal.pageSize.height - 40) { // 40 para margen inferior
+                doc.addPage();
+                finalY = 40; // Reiniciar Y para el contenido de la nueva página
+            } else {
+                finalY += 20; // Padding después de la tabla si está en la misma página
+            }
+
+            // Dibujar Subtotal
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text(toSentenceCase(translations[currentLanguage].subtotalLabel) + ":", totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
+            doc.text(subTotalAmountSpan.textContent, totalsSectionX + totalsSectionWidth, finalY, { align: 'right' });
+            finalY += 15;
+
+            // Dibujar Impuestos
+            document.querySelectorAll('.tax-row').forEach(taxRow => {
+                const taxName = taxRow.querySelector('.tax-name-input').value;
+                const taxPercentage = parseNumber(taxRow.querySelector('.tax-percentage-input').value);
+                const taxAmount = taxRow.querySelector('.tax-amount').textContent;
+                const taxOperation = taxRow.querySelector('.tax-operation-btn').dataset.operation;
+
+                let taxLabelText = `${taxName.toUpperCase()} (${formatNumber(taxPercentage, 0)}%)`;
+                if (taxOperation === '-') {
+                    taxLabelText += ` (-)`;
+                } else if (taxOperation === '+') {
+                    taxLabelText += ` (+)`;
+                }
+
+                doc.setFont("helvetica", "normal");
+                doc.text(taxLabelText + ":", totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
+                doc.text(taxAmount, totalsSectionX + totalsSectionWidth, finalY, { align: 'right' });
+                finalY += 15;
+            });
+
+            // Dibujar Total Final
+            finalY += 10; // Padding antes del total final
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text(toSentenceCase(translations[currentLanguage].finalTotalLabel) + ":", totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
+            doc.text(grandTotalSpan.textContent, totalsSectionX + totalsSectionWidth, finalY, { align: 'right' });
+            finalY += 20; // Ajustar para el tamaño de fuente del total final
+
+            // Añadir información de pago si está disponible, asegurándose de que comience debajo de la tabla
             if (paymentInfoInput.value.trim() !== '') {
+                // Comprobar si hay suficiente espacio para la información de pago en la página actual
+                const paymentInfoHeight = doc.splitTextToSize(paymentInfoInput.value, pdfPageWidth - (pdfMarginX * 2)).length * doc.getLineHeight();
+                if (finalY + 20 + paymentInfoHeight > doc.internal.pageSize.height - 40) { // 40 para margen inferior
+                    doc.addPage();
+                    // Reiniciar Y para el contenido de la nueva página (sin el encabezado completo)
+                    finalY = 40; // Margen superior para el contenido de la nueva página
+                }
+                
                 finalY += 20;
                 doc.setFontSize(12);
                 doc.setFont("helvetica", "bold");
