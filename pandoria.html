@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pandoria</title>
+  <title>Pandoria - Editor TMX y Herramienta de Alineación</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -112,9 +112,6 @@
         max-height: 60vh;
         overflow-y: auto;
     }
-    #tmTableBody tr {
-        transition: all 0.2s ease-in-out;
-    }
     #tmTableBody tr:hover {
         transform: scale(1.01);
         box-shadow: 0 8px 16px rgba(0,0,0,0.1);
@@ -134,6 +131,57 @@
     .lang-btn:not(.active):hover {
         background-color: #d1d5db;
     }
+    /* Estilos para el Asistente de Alineación */
+    #alignmentWizardModal .modal-content {
+        max-width: 90vw;
+        height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .wizard-body {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 1rem;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    .wizard-column {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .wizard-segment {
+        border: 1px solid #d1d5db;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background-color: #f9fafb;
+        font-size: 0.875rem;
+        min-height: 34px;
+    }
+    .wizard-segment[contenteditable="true"]:focus {
+        outline: 1px solid #FF5F18;
+        background-color: #fff;
+    }
+    .wizard-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 0;
+    }
+    .wizard-action-btn {
+        background: #e5e7eb;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin: 0 4px;
+    }
+    .wizard-action-btn:hover {
+        background: #d1d5db;
+    }
   </style>
 </head>
 <body class="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8">
@@ -148,7 +196,7 @@
     <!-- Encabezado -->
     <header class="text-center mb-6 pt-8">
       <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png" alt="Pandoria Logo" class="mx-auto mb-4 w-64 h-auto">
-      <p class="text-gray-600" data-i18n="tool_description">Una herramienta sencilla para editar memorias de traducción TMX.</p>
+      <p class="text-gray-600" data-i18n="tool_description">Una herramienta sencilla para editar y alinear memorias de traducción.</p>
     </header>
 
     <!-- Controles Principales -->
@@ -158,7 +206,8 @@
       </label>
       <input type="file" id="tmxFileInput" accept=".xml,.tmx" class="hidden" />
       <button id="downloadTmxBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="download_tmx">Descargar TMX</button>
-      <button id="newTmxBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="create_tmx">Crear TMX</button>
+      <button id="newTmxBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="create_tmx">Crear nuevo TMX</button>
+      <button id="alignBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="align_texts">Alinear textos</button>
     </div>
 
     <!-- Sección de Configuración de Idioma (Inicialmente visible) -->
@@ -216,12 +265,72 @@
           <button id="addEntryBtn" class="btn btn-primary font-medium py-2 px-4 rounded-lg" data-i18n="add_new_entry">Añadir nueva entrada</button>
       </div>
     </div>
+    
+    <!-- Sección de Alineación (Inicialmente oculta) -->
+    <div id="alignmentSection" class="hidden p-4 bg-gray-50 rounded-lg">
+      <h2 class="text-xl font-semibold mb-4 text-center" data-i18n="align_title">Alinear textos para crear una TM</h2>
+      
+      <!-- Info de Idiomas para la alineación -->
+      <div class="flex flex-wrap gap-4 justify-center items-end mb-6 p-4 bg-white rounded-lg shadow-sm">
+          <div>
+              <label for="alignSrcLang" class="block text-sm font-medium text-gray-700" data-i18n="source_language">Idioma de origen:</label>
+              <input id="alignSrcLang" list="isoLanguages" value="en-US" class="w-full p-2 border border-gray-300 rounded-md">
+          </div>
+          <div>
+              <label for="alignTgtLang" class="block text-sm font-medium text-gray-700" data-i18n="target_language">Idioma de destino:</label>
+              <input id="alignTgtLang" list="isoLanguages" value="es-ES" class="w-full p-2 border border-gray-300 rounded-md">
+          </div>
+      </div>
+      
+      <!-- Controles de carga de archivos -->
+      <div class="text-center my-6">
+        <p class="text-gray-600 mb-4" data-i18n="upload_files_info">O, si lo prefieres, carga tus archivos de texto (TXT o SRT) para la alineación.</p>
+        <div class="flex justify-center gap-4 flex-wrap">
+            <div>
+                <label for="sourceFileInput" class="btn btn-secondary font-medium py-2 px-4 rounded-lg cursor-pointer" data-i18n="upload_source_file">
+                    Cargar archivo de origen
+                </label>
+                <input type="file" id="sourceFileInput" class="hidden" accept=".txt,.srt"/>
+                <span id="sourceFileName" class="block text-sm text-gray-500 mt-1"></span>
+            </div>
+            <div>
+                <label for="targetFileInput" class="btn btn-secondary font-medium py-2 px-4 rounded-lg cursor-pointer" data-i18n="upload_target_file">
+                    Cargar archivo de destino
+                </label>
+                <input type="file" id="targetFileInput" class="hidden" accept=".txt,.srt"/>
+                <span id="targetFileName" class="block text-sm text-gray-500 mt-1"></span>
+            </div>
+        </div>
+      </div>
+      
+      <div class="relative flex items-center my-4">
+        <div class="flex-grow border-t border-gray-300"></div>
+        <span class="flex-shrink mx-4 text-gray-500 text-sm" data-i18n="or_paste_below">O pega el texto manualmente</span>
+        <div class="flex-grow border-t border-gray-300"></div>
+      </div>
+
+      <!-- Áreas de texto para pegar el contenido -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+            <label for="sourceTextArea" class="block text-lg font-medium text-gray-800 mb-2" data-i18n="source_text">Texto de origen</label>
+            <textarea id="sourceTextArea" rows="15" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500" data-i18n-placeholder="paste_source_text_placeholder"></textarea>
+        </div>
+        <div>
+            <label for="targetTextArea" class="block text-lg font-medium text-gray-800 mb-2" data-i18n="target_text">Texto de destino</label>
+            <textarea id="targetTextArea" rows="15" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500" data-i18n-placeholder="paste_target_text_placeholder"></textarea>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <button id="startAlignmentBtn" class="btn btn-primary font-medium py-3 px-6 text-lg rounded-lg" data-i18n="start_alignment">Empezar alineación</button>
+      </div>
+    </div>
   </div>
 
   <!-- Datalist para códigos ISO -->
   <datalist id="isoLanguages"></datalist>
 
-  <!-- Modal para mensajes genéricos -->
+  <!-- Modales -->
     <div id="messageBox" class="modal">
         <div class="modal-content">
             <p id="messageText" class="mb-4"></p>
@@ -229,14 +338,30 @@
         </div>
     </div>
     
-  <!-- Modal de confirmación para 'Crear TMX' -->
     <div id="confirmModal" class="modal">
         <div class="modal-content">
-            <h3 id="confirmTitle" class="text-xl font-bold mb-2" data-i18n="confirm_new_tmx_title">Confirmar creación</h3>
-            <p id="confirmText" class="mb-6 text-gray-600" data-i18n="confirm_new_tmx_text">Se perderán todos los datos no guardados. ¿Deseas continuar y crear una nueva memoria de traducción desde cero?</p>
+            <h3 id="confirmTitle" class="text-xl font-bold mb-2"></h3>
+            <p id="confirmText" class="mb-6 text-gray-600"></p>
             <div class="flex justify-center gap-4">
                  <button id="confirmCancelBtn" class="btn btn-secondary min-w-[120px]" data-i18n="cancel">Cancelar</button>
                  <button id="confirmProceedBtn" class="btn btn-primary min-w-[120px]" data-i18n="proceed">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asistente de Alineación Modal -->
+    <div id="alignmentWizardModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-semibold mb-2" data-i18n="alignment_wizard_title">Asistente de alineación</h2>
+            <p class="text-gray-600 mb-4" data-i18n="alignment_wizard_desc">El número de líneas no coincide. Edita el texto o usa los botones para unir o añadir líneas hasta que ambos lados tengan el mismo número de segmentos.</p>
+            <div id="wizardBody" class="wizard-body border-t border-b py-4 my-4">
+                <div class="wizard-column" id="wizardSourceColumn"></div>
+                <div class="wizard-column" id="wizardActionsColumn"></div>
+                <div class="wizard-column" id="wizardTargetColumn"></div>
+            </div>
+            <div class="flex justify-end gap-4">
+                <button id="wizardCancelBtn" class="btn btn-secondary" data-i18n="cancel">Cancelar</button>
+                <button id="wizardConfirmBtn" class="btn btn-primary" data-i18n="wizard_confirm_button">Usar estos textos</button>
             </div>
         </div>
     </div>
@@ -255,7 +380,7 @@
         es: {
             'import_tmx': 'Importar TMX',
             'download_tmx': 'Descargar TMX',
-            'create_tmx': 'Crear TMX',
+            'create_tmx': 'Crear nuevo TMX',
             'add_new_entry': 'Añadir nueva entrada',
             'undo': 'Deshacer',
             'configure_tm_languages': 'Configurar idiomas de la memoria',
@@ -269,7 +394,7 @@
             'actions_header': 'Acciones',
             'delete': 'Eliminar',
             'no_results': 'No se encontraron resultados para tu búsqueda.',
-            'tool_description': 'Una herramienta sencilla para editar memorias de traducción TMX.',
+            'tool_description': 'Una herramienta sencilla para editar y alinear memorias de traducción.',
             'error_processing_tmx': 'Error al procesar el archivo TMX: ',
             'error_reading_file': 'Error al leer el archivo.',
             'invalid_xml': 'El archivo no es un XML válido.',
@@ -283,11 +408,29 @@
             'cancel': 'Cancelar',
             'proceed': 'Continuar',
             'no_more_undo': 'No hay más acciones que deshacer.',
+            'align_texts': 'Alinear textos',
+            'align_title': 'Alinear textos para crear una TM',
+            'source_text': 'Texto de origen',
+            'target_text': 'Texto de destino',
+            'paste_source_text_placeholder': 'Pega aquí el texto en el idioma de origen...',
+            'paste_target_text_placeholder': 'Pega aquí el texto traducido...',
+            'start_alignment': 'Empezar alineación',
+            'confirm_align_title': 'Confirmar alineación',
+            'confirm_align_text': 'Esto reemplazará cualquier dato no guardado en el editor. ¿Quieres continuar y alinear los textos?',
+            'upload_files_info': 'O, si lo prefieres, carga tus archivos de texto (TXT o SRT) para la alineación.',
+            'upload_source_file': 'Cargar archivo de origen',
+            'upload_target_file': 'Cargar archivo de destino',
+            'or_paste_below': 'O pega el texto manualmente',
+            'unsupported_format': 'Formato de archivo no soportado.',
+            'file_read_error': 'Error al leer el archivo.',
+            'alignment_wizard_title': 'Asistente de alineación',
+            'alignment_wizard_desc': 'El número de líneas no coincide. Edita el texto o usa los botones para unir o añadir líneas hasta que ambos lados tengan el mismo número de segmentos.',
+            'wizard_confirm_button': 'Usar estos textos',
         },
         en: {
             'import_tmx': 'Import TMX',
             'download_tmx': 'Download TMX',
-            'create_tmx': 'Create TMX',
+            'create_tmx': 'Create new TMX',
             'add_new_entry': 'Add new entry',
             'undo': 'Undo',
             'configure_tm_languages': 'Set Translation Memory Languages',
@@ -301,7 +444,7 @@
             'actions_header': 'Actions',
             'delete': 'Delete',
             'no_results': 'No results found for your search.',
-            'tool_description': 'A simple tool to edit TMX translation memories.',
+            'tool_description': 'A simple tool to edit and align translation memories.',
             'error_processing_tmx': 'Error processing TMX file: ',
             'error_reading_file': 'Error reading file.',
             'invalid_xml': 'The file is not valid XML.',
@@ -315,15 +458,35 @@
             'cancel': 'Cancel',
             'proceed': 'Proceed',
             'no_more_undo': 'No more actions to undo.',
+            'align_texts': 'Align Texts',
+            'align_title': 'Align texts to create a TM',
+            'source_text': 'Source Text',
+            'target_text': 'Target Text',
+            'paste_source_text_placeholder': 'Paste the source language text here...',
+            'paste_target_text_placeholder': 'Paste the translated text here...',
+            'start_alignment': 'Start Alignment',
+            'confirm_align_title': 'Confirm Alignment',
+            'confirm_align_text': 'This will replace any unsaved data in the editor. Do you want to proceed and align the texts?',
+            'upload_files_info': 'Or, you can upload your text files (TXT or SRT) for alignment.',
+            'upload_source_file': 'Upload source file',
+            'upload_target_file': 'Upload target file',
+            'or_paste_below': 'Or paste text manually',
+            'unsupported_format': 'Unsupported file format.',
+            'file_read_error': 'Error reading file.',
+            'alignment_wizard_title': 'Alignment wizard',
+            'alignment_wizard_desc': 'The number of lines does not match. Edit the text or use the buttons to merge or add empty lines until both sides have the same number of segments.',
+            'wizard_confirm_button': 'Use these texts',
         }
     };
 
-    // Elementos del DOM
+    // --- Elementos del DOM ---
     const tmxFileInput = document.getElementById('tmxFileInput');
     const downloadTmxBtn = document.getElementById('downloadTmxBtn');
     const newTmxBtn = document.getElementById('newTmxBtn');
+    const alignBtn = document.getElementById('alignBtn');
     const languageConfigSection = document.getElementById('languageConfigSection');
     const editorSection = document.getElementById('editorSection');
+    const alignmentSection = document.getElementById('alignmentSection');
     const configSrcLangInput = document.getElementById('configSrcLang');
     const configTgtLangInput = document.getElementById('configTgtLang');
     const confirmLanguagesBtn = document.getElementById('confirmLanguagesBtn');
@@ -333,20 +496,35 @@
     const tmTableBody = document.getElementById('tmTableBody');
     const addEntryBtn = document.getElementById('addEntryBtn');
     const noResultsMessage = document.getElementById('noResultsMessage');
-    const isoLanguagesDatalist = document.getElementById('isoLanguages');
-    const langEnBtn = document.getElementById('langEnBtn');
-    const langEsBtn = document.getElementById('langEsBtn');
     const undoBtn = document.getElementById('undoBtn');
-
-    // Modales
+    const alignSrcLang = document.getElementById('alignSrcLang');
+    const alignTgtLang = document.getElementById('alignTgtLang');
+    const sourceFileInput = document.getElementById('sourceFileInput');
+    const targetFileInput = document.getElementById('targetFileInput');
+    const sourceFileName = document.getElementById('sourceFileName');
+    const targetFileName = document.getElementById('targetFileName');
+    const sourceTextArea = document.getElementById('sourceTextArea');
+    const targetTextArea = document.getElementById('targetTextArea');
+    const startAlignmentBtn = document.getElementById('startAlignmentBtn');
+    const isoLanguagesDatalist = document.getElementById('isoLanguages');
     const messageBox = document.getElementById('messageBox');
     const messageText = document.getElementById('messageText');
     const messageCloseBtn = document.getElementById('messageCloseBtn');
     const confirmModal = document.getElementById('confirmModal');
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmText = document.getElementById('confirmText');
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');
     const confirmProceedBtn = document.getElementById('confirmProceedBtn');
+    
+    // Asistente de Alineación
+    const alignmentWizardModal = document.getElementById('alignmentWizardModal');
+    const wizardSourceColumn = document.getElementById('wizardSourceColumn');
+    const wizardActionsColumn = document.getElementById('wizardActionsColumn');
+    const wizardTargetColumn = document.getElementById('wizardTargetColumn');
+    const wizardCancelBtn = document.getElementById('wizardCancelBtn');
+    const wizardConfirmBtn = document.getElementById('wizardConfirmBtn');
 
-
+    
     // Lista de idiomas ISO
     const isoLanguagesData = [
         { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" },
@@ -361,18 +539,31 @@
     document.addEventListener('DOMContentLoaded', () => {
         populateIsoLanguagesDatalist();
         setLanguage(currentLanguage);
+        
+        // Event Listeners
         newTmxBtn.addEventListener('click', handleNewTmxClick);
+        alignBtn.addEventListener('click', showAlignmentView);
         confirmLanguagesBtn.addEventListener('click', confirmLanguages);
         tmxFileInput.addEventListener('change', handleFileLoad);
         downloadTmxBtn.addEventListener('click', downloadTMX);
-        searchTermInput.addEventListener('input', () => renderTM(translationMemory, false)); // No guardar historial en búsqueda
+        searchTermInput.addEventListener('input', () => renderTM(translationMemory, false));
         addEntryBtn.addEventListener('click', addEntry);
         undoBtn.addEventListener('click', undoLastAction);
         messageCloseBtn.addEventListener('click', () => messageBox.style.display = 'none');
         langEnBtn.addEventListener('click', () => setLanguage('en'));
         langEsBtn.addEventListener('click', () => setLanguage('es'));
+        confirmCancelBtn.addEventListener('click', () => confirmModal.style.display = 'none');
         
-        // Atajo de teclado para deshacer
+        // Listeners de alineación
+        startAlignmentBtn.addEventListener('click', performAlignment);
+        sourceFileInput.addEventListener('change', (e) => handleAlignmentFileUpload(e, 'src'));
+        targetFileInput.addEventListener('change', (e) => handleAlignmentFileUpload(e, 'tgt'));
+        wizardCancelBtn.addEventListener('click', () => alignmentWizardModal.style.display = 'none');
+        wizardConfirmBtn.addEventListener('click', () => {
+            alignmentWizardModal.style.display = 'none';
+            performAlignment(); // Re-intenta la alineación con los textos corregidos
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key.toLowerCase() === 'z') {
                 e.preventDefault();
@@ -380,52 +571,30 @@
             }
         });
         
-        // Listeners para el modal de confirmación
-        confirmCancelBtn.addEventListener('click', () => confirmModal.style.display = 'none');
-        confirmProceedBtn.addEventListener('click', () => {
-            confirmModal.style.display = 'none';
-            resetTM();
-        });
-        
         updateUndoButton();
     });
     
     // --- Gestión del Historial (Undo) ---
-
-    /**
-     * Guarda el estado actual de la memoria de traducción en la pila de historial.
-     */
     function saveStateToHistory() {
-        // Clonación profunda para evitar referencias
         historyStack.push(JSON.parse(JSON.stringify(translationMemory)));
         updateUndoButton();
     }
     
-    /**
-     * Deshace la última acción restaurando el estado anterior desde el historial.
-     */
     function undoLastAction() {
         if (historyStack.length > 0) {
             translationMemory = historyStack.pop();
-            renderTM(translationMemory, false); // No guardar este "cambio" en el historial
+            renderTM(translationMemory, false);
         } else {
             showMessage(translations[currentLanguage]['no_more_undo']);
         }
         updateUndoButton();
     }
     
-     /**
-     * Habilita o deshabilita el botón de deshacer según el estado del historial.
-     */
     function updateUndoButton() {
         undoBtn.disabled = historyStack.length === 0;
     }
 
-
-    /**
-     * Establece el idioma de la interfaz y actualiza los textos.
-     * @param {string} lang - El código del idioma ('en' o 'es').
-     */
+    // --- Gestión de la Interfaz ---
     function setLanguage(lang) {
         currentLanguage = lang;
         langEnBtn.classList.toggle('active', lang === 'en');
@@ -433,16 +602,12 @@
 
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.dataset.i18n;
-            if (translations[lang][key]) {
-                el.textContent = translations[lang][key];
-            }
+            if (translations[lang][key]) el.textContent = translations[lang][key];
         });
 
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             const key = el.dataset.i18nPlaceholder;
-            if (translations[lang][key]) {
-                el.placeholder = translations[lang][key];
-            }
+            if (translations[lang][key]) el.placeholder = translations[lang][key];
         });
         
         if (!editorSection.classList.contains('hidden')) {
@@ -450,9 +615,6 @@
         }
     }
 
-    /**
-     * Rellena el datalist con los códigos de idioma ISO.
-     */
     function populateIsoLanguagesDatalist() {
         isoLanguagesDatalist.innerHTML = '';
         isoLanguagesData.forEach(lang => {
@@ -463,30 +625,25 @@
         });
     }
 
-    /**
-     * Muestra un mensaje en el modal.
-     * @param {string} msg - El mensaje a mostrar.
-     */
     function showMessage(msg) {
         messageText.textContent = msg;
         messageBox.style.display = 'flex';
     }
     
-     /**
-     * Maneja el clic en "Crear TMX", mostrando un modal de confirmación si hay datos.
-     */
     function handleNewTmxClick() {
         if (translationMemory.length > 0) {
+            confirmTitle.textContent = translations[currentLanguage]['confirm_new_tmx_title'];
+            confirmText.textContent = translations[currentLanguage]['confirm_new_tmx_text'];
             confirmModal.style.display = 'flex';
+            confirmProceedBtn.onclick = () => {
+                confirmModal.style.display = 'none';
+                resetTM();
+            };
         } else {
-            resetTM(); // Si no hay datos, simplemente reinicia
+            resetTM();
         }
     }
 
-
-    /**
-     * Reinicia la interfaz para crear o cargar una nueva TM.
-     */
     function resetTM() {
         translationMemory = [];
         historyStack = [];
@@ -497,14 +654,12 @@
         configTgtLangInput.value = 'es-ES';
         searchTermInput.value = '';
 
+        alignmentSection.classList.add('hidden');
         languageConfigSection.style.display = 'block';
         editorSection.classList.add('hidden');
         renderTM([], false);
     }
 
-    /**
-     * Confirma los idiomas seleccionados y muestra el editor.
-     */
     function confirmLanguages() {
         const srcLang = configSrcLangInput.value.trim();
         const tgtLang = configTgtLangInput.value.trim();
@@ -528,10 +683,7 @@
         renderTM([], false);
     }
 
-    /**
-     * Maneja la carga de un archivo TMX.
-     * @param {Event} event - El evento de cambio del input de archivo.
-     */
+    // --- Carga y Parseo de Archivo TMX (Editor Principal) ---
     function handleFileLoad(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -541,9 +693,10 @@
             try {
                 const content = e.target.result;
                 parseTMX(content);
-                historyStack = []; // Reiniciar historial al cargar nuevo archivo
+                historyStack = [];
                 updateUndoButton();
                 languageConfigSection.style.display = 'none';
+                alignmentSection.classList.add('hidden');
                 editorSection.classList.remove('hidden');
                 renderTM(translationMemory, false);
             } catch (error) {
@@ -556,27 +709,20 @@
              showMessage(translations[currentLanguage]['error_reading_file']);
              resetTM();
         };
-        reader.readAsText(file);
+        reader.readAsText(file, 'UTF-8');
     }
 
-    /**
-     * Parsea el contenido de un archivo TMX y lo carga en la memoria.
-     * @param {string} tmxContent - El contenido XML del archivo TMX.
-     */
     function parseTMX(tmxContent) {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(tmxContent, "application/xml");
 
         const parserError = xmlDoc.querySelector("parsererror");
-        if (parserError) {
-            throw new Error(translations[currentLanguage]['invalid_xml']);
-        }
+        if (parserError) throw new Error(translations[currentLanguage]['invalid_xml']);
 
         const header = xmlDoc.querySelector("header");
         if (!header) throw new Error(translations[currentLanguage]['no_header']);
         
         tmSourceLanguage = header.getAttribute("srclang");
-
         const tuElements = xmlDoc.querySelectorAll("tu");
         if (tuElements.length === 0) {
             showMessage(translations[currentLanguage]['no_tus']);
@@ -585,27 +731,15 @@
         }
 
         const firstTuvs = tuElements[0].querySelectorAll("tuv");
-        if (firstTuvs.length > 1) {
-             tmTargetLanguage = Array.from(firstTuvs).find(tuv => tuv.getAttribute("xml:lang") !== tmSourceLanguage)?.getAttribute("xml:lang") || 'unknown';
-        } else {
-            tmTargetLanguage = "unknown";
-        }
-
+        tmTargetLanguage = Array.from(firstTuvs).find(tuv => tuv.getAttribute("xml:lang") !== tmSourceLanguage)?.getAttribute("xml:lang") || 'unknown';
 
         const newTM = [];
         tuElements.forEach(tu => {
-            const tuvs = tu.querySelectorAll("tuv");
-            let srcText = '', tgtText = '';
-            
-            const srcTuv = Array.from(tuvs).find(t => t.getAttribute("xml:lang") === tmSourceLanguage);
-            const tgtTuv = Array.from(tuvs).find(t => t.getAttribute("xml:lang") === tmTargetLanguage);
-
-            if (srcTuv) srcText = srcTuv.querySelector("seg")?.textContent || '';
-            if (tgtTuv) tgtText = tgtTuv.querySelector("seg")?.textContent || '';
-            
-            if (srcTuv) { // Solo añadir si hay un segmento de origen
-                 newTM.push({ srcText, tgtText });
-            }
+            const srcTuv = Array.from(tu.querySelectorAll("tuv")).find(t => t.getAttribute("xml:lang") === tmSourceLanguage);
+            const tgtTuv = Array.from(tu.querySelectorAll("tuv")).find(t => t.getAttribute("xml:lang") === tmTargetLanguage);
+            const srcText = srcTuv?.querySelector("seg")?.textContent || '';
+            const tgtText = tgtTuv?.querySelector("seg")?.textContent || '';
+            if (srcTuv) newTM.push({ srcText, tgtText });
         });
 
         translationMemory = newTM;
@@ -613,15 +747,9 @@
         displayTgtLangSpan.textContent = tmTargetLanguage;
     }
 
-    /**
-     * Renderiza la tabla de la memoria de traducción.
-     * @param {Array<Object>} tm - El array de unidades de traducción a mostrar.
-     * @param {boolean} [saveHistory=true] - Si se debe guardar el estado en el historial.
-     */
+    // --- Renderizado y Edición de la Tabla ---
     function renderTM(tm, saveHistory = true) {
-        if (saveHistory) {
-            saveStateToHistory();
-        }
+        if (saveHistory) saveStateToHistory();
     
         const filter = searchTermInput.value.toLowerCase();
         tmTableBody.innerHTML = '';
@@ -634,13 +762,12 @@
         noResultsMessage.classList.toggle('hidden', !(filteredTM.length === 0 && tm.length > 0));
 
         filteredTM.forEach((entry) => {
-            // Buscamos el índice original para mantener la consistencia al editar/borrar
             const originalIndex = translationMemory.findIndex(origEntry => origEntry === entry);
             const row = document.createElement('tr');
             row.className = "border-b";
             row.innerHTML = `
-                <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="srcText">${entry.srcText}</td>
-                <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="tgtText">${entry.tgtText}</td>
+                <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="srcText">${escapeHTML(entry.srcText)}</td>
+                <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="tgtText">${escapeHTML(entry.tgtText)}</td>
                 <td class="px-6 py-4 text-center">
                     <button class="btn btn-danger font-medium py-1 px-3 rounded-md text-xs" data-index="${originalIndex}">${translations[currentLanguage]['delete']}</button>
                 </td>
@@ -649,7 +776,7 @@
         });
 
         tmTableBody.querySelectorAll('.editable-cell').forEach(cell => {
-            cell.addEventListener('focus', saveStateToHistory); // Guardar estado justo antes de editar
+            cell.addEventListener('focus', saveStateToHistory);
             cell.addEventListener('input', updateEntry);
         });
         tmTableBody.querySelectorAll('.btn-danger').forEach(button => {
@@ -657,49 +784,29 @@
         });
     }
 
-    /**
-     * Añade una nueva entrada vacía a la memoria de traducción.
-     */
     function addEntry() {
         saveStateToHistory();
         translationMemory.unshift({ srcText: '', tgtText: '' });
-        renderTM(translationMemory, false); // El estado ya se guardó
+        renderTM(translationMemory, false);
         const newCell = tmTableBody.querySelector('tr:first-child .editable-cell');
-        if(newCell) {
-            newCell.focus();
-        }
+        if(newCell) newCell.focus();
     }
 
-    /**
-     * Actualiza una entrada en el array de la memoria de traducción.
-     * @param {Event} event - El evento de input de la celda editable.
-     */
     function updateEntry(event) {
         const index = event.target.dataset.index;
         const field = event.target.dataset.field;
         const value = event.target.textContent;
-        if (translationMemory[index]) {
-            translationMemory[index][field] = value;
-        }
-        // No se guarda el historial aquí para evitar un guardado por cada tecla pulsada.
-        // El estado se guarda en el 'focus' del campo.
+        if (translationMemory[index]) translationMemory[index][field] = value;
     }
 
-    /**
-     * Elimina una entrada de la memoria de traducción.
-     * @param {Event} event - El evento de click del botón de eliminar.
-     */
     function deleteEntry(event) {
         saveStateToHistory();
         const index = event.target.dataset.index;
         translationMemory.splice(index, 1);
-        renderTM(translationMemory, false); // El estado ya se guardó
+        renderTM(translationMemory, false);
     }
 
-    /**
-     * Genera el contenido XML para un archivo TMX.
-     * @returns {string|null} - El contenido TMX como string o null si hay error.
-     */
+    // --- Generación y Descarga de TMX ---
     function generateTMX() {
         if (!tmSourceLanguage || !tmTargetLanguage) {
             showMessage(translations[currentLanguage]['lang_not_configured']);
@@ -712,41 +819,20 @@
         tmxString += `  <body>\n`;
 
         translationMemory.forEach(entry => {
-            const escapeXML = (str) => str.replace(/[<>&'"]/g, c => {
-                switch (c) {
-                    case '<': return '&lt;';
-                    case '>': return '&gt;';
-                    case '&': return '&amp;';
-                    case '\'': return '&apos;';
-                    case '"': return '&quot;';
-                }
-            });
-
             const src = escapeXML(entry.srcText.trim());
             const tgt = escapeXML(entry.tgtText.trim());
-
-            // No añadir entradas vacías al TMX final
             if (!src && !tgt) return;
 
             tmxString += `    <tu>\n`;
-            tmxString += `      <tuv xml:lang="${tmSourceLanguage}">\n`;
-            tmxString += `        <seg>${src}</seg>\n`;
-            tmxString += `      </tuv>\n`;
-            tmxString += `      <tuv xml:lang="${tmTargetLanguage}">\n`;
-            tmxString += `        <seg>${tgt}</seg>\n`;
-            tmxString += `      </tuv>\n`;
+            tmxString += `      <tuv xml:lang="${tmSourceLanguage}">\n        <seg>${src}</seg>\n      </tuv>\n`;
+            tmxString += `      <tuv xml:lang="${tmTargetLanguage}">\n        <seg>${tgt}</seg>\n      </tuv>\n`;
             tmxString += `    </tu>\n`;
         });
 
-        tmxString += `  </body>\n`;
-        tmxString += `</tmx>\n`;
-
+        tmxString += `  </body>\n</tmx>\n`;
         return tmxString;
     }
 
-    /**
-     * Inicia la descarga del archivo TMX generado.
-     */
     function downloadTMX() {
         const tmxContent = generateTMX();
         if (!tmxContent) return;
@@ -762,6 +848,211 @@
         URL.revokeObjectURL(url);
         showMessage(translations[currentLanguage]['tm_saved_success']);
     }
+
+    // --- Funcionalidad de Alineación ---
+    function showAlignmentView() {
+        if (translationMemory.length > 0) {
+            confirmTitle.textContent = translations[currentLanguage]['confirm_align_title'];
+            confirmText.textContent = translations[currentLanguage]['confirm_align_text'];
+            confirmModal.style.display = 'flex';
+            confirmProceedBtn.onclick = () => {
+                confirmModal.style.display = 'none';
+                displayAlignmentSection();
+            };
+        } else {
+            displayAlignmentSection();
+        }
+    }
+
+    function displayAlignmentSection() {
+        languageConfigSection.style.display = 'none';
+        editorSection.classList.add('hidden');
+        alignmentSection.classList.remove('hidden');
+        translationMemory = [];
+        historyStack = [];
+        updateUndoButton();
+        sourceTextArea.value = '';
+        targetTextArea.value = '';
+        sourceFileName.textContent = '';
+        targetFileName.textContent = '';
+        sourceFileInput.value = '';
+        targetFileInput.value = '';
+    }
+
+    async function handleAlignmentFileUpload(event, type) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (type === 'src') sourceFileName.textContent = file.name;
+        if (type === 'tgt') targetFileName.textContent = file.name;
+
+        const extension = file.name.split('.').pop().toLowerCase();
+        const content = await file.text();
+
+        try {
+            let segments;
+            if (extension === 'srt') {
+                segments = parseSRT(content);
+            } else if (extension === 'txt') {
+                segments = parseTXT(content);
+            } else {
+                showMessage(translations[currentLanguage]['unsupported_format']);
+                return;
+            }
+            
+            if (type === 'src') {
+                sourceTextArea.value = segments.join('\n');
+            } else {
+                targetTextArea.value = segments.join('\n');
+            }
+        } catch (error) {
+            showMessage(`${translations[currentLanguage]['file_read_error']}: ${error.message}`);
+            console.error(error);
+        }
+    }
+
+    function performAlignment() {
+        const srcText = sourceTextArea.value.trim();
+        const tgtText = targetTextArea.value.trim();
+        const srcLang = alignSrcLang.value;
+        const tgtLang = alignTgtLang.value;
+
+        if (!srcText || !tgtText || !srcLang || !tgtLang) {
+            showMessage(translations[currentLanguage]['enter_lang_codes']);
+            return;
+        }
+
+        const srcSegments = srcText.split('\n');
+        const tgtSegments = tgtText.split('\n');
+
+        if (srcSegments.length !== tgtSegments.length) {
+            openAlignmentWizard();
+            return;
+        }
+        
+        tmSourceLanguage = srcLang;
+        tmTargetLanguage = tgtLang;
+        displaySrcLangSpan.textContent = tmSourceLanguage;
+        displayTgtLangSpan.textContent = tmTargetLanguage;
+        
+        translationMemory = srcSegments.map((src, index) => ({
+            srcText: src.trim(),
+            tgtText: (tgtSegments[index] || '').trim()
+        })).filter(entry => entry.srcText || entry.tgtText); // Filtrar entradas completamente vacías
+
+        historyStack = [];
+        updateUndoButton();
+        alignmentSection.classList.add('hidden');
+        editorSection.classList.remove('hidden');
+        renderTM(translationMemory, false);
+    }
+
+    // --- Asistente de Alineación ---
+    function openAlignmentWizard() {
+        alignmentWizardModal.style.display = 'flex';
+        renderWizard();
+    }
+
+    function renderWizard() {
+        const srcSegments = sourceTextArea.value.split('\n');
+        const tgtSegments = targetTextArea.value.split('\n');
+
+        wizardSourceColumn.innerHTML = '';
+        wizardActionsColumn.innerHTML = '';
+        wizardTargetColumn.innerHTML = '';
+
+        const maxLines = Math.max(srcSegments.length, tgtSegments.length);
+
+        for (let i = 0; i < maxLines; i++) {
+            // Columna de Origen
+            const srcSegment = srcSegments[i] !== undefined ? srcSegments[i] : '';
+            const srcDiv = document.createElement('div');
+            srcDiv.className = 'wizard-segment';
+            srcDiv.setAttribute('contenteditable', 'true');
+            srcDiv.textContent = srcSegment;
+            srcDiv.oninput = (e) => updateWizardText('src', i, e.target.textContent);
+            wizardSourceColumn.appendChild(srcDiv);
+
+            // Columna de Acciones
+            const actionDiv = document.createElement('div');
+            actionDiv.className = 'wizard-actions';
+            if (i > 0) {
+                actionDiv.innerHTML += `<button class="wizard-action-btn" title="Unir con anterior" onclick="mergeLine('src', ${i})">↑</button>`;
+            }
+            actionDiv.innerHTML += `<button class="wizard-action-btn" title="Añadir línea vacía en destino" onclick="insertEmptyLine('tgt', ${i})">+</button>`;
+            actionDiv.innerHTML += `<button class="wizard-action-btn" title="Añadir línea vacía en origen" onclick="insertEmptyLine('src', ${i})">+</button>`;
+            if (i > 0) {
+                actionDiv.innerHTML += `<button class="wizard-action-btn" title="Unir con anterior" onclick="mergeLine('tgt', ${i})">↑</button>`;
+            }
+            wizardActionsColumn.appendChild(actionDiv);
+            
+            // Columna de Destino
+            const tgtSegment = tgtSegments[i] !== undefined ? tgtSegments[i] : '';
+            const tgtDiv = document.createElement('div');
+            tgtDiv.className = 'wizard-segment';
+            tgtDiv.setAttribute('contenteditable', 'true');
+            tgtDiv.textContent = tgtSegment;
+            tgtDiv.oninput = (e) => updateWizardText('tgt', i, e.target.textContent);
+            wizardTargetColumn.appendChild(tgtDiv);
+        }
+    }
+    
+    function updateWizardText(type, index, newText) {
+        const textarea = type === 'src' ? sourceTextArea : targetTextArea;
+        let lines = textarea.value.split('\n');
+        if (index < lines.length) {
+            lines[index] = newText;
+            textarea.value = lines.join('\n');
+        }
+    }
+
+    function mergeLine(type, index) {
+        const textarea = type === 'src' ? sourceTextArea : targetTextArea;
+        let lines = textarea.value.split('\n');
+        if (index > 0 && index < lines.length) {
+            lines[index - 1] = lines[index - 1] + ' ' + lines[index];
+            lines.splice(index, 1);
+            textarea.value = lines.join('\n');
+            renderWizard();
+        }
+    }
+
+    function insertEmptyLine(type, index) {
+        const textarea = type === 'src' ? sourceTextArea : targetTextArea;
+        let lines = textarea.value.split('\n');
+        lines.splice(index, 0, '');
+        textarea.value = lines.join('\n');
+        renderWizard();
+    }
+
+
+    // --- Parsers para Alineación ---
+    function parseSRT(content) {
+        const normalizedContent = content.replace(/\r\n/g, '\n');
+        return normalizedContent.split(/\n\s*\n/)
+            .map(block => {
+                if (!block.trim()) return null;
+                const lines = block.split('\n');
+                const textLines = lines.filter(line => !/^\d+$/.test(line.trim()) && !line.includes('-->'));
+                return textLines.join(' ').trim();
+            })
+            .filter(segment => segment);
+    }
+
+    function parseTXT(content) {
+        return content.split('\n').filter(line => line.trim() !== '');
+    }
+
+    // --- Utilidades ---
+    const escapeHTML = (str) => {
+        const p = document.createElement('p');
+        p.textContent = str;
+        return p.innerHTML;
+    };
+    
+    const escapeXML = (str) => str.replace(/[<>&'"]/g, c => ({
+        '<': '&lt;', '>': '&gt;', '&': '&amp;', '\'': '&apos;', '"': '&quot;'
+    }[c]));
 
   </script>
 </body>
