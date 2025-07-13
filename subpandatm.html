@@ -3250,7 +3250,7 @@
         function jumpToCurrentSubtitleTime(entryIndex) {
             if (srtEntries[entryIndex] && videoPlayer.src) {
                 const entry = srtEntries[entryIndex];
-                const stopTime = entry.endTimeMs / 1000;
+                const stopTime = (entry.endTimeMs - 250) / 1000; // Restamos 250ms
                 videoPlayer.currentTime = entry.startTimeMs / 1000;
                 videoPlayer.play();
 
