@@ -1737,6 +1737,36 @@
                 const validateButton = translationUnit.querySelector(`#validateBtn-${entryIndex}`);
                 const editButton = translationUnit.querySelector(`#editBtn-${entryIndex}`);
 
+      // --- INICIO DE LA SOLUCIÓN DEFINITIVA ---
+                translationEditor.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+
+                        const selection = window.getSelection();
+                        if (!selection.rangeCount) return;
+
+                        const range = selection.getRangeAt(0);
+                        const br = document.createElement('br');
+                        // Creamos un nodo de texto con un carácter invisible (espacio de ancho cero)
+                        const zeroWidthSpace = document.createTextNode('\u200B');
+
+                        range.deleteContents();
+                        range.insertNode(br);
+                        
+                        // Insertamos el carácter invisible justo después del <br>
+                        // El método insertBefore con br.nextSibling lo coloca justo después
+                        br.parentNode.insertBefore(zeroWidthSpace, br.nextSibling);
+
+                        // Movemos el cursor para que se posicione al inicio del carácter invisible
+                        range.setStart(zeroWidthSpace, 0);
+                        range.collapse(true);
+
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                });
+                // --- FIN DE LA SOLUCIÓN DEFINITIVA ---
+
                 translationEditor.addEventListener('input', (event) => {
                     const currentEntry = srtEntries[entryIndex];
                     currentEntry.translation = event.target.innerHTML;
