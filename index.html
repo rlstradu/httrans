@@ -80,14 +80,14 @@
         .description {
             color: #4a5568;
             margin-bottom: 2.5rem;
-            font-size: 1rem; /* Tamaño de fuente reducido */
+            font-size: 1rem;
             line-height: 1.6;
             max-width: 700px;
             margin-left: auto;
             margin-right: auto;
         }
         
-        /* Grid de herramientas mejorado */
+        /* Grid de herramientas */
         .tool-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -110,7 +110,6 @@
             align-items: center;
         }
 
-        /* Nuevo efecto hover */
         .tool-item:hover {
             transform: translateY(-8px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -119,8 +118,8 @@
         }
 
         .tool-logo {
-            max-width: 200px; /* Tamaño de logo aumentado */
-            height: 100px;    /* Tamaño de logo aumentado */
+            max-width: 200px;
+            height: 100px;
             object-fit: contain;
             margin: 0 auto 1rem auto;
             transition: transform 0.3s ease;
@@ -131,14 +130,14 @@
         }
         
         .tool-text-main {
-            font-size: 1.1rem; /* Tamaño de fuente aumentado */
+            font-size: 1.1rem;
             font-weight: 700;
             color: #2c3e50;
             text-transform: uppercase;
         }
 
         .tool-text-sub {
-            font-size: 0.85rem; /* Tamaño de fuente aumentado */
+            font-size: 0.85rem;
             font-weight: 400;
             color: #718096;
             text-transform: none;
@@ -227,7 +226,69 @@
             margin-bottom: 10px;
         }
 
-        /* Responsive */
+        /* Estilos para el Pop-up del Newsletter */
+        .newsletter-popup {
+            position: fixed;
+            bottom: -100%; /* Empieza fuera de la pantalla */
+            right: 2rem;
+            width: 90%;
+            max-width: 450px;
+            z-index: 1000;
+            transition: bottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Animación suave */
+            opacity: 0;
+            transition: opacity 0.8s ease, bottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .newsletter-popup.show {
+            bottom: 2rem; /* Posición final */
+            opacity: 1;
+        }
+
+        .newsletter-popup-content {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .newsletter-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: #333;
+            font-size: 20px;
+            line-height: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .newsletter-close-btn:hover {
+            background: rgba(0,0,0,0.2);
+            transform: rotate(90deg);
+        }
+
+        /* Responsive para el Pop-up */
+        @media (max-width: 768px) {
+            .newsletter-popup {
+                right: 50%;
+                transform: translateX(50%);
+                max-width: 90%;
+            }
+            .newsletter-popup.show {
+                bottom: 1rem;
+            }
+        }
+        
+        /* Responsive general */
         @media (max-width: 768px) {
             body { padding: 1rem; }
             .main-container { padding: 1.5rem; }
@@ -237,6 +298,40 @@
             .tool-grid { grid-template-columns: 1fr; gap: 1rem; }
             .language-selector { top: 10px; right: 10px; }
         }
+    </style>
+    <!-- Estilos del formulario de MailerLite -->
+    <style type="text/css">@import url("https://assets.mlcdn.com/fonts.css?version=1752130");</style>
+    <style type="text/css">
+    .ml-form-embedSubmitLoad { display: inline-block; width: 20px; height: 20px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    .ml-form-embedSubmitLoad:after { content: " "; display: block; width: 11px; height: 11px; margin: 1px; border-radius: 50%; border: 4px solid #fff; border-color: #ffffff #ffffff #ffffff transparent; animation: ml-form-embedSubmitLoad 1.2s linear infinite; }
+    @keyframes ml-form-embedSubmitLoad { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #mlb2-28422372.ml-form-embedContainer { box-sizing: border-box; display: table; margin: 0 auto; position: static; width: 100% !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper { background-color: transparent !important; border-width: 0 !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody, #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-successBody { padding: 20px; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent h4, #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent p { font-family: 'Montserrat', sans-serif !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent p { color: #4a5568 !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-fieldRow input { background-color: rgba(255,255,255,0.7) !important; border-color: rgba(0,0,0,0.1) !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button { background-color: #E23B5D !important; font-family: 'Montserrat', sans-serif !important; font-weight: 700 !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button:hover { background-color: #d02a4c !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedPermissions .ml-form-embedPermissionsContent.privacy-policy p, #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedPermissions .ml-form-embedPermissionsContent.privacy-policy p a { color: #718096 !important; font-size: 11px !important; }
+    /* Simplificación de los estilos largos de MailerLite */
+    #mlb2-28422372.ml-form-embedContainer h4, #mlb2-28422372.ml-form-embedContainer p, #mlb2-28422372.ml-form-embedContainer span, #mlb2-28422372.ml-form-embedContainer button { text-transform: none !important; letter-spacing: normal !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper.embedForm { max-width: 100%; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-align-center { text-align: center; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedHeader img { display: none; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent { margin: 0 0 20px 0; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent h4 { color: #373737; font-size: 22px; font-weight: 700; margin: 0 0 10px 0; text-align: center; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent p { font-size: 14px; line-height: 1.6; margin: 0 0 10px 0; text-align: center; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody form { margin: 0; width: 100%; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-formContent { margin: 0 0 15px 0; width: 100%; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-fieldRow { margin: 0 0 10px 0; width: 100%; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-fieldRow input { color: #333333 !important; border-radius: 8px !important; border-style: solid !important; border-width: 1px !important; font-family: 'Montserrat', sans-serif; font-size: 14px !important; height: auto; line-height: 21px !important; padding: 12px !important; width: 100% !important; box-sizing: border-box !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit { margin: 0; width: 100%; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button { border: none !important; border-radius: 8px !important; cursor: pointer; font-size: 16px !important; line-height: 21px !important; height: auto; padding: 12px !important; width: 100% !important; box-sizing: border-box !important; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedPermissions { text-align: center; width: 100%; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-successBody { display: none; }
+    #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-successBody .ml-form-successContent h4 { font-size: 22px; }
     </style>
 </head>
 <body>
@@ -273,6 +368,56 @@
         </footer>
     </div>
 
+    <!-- Pop-up del Newsletter -->
+    <div id="newsletterPopup" class="newsletter-popup">
+        <div class="newsletter-popup-content">
+            <button id="newsletterCloseBtn" class="newsletter-close-btn">&times;</button>
+            <!-- Formulario de MailerLite -->
+            <div id="mlb2-28422372" class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-28422372">
+                <div class="ml-form-align-center">
+                    <div class="ml-form-embedWrapper embedForm">
+                        <div class="ml-form-embedBody ml-form-embedBodyDefault row-form">
+                            <div class="ml-form-embedContent">
+                                <h4 data-key="newsletterTitle"></h4>
+                                <p data-key="newsletterDescription"></p>
+                            </div>
+                            <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/1667168/forms/160002497567524097/subscribe" data-code="" method="post" target="_blank">
+                                <div class="ml-form-formContent">
+                                    <div class="ml-form-fieldRow ml-last-item">
+                                        <div class="ml-field-group ml-field-email ml-validate-email ml-validate-required">
+                                            <input aria-label="email" aria-required="true" type="email" class="form-control" data-inputmask="" name="fields[email]" placeholder="Email" autocomplete="email">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ml-form-embedPermissions">
+                                    <div class="ml-form-embedPermissionsContent default privacy-policy">
+                                        <p data-key="newsletterPrivacy"></p>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="ml-submit" value="1">
+                                <div class="ml-form-embedSubmit">
+                                    <button type="submit" class="primary" data-key="newsletterSubmit"></button>
+                                    <button disabled="disabled" style="display: none;" type="button" class="loading">
+                                        <div class="ml-form-embedSubmitLoad"></div>
+                                        <span class="sr-only">Loading...</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="anticsrf" value="true">
+                            </form>
+                        </div>
+                        <div class="ml-form-successBody row-success" style="display: none">
+                            <div class="ml-form-successContent">
+                                <h4 data-key="newsletterSuccessTitle"></h4>
+                                <p data-key="newsletterSuccessMessage"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- DATOS Y TRADUCCIONES ---
@@ -305,6 +450,12 @@
                     githubRepo: 'Repositorio en <a href="https://github.com/rlstradu/httrans" target="_blank">GitHub</a>',
                     pandaHugMessage: 'Envía un abrazo de panda al desarrollador como agradecimiento',
                     pandaHugCta: 'Abrazo',
+                    newsletterTitle: '¡No te pierdas nada!',
+                    newsletterDescription: 'Suscríbete para recibir noticias y actualizaciones sobre <strong>httrans</strong> y tecnología de traducción.',
+                    newsletterPrivacy: 'Puedes darte de baja en cualquier momento. Para más detalles, consulta nuestra <a href="https://rlstradu.github.io/httrans/privacy-policy.html" target="_blank">Política de Privacidad</a>.',
+                    newsletterSubmit: 'Suscribirse',
+                    newsletterSuccessTitle: '¡Gracias!',
+                    newsletterSuccessMessage: 'Te has unido correctamente a nuestra lista de suscriptores.',
                 },
                 en: {
                     description: 'A handy set of simple, practical tools created by a fellow translator who loves pandas, designed to make your day-to-day work easier. They’re completely free, require no installation, and work right from your browser.',
@@ -322,6 +473,12 @@
                     githubRepo: 'Repository on <a href="https://github.com/rlstradu/httrans" target="_blank">GitHub</a>',
                     pandaHugMessage: 'Send a panda hug to the developer as a thank you',
                     pandaHugCta: 'Hug',
+                    newsletterTitle: 'Stay in the loop!',
+                    newsletterDescription: 'Subscribe to receive updates and news about <strong>httrans</strong> and translation technology.',
+                    newsletterPrivacy: 'You can unsubscribe anytime. For more details, review our <a href="https://rlstradu.github.io/httrans/privacy-policy.html" target="_blank">Privacy Policy</a>.',
+                    newsletterSubmit: 'Subscribe',
+                    newsletterSuccessTitle: 'Thank you!',
+                    newsletterSuccessMessage: 'You have successfully joined our subscriber list.',
                 }
             };
 
@@ -330,11 +487,12 @@
             const langButtons = document.querySelectorAll('.lang-button');
             const pandaHugButton = document.getElementById('pandaHugButton');
             const likeCountSpan = document.getElementById('likeCount');
+            const newsletterPopup = document.getElementById('newsletterPopup');
+            const newsletterCloseBtn = document.getElementById('newsletterCloseBtn');
             
             let currentLang = localStorage.getItem('selectedLang') || 'en';
             let likeCount = parseInt(localStorage.getItem('pandaHugCount') || '0');
 
-            // Función para renderizar las tarjetas de herramientas
             function renderTools() {
                 toolGrid.innerHTML = '';
                 tools.forEach((tool, index) => {
@@ -343,55 +501,39 @@
                     toolElement.target = '_blank';
                     toolElement.className = 'tool-item fade-in';
                     toolElement.style.animationDelay = `${0.3 + index * 0.05}s`;
-                    
-                    toolElement.innerHTML = `
-                        <img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo">
-                        <div>
-                            <div class="tool-text-main" data-key="${tool.id}Main"></div>
-                            <div class="tool-text-sub" data-key="${tool.id}Sub"></div>
-                        </div>
-                    `;
+                    toolElement.innerHTML = `<img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo"><div><div class="tool-text-main" data-key="${tool.id}Main"></div><div class="tool-text-sub" data-key="${tool.id}Sub"></div></div>`;
                     toolGrid.appendChild(toolElement);
                 });
             }
 
-            // Función para actualizar textos según el idioma
             function updateText(lang) {
                 document.querySelectorAll('[data-key]').forEach(element => {
                     const key = element.dataset.key;
                     if (translations[lang] && translations[lang][key]) {
-                        // Usar innerHTML para que renderice las etiquetas <a>
                         element.innerHTML = translations[lang][key];
                     }
                 });
             }
 
-            // Función para actualizar el estado de los botones de idioma
             function updateLangButtons(selectedLang) {
                 langButtons.forEach(button => {
                     button.classList.toggle('active', button.dataset.lang === selectedLang);
                 });
             }
 
-            // Lógica del botón "Me gusta"
             function updateLikeCount() {
                 likeCountSpan.textContent = likeCount;
                 localStorage.setItem('pandaHugCount', likeCount);
             }
 
             pandaHugButton.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevenir navegación si se hace clic en el botón dentro de un enlace de pie de página
+                e.preventDefault();
                 likeCount++;
                 updateLikeCount();
-                
-                // Añadir animación
                 pandaHugButton.classList.add('clicked');
-                setTimeout(() => {
-                    pandaHugButton.classList.remove('clicked');
-                }, 500);
+                setTimeout(() => pandaHugButton.classList.remove('clicked'), 500);
             });
 
-            // Lógica para cambiar de idioma
             langButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     currentLang = button.dataset.lang;
@@ -401,12 +543,40 @@
                 });
             });
 
+            // Lógica del Pop-up del Newsletter
+            setTimeout(() => {
+                // Solo mostrar si no se ha cerrado antes en esta sesión
+                if (!sessionStorage.getItem('newsletterClosed')) {
+                    newsletterPopup.classList.add('show');
+                }
+            }, 5000); // 5000ms = 5 segundos
+
+            newsletterCloseBtn.addEventListener('click', () => {
+                newsletterPopup.classList.remove('show');
+                // Recordar que se ha cerrado para esta sesión
+                sessionStorage.setItem('newsletterClosed', 'true');
+            });
+
+
             // --- INICIALIZACIÓN ---
             renderTools();
             updateLangButtons(currentLang);
             updateText(currentLang);
             updateLikeCount();
         });
+    </script>
+
+    <!-- Scripts del formulario de MailerLite -->
+    <script>
+        function ml_webform_success_28422372() {
+            var $ = ml_jQuery || jQuery;
+            $('.ml-subscribe-form-28422372 .row-success').show();
+            $('.ml-subscribe-form-28422372 .row-form').hide();
+        }
+    </script>
+    <script src="https://groot.mailerlite.com/js/w/webforms.min.js?v176e10baa5e7ed80d35ae235be3d5024" type="text/javascript"></script>
+    <script>
+        fetch("https://assets.mailerlite.com/jsonp/1667168/forms/160002497567524097/takel")
     </script>
 </body>
 </html>
