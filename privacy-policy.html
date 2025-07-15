@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - HTTrans</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
+    <!-- Carga de Google Fonts (Montserrat) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos base y fondo animado (Idénticos al index) */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            box-sizing: border-box;
+            background: linear-gradient(45deg, #fde7ea, #e8eaf6, #e0f2f1, #fce4ec);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Contenedor principal con efecto Glassmorphism */
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 2.5rem;
+            text-align: left; /* Alineado a la izquierda para mejor legibilidad */
+            position: relative;
+        }
+
+        /* Animaciones de entrada */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        
+        /* Estilos para Títulos y Texto de la Política */
+        .policy-title {
+            color: #373737;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+        
+        .policy-subtitle {
+            color: #4a5568;
+            margin-bottom: 2.5rem;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .policy-content h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 2px solid #E23B5D;
+            padding-bottom: 0.25rem;
+        }
+
+        .policy-content p {
+            color: #4a5568;
+            margin-bottom: 1rem;
+            line-height: 1.7;
+        }
+
+        .policy-content a {
+            color: #E23B5D;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .policy-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* Botón para volver al inicio */
+        .back-button {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 12px 25px;
+            background-color: #E23B5D;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* Selector de idioma (Idéntico al index) */
+        .language-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 5px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 0.5rem;
+            padding: 5px;
+            z-index: 10;
+        }
+        .lang-button {
+            padding: 5px 10px;
+            border: none;
+            background-color: transparent;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .lang-button.active {
+            background-color: #E23B5D;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .main-container { padding: 1.5rem; }
+            .policy-title { font-size: 1.5rem; }
+            .policy-subtitle { font-size: 0.9rem; }
+            .language-selector { top: 10px; right: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container fade-in">
+        <!-- Selector de idioma -->
+        <div class="language-selector">
+            <button class="lang-button" data-lang="es">ES</button>
+            <button class="lang-button" data-lang="en">EN</button>
+        </div>
+
+        <!-- Contenido principal -->
+        <h1 class="policy-title" data-key="title"></h1>
+        <p class="policy-subtitle" data-key="lastUpdated"></p>
+        
+        <div class="policy-content">
+            <p data-key="intro"></p>
+
+            <h2 data-key="dataController_h"></h2>
+            <p data-key="dataController_p"></p>
+
+            <h2 data-key="dataCollected_h"></h2>
+            <p data-key="dataCollected_p"></p>
+
+            <h2 data-key="dataPurpose_h"></h2>
+            <p data-key="dataPurpose_p"></p>
+
+            <h2 data-key="userRights_h"></h2>
+            <p data-key="userRights_p"></p>
+            <p data-key="unsubscribe_p"></p>
+            
+            <h2 data-key="thirdParties_h"></h2>
+            <p data-key="thirdParties_p"></p>
+
+            <h2 data-key="dataSecurity_h"></h2>
+            <p data-key="dataSecurity_p"></p>
+            
+            <h2 data-key="policyChanges_h"></h2>
+            <p data-key="policyChanges_p"></p>
+            
+            <h2 data-key="contact_h"></h2>
+            <p data-key="contact_p"></p>
+        </div>
+
+        <div class="text-center">
+            <a href="index.html" class="back-button" data-key="backButton"></a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATOS Y TRADUCCIONES ---
+            const translations = {
+                es: {
+                    title: 'Política de privacidad',
+                    lastUpdated: 'Última actualización: 15 de julio de 2025',
+                    intro: 'Esta política de privacidad describe cómo se recopila, utiliza y gestiona tu información personal al suscribirte al boletín informativo (newsletter) del proyecto HTTrans.',
+                    dataController_h: 'Responsable del tratamiento',
+                    dataController_p: 'El responsable de tus datos es Rafael López Sánchez, creador del proyecto HTTrans. Contacto: <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>.',
+                    dataCollected_h: 'Información que se recopila',
+                    dataCollected_p: 'Para la suscripción al boletín, se recopila únicamente tu dirección de correo electrónico. No se solicita ni almacena ninguna otra información personal.',
+                    dataPurpose_h: 'Finalidad del tratamiento de datos',
+                    dataPurpose_p: 'Tu dirección de correo electrónico se utiliza con el único propósito de enviar el boletín de HTTrans, que puede incluir noticias sobre el proyecto, actualizaciones de las herramientas y otra información relevante. No se utilizarán tus datos para ningún otro fin.',
+                    userRights_h: 'Tus derechos',
+                    userRights_p: 'Tienes derecho a acceder, rectificar o suprimir tus datos en cualquier momento. Para ejercer estos derechos, puedes ponerte en contacto a través de la dirección de correo electrónico proporcionada.',
+                    unsubscribe_p: 'Además, puedes darte de baja del boletín en cualquier momento haciendo clic en el enlace "Cancelar suscripción" o "Unsubscribe" que encontrarás al pie de cada correo que se envíe.',
+                    thirdParties_h: 'Terceros',
+                    thirdParties_p: 'Tu dirección de correo electrónico no se comparte ni se vende a terceros. Para gestionar el envío de los boletines se utiliza Mailerlite, un servicio que cumple con las normativas de privacidad vigentes. Puedes consultar su política de privacidad <a href="https://www.mailerlite.com/legal/privacy-policy" target="_blank">aquí</a>.',
+                    dataSecurity_h: 'Cómo se protegen los datos',
+                    dataSecurity_p: 'Se toman las medidas técnicas y organizativas necesarias para proteger tu dirección de correo electrónico, principalmente a través de la selección de proveedores de servicios con altas garantías de seguridad.',
+                    policyChanges_h: 'Cambios en la política de privacidad',
+                    policyChanges_p: 'Se reserva el derecho de modificar esta política en el futuro. Cualquier cambio será comunicado a través del boletín informativo o será publicado en esta misma página.',
+                    contact_h: 'Contacto',
+                    contact_p: 'Si tienes alguna pregunta sobre esta política de privacidad, no dudes en contactar a través de <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>.',
+                    backButton: 'Volver al inicio'
+                },
+                en: {
+                    title: 'Privacy Policy',
+                    lastUpdated: 'Last updated: July 15, 2025',
+                    intro: 'This Privacy Policy outlines how your personal information is collected, used, and managed when you subscribe to the HTTrans project newsletter.',
+                    dataController_h: 'Data controller',
+                    dataController_p: 'The data controller for your information is Rafael López Sánchez, creator of the HTTrans project. Contact: <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>.',
+                    dataCollected_h: 'Information we collect',
+                    dataCollected_p: 'When you subscribe to the newsletter, the only personal information collected is your email address. No other personal data is requested or stored.',
+                    dataPurpose_h: 'Purpose of processing',
+                    dataPurpose_p: 'Your email address is used exclusively to send you the HTTrans newsletter, featuring project news, tool updates, and other relevant content. Your data will not be used for any other purpose.',
+                    userRights_h: 'Your rights',
+                    userRights_p: 'You have the right to access, correct, or delete your personal data at any time. To exercise these rights, please contact us at the provided email address.',
+                    unsubscribe_p: 'You can also unsubscribe from the newsletter at any time by clicking the "Unsubscribe" link located in the footer of every email.',
+                    thirdParties_h: 'Third-party services',
+                    thirdParties_p: 'Your email address will not be shared with or sold to third parties. Newsletter delivery is managed by Mailerlite, a service compliant with all current privacy regulations. Their privacy policy is available <a href="https://www.mailerlite.com/legal/privacy-policy" target="_blank">here</a>.',
+                    dataSecurity_h: 'Data security',
+                    dataSecurity_p: 'Appropriate technical and organizational measures are in place to protect your email address. This security is primarily ensured by using a service provider that adheres to high security standards.',
+                    policyChanges_h: 'Changes to this policy',
+                    policyChanges_p: 'This policy may be updated from time to time. Any modifications will be communicated via the newsletter or posted on this page.',
+                    contact_h: 'Contact us',
+                    contact_p: 'For any questions regarding this Privacy Policy, please contact us at <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>.',
+                    backButton: 'Back to Home'
+                }
+            };
+
+            // --- LÓGICA DE LA APLICACIÓN ---
+            const langButtons = document.querySelectorAll('.lang-button');
+            // 'en' como idioma por defecto
+            let currentLang = localStorage.getItem('selectedLang') || 'en'; 
+
+            // Función para actualizar textos según el idioma
+            function updateText(lang) {
+                document.documentElement.lang = lang; // Actualizar el atributo lang del HTML
+                document.querySelectorAll('[data-key]').forEach(element => {
+                    const key = element.dataset.key;
+                    if (translations[lang] && translations[lang][key]) {
+                        // Usar innerHTML para que renderice las etiquetas <a>
+                        element.innerHTML = translations[lang][key];
+                    }
+                });
+            }
+
+            // Función para actualizar el estado de los botones de idioma
+            function updateLangButtons(selectedLang) {
+                langButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.lang === selectedLang);
+                });
+            }
+
+            // Lógica para cambiar de idioma
+            langButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    currentLang = button.dataset.lang;
+                    localStorage.setItem('selectedLang', currentLang);
+                    updateLangButtons(currentLang);
+                    updateText(currentLang);
+                });
+            });
+
+            // --- INICIALIZACIÓN ---
+            updateLangButtons(currentLang);
+            updateText(currentLang);
+        });
+    </script>
+</body>
+</html>
