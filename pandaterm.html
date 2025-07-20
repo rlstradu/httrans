@@ -297,15 +297,24 @@
       color: #888;
     }
 
+    /* --- CAMBIOS AQUÍ --- */
+    /* 1. Nuevo contenedor para la tabla con la barra de desplazamiento */
+    .table-container {
+      max-height: 400px; /* Altura máxima antes de que aparezca el scroll */
+      overflow-y: auto;  /* Muestra la barra de desplazamiento vertical solo cuando sea necesario */
+      border-radius: 8px; /* Mantiene las esquinas redondeadas */
+      margin-top: 20px;
+      border: 1px solid var(--border-color); /* Borde sutil para mejor integración visual */
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* 2. La tabla vuelve a su estado normal para ocupar el 100% del ancho */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
       background-color: var(--card-background);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
+    /* --- FIN DE LOS CAMBIOS --- */
 
     th, td {
       border-bottom: 1px solid var(--border-color);
@@ -324,6 +333,8 @@
       font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      position: sticky; /* Hace que los encabezados se queden fijos al hacer scroll */
+      top: 0; /* Pega los encabezados en la parte superior del contenedor */
     }
     
     body.dark-mode th {
@@ -472,16 +483,21 @@
             <input id="searchTerm" placeholder="Buscar término..." oninput="renderGlossary()" data-i18n-placeholder="search_placeholder" />
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th data-i18n="source_term_col">Término de origen</th>
-                    <th data-i18n="target_term_col">Término de destino</th>
-                    <th data-i18n="actions_col">Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="glossaryTable"></tbody>
-        </table>
+        <!-- --- CAMBIO AQUÍ --- -->
+        <!-- Se ha añadido un div para contener la tabla y controlar el scroll -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th data-i18n="source_term_col">Término de origen</th>
+                        <th data-i18n="target_term_col">Término de destino</th>
+                        <th data-i18n="actions_col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="glossaryTable"></tbody>
+            </table>
+        </div>
+        <!-- --- FIN DEL CAMBIO --- -->
     </div>
 
     <datalist id="isoLanguages">
