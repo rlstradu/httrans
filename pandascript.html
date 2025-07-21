@@ -203,7 +203,7 @@
     const DEFAULT_FRAMERATE = 30;
     let tcrOffsetSeconds = 0;
     let lastVolume = 1;
-    let findReplaceState = { query: '', replacement: '', caseSensitive: false, matches: [], currentIndex: -1, isFinding: false };
+    let findReplaceState = { query: '', replacement: '', caseSensitive: false, lastFoundRange: null };
     let isDarkMode = false; 
     let currentLanguage = 'en';
     let listeningForShortcut = null;
@@ -449,11 +449,14 @@
         if (e.metaKey) parts.push('Meta');
         
         const key = e.key.trim();
+        // Solo añade la tecla si no es una tecla modificadora por sí misma
         if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
             if (key === ' ') {
                 parts.push('Space');
-            } else {
+            } else if (key.length === 1) { // Para letras y números
                 parts.push(e.key.toUpperCase());
+            } else { // Para otras teclas como ArrowLeft, Enter, etc.
+                parts.push(key);
             }
         }
         return parts.join('+');
@@ -565,6 +568,8 @@
             if(button) button.classList.remove('is-listening');
             listeningForShortcut = null;
         }
+        // Limpiar la selección actual de window.find() al cerrar el modal
+        window.getSelection().empty();
     }
 
     function customAlert(messageKey, titleKey = 'modalAttention', args = []) {
@@ -803,15 +808,240 @@
       link.remove();
     }
 
-    function showFindModal() { /* ... */ }
-    function showReplaceModal() { /* ... */ }
-    function highlightAllMatches(query, caseSensitive) { /* ... */ }
-    function clearHighlights() { /* ... */ }
-    function goToMatch(index) { /* ... */ }
-    function findNext() { /* ... */ }
-    function findPrevious() { /* ... */ }
-    function replaceCurrent() { /* ... */ }
-    function replaceAll() { /* ... */ }
+    // --- Funciones de Buscar y Reemplazar ---
+
+    /**
+     * Muestra el modal de búsqueda.
+     */
+    function showFindModal() {
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+        
+        let findHtml = `
+            <div>
+                <label for="findQueryInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}</label>
+                <input type="text" id="findQueryInput" class="${inputClasses}" value="${findReplaceState.query}" />
+                <label class="inline-flex items-center cursor-pointer mb-3">
+                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
+                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
+                </label>
+                <div id="findStatus" class="text-sm text-red-500"></div>
+            </div>
+        `;
+
+        showModal(
+            translations[currentLanguage].findModalTitle, '',
+            [
+                { text: translations[currentLanguage].modalClose, type: 'neutral' },
+                { text: translations[currentLanguage].findPrevious, handler: () => findNext(true), type: 'neutral' }, // true para buscar hacia atrás
+                { text: translations[currentLanguage].findNext, handler: () => findNext(false), type: 'primary' } // false para buscar hacia adelante
+            ],
+            findHtml
+        );
+
+        // Restaurar el foco en el editor después de abrir el modal, para que window.find funcione correctamente
+        editor.focus();
+    }
+
+    /**
+     * Muestra el modal de reemplazar.
+     */
+    function showReplaceModal() {
+        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+        
+        let replaceHtml = `
+            <div>
+                <label for="findQueryInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}</label>
+                <input type="text" id="findQueryInput" class="${inputClasses}" value="${findReplaceState.query}" />
+                <label for="replaceWithInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].replaceWithLabel}</label>
+                <input type="text" id="replaceWithInput" class="${inputClasses}" value="${findReplaceState.replacement}" />
+                <label class="inline-flex items-center cursor-pointer mb-3">
+                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
+                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
+                </label>
+                <div id="findStatus" class="text-sm text-red-500"></div>
+            </div>
+        `;
+
+        showModal(
+            translations[currentLanguage].replaceModalTitle, '',
+            [
+                { text: translations[currentLanguage].modalClose, type: 'neutral' },
+                { text: translations[currentLanguage].replaceAllButton, handler: replaceAll, type: 'danger' },
+                { text: translations[currentLanguage].replaceButtonInModal, handler: replaceCurrent, type: 'neutral' },
+                { text: translations[currentLanguage].findPrevious, handler: () => findNext(true), type: 'neutral' },
+                { text: translations[currentLanguage].findNext, handler: () => findNext(false), type: 'primary' }
+            ],
+            replaceHtml
+        );
+
+        // Restaurar el foco en el editor después de abrir el modal, para que window.find funcione correctamente
+        editor.focus();
+    }
+
+    /**
+     * Busca la siguiente o anterior coincidencia en el editor.
+     * @param {boolean} searchBackwards - Si es true, busca hacia atrás.
+     */
+    function findNext(searchBackwards = false) {
+        const findQueryInput = document.getElementById('findQueryInput');
+        const findCaseSensitive = document.getElementById('findCaseSensitive');
+        const findStatus = document.getElementById('findStatus');
+
+        if (!findQueryInput || !findStatus) return;
+
+        const query = findQueryInput.value;
+        const caseSensitive = findCaseSensitive.checked;
+
+        if (!query) {
+            findStatus.textContent = '';
+            return;
+        }
+
+        // Actualizar el estado de búsqueda y reemplazo
+        findReplaceState.query = query;
+        findReplaceState.caseSensitive = caseSensitive;
+
+        // Limpiar selecciones anteriores si la consulta ha cambiado
+        if (query !== findReplaceState.lastQuery || caseSensitive !== findReplaceState.lastCaseSensitive) {
+            window.getSelection().empty(); // Deselecciona lo que sea que estuviera seleccionado
+            findReplaceState.lastQuery = query;
+            findReplaceState.lastCaseSensitive = caseSensitive;
+        }
+
+        // Realizar la búsqueda. El último argumento (showDialog) es false para no mostrar el diálogo nativo.
+        const found = window.find(query, caseSensitive, searchBackwards, true, false, false, false);
+
+        if (!found) {
+            findStatus.textContent = translations[currentLanguage].noMatchesFound;
+            // Si no se encuentra, intentar desde el principio/final para envolver
+            window.getSelection().empty(); // Limpiar la selección para reiniciar la búsqueda
+            window.find(query, caseSensitive, searchBackwards, true, false, false, false); // Reintentar para envolver
+            if (!window.find(query, caseSensitive, searchBackwards, true, false, false, false)) { // Si aún no se encuentra después de envolver
+                findStatus.textContent = translations[currentLanguage].noMatchesFound;
+            } else {
+                findStatus.textContent = ''; // Se encontró después de envolver
+            }
+        } else {
+            findStatus.textContent = '';
+        }
+    }
+
+    /**
+     * Reemplaza la coincidencia actualmente seleccionada.
+     */
+    function replaceCurrent() {
+        const findQueryInput = document.getElementById('findQueryInput');
+        const replaceWithInput = document.getElementById('replaceWithInput');
+        const findCaseSensitive = document.getElementById('findCaseSensitive');
+        const findStatus = document.getElementById('findStatus');
+
+        if (!findQueryInput || !replaceWithInput || !findStatus) return;
+
+        const query = findQueryInput.value;
+        const replacement = replaceWithInput.value;
+        const caseSensitive = findCaseSensitive.checked;
+
+        if (!query) {
+            findStatus.textContent = '';
+            return;
+        }
+
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const selectedText = range.toString();
+
+            // Verificar si el texto seleccionado coincide con la consulta (respetando mayúsculas/minúsculas)
+            const matchCondition = caseSensitive ? (selectedText === query) : (selectedText.toLowerCase() === query.toLowerCase());
+
+            if (matchCondition) {
+                // Eliminar el texto seleccionado
+                range.deleteContents();
+                // Insertar el texto de reemplazo
+                range.insertNode(document.createTextNode(replacement));
+                // Mover el cursor al final del texto reemplazado
+                selection.collapseToEnd();
+                findStatus.textContent = '';
+            } else {
+                findStatus.textContent = translations[currentLanguage].noMatchSelectedForReplace;
+            }
+        } else {
+            findStatus.textContent = translations[currentLanguage].noMatchSelectedForReplace;
+        }
+        
+        // Después de reemplazar, buscar la siguiente coincidencia
+        findNext(false); 
+    }
+
+    /**
+     * Reemplaza todas las coincidencias en el editor.
+     */
+    function replaceAll() {
+        const findQueryInput = document.getElementById('findQueryInput');
+        const replaceWithInput = document.getElementById('replaceWithInput');
+        const findCaseSensitive = document.getElementById('findCaseSensitive');
+        const findStatus = document.getElementById('findStatus');
+
+        if (!findQueryInput || !replaceWithInput || !findStatus) return;
+
+        const query = findQueryInput.value;
+        const replacement = replaceWithInput.value;
+        const caseSensitive = findCaseSensitive.checked;
+
+        if (!query) {
+            findStatus.textContent = '';
+            return;
+        }
+
+        // Guardar la posición actual del cursor
+        const selection = window.getSelection();
+        const originalRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+        // Obtener el HTML del editor
+        let editorHtml = editor.innerHTML;
+
+        // Paso 1: Proteger los timecodes reemplazándolos con un placeholder único
+        // Usamos un mapa para almacenar el HTML original de los timecodes
+        const timecodePlaceholders = new Map();
+        let placeholderCounter = 0;
+        editorHtml = editorHtml.replace(/<span class="timestamp">\[.*?\]<\/span>/g, (match) => {
+            const placeholder = `__TIMECODE_PLACEHOLDER_${placeholderCounter++}__`;
+            timecodePlaceholders.set(placeholder, match);
+            return placeholder;
+        });
+
+        // Paso 2: Realizar el reemplazo de texto en el HTML modificado
+        const flags = caseSensitive ? 'g' : 'gi';
+        const regex = new RegExp(query, flags);
+        editorHtml = editorHtml.replace(regex, replacement);
+
+        // Paso 3: Restaurar los timecodes
+        timecodePlaceholders.forEach((originalHtml, placeholder) => {
+            editorHtml = editorHtml.replace(new RegExp(placeholder, 'g'), originalHtml);
+        });
+
+        // Actualizar el contenido del editor
+        editor.innerHTML = editorHtml;
+
+        // Restaurar la posición del cursor si es posible
+        if (originalRange) {
+            try {
+                selection.removeAllRanges();
+                selection.addRange(originalRange);
+            } catch (e) {
+                // Si el rango se invalidó por el cambio de HTML, simplemente enfocar el editor
+                editor.focus();
+            }
+        } else {
+            editor.focus();
+        }
+
+        customAlert('replacementComplete', 'modalConfirmAction', [query]);
+        hideModal(); // Cerrar el modal después de reemplazar todo
+    }
+
 
     // --- Lógica de Inicialización y Eventos ---
     
@@ -849,9 +1079,27 @@
         editor.addEventListener('focus', () => {
             if (isEditorPristine) {
                 editor.innerHTML = '';
+            }
+        });
+
+        editor.addEventListener('input', () => {
+            // Si el editor está vacío, restablecer isEditorPristine a true
+            if (editor.innerText.trim() === '') {
+                isEditorPristine = true;
+                editor.innerHTML = `<p data-i18n="editorPlaceholder">${translations[currentLanguage].editorPlaceholder}</p>`;
+                applyTheme(isDarkMode ? 'dark' : 'light'); // Re-aplicar tema para el placeholder
+                // Mover el cursor al inicio del placeholder
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.setStart(editor.firstChild, 0);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } else {
                 isEditorPristine = false;
             }
         });
+
 
         playPauseBtn.addEventListener('click', () => executeShortcut('playPause'));
         document.getElementById('speedUpBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.min(4.0, video.playbackRate + 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
@@ -904,8 +1152,6 @@
                     const importedShortcuts = JSON.parse(event.target.result);
                     if (typeof importedShortcuts === 'object' && importedShortcuts !== null) {
                         tempShortcuts = { ...defaultShortcuts, ...importedShortcuts };
-                        // Re-render modal body
-                        document.getElementById('modalBody').innerHTML = document.getElementById('modalBody').innerHTML; // quick hack to re-render
                         showShortcutsModal(); // Re-open to refresh content
                         customAlert('shortcutsImported');
                     } else {
@@ -923,11 +1169,18 @@
         if (listeningForShortcut) {
             e.preventDefault();
             e.stopPropagation();
-            // Ignore events that are just for a modifier key press/release
+            // Ignorar eventos que son solo para una tecla modificadora (Ctrl, Alt, Shift, Meta)
             if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
                 return; 
             }
             const newShortcutStr = keyEventToString(e);
+            // Asegurarse de que el atajo no esté vacío (solo modificadores)
+            if (newShortcutStr.split('+').filter(p => !['Control', 'Alt', 'Shift', 'Meta'].includes(p)).length === 0) {
+                // Si solo se presionaron modificadores, no guardar como atajo válido
+                // y mantener el estado de "escucha" para una tecla real
+                return;
+            }
+
             tempShortcuts[listeningForShortcut] = newShortcutStr;
             const button = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
             if (button) {
@@ -937,8 +1190,11 @@
             listeningForShortcut = null;
             return;
         }
+        // No ejecutar atajos si el foco está en un campo de entrada o el editor,
+        // a menos que el atajo sea específicamente para el editor (como Ctrl+Space)
         if (document.activeElement.tagName === 'INPUT' || (document.activeElement.isContentEditable && document.activeElement !== editor)) return;
-        const pressedShortcut = keyEventToString(e).replace('Meta', 'Control'); // Normalize Meta to Control for execution
+        
+        const pressedShortcut = keyEventToString(e).replace('Meta', 'Control'); // Normalizar Meta a Control para la ejecución
         for (const action in shortcuts) {
             if (shortcuts[action].replace('Meta', 'Control') === pressedShortcut) {
                 e.preventDefault();
