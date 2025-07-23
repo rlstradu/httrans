@@ -8,6 +8,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome para iconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- jsPDF para exportar a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; overflow: hidden; }
     #left, #right { overflow: auto; }
@@ -70,6 +72,8 @@
         <button onclick="seekMedia(-5)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind5sTitle">-5s</button>
         <button onclick="seekMedia(-3)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind3sTitle">-3s</button>
         <button onclick="seekMedia(-1)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind1sTitle">-1s</button>
+        <button onclick="executeShortcut('rewind1frame')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind1fTitle">-1f</button>
+        <button onclick="executeShortcut('forward1frame')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward1fTitle">+1f</button>
         <button onclick="seekMedia(1)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward1sTitle">+1s</button>
         <button onclick="seekMedia(3)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward3sTitle">+3s</button>
         <button onclick="seekMedia(5)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward5sTitle">+5s</button>
@@ -113,7 +117,7 @@
             </button>
             <div id="fileMenuDropdown" class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10">
                 <div class="py-1" role="menu" aria-orientation="vertical">
-                    <a href="#" id="importTextBtn" class="dropdown-item" role="menuitem"><i class="fas fa-file-alt mr-3"></i><span data-i18n="importText">Import .txt</span></a>
+                    <a href="#" id="importTextBtn" class="dropdown-item" role="menuitem"><i class="fas fa-file-alt mr-3"></i><span data-i18n="importTest">Import .txt</span></a>
                     <a href="#" id="exportBtn" class="dropdown-item" role="menuitem"><i class="fas fa-download mr-3"></i><span data-i18n="export">Export</span></a>
                 </div>
             </div>
@@ -141,9 +145,13 @@
         <button id="italicBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-italic"></i></button>
         <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-search"></i></button>
         <button id="replaceBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-exchange-alt"></i></button>
+        <!-- CAMBIO: Controles de fuente y tamaño -->
+        <div class="border-l h-6 mx-2"></div>
+        <select id="fontFamilySelect" title="Select Font Family" class="rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none"></select>
+        <select id="fontSizeSelect" title="Select Font Size" class="rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none"></select>
     </div>
     <!-- Editor de Texto -->
-    <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="flex-1 rounded-lg p-4 font-mono text-sm overflow-y-auto outline-none shadow-inner min-h-[200px]">
+    <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner min-h-[200px]">
       <p data-i18n="editorPlaceholder">Start transcribing here...</p>
     </div>
   </div>
@@ -198,6 +206,10 @@
     const leftPanel = document.getElementById('left');
     const rightPanel = document.getElementById('right');
     const shortcutImportInput = document.getElementById('shortcutImportInput');
+    // CAMBIO: Selectores para los nuevos controles de fuente
+    const fontFamilySelect = document.getElementById('fontFamilySelect');
+    const fontSizeSelect = document.getElementById('fontSizeSelect');
+
 
     // --- Estado de la Aplicación ---
     const DEFAULT_FRAMERATE = 30;
@@ -209,6 +221,10 @@
     let listeningForShortcut = null;
     let isEditorPristine = true;
     let tempShortcuts = {};
+    let backupInterval = null;
+    // CAMBIO: Estado para la fuente y tamaño
+    let currentFontFamily = 'monospace';
+    let currentFontSize = '14px';
 
     // --- Traducciones ---
     const translations = {
@@ -221,6 +237,7 @@
         volumeControlTitle: "Volume", muteUnmuteTitle: "Mute/Unmute",
         rewind5sTitle: "Rewind 5s", rewind3sTitle: "Rewind 3s", rewind1sTitle: "Rewind 1s",
         forward1sTitle: "Forward 1s", forward3sTitle: "Forward 3s", forward5sTitle: "Forward 5s",
+        rewind1fTitle: "Rewind 1 Frame", forward1fTitle: "Forward 1 Frame",
         recurringTextHeader: "Recurring Text (keyboard shortcuts)",
         recurringTextPlaceholder: "Recurring text {0}",
         insertTimecode: "Insert Timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode",
@@ -246,14 +263,16 @@
         replaceButtonInModal: "Replace", replaceAllButton: "Replace All",
         noMatchSelectedForReplace: "No match selected.", replacementComplete: "All occurrences of \"{0}\" replaced.",
         changeLanguageButton: "Change Language", chooseLanguageMessage: "Choose a language:",
-        exportFileModalTitle: "Export File", exportFileMessage: "Enter filename:", exportFilenamePlaceholder: "transcription",
-        exportFormatLabel: "Select format:", exportFormatTxt: "Plain Text (.txt)", exportFormatHtml: "Formatted Text (.html)",
+        exportFileModalTitle: "Export File", exportFileMessage: "Enter filename (without extension):", exportFilenamePlaceholder: "transcription",
+        exportFormatLabel: "Select format:", exportFormatTxt: "Plain Text (.txt)", exportFormatHtml: "Formatted Text (.html)", exportFormatPdf: "PDF Document (.pdf)",
         exportButton: "Export", 
         languageEnglish: "English", languageSpanish: "Spanish",
         shortcutLabel_insertTimecode: "Insert Timecode",
         shortcutLabel_playPause: "Play/Pause",
         shortcutLabel_rewind5s: "Rewind 5s",
         shortcutLabel_forward5s: "Forward 5s",
+        shortcutLabel_rewind3s: "Rewind 3s",
+        shortcutLabel_forward3s: "Forward 3s",
         shortcutLabel_rewind1s: "Rewind 1s",
         shortcutLabel_forward1s: "Forward 1s",
         shortcutLabel_rewind1frame: "Rewind 1 Frame",
@@ -268,6 +287,10 @@
         exportShortcuts: "Export",
         shortcutsImported: "Shortcuts imported successfully.",
         shortcutsImportError: "Error importing shortcuts. Invalid file format.",
+        backupFoundTitle: "Backup Found",
+        backupFoundMessage: "An automatic backup from {0} was found. Do you want to restore the content?",
+        restoreButton: "Restore",
+        discardButton: "Discard",
       },
       es: {
         appTitle: "PandaScript",
@@ -278,6 +301,7 @@
         volumeControlTitle: "Volumen", muteUnmuteTitle: "Silenciar/Activar",
         rewind5sTitle: "Retroceder 5s", rewind3sTitle: "Retroceder 3s", rewind1sTitle: "Retroceder 1s",
         forward1sTitle: "Avanzar 1s", forward3sTitle: "Avanzar 3s", forward5sTitle: "Avanzar 5s",
+        rewind1fTitle: "Retroceder 1 Fotograma", forward1fTitle: "Avanzar 1 Fotograma",
         recurringTextHeader: "Texto recurrente (atajos de teclado)",
         recurringTextPlaceholder: "Texto recurrente {0}",
         insertTimecode: "Insertar TCR", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial",
@@ -303,14 +327,16 @@
         replaceButtonInModal: "Reemplazar", replaceAllButton: "Reemplazar Todo",
         noMatchSelectedForReplace: "No hay coincidencia seleccionada.", replacementComplete: "Todas las apariciones de \"{0}\" han sido reemplazadas.",
         changeLanguageButton: "Cambiar Idioma", chooseLanguageMessage: "Elige un idioma:",
-        exportFileModalTitle: "Exportar Archivo", exportFileMessage: "Introduce el nombre del archivo:", exportFilenamePlaceholder: "transcripcion",
-        exportFormatLabel: "Seleccionar formato:", exportFormatTxt: "Texto Plano (.txt)", exportFormatHtml: "Texto con Formato (.html)",
+        exportFileModalTitle: "Exportar Archivo", exportFileMessage: "Introduce el nombre del archivo (sin extensión):", exportFilenamePlaceholder: "transcripcion",
+        exportFormatLabel: "Seleccionar formato:", exportFormatTxt: "Texto Plano (.txt)", exportFormatHtml: "Texto con Formato (.html)", exportFormatPdf: "Documento PDF (.pdf)",
         exportButton: "Exportar", 
         languageEnglish: "Inglés", languageSpanish: "Español",
         shortcutLabel_insertTimecode: "Insertar TCR",
         shortcutLabel_playPause: "Reproducir/Pausar",
         shortcutLabel_rewind5s: "Retroceder 5s",
         shortcutLabel_forward5s: "Avanzar 5s",
+        shortcutLabel_rewind3s: "Retroceder 3s",
+        shortcutLabel_forward3s: "Avanzar 3s",
         shortcutLabel_rewind1s: "Retroceder 1s",
         shortcutLabel_forward1s: "Avanzar 1s",
         shortcutLabel_rewind1frame: "Retroceder 1 Fotograma",
@@ -325,6 +351,10 @@
         exportShortcuts: "Exportar",
         shortcutsImported: "Atajos importados correctamente.",
         shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.",
+        backupFoundTitle: "Copia de seguridad encontrada",
+        backupFoundMessage: "Se encontró una copia de seguridad automática de {0}. ¿Quieres restaurar el contenido?",
+        restoreButton: "Restaurar",
+        discardButton: "Descartar",
       }
     };
     
@@ -360,9 +390,11 @@
     let shortcuts = {};
     const defaultShortcuts = {
         'insertTimecode': 'Alt+Q',
-        'playPause': 'Control+Space',
+        'playPause': 'Alt+P',
         'rewind5s': 'Shift+ArrowLeft',
         'forward5s': 'Shift+ArrowRight',
+        'rewind3s': 'Control+Shift+ArrowLeft',
+        'forward3s': 'Control+Shift+ArrowRight',
         'rewind1s': 'Control+ArrowLeft',
         'forward1s': 'Control+ArrowRight',
         'rewind1frame': 'Alt+ArrowLeft',
@@ -380,6 +412,21 @@
 
     // --- Definiciones de Funciones ---
 
+    // CAMBIO: Nueva función para aplicar los ajustes de fuente
+    function applyFontSettings(fontFamily, fontSize) {
+        currentFontFamily = fontFamily;
+        currentFontSize = fontSize;
+
+        editor.style.fontFamily = fontFamily;
+        editor.style.fontSize = fontSize;
+
+        fontFamilySelect.value = fontFamily;
+        fontSizeSelect.value = fontSize;
+
+        localStorage.setItem('pandascript_fontFamily', fontFamily);
+        localStorage.setItem('pandascript_fontSize', fontSize);
+    }
+
     function applyLanguage(lang) {
       currentLanguage = lang;
       document.documentElement.lang = lang; 
@@ -387,6 +434,10 @@
         const key = el.getAttribute('data-i18n');
         let text = translations[currentLanguage][key] || key;
         el.textContent = text;
+      });
+       document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        el.title = translations[currentLanguage][key] || key;
       });
       updateRecurringTextPlaceholders();
       applyTheme(isDarkMode ? 'dark' : 'light');
@@ -412,7 +463,12 @@
         input.className = `flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
       });
 
-      editor.className = `flex-1 rounded-lg p-4 font-mono text-sm overflow-y-auto outline-none shadow-inner min-h-[200px] ${theme.editorBg} ${theme.editorBorder} ${theme.editorText}`;
+      // CAMBIO: Aplicar tema a los nuevos selectores de fuente
+      [fontFamilySelect, fontSizeSelect].forEach(select => {
+        select.className = `rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
+      });
+
+      editor.className = `flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner min-h-[200px] ${theme.editorBg} ${theme.editorBorder} ${theme.editorText}`;
       if (editor.querySelector('p')) { editor.querySelector('p').className = `${theme.textColorSecondary}`; }
       tcrDisplay.className = `font-mono text-4xl p-4 text-center rounded-lg mb-4 shadow-md w-full ${isDarkMode ? 'bg-black text-white' : 'bg-gray-200 text-black'}`;
       [fileMenuBtn, settingsMenuBtn].forEach(btn => { btn.className = `inline-flex justify-center w-full rounded-md shadow-sm px-4 py-2 text-sm font-medium focus:outline-none ${theme.menuBtnBg} ${theme.menuBtnText} ${theme.menuBtnHoverBg} ${theme.menuBtnBorder}`; });
@@ -449,13 +505,12 @@
         if (e.metaKey) parts.push('Meta');
         
         const key = e.key.trim();
-        // Solo añade la tecla si no es una tecla modificadora por sí misma
         if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
             if (key === ' ') {
                 parts.push('Space');
-            } else if (key.length === 1) { // Para letras y números
+            } else if (key.length === 1) {
                 parts.push(e.key.toUpperCase());
-            } else { // Para otras teclas como ArrowLeft, Enter, etc.
+            } else {
                 parts.push(key);
             }
         }
@@ -472,10 +527,11 @@
             'playPause': () => {
                 if (!video.src || video.src === window.location.href) return;
                 video.paused ? video.play() : video.pause();
-                playPauseBtn.innerHTML = `<i class="fas ${video.paused ? 'fa-play' : 'fa-pause'}"></i>`;
             },
             'rewind5s': () => seekMedia(-5),
             'forward5s': () => seekMedia(5),
+            'rewind3s': () => seekMedia(-3),
+            'forward3s': () => seekMedia(3),
             'rewind1s': () => seekMedia(-1),
             'forward1s': () => seekMedia(1),
             'rewind1frame': () => seekMedia(-1/DEFAULT_FRAMERATE),
@@ -568,7 +624,6 @@
             if(button) button.classList.remove('is-listening');
             listeningForShortcut = null;
         }
-        // Limpiar la selección actual de window.find() al cerrar el modal
         window.getSelection().empty();
     }
 
@@ -579,22 +634,19 @@
     }
     
     function showShortcutsModal() {
-        tempShortcuts = JSON.parse(JSON.stringify(shortcuts)); // Clonar para edición
+        tempShortcuts = JSON.parse(JSON.stringify(shortcuts));
         
         const renderShortcuts = () => {
             const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
             let bodyHtml = '<div class="space-y-2">';
-            const shortcutActions = Object.keys(defaultShortcuts);
-            const recurringCount = recurringTextContainer.children.length;
-            for(let i = 1; i <= recurringCount; i++) {
-                shortcutActions.push(`insertRecurringText${i}`);
-            }
-            shortcutActions.forEach(action => {
-                let labelKey = `shortcutLabel_${action.replace(/\d/g, '')}`;
+            const shortcutActionsInOrder = [
+                'insertTimecode', 'playPause', 'rewind5s', 'forward5s', 'rewind3s', 'forward3s',
+                'rewind1s', 'forward1s', 'rewind1frame', 'forward1frame'
+            ];
+            
+            shortcutActionsInOrder.forEach(action => {
+                let labelKey = `shortcutLabel_${action}`;
                 let label = translations[currentLanguage][labelKey] || action;
-                if (action.includes('insertRecurringText')) {
-                    label = label.replace('{0}', action.replace('insertRecurringText', ''));
-                }
                 bodyHtml += `
                     <div class="flex justify-between items-center">
                         <span>${label}</span>
@@ -604,6 +656,21 @@
                     </div>
                 `;
             });
+            
+            const recurringCount = recurringTextContainer.children.length;
+            for(let i = 1; i <= recurringCount; i++) {
+                const action = `insertRecurringText${i}`;
+                let label = translations[currentLanguage]['shortcutLabel_insertRecurringText'].replace('{0}', i);
+                bodyHtml += `
+                    <div class="flex justify-between items-center">
+                        <span>${label}</span>
+                        <button class="shortcut-button font-mono p-1 px-2 border-2 rounded ${theme.btnSimple} ${theme.border}" data-action="${action}">
+                            ${tempShortcuts[action] || 'Not set'}
+                        </button>
+                    </div>
+                `;
+            }
+
             bodyHtml += '</div>';
             return bodyHtml;
         }
@@ -760,7 +827,7 @@
         let exportHtml = `
             <div>
                 <label for="exportFilenameInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].exportFileMessage}</label>
-                <input type="text" id="exportFilenameInput" class="${inputClasses}" value="${translations[currentLanguage].exportFilenamePlaceholder}.txt" />
+                <input type="text" id="exportFilenameInput" class="${inputClasses}" value="${translations[currentLanguage].exportFilenamePlaceholder}" />
                 <label class="text-sm font-medium mb-1 block mt-4">${translations[currentLanguage].exportFormatLabel}</label>
                 <div class="space-y-2">
                     <label class="inline-flex items-center cursor-pointer">
@@ -770,6 +837,10 @@
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="radio" name="exportFormat" value="html" class="form-radio">
                         <span class="ml-2">${translations[currentLanguage].exportFormatHtml}</span>
+                    </label><br>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" name="exportFormat" value="pdf" class="form-radio">
+                        <span class="ml-2">${translations[currentLanguage].exportFormatPdf}</span>
                     </label>
                 </div>
             </div>
@@ -780,8 +851,9 @@
             [
                 { text: translations[currentLanguage].modalCancel, type: 'neutral' },
                 { text: translations[currentLanguage].exportButton, handler: () => {
-                    const filename = document.getElementById('exportFilenameInput').value;
+                    const filenameBase = document.getElementById('exportFilenameInput').value || translations[currentLanguage].exportFilenamePlaceholder;
                     const format = document.querySelector('input[name="exportFormat"]:checked').value;
+                    const filename = `${filenameBase}.${format}`;
                     exportText(format, filename);
                 }, type: 'primary' }
             ],
@@ -789,6 +861,7 @@
         );
     }
 
+    // CAMBIO: Función de exportación actualizada para reflejar la fuente y el tamaño
     function exportText(type, filename) {
       let content;
       let mimeType;
@@ -796,8 +869,38 @@
         content = editor.innerText; 
         mimeType = 'text/plain;charset=utf-8';
       } else if (type === 'html') {
-        content = `<!DOCTYPE html><html lang="${currentLanguage}"><head><meta charset="UTF-8"><title>Exported Transcription</title><style>body { font-family: sans-serif; } .timestamp { color: blue; }</style></head><body>${editor.innerHTML}</body></html>`;
+        const styles = `
+            body { 
+                font-family: ${currentFontFamily}; 
+                font-size: ${currentFontSize}; 
+            } 
+            .timestamp { color: blue; text-decoration: none; }
+        `;
+        content = `<!DOCTYPE html><html lang="${currentLanguage}"><head><meta charset="UTF-8"><title>Exported Transcription</title><style>${styles}</style></head><body>${editor.innerHTML}</body></html>`;
         mimeType = 'text/html;charset=utf-8';
+      } else if (type === 'pdf') {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const mapFontForPdf = (font) => {
+            const fontLower = font.toLowerCase();
+            if (fontLower.includes('courier') || fontLower.includes('monospace')) return 'Courier';
+            if (fontLower.includes('times') || fontLower.includes('serif')) return 'Times-Roman';
+            return 'Helvetica';
+        };
+
+        const pdfFont = mapFontForPdf(currentFontFamily);
+        const pdfFontSize = parseInt(currentFontSize, 10);
+
+        doc.setFont(pdfFont);
+        doc.setFontSize(pdfFontSize);
+
+        const textContent = editor.innerText;
+        const lines = doc.splitTextToSize(textContent, 180);
+        doc.text(lines, 10, 10);
+        doc.save(filename);
+        clearBackup();
+        return;
       } else { return; }
 
       const blob = new Blob([content], { type: mimeType });
@@ -806,13 +909,11 @@
       link.download = filename;
       link.click();
       link.remove();
+      clearBackup();
     }
 
     // --- Funciones de Buscar y Reemplazar ---
 
-    /**
-     * Muestra el modal de búsqueda.
-     */
     function showFindModal() {
         const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
         const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
@@ -833,19 +934,14 @@
             translations[currentLanguage].findModalTitle, '',
             [
                 { text: translations[currentLanguage].modalClose, type: 'neutral' },
-                { text: translations[currentLanguage].findPrevious, handler: () => findNext(true), type: 'neutral' }, // true para buscar hacia atrás
-                { text: translations[currentLanguage].findNext, handler: () => findNext(false), type: 'primary' } // false para buscar hacia adelante
+                { text: translations[currentLanguage].findPrevious, handler: () => findNext(true), type: 'neutral' },
+                { text: translations[currentLanguage].findNext, handler: () => findNext(false), type: 'primary' }
             ],
             findHtml
         );
-
-        // Restaurar el foco en el editor después de abrir el modal, para que window.find funcione correctamente
         editor.focus();
     }
 
-    /**
-     * Muestra el modal de reemplazar.
-     */
     function showReplaceModal() {
         const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
         const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
@@ -875,93 +971,56 @@
             ],
             replaceHtml
         );
-
-        // Restaurar el foco en el editor después de abrir el modal, para que window.find funcione correctamente
         editor.focus();
     }
 
-    /**
-     * Busca la siguiente o anterior coincidencia en el editor.
-     * @param {boolean} searchBackwards - Si es true, busca hacia atrás.
-     */
     function findNext(searchBackwards = false) {
         const findQueryInput = document.getElementById('findQueryInput');
         const findCaseSensitive = document.getElementById('findCaseSensitive');
         const findStatus = document.getElementById('findStatus');
-
         if (!findQueryInput || !findStatus) return;
-
         const query = findQueryInput.value;
         const caseSensitive = findCaseSensitive.checked;
-
-        if (!query) {
-            findStatus.textContent = '';
-            return;
-        }
-
-        // Actualizar el estado de búsqueda y reemplazo
+        if (!query) { findStatus.textContent = ''; return; }
         findReplaceState.query = query;
         findReplaceState.caseSensitive = caseSensitive;
-
-        // Limpiar selecciones anteriores si la consulta ha cambiado
         if (query !== findReplaceState.lastQuery || caseSensitive !== findReplaceState.lastCaseSensitive) {
-            window.getSelection().empty(); // Deselecciona lo que sea que estuviera seleccionado
+            window.getSelection().empty();
             findReplaceState.lastQuery = query;
             findReplaceState.lastCaseSensitive = caseSensitive;
         }
-
-        // Realizar la búsqueda. El último argumento (showDialog) es false para no mostrar el diálogo nativo.
         const found = window.find(query, caseSensitive, searchBackwards, true, false, false, false);
-
         if (!found) {
             findStatus.textContent = translations[currentLanguage].noMatchesFound;
-            // Si no se encuentra, intentar desde el principio/final para envolver
-            window.getSelection().empty(); // Limpiar la selección para reiniciar la búsqueda
-            window.find(query, caseSensitive, searchBackwards, true, false, false, false); // Reintentar para envolver
-            if (!window.find(query, caseSensitive, searchBackwards, true, false, false, false)) { // Si aún no se encuentra después de envolver
+            window.getSelection().empty();
+            if (!window.find(query, caseSensitive, searchBackwards, true, false, false, false)) {
                 findStatus.textContent = translations[currentLanguage].noMatchesFound;
             } else {
-                findStatus.textContent = ''; // Se encontró después de envolver
+                findStatus.textContent = '';
             }
         } else {
             findStatus.textContent = '';
         }
     }
 
-    /**
-     * Reemplaza la coincidencia actualmente seleccionada.
-     */
     function replaceCurrent() {
         const findQueryInput = document.getElementById('findQueryInput');
         const replaceWithInput = document.getElementById('replaceWithInput');
         const findCaseSensitive = document.getElementById('findCaseSensitive');
         const findStatus = document.getElementById('findStatus');
-
         if (!findQueryInput || !replaceWithInput || !findStatus) return;
-
         const query = findQueryInput.value;
         const replacement = replaceWithInput.value;
         const caseSensitive = findCaseSensitive.checked;
-
-        if (!query) {
-            findStatus.textContent = '';
-            return;
-        }
-
+        if (!query) { findStatus.textContent = ''; return; }
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
             const selectedText = range.toString();
-
-            // Verificar si el texto seleccionado coincide con la consulta (respetando mayúsculas/minúsculas)
             const matchCondition = caseSensitive ? (selectedText === query) : (selectedText.toLowerCase() === query.toLowerCase());
-
             if (matchCondition) {
-                // Eliminar el texto seleccionado
                 range.deleteContents();
-                // Insertar el texto de reemplazo
                 range.insertNode(document.createTextNode(replacement));
-                // Mover el cursor al final del texto reemplazado
                 selection.collapseToEnd();
                 findStatus.textContent = '';
             } else {
@@ -970,40 +1029,22 @@
         } else {
             findStatus.textContent = translations[currentLanguage].noMatchSelectedForReplace;
         }
-        
-        // Después de reemplazar, buscar la siguiente coincidencia
         findNext(false); 
     }
 
-    /**
-     * Reemplaza todas las coincidencias en el editor.
-     */
     function replaceAll() {
         const findQueryInput = document.getElementById('findQueryInput');
         const replaceWithInput = document.getElementById('replaceWithInput');
         const findCaseSensitive = document.getElementById('findCaseSensitive');
         const findStatus = document.getElementById('findStatus');
-
         if (!findQueryInput || !replaceWithInput || !findStatus) return;
-
         const query = findQueryInput.value;
         const replacement = replaceWithInput.value;
         const caseSensitive = findCaseSensitive.checked;
-
-        if (!query) {
-            findStatus.textContent = '';
-            return;
-        }
-
-        // Guardar la posición actual del cursor
+        if (!query) { findStatus.textContent = ''; return; }
         const selection = window.getSelection();
         const originalRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-        // Obtener el HTML del editor
         let editorHtml = editor.innerHTML;
-
-        // Paso 1: Proteger los timecodes reemplazándolos con un placeholder único
-        // Usamos un mapa para almacenar el HTML original de los timecodes
         const timecodePlaceholders = new Map();
         let placeholderCounter = 0;
         editorHtml = editorHtml.replace(/<span class="timestamp">\[.*?\]<\/span>/g, (match) => {
@@ -1011,50 +1052,100 @@
             timecodePlaceholders.set(placeholder, match);
             return placeholder;
         });
-
-        // Paso 2: Realizar el reemplazo de texto en el HTML modificado
         const flags = caseSensitive ? 'g' : 'gi';
         const regex = new RegExp(query, flags);
         editorHtml = editorHtml.replace(regex, replacement);
-
-        // Paso 3: Restaurar los timecodes
         timecodePlaceholders.forEach((originalHtml, placeholder) => {
             editorHtml = editorHtml.replace(new RegExp(placeholder, 'g'), originalHtml);
         });
-
-        // Actualizar el contenido del editor
         editor.innerHTML = editorHtml;
-
-        // Restaurar la posición del cursor si es posible
         if (originalRange) {
             try {
                 selection.removeAllRanges();
                 selection.addRange(originalRange);
             } catch (e) {
-                // Si el rango se invalidó por el cambio de HTML, simplemente enfocar el editor
                 editor.focus();
             }
         } else {
             editor.focus();
         }
-
         customAlert('replacementComplete', 'modalConfirmAction', [query]);
-        hideModal(); // Cerrar el modal después de reemplazar todo
+        hideModal();
+    }
+    
+    function saveBackup() {
+        if (!isEditorPristine) {
+            const backupData = {
+                content: editor.innerHTML,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem('pandascript_backup', JSON.stringify(backupData));
+        }
+    }
+
+    function loadBackup() {
+        const backupJSON = localStorage.getItem('pandascript_backup');
+        if (backupJSON) {
+            const backupData = JSON.parse(backupJSON);
+            const date = new Date(backupData.timestamp).toLocaleString(currentLanguage);
+            const message = translations[currentLanguage].backupFoundMessage.replace('{0}', date);
+            showModal(
+                translations[currentLanguage].backupFoundTitle,
+                message,
+                [
+                    { text: translations[currentLanguage].discardButton, handler: clearBackup, type: 'danger' },
+                    { text: translations[currentLanguage].restoreButton, handler: () => {
+                        editor.innerHTML = backupData.content;
+                        isEditorPristine = false;
+                        clearBackup();
+                    }, type: 'primary' }
+                ]
+            );
+        }
+    }
+    
+    function clearBackup() {
+        localStorage.removeItem('pandascript_backup');
     }
 
 
     // --- Lógica de Inicialización y Eventos ---
     
     document.addEventListener('DOMContentLoaded', () => {
+        // CAMBIO: Poblar los selectores de fuente y tamaño
+        const fonts = ['monospace', 'Arial', 'Verdana', 'Georgia', 'Times New Roman', 'Courier New'];
+        fonts.forEach(font => {
+            const option = document.createElement('option');
+            option.value = font;
+            option.textContent = font;
+            fontFamilySelect.appendChild(option);
+        });
+
+        const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px'];
+        fontSizes.forEach(size => {
+            const option = document.createElement('option');
+            option.value = size;
+            option.textContent = size;
+            fontSizeSelect.appendChild(option);
+        });
+
         const savedTheme = localStorage.getItem('theme') || 'light';
         isDarkMode = (savedTheme === 'dark');
         loadShortcuts();
         loadRecurringTexts();
         const savedLanguage = localStorage.getItem('language') || 'en';
         applyLanguage(savedLanguage);
+        
+        // CAMBIO: Cargar y aplicar los ajustes de fuente guardados
+        const savedFontFamily = localStorage.getItem('pandascript_fontFamily') || 'monospace';
+        const savedFontSize = localStorage.getItem('pandascript_fontSize') || '14px';
+        applyFontSettings(savedFontFamily, savedFontSize);
+        
         updateEmptyPlayerState();
+        loadBackup();
 
-        // Asignar todos los eventos aquí
+        backupInterval = setInterval(saveBackup, 60000);
+
         importVideoAudioBtn.addEventListener('click', () => videoFileInput.click());
         videoFileInput.addEventListener('change', (e) => {
           const file = e.target.files[0];
@@ -1072,6 +1163,7 @@
             reader.onload = (event) => { 
                 editor.innerHTML = event.target.result.replace(/\n/g, '<br>'); 
                 isEditorPristine = false;
+                clearBackup();
             };
             reader.readAsText(file);
         });
@@ -1083,12 +1175,10 @@
         });
 
         editor.addEventListener('input', () => {
-            // Si el editor está vacío, restablecer isEditorPristine a true
             if (editor.innerText.trim() === '') {
                 isEditorPristine = true;
                 editor.innerHTML = `<p data-i18n="editorPlaceholder">${translations[currentLanguage].editorPlaceholder}</p>`;
-                applyTheme(isDarkMode ? 'dark' : 'light'); // Re-aplicar tema para el placeholder
-                // Mover el cursor al inicio del placeholder
+                applyTheme(isDarkMode ? 'dark' : 'light');
                 const range = document.createRange();
                 const sel = window.getSelection();
                 range.setStart(editor.firstChild, 0);
@@ -1099,9 +1189,23 @@
                 isEditorPristine = false;
             }
         });
-
+        
+        editor.addEventListener('click', (e) => {
+            if (e.target.classList.contains('timestamp')) {
+                const timeCodeString = e.target.textContent.replace(/[\[\]]/g, '');
+                const timeInSeconds = parseTimeCodeToSeconds(timeCodeString);
+                if (timeInSeconds !== null && video.src && !isNaN(video.duration)) {
+                    const targetTime = timeInSeconds - tcrOffsetSeconds;
+                    if (targetTime >= 0 && targetTime <= video.duration) {
+                        video.currentTime = targetTime;
+                    }
+                }
+            }
+        });
 
         playPauseBtn.addEventListener('click', () => executeShortcut('playPause'));
+        video.addEventListener('play', () => playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>');
+        video.addEventListener('pause', () => playPauseBtn.innerHTML = '<i class="fas fa-play"></i>');
         document.getElementById('speedUpBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.min(4.0, video.playbackRate + 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
         document.getElementById('speedDownBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.max(0.5, video.playbackRate - 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
         volumeSlider.addEventListener('input', () => { if(video.src) { video.volume = volumeSlider.value; video.muted = video.volume === 0; muteBtn.innerHTML = `<i class="fas ${video.muted ? 'fa-volume-mute' : 'fa-volume-up'}"></i>`; if(!video.muted) lastVolume = video.volume; }});
@@ -1137,6 +1241,10 @@
         findBtn.addEventListener('click', () => { showFindModal(); });
         replaceBtn.addEventListener('click', () => { showReplaceModal(); });
 
+        // CAMBIO: Event listeners para los nuevos controles de fuente
+        fontFamilySelect.addEventListener('change', (e) => applyFontSettings(e.target.value, currentFontSize));
+        fontSizeSelect.addEventListener('change', (e) => applyFontSettings(currentFontFamily, e.target.value));
+
         resizer.addEventListener('mousedown', (e) => {
             e.preventDefault();
             document.addEventListener('mousemove', handleMouseMove);
@@ -1152,7 +1260,7 @@
                     const importedShortcuts = JSON.parse(event.target.result);
                     if (typeof importedShortcuts === 'object' && importedShortcuts !== null) {
                         tempShortcuts = { ...defaultShortcuts, ...importedShortcuts };
-                        showShortcutsModal(); // Re-open to refresh content
+                        showShortcutsModal();
                         customAlert('shortcutsImported');
                     } else {
                         throw new Error("Invalid format");
@@ -1169,15 +1277,11 @@
         if (listeningForShortcut) {
             e.preventDefault();
             e.stopPropagation();
-            // Ignorar eventos que son solo para una tecla modificadora (Ctrl, Alt, Shift, Meta)
             if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
                 return; 
             }
             const newShortcutStr = keyEventToString(e);
-            // Asegurarse de que el atajo no esté vacío (solo modificadores)
             if (newShortcutStr.split('+').filter(p => !['Control', 'Alt', 'Shift', 'Meta'].includes(p)).length === 0) {
-                // Si solo se presionaron modificadores, no guardar como atajo válido
-                // y mantener el estado de "escucha" para una tecla real
                 return;
             }
 
@@ -1190,13 +1294,18 @@
             listeningForShortcut = null;
             return;
         }
-        // No ejecutar atajos si el foco está en un campo de entrada o el editor,
-        // a menos que el atajo sea específicamente para el editor (como Ctrl+Space)
-        if (document.activeElement.tagName === 'INPUT' || (document.activeElement.isContentEditable && document.activeElement !== editor)) return;
         
-        const pressedShortcut = keyEventToString(e).replace('Meta', 'Control'); // Normalizar Meta a Control para la ejecución
+        const isModalOpen = document.getElementById('customModal').classList.contains('show');
+        const activeEl = document.activeElement;
+        if (isModalOpen && activeEl.tagName !== 'INPUT' && !activeEl.isContentEditable) {
+        } else if (activeEl.tagName === 'INPUT' || (activeEl.isContentEditable && activeEl !== editor)) {
+            return;
+        }
+        
+        const pressedShortcut = keyEventToString(e).replace('Meta', 'Control');
         for (const action in shortcuts) {
-            if (shortcuts[action].replace('Meta', 'Control') === pressedShortcut) {
+            if (shortcuts[action] && shortcuts[action].replace('Meta', 'Control') === pressedShortcut) {
+                if (isModalOpen && activeEl.tagName === 'INPUT') continue;
                 e.preventDefault();
                 executeShortcut(action);
                 break; 
