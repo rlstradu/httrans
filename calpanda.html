@@ -1271,7 +1271,7 @@
             // Dibujar Subtotal
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
-            doc.text(toSentenceCase(translations[currentLanguage].subtotalLabel) + ":", totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
+doc.text(toSentenceCase(translations[currentLanguage].subtotalLabel), totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
             doc.text(subTotalAmountSpan.textContent, totalsSectionX + totalsSectionWidth, finalY, { align: 'right' });
             finalY += 15;
 
@@ -1299,7 +1299,7 @@
             finalY += 10; // Padding antes del total final
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
-            doc.text(toSentenceCase(translations[currentLanguage].finalTotalLabel) + ":", totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
+doc.text(toSentenceCase(translations[currentLanguage].finalTotalLabel), totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
             doc.text(grandTotalSpan.textContent, totalsSectionX + totalsSectionWidth, finalY, { align: 'right' });
             finalY += 20; // Ajustar para el tamaño de fuente del total final
 
