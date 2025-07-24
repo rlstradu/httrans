@@ -1318,7 +1318,7 @@ doc.text(toSentenceCase(translations[currentLanguage].finalTotalLabel), totalsSe
                 doc.setFont("helvetica", "bold");
                 doc.text(toSentenceCase(paymentInfoLabelInput.value), pdfMarginX, finalY);
                 doc.setFont("helvetica", "normal");
-                finalY += 7;
+                finalY += 15;
                 addMultiLineText(doc, paymentInfoInput.value, pdfMarginX, finalY, pdfPageWidth - (pdfMarginX * 2), "left");
             }
 
