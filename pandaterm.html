@@ -11,7 +11,7 @@
     :root {
       /* Brand Colors */
       --primary-color: #7DCEC7; /* Mint Green */
-      --primary-hover-color: #6cbdb5; 
+      --primary-hover-color: #6cbdb5;
       --text-color-dark: #373737; /* Dark Grey */
       --background-color-light: #f7f9fb;
       --card-background-light: #ffffff;
@@ -115,7 +115,7 @@
     .logo:hover {
       transform: scale(1.05); /* Added hover effect */
     }
-    
+
     body.dark-mode .logo {
       filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)); /* Sharper, more intense white halo */
     }
@@ -145,22 +145,22 @@
       animation: fadeIn 0.5s ease-out 0.4s forwards;
     }
 
-    .controls, .add-term, .search-section, .lang-display {
+    .controls, .search-section, .lang-display {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       margin-bottom: 20px;
     }
-    
+
     .controls {
         align-items: center;
     }
 
+    /* Unified style for all input fields and textareas in add-term and general input groups */
     .controls button,
     .add-term button,
     .search-section input,
     .lang-display button,
-    .add-term input,
     .lang-display input,
     select {
       padding: 12px 20px;
@@ -173,9 +173,49 @@
       box-sizing: border-box;
       transition: all 0.2s ease;
       font-family: 'Montserrat', sans-serif;
+      background-color: var(--card-background); /* Ensure background matches */
     }
-    
-    input:focus, select:focus {
+
+    .add-term input,
+    .add-term textarea,
+    .modal-content .input-group input,
+    .modal-content .input-group textarea {
+        padding: 12px 20px;
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        font-size: 1rem;
+        color: var(--text-color);
+        flex-grow: 1;
+        box-sizing: border-box;
+        transition: all 0.2s ease;
+        font-family: 'Montserrat', sans-serif;
+        background-color: var(--card-background);
+        height: 50px; /* Fixed height for all input fields in add-term section */
+    }
+
+    /* Flex container for add-term section to keep fields in one row */
+    .add-term {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping if space is limited */
+        gap: 12px;
+        margin-bottom: 20px;
+        align-items: flex-end; /* Align button to the bottom */
+    }
+
+    .add-term .input-group {
+        flex: 1 1 calc(25% - 9px); /* Distribute 4 items per row, adjust gap */
+        min-width: 180px; /* Minimum width for each input group */
+    }
+
+    /* Ensure textareas can be resized vertically */
+    .add-term textarea,
+    .modal-content .input-group textarea {
+        resize: vertical;
+        min-height: 50px; /* Minimum height for textareas, matching input height */
+        height: auto; /* Allow height to adjust if user resizes */
+    }
+
+    input:focus, select:focus, textarea:focus { /* Added textarea to focus styles */
         outline: none;
         border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(125, 206, 199, 0.3);
@@ -188,22 +228,15 @@
       font-weight: 600;
       transition: all 0.2s ease-out;
     }
-    
+
     button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    
+
     button:active {
         transform: translateY(0);
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .add-term input,
-    .search-section input,
-    .lang-display input,
-    select {
-        background-color: var(--card-background);
     }
 
     .btn-primary {
@@ -221,7 +254,7 @@
     .btn-secondary:hover {
       background-color: var(--btn-secondary-hover-bg);
     }
-    
+
     .lang-btn {
         background-color: var(--card-background);
         border: 1px solid var(--border-color);
@@ -230,7 +263,7 @@
         flex-grow: 0;
         padding: 8px 12px;
     }
-    
+
     .lang-btn.active {
         background-color: var(--primary-color);
         color: var(--btn-primary-text-color);
@@ -282,7 +315,7 @@
       min-width: 150px;
     }
 
-    .lang-display, .add-term {
+    .lang-display {
         align-items: flex-end;
     }
 
@@ -297,31 +330,28 @@
       color: #888;
     }
 
-    /* --- CAMBIOS AQUÍ --- */
-    /* 1. Nuevo contenedor para la tabla con la barra de desplazamiento */
     .table-container {
-      max-height: 400px; /* Altura máxima antes de que aparezca el scroll */
-      overflow-y: auto;  /* Muestra la barra de desplazamiento vertical solo cuando sea necesario */
-      border-radius: 8px; /* Mantiene las esquinas redondeadas */
+      max-height: 400px;
+      overflow-y: auto;
+      border-radius: 8px;
       margin-top: 20px;
-      border: 1px solid var(--border-color); /* Borde sutil para mejor integración visual */
+      border: 1px solid var(--border-color);
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
-    /* 2. La tabla vuelve a su estado normal para ocupar el 100% del ancho */
     table {
       width: 100%;
       border-collapse: collapse;
       background-color: var(--card-background);
     }
-    /* --- FIN DE LOS CAMBIOS --- */
 
     th, td {
       border-bottom: 1px solid var(--border-color);
       padding: 14px 16px;
       text-align: left;
+      vertical-align: top; /* Align content to the top for multi-line text */
     }
-    
+
     td {
         color: var(--text-color);
     }
@@ -333,10 +363,10 @@
       font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      position: sticky; /* Hace que los encabezados se queden fijos al hacer scroll */
-      top: 0; /* Pega los encabezados en la parte superior del contenedor */
+      position: sticky;
+      top: 0;
     }
-    
+
     body.dark-mode th {
         background-color: #303030;
     }
@@ -348,7 +378,7 @@
     tr:hover {
       background-color: rgba(125, 206, 199, 0.07);
     }
-    
+
     h2 {
         font-weight: 600;
         margin-bottom: 20px;
@@ -409,6 +439,148 @@
         margin-bottom: 0;
         pointer-events: none;
     }
+
+    /* Styles for editable cells */
+    td.editable {
+        cursor: pointer;
+        position: relative;
+    }
+
+    td.editable:hover {
+        background-color: rgba(125, 206, 199, 0.15);
+    }
+
+    td.editable input[type="text"],
+    td.editable textarea {
+        width: calc(100% - 10px); /* Adjust for padding */
+        padding: 5px;
+        border: 1px solid var(--primary-color);
+        border-radius: 4px;
+        background-color: var(--card-background);
+        color: var(--text-color);
+        font-family: 'Montserrat', sans-serif;
+        box-sizing: border-box;
+        resize: vertical; /* Allow vertical resizing for textareas */
+        min-height: 30px; /* Minimum height for textarea */
+    }
+
+    td.editable input[type="text"]:focus,
+    td.editable textarea:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(125, 206, 199, 0.5);
+    }
+
+    .search-options {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    }
+
+    .search-options label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 0; /* Override default label margin */
+        font-size: 1rem;
+        font-weight: 400;
+    }
+
+    .search-options input[type="radio"] {
+        width: auto;
+        min-width: unset;
+        margin-right: 5px;
+        cursor: pointer;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content {
+        background-color: var(--card-background);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+        animation: popIn 0.3s ease-out;
+        position: relative;
+    }
+
+    .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-weight: 600;
+        color: var(--text-color);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+    }
+
+    .modal-content .input-group {
+        margin-bottom: 15px;
+    }
+
+    .modal-content .input-group label {
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    .modal-content .input-group input,
+    .modal-content .input-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        background-color: var(--card-background);
+        color: var(--text-color);
+        font-family: 'Montserrat', sans-serif;
+        box-sizing: border-box;
+    }
+
+    .modal-content .input-group textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .modal-content .dialog-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .close-modal-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-color);
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        transition: background-color 0.2s;
+    }
+
+    .close-modal-btn:hover {
+        background-color: rgba(0,0,0,0.1);
+    }
+
   </style>
 </head>
 <body>
@@ -475,34 +647,54 @@
                 <label for="tgtTerm" data-i18n="translation">Traducción:</label>
                 <input id="tgtTerm" />
             </div>
+            <div class="input-group">
+                <label for="definition" data-i18n="definition">Definición:</label>
+                <textarea id="definition"></textarea>
+            </div>
+            <div class="input-group">
+                <label for="notes" data-i18n="notes">Notas:</label>
+                <textarea id="notes"></textarea>
+            </div>
             <button onclick="addTerm()" data-i18n="add_button" class="btn-primary">Añadir</button>
         </div>
 
         <h2 data-i18n="search_title">Buscar</h2>
         <div class="search-section">
             <input id="searchTerm" placeholder="Buscar término..." oninput="renderGlossary()" data-i18n-placeholder="search_placeholder" />
+            <div class="search-options">
+                <label>
+                    <input type="radio" name="searchScope" value="all" checked onchange="renderGlossary()">
+                    <span data-i18n="search_all">Todos</span>
+                </label>
+                <label>
+                    <input type="radio" name="searchScope" value="source" onchange="renderGlossary()">
+                    <span data-i18n="search_source">Solo origen</span>
+                </label>
+                <label>
+                    <input type="radio" name="searchScope" value="target" onchange="renderGlossary()">
+                    <span data-i18n="search_target">Solo destino</span>
+                </label>
+            </div>
         </div>
 
-        <!-- --- CAMBIO AQUÍ --- -->
-        <!-- Se ha añadido un div para contener la tabla y controlar el scroll -->
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
                         <th data-i18n="source_term_col">Término de origen</th>
                         <th data-i18n="target_term_col">Término de destino</th>
+                        <th data-i18n="definition_col">Definición</th>
+                        <th data-i18n="notes_col">Notas</th>
                         <th data-i18n="actions_col">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="glossaryTable"></tbody>
             </table>
         </div>
-        <!-- --- FIN DEL CAMBIO --- -->
     </div>
 
     <datalist id="isoLanguages">
-      <!-- Options will be dynamically populated by JavaScript -->
-    </datalist>
+      </datalist>
   </div>
 
   <script>
@@ -538,13 +730,21 @@
         term: "Term:",
         target_language: "Target language:",
         translation: "Translation:",
+        definition: "Definition:",
+        notes: "Notes:",
         add_button: "Add",
         search_title: "Search",
         search_placeholder: "Search term...",
+        search_all: "All",
+        search_source: "Source only",
+        search_target: "Target only",
         source_term_col: "Source term",
         target_term_col: "Target term",
+        definition_col: "Definition",
+        notes_col: "Notes",
         actions_col: "Actions",
         delete_button: "Delete",
+        edit_button: "Edit",
         both_terms_required: "Both term and translation are required.",
         lang_config_required: "Please configure source and target languages for the glossary.",
         "Cannot download empty or unconfigured glossary.": "Cannot download empty or unconfigured glossary.",
@@ -556,7 +756,9 @@
         cancel_button: "Cancel",
         download_dialog_title: "Enter filename",
         download_dialog_placeholder: "glossary",
-        save_button: "Save"
+        save_button: "Save",
+        edit_term_title: "Edit Term",
+        update_button: "Update"
       },
       es: {
         title: "PandaTerm",
@@ -576,13 +778,21 @@
         term: "Término:",
         target_language: "Idioma de destino:",
         translation: "Traducción:",
+        definition: "Definición:",
+        notes: "Notas:",
         add_button: "Añadir",
         search_title: "Buscar",
         search_placeholder: "Buscar término...",
+        search_all: "Todos",
+        search_source: "Solo origen",
+        search_target: "Solo destino",
         source_term_col: "Término de origen",
         target_term_col: "Término de destino",
+        definition_col: "Definición",
+        notes_col: "Notas",
         actions_col: "Acciones",
         delete_button: "Eliminar",
+        edit_button: "Editar",
         both_terms_required: "El término y la traducción son obligatorios.",
         lang_config_required: "Por favor, configura los idiomas de origen y destino para el glosario.",
         "Cannot download empty or unconfigured glossary.": "No se puede descargar un glosario vacío o sin configurar.",
@@ -594,7 +804,9 @@
         cancel_button: "Cancelar",
         download_dialog_title: "Introducir nombre de archivo",
         download_dialog_placeholder: "glosario",
-        save_button: "Guardar"
+        save_button: "Guardar",
+        edit_term_title: "Editar término",
+        update_button: "Actualizar"
       }
     };
 
@@ -602,6 +814,9 @@
       { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" }, { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" }, { code: "es-AR", name: "Español (Argentina)" }, { code: "fr", name: "Français" }, { code: "de", name: "Deutsch" }, { code: "it", name: "Italiano" }, { code: "pt", name: "Português" }, { code: "ja", name: "日本語 (Japanese)" }, { code: "zh", name: "中文 (Chinese)" }, { code: "ar", name: "العربية (Arabic)" }, { code: "ru", name: "Русский (Russian)" }, { code: "ko", name: "한국어 (Korean)" }, { code: "nl", name: "Nederlands" }, { code: "sv", name: "Svenska" }, { code: "da", name: "Dansk" }, { code: "no", name: "Norsk" }, { code: "fi", name: "Suomi" }, { code: "tr", name: "Türkçe" }, { code: "pl", "name": "Polski" }, { code: "ca", name: "Català" }, { code: "eu", name: "Euskara" }, { code: "gl", name: "Galego" }
     ];
 
+    /**
+     * Populates the datalist with ISO language codes and names.
+     */
     function populateIsoLanguagesDatalist() {
       const datalist = document.getElementById('isoLanguages');
       datalist.innerHTML = '';
@@ -613,28 +828,46 @@
       });
     }
 
+    /**
+     * Applies the selected theme (light or dark) to the body.
+     * @param {string} theme - The theme to apply ('light' or 'dark').
+     */
     function applyTheme(theme) {
       document.body.className = theme === 'dark' ? 'dark-mode' : '';
       currentTheme = theme;
       localStorage.setItem('theme', theme);
     }
 
+    /**
+     * Toggles between light and dark themes.
+     */
     function toggleTheme() {
       applyTheme(currentTheme === 'light' ? 'dark' : 'light');
     }
 
+    /**
+     * Sets the UI language and updates all translatable text.
+     * @param {string} lang - The language code ('en' or 'es').
+     */
     function setUILanguage(lang) {
       currentUILanguage = lang;
       localStorage.setItem('language', lang);
       updateTextContent();
       updateLanguageButtons();
     }
-    
+
+    /**
+     * Updates the active state of language switcher buttons.
+     */
     function updateLanguageButtons() {
         document.getElementById('langBtnEN').classList.toggle('active', currentUILanguage === 'en');
         document.getElementById('langBtnES').classList.toggle('active', currentUILanguage === 'es');
     }
 
+    /**
+     * Updates all elements with `data-i18n` and `data-i18n-placeholder` attributes
+     * to the current UI language.
+     */
     function updateTextContent() {
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -649,17 +882,24 @@
           el.placeholder = translations[currentUILanguage][key];
         }
       });
-      renderGlossary();
+      renderGlossary(); // Re-render glossary to update delete button text
     }
 
+    /**
+     * Shows a specific section of the application and hides others.
+     * @param {string} sectionId - The ID of the section to show.
+     */
     function showSection(sectionId) {
         const sectionToShow = document.getElementById(sectionId);
         const sectionToHide = sectionId === 'editorSection' ? document.getElementById('languageConfigSection') : document.getElementById('editorSection');
-        
+
         sectionToHide.classList.add('hidden-section');
         sectionToShow.classList.remove('hidden-section');
     }
-    
+
+    /**
+     * Updates the disabled state of the undo button based on history.
+     */
     function updateUndoButtonState() {
       const undoButton = document.getElementById('undoButton');
       if(undoButton) {
@@ -667,12 +907,18 @@
       }
     }
 
+    /**
+     * Saves the current state of the glossary to the history for undo functionality.
+     */
     function saveState() {
       // Save a deep copy of the current glossary state
       history.push(JSON.parse(JSON.stringify(glossary)));
       updateUndoButtonState();
     }
 
+    /**
+     * Undoes the last action by restoring the previous glossary state from history.
+     */
     function undo() {
       if (history.length > 0) {
         glossary = history.pop();
@@ -681,6 +927,9 @@
       }
     }
 
+    /**
+     * Performs the actual reset of the glossary after confirmation.
+     */
     function performResetGlossary() {
       saveState();
       glossary = [];
@@ -690,17 +939,27 @@
       document.getElementById('configTgtLang').value = 'es-ES';
       document.getElementById('srcTerm').value = '';
       document.getElementById('tgtTerm').value = '';
+      document.getElementById('definition').value = ''; // Clear definition
+      document.getElementById('notes').value = ''; // Clear notes
       document.getElementById('searchTerm').value = '';
+      // Reset search scope to 'all'
+      document.querySelector('input[name="searchScope"][value="all"]').checked = true;
       showSection('languageConfigSection');
       renderGlossary();
     }
 
+    /**
+     * Prompts the user for confirmation before resetting the glossary.
+     */
     function resetGlossary() {
       const title = translations[currentUILanguage]['new_glossary_confirm_title'];
       const message = translations[currentUILanguage]['new_glossary_confirm_text'];
       showConfirmationDialog(title, message, performResetGlossary);
     }
 
+    /**
+     * Confirms and sets the glossary's source and target languages.
+     */
     function confirmGlossaryLanguages() {
       const srcLang = document.getElementById('configSrcLang').value.trim();
       const tgtLang = document.getElementById('configTgtLang').value.trim();
@@ -716,63 +975,170 @@
       document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
       showSection('editorSection');
       renderGlossary();
-      
+
       // Clear history when starting a new glossary configuration
       history = [];
       updateUndoButtonState();
     }
 
+    /**
+     * Adds a new term to the glossary.
+     */
     function addTerm() {
       const srcTermInput = document.getElementById("srcTerm");
       const tgtTermInput = document.getElementById("tgtTerm");
+      const definitionInput = document.getElementById("definition"); // New
+      const notesInput = document.getElementById("notes"); // New
+
       const srcTerm = srcTermInput.value.trim();
       const tgtTerm = tgtTermInput.value.trim();
+      const definition = definitionInput.value.trim(); // New
+      const notes = notesInput.value.trim(); // New
 
       if (!srcTerm || !tgtTerm) {
         showMessageBox(translations[currentUILanguage]['both_terms_required']);
         return;
       }
-      
+
       saveState();
 
       glossary.push({
         srcLang: glossarySourceLanguage,
         srcTerm: srcTerm,
         tgtLang: glossaryTargetLanguage,
-        tgtTerm: tgtTerm
+        tgtTerm: tgtTerm,
+        definition: definition, // Add definition
+        notes: notes // Add notes
       });
       srcTermInput.value = "";
       tgtTermInput.value = "";
+      definitionInput.value = ""; // Clear definition input
+      notesInput.value = ""; // Clear notes input
       srcTermInput.focus();
       renderGlossary(true); // Pass true to animate the last row
     }
 
-    function deleteTerm(index) {
+    /**
+     * Deletes a term from the glossary by its original index.
+     * @param {number} originalIndex - The original index of the term in the glossary array.
+     */
+    function deleteTerm(originalIndex) {
       saveState();
-      glossary.splice(index, 1);
+      glossary.splice(originalIndex, 1);
       renderGlossary();
     }
 
+    /**
+     * Opens a modal to edit an existing term.
+     * @param {number} index - The index of the term in the glossary array.
+     */
+    function editTerm(index) {
+        const term = glossary[index];
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.id = 'editModal';
+
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <button class="close-modal-btn" onclick="closeModal('editModal')">&times;</button>
+                <h3 data-i18n="edit_term_title">${translations[currentUILanguage]['edit_term_title']}</h3>
+                <div class="input-group">
+                    <label for="editSrcTerm" data-i18n="term">${translations[currentUILanguage]['term']}</label>
+                    <input id="editSrcTerm" type="text" value="${term.srcTerm}" />
+                </div>
+                <div class="input-group">
+                    <label for="editTgtTerm" data-i18n="translation">${translations[currentUILanguage]['translation']}</label>
+                    <input id="editTgtTerm" type="text" value="${term.tgtTerm}" />
+                </div>
+                <div class="input-group">
+                    <label for="editDefinition" data-i18n="definition">${translations[currentUILanguage]['definition']}</label>
+                    <textarea id="editDefinition">${term.definition || ''}</textarea>
+                </div>
+                <div class="input-group">
+                    <label for="editNotes" data-i18n="notes">${translations[currentUILanguage]['notes']}</label>
+                    <textarea id="editNotes">${term.notes || ''}</textarea>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="btn-secondary" onclick="closeModal('editModal')" data-i18n="cancel_button">${translations[currentUILanguage]['cancel_button']}</button>
+                    <button class="btn-primary" onclick="saveEditedTerm(${index})" data-i18n="update_button">${translations[currentUILanguage]['update_button']}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalOverlay);
+    }
+
+    /**
+     * Saves the changes made to a term in the edit modal.
+     * @param {number} index - The index of the term in the glossary array.
+     */
+    function saveEditedTerm(index) {
+        const srcTerm = document.getElementById('editSrcTerm').value.trim();
+        const tgtTerm = document.getElementById('editTgtTerm').value.trim();
+        const definition = document.getElementById('editDefinition').value.trim();
+        const notes = document.getElementById('editNotes').value.trim();
+
+        if (!srcTerm || !tgtTerm) {
+            showMessageBox(translations[currentUILanguage]['both_terms_required']);
+            return;
+        }
+
+        saveState(); // Save state before modification
+
+        glossary[index].srcTerm = srcTerm;
+        glossary[index].tgtTerm = tgtTerm;
+        glossary[index].definition = definition;
+        glossary[index].notes = notes;
+
+        closeModal('editModal');
+        renderGlossary();
+    }
+
+    /**
+     * Closes a modal dialog.
+     * @param {string} modalId - The ID of the modal overlay to close.
+     */
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    /**
+     * Renders the glossary table based on current search and filter criteria.
+     * @param {boolean} animateLastRow - Whether to apply animation to the last added row.
+     */
     function renderGlossary(animateLastRow = false) {
       const tbody = document.getElementById("glossaryTable");
       const search = document.getElementById("searchTerm").value.toLowerCase();
+      const searchScope = document.querySelector('input[name="searchScope"]:checked').value;
       tbody.innerHTML = "";
 
-      const filteredGlossary = glossary.filter(entry => 
-        entry.srcTerm.toLowerCase().includes(search) ||
-        entry.tgtTerm.toLowerCase().includes(search)
-      );
+      const filteredGlossary = glossary.filter(entry => {
+        const srcMatch = entry.srcTerm.toLowerCase().includes(search);
+        const tgtMatch = entry.tgtTerm.toLowerCase().includes(search);
+
+        if (searchScope === 'source') {
+          return srcMatch;
+        } else if (searchScope === 'target') {
+          return tgtMatch;
+        } else { // 'all'
+          return srcMatch || tgtMatch;
+        }
+      });
 
       filteredGlossary.forEach((entry, i) => {
-          // Find original index to pass to deleteTerm
+          // Find original index to pass to deleteTerm and editTerm
           const originalIndex = glossary.findIndex(g => g === entry);
           const row = document.createElement("tr");
           row.innerHTML = `
-            <td>${entry.srcTerm}</td>
-            <td>${entry.tgtTerm}</td>
+            <td class="editable" onclick="editTerm(${originalIndex})">${entry.srcTerm}</td>
+            <td class="editable" onclick="editTerm(${originalIndex})">${entry.tgtTerm}</td>
+            <td class="editable" onclick="editTerm(${originalIndex})">${entry.definition || ''}</td>
+            <td class="editable" onclick="editTerm(${originalIndex})">${entry.notes || ''}</td>
             <td><button class="delete-btn" onclick="deleteTerm(${originalIndex})">${translations[currentUILanguage]['delete_button']}</button></td>
           `;
-          
+
           if (animateLastRow && i === filteredGlossary.length - 1) {
               row.classList.add('row-pop-in');
           }
@@ -781,6 +1147,10 @@
       });
     }
 
+    /**
+     * Generates the TBX XML string from the current glossary data.
+     * @returns {string} The TBX XML string.
+     */
     function generateTBX() {
       const xml = [`<?xml version="1.0" encoding="UTF-8"?>`,
         `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`,
@@ -789,11 +1159,21 @@
 
       glossary.forEach(entry => {
         xml.push(`      <termEntry>`);
-        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`);
+        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`); // Changed to LangSet (capital L)
         xml.push(`          <tig><term>${entry.srcTerm}</term></tig>`);
         xml.push(`        </LangSet>`);
-        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`);
-        xml.push(`          <tig><term>${entry.tgtTerm}</term></tig>`);
+        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`); // Changed to LangSet (capital L)
+        xml.push(`          <tig>`);
+        xml.push(`            <term>${entry.tgtTerm}</term>`);
+        // Add definition if present
+        if (entry.definition) {
+            xml.push(`            <descrip type="definition">${entry.definition}</descrip>`);
+        }
+        // Add notes if present
+        if (entry.notes) {
+            xml.push(`            <termNote type="comment">${entry.notes}</termNote>`); // Using type="comment" for general notes
+        }
+        xml.push(`          </tig>`);
         xml.push(`        </LangSet>`);
         xml.push(`      </termEntry>`);
       });
@@ -802,6 +1182,9 @@
       return xml.join("\n");
     }
 
+    /**
+     * Initiates the download of the current glossary as a TBX file.
+     */
     function downloadTBX() {
       if (glossary.length === 0 || !glossarySourceLanguage || !glossaryTargetLanguage) {
         showMessageBox(translations[currentUILanguage]["Cannot download empty or unconfigured glossary."]);
@@ -822,61 +1205,109 @@
       });
     }
 
+    /**
+     * Loads a TBX file selected by the user.
+     */
     function loadTBX() {
+      console.log("Starting TBX import process...");
       document.getElementById("tbxFileInput").click();
       document.getElementById("tbxFileInput").onchange = (event) => {
         const file = event.target.files[0];
-        if (!file) return;
+        if (!file) {
+          console.log("No file selected.");
+          return;
+        }
+
+        console.log(`Selected file: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
 
         const reader = new FileReader();
         reader.onload = () => {
           try {
+            console.log("File read successfully. Attempting to parse XML...");
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(reader.result, "application/xml");
 
+            // Check for parsing errors
             const parserError = xmlDoc.querySelector("parsererror");
             if (parserError) {
-                throw new Error("Parsing error: The file is not a valid XML.");
+                const errorText = parserError.textContent || "Unknown XML parsing error.";
+                console.error("XML Parsing Error:", errorText, xmlDoc);
+                throw new Error(`Parsing error: The file is not a valid XML/TBX. Details: ${errorText.substring(0, 100)}...`);
             }
+            console.log("Parsed XML document:", xmlDoc);
 
             const entries = xmlDoc.getElementsByTagName("termEntry");
-            const newGlossary = [];
-            const langCounts = {};
+            console.log(`Found ${entries.length} <termEntry> elements.`);
 
-            for (let entry of entries) {
+            const newGlossary = [];
+            const langCounts = {}; // To determine most frequent source/target languages
+
+            if (entries.length === 0) {
+                console.warn("No <termEntry> elements found in the TBX file.");
+                // We'll proceed, but the glossary will be empty.
+                // The language detection logic below will handle it by defaulting.
+            }
+
+            for (let i = 0; i < entries.length; i++) {
+              const entry = entries[i];
+              // FIX: Changed "langSet" to "LangSet" to match the user's TBX file structure
               const sets = entry.getElementsByTagName("LangSet");
+              console.log(`Processing termEntry ${i+1}. Found ${sets.length} <LangSet> elements.`);
+
               if (sets.length >= 2) {
                 const lang1 = sets[0].getAttribute("xml:lang");
-                const term1 = sets[0].getElementsByTagName("term")[0]?.textContent || '';
-                const lang2 = sets[1].getAttribute("xml:lang");
-                const term2 = sets[1].getElementsByTagName("term")[0]?.textContent || '';
+                const term1 = sets[0].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
 
-                if (lang1 && lang2) {
-                    langCounts[lang1] = (langCounts[lang1] || 0) + 1;
-                    langCounts[lang2] = (langCounts[lang2] || 0) + 1;
-                    newGlossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2 });
-                }
+                const lang2 = sets[1].getAttribute("xml:lang");
+                const term2 = sets[1].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
+
+                // Extract definition and notes from the second LangSet (target language)
+                const tig2 = sets[1].getElementsByTagName("tig")[0];
+                const definition = tig2?.getElementsByTagName("descrip")[0]?.textContent || '';
+                const notes = tig2?.querySelector('termNote[type="comment"]')?.textContent || '';
+
+                console.log(`  TermPair: ${lang1}:${term1} - ${lang2}:${term2}. Definition: "${definition}", Notes: "${notes}"`);
+
+                newGlossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2, definition: definition, notes: notes });
+
+                // Count language occurrences to determine the dominant languages
+                langCounts[lang1] = (langCounts[lang1] || 0) + 1;
+                langCounts[lang2] = (langCounts[lang2] || 0) + 1;
+
+              } else {
+                console.warn(`  TermEntry ${i+1} does not have at least two <LangSet> elements. Skipping.`);
               }
             }
 
+            console.log("Language counts:", langCounts);
             const sortedLangs = Object.keys(langCounts).sort((a, b) => langCounts[b] - langCounts[a]);
+            console.log("Sorted languages by frequency:", sortedLangs);
+
             let detectedSrcLang, detectedTgtLang;
 
             if (sortedLangs.length >= 2) {
                 detectedSrcLang = sortedLangs[0];
                 detectedTgtLang = sortedLangs[1];
+                console.log(`Detected source language: ${detectedSrcLang}, Target language: ${detectedTgtLang}`);
 
                 newGlossary.forEach(entry => {
-                    if (entry.srcLang !== detectedSrcLang) {
+                    // If the srcLang of an entry doesn't match the globally detected srcLang, swap them.
+                    // This ensures consistency even if a TBX has entries with languages in different orders.
+                    if (entry.srcLang !== detectedSrcLang && entry.tgtLang === detectedSrcLang) {
+                        console.log(`Swapping language pair for entry: ${entry.srcTerm}`);
                         [entry.srcLang, entry.tgtLang] = [entry.tgtLang, entry.srcLang];
                         [entry.srcTerm, entry.tgtTerm] = [entry.tgtTerm, entry.srcTerm];
+                        // Definition and notes are usually tied to the target term, so they should move with it.
+                        // No explicit swap needed for definition/notes as they are already associated with the tgtLang.
                     }
                 });
             } else {
+                // Fallback if not enough distinct languages are found in term entries
                 const martif = xmlDoc.getElementsByTagName("martif")[0];
                 const headerLang = martif ? martif.getAttribute("xml:lang") : '';
-                detectedSrcLang = headerLang || (sortedLangs.length > 0 ? sortedLangs[0] : 'en-US');
-                detectedTgtLang = 'es-ES';
+                detectedSrcLang = headerLang || 'en-US'; // Use martif's xml:lang or default
+                detectedTgtLang = 'es-ES'; // Default target
+                console.warn(`No valid language pairs found in TBX entries. Defaulting glossary languages to ${detectedSrcLang}/${detectedTgtLang}.`);
                 if (newGlossary.length > 0) {
                      showMessageBox(translations[currentUILanguage]["No valid language pairs found in TBX. Defaulting to en-US/es-ES."]);
                 }
@@ -891,20 +1322,25 @@
             document.getElementById('configTgtLang').value = glossaryTargetLanguage;
             document.getElementById('displaySrcLang').value = glossarySourceLanguage;
             document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
-            
+
             showSection('editorSection');
             renderGlossary();
+            console.log("TBX import completed successfully.");
 
           } catch (error) {
-            console.error("Error loading TBX file:", error);
+            console.error("Error during TBX file processing:", error);
             showMessageBox(translations[currentUILanguage]["Error loading TBX file. Please ensure it's a valid XML/TBX."]);
           }
         };
         reader.readAsText(file);
-        event.target.value = '';
+        event.target.value = ''; // Clear the file input
       };
     }
 
+    /**
+     * Displays a simple message box to the user.
+     * @param {string} message - The message to display.
+     */
     function showMessageBox(message) {
       const existingMessageBox = document.querySelector('.message-box');
       if (existingMessageBox) {
@@ -928,6 +1364,12 @@
       document.body.appendChild(messageBox);
     }
 
+    /**
+     * Displays a confirmation dialog to the user.
+     * @param {string} title - The title of the dialog.
+     * @param {string} message - The message to display.
+     * @param {function} onConfirm - Callback function to execute if confirmed.
+     */
     function showConfirmationDialog(title, message, onConfirm) {
       const existingMessageBox = document.querySelector('.message-box');
       if (existingMessageBox) {
@@ -949,7 +1391,7 @@
       const confirmButton = document.createElement('button');
       confirmButton.textContent = translations[currentUILanguage]['confirm_button'] || 'Confirm';
       confirmButton.className = 'btn-danger';
-      confirmButton.onclick = () => {
+      confirm.onclick = () => {
         onConfirm();
         document.body.removeChild(messageBox);
       };
@@ -968,6 +1410,13 @@
       document.body.appendChild(messageBox);
     }
 
+    /**
+     * Displays an input dialog to the user.
+     * @param {string} title - The title of the dialog.
+     * @param {string} message - An optional message to display.
+     * @param {string} placeholder - The placeholder text for the input field.
+     * @param {function} onConfirm - Callback function with the input value if confirmed.
+     */
     function showInputDialog(title, message, placeholder, onConfirm) {
       const existingMessageBox = document.querySelector('.message-box');
       if (existingMessageBox) {
@@ -1048,10 +1497,12 @@
       // Set initial state for undo button
       updateUndoButtonState();
 
-      // Add key listeners
+      // Add key listeners for adding terms
       document.getElementById('srcTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('tgtTerm').focus(); });
-      document.getElementById('tgtTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTerm(); });
-      
+      document.getElementById('tgtTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('definition').focus(); });
+      document.getElementById('definition').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('notes').focus(); });
+      document.getElementById('notes').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTerm(); });
+
       // Add undo shortcut
       document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key.toLowerCase() === 'z') {
