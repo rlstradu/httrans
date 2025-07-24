@@ -1153,32 +1153,35 @@
      */
     function generateTBX() {
       const xml = [`<?xml version="1.0" encoding="UTF-8"?>`,
-        `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`,
+        // Change root element from martif to tbx and adjust namespace/style
+        `<tbx style="dca" type="TBX-Basic" xml:lang="${glossarySourceLanguage}" xmlns="urn:iso:std:iso:30042:ed-2">`,
         `  <text>`,
         `    <body>`];
 
       glossary.forEach(entry => {
-        xml.push(`      <termEntry>`);
-        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`); // Changed to LangSet (capital L)
-        xml.push(`          <tig><term>${entry.srcTerm}</term></tig>`);
-        xml.push(`        </LangSet>`);
-        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`); // Changed to LangSet (capital L)
-        xml.push(`          <tig>`);
+        xml.push(`      <conceptEntry>`); // Changed from termEntry
+        xml.push(`        <langSec xml:lang="${entry.srcLang}">`); // Changed from LangSet
+        xml.push(`          <termSec>`); // Changed from tig
+        xml.push(`            <term>${entry.srcTerm}</term>`);
+        xml.push(`          </termSec>`);
+        xml.push(`        </langSec>`);
+        xml.push(`        <langSec xml:lang="${entry.tgtLang}">`); // Changed from LangSet
+        xml.push(`          <termSec>`); // Changed from tig
         xml.push(`            <term>${entry.tgtTerm}</term>`);
-        // Add definition if present
+        // Add definition if present, now within termSec
         if (entry.definition) {
             xml.push(`            <descrip type="definition">${entry.definition}</descrip>`);
         }
-        // Add notes if present
+        // Add notes if present, now within termSec
         if (entry.notes) {
-            xml.push(`            <termNote type="comment">${entry.notes}</termNote>`); // Using type="comment" for general notes
+            xml.push(`            <termNote type="comment">${entry.notes}</termNote>`);
         }
-        xml.push(`          </tig>`);
-        xml.push(`        </LangSet>`);
-        xml.push(`      </termEntry>`);
+        xml.push(`          </termSec>`);
+        xml.push(`        </langSec>`);
+        xml.push(`      </conceptEntry>`);
       });
 
-      xml.push(`    </body>`, `  </text>`, `</martif>`);
+      xml.push(`    </body>`, `  </text>`, `</tbx>`); // Changed root element to tbx
       return xml.join("\n");
     }
 
@@ -1236,46 +1239,81 @@
             }
             console.log("Parsed XML document:", xmlDoc);
 
-            const entries = xmlDoc.getElementsByTagName("termEntry");
-            console.log(`Found ${entries.length} <termEntry> elements.`);
+            const entries = xmlDoc.getElementsByTagName("conceptEntry"); // Changed from termEntry
+            console.log(`Found ${entries.length} <conceptEntry> elements.`);
 
             const newGlossary = [];
             const langCounts = {}; // To determine most frequent source/target languages
 
             if (entries.length === 0) {
-                console.warn("No <termEntry> elements found in the TBX file.");
-                // We'll proceed, but the glossary will be empty.
-                // The language detection logic below will handle it by defaulting.
+                console.warn("No <conceptEntry> elements found in the TBX file.");
             }
 
             for (let i = 0; i < entries.length; i++) {
               const entry = entries[i];
-              // FIX: Changed "langSet" to "LangSet" to match the user's TBX file structure
-              const sets = entry.getElementsByTagName("LangSet");
-              console.log(`Processing termEntry ${i+1}. Found ${sets.length} <LangSet> elements.`);
+              const langSecs = entry.getElementsByTagName("langSec"); // Changed from LangSet
+              console.log(`Processing conceptEntry ${i+1}. Found ${langSecs.length} <langSec> elements.`);
 
-              if (sets.length >= 2) {
-                const lang1 = sets[0].getAttribute("xml:lang");
-                const term1 = sets[0].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
+              // Try to get a concept-level definition and notes first
+              const conceptDefinitionElement = entry.querySelector('descrip[type="definition"]');
+              const conceptNotesElement = entry.querySelector('note'); // TBX Basic uses <note> for general notes at concept level
 
-                const lang2 = sets[1].getAttribute("xml:lang");
-                const term2 = sets[1].getElementsByTagName("tig")[0]?.getElementsByTagName("term")[0]?.textContent || '';
+              let conceptDefinition = conceptDefinitionElement ? conceptDefinitionElement.textContent || '' : '';
+              let conceptNotes = conceptNotesElement ? conceptNotesElement.textContent || '' : '';
 
-                // Extract definition and notes from the second LangSet (target language)
-                const tig2 = sets[1].getElementsByTagName("tig")[0];
-                const definition = tig2?.getElementsByTagName("descrip")[0]?.textContent || '';
-                const notes = tig2?.querySelector('termNote[type="comment"]')?.textContent || '';
+              if (langSecs.length >= 2) {
+                let srcLang = '';
+                let srcTerm = '';
+                let tgtLang = '';
+                let tgtTerm = '';
+                let entryDefinition = conceptDefinition; // Start with concept-level definition
+                let entryNotes = conceptNotes; // Start with concept-level notes
 
-                console.log(`  TermPair: ${lang1}:${term1} - ${lang2}:${term2}. Definition: "${definition}", Notes: "${notes}"`);
+                // Process first langSec (assumed source)
+                const firstLangSec = langSecs[0];
+                srcLang = firstLangSec.getAttribute("xml:lang") || '';
+                const firstTermSec = firstLangSec.getElementsByTagName("termSec")[0]; // Changed from tig
+                if (firstTermSec) {
+                    srcTerm = firstTermSec.getElementsByTagName("term")[0]?.textContent || '';
+                }
 
-                newGlossary.push({ srcLang: lang1, srcTerm: term1, tgtLang: lang2, tgtTerm: term2, definition: definition, notes: notes });
+                // Process second langSec (assumed target)
+                const secondLangSec = langSecs[1];
+                tgtLang = secondLangSec.getAttribute("xml:lang") || '';
+                const secondTermSec = secondLangSec.getElementsByTagName("termSec")[0]; // Changed from tig
+                if (secondTermSec) {
+                    tgtTerm = secondTermSec.getElementsByTagName("term")[0]?.textContent || '';
 
-                // Count language occurrences to determine the dominant languages
-                langCounts[lang1] = (langCounts[lang1] || 0) + 1;
-                langCounts[lang2] = (langCounts[lang2] || 0) + 1;
+                    // Prioritize term-level definition/notes if available in target langSec
+                    const termSecDefinitionElement = secondTermSec.querySelector('descrip[type="definition"]');
+                    const termSecNotesElement = secondTermSec.querySelector('termNote[type="comment"]');
+                    const termSecContextElement = secondTermSec.querySelector('descrip[type="context"]'); // Often used as definition/notes
+
+                    if (termSecDefinitionElement) {
+                        entryDefinition = termSecDefinitionElement.textContent || '';
+                    } else if (termSecContextElement) { // If no explicit definition, context might serve as one
+                        entryDefinition = termSecContextElement.textContent || '';
+                    }
+
+                    if (termSecNotesElement) {
+                        entryNotes = termSecNotesElement.textContent || '';
+                    }
+                }
+
+                console.log(`  TermPair: ${srcLang}:${srcTerm} - ${tgtLang}:${tgtTerm}. Definition: "${entryDefinition}", Notes: "${entryNotes}"`);
+
+                // Only add if at least one term is present.
+                if (srcTerm || tgtTerm) {
+                    newGlossary.push({ srcLang: srcLang, srcTerm: srcTerm, tgtLang: tgtLang, tgtTerm: tgtTerm, definition: entryDefinition, notes: entryNotes });
+
+                    langCounts[srcLang] = (langCounts[srcLang] || 0) + 1;
+                    langCounts[tgtLang] = (langCounts[tgtLang] || 0) + 1;
+                } else {
+                    console.warn(`  ConceptEntry ${i+1} has two langSecs but no terms found. Skipping.`);
+                }
 
               } else {
-                console.warn(`  TermEntry ${i+1} does not have at least two <LangSet> elements. Skipping.`);
+                console.warn(`  ConceptEntry ${i+1} does not have at least two <langSec> elements. Skipping.`);
               }
             }
 
@@ -1297,15 +1335,19 @@
                         console.log(`Swapping language pair for entry: ${entry.srcTerm}`);
                         [entry.srcLang, entry.tgtLang] = [entry.tgtLang, entry.srcLang];
                         [entry.srcTerm, entry.tgtTerm] = [entry.tgtTerm, entry.srcTerm];
-                        // Definition and notes are usually tied to the target term, so they should move with it.
-                        // No explicit swap needed for definition/notes as they are already associated with the tgtLang.
                     }
                 });
             } else {
                 // Fallback if not enough distinct languages are found in term entries
-                const martif = xmlDoc.getElementsByTagName("martif")[0];
-                const headerLang = martif ? martif.getAttribute("xml:lang") : '';
-                detectedSrcLang = headerLang || 'en-US'; // Use martif's xml:lang or default
+                const tbxHeader = xmlDoc.getElementsByTagName("tbxHeader")[0]; // Get tbxHeader
+                const fileDesc = tbxHeader ? tbxHeader.getElementsByTagName("fileDesc")[0] : null;
+                const titleStmt = fileDesc ? fileDesc.getElementsByTagName("titleStmt")[0] : null;
+                const title = titleStmt ? titleStmt.getElementsByTagName("title")[0]?.textContent : '';
+
+                const tbxRoot = xmlDoc.getElementsByTagName("tbx")[0];
+                const headerLang = tbxRoot ? tbxRoot.getAttribute("xml:lang") : '';
+
+                detectedSrcLang = headerLang || 'en-US'; // Use tbx's xml:lang or default
                 detectedTgtLang = 'es-ES'; // Default target
                 console.warn(`No valid language pairs found in TBX entries. Defaulting glossary languages to ${detectedSrcLang}/${detectedTgtLang}.`);
                 if (newGlossary.length > 0) {
@@ -1391,7 +1433,7 @@
       const confirmButton = document.createElement('button');
       confirmButton.textContent = translations[currentUILanguage]['confirm_button'] || 'Confirm';
       confirmButton.className = 'btn-danger';
-      confirm.onclick = () => {
+      confirmButton.onclick = () => {
         onConfirm();
         document.body.removeChild(messageBox);
       };
