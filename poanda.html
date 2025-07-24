@@ -75,7 +75,8 @@
         }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background-color: var(--color-white); padding: 2rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 90%; width: 500px; }
-        #findReplaceModal .modal-content { width: 650px; max-width: 95%; }
+ #findReplaceModal .modal-content { width: 650px; max-width: 95%; }
+        #shortcutsModal .modal-content { width: 550px; max-width: 95%; }
         .shortcut-icon { display: inline-block; width: 1em; height: 1em; vertical-align: middle; margin: 0 4px; }
         .main-editor-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
         @media (min-width: 1024px) {
@@ -192,6 +193,30 @@
         .resizer-tr { top: -5px; right: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
         .resizer-bl { bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
         .resizer-br { bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
+    
+        .shortcut-input {
+            background-color: #f9fafb;
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            width: 100%;
+            text-align: center;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .shortcut-input:focus {
+            outline: 2px solid var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+
+   #shortcutsEditor {
+            max-height: 50vh; /* Limita la altura al 50% de la ventana */
+            overflow-y: auto; /* Muestra el scrollbar vertical si el contenido se desborda */
+            padding-right: 1rem; /* Añade un pequeño espacio para que el scrollbar no tape el contenido */
+        }
+
+
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
@@ -393,12 +418,30 @@
                         <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden"></div>
                     </div>
                 </div>
-                <datalist id="isoLanguages"></datalist>
             </div>
         </div>
 
         <div id="messageBox" class="modal hidden"><div class="modal-content"><p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><button id="messageClose" class="py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok" id="okBtnText"></span></button></div></div>
-        <div id="shortcutsModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="shortcuts_title" id="shortcutsTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><ul class="list-disc list-inside text-on-light-contrast space-y-2"><li id="shortcutValidate"></li><li id="shortcutNext"></li><li id="shortcutPrev"></li><li id="shortcutAlt1"></li><li id="shortcutTmInsert"></li></ul><button data-i18n="close_btn" id="shortcutsCloseBtn" class="mt-6 py-2 px-4 rounded-md transition duration-300 w-full btn-modal-neutral"><span id="shortcutsCloseBtnText"></span></button></div></div>
+        
+        <div id="shortcutsModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 data-i18n="shortcuts_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
+                <div id="shortcutsEditor" class="space-y-4">
+                    <!-- Shortcut editor content will be generated here by JS -->
+                </div>
+                <div class="flex flex-wrap justify-end gap-2 mt-6">
+                    <button id="importShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-secondary"><span data-i18n="import_shortcuts_btn"></span></button>
+                    <input type="file" id="importShortcutsInput" class="hidden" accept=".json">
+                    <button id="exportShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-secondary"><span data-i18n="export_shortcuts_btn"></span></button>
+                    <button id="resetShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-dark"><span data-i18n="reset_defaults_btn"></span></button>
+                </div>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button id="shortcutsCloseBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button>
+                    <button id="saveShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="save_button"></span></button>
+                </div>
+            </div>
+        </div>
+
         <div id="findReplaceModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div><label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div class="flex items-center space-x-4"><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="caseSensitiveCheckbox" class="mr-2"><span data-i18n="case_sensitive" id="caseSensitiveText"></span></label><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="regexCheckbox" class="mr-2"><span data-i18n="regular_expression" id="regexText"></span></label></div><div class="flex justify-end space-x-2"><button data-i18n="find_prev" id="findPrevBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span id="findPrevText"></span></button><button data-i18n="find_next" id="findNextBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span id="findNextText"></span></button><button data-i18n="replace" id="replaceBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-secondary"><span id="replaceText"></span></button><button data-i18n="replace_all" id="replaceAllBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span id="replaceAllText"></span></button></div></div><button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 py-2 px-4 rounded-md transition duration-300 w-full btn-modal-dark"><span id="findReplaceCloseBtnText"></span></button></div></div>
         <div id="saveProjectModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div></div><div class="flex justify-end space-x-2 mt-6"><button id="saveProjectCancelBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="saveProjectConfirmBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="save_button"></span></button></div></div></div>
         
@@ -467,7 +510,6 @@
         let tmTargetLanguage = ''; // Will typically be the target language of the PO file
         let tmBestMatchForActiveSegment = null; // Stores the best TM match for the currently focused segment
         let currentTMLatestSearchResults = []; // Stores the last set of results rendered in TM search table
-
 
         // DOM elements for Poanda editor
         const poFile = document.getElementById('poFile');
@@ -547,6 +589,14 @@
         const replaceAllBtn = document.getElementById('replaceAllBtn');
         const findReplaceCloseBtn = document.getElementById('findReplaceCloseBtn');
 
+        // Shortcuts Modal DOM elements
+        const shortcutsEditor = document.getElementById('shortcutsEditor');
+        const saveShortcutsBtn = document.getElementById('saveShortcutsBtn');
+        const importShortcutsBtn = document.getElementById('importShortcutsBtn');
+        const importShortcutsInput = document.getElementById('importShortcutsInput');
+        const exportShortcutsBtn = document.getElementById('exportShortcutsBtn');
+        const resetShortcutsBtn = document.getElementById('resetShortcutsBtn');
+
         // Terminology Sidebar DOM elements
         const terminologyBtn = document.getElementById('terminologyBtn');
         const terminologySidebar = document.getElementById('terminologySidebar');
@@ -625,11 +675,28 @@
                 'ok': 'OK',
                 'shortcuts_btn': 'Shortcuts',
                 'shortcuts_title': 'Keyboard Shortcuts',
-                'shortcut_validate': 'Ctrl + Enter: Validate translation and go to the next one.',
-                'shortcut_next': 'Ctrl + Arrow Down: Go to the next translation.',
-                'shortcut_prev': 'Ctrl + Arrow Up: Go to the previous translation.',
-                'shortcut_alt_1': 'Alt + [1-5]: Insert translation memory suggestion.',
-                'shortcut_tm_insert': 'Ctrl + Alt + [1-5]: Insert highlighted glossary term.',
+                'shortcut_validate': 'Validate & Next Segment',
+                'shortcut_next': 'Next Segment',
+                'shortcut_prev': 'Previous Segment',
+              'shortcut_tm_insert_1': 'Insert TM Match 1',
+                'shortcut_tm_insert_2': 'Insert TM Match 2',
+                'shortcut_tm_insert_3': 'Insert TM Match 3',
+                'shortcut_tm_insert_4': 'Insert TM Match 4',
+                'shortcut_tm_insert_5': 'Insert TM Match 5',
+                'shortcut_glossary_insert_1': 'Insert Glossary Term 1',
+                'shortcut_glossary_insert_2': 'Insert Glossary Term 2',
+                'shortcut_glossary_insert_3': 'Insert Glossary Term 3',
+                'shortcut_glossary_insert_4': 'Insert Glossary Term 4',
+                'shortcut_glossary_insert_5': 'Insert Glossary Term 5',
+                'save_shortcuts_btn': 'Save Shortcuts',
+                'import_shortcuts_btn': 'Import',
+                'export_shortcuts_btn': 'Export',
+                'reset_defaults_btn': 'Reset to Defaults',
+                'shortcuts_saved': 'Shortcuts saved successfully!',
+                'shortcuts_loaded': 'Shortcuts imported successfully!',
+                'shortcuts_reset': 'Shortcuts have been reset to default.',
+                'error_loading_shortcuts': 'Error loading shortcuts file. Ensure it is a valid JSON configuration.',
+                'click_to_set_shortcut': 'Click and press the desired key combination',
                 'close_btn': 'Close',
                 'find_replace_btn': 'Find & Replace',
                 'find_replace_title': 'Find and Replace',
@@ -773,11 +840,30 @@
                 'ok': 'OK',
                 'shortcuts_btn': 'Atajos',
                 'shortcuts_title': 'Atajos de teclado',
-                'shortcut_validate': 'Ctrl + Enter: Validar traducción y pasar a la siguiente.',
-                'shortcut_next': 'Ctrl + Flecha abajo: Ir a la siguiente traducción.',
-                'shortcut_prev': 'Ctrl + Flecha arriba: Ir a la traducción anterior.',
-                'shortcut_alt_1': 'Alt + [1-5]: Insertar sugerencia de la memoria de traducción.',
-                'shortcut_tm_insert': 'Ctrl + Alt + [1-5]: Insertar término traducido resaltado en glosario.',
+                'shortcut_validate': 'Validar e ir al siguiente segmento',
+                'shortcut_next': 'Siguiente segmento',
+                'shortcut_prev': 'Segmento anterior',
+
+           'shortcut_tm_insert_1': 'Insertar concordancia de MT 1',
+                'shortcut_tm_insert_2': 'Insertar concordancia de MT 2',
+                'shortcut_tm_insert_3': 'Insertar concordancia de MT 3',
+                'shortcut_tm_insert_4': 'Insertar concordancia de MT 4',
+                'shortcut_tm_insert_5': 'Insertar concordancia de MT 5',
+                'shortcut_glossary_insert_1': 'Insertar término del glosario 1',
+                'shortcut_glossary_insert_2': 'Insertar término del glosario 2',
+                'shortcut_glossary_insert_3': 'Insertar término del glosario 3',
+                'shortcut_glossary_insert_4': 'Insertar término del glosario 4',
+                'shortcut_glossary_insert_5': 'Insertar término del glosario 5',
+
+                'save_shortcuts_btn': 'Guardar atajos',
+                'import_shortcuts_btn': 'Importar',
+                'export_shortcuts_btn': 'Exportar',
+                'reset_defaults_btn': 'Restablecer',
+                'shortcuts_saved': '¡Atajos guardados correctamente!',
+                'shortcuts_loaded': '¡Atajos importados correctamente!',
+                'shortcuts_reset': 'Los atajos se han restablecido a los valores por defecto.',
+                'error_loading_shortcuts': 'Error al cargar el archivo de atajos. Asegúrate de que es un archivo de configuración JSON válido.',
+                'click_to_set_shortcut': 'Haz clic y presiona la combinación de teclas deseada',
                 'close_btn': 'Cerrar',
                 'find_replace_btn': 'Buscar y reemplazar',
                 'find_replace_title': 'Buscar y reemplazar',
@@ -896,6 +982,45 @@
                 'search_in_translation': 'Buscar en traducción',
             }
         };
+
+        // --- Shortcut Configuration ---
+      const defaultShortcutConfig = {
+            validateAndNext: { ctrlKey: true, altKey: false, shiftKey: false, key: 'Enter' },
+            nextSegment: { ctrlKey: true, altKey: false, shiftKey: false, key: 'ArrowDown' },
+            prevSegment: { ctrlKey: true, altKey: false, shiftKey: false, key: 'ArrowUp' },
+            insertTMMatch1: { ctrlKey: false, altKey: true, shiftKey: false, key: '1' },
+            insertTMMatch2: { ctrlKey: false, altKey: true, shiftKey: false, key: '2' },
+            insertTMMatch3: { ctrlKey: false, altKey: true, shiftKey: false, key: '3' },
+            insertTMMatch4: { ctrlKey: false, altKey: true, shiftKey: false, key: '4' },
+            insertTMMatch5: { ctrlKey: false, altKey: true, shiftKey: false, key: '5' },
+            insertGlossaryTerm1: { ctrlKey: true, altKey: false, shiftKey: false, key: '1' },
+            insertGlossaryTerm2: { ctrlKey: true, altKey: false, shiftKey: false, key: '2' },
+            insertGlossaryTerm3: { ctrlKey: true, altKey: false, shiftKey: false, key: '3' },
+            insertGlossaryTerm4: { ctrlKey: true, altKey: false, shiftKey: false, key: '4' },
+            insertGlossaryTerm5: { ctrlKey: true, altKey: false, shiftKey: false, key: '5' }
+        };
+
+        let shortcutConfig = {};
+        let tempShortcutConfig = {}; // To hold changes before saving
+
+        // --- Helper function to load shortcuts ---
+      function loadShortcuts() {
+            const savedShortcuts = localStorage.getItem('poandaShortcutConfig');
+            let finalConfig = { ...defaultShortcutConfig }; // Empezamos con los valores por defecto
+
+            if (savedShortcuts) {
+                const savedConfig = JSON.parse(savedShortcuts);
+                // Recorremos los atajos guardados y solo aplicamos los que siguen siendo válidos
+                for (const action in savedConfig) {
+                    // Si la acción del archivo guardado existe en nuestra configuración por defecto, la usamos.
+                    if (defaultShortcutConfig.hasOwnProperty(action)) {
+                        finalConfig[action] = savedConfig[action];
+                    }
+                }
+            }
+            shortcutConfig = finalConfig;
+        }
+
 
         // SVG icons for shortcuts
         const arrowDownIcon = `<svg class="shortcut-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 12a1 1 0 01-.707-.293l-4-4a1 1 0 011.414-1.414L10 9.586l3.293-3.293a1 1 0 111.414 1.414l-4 4A1 1 0 0110 12z" clip-rule="evenodd"></path></svg>`;
@@ -1885,93 +2010,87 @@
             processPoContent(content);
         }
 
+        // Main keydown listener
         document.addEventListener('keydown', (event) => {
-            if (!shortcutsModal.classList.contains('hidden') || !findReplaceModal.classList.contains('hidden') || !messageBox.classList.contains('hidden') || !saveProjectModal.classList.contains('hidden')) {
-                return;
+            // Ignore keydown events if a modal is open or if the event originates from an input field not part of the main translation flow
+            const activeElement = document.activeElement;
+            const isModalOpen = !shortcutsModal.classList.contains('hidden') || 
+                                !findReplaceModal.classList.contains('hidden') || 
+                                !messageBox.classList.contains('hidden') || 
+                                !saveProjectModal.classList.contains('hidden') ||
+                                !backupModal.classList.contains('hidden') ||
+                                !restoreBackupModal.classList.contains('hidden');
+
+            if (isModalOpen && activeElement.id !== 'findInput' && activeElement.id !== 'replaceInput') {
+                 // Exception for find/replace inputs inside their modal
+                if (activeElement.closest('.modal') && !activeElement.classList.contains('shortcut-input')) {
+                   return;
+                }
             }
 
-            const isNumberKey = event.key >= '1' && event.key <= '5';
-            const indexToInsert = parseInt(event.key) - 1;
+            // Check if the event matches any configured shortcut
+            for (const action in shortcutConfig) {
+                const config = shortcutConfig[action];
 
-            if (event.altKey && !event.ctrlKey) {
-                if (isNumberKey) {
+                if (event.ctrlKey === config.ctrlKey &&
+                    event.altKey === config.altKey &&
+                    event.shiftKey === config.shiftKey &&
+                    event.key.toLowerCase() === config.key.toLowerCase()) {
+                    
                     event.preventDefault();
-                    const currentFocused = getCurrentFocusedIndex();
-                    if (!currentFocused) return;
-
-                    const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
-                    if (!targetTextarea || targetTextarea.readOnly) return;
-
-                    if (currentTMLatestSearchResults.length > indexToInsert) {
-                        const tmToInsert = currentTMLatestSearchResults[indexToInsert];
-                        const textToInsert = tmToInsert.tgtText;
-
-                        const start = targetTextarea.selectionStart;
-                        const end = targetTextarea.selectionEnd;
-                        const currentValue = targetTextarea.value;
-
-                        targetTextarea.value = currentValue.substring(0, start) +
-                                               textToInsert +
-                                               currentValue.substring(end);
-
-                        targetTextarea.selectionStart = targetTextarea.selectionEnd = start + textToInsert.length;
-
-                        const inputEvent = new Event('input', { bubbles: true });
-                        targetTextarea.dispatchEvent(inputEvent);
-                    } else {
-                        showMessage(translations[currentLanguage]['tm_no_match_found']);
-                    }
-                }
-            } else if (event.ctrlKey && event.altKey) {
-                 if (isNumberKey) {
-                    event.preventDefault();
-                    const currentFocused = getCurrentFocusedIndex();
-                    if (!currentFocused) return;
-
-                    const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
-                    if (!targetTextarea || targetTextarea.readOnly) return;
-
-                    if (currentGlossaryLatestResults.length > indexToInsert) {
-                        const glossaryTermToInsert = currentGlossaryLatestResults[indexToInsert];
-                        const termTextToInsert = glossaryTermToInsert.tgtTerm;
-
-                        const start = targetTextarea.selectionStart;
-                        const end = targetTextarea.selectionEnd;
-                        const currentValue = targetTextarea.value;
-
-                        targetTextarea.value = currentValue.substring(0, start) +
-                                               termTextToInsert +
-                                               currentValue.substring(end);
-
-                        targetTextarea.selectionStart = targetTextarea.selectionEnd = start + termTextToInsert.length;
-
-                        const inputEvent = new Event('input', { bubbles: true });
-                        targetTextarea.dispatchEvent(inputEvent);
-                    } else {
-                        showMessage(translations[currentLanguage]['no_match_found']);
-                    }
-                }
-            } else if (event.ctrlKey) {
-                const currentFocused = getCurrentFocusedIndex();
-                if (!currentFocused) return;
-
-                switch (event.key) {
-                    case 'Enter':
-                        event.preventDefault();
-                        setTranslationEditableState(currentFocused.entryIndex, currentFocused.segmentIndex, false);
-                        goToNextTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
-                        break;
-                    case 'ArrowDown':
-                        event.preventDefault();
-                        goToNextTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
-                        break;
-                    case 'ArrowUp':
-                        event.preventDefault();
-                        goToPreviousTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
-                        break;
+                    handleShortcutAction(action, event.key);
+                    return; 
                 }
             }
         });
+
+        function handleShortcutAction(action, pressedKey) {
+            const currentFocused = getCurrentFocusedIndex();
+
+            // La mayoría de las acciones requieren un segmento activo
+            if (!currentFocused && !action.startsWith('open')) return;
+
+            // Manejo dinámico para acciones numeradas
+            if (action.startsWith('insertTMMatch') || action.startsWith('insertGlossaryTerm')) {
+                const isTM = action.startsWith('insertTMMatch');
+                const items = isTM ? currentTMLatestSearchResults : currentGlossaryLatestResults;
+                const index = parseInt(action.slice(-1)) - 1; // Extrae el número del final de la acción
+
+                if (items.length > index) {
+                    const itemToInsert = items[index];
+                    const textToInsert = isTM ? itemToInsert.tgtText : itemToInsert.tgtTerm;
+                    const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
+                    
+                    if (targetTextarea && !targetTextarea.readOnly) {
+                        const start = targetTextarea.selectionStart;
+                        const end = targetTextarea.selectionEnd;
+                        targetTextarea.value = targetTextarea.value.substring(0, start) + textToInsert + targetTextarea.value.substring(end);
+                        targetTextarea.selectionStart = targetTextarea.selectionEnd = start + textToInsert.length;
+                        
+                        // Dispara el evento 'input' para actualizar contadores
+                        targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                } else {
+                    showMessage(translations[currentLanguage][isTM ? 'tm_no_match_found' : 'no_match_found']);
+                }
+                return; // Acción manejada
+            }
+
+            // Manejo para el resto de acciones
+            switch (action) {
+                case 'validateAndNext':
+                    setTranslationEditableState(currentFocused.entryIndex, currentFocused.segmentIndex, false);
+                    goToNextTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
+                    break;
+                case 'nextSegment':
+                    goToNextTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
+                    break;
+                case 'prevSegment':
+                    goToPreviousTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
+                    break;
+            }
+        }
+
 
         function showMessage(msg) {
             messageText.textContent = msg;
@@ -1983,6 +2102,8 @@
         });
 
         shortcutsBtn.addEventListener('click', () => {
+            tempShortcutConfig = JSON.parse(JSON.stringify(shortcutConfig)); // Create a deep copy for editing
+            renderShortcutsUI();
             shortcutsModal.classList.remove('hidden');
         });
 
@@ -2273,21 +2394,6 @@
                     }
                 }
             });
-
-            const shortcutValidateElement = document.getElementById('shortcutValidate');
-            if (shortcutValidateElement) shortcutValidateElement.innerHTML = `<strong>Ctrl + Enter:</strong> ${lang['shortcut_validate'].substring(lang['shortcut_validate'].indexOf(':') + 1).trim()}`;
-
-            const shortcutNextElement = document.getElementById('shortcutNext');
-            if (shortcutNextElement) shortcutNextElement.innerHTML = `<strong>Ctrl + ${arrowDownIcon}</strong>: ${lang['shortcut_next'].substring(lang['shortcut_next'].indexOf(':') + 1).trim()}`;
-            
-            const shortcutPrevElement = document.getElementById('shortcutPrev');
-            if (shortcutPrevElement) shortcutPrevElement.innerHTML = `<strong>Ctrl + ${arrowUpIcon}</strong>: ${lang['shortcut_prev'].substring(lang['shortcut_prev'].indexOf(':') + 1).trim()}`;
-
-            const shortcutAlt1Element = document.getElementById('shortcutAlt1');
-            if (shortcutAlt1Element) shortcutAlt1Element.innerHTML = `<strong>Alt + [1-5]:</strong> ${lang['shortcut_alt_1'].substring(lang['shortcut_alt_1'].indexOf(':') + 1).trim()}`;
-
-            const shortcutTmInsertElement = document.getElementById('shortcutTmInsert');
-            if (shortcutTmInsertElement) shortcutTmInsertElement.innerHTML = `<strong>Ctrl + Alt + [1-5]:</strong> ${lang['shortcut_tm_insert'].substring(lang['shortcut_tm_insert'].indexOf(':') + 1).trim()}`;
             
             const displaySourceLanguageLabel = document.getElementById('displaySourceLanguageLabel');
             if (displaySourceLanguageLabel) displaySourceLanguageLabel.textContent = lang['source_language'];
@@ -2300,9 +2406,6 @@
 
             const displayTmTargetLanguageLabel = document.getElementById('displayTmTargetLanguageLabel');
             if (displayTmTargetLanguageLabel) displayTmTargetLanguageLabel.textContent = lang['target_language'];
-
-            const shortcutsCloseBtnText = document.getElementById('shortcutsCloseBtnText');
-            if(shortcutsCloseBtnText) shortcutsCloseBtnText.textContent = lang['close_btn'];
             
             const findReplaceCloseBtnText = document.getElementById('findReplaceCloseBtnText');
             if(findReplaceCloseBtnText) findReplaceCloseBtnText.textContent = lang['close_btn'];
@@ -2347,6 +2450,163 @@
                 statsBtn.classList.remove('utility-btn-active');
             }
         }
+
+        // --- Shortcut Customization Logic ---
+        function formatShortcut(config) {
+            let parts = [];
+            if (config.ctrlKey) parts.push('Ctrl');
+            if (config.altKey) parts.push('Alt');
+            if (config.shiftKey) parts.push('Shift');
+            
+            let key = config.key;
+            if (key === 'ArrowUp') key = '↑';
+            if (key === 'ArrowDown') key = '↓';
+            if (key === 'ArrowLeft') key = '←';
+            if (key === 'ArrowRight') key = '→';
+
+            parts.push(key);
+            return parts.join(' + ');
+        }
+
+        function renderShortcutsUI() {
+            shortcutsEditor.innerHTML = '';
+            const lang = translations[currentLanguage];
+
+            for (const action in tempShortcutConfig) {
+                const config = tempShortcutConfig[action];
+                
+                let translationKey;
+                if (action.startsWith('insertTMMatch')) {
+                    translationKey = `shortcut_tm_insert_${action.slice(-1)}`;
+                } else if (action.startsWith('insertGlossaryTerm')) {
+                    translationKey = `shortcut_glossary_insert_${action.slice(-1)}`;
+                } else {
+                    // --- INICIO DE LA CORRECCIÓN ---
+                    // Hacemos una correspondencia manual para los casos que no coinciden
+                    switch (action) {
+                        case 'validateAndNext':
+                            translationKey = 'shortcut_validate';
+                            break;
+                        case 'nextSegment':
+                            translationKey = 'shortcut_next';
+                            break;
+                        case 'prevSegment':
+                            translationKey = 'shortcut_prev';
+                            break;
+                        default:
+                            // Un respaldo para futuros atajos que sí coincidan
+                            translationKey = `shortcut_${action}`;
+                            break;
+                    }
+                    // --- FIN DE LA CORRECCIÓN ---
+                }
+                const actionLabel = lang[translationKey] || action;
+                
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-2 items-center gap-4';
+                
+                const label = document.createElement('label');
+                label.className = 'text-on-light-contrast font-medium';
+                label.textContent = actionLabel;
+                row.appendChild(label);
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.readOnly = true;
+                input.className = 'shortcut-input';
+                input.value = formatShortcut(config);
+                input.dataset.action = action;
+                input.placeholder = lang['click_to_set_shortcut'];
+
+                input.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    
+                    const tempConfig = {
+                        ctrlKey: e.ctrlKey,
+                        altKey: e.altKey,
+                        shiftKey: e.shiftKey,
+                        key: '...'
+                    };
+                    input.value = formatShortcut(tempConfig);
+
+                    if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+                        const newConfig = {
+                            ctrlKey: e.ctrlKey,
+                            altKey: e.altKey,
+                            shiftKey: e.shiftKey,
+                            key: (e.key.length === 1) ? e.key.toLowerCase() : e.key
+                        };
+
+                        tempShortcutConfig[action] = newConfig;
+                        input.value = formatShortcut(newConfig);
+                        input.blur();
+                    }
+                });
+
+                input.addEventListener('blur', () => {
+                    input.value = formatShortcut(tempShortcutConfig[action]);
+                });
+                
+                row.appendChild(input);
+                shortcutsEditor.appendChild(row);
+            }
+        }
+
+        saveShortcutsBtn.addEventListener('click', () => {
+            shortcutConfig = JSON.parse(JSON.stringify(tempShortcutConfig));
+            localStorage.setItem('poandaShortcutConfig', JSON.stringify(shortcutConfig));
+            showMessage(translations[currentLanguage]['shortcuts_saved']);
+            shortcutsModal.classList.add('hidden');
+        });
+        
+        resetShortcutsBtn.addEventListener('click', () => {
+            tempShortcutConfig = JSON.parse(JSON.stringify(defaultShortcutConfig));
+            renderShortcutsUI();
+            showMessage(translations[currentLanguage]['shortcuts_reset']);
+        });
+
+        exportShortcutsBtn.addEventListener('click', () => {
+            const jsonString = JSON.stringify(shortcutConfig, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'poanda_shortcuts.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        importShortcutsBtn.addEventListener('click', () => {
+            importShortcutsInput.click();
+        });
+
+        importShortcutsInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedConfig = JSON.parse(e.target.result);
+                    // Basic validation
+                    if (typeof importedConfig === 'object' && importedConfig.validateAndNext) {
+                        tempShortcutConfig = { ...defaultShortcutConfig, ...importedConfig };
+                        renderShortcutsUI();
+                        showMessage(translations[currentLanguage]['shortcuts_loaded']);
+                    } else {
+                        throw new Error("Invalid format");
+                    }
+                } catch (error) {
+                    showMessage(translations[currentLanguage]['error_loading_shortcuts']);
+                    console.error("Error importing shortcuts:", error);
+                } finally {
+                    importShortcutsInput.value = ''; // Reset file input
+                }
+            };
+            reader.readAsText(file);
+        });
 
 
         // --- Terminology Sidebar Logic ---
@@ -3652,6 +3912,7 @@
 
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
+            loadShortcuts(); // Load saved or default shortcuts
             populateIsoLanguagesDatalist();
             
             document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
@@ -3670,7 +3931,7 @@
                 saveProjectModal.classList.add('hidden');
             });
 
-            restoreBackupBtn.addEventListener('click', restoreSession);
+            restoreBackupBtn.addEventListener('click', () => restoreSession());
             discardBackupBtn.addEventListener('click', () => {
                 clearBackup();
                 restoreBackupModal.classList.add('hidden');
