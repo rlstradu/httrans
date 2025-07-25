@@ -364,6 +364,7 @@
       letter-spacing: 0.5px;
       position: sticky;
       top: 0;
+      z-index: 10; /* Added z-index for opaque background when sticky */
     }
 
     body.dark-mode th {
@@ -1408,6 +1409,9 @@
 
       const messageBox = document.createElement('div');
       messageBox.className = 'message-box';
+
+      const titleEl = document.createElement('h3');
+      titleEl.textContent = title;
 
       const messageText = document.createElement('p');
       messageText.textContent = message;
