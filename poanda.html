@@ -1335,14 +1335,13 @@
          * @param {HTMLTextAreaElement} textarea The textarea element.
          * @param {number} originalLength The length of the original string segment.
          */
-        function updateCharCount(textarea, originalLength) {
-            const entryIndex = parseInt(textarea.dataset.entryIndex);
-            const segmentIndex = parseInt(textarea.dataset.segmentIndex);
-            const charCountSpan = document.getElementById(`charCount-${entryIndex}-${segmentIndex}`);
-            if (charCountSpan) {
-                charCountSpan.textContent = `${translations[currentLanguage]['char_count_original']}${originalLength} ${translations[currentLanguage]['char_units']} | ${translations[currentLanguage]['char_count_translation']}${textarea.value.length} ${translations[currentLanguage]['char_units']}`;
-            }
-        }
+      
+
+function updateCharCount(textarea, originalLength, charCountSpan) {
+    if (charCountSpan) {
+        charCountSpan.textContent = `${translations[currentLanguage]['char_count_original']}${originalLength} ${translations[currentLanguage]['char_units']} | ${translations[currentLanguage]['char_count_translation']}${textarea.value.length} ${translations[currentLanguage]['char_units']}`;
+    }
+}
 
         /**
          * Configures the editable state of a translation entry (editable/read-only).
@@ -1591,7 +1590,8 @@
 
                         const originalSegmentPre = originalCol.querySelector('pre');
                         autoResizeTextarea(event.target, originalSegmentPre);
-                        updateCharCount(event.target, parseInt(event.target.dataset.originalLength));
+      const charCountSpan = document.getElementById(`charCount-${currentEntryIndex}-${currentSegmentIndex}`);
+updateCharCount(event.target, parseInt(event.target.dataset.originalLength), charCountSpan);
                         updateStatsDisplay();
 
                         if (document.activeElement === msgstrTextarea) {
@@ -1661,7 +1661,7 @@
                     });
 
                     autoResizeTextarea(msgstrTextarea, msgidPre);
-                    updateCharCount(msgstrTextarea, segment.original.length);
+updateCharCount(msgstrTextarea, segment.original.length, charCountSpan);
                 });
 
                 if (entry.fuzzy) {
@@ -1958,8 +1958,10 @@
              showLoadingOverlay(translations[currentLanguage]['loading_file']);
              try {
                 poEntries = parsePoContent(content);
-                renderTranslations(poEntries);
-                updateStatsDisplay();
+setTimeout(() => {
+    renderTranslations(poEntries);
+    updateStatsDisplay();
+}, 0);
                 poSearchInput.value = ''; // Clear search on new file
                 filterPOEntries(); // Apply empty filter to reset view
              } catch (error) {
