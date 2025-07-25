@@ -1802,33 +1802,40 @@ updateCharCount(msgstrTextarea, segment.original.length, charCountSpan);
         /**
          * Updates the display of translation progress and word counts.
          */
-        function updateStatsDisplay() {
-            let totalSegments = 0;
-            let translatedSegments = 0;
-            let totalWordsOriginal = 0;
-            let totalWordsTranslated = 0;
+  function updateStatsDisplay() {
+    let totalSegments = 0;
+    let translatedSegments = 0;
+    let totalWordsOriginal = 0;
+    let totalWordsTranslated = 0;
+    let originalWordsInTranslatedSegments = 0; // Variable clave para el cálculo correcto
 
-            poEntries.forEach(entry => {
-                if (entry.isHeader) return;
+    poEntries.forEach(entry => {
+        if (entry.isHeader) return;
+        
+        if (entry.sentenceSegments) {
+            entry.sentenceSegments.forEach(segment => {
+                totalSegments++;
+                totalWordsOriginal += segment.wordCountOriginal;
                 
-                if (entry.sentenceSegments) {
-                    entry.sentenceSegments.forEach(segment => {
-                        totalSegments++;
-                        totalWordsOriginal += segment.wordCountOriginal;
-                        if (segment.isTranslated) {
-                            translatedSegments++;
-                            totalWordsTranslated += segment.wordCountTranslation;
-                        }
-                    });
+                // Comprueba si el segmento está validado
+                if (segment.isTranslated) {
+                    translatedSegments++;
+                    totalWordsTranslated += segment.wordCountTranslation;
+                    // Acumula las palabras del ORIGINAL del segmento ya traducido
+                    originalWordsInTranslatedSegments += segment.wordCountOriginal;
                 }
             });
-
-            const percentage = totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
-            segmentsProgress.textContent = `${translatedSegments} / ${totalSegments} segments (${percentage}%)`;
-            wordsTranslated.textContent = `${totalWordsTranslated}`;
-            wordsTotal.textContent = `${totalWordsOriginal}`;
-            wordsRemaining.textContent = `${totalWordsOriginal - totalWordsTranslated}`;
         }
+    });
+
+    const percentage = totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
+    segmentsProgress.textContent = `${translatedSegments} / ${totalSegments} segments (${percentage}%)`;
+    wordsTranslated.textContent = `${totalWordsTranslated}`;
+    wordsTotal.textContent = `${totalWordsOriginal}`;
+    
+    // El cálculo correcto para las palabras restantes
+    wordsRemaining.textContent = `${totalWordsOriginal - originalWordsInTranslatedSegments}`;
+}
 
 
         /**
