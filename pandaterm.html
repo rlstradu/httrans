@@ -145,7 +145,7 @@
       animation: fadeIn 0.5s ease-out 0.4s forwards;
     }
 
-    .controls, .search-section, .lang-display {
+    .controls, .search-section {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
@@ -158,11 +158,7 @@
 
     /* Unified style for all input fields and textareas in add-term and general input groups */
     .controls button,
-    .add-term button,
-    .search-section input,
-    .lang-display button,
-    .lang-display input,
-    select {
+    .search-section input {
       padding: 12px 20px;
       border: 1px solid var(--input-border);
       border-radius: 8px;
@@ -178,8 +174,10 @@
 
     .add-term input,
     .add-term textarea,
+    .add-term select,
     .modal-content .input-group input,
-    .modal-content .input-group textarea {
+    .modal-content .input-group textarea,
+    .modal-content .input-group select {
         padding: 12px 20px;
         border: 1px solid var(--input-border);
         border-radius: 8px;
@@ -193,27 +191,91 @@
         height: 50px; /* Fixed height for all input fields in add-term section */
     }
 
-    /* Flex container for add-term section to keep fields in one row */
+    /* Flex container for add-term section to keep fields in one column of rows */
     .add-term {
         display: flex;
-        flex-wrap: wrap; /* Allow wrapping if space is limited */
-        gap: 12px;
+        flex-direction: column; /* Stack rows vertically */
+        gap: 20px; /* Increased gap between rows for better spacing */
         margin-bottom: 20px;
-        align-items: flex-end; /* Align button to the bottom */
     }
 
-    .add-term .input-group {
-        flex: 1 1 calc(25% - 9px); /* Distribute 4 items per row, adjust gap */
-        min-width: 180px; /* Minimum width for each input group */
+    .add-term-row {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping within rows */
+        gap: 20px; /* Increased gap between items in a row */
+        align-items: flex-start; /* Align items to the top to prevent label overlap */
+        width: 100%; /* Ensure rows take full width */
+        box-sizing: border-box;
     }
 
-    /* Ensure textareas can be resized vertically */
+    /* All input groups and buttons within add-term-row should share space equally */
+    .add-term-row .input-group {
+        flex: 1 1 calc(50% - 10px); /* Each takes 50% of the row, accounting for 20px gap */
+        min-width: 150px; /* Ensure a minimum width for responsiveness */
+        display: flex; /* Make input-group a flex container */
+        flex-direction: column; /* Stack label and input vertically */
+    }
+
+    .add-term-row button {
+        flex: 1 1 calc(50% - 10px); /* Button takes 50% of the row */
+        min-width: 150px; /* Ensure a minimum width for responsiveness */
+        height: 50px; /* Ensure button also matches input height */
+        align-self: flex-end; /* Align button to the bottom of its row */
+    }
+
+    /* Special handling for textareas to allow vertical resizing and proper min-height */
     .add-term textarea,
     .modal-content .input-group textarea {
-        resize: vertical;
-        min-height: 50px; /* Minimum height for textareas, matching input height */
+        resize: both; /* Allow both vertical and horizontal resizing */
+        min-height: 80px; /* Increased minimum height for textareas */
         height: auto; /* Allow height to adjust if user resizes */
+        min-width: 100%; /* Ensure it doesn't shrink too much horizontally */
+        width: 100%; /* Default to 100% width */
     }
+
+    /* Language configuration and display sections */
+    .lang-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px; /* Consistent gap */
+        align-items: flex-end; /* Align labels/inputs */
+    }
+
+    .lang-display .input-group {
+        flex: 1 1 calc(50% - 7.5px); /* Each input group takes half the width */
+        min-width: 150px; /* Ensure responsiveness */
+        display: flex; /* Make input-group a flex container */
+        flex-direction: column; /* Stack label and input vertically */
+    }
+
+    /* Ensure inputs inside lang-display .input-group take full width of their parent */
+    .lang-display .input-group input {
+        width: 100%;
+        min-width: unset; /* Override general min-width for these specific inputs */
+        height: 50px; /* Consistent height for language inputs */
+        padding: 12px 20px; /* Consistent padding */
+        border: 1px solid var(--input-border); /* Consistent border */
+        border-radius: 8px; /* Consistent border-radius */
+        background-color: var(--card-background); /* Consistent background */
+        color: var(--text-color); /* Consistent text color */
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+
+    .lang-display button {
+        flex: 1 1 100%; /* Button takes full width on a new line */
+        min-width: unset; /* Override general min-width */
+        padding: 12px 20px; /* Standard button padding */
+        font-size: 1rem; /* Standard font size */
+    }
+
+    /* Ensure labels in lang-display also behave well */
+    .lang-display .input-group label {
+        display: block; /* Ensure label is above input */
+        margin-bottom: 8px; /* Increased margin-bottom for labels */
+        font-size: 0.9rem;
+        color: var(--text-color);
+    }
+
 
     input:focus, select:focus, textarea:focus { /* Added textarea to focus styles */
         outline: none;
@@ -302,21 +364,17 @@
       font-weight: 500;
       margin-right: 5px;
       white-space: nowrap;
-      margin-bottom: 8px;
-      display: block;
+      /* margin-bottom: 4px; Removed as input-group handles it */
+      display: block; /* Revert to block for labels without checkboxes */
       font-size: 0.9rem;
       color: var(--text-color);
     }
 
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-      min-width: 150px;
-    }
-
-    .lang-display {
-        align-items: flex-end;
+    .required-asterisk {
+        color: var(--btn-danger-bg); /* Red color for asterisk */
+        margin-left: 4px;
+        font-size: 1.1em;
+        vertical-align: middle;
     }
 
     input:disabled {
@@ -330,8 +388,9 @@
     }
 
     .table-container {
-      max-height: 400px;
+      max-height: 80vh; /* Increased max-height for more visible rows */
       overflow-y: auto;
+      overflow-x: auto; /* Added horizontal scroll for wide content */
       border-radius: 8px;
       margin-top: 20px;
       border: 1px solid var(--border-color);
@@ -340,6 +399,7 @@
 
     table {
       width: 100%;
+      min-width: 900px; /* Ensure table can expand horizontally, increased from 700px */
       border-collapse: collapse;
       background-color: var(--card-background);
     }
@@ -350,6 +410,15 @@
       text-align: left;
       vertical-align: top; /* Align content to the top for multi-line text */
     }
+
+    /* Give specific columns a minimum width to ensure content pushes the table wider */
+    th:nth-child(1), td:nth-child(1) { min-width: 150px; } /* Source Term */
+    th:nth-child(2), td:nth-child(2) { min-width: 150px; } /* Target Term */
+    th:nth-child(3), td:nth-child(3) { min-width: 250px; } /* Definition */
+    th:nth-child(4), td:nth-child(4) { min-width: 200px; } /* Notes */
+    th:nth-child(5), td:nth-child(5) { min-width: 120px; } /* Part of Speech */
+    th:nth-child(6), td:nth-child(6) { width: 80px; } /* Actions */
+
 
     td {
         color: var(--text-color);
@@ -451,7 +520,8 @@
     }
 
     td.editable input[type="text"],
-    td.editable textarea {
+    td.editable textarea,
+    td.editable select {
         width: calc(100% - 10px); /* Adjust for padding */
         padding: 5px;
         border: 1px solid var(--primary-color);
@@ -465,7 +535,8 @@
     }
 
     td.editable input[type="text"]:focus,
-    td.editable textarea:focus {
+    td.editable textarea:focus,
+    td.editable select:focus {
         outline: none;
         box-shadow: 0 0 0 2px rgba(125, 206, 199, 0.5);
     }
@@ -540,7 +611,8 @@
     }
 
     .modal-content .input-group input,
-    .modal-content .input-group textarea {
+    .modal-content .input-group textarea,
+    .modal-content .input-group select {
         width: 100%;
         padding: 10px;
         border: 1px solid var(--input-border);
@@ -563,6 +635,13 @@
         margin-top: 25px;
     }
 
+    .modal-content .dialog-buttons button { /* Specific styling for modal buttons */
+        height: 50px; /* Consistent height */
+        padding: 12px 20px; /* Consistent padding */
+        font-size: 1rem; /* Consistent font size */
+        border-radius: 8px; /* Consistent border-radius */
+    }
+
     .close-modal-btn {
         position: absolute;
         top: 15px;
@@ -579,6 +658,21 @@
 
     .close-modal-btn:hover {
         background-color: rgba(0,0,0,0.1);
+    }
+
+    /* Styles for clickable links in table cells */
+    td a {
+        color: var(--primary-color);
+        text-decoration: underline;
+    }
+
+    td a:hover {
+        text-decoration: none;
+    }
+
+    /* Column visibility menu (removed from functionality, but leaving styles just in case for now) */
+    .column-visibility-menu {
+        display: none; /* Always hidden */
     }
 
   </style>
@@ -639,23 +733,41 @@
 
         <h2 data-i18n="add_term_title">Añadir término</h2>
         <div class="add-term">
-            <div class="input-group">
-                <label for="srcTerm" data-i18n="term">Término:</label>
-                <input id="srcTerm" />
+            <div class="add-term-row">
+                <div class="input-group">
+                    <label for="srcTerm" data-i18n="term">Término:<span class="required-asterisk">*</span></label>
+                    <input id="srcTerm" />
+                </div>
+                <div class="input-group">
+                    <label for="tgtTerm" data-i18n="translation">Traducción:<span class="required-asterisk">*</span></label>
+                    <input id="tgtTerm" />
+                </div>
             </div>
-            <div class="input-group">
-                <label for="tgtTerm" data-i18n="translation">Traducción:</label>
-                <input id="tgtTerm" />
+
+            <div class="add-term-row">
+                <div class="input-group" id="definitionInputGroup">
+                    <label for="definition"><span data-i18n="definition">Definición:</span></label>
+                    <textarea id="definition"></textarea>
+                </div>
+                <div class="input-group" id="notesInputGroup">
+                    <label for="notes"><span data-i18n="notes">Notas:</span></label>
+                    <textarea id="notes"></textarea>
+                </div>
             </div>
-            <div class="input-group">
-                <label for="definition" data-i18n="definition">Definición:</label>
-                <textarea id="definition"></textarea>
+
+            <div class="add-term-row">
+                <div class="input-group" id="partOfSpeechInputGroup">
+                    <label for="partOfSpeech"><span data-i18n="part_of_speech">Categoría gramatical:</span></label>
+                    <select id="partOfSpeech">
+                        <option value="" data-i18n="select_pos_placeholder">Seleccionar</option>
+                        <option value="noun">noun</option>
+                        <option value="verb">verb</option>
+                        <option value="adj">adj</option>
+                        <option value="adv">adv</option>
+                    </select>
+                </div>
+                <button onclick="addTerm()" data-i18n="add_button" class="btn-primary">Añadir</button>
             </div>
-            <div class="input-group">
-                <label for="notes" data-i18n="notes">Notas:</label>
-                <textarea id="notes"></textarea>
-            </div>
-            <button onclick="addTerm()" data-i18n="add_button" class="btn-primary">Añadir</button>
         </div>
 
         <h2 data-i18n="search_title">Buscar</h2>
@@ -681,11 +793,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th data-i18n="source_term_col">Término de origen</th>
-                        <th data-i18n="target_term_col">Término de destino</th>
-                        <th data-i18n="definition_col">Definición</th>
-                        <th data-i18n="notes_col">Notas</th>
-                        <th data-i18n="actions_col">Acciones</th>
+                        <th data-i18n="source_term_col" data-column-id="source_term_col">Término de origen</th>
+                        <th data-i18n="target_term_col" data-column-id="target_term_col">Término de destino</th>
+                        <th data-i18n="definition_col" data-column-id="definition_col">Definición</th>
+                        <th data-i18n="notes_col" data-column-id="notes_col">Notas</th>
+                        <th data-i18n="part_of_speech_col" data-column-id="part_of_speech_col">Categoría gramatical</th>
+                        <th data-i18n="actions_col" data-column-id="actions_col">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="glossaryTable"></tbody>
@@ -711,6 +824,16 @@
     let glossarySourceLanguage = '';
     let glossaryTargetLanguage = '';
 
+    // Column visibility state - now always true as the toggle button is removed
+    let columnVisibility = {
+        'source_term_col': true,
+        'target_term_col': true,
+        'definition_col': true,
+        'notes_col': true,
+        'part_of_speech_col': true,
+        'actions_col': true
+    };
+
     const translations = {
       en: {
         title: "PandaTerm",
@@ -728,20 +851,23 @@
         add_term_title: "Add term",
         source_language: "Source language:",
         term: "Term:",
-        target_language: "Target language:",
+        target_language: "Translation:",
         translation: "Translation:",
         definition: "Definition:",
         notes: "Notes:",
+        part_of_speech: "Part of Speech:",
         add_button: "Add",
         search_title: "Search",
         search_placeholder: "Search term...",
         search_all: "All",
         search_source: "Source only",
         search_target: "Target only",
+        // toggle_columns_button: "Toggle Columns", // Removed
         source_term_col: "Source term",
         target_term_col: "Target term",
         definition_col: "Definition",
         notes_col: "Notes",
+        part_of_speech_col: "Part of Speech",
         actions_col: "Actions",
         delete_button: "Delete",
         edit_button: "Edit",
@@ -758,7 +884,12 @@
         download_dialog_placeholder: "glossary",
         save_button: "Save",
         edit_term_title: "Edit Term",
-        update_button: "Update"
+        update_button: "Update",
+        select_pos_placeholder: "Select",
+        show_more_fields: "Show more fields",
+        hide_more_fields: "Hide fields",
+        delete_term_confirm_title: "Confirm Delete",
+        delete_term_confirm_text: "Are you sure you want to delete this term? This action cannot be undone."
       },
       es: {
         title: "PandaTerm",
@@ -780,16 +911,19 @@
         translation: "Traducción:",
         definition: "Definición:",
         notes: "Notas:",
+        part_of_speech: "Categoría gramatical:",
         add_button: "Añadir",
         search_title: "Buscar",
         search_placeholder: "Buscar término...",
         search_all: "Todos",
         search_source: "Solo origen",
         search_target: "Solo destino",
+        // toggle_columns_button: "Mostrar/Ocultar Columnas", // Removed
         source_term_col: "Término de origen",
         target_term_col: "Término de destino",
         definition_col: "Definición",
         notes_col: "Notas",
+        part_of_speech_col: "Categoría gramatical",
         actions_col: "Acciones",
         delete_button: "Eliminar",
         edit_button: "Editar",
@@ -806,7 +940,12 @@
         download_dialog_placeholder: "glosario",
         save_button: "Guardar",
         edit_term_title: "Editar término",
-        update_button: "Actualizar"
+        update_button: "Actualizar",
+        select_pos_placeholder: "Seleccionar",
+        show_more_fields: "Mostrar más campos",
+        hide_more_fields: "Ocultar campos",
+        delete_term_confirm_title: "Confirmar eliminación",
+        delete_term_confirm_text: "¿Estás seguro de que quieres eliminar este término? Esta acción no se puede deshacer."
       }
     };
 
@@ -882,6 +1021,12 @@
           el.placeholder = translations[currentUILanguage][key];
         }
       });
+      // Update placeholder for partOfSpeech select
+      const selectPosPlaceholder = document.querySelector('#partOfSpeech option[value=""]');
+      if (selectPosPlaceholder) {
+          selectPosPlaceholder.textContent = translations[currentUILanguage]['select_pos_placeholder'];
+      }
+
       renderGlossary(); // Re-render glossary to update delete button text
     }
 
@@ -941,9 +1086,11 @@
       document.getElementById('tgtTerm').value = '';
       document.getElementById('definition').value = ''; // Clear definition
       document.getElementById('notes').value = ''; // Clear notes
+      document.getElementById('partOfSpeech').value = ''; // Clear part of speech
       document.getElementById('searchTerm').value = '';
       // Reset search scope to 'all'
       document.querySelector('input[name="searchScope"][value="all"]').checked = true;
+
       showSection('languageConfigSection');
       renderGlossary();
     }
@@ -987,13 +1134,15 @@
     function addTerm() {
       const srcTermInput = document.getElementById("srcTerm");
       const tgtTermInput = document.getElementById("tgtTerm");
-      const definitionInput = document.getElementById("definition"); // New
-      const notesInput = document.getElementById("notes"); // New
+      const definitionInput = document.getElementById("definition");
+      const notesInput = document.getElementById("notes");
+      const partOfSpeechInput = document.getElementById("partOfSpeech");
 
       const srcTerm = srcTermInput.value.trim();
       const tgtTerm = tgtTermInput.value.trim();
-      const definition = definitionInput.value.trim(); // New
-      const notes = notesInput.value.trim(); // New
+      const definition = definitionInput.value.trim();
+      const notes = notesInput.value.trim();
+      const partOfSpeech = partOfSpeechInput.value.trim();
 
       if (!srcTerm || !tgtTerm) {
         showMessageBox(translations[currentUILanguage]['both_terms_required']);
@@ -1007,13 +1156,16 @@
         srcTerm: srcTerm,
         tgtLang: glossaryTargetLanguage,
         tgtTerm: tgtTerm,
-        definition: definition, // Add definition
-        notes: notes // Add notes
+        definition: definition,
+        notes: notes,
+        srcPartOfSpeech: partOfSpeech
+        // We're not storing tgtPartOfSpeech separately for now, assuming it's usually the same or derived.
       });
       srcTermInput.value = "";
       tgtTermInput.value = "";
-      definitionInput.value = ""; // Clear definition input
-      notesInput.value = ""; // Clear notes input
+      definitionInput.value = "";
+      notesInput.value = "";
+      partOfSpeechInput.value = "";
       srcTermInput.focus();
       renderGlossary(true); // Pass true to animate the last row
     }
@@ -1023,9 +1175,14 @@
      * @param {number} originalIndex - The original index of the term in the glossary array.
      */
     function deleteTerm(originalIndex) {
-      saveState();
-      glossary.splice(originalIndex, 1);
-      renderGlossary();
+        const title = translations[currentUILanguage]['delete_term_confirm_title'];
+        const message = translations[currentUILanguage]['delete_term_confirm_text'];
+        showConfirmationDialog(title, message, () => {
+            saveState();
+            glossary.splice(originalIndex, 1);
+            renderGlossary();
+            closeModal('editModal'); // Close modal if open after deleting
+        });
     }
 
     /**
@@ -1038,16 +1195,21 @@
         modalOverlay.className = 'modal-overlay';
         modalOverlay.id = 'editModal';
 
+        // Create options for partOfSpeech select
+        const posOptions = ['noun', 'verb', 'adj', 'adv'].map(pos =>
+            `<option value="${pos}" ${term.srcPartOfSpeech === pos ? 'selected' : ''}>${pos}</option>`
+        ).join('');
+
         modalOverlay.innerHTML = `
             <div class="modal-content">
                 <button class="close-modal-btn" onclick="closeModal('editModal')">&times;</button>
                 <h3 data-i18n="edit_term_title">${translations[currentUILanguage]['edit_term_title']}</h3>
                 <div class="input-group">
-                    <label for="editSrcTerm" data-i18n="term">${translations[currentUILanguage]['term']}</label>
+                    <label for="editSrcTerm" data-i18n="term">${translations[currentUILanguage]['term']}<span class="required-asterisk">*</span></label>
                     <input id="editSrcTerm" type="text" value="${term.srcTerm}" />
                 </div>
                 <div class="input-group">
-                    <label for="editTgtTerm" data-i18n="translation">${translations[currentUILanguage]['translation']}</label>
+                    <label for="editTgtTerm" data-i18n="translation">${translations[currentUILanguage]['translation']}<span class="required-asterisk">*</span></label>
                     <input id="editTgtTerm" type="text" value="${term.tgtTerm}" />
                 </div>
                 <div class="input-group">
@@ -1058,7 +1220,15 @@
                     <label for="editNotes" data-i18n="notes">${translations[currentUILanguage]['notes']}</label>
                     <textarea id="editNotes">${term.notes || ''}</textarea>
                 </div>
+                <div class="input-group">
+                    <label for="editPartOfSpeech" data-i18n="part_of_speech">${translations[currentUILanguage]['part_of_speech']}</label>
+                    <select id="editPartOfSpeech">
+                        <option value="" data-i18n="select_pos_placeholder">${translations[currentUILanguage]['select_pos_placeholder']}</option>
+                        ${posOptions}
+                    </select>
+                </div>
                 <div class="dialog-buttons">
+                    <button class="btn-danger" onclick="deleteTerm(${index})" data-i18n="delete_button">${translations[currentUILanguage]['delete_button']}</button>
                     <button class="btn-secondary" onclick="closeModal('editModal')" data-i18n="cancel_button">${translations[currentUILanguage]['cancel_button']}</button>
                     <button class="btn-primary" onclick="saveEditedTerm(${index})" data-i18n="update_button">${translations[currentUILanguage]['update_button']}</button>
                 </div>
@@ -1076,6 +1246,7 @@
         const tgtTerm = document.getElementById('editTgtTerm').value.trim();
         const definition = document.getElementById('editDefinition').value.trim();
         const notes = document.getElementById('editNotes').value.trim();
+        const partOfSpeech = document.getElementById('editPartOfSpeech').value.trim();
 
         if (!srcTerm || !tgtTerm) {
             showMessageBox(translations[currentUILanguage]['both_terms_required']);
@@ -1088,6 +1259,7 @@
         glossary[index].tgtTerm = tgtTerm;
         glossary[index].definition = definition;
         glossary[index].notes = notes;
+        glossary[index].srcPartOfSpeech = partOfSpeech;
 
         closeModal('editModal');
         renderGlossary();
@@ -1105,6 +1277,42 @@
     }
 
     /**
+     * Formats text to make URLs clickable.
+     * @param {string} text - The input text.
+     * @returns {string} The text with URLs replaced by clickable links.
+     */
+    function formatTextWithLinks(text) {
+        if (!text) return '';
+        // Regular expression to find URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    }
+
+    /**
+     * Applies the current column visibility settings to the table.
+     * Since the toggle button is removed, all columns are always visible.
+     */
+    function applyColumnVisibility() {
+        const table = document.querySelector('table');
+        if (!table) return;
+
+        const headers = Array.from(table.querySelectorAll('th'));
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+        headers.forEach((th, index) => {
+            // All columns are always visible
+            th.style.display = '';
+
+            rows.forEach(row => {
+                const cell = row.children[index];
+                if (cell) {
+                    cell.style.display = '';
+                }
+            });
+        });
+    }
+
+    /**
      * Renders the glossary table based on current search and filter criteria.
      * @param {boolean} animateLastRow - Whether to apply animation to the last added row.
      */
@@ -1117,13 +1325,16 @@
       const filteredGlossary = glossary.filter(entry => {
         const srcMatch = entry.srcTerm.toLowerCase().includes(search);
         const tgtMatch = entry.tgtTerm.toLowerCase().includes(search);
+        const defMatch = (entry.definition || '').toLowerCase().includes(search);
+        const notesMatch = (entry.notes || '').toLowerCase().includes(search);
+        const posMatch = (entry.srcPartOfSpeech || '').toLowerCase().includes(search);
 
         if (searchScope === 'source') {
           return srcMatch;
         } else if (searchScope === 'target') {
           return tgtMatch;
         } else { // 'all'
-          return srcMatch || tgtMatch;
+          return srcMatch || tgtMatch || defMatch || notesMatch || posMatch;
         }
       });
 
@@ -1134,8 +1345,9 @@
           row.innerHTML = `
             <td class="editable" onclick="editTerm(${originalIndex})">${entry.srcTerm}</td>
             <td class="editable" onclick="editTerm(${originalIndex})">${entry.tgtTerm}</td>
-            <td class="editable" onclick="editTerm(${originalIndex})">${entry.definition || ''}</td>
-            <td class="editable" onclick="editTerm(${originalIndex})">${entry.notes || ''}</td>
+            <td class="editable" onclick="editTerm(${originalIndex})">${formatTextWithLinks(entry.definition)}</td>
+            <td class="editable" onclick="editTerm(${originalIndex})">${formatTextWithLinks(entry.notes)}</td>
+            <td class="editable" onclick="editTerm(${originalIndex})">${entry.srcPartOfSpeech || ''}</td>
             <td><button class="delete-btn" onclick="deleteTerm(${originalIndex})">${translations[currentUILanguage]['delete_button']}</button></td>
           `;
 
@@ -1145,6 +1357,7 @@
 
           tbody.appendChild(row);
       });
+      applyColumnVisibility(); // Apply visibility after rendering
     }
 
     /**
@@ -1154,17 +1367,23 @@
      */
     function generateTBX() {
       const xml = [`<?xml version="1.0" encoding="UTF-8"?>`,
-        `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`, // Reverted to martif
+        `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`,
         `  <text>`,
         `    <body>`];
 
       glossary.forEach(entry => {
-        xml.push(`      <termEntry>`); // Reverted to termEntry
-        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`); // Reverted to LangSet
-        xml.push(`          <tig><term>${entry.srcTerm}</term></tig>`); // Reverted to tig
+        xml.push(`      <termEntry>`);
+        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`);
+        xml.push(`          <tig>`);
+        xml.push(`            <term>${entry.srcTerm}</term>`);
+        // Add source part of speech if present
+        if (entry.srcPartOfSpeech) {
+            xml.push(`            <termNote type="partOfSpeech">${entry.srcPartOfSpeech}</termNote>`);
+        }
+        xml.push(`          </tig>`);
         xml.push(`        </LangSet>`);
-        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`); // Reverted to LangSet
-        xml.push(`          <tig>`); // Reverted to tig
+        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`);
+        xml.push(`          <tig>`);
         xml.push(`            <term>${entry.tgtTerm}</term>`);
         // Add definition if present
         if (entry.definition) {
@@ -1174,12 +1393,14 @@
         if (entry.notes) {
             xml.push(`            <termNote type="comment">${entry.notes}</termNote>`);
         }
+        // If a target part of speech was ever stored, it would go here.
+        // For now, we only store srcPartOfSpeech, so we don't add it to the target tig.
         xml.push(`          </tig>`);
         xml.push(`        </LangSet>`);
         xml.push(`      </termEntry>`);
       });
 
-      xml.push(`    </body>`, `  </text>`, `</martif>`); // Reverted to martif
+      xml.push(`    </body>`, `  </text>`, `</martif>`);
       return xml.join("\n");
     }
 
@@ -1287,8 +1508,10 @@
               if (langSets.length >= 2) {
                 let srcLang = '';
                 let srcTerm = '';
+                let srcPartOfSpeech = '';
                 let tgtLang = '';
                 let tgtTerm = '';
+                let tgtPartOfSpeech = '';
                 let entryDefinition = conceptDefinition; // Start with concept-level definition
                 let entryNotes = conceptNotes; // Start with concept-level notes
 
@@ -1298,6 +1521,15 @@
                 const firstTermGroup = firstLangSet.getElementsByTagName(termGroupTagName)[0];
                 if (firstTermGroup) {
                     srcTerm = firstTermGroup.getElementsByTagName("term")[0]?.textContent || '';
+                    
+                    // Try to extract partOfSpeech using the 'min' namespace first
+                    let minPartOfSpeechElement = firstTermGroup.getElementsByTagNameNS("http://www.tbxinfo.net/ns/min", "partOfSpeech")[0];
+                    if (minPartOfSpeechElement) {
+                        srcPartOfSpeech = minPartOfSpeechElement.textContent || '';
+                    } else {
+                        // Fallback to termNote type="partOfSpeech" if 'min' namespace element is not found
+                        srcPartOfSpeech = firstTermGroup.querySelector('termNote[type="partOfSpeech"]')?.textContent || '';
+                    }
                 }
 
                 // Process second langSet (assumed target)
@@ -1306,6 +1538,14 @@
                 const secondTermGroup = secondLangSet.getElementsByTagName(termGroupTagName)[0];
                 if (secondTermGroup) {
                     tgtTerm = secondTermGroup.getElementsByTagName("term")[0]?.textContent || '';
+
+                    // Apply the same logic for target part of speech
+                    let minPartOfSpeechElement = secondTermGroup.getElementsByTagNameNS("http://www.tbxinfo.net/ns/min", "partOfSpeech")[0];
+                    if (minPartOfSpeechElement) {
+                        tgtPartOfSpeech = minPartOfSpeechElement.textContent || '';
+                    } else {
+                        tgtPartOfSpeech = secondTermGroup.querySelector('termNote[type="partOfSpeech"]')?.textContent || '';
+                    }
 
                     // Prioritize term-level definition/notes if available in target langSet/termGroup
                     const termGroupDefinitionElement = secondTermGroup.querySelector('descrip[type="definition"]');
@@ -1323,11 +1563,20 @@
                     }
                 }
 
-                console.log(`  TermPair: ${srcLang}:${srcTerm} - ${tgtLang}:${tgtTerm}. Definition: "${entryDefinition}", Notes: "${entryNotes}"`);
+                console.log(`  TermPair: ${srcLang}:${srcTerm} (POS: ${srcPartOfSpeech}) - ${tgtLang}:${tgtTerm} (POS: ${tgtPartOfSpeech}). Definition: "${entryDefinition}", Notes: "${entryNotes}"`);
 
                 // Only add if at least one term is present.
                 if (srcTerm || tgtTerm) {
-                    newGlossary.push({ srcLang: srcLang, srcTerm: srcTerm, tgtLang: tgtLang, tgtTerm: tgtTerm, definition: entryDefinition, notes: entryNotes });
+                    newGlossary.push({
+                        srcLang: srcLang,
+                        srcTerm: srcTerm,
+                        srcPartOfSpeech: srcPartOfSpeech, // Store source part of speech
+                        tgtLang: tgtLang,
+                        tgtTerm: tgtTerm,
+                        tgtPartOfSpeech: tgtPartOfSpeech, // Store target part of speech (even if not displayed, good for data integrity)
+                        definition: entryDefinition,
+                        notes: entryNotes
+                    });
 
                     langCounts[srcLang] = (langCounts[srcLang] || 0) + 1;
                     langCounts[tgtLang] = (langCounts[tgtLang] || 0) + 1;
@@ -1358,6 +1607,8 @@
                         console.log(`Swapping language pair for entry: ${entry.srcTerm}`);
                         [entry.srcLang, entry.tgtLang] = [entry.tgtLang, entry.srcLang];
                         [entry.srcTerm, entry.tgtTerm] = [entry.tgtTerm, entry.srcTerm];
+                        // Also swap part of speech if they were explicitly stored for each language
+                        [entry.srcPartOfSpeech, entry.tgtPartOfSpeech] = [entry.tgtPartOfSpeech, entry.srcPartOfSpeech];
                     }
                 });
             } else {
@@ -1411,7 +1662,8 @@
       messageBox.className = 'message-box';
 
       const titleEl = document.createElement('h3');
-      titleEl.textContent = title;
+      // For simple messages, title is usually not needed or can be a generic "Info"
+      titleEl.textContent = translations[currentUILanguage]['title']; // Using app title as generic info title
 
       const messageText = document.createElement('p');
       messageText.textContent = message;
@@ -1422,6 +1674,7 @@
       closeButton.className = 'btn-primary';
       closeButton.onclick = () => document.body.removeChild(messageBox);
 
+      messageBox.appendChild(titleEl); // Add title element
       messageBox.appendChild(messageText);
       messageBox.appendChild(closeButton);
       document.body.appendChild(messageBox);
@@ -1544,6 +1797,9 @@
       input.focus();
     }
 
+    // Removed showColumnVisibilityMenu and toggleColumnVisibilityMenu functions
+    // Removed columnVisibilityMenu global variable
+
     document.addEventListener('DOMContentLoaded', () => {
       // Set initial language if not already set
       if (!localStorage.getItem('language')) {
@@ -1562,9 +1818,22 @@
 
       // Add key listeners for adding terms
       document.getElementById('srcTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('tgtTerm').focus(); });
-      document.getElementById('tgtTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('definition').focus(); });
-      document.getElementById('definition').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('notes').focus(); });
-      document.getElementById('notes').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTerm(); });
+      document.getElementById('tgtTerm').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+              document.getElementById('definition').focus();
+          }
+      });
+      document.getElementById('definition').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+              document.getElementById('notes').focus();
+          }
+      });
+      document.getElementById('notes').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+              document.getElementById('partOfSpeech').focus();
+          }
+      });
+      document.getElementById('partOfSpeech').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTerm(); });
 
       // Add undo shortcut
       document.addEventListener('keydown', (e) => {
@@ -1573,6 +1842,9 @@
           undo();
         }
       });
+      
+      // Apply initial column visibility (all true by default now)
+      applyColumnVisibility();
     });
   </script>
 </body>
