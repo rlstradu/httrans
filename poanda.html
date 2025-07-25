@@ -667,6 +667,7 @@
                 'error_reading_file': 'Error reading or parsing .po file: ',
                 'error_saving_file': 'Error saving .po file: ',
                 'file_saved_successfully': '.po file saved successfully.',
+'tbx_saved_successfully': 'TBX file saved successfully.',
                 'no_translations_to_save': 'No translations to save. Load a .po file first.',
                 'reached_last': 'You have reached the last translation.',
                 'reached_first': 'You are already at the first translation.',
@@ -832,6 +833,7 @@
                 'error_reading_file': 'Error al leer o analizar archivo .po: ',
                 'error_saving_file': 'Error al guardar archivo .po: ',
                 'file_saved_successfully': 'Archivo .po guardado con éxito.',
+'tbx_saved_successfully': 'Archivo TBX guardado con éxito.',
                 'no_translations_to_save': 'No hay traducciones para guardar. Carga un archivo .po primero.',
                 'reached_last': 'Has llegado a la última traducción.',
                 'reached_first': 'Ya estás en la primera traducción.',
@@ -2808,7 +2810,7 @@
                 document.body.appendChild(a);
                 a.click();
                 URL.revokeObjectURL(url);
-                showMessage(translations[currentLanguage]['file_saved_successfully']);
+                showMessage(translations[currentLanguage]['tbx_saved_successfully']);
             } catch (error) {
                 showMessage(`${translations[currentLanguage]['error_saving_file']} ${error.message}`);
                 console.error("Error downloading TBX:", error);
