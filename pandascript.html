@@ -4,13 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="appTitle">PandaScript</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Font Awesome para iconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- jsPDF para exportar a PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- Wavesurfer.js CDN -->
   <script src="https://unpkg.com/wavesurfer.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; overflow: hidden; }
@@ -93,16 +89,10 @@
         font-size: 0.875rem;
         transition: background-color 0.2s;
     }
-     #find-replace-close-btn {
-        font-size: 1.2rem;
-        line-height: 1;
-        padding: 0 8px;
-    }
   </style>
 </head>
 <body class="flex flex-row h-screen">
 
-  <!-- Panel Izquierdo -->
   <div id="left" class="p-4 flex flex-col relative" style="flex-basis: 40%;">
     
     <div id="video-player-container" class="relative w-full overflow-hidden rounded-lg mb-4 shadow-2xl" style="padding-top: 56.25%;">
@@ -158,13 +148,10 @@
     </div>
   </div>
 
-  <!-- Divisor Flexible -->
   <div id="resizer"></div>
 
-  <!-- Panel Derecho -->
   <div id="right" class="p-4 flex flex-col relative" style="flex-basis: 60%;">
     <div id="controls" class="mb-4 flex flex-wrap items-center gap-2">
-        <!-- Menú File -->
         <div class="relative inline-block text-left">
             <button id="fileMenuBtn" type="button" class="inline-flex justify-center rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
                 <span data-i18n="fileMenu">File</span>
@@ -179,7 +166,6 @@
                 </div>
             </div>
         </div>
-        <!-- Menú Settings -->
         <div class="relative inline-block text-left">
             <button id="settingsMenuBtn" type="button" class="inline-flex justify-center rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
                 <span data-i18n="settingsMenu">Settings</span>
@@ -193,9 +179,7 @@
                 </div>
             </div>
         </div>
-        <!-- Separador -->
         <div class="border-l h-6 mx-2" id="controlsSeparator"></div>
-        <!-- Botones restantes -->
         <div class="editor-button-group">
             <input type="file" id="textFileInput" accept=".txt" class="hidden" />
             <input type="file" id="shortcutImportInput" accept=".json" class="hidden" />
@@ -208,11 +192,10 @@
         </div>
     </div>
     
-    <!-- Barra de Búsqueda y Reemplazo -->
     <div id="find-replace-bar" class="hidden">
         <div class="flex flex-col gap-2 flex-grow">
             <div class="flex items-center gap-2">
-                <input type="text" id="find-input" class="flex-grow" />
+                <input type="text" id="find-input" class="flex-grow" data-i18n-placeholder="findPlaceholder" />
                 <span id="find-results-count" class="text-sm">0/0</span>
                 <button id="find-prev-btn" data-i18n-title="tooltip_find_previous"><i class="fas fa-arrow-up"></i></button>
                 <button id="find-next-btn" data-i18n-title="tooltip_find_next"><i class="fas fa-arrow-down"></i></button>
@@ -224,22 +207,19 @@
                 <button id="replace-all-btn" data-i18n="replaceAll">Replace All</button>
             </div>
         </div>
-        <div class="flex items-center gap-2 ml-4">
+        <div class="flex items-center gap-2 ml-auto pl-4">
              <label class="flex items-center gap-1 text-sm cursor-pointer">
                 <input type="checkbox" id="match-case-checkbox" />
                 <span data-i18n="caseSensitive">Match case</span>
             </label>
-            <button id="find-replace-close-btn" data-i18n-title="tooltip_close_find_bar">&times;</button>
         </div>
     </div>
 
-    <!-- Editor de Texto -->
     <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="w-full flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner">
       <p data-i18n="editorPlaceholder">Start transcribing here...</p>
     </div>
   </div>
 
-  <!-- Modal -->
   <div id="customModal" class="modal-overlay">
     <div class="modal-content">
       <span class="modal-close-btn">&times;</span>
@@ -310,7 +290,6 @@
         const matchCaseCheckbox = document.getElementById('match-case-checkbox');
         const replaceBtn = document.getElementById('replace-btn');
         const replaceAllBtn = document.getElementById('replace-all-btn');
-        const findReplaceCloseBtn = document.getElementById('find-replace-close-btn');
         const toggleReplaceBtn = document.getElementById('toggle-replace-btn');
         const replaceControls = document.getElementById('replace-controls');
 
@@ -328,8 +307,8 @@
 
         // --- Traducciones ---
         const translations = {
-            en: { appTitle: "PandaScript", openMediaFile: "Open Video/Audio File", insertTimecode: "Insert timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode", recurringTextHeader: "Recurring Text", fileMenu: "File", settingsMenu: "Settings", newTranscription: "New transcription", importText: "Import .txt", export: "Export", backup: "Backup", shortcutsButton: "Keyboard Shortcuts", darkMode: "Dark Mode", lightMode: "Light Mode", changeLanguageButton: "Change Language", editorPlaceholder: "Open a video or audio file and start transcribing here. Use the different commands and keyboard shortcuts to transcribe productively.", exportModalTitle: "Export Transcription", filenameLabel: "Filename:", formatLabel: "Format:", exportBtnText: "Export", newTranscriptionConfirm: "Are you sure you want to start a new transcription? Any unsaved progress will be lost.", backupFoundTitle: "Backup Found", backupFoundMessage: "An automatic backup was found. Do you want to restore it?", restore: "Restore", discard: "Discard", noBackup: "No backup available.", shortcutsModalTitle: "Customize Keyboard Shortcuts", shortcutsModalMessage: "Click on a button to set a new shortcut.", resetShortcuts: "Restore", pressNewShortcut: "Press new keys...", saveShortcuts: "Save", importShortcuts: "Import", exportShortcuts: "Export", shortcutsImported: "Shortcuts imported successfully.", shortcutsImportError: "Error importing shortcuts. Invalid file format.", shortcutLabel_playPause: "Play/Pause", shortcutLabel_rewind5s: "Rewind 5s", shortcutLabel_forward5s: "Forward 5s", shortcutLabel_rewind1s: "Rewind 1s", shortcutLabel_forward1s: "Forward 1s", shortcutLabel_rewind1frame: "Rewind 1 frame", shortcutLabel_forward1frame: "Forward 1 frame", shortcutLabel_speedUp: "Speed Up", shortcutLabel_speedDown: "Speed Down", shortcutLabel_insertTimecode: "Insert timecode", shortcutLabel_insertRecurringText: "Insert recurring text", unsavedChangesTitle: "Unsaved Changes", unsavedChangesMessage: "You have unsaved changes in the shortcuts. Do you want to close without saving?", continueAndClose: "Continue and Close", goBack: "Go Back", caseSensitive: "Match case", replace: "Replace", replaceAll: "Replace All", shortcutLabel_bold: "Bold", shortcutLabel_italic: "Italic", shortcutLabel_uppercase: "Uppercase", shortcutLabel_lowercase: "Lowercase", tooltip_add_recurring: "Add text to editor", tooltip_delete_recurring: "Delete field", shortcutLabel_find: "Find", shortcutLabel_replace: "Replace", tooltip_find_previous: "Find Previous", tooltip_find_next: "Find Next", tooltip_toggle_replace: "Toggle Replace", tooltip_close_find_bar: "Close", languageModalTitle: "Change Language", save: "Save", cancel: "Cancel" },
-            es: { appTitle: "PandaScript", openMediaFile: "Abrir Vídeo/Audio", insertTimecode: "Insertar código de tiempo", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial", recurringTextHeader: "Texto recurrente", fileMenu: "Archivo", settingsMenu: "Ajustes", newTranscription: "Nueva transcripción", importText: "Importar .txt", export: "Exportar", backup: "Copia de seguridad", shortcutsButton: "Atajos de teclado", darkMode: "Modo oscuro", lightMode: "Modo claro", changeLanguageButton: "Cambiar idioma", editorPlaceholder: "Abre un archivo de vídeo o audio y empieza a transcribir aquí. Utiliza los diferentes comandos y atajos de teclado para transcribir de manera productiva.", exportModalTitle: "Exportar Transcripción", filenameLabel: "Nombre del archivo:", formatLabel: "Formato:", exportBtnText: "Exportar", newTranscriptionConfirm: "¿Seguro que quieres empezar una nueva transcripción? Se perderá todo el progreso no guardado.", backupFoundTitle: "Copia de seguridad encontrada", backupFoundMessage: "Se encontró una copia de seguridad automática. ¿Quieres restaurarla?", restore: "Restaurar", discard: "Descartar", noBackup: "No hay ninguna copia de seguridad disponible.", shortcutsModalTitle: "Personalizar Atajos de Teclado", shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.", resetShortcuts: "Restaurar", pressNewShortcut: "Pulsa las nuevas teclas...", saveShortcuts: "Guardar", importShortcuts: "Importar", exportShortcuts: "Exportar", shortcutsImported: "Atajos importados correctamente.", shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.", shortcutLabel_playPause: "Reproducir/Pausar", shortcutLabel_rewind5s: "Retroceder 5s", shortcutLabel_forward5s: "Avanzar 5s", shortcutLabel_rewind1s: "Retroceder 1s", shortcutLabel_forward1s: "Avanzar 1s", shortcutLabel_rewind1frame: "Retroceder 1 fotograma", shortcutLabel_forward1frame: "Avanzar 1 fotograma", shortcutLabel_speedUp: "Acelerar", shortcutLabel_speedDown: "Ralentizar", shortcutLabel_insertTimecode: "Insertar código de tiempo", shortcutLabel_insertRecurringText: "Insertar texto recurrente", unsavedChangesTitle: "Cambios no guardados", unsavedChangesMessage: "Tienes cambios sin guardar en los atajos. ¿Quieres cerrar sin guardar?", continueAndClose: "Continuar y cerrar", goBack: "Volver", caseSensitive: "Distinguir mayúsculas", replace: "Reemplazar", replaceAll: "Reemplazar todos", shortcutLabel_bold: "Negrita", shortcutLabel_italic: "Cursiva", shortcutLabel_uppercase: "Mayúsculas", shortcutLabel_lowercase: "Minúsculas", tooltip_add_recurring: "Añadir texto al editor", tooltip_delete_recurring: "Eliminar campo", shortcutLabel_find: "Buscar", shortcutLabel_replace: "Reemplazar", tooltip_find_previous: "Buscar anterior", tooltip_find_next: "Buscar siguiente", tooltip_toggle_replace: "Habilitar buscar y reemplazar", tooltip_close_find_bar: "Cerrar", languageModalTitle: "Cambiar Idioma", save: "Guardar", cancel: "Cancelar" }
+            en: { appTitle: "PandaScript", openMediaFile: "Open Video/Audio File", insertTimecode: "Insert timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode", recurringTextHeader: "Recurring Text", fileMenu: "File", settingsMenu: "Settings", newTranscription: "New transcription", importText: "Import .txt", export: "Export", backup: "Backup", shortcutsButton: "Keyboard Shortcuts", darkMode: "Dark Mode", lightMode: "Light Mode", changeLanguageButton: "Change Language", editorPlaceholder: "Open a video or audio file and start transcribing here. Use the different commands and keyboard shortcuts to transcribe productively.", exportModalTitle: "Export Transcription", filenameLabel: "Filename:", formatLabel: "Format:", exportBtnText: "Export", newTranscriptionConfirm: "Are you sure you want to start a new transcription? Any unsaved progress will be lost.", backupFoundTitle: "Backup Found", backupFoundMessage: "An automatic backup was found. Do you want to restore it?", restore: "Restore", discard: "Discard", noBackup: "No backup available.", shortcutsModalTitle: "Customize Keyboard Shortcuts", shortcutsModalMessage: "Click on a button to set a new shortcut.", resetShortcuts: "Restore", pressNewShortcut: "Press new keys...", saveShortcuts: "Save", importShortcuts: "Import", exportShortcuts: "Export", shortcutsImported: "Shortcuts imported successfully.", shortcutsImportError: "Error importing shortcuts. Invalid file format.", shortcutLabel_playPause: "Play/Pause", shortcutLabel_rewind5s: "Rewind 5s", shortcutLabel_forward5s: "Forward 5s", shortcutLabel_rewind1s: "Rewind 1s", shortcutLabel_forward1s: "Forward 1s", shortcutLabel_rewind1frame: "Rewind 1 frame", shortcutLabel_forward1frame: "Forward 1 frame", shortcutLabel_speedUp: "Speed Up", shortcutLabel_speedDown: "Speed Down", shortcutLabel_insertTimecode: "Insert timecode", shortcutLabel_insertRecurringText: "Insert recurring text", unsavedChangesTitle: "Unsaved Changes", unsavedChangesMessage: "You have unsaved changes in the shortcuts. Do you want to close without saving?", continueAndClose: "Continue and Close", goBack: "Go Back", findPlaceholder: "Find...", caseSensitive: "Match case", replace: "Replace", replaceAll: "Replace All", shortcutLabel_bold: "Bold", shortcutLabel_italic: "Italic", shortcutLabel_uppercase: "Uppercase", shortcutLabel_lowercase: "Lowercase", tooltip_add_recurring: "Add text to editor", tooltip_delete_recurring: "Delete field", shortcutLabel_find: "Find", shortcutLabel_replace: "Replace", tooltip_find_previous: "Find Previous", tooltip_find_next: "Find Next", tooltip_toggle_replace: "Toggle Replace", tooltip_close_find_bar: "Close", languageModalTitle: "Change Language", save: "Save", cancel: "Cancel" },
+            es: { appTitle: "PandaScript", openMediaFile: "Abrir Vídeo/Audio", insertTimecode: "Insertar código de tiempo", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial", recurringTextHeader: "Texto recurrente", fileMenu: "Archivo", settingsMenu: "Ajustes", newTranscription: "Nueva transcripción", importText: "Importar .txt", export: "Exportar", backup: "Copia de seguridad", shortcutsButton: "Atajos de teclado", darkMode: "Modo oscuro", lightMode: "Modo claro", changeLanguageButton: "Cambiar idioma", editorPlaceholder: "Abre un archivo de vídeo o audio y empieza a transcribir aquí. Utiliza los diferentes comandos y atajos de teclado para transcribir de manera productiva.", exportModalTitle: "Exportar Transcripción", filenameLabel: "Nombre del archivo:", formatLabel: "Formato:", exportBtnText: "Exportar", newTranscriptionConfirm: "¿Seguro que quieres empezar una nueva transcripción? Se perderá todo el progreso no guardado.", backupFoundTitle: "Copia de seguridad encontrada", backupFoundMessage: "Se encontró una copia de seguridad automática. ¿Quieres restaurarla?", restore: "Restaurar", discard: "Descartar", noBackup: "No hay ninguna copia de seguridad disponible.", shortcutsModalTitle: "Personalizar Atajos de Teclado", shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.", resetShortcuts: "Restaurar", pressNewShortcut: "Pulsa las nuevas teclas...", saveShortcuts: "Guardar", importShortcuts: "Importar", exportShortcuts: "Exportar", shortcutsImported: "Atajos importados correctamente.", shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.", shortcutLabel_playPause: "Reproducir/Pausar", shortcutLabel_rewind5s: "Retroceder 5s", shortcutLabel_forward5s: "Avanzar 5s", shortcutLabel_rewind1s: "Retroceder 1s", shortcutLabel_forward1s: "Avanzar 1s", shortcutLabel_rewind1frame: "Retroceder 1 fotograma", shortcutLabel_forward1frame: "Avanzar 1 fotograma", shortcutLabel_speedUp: "Acelerar", shortcutLabel_speedDown: "Ralentizar", shortcutLabel_insertTimecode: "Insertar código de tiempo", shortcutLabel_insertRecurringText: "Insertar texto recurrente", unsavedChangesTitle: "Cambios no guardados", unsavedChangesMessage: "Tienes cambios sin guardar en los atajos. ¿Quieres cerrar sin guardar?", continueAndClose: "Continuar y cerrar", goBack: "Volver", findPlaceholder: "Buscar...", caseSensitive: "Distinguir mayúsculas", replace: "Reemplazar", replaceAll: "Reemplazar todos", shortcutLabel_bold: "Negrita", shortcutLabel_italic: "Cursiva", shortcutLabel_uppercase: "Mayúsculas", shortcutLabel_lowercase: "Minúsculas", tooltip_add_recurring: "Añadir texto al editor", tooltip_delete_recurring: "Eliminar campo", shortcutLabel_find: "Buscar", shortcutLabel_replace: "Reemplazar", tooltip_find_previous: "Buscar anterior", tooltip_find_next: "Buscar siguiente", tooltip_toggle_replace: "Habilitar buscar y reemplazar", tooltip_close_find_bar: "Cerrar", languageModalTitle: "Cambiar Idioma", save: "Guardar", cancel: "Cancelar" }
         };
 
         const availableLanguages = {
@@ -371,6 +350,13 @@
                 const key = el.getAttribute('data-i18n-title');
                 if (translations[lang] && translations[lang][key]) {
                     el.title = translations[lang][key];
+                }
+            });
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
                 }
             });
             if (isEditorPristine) {
@@ -1218,7 +1204,6 @@
         });
         
         // Find & Replace Event Listeners
-        findReplaceCloseBtn.addEventListener('click', hideFindReplaceBar);
         findInput.addEventListener('input', updateFindResults);
         matchCaseCheckbox.addEventListener('change', updateFindResults);
         findNextBtn.addEventListener('click', () => findInEditor(false));
