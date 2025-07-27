@@ -10,95 +10,151 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <!-- jsPDF para exportar a PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Wavesurfer.js CDN -->
+  <script src="https://unpkg.com/wavesurfer.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; overflow: hidden; }
     #left, #right { overflow: auto; }
     #left::-webkit-scrollbar, #right::-webkit-scrollbar { width: 0px; background: transparent; }
     #resizer { flex-basis: 2px; flex-shrink: 0; cursor: col-resize; transition: background-color 0.2s ease-in-out; }
-    #resizer:hover { background-color: #3b82f6; }
-    .timestamp { color: #93c5fd !important; text-decoration: underline !important; cursor: pointer; background: none !important; }
-    #video { width: 100%; height: 100%; object-fit: contain; }
+    #resizer:hover { background-color: #FF4853; }
+    .timestamp { color: #FF4853 !important; text-decoration: underline !important; cursor: pointer; background: none !important; }
+    
+    #video-player-container { position: relative; overflow: hidden; }
+    #video-controls-overlay {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        padding: 8px;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+        opacity: 0; visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    #video-player-container:hover #video-controls-overlay { opacity: 1; visibility: visible; }
+    
+    #progressBarContainer {
+        width: 95%; height: 5px; background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 10px; cursor: pointer; margin: 0 auto;
+    }
+    #progressBar { width: 0%; height: 100%; background-color: #FF4853; border-radius: 10px; }
+
+    .control-button-row { display: flex; justify-content: center; align-items: center; gap: 6px; }
+    .control-button {
+        background-color: rgba(55, 55, 55, 0.8); color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px;
+        padding: 4px 8px; transition: background-color 0.2s, transform 0.2s;
+        font-size: 0.75rem; line-height: 1;
+    }
+    .control-button:hover { background-color: #FF4853; transform: scale(1.05); }
+    .control-button:disabled { opacity: 0.5; cursor: not-allowed; background-color: rgba(55, 55, 55, 0.8); }
+    #playPauseBtn { font-size: 1rem; padding: 6px 10px; }
+    #playPauseBtn.playing i:before { content: "\f04c"; }
+    .volume-container { display: flex; align-items: center; gap: 8px; }
+    #volumeSlider { width: 70px; height: 5px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.3); border-radius: 5px; outline: none; transition: opacity 0.2s; }
+    #volumeSlider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: #FF4853; border-radius: 50%; cursor: pointer; }
+    #volumeSlider::-moz-range-thumb { width: 12px; height: 12px; background: #FF4853; border-radius: 50%; cursor: pointer; }
+
+    #tcrDisplay { font-family: 'Courier New', monospace; }
+    .recurring-btn:hover { background-color: #FF4853 !important; }
+
+    #editor { min-height: 200px; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
+    
+    .editor-button-group { display: flex; align-items: center; gap: 0.5rem; }
+    .editor-button { padding: 0.375rem 0.625rem; }
+    .dropdown-item { display: block; width: 100%; text-align: left; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
     .modal-overlay.show { opacity: 1; visibility: visible; }
-    .modal-content { background-color: #f3f4f6; color: #1f2937; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); max-width: 500px; width: 90%; }
+    .modal-content { position: relative; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); max-width: 500px; width: 90%; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-    #tcrDisplay { font-family: 'Courier New', monospace; }
-    .highlighted-match { background-color: yellow; color: black; }
-    .current-match { background-color: orange; color: black; }
-    #editor { min-height: 200px; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
-    #volumeSlider { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; width: 100%; height: 8px; }
-    #volumeSlider::-webkit-slider-runnable-track { background: #ccc; border-radius: 5px; height: 8px; }
-    #volumeSlider::-moz-range-track { background: #ccc; border-radius: 5px; height: 8px; }
-    #volumeSlider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #007bff; border: 1px solid #0056b3; margin-top: -4px; }
-    #volumeSlider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #007bff; border: 1px solid #0056b3; }
-    body.dark #volumeSlider::-webkit-slider-runnable-track { background: #555; }
-    body.dark #volumeSlider::-webkit-slider-thumb { background: #63b3ed; border-color: #4299e1; }
-    body.dark #volumeSlider::-moz-range-track { background: #555; }
-    body.dark #volumeSlider::-moz-range-thumb { background: #63b3ed; border-color: #4299e1; }
-    .shortcut-button.is-listening { border-color: #3b82f6; color: #3b82f6; }
+    .shortcut-button.is-listening { border-color: #FF4853; color: #FF4853; }
+    #modalBody { max-height: 60vh; overflow-y: auto; }
+    .modal-close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
+
+    /* Find & Replace Bar Styles */
+    #find-replace-bar {
+        padding: 8px;
+        border-bottom: 1px solid;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    #find-replace-bar input[type="text"] {
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid;
+        font-size: 0.875rem;
+    }
+    #find-replace-bar button {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+     #find-replace-close-btn {
+        font-size: 1.2rem;
+        line-height: 1;
+        padding: 0 8px;
+    }
   </style>
 </head>
 <body class="flex flex-row h-screen">
 
   <!-- Panel Izquierdo -->
   <div id="left" class="p-4 flex flex-col relative" style="flex-basis: 40%;">
-    <!-- Contenedor del reproductor de vídeo -->
-    <div class="relative w-full overflow-hidden rounded-lg mb-2 shadow-md" style="padding-top: 56.25%;">
-        <div id="videoDisplayContainer" class="absolute inset-0 bg-black flex items-center justify-center">
-            <video id="video" controls class="w-full h-full object-contain hidden"></video> 
+    
+    <div id="video-player-container" class="relative w-full overflow-hidden rounded-lg mb-4 shadow-2xl" style="padding-top: 56.25%;">
+        <div class="absolute inset-0 bg-black flex items-center justify-center">
+            <video id="video" class="w-full h-full object-contain"></video> 
             <div id="emptyPlayerOverlay" class="absolute inset-0 flex flex-col justify-center items-center bg-black text-gray-400">
                 <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-logo.png" alt="PandaScript Logo" class="h-24 mb-2"> 
                 <span class="text-xl font-bold">PandaScript</span>
             </div>
         </div>
-    </div>
-    <p id="noMediaMessage" class="text-sm text-center italic mb-4 hidden" data-i18n="noMediaMessage">No media file loaded.</p>
-    
-    <!-- Controles de Reproducción -->
-    <div class="playback-controls flex flex-col gap-2 mb-4">
-      <div class="flex flex-wrap justify-center items-center gap-2 w-full">
-        <input type="file" id="videoFileInput" accept="video/*,audio/*" class="hidden" />
-        <button id="importVideoAudioBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out w-auto" data-i18n="openMediaFile" data-i18n-title="openMediaFileTitle"><i class="fas fa-file-video mr-2"></i>Open Video/Audio File</button>
-        <button id="playPauseBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="playPauseTitle"><i class="fas fa-play"></i></button>
-        <button id="speedDownBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="slowDownTitle">-0.25x</button>
-        <span id="speedDisplay" class="text-sm font-semibold flex items-center px-2">1.0x</span>
-        <button id="speedUpBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="speedUpTitle">+0.25x</button>
-        <div class="flex-grow max-w-[75px] px-2">
-            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" class="w-full h-2 rounded-lg appearance-none cursor-pointer range-lg" data-i18n-title="volumeControlTitle" />
+        <div id="video-controls-overlay">
+            <div id="progressBarContainer">
+                <div id="progressBar"></div>
+            </div>
+            <div class="control-button-row">
+                <button id="speedDownBtn" class="control-button">-0.25x</button>
+                <button id="rewind5sBtn" class="control-button">-5s</button>
+                <button id="rewind1sBtn" class="control-button">-1s</button>
+                <button id="rewind1fBtn" class="control-button">-1f</button>
+                <button id="playPauseBtn" class="control-button"><i class="fas fa-play"></i></button>
+                <button id="forward1fBtn" class="control-button">+1f</button>
+                <button id="forward1sBtn" class="control-button">+1s</button>
+                <button id="forward5sBtn" class="control-button">+5s</button>
+                <button id="speedUpBtn" class="control-button">+0.25x</button>
+                <span id="speedDisplay" class="text-white text-xs font-semibold mx-2">1.0x</span>
+                <div class="volume-container">
+                    <button id="muteBtn" class="control-button"><i class="fas fa-volume-up"></i></button>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+                </div>
+            </div>
         </div>
-        <button id="muteBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="muteUnmuteTitle"><i class="fas fa-volume-up"></i></button>
-      </div>
-      <div class="flex flex-wrap justify-center items-center gap-2 w-full mt-2">
-        <button onclick="seekMedia(-5)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind5sTitle">-5s</button>
-        <button onclick="seekMedia(-3)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind3sTitle">-3s</button>
-        <button onclick="seekMedia(-1)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind1sTitle">-1s</button>
-        <button onclick="executeShortcut('rewind1frame')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="rewind1fTitle">-1f</button>
-        <button onclick="executeShortcut('forward1frame')" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward1fTitle">+1f</button>
-        <button onclick="seekMedia(1)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward1sTitle">+1s</button>
-        <button onclick="seekMedia(3)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward3sTitle">+3s</button>
-        <button onclick="seekMedia(5)" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto" data-i18n-title="forward5sTitle">+5s</button>
-      </div>
     </div>
     
-    <!-- Visualización de TCR -->
+    <button id="importVideoAudioBtn" class="w-full font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out mb-4" data-i18n="openMediaFile" data-i18n-title="openMediaFileTitle"><i class="fas fa-file-video mr-2"></i>Open Video/Audio File</button>
+    <input type="file" id="videoFileInput" accept="video/*,audio/*" class="hidden" />
+
+    <div id="waveform-container" class="w-full h-24 mb-4 rounded-lg shadow-md hidden"></div>
+    
     <div id="tcrDisplay" class="font-mono text-4xl p-4 text-center rounded-lg mb-4 shadow-md w-full">--:--:--,---</div>
 
-    <!-- Botones de TCR -->
     <div class="flex flex-wrap gap-2 mb-4 w-full">
-      <button onclick="executeShortcut('insertTimecode')" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-clock mr-2"></i><span data-i18n="insertTimecode">Insert Timecode</span></button>
-      <button onclick="showTCRFormatSelection()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="timecodeFormat"><i class="fas fa-gear mr-2"></i>Timecode Format</button>
-      <button onclick="showSetInitialTCRModal()" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="setInitialTimecode"><i class="fas fa-play mr-2"></i>Set Initial Timecode</button>
+      <button id="insertTimecodeBtn" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><span data-i18n="insertTimecode">Insert Timecode</span></button>
+      <button id="timecodeFormatBtn" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="timecodeFormat"><i class="fas fa-gear mr-2"></i>Timecode Format</button>
+      <button id="setInitialTimecodeBtn" class="flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm" data-i18n="setInitialTimecode"><i class="fas fa-play mr-2"></i>Set Initial Timecode</button>
     </div>
     
-    <!-- Campos de Texto Recurrente -->
-    <div id="recurringTextSection" class="mt-4 mb-6 w-full">
+    <div id="recurringTextSection" class="mt-auto mb-6 w-full">
       <div class="flex items-center justify-between mb-3 border-b pb-2">
         <h4 class="text-lg font-semibold" data-i18n="recurringTextHeader">Recurring Text</h4>
-        <button id="addRecurringTextBtn" class="font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-plus"></i></button>
+        <button id="addRecurringTextBtn" class="font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-plus"></i></button>
       </div>
-      <div id="recurringTextContainer" class="flex flex-col gap-2 justify-center">
-        <!-- Los campos se añadirán aquí dinámicamente -->
-      </div>
+      <div id="recurringTextContainer" class="flex flex-col gap-2 justify-center"></div>
     </div>
   </div>
 
@@ -106,52 +162,79 @@
   <div id="resizer"></div>
 
   <!-- Panel Derecho -->
-  <div id="right" class="p-4 flex flex-col" style="flex-basis: 60%;">
-    <!-- Controles con Menús -->
+  <div id="right" class="p-4 flex flex-col relative" style="flex-basis: 60%;">
     <div id="controls" class="mb-4 flex flex-wrap items-center gap-2">
         <!-- Menú File -->
         <div class="relative inline-block text-left">
-            <button id="fileMenuBtn" type="button" class="inline-flex justify-center w-full rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
+            <button id="fileMenuBtn" type="button" class="inline-flex justify-center rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
                 <span data-i18n="fileMenu">File</span>
                 <i class="fas fa-chevron-down -mr-1 ml-2 h-5 w-5"></i>
             </button>
             <div id="fileMenuDropdown" class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10">
                 <div class="py-1" role="menu" aria-orientation="vertical">
-                    <a href="#" id="importTextBtn" class="dropdown-item" role="menuitem"><i class="fas fa-file-alt mr-3"></i><span data-i18n="importText">Import .txt</span></a>
-                    <a href="#" id="exportBtn" class="dropdown-item" role="menuitem"><i class="fas fa-download mr-3"></i><span data-i18n="export">Export</span></a>
+                    <a href="#" id="newTranscriptionBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-file-alt mr-3"></i><span data-i18n="newTranscription">Nueva transcripción</span></a>
+                    <a href="#" id="importTextBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-file-import mr-3"></i><span data-i18n="importText">Import .txt</span></a>
+                    <a href="#" id="exportBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-file-export mr-3"></i><span data-i18n="export">Export</span></a>
+                    <a href="#" id="backupBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-save mr-3"></i><span data-i18n="backup">Copia de seguridad</span></a>
                 </div>
             </div>
         </div>
         <!-- Menú Settings -->
         <div class="relative inline-block text-left">
-            <button id="settingsMenuBtn" type="button" class="inline-flex justify-center w-full rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
+            <button id="settingsMenuBtn" type="button" class="inline-flex justify-center rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
                 <span data-i18n="settingsMenu">Settings</span>
                 <i class="fas fa-chevron-down -mr-1 ml-2 h-5 w-5"></i>
             </button>
             <div id="settingsMenuDropdown" class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10">
                 <div class="py-1" role="menu" aria-orientation="vertical">
-                    <a href="#" id="shortcutsBtn" class="dropdown-item" role="menuitem"><i class="fas fa-keyboard mr-3"></i><span data-i18n="shortcutsButton">Keyboard Shortcuts</span></a>
-                    <a href="#" id="themeToggleBtn" class="dropdown-item" role="menuitem"><i id="themeIcon" class="fas fa-moon mr-3"></i><span id="themeText" data-i18n="darkMode">Dark Mode</span></a>
-                    <a href="#" id="languageToggleBtn" class="dropdown-item" role="menuitem"><i class="fas fa-language mr-3"></i><span id="languageText" data-i18n="changeLanguageButton">Change Language</span></a>
+                    <a href="#" id="shortcutsBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-keyboard mr-3"></i><span data-i18n="shortcutsButton">Keyboard Shortcuts</span></a>
+                    <a href="#" id="themeToggleBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i id="themeIcon" class="fas fa-moon mr-3"></i><span id="themeText" data-i18n="darkMode">Dark Mode</span></a>
+                    <a href="#" id="languageToggleBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-language mr-3"></i><span id="languageText" data-i18n="changeLanguageButton">Change Language</span></a>
                 </div>
             </div>
         </div>
         <!-- Separador -->
         <div class="border-l h-6 mx-2" id="controlsSeparator"></div>
         <!-- Botones restantes -->
-        <input type="file" id="textFileInput" accept=".txt" class="hidden" />
-        <input type="file" id="shortcutImportInput" accept=".json" class="hidden" />
-        <button id="boldBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-bold"></i></button>
-        <button id="italicBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-italic"></i></button>
-        <button id="findBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-search"></i></button>
-        <button id="replaceBtn" class="font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm"><i class="fas fa-exchange-alt"></i></button>
-        <!-- CAMBIO: Controles de fuente y tamaño -->
-        <div class="border-l h-6 mx-2"></div>
-        <select id="fontFamilySelect" title="Select Font Family" class="rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none"></select>
-        <select id="fontSizeSelect" title="Select Font Size" class="rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none"></select>
+        <div class="editor-button-group">
+            <input type="file" id="textFileInput" accept=".txt" class="hidden" />
+            <input type="file" id="shortcutImportInput" accept=".json" class="hidden" />
+            <button id="boldBtn" class="editor-button rounded-md border shadow-sm"><i class="fas fa-bold"></i></button>
+            <button id="italicBtn" class="editor-button rounded-md border shadow-sm"><i class="fas fa-italic"></i></button>
+            <button id="uppercaseBtn" class="editor-button rounded-md border shadow-sm font-bold">aA</button>
+            <button id="lowercaseBtn" class="editor-button rounded-md border shadow-sm font-bold">Aa</button>
+            <select id="fontFamilySelect" title="Select Font Family" class="rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none"></select>
+            <select id="fontSizeSelect" title="Select Font Size" class="rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none"></select>
+        </div>
     </div>
+    
+    <!-- Barra de Búsqueda y Reemplazo -->
+    <div id="find-replace-bar" class="hidden">
+        <div class="flex flex-col gap-2 flex-grow">
+            <div class="flex items-center gap-2">
+                <input type="text" id="find-input" class="flex-grow" />
+                <span id="find-results-count" class="text-sm">0/0</span>
+                <button id="find-prev-btn" data-i18n-title="tooltip_find_previous"><i class="fas fa-arrow-up"></i></button>
+                <button id="find-next-btn" data-i18n-title="tooltip_find_next"><i class="fas fa-arrow-down"></i></button>
+                <button id="toggle-replace-btn" data-i18n-title="tooltip_toggle_replace" class="px-2 py-1"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div id="replace-controls" class="hidden items-center gap-2">
+                <input type="text" id="replace-input" class="flex-grow" />
+                <button id="replace-btn" data-i18n="replace">Replace</button>
+                <button id="replace-all-btn" data-i18n="replaceAll">Replace All</button>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 ml-4">
+             <label class="flex items-center gap-1 text-sm cursor-pointer">
+                <input type="checkbox" id="match-case-checkbox" />
+                <span data-i18n="caseSensitive">Match case</span>
+            </label>
+            <button id="find-replace-close-btn" data-i18n-title="tooltip_close_find_bar">&times;</button>
+        </div>
+    </div>
+
     <!-- Editor de Texto -->
-    <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner min-h-[200px]">
+    <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="w-full flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner">
       <p data-i18n="editorPlaceholder">Start transcribing here...</p>
     </div>
   </div>
@@ -159,6 +242,7 @@
   <!-- Modal -->
   <div id="customModal" class="modal-overlay">
     <div class="modal-content">
+      <span class="modal-close-btn">&times;</span>
       <h3 id="modalTitle" class="text-xl font-bold mb-4"></h3>
       <p id="modalMessage" class="mb-4"></p>
       <div id="modalBody" class="mb-4"></div>
@@ -167,544 +251,565 @@
   </div>
 
   <script type="module">
-    // Módulo de Firebase (sin cambios)
-  </script>
-  <script>
-    // --- Selectores de Elementos DOM ---
-    const video = document.getElementById('video');
-    const videoFileInput = document.getElementById('videoFileInput');
-    const importVideoAudioBtn = document.getElementById('importVideoAudioBtn');
-    const textFileInput = document.getElementById('textFileInput');
-    const editor = document.getElementById('editor');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const speedDisplay = document.getElementById('speedDisplay');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const muteBtn = document.getElementById('muteBtn');
-    const tcrDisplay = document.getElementById('tcrDisplay');
-    const emptyPlayerOverlay = document.getElementById('emptyPlayerOverlay');
-    const recurringTextContainer = document.getElementById('recurringTextContainer');
-    const addRecurringTextBtn = document.getElementById('addRecurringTextBtn');
-    
-    const boldBtn = document.getElementById('boldBtn');
-    const italicBtn = document.getElementById('italicBtn');
-    const findBtn = document.getElementById('findBtn');
-    const replaceBtn = document.getElementById('replaceBtn');
+        // --- DOM Element References ---
+        const video = document.getElementById('video');
+        const videoFileInput = document.getElementById('videoFileInput');
+        const importVideoAudioBtn = document.getElementById('importVideoAudioBtn');
+        const textFileInput = document.getElementById('textFileInput');
+        const editor = document.getElementById('editor');
+        const tcrDisplay = document.getElementById('tcrDisplay');
+        const emptyPlayerOverlay = document.getElementById('emptyPlayerOverlay');
+        const recurringTextContainer = document.getElementById('recurringTextContainer');
+        const addRecurringTextBtn = document.getElementById('addRecurringTextBtn');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const rewind5sBtn = document.getElementById('rewind5sBtn');
+        const rewind1sBtn = document.getElementById('rewind1sBtn');
+        const rewind1fBtn = document.getElementById('rewind1fBtn');
+        const forward1fBtn = document.getElementById('forward1fBtn');
+        const forward1sBtn = document.getElementById('forward1sBtn');
+        const forward5sBtn = document.getElementById('forward5sBtn');
+        const speedDownBtn = document.getElementById('speedDownBtn');
+        const speedUpBtn = document.getElementById('speedUpBtn');
+        const speedDisplay = document.getElementById('speedDisplay');
+        const muteBtn = document.getElementById('muteBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const insertTimecodeBtn = document.getElementById('insertTimecodeBtn');
+        const timecodeFormatBtn = document.getElementById('timecodeFormatBtn');
+        const setInitialTimecodeBtn = document.getElementById('setInitialTimecodeBtn');
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const uppercaseBtn = document.getElementById('uppercaseBtn');
+        const lowercaseBtn = document.getElementById('lowercaseBtn');
+        const fileMenuBtn = document.getElementById('fileMenuBtn');
+        const fileMenuDropdown = document.getElementById('fileMenuDropdown');
+        const settingsMenuBtn = document.getElementById('settingsMenuBtn');
+        const settingsMenuDropdown = document.getElementById('settingsMenuDropdown');
+        const newTranscriptionBtn = document.getElementById('newTranscriptionBtn');
+        const importTextBtn = document.getElementById('importTextBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const backupBtn = document.getElementById('backupBtn');
+        const shortcutsBtn = document.getElementById('shortcutsBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const languageToggleBtn = document.getElementById('languageToggleBtn');
+        const resizer = document.getElementById('resizer');
+        const leftPanel = document.getElementById('left');
+        const rightPanel = document.getElementById('right');
+        const fontFamilySelect = document.getElementById('fontFamilySelect');
+        const fontSizeSelect = document.getElementById('fontSizeSelect');
+        const waveformContainer = document.getElementById('waveform-container');
+        const progressBarContainer = document.getElementById('progressBarContainer');
+        const progressBar = document.getElementById('progressBar');
+        const shortcutImportInput = document.getElementById('shortcutImportInput');
+        // Find & Replace elements
+        const findReplaceBar = document.getElementById('find-replace-bar');
+        const findInput = document.getElementById('find-input');
+        const replaceInput = document.getElementById('replace-input');
+        const findResultsCount = document.getElementById('find-results-count');
+        const findPrevBtn = document.getElementById('find-prev-btn');
+        const findNextBtn = document.getElementById('find-next-btn');
+        const matchCaseCheckbox = document.getElementById('match-case-checkbox');
+        const replaceBtn = document.getElementById('replace-btn');
+        const replaceAllBtn = document.getElementById('replace-all-btn');
+        const findReplaceCloseBtn = document.getElementById('find-replace-close-btn');
+        const toggleReplaceBtn = document.getElementById('toggle-replace-btn');
+        const replaceControls = document.getElementById('replace-controls');
 
-    const fileMenuBtn = document.getElementById('fileMenuBtn');
-    const fileMenuDropdown = document.getElementById('fileMenuDropdown');
-    const settingsMenuBtn = document.getElementById('settingsMenuBtn');
-    const settingsMenuDropdown = document.getElementById('settingsMenuDropdown');
-    const importTextBtn = document.getElementById('importTextBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const shortcutsBtn = document.getElementById('shortcutsBtn');
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const languageToggleBtn = document.getElementById('languageToggleBtn');
-    const themeText = document.getElementById('themeText');
-    const themeIcon = document.getElementById('themeIcon');
-    
-    const resizer = document.getElementById('resizer');
-    const leftPanel = document.getElementById('left');
-    const rightPanel = document.getElementById('right');
-    const shortcutImportInput = document.getElementById('shortcutImportInput');
-    // CAMBIO: Selectores para los nuevos controles de fuente
-    const fontFamilySelect = document.getElementById('fontFamilySelect');
-    const fontSizeSelect = document.getElementById('fontSizeSelect');
+        // --- Estado de la Aplicación ---
+        const DEFAULT_FRAMERATE = 30;
+        let tcrOffsetSeconds = 0;
+        let isDarkMode = false;
+        let currentLanguage = localStorage.getItem('pandascript_language') || 'en';
+        let wavesurfer = null;
+        let lastVolume = 1;
+        let shortcuts = {};
+        let isEditorPristine = true;
+        let listeningForShortcut = null;
+        let tempShortcuts = {};
 
+        // --- Traducciones ---
+        const translations = {
+            en: { appTitle: "PandaScript", openMediaFile: "Open Video/Audio File", insertTimecode: "Insert timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode", recurringTextHeader: "Recurring Text", fileMenu: "File", settingsMenu: "Settings", newTranscription: "New transcription", importText: "Import .txt", export: "Export", backup: "Backup", shortcutsButton: "Keyboard Shortcuts", darkMode: "Dark Mode", lightMode: "Light Mode", changeLanguageButton: "Change Language", editorPlaceholder: "Open a video or audio file and start transcribing here. Use the different commands and keyboard shortcuts to transcribe productively.", exportModalTitle: "Export Transcription", filenameLabel: "Filename:", formatLabel: "Format:", exportBtnText: "Export", newTranscriptionConfirm: "Are you sure you want to start a new transcription? Any unsaved progress will be lost.", backupFoundTitle: "Backup Found", backupFoundMessage: "An automatic backup was found. Do you want to restore it?", restore: "Restore", discard: "Discard", noBackup: "No backup available.", shortcutsModalTitle: "Customize Keyboard Shortcuts", shortcutsModalMessage: "Click on a button to set a new shortcut.", resetShortcuts: "Restore", pressNewShortcut: "Press new keys...", saveShortcuts: "Save", importShortcuts: "Import", exportShortcuts: "Export", shortcutsImported: "Shortcuts imported successfully.", shortcutsImportError: "Error importing shortcuts. Invalid file format.", shortcutLabel_playPause: "Play/Pause", shortcutLabel_rewind5s: "Rewind 5s", shortcutLabel_forward5s: "Forward 5s", shortcutLabel_rewind1s: "Rewind 1s", shortcutLabel_forward1s: "Forward 1s", shortcutLabel_rewind1frame: "Rewind 1 frame", shortcutLabel_forward1frame: "Forward 1 frame", shortcutLabel_speedUp: "Speed Up", shortcutLabel_speedDown: "Speed Down", shortcutLabel_insertTimecode: "Insert timecode", shortcutLabel_insertRecurringText: "Insert recurring text", unsavedChangesTitle: "Unsaved Changes", unsavedChangesMessage: "You have unsaved changes in the shortcuts. Do you want to close without saving?", continueAndClose: "Continue and Close", goBack: "Go Back", caseSensitive: "Match case", replace: "Replace", replaceAll: "Replace All", shortcutLabel_bold: "Bold", shortcutLabel_italic: "Italic", shortcutLabel_uppercase: "Uppercase", shortcutLabel_lowercase: "Lowercase", tooltip_add_recurring: "Add text to editor", tooltip_delete_recurring: "Delete field", shortcutLabel_find: "Find", shortcutLabel_replace: "Replace", tooltip_find_previous: "Find Previous", tooltip_find_next: "Find Next", tooltip_toggle_replace: "Toggle Replace", tooltip_close_find_bar: "Close", languageModalTitle: "Change Language", save: "Save", cancel: "Cancel" },
+            es: { appTitle: "PandaScript", openMediaFile: "Abrir Vídeo/Audio", insertTimecode: "Insertar código de tiempo", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial", recurringTextHeader: "Texto recurrente", fileMenu: "Archivo", settingsMenu: "Ajustes", newTranscription: "Nueva transcripción", importText: "Importar .txt", export: "Exportar", backup: "Copia de seguridad", shortcutsButton: "Atajos de teclado", darkMode: "Modo oscuro", lightMode: "Modo claro", changeLanguageButton: "Cambiar idioma", editorPlaceholder: "Abre un archivo de vídeo o audio y empieza a transcribir aquí. Utiliza los diferentes comandos y atajos de teclado para transcribir de manera productiva.", exportModalTitle: "Exportar Transcripción", filenameLabel: "Nombre del archivo:", formatLabel: "Formato:", exportBtnText: "Exportar", newTranscriptionConfirm: "¿Seguro que quieres empezar una nueva transcripción? Se perderá todo el progreso no guardado.", backupFoundTitle: "Copia de seguridad encontrada", backupFoundMessage: "Se encontró una copia de seguridad automática. ¿Quieres restaurarla?", restore: "Restaurar", discard: "Descartar", noBackup: "No hay ninguna copia de seguridad disponible.", shortcutsModalTitle: "Personalizar Atajos de Teclado", shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.", resetShortcuts: "Restaurar", pressNewShortcut: "Pulsa las nuevas teclas...", saveShortcuts: "Guardar", importShortcuts: "Importar", exportShortcuts: "Exportar", shortcutsImported: "Atajos importados correctamente.", shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.", shortcutLabel_playPause: "Reproducir/Pausar", shortcutLabel_rewind5s: "Retroceder 5s", shortcutLabel_forward5s: "Avanzar 5s", shortcutLabel_rewind1s: "Retroceder 1s", shortcutLabel_forward1s: "Avanzar 1s", shortcutLabel_rewind1frame: "Retroceder 1 fotograma", shortcutLabel_forward1frame: "Avanzar 1 fotograma", shortcutLabel_speedUp: "Acelerar", shortcutLabel_speedDown: "Ralentizar", shortcutLabel_insertTimecode: "Insertar código de tiempo", shortcutLabel_insertRecurringText: "Insertar texto recurrente", unsavedChangesTitle: "Cambios no guardados", unsavedChangesMessage: "Tienes cambios sin guardar en los atajos. ¿Quieres cerrar sin guardar?", continueAndClose: "Continuar y cerrar", goBack: "Volver", caseSensitive: "Distinguir mayúsculas", replace: "Reemplazar", replaceAll: "Reemplazar todos", shortcutLabel_bold: "Negrita", shortcutLabel_italic: "Cursiva", shortcutLabel_uppercase: "Mayúsculas", shortcutLabel_lowercase: "Minúsculas", tooltip_add_recurring: "Añadir texto al editor", tooltip_delete_recurring: "Eliminar campo", shortcutLabel_find: "Buscar", shortcutLabel_replace: "Reemplazar", tooltip_find_previous: "Buscar anterior", tooltip_find_next: "Buscar siguiente", tooltip_toggle_replace: "Habilitar buscar y reemplazar", tooltip_close_find_bar: "Cerrar", languageModalTitle: "Cambiar Idioma", save: "Guardar", cancel: "Cancelar" }
+        };
 
-    // --- Estado de la Aplicación ---
-    const DEFAULT_FRAMERATE = 30;
-    let tcrOffsetSeconds = 0;
-    let lastVolume = 1;
-    let findReplaceState = { query: '', replacement: '', caseSensitive: false, lastFoundRange: null };
-    let isDarkMode = false; 
-    let currentLanguage = 'en';
-    let listeningForShortcut = null;
-    let isEditorPristine = true;
-    let tempShortcuts = {};
-    let backupInterval = null;
-    // CAMBIO: Estado para la fuente y tamaño
-    let currentFontFamily = 'monospace';
-    let currentFontSize = '14px';
+        const availableLanguages = {
+            en: 'English',
+            es: 'Español'
+        };
 
-    // --- Traducciones ---
-    const translations = {
-      en: {
-        appTitle: "PandaScript",
-        openMediaFile: "Open Video/Audio File",
-        noMediaMessage: "No media file loaded.",
-        playPauseTitle: "Play/Pause",
-        slowDownTitle: "Slow down", speedUpTitle: "Speed up",
-        volumeControlTitle: "Volume", muteUnmuteTitle: "Mute/Unmute",
-        rewind5sTitle: "Rewind 5s", rewind3sTitle: "Rewind 3s", rewind1sTitle: "Rewind 1s",
-        forward1sTitle: "Forward 1s", forward3sTitle: "Forward 3s", forward5sTitle: "Forward 5s",
-        rewind1fTitle: "Rewind 1 Frame", forward1fTitle: "Forward 1 Frame",
-        recurringTextHeader: "Recurring Text (keyboard shortcuts)",
-        recurringTextPlaceholder: "Recurring text {0}",
-        insertTimecode: "Insert Timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode",
-        importText: "Import .txt", export: "Export",
-        bold: "Bold", italic: "Italic", findButton: "Find", replaceButton: "Replace",
-        darkMode: "Dark Mode", lightMode: "Light Mode",
-        shortcutsButton: "Keyboard Shortcuts", 
-        editorPlaceholder: "Start transcribing here, or import a text file. Load a video/audio in the left panel to begin.",
-        fileMenu: "File", settingsMenu: "Settings",
-        modalAttention: "Attention", modalConfirmAction: "Confirm Action",
-        modalAccept: "Accept", modalCancel: "Cancel", modalConfirm: "Confirm", modalClose: "Close",
-        tcrFormatModalTitle: "Select Timecode Format", tcrFormatModalMessage: "Choose the format:", tcrFormatModalSave: "Save",
-        setInitialTCRModalTitle: "Set Initial Timecode", setInitialTCRModalMessage: "Enter the starting timecode:",
-        setInitialTCRModalPlaceholder: "Ex: 00:00:00,000 or 00:00:00:00", setInitialTCRModalSet: "Set",
-        setTCRSuccess: "Initial timecode set to {0}.", invalidTCRFormat: "Invalid timecode format.",
-        mediaLoadErrorWithFileProtocolHint: "Error loading media file. It could be an unsupported format.",
-        noMediaWarning: "Load a video or audio first to {0}.",
-        insertTimecodeError: "Load a video or audio first to insert a timecode.",
-        textLoadError: "Error loading text file.",
-        findModalTitle: "Find Text", findQueryLabel: "Text to find:", caseSensitiveLabel: "Match case",
-        findPrevious: "Previous", findNext: "Next", noMatchesFound: "No matches found.",
-        replaceModalTitle: "Replace Text", replaceWithLabel: "Replace with:",
-        replaceButtonInModal: "Replace", replaceAllButton: "Replace All",
-        noMatchSelectedForReplace: "No match selected.", replacementComplete: "All occurrences of \"{0}\" replaced.",
-        changeLanguageButton: "Change Language", chooseLanguageMessage: "Choose a language:",
-        exportFileModalTitle: "Export File", exportFileMessage: "Enter filename (without extension):", exportFilenamePlaceholder: "transcription",
-        exportFormatLabel: "Select format:", exportFormatTxt: "Plain Text (.txt)", exportFormatHtml: "Formatted Text (.html)", exportFormatPdf: "PDF Document (.pdf)",
-        exportButton: "Export", 
-        languageEnglish: "English", languageSpanish: "Spanish",
-        shortcutLabel_insertTimecode: "Insert Timecode",
-        shortcutLabel_playPause: "Play/Pause",
-        shortcutLabel_rewind5s: "Rewind 5s",
-        shortcutLabel_forward5s: "Forward 5s",
-        shortcutLabel_rewind3s: "Rewind 3s",
-        shortcutLabel_forward3s: "Forward 3s",
-        shortcutLabel_rewind1s: "Rewind 1s",
-        shortcutLabel_forward1s: "Forward 1s",
-        shortcutLabel_rewind1frame: "Rewind 1 Frame",
-        shortcutLabel_forward1frame: "Forward 1 Frame",
-        shortcutLabel_insertRecurringText: "Insert Recurring Text {0}",
-        shortcutsModalTitle: "Customize Keyboard Shortcuts",
-        shortcutsModalMessage: "Click on a button to set a new shortcut.",
-        resetShortcuts: "Reset to Defaults",
-        pressNewShortcut: "Press new keys...",
-        saveShortcuts: "Save Shortcuts",
-        importShortcuts: "Import",
-        exportShortcuts: "Export",
-        shortcutsImported: "Shortcuts imported successfully.",
-        shortcutsImportError: "Error importing shortcuts. Invalid file format.",
-        backupFoundTitle: "Backup Found",
-        backupFoundMessage: "An automatic backup from {0} was found. Do you want to restore the content?",
-        restoreButton: "Restore",
-        discardButton: "Discard",
-      },
-      es: {
-        appTitle: "PandaScript",
-        openMediaFile: "Abrir Vídeo/Audio",
-        noMediaMessage: "No hay archivo multimedia cargado.",
-        playPauseTitle: "Reproducir/Pausar",
-        slowDownTitle: "Ralentizar", speedUpTitle: "Acelerar",
-        volumeControlTitle: "Volumen", muteUnmuteTitle: "Silenciar/Activar",
-        rewind5sTitle: "Retroceder 5s", rewind3sTitle: "Retroceder 3s", rewind1sTitle: "Retroceder 1s",
-        forward1sTitle: "Avanzar 1s", forward3sTitle: "Avanzar 3s", forward5sTitle: "Avanzar 5s",
-        rewind1fTitle: "Retroceder 1 Fotograma", forward1fTitle: "Avanzar 1 Fotograma",
-        recurringTextHeader: "Texto recurrente (atajos de teclado)",
-        recurringTextPlaceholder: "Texto recurrente {0}",
-        insertTimecode: "Insertar TCR", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial",
-        importText: "Importar .txt", export: "Exportar",
-        bold: "Negrita", italic: "Cursiva", findButton: "Buscar", replaceButton: "Reemplazar",
-        darkMode: "Modo oscuro", lightMode: "Modo claro",
-        shortcutsButton: "Atajos de teclado", 
-        editorPlaceholder: "Empieza a transcribir aquí o importa un archivo de texto. Carga un vídeo/audio para empezar.",
-        fileMenu: "Archivo", settingsMenu: "Ajustes",
-        modalAttention: "Atención", modalConfirmAction: "Confirmar Acción",
-        modalAccept: "Aceptar", modalCancel: "Cancelar", modalConfirm: "Confirmar", modalClose: "Cerrar",
-        tcrFormatModalTitle: "Seleccionar Formato de TCR", tcrFormatModalMessage: "Elige el formato:", tcrFormatModalSave: "Guardar",
-        setInitialTCRModalTitle: "Establecer TCR Inicial", setInitialTCRModalMessage: "Introduce el TCR de inicio:",
-        setInitialTCRModalPlaceholder: "Ej: 00:00:00,000 o 00:00:00:00", setInitialTCRModalSet: "Establecer",
-        setTCRSuccess: "TCR inicial establecido en {0}.", invalidTCRFormat: "Formato de TCR no válido.",
-        mediaLoadErrorWithFileProtocolHint: "Error al cargar el archivo. Puede ser un formato no compatible.",
-        noMediaWarning: "Carga primero un vídeo o audio para {0}.",
-        insertTimecodeError: "Carga primero un vídeo o audio para insertar un TCR.",
-        textLoadError: "Error al cargar el archivo de texto.",
-        findModalTitle: "Buscar Texto", findQueryLabel: "Texto a buscar:", caseSensitiveLabel: "Distinguir mayúsculas",
-        findPrevious: "Anterior", findNext: "Siguiente", noMatchesFound: "No se encontraron coincidencias.",
-        replaceModalTitle: "Reemplazar Texto", replaceWithLabel: "Reemplazar con:",
-        replaceButtonInModal: "Reemplazar", replaceAllButton: "Reemplazar Todo",
-        noMatchSelectedForReplace: "No hay coincidencia seleccionada.", replacementComplete: "Todas las apariciones de \"{0}\" han sido reemplazadas.",
-        changeLanguageButton: "Cambiar Idioma", chooseLanguageMessage: "Elige un idioma:",
-        exportFileModalTitle: "Exportar Archivo", exportFileMessage: "Introduce el nombre del archivo (sin extensión):", exportFilenamePlaceholder: "transcripcion",
-        exportFormatLabel: "Seleccionar formato:", exportFormatTxt: "Texto Plano (.txt)", exportFormatHtml: "Texto con Formato (.html)", exportFormatPdf: "Documento PDF (.pdf)",
-        exportButton: "Exportar", 
-        languageEnglish: "Inglés", languageSpanish: "Español",
-        shortcutLabel_insertTimecode: "Insertar TCR",
-        shortcutLabel_playPause: "Reproducir/Pausar",
-        shortcutLabel_rewind5s: "Retroceder 5s",
-        shortcutLabel_forward5s: "Avanzar 5s",
-        shortcutLabel_rewind3s: "Retroceder 3s",
-        shortcutLabel_forward3s: "Avanzar 3s",
-        shortcutLabel_rewind1s: "Retroceder 1s",
-        shortcutLabel_forward1s: "Avanzar 1s",
-        shortcutLabel_rewind1frame: "Retroceder 1 Fotograma",
-        shortcutLabel_forward1frame: "Avanzar 1 Fotograma",
-        shortcutLabel_insertRecurringText: "Insertar Texto Recurrente {0}",
-        shortcutsModalTitle: "Personalizar Atajos de Teclado",
-        shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.",
-        resetShortcuts: "Restaurar por Defecto",
-        pressNewShortcut: "Pulsa las nuevas teclas...",
-        saveShortcuts: "Guardar Atajos",
-        importShortcuts: "Importar",
-        exportShortcuts: "Exportar",
-        shortcutsImported: "Atajos importados correctamente.",
-        shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.",
-        backupFoundTitle: "Copia de seguridad encontrada",
-        backupFoundMessage: "Se encontró una copia de seguridad automática de {0}. ¿Quieres restaurar el contenido?",
-        restoreButton: "Restaurar",
-        discardButton: "Descartar",
-      }
-    };
-    
-    // --- Definición de Temas ---
-    const themeClasses = {
-      dark: {
-        bodyBg: 'bg-gray-950', bodyText: 'text-gray-200', panelBg: 'bg-gray-800', border: 'border-gray-700',
-        inputBg: 'bg-gray-700', inputBorder: 'border-gray-600', inputText: 'text-gray-200',
-        editorBg: 'bg-gray-900', editorBorder: 'border-gray-700', editorText: 'text-gray-200',
-        timestampColor: '#93c5fd', modalBg: 'bg-gray-800', modalText: 'text-gray-200',
-        btnPrimary: 'bg-blue-600 hover:bg-blue-700 text-white', btnDanger: 'bg-red-600 hover:bg-red-700 text-white',
-        btnNeutral: 'bg-gray-600 hover:bg-gray-500 text-white', btnSimple: 'bg-gray-700 hover:bg-gray-600 text-gray-200',
-        menuBtnBg: 'bg-gray-700', menuBtnText: 'text-gray-200', menuBtnHoverBg: 'hover:bg-gray-600', menuBtnBorder: 'border-gray-600',
-        menuDropdownBg: 'bg-gray-800', menuDropdownBorder: 'border-gray-700',
-        menuItemText: 'text-gray-300', menuItemHoverBg: 'hover:bg-gray-700', menuItemHoverText: 'hover:text-white',
-        textColorPrimary: 'text-gray-300', textColorSecondary: 'text-gray-400', resizerBg: 'bg-gray-700'
-      },
-      light: {
-        bodyBg: 'bg-gray-50', bodyText: 'text-gray-900', panelBg: 'bg-white', border: 'border-gray-300',
-        inputBg: 'bg-gray-200', inputBorder: 'border-gray-300', inputText: 'text-gray-800',
-        editorBg: 'bg-white', editorBorder: 'border-gray-300', editorText: 'text-black',
-        timestampColor: '#1d4ed8', modalBg: 'bg-white', modalText: 'text-gray-900',
-        btnPrimary: 'bg-blue-600 hover:bg-blue-700 text-white', btnDanger: 'bg-red-600 hover:bg-red-700 text-white',
-        btnNeutral: 'bg-gray-200 hover:bg-gray-300 text-black', btnSimple: 'bg-white hover:bg-gray-100 text-gray-800',
-        menuBtnBg: 'bg-white', menuBtnText: 'text-gray-700', menuBtnHoverBg: 'hover:bg-gray-50', menuBtnBorder: 'border-gray-300',
-        menuDropdownBg: 'bg-white', menuDropdownBorder: 'border-gray-200',
-        menuItemText: 'text-gray-700', menuItemHoverBg: 'hover:bg-gray-100', menuItemHoverText: 'hover:text-gray-900',
-        textColorPrimary: 'text-gray-700', textColorSecondary: 'text-gray-500', resizerBg: 'bg-gray-300'
-      }
-    };
+        // --- Definición de Temas ---
+        const themeClasses = {
+            dark: { bodyBg: 'bg-gray-950', bodyText: 'text-gray-200', panelBg: 'bg-gray-800', border: 'border-gray-700', editorBg: 'bg-gray-900', editorText: 'text-gray-200', btnNeutral: 'bg-gray-600 hover:bg-gray-500 text-white', menuBtnBg: 'bg-gray-700', menuBtnText: 'text-gray-200', menuBtnHoverBg: 'hover:bg-gray-600', waveformContainerBg: 'bg-gray-900', waveColor: '#373737', progressColor: '#FF4853', cursorColor: '#FF4853', dropdownBg: 'bg-gray-800', modalContentBg: 'bg-gray-800', modalContentText: 'text-gray-200', findBarBg: 'bg-gray-800', findBarBorder: 'border-gray-700', findBarInputBg: 'bg-gray-700', findBarInputBorder: 'border-gray-600' },
+            light: { bodyBg: 'bg-gray-50', bodyText: 'text-gray-900', panelBg: 'bg-white', border: 'border-gray-300', editorBg: 'bg-white', editorText: 'text-black', btnNeutral: 'bg-gray-200 hover:bg-gray-300 text-black', menuBtnBg: 'bg-white', menuBtnText: 'text-gray-700', menuBtnHoverBg: 'hover:bg-gray-50', waveformContainerBg: 'bg-gray-200', waveColor: '#CBD5E0', progressColor: '#FF4853', cursorColor: '#FF4853', dropdownBg: 'bg-white', modalContentBg: 'bg-white', modalContentText: 'text-gray-900', findBarBg: 'bg-gray-100', findBarBorder: 'border-gray-300', findBarInputBg: 'bg-white', findBarInputBorder: 'border-gray-400' }
+        };
 
-    // --- Definición de Atajos ---
-    let shortcuts = {};
-    const defaultShortcuts = {
-        'insertTimecode': 'Alt+Q',
-        'playPause': 'Alt+P',
-        'rewind5s': 'Shift+ArrowLeft',
-        'forward5s': 'Shift+ArrowRight',
-        'rewind3s': 'Control+Shift+ArrowLeft',
-        'forward3s': 'Control+Shift+ArrowRight',
-        'rewind1s': 'Control+ArrowLeft',
-        'forward1s': 'Control+ArrowRight',
-        'rewind1frame': 'Alt+ArrowLeft',
-        'forward1frame': 'Alt+ArrowRight',
-    };
+        // --- Formatos de TCR ---
+        const pad = (num, len = 2) => String(num).padStart(len, '0');
+        const tcrFormats = [
+            { name: "HH:MM:SS,MSS", format: (t) => { if(isNaN(t)) return '--:--:--,---'; const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=Math.floor(t%60),ms=Math.floor(t%1*1000); return `${pad(h)}:${pad(m)}:${pad(s)},${pad(ms,3)}`; }},
+            { name: "HH:MM:SS:FF", format: (t, fr) => { if(isNaN(t)) return '--:--:--:--'; const tf=Math.floor(t*fr),h=Math.floor(tf/(3600*fr)),m=Math.floor(tf/(60*fr)%60),s=Math.floor(tf/fr%60),f=tf%fr; return `${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`; }},
+            { name: "MM:SS,MSS", format: (t) => { if(isNaN(t)) return '--:--,---'; const m=Math.floor(t/60),s=Math.floor(t%60),ms=Math.floor(t%1*1000); return `${pad(m)}:${pad(s)},${pad(ms,3)}`; }},
+            { name: "MM:SS", format: (t) => { if(isNaN(t)) return '--:--'; const m=Math.floor(t/60),s=Math.floor(t%60); return `${pad(m)}:${pad(s)}`; }},
+            { name: "MM:SS:FF", format: (t, fr) => { if(isNaN(t)) return '--:--:--'; const tf=Math.floor(t*fr),m=Math.floor(tf/(60*fr)),s=Math.floor(tf/fr%60),f=tf%fr; return `${pad(m)}:${pad(s)}:${pad(f)}`; }},
+        ];
+        let currentTCRFormatIndex = 0;
 
-    // --- Definiciones de Formatos de TCR ---
-    const pad = (num, len = 2) => String(num).padStart(len, '0');
-    const tcrFormats = [
-        { name: "HH:MM:SS,MMM", format: (t) => { if(isNaN(t)) return '--:--:--,---'; const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=Math.floor(t%60),ms=Math.floor(t%1*1000); return `${pad(h)}:${pad(m)}:${pad(s)},${pad(ms,3)}`; }},
-        { name: "HH:MM:SS:FF", format: (t, fr) => { if(isNaN(t)) return '--:--:--:--'; const tf=Math.floor(t*fr),h=Math.floor(tf/(3600*fr)),m=Math.floor(tf/(60*fr)%60),s=Math.floor(tf/fr%60),f=tf%fr; return `${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`; }},
-    ];
-    let currentTCRFormatIndex = 0; 
-
-
-    // --- Definiciones de Funciones ---
-
-    // CAMBIO: Nueva función para aplicar los ajustes de fuente
-    function applyFontSettings(fontFamily, fontSize) {
-        currentFontFamily = fontFamily;
-        currentFontSize = fontSize;
-
-        editor.style.fontFamily = fontFamily;
-        editor.style.fontSize = fontSize;
-
-        fontFamilySelect.value = fontFamily;
-        fontSizeSelect.value = fontSize;
-
-        localStorage.setItem('pandascript_fontFamily', fontFamily);
-        localStorage.setItem('pandascript_fontSize', fontSize);
-    }
-
-    function applyLanguage(lang) {
-      currentLanguage = lang;
-      document.documentElement.lang = lang; 
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        let text = translations[currentLanguage][key] || key;
-        el.textContent = text;
-      });
-       document.querySelectorAll('[data-i18n-title]').forEach(el => {
-        const key = el.getAttribute('data-i18n-title');
-        el.title = translations[currentLanguage][key] || key;
-      });
-      updateRecurringTextPlaceholders();
-      applyTheme(isDarkMode ? 'dark' : 'light');
-    }
-
-    function applyTheme(themeName) {
-      const theme = themeClasses[themeName];
-      isDarkMode = (themeName === 'dark');
-      document.body.className = `flex flex-row h-screen overflow-hidden ${theme.bodyBg} ${theme.bodyText}`;
-      leftPanel.className = `p-4 flex flex-col relative ${theme.panelBg}`;
-      rightPanel.className = `p-4 flex flex-col ${theme.panelBg}`;
-      resizer.className = `cursor-col-resize ${theme.resizerBg}`;
-      
-      document.querySelectorAll('.playback-controls button, #left > .flex-wrap > button, #addRecurringTextBtn').forEach(btn => {
-        btn.className = `${btn.className.includes('flex-1') ? 'flex-1' : ''} font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm flex items-center justify-center w-auto ${theme.btnNeutral}`;
-      });
-      
-      recurringTextContainer.querySelectorAll('button').forEach(btn => {
-         btn.className = `font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm ${theme.btnNeutral}`;
-      });
-
-      document.querySelectorAll('#recurringTextContainer input[type="text"]').forEach(input => {
-        input.className = `flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
-      });
-
-      // CAMBIO: Aplicar tema a los nuevos selectores de fuente
-      [fontFamilySelect, fontSizeSelect].forEach(select => {
-        select.className = `rounded-md border shadow-sm px-2 py-1.5 text-sm focus:outline-none ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
-      });
-
-      editor.className = `flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner min-h-[200px] ${theme.editorBg} ${theme.editorBorder} ${theme.editorText}`;
-      if (editor.querySelector('p')) { editor.querySelector('p').className = `${theme.textColorSecondary}`; }
-      tcrDisplay.className = `font-mono text-4xl p-4 text-center rounded-lg mb-4 shadow-md w-full ${isDarkMode ? 'bg-black text-white' : 'bg-gray-200 text-black'}`;
-      [fileMenuBtn, settingsMenuBtn].forEach(btn => { btn.className = `inline-flex justify-center w-full rounded-md shadow-sm px-4 py-2 text-sm font-medium focus:outline-none ${theme.menuBtnBg} ${theme.menuBtnText} ${theme.menuBtnHoverBg} ${theme.menuBtnBorder}`; });
-      [fileMenuDropdown, settingsMenuDropdown].forEach(dropdown => { dropdown.className = `origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10 ${theme.menuDropdownBg} ${theme.menuDropdownBorder}`; });
-      document.querySelectorAll('.dropdown-item').forEach(item => { item.className = `dropdown-item block px-4 py-2 text-sm w-full text-left flex items-center ${theme.menuItemText} ${theme.menuItemHoverBg} ${theme.menuItemHoverText}`; });
-      document.getElementById('controlsSeparator').className = `border-l h-6 mx-2 ${theme.border}`;
-      [boldBtn, italicBtn, findBtn, replaceBtn].forEach(btn => { btn.className = `font-bold p-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm ${theme.btnSimple} ${theme.border}`; });
-      themeText.textContent = isDarkMode ? translations[currentLanguage].lightMode : translations[currentLanguage].darkMode;
-      themeIcon.className = `fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} mr-3`;
-      const styleEl = document.querySelector('style');
-      let styleContent = styleEl.innerHTML; 
-      styleContent = styleContent.replace(/(\.timestamp \{\s*color:\s*)#[a-fA-F0-9]+\s*!important;/, `$1${theme.timestampColor} !important;`);
-      styleEl.innerHTML = styleContent;
-    }
-
-    function loadShortcuts() {
-        const savedShortcuts = JSON.parse(localStorage.getItem('pandascript_shortcuts'));
-        shortcuts = { ...defaultShortcuts, ...savedShortcuts };
-        for (let i = 1; i <= 10; i++) {
-             const action = `insertRecurringText${i}`;
-             if (!shortcuts[action]) shortcuts[action] = `Alt+${i}`;
-        }
-    }
-
-    function saveShortcuts() {
-        localStorage.setItem('pandascript_shortcuts', JSON.stringify(shortcuts));
-    }
-
-    function keyEventToString(e) {
-        let parts = [];
-        if (e.ctrlKey) parts.push('Control');
-        if (e.altKey) parts.push('Alt');
-        if (e.shiftKey) parts.push('Shift');
-        if (e.metaKey) parts.push('Meta');
-        
-        const key = e.key.trim();
-        if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
-            if (key === ' ') {
-                parts.push('Space');
-            } else if (key.length === 1) {
-                parts.push(e.key.toUpperCase());
-            } else {
-                parts.push(key);
-            }
-        }
-        return parts.join('+');
-    }
-
-    function executeShortcut(action) {
-        const actions = {
-            'insertTimecode': () => {
-                if (!video.src || video.src === window.location.href) return customAlert('insertTimecodeError');
-                const timeCode = tcrFormats[currentTCRFormatIndex].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE); 
-                insertHtmlAtCursor(`<span class="timestamp">[${timeCode}]</span> `);
-            },
-            'playPause': () => {
-                if (!video.src || video.src === window.location.href) return;
-                video.paused ? video.play() : video.pause();
-            },
-            'rewind5s': () => seekMedia(-5),
-            'forward5s': () => seekMedia(5),
-            'rewind3s': () => seekMedia(-3),
-            'forward3s': () => seekMedia(3),
-            'rewind1s': () => seekMedia(-1),
-            'forward1s': () => seekMedia(1),
-            'rewind1frame': () => seekMedia(-1/DEFAULT_FRAMERATE),
-            'forward1frame': () => seekMedia(1/DEFAULT_FRAMERATE),
-            'insertRecurringText': (index) => {
-                const inputs = recurringTextContainer.querySelectorAll('input');
-                if (inputs[index-1] && inputs[index-1].value) {
-                    insertHtmlAtCursor(inputs[index-1].value + ' ');
+        // --- Funciones Principales ---
+        function applyLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            // Update text content
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const target = el.querySelector('span') || el;
+                if (translations[lang] && translations[lang][key]) {
+                    target.textContent = translations[lang][key];
                 }
+            });
+             // Update titles
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const key = el.getAttribute('data-i18n-title');
+                if (translations[lang] && translations[lang][key]) {
+                    el.title = translations[lang][key];
+                }
+            });
+            if (isEditorPristine) {
+                editor.querySelector('p').textContent = translations[currentLanguage].editorPlaceholder;
             }
-        };
-        if (action.startsWith('insertRecurringText')) {
-            const index = parseInt(action.replace('insertRecurringText', ''));
-            actions['insertRecurringText'](index);
-        } else if (actions[action]) {
-            actions[action]();
+            updateTooltips();
+            applyTheme(isDarkMode ? 'dark' : 'light');
         }
-    }
-    
-    function addRecurringTextField(value = '') {
-        const count = recurringTextContainer.children.length;
-        if (count >= 9) addRecurringTextBtn.disabled = true;
-        const container = document.createElement('div');
-        container.className = 'flex items-center gap-2';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = value;
-        input.addEventListener('input', saveRecurringTexts);
-        const removeBtn = document.createElement('button');
-        removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
-        removeBtn.onclick = () => {
-            container.remove();
-            updateRecurringTextPlaceholders();
-            saveRecurringTexts();
-            addRecurringTextBtn.disabled = false;
-        };
-        container.appendChild(input);
-        container.appendChild(removeBtn);
-        recurringTextContainer.appendChild(container);
-        updateRecurringTextPlaceholders();
-        applyTheme(isDarkMode ? 'dark' : 'light');
-    }
 
-    function updateRecurringTextPlaceholders() {
-        const inputs = recurringTextContainer.querySelectorAll('input');
-        inputs.forEach((input, index) => {
-            const placeholderText = translations[currentLanguage].recurringTextPlaceholder.replace('{0}', index + 1);
-            input.placeholder = placeholderText;
-        });
-    }
+        function applyTheme(themeName) {
+            const theme = themeClasses[themeName];
+            isDarkMode = (themeName === 'dark');
+            document.body.className = `flex flex-row h-screen overflow-hidden ${theme.bodyBg} ${theme.bodyText}`;
+            leftPanel.className = `p-4 flex flex-col relative ${theme.panelBg}`;
+            rightPanel.className = `p-4 flex flex-col relative ${theme.panelBg}`;
+            resizer.className = `cursor-col-resize bg-gray-300 dark:bg-gray-700`;
+            importVideoAudioBtn.className = `w-full font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out mb-4 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-black'}`;
+            document.querySelectorAll('#left > .flex-wrap > button').forEach(btn => {
+                btn.className = `flex-1 font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out text-sm ${theme.btnNeutral}`;
+            });
+            addRecurringTextBtn.className = `font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out text-sm ${theme.btnNeutral}`;
+            document.querySelectorAll('#controls .relative button, #controls .editor-button-group button, #controls .editor-button-group select').forEach(el => {
+                el.classList.remove('bg-gray-700', 'text-gray-200', 'hover:bg-gray-600', 'bg-white', 'text-gray-700', 'hover:bg-gray-50');
+                el.classList.add(theme.menuBtnBg, theme.menuBtnText, theme.menuBtnHoverBg);
+            });
+            [fileMenuDropdown, settingsMenuDropdown].forEach(dd => {
+                dd.classList.remove('bg-gray-800', 'bg-white');
+                dd.classList.add(theme.dropdownBg);
+            });
+            editor.className = `flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner ${theme.editorBg} ${theme.editorText}`;
+            if (wavesurfer) {
+                wavesurfer.setOptions({ waveColor: theme.waveColor, progressColor: theme.progressColor, cursorColor: theme.cursorColor });
+            }
+            waveformContainer.classList.remove('bg-gray-900', 'bg-gray-200');
+            waveformContainer.classList.add(theme.waveformContainerBg);
+            document.querySelector('.modal-content').classList.remove('bg-white', 'text-gray-900', 'bg-gray-800', 'text-gray-200');
+            document.querySelector('.modal-content').classList.add(theme.modalContentBg, theme.modalContentText);
 
-    function saveRecurringTexts() {
-        const values = Array.from(recurringTextContainer.querySelectorAll('input')).map(input => input.value);
-        localStorage.setItem('pandascript_recurring_texts', JSON.stringify(values));
-    }
-
-    function loadRecurringTexts() {
-        const savedTexts = JSON.parse(localStorage.getItem('pandascript_recurring_texts'));
-        if (savedTexts && savedTexts.length > 0) {
-            savedTexts.forEach(text => addRecurringTextField(text));
-        } else {
-            for(let i = 0; i < 4; i++) addRecurringTextField();
-        }
-    }
-
-    function showModal(title, message, buttons, bodyContent = '') {
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const modalContentEl = document.getElementById('customModal').querySelector('.modal-content');
-        modalContentEl.className = `modal-content ${theme.modalBg} ${theme.modalText}`;
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMessage').innerHTML = message;
-        document.getElementById('modalBody').innerHTML = bodyContent;
-        const modalButtons = document.getElementById('modalButtons');
-        modalButtons.innerHTML = '';
-        buttons.forEach(buttonConfig => {
-            const button = document.createElement('button');
-            button.textContent = buttonConfig.text;
-            const btnClass = buttonConfig.type === 'danger' ? theme.btnDanger : (buttonConfig.type === 'primary' ? theme.btnPrimary : theme.btnNeutral);
-            button.className = `font-bold py-1.5 px-2.5 rounded-lg shadow-md transition duration-200 ease-in-out ${btnClass}`;
-            button.onclick = () => { if(!buttonConfig.preventClose) hideModal(); if (buttonConfig.handler) buttonConfig.handler(); };
-            modalButtons.appendChild(button);
-        });
-        document.getElementById('customModal').classList.add('show');
-    }
-
-    function hideModal() { 
-        document.getElementById('customModal').classList.remove('show');
-        if (listeningForShortcut) {
-            const button = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
-            if(button) button.classList.remove('is-listening');
-            listeningForShortcut = null;
-        }
-        window.getSelection().empty();
-    }
-
-    function customAlert(messageKey, titleKey = 'modalAttention', args = []) {
-        let msg = translations[currentLanguage][messageKey] || messageKey;
-        if(args.length > 0) msg = msg.replace('{0}', args[0]);
-        showModal(translations[currentLanguage][titleKey], msg, [{ text: translations[currentLanguage].modalAccept, type: 'primary' }]);
-    }
-    
-    function showShortcutsModal() {
-        tempShortcuts = JSON.parse(JSON.stringify(shortcuts));
-        
-        const renderShortcuts = () => {
-            const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-            let bodyHtml = '<div class="space-y-2">';
-            const shortcutActionsInOrder = [
-                'insertTimecode', 'playPause', 'rewind5s', 'forward5s', 'rewind3s', 'forward3s',
-                'rewind1s', 'forward1s', 'rewind1frame', 'forward1frame'
-            ];
-            
-            shortcutActionsInOrder.forEach(action => {
-                let labelKey = `shortcutLabel_${action}`;
-                let label = translations[currentLanguage][labelKey] || action;
-                bodyHtml += `
-                    <div class="flex justify-between items-center">
-                        <span>${label}</span>
-                        <button class="shortcut-button font-mono p-1 px-2 border-2 rounded ${theme.btnSimple} ${theme.border}" data-action="${action}">
-                            ${tempShortcuts[action] || 'Not set'}
-                        </button>
-                    </div>
-                `;
+            // Theme for Find/Replace bar
+            findReplaceBar.classList.remove('bg-gray-100', 'border-gray-300', 'bg-gray-800', 'border-gray-700');
+            findReplaceBar.classList.add(theme.findBarBg, theme.findBarBorder);
+            [findInput, replaceInput].forEach(input => {
+                input.classList.remove('bg-white', 'border-gray-400', 'bg-gray-700', 'border-gray-600');
+                input.classList.add(theme.findBarInputBg, theme.findBarInputBorder);
+            });
+            document.querySelectorAll('#find-replace-bar button').forEach(btn => {
+                 btn.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'bg-gray-600', 'hover:bg-gray-500');
+                 btn.classList.add(...theme.btnNeutral.split(' '));
             });
             
-            const recurringCount = recurringTextContainer.children.length;
-            for(let i = 1; i <= recurringCount; i++) {
-                const action = `insertRecurringText${i}`;
-                let label = translations[currentLanguage]['shortcutLabel_insertRecurringText'].replace('{0}', i);
-                bodyHtml += `
-                    <div class="flex justify-between items-center">
-                        <span>${label}</span>
-                        <button class="shortcut-button font-mono p-1 px-2 border-2 rounded ${theme.btnSimple} ${theme.border}" data-action="${action}">
-                            ${tempShortcuts[action] || 'Not set'}
-                        </button>
-                    </div>
-                `;
-            }
-
-            bodyHtml += '</div>';
-            return bodyHtml;
+            const themeText = document.getElementById('themeText');
+            const themeIcon = document.getElementById('themeIcon');
+            themeText.textContent = isDarkMode ? translations[currentLanguage].lightMode : translations[currentLanguage].darkMode;
+            themeIcon.className = `fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} mr-3`;
         }
 
-        const buttons = [
-            { text: translations[currentLanguage].importShortcuts, handler: () => shortcutImportInput.click(), type: 'neutral', preventClose: true },
-            { text: translations[currentLanguage].exportShortcuts, handler: () => {
-                const blob = new Blob([JSON.stringify(shortcuts, null, 2)], { type: 'application/json' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'pandascript_shortcuts.json';
-                link.click();
-                link.remove();
-            }, type: 'neutral', preventClose: true },
-            { text: translations[currentLanguage].resetShortcuts, handler: () => {
-                tempShortcuts = { ...defaultShortcuts };
-                document.getElementById('modalBody').innerHTML = renderShortcuts();
-                addShortcutButtonListeners();
-            }, type: 'danger', preventClose: true },
-            { text: translations[currentLanguage].saveShortcuts, handler: () => {
-                shortcuts = { ...tempShortcuts };
-                saveShortcuts();
-                hideModal();
-            }, type: 'primary' }
-        ];
+        function togglePlaybackControls(disabled) {
+            const controls = [playPauseBtn, rewind5sBtn, rewind1sBtn, rewind1fBtn, forward1fBtn, forward1sBtn, forward5sBtn, speedDownBtn, speedUpBtn, muteBtn, volumeSlider];
+            controls.forEach(btn => btn.disabled = disabled);
+        }
 
-        showModal(
-            translations[currentLanguage].shortcutsModalTitle,
-            translations[currentLanguage].shortcutsModalMessage,
-            buttons,
-            renderShortcuts()
-        );
+        function seekMedia(seconds) {
+            if (video.src) {
+                video.currentTime = Math.max(0, video.currentTime + seconds);
+            }
+        }
+
+        function executeShortcut(action) {
+            const actions = {
+                'playPause': () => {
+                    if (video.paused) {
+                        video.play().catch(e => console.error("Error al reproducir:", e));
+                    } else {
+                        video.pause();
+                    }
+                },
+                'rewind5s': () => seekMedia(-5), 'rewind1s': () => seekMedia(-1),
+                'rewind1frame': () => seekMedia(-1 / DEFAULT_FRAMERATE), 'forward1frame': () => seekMedia(1 / DEFAULT_FRAMERATE),
+                'forward1s': () => seekMedia(1), 'forward5s': () => seekMedia(5),
+                'speedUp': () => { video.playbackRate = Math.min(4, video.playbackRate + 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; },
+                'speedDown': () => { video.playbackRate = Math.max(0.5, video.playbackRate - 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; },
+                'insertTimecode': insertTimecode,
+                'bold': () => document.execCommand('bold'),
+                'italic': () => document.execCommand('italic'),
+                'find': () => showFindReplaceBar(false),
+                'replace': () => showFindReplaceBar(true),
+            };
+            if (action.startsWith('insertRecurringText')) {
+                const index = parseInt(action.replace('insertRecurringText', ''));
+                const inputs = recurringTextContainer.querySelectorAll('input');
+                if (inputs[index - 1] && inputs[index - 1].value) {
+                    document.execCommand('insertText', false, inputs[index - 1].value + ' ');
+                }
+            } else if (actions[action]) {
+                actions[action]();
+            }
+        }
+
+        function updateTCRDisplay() {
+            if (video.src) {
+                tcrDisplay.textContent = tcrFormats[currentTCRFormatIndex].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE);
+            }
+        }
         
-        const addShortcutButtonListeners = () => {
+        function addRecurringTextField(value = '') {
+            const container = document.createElement('div');
+            container.className = 'flex items-center gap-2';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = value;
+            input.className = 'flex-1 min-w-[120px] p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 border border-gray-300';
+            const addBtn = document.createElement('button');
+            addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+            addBtn.className = 'recurring-btn font-bold p-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm';
+            addBtn.onclick = () => {
+                if(input.value) {
+                    if (isEditorPristine) {
+                        editor.innerHTML = '<div><br></div>';
+                        isEditorPristine = false;
+                    }
+                    document.execCommand('insertText', false, input.value + ' ');
+                }
+            };
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            removeBtn.className = 'recurring-btn font-bold p-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out text-sm';
+            removeBtn.onclick = () => container.remove();
+            
+            container.appendChild(input);
+            container.appendChild(addBtn);
+            container.appendChild(removeBtn);
+            recurringTextContainer.appendChild(container);
+            
+            const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
+            [addBtn, removeBtn].forEach(btn => btn.classList.add(...theme.btnNeutral.split(' ').filter(c => !c.startsWith('hover:'))));
+            updateTooltips();
+        }
+
+        function showModal(title, message, buttons, bodyContent = '', onClose = null) {
+            const modal = document.getElementById('customModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = message;
+            document.getElementById('modalBody').innerHTML = bodyContent;
+            const modalButtons = document.getElementById('modalButtons');
+            modalButtons.innerHTML = '';
+            buttons.forEach(buttonConfig => {
+                const button = document.createElement('button');
+                button.textContent = buttonConfig.text;
+                button.className = `font-bold py-1.5 px-2.5 rounded-lg shadow-md transition`;
+                button.onclick = () => {
+                    if (buttonConfig.handler) buttonConfig.handler();
+                    if (!buttonConfig.preventClose) modal.classList.remove('show');
+                };
+                modalButtons.appendChild(button);
+            });
+            const closeBtn = modal.querySelector('.modal-close-btn');
+            closeBtn.onclick = onClose ? onClose : () => modal.classList.remove('show');
+            modal.classList.add('show');
+        }
+
+        function insertTimecode() {
+            if (!video.src) return;
+            const timecode = tcrDisplay.textContent;
+            const seconds = video.currentTime + tcrOffsetSeconds;
+            const html = `<span class="timestamp" data-seconds="${seconds}" contenteditable="false">[${timecode}]</span>&nbsp;`;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        function parseTimeCodeToSeconds(timeCodeString) {
+            let match = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2})[,:](\d{2,3})/);
+            if(match) return parseInt(match[1])*3600 + parseInt(match[2])*60 + parseInt(match[3]) + parseInt(match[4])/(match[4].length === 3 ? 1000 : DEFAULT_FRAMERATE);
+            match = timeCodeString.match(/(\d{2}):(\d{2})[,:](\d{2,3})/);
+            if(match) return parseInt(match[1])*60 + parseInt(match[2]) + parseInt(match[3])/(match[3].length === 3 ? 1000 : DEFAULT_FRAMERATE);
+            match = timeCodeString.match(/(\d{2}):(\d{2})/);
+            if(match) return parseInt(match[1])*60 + parseInt(match[2]);
+            return null;
+        }
+
+        function showSetInitialTCRModal() {
+            const body = `<input type="text" id="initialTCRInput" class="w-full p-2 border rounded" placeholder="HH:MM:SS,MMM or HH:MM:SS:FF">`;
+            const buttons = [{ text: 'Cancel' }, { text: 'Set', handler: () => {
+                const inputVal = document.getElementById('initialTCRInput').value;
+                const desiredSeconds = parseTimeCodeToSeconds(inputVal);
+                if (desiredSeconds !== null) {
+                    tcrOffsetSeconds = desiredSeconds - video.currentTime;
+                    updateTCRDisplay();
+                } else {
+                    alert('Invalid timecode format');
+                }
+            }}];
+            showModal('Set Initial Timecode', '', buttons, body);
+        }
+
+        function showTCRFormatModal() {
+            let optionsHtml = '<div class="space-y-2">';
+            tcrFormats.forEach((format, index) => {
+                optionsHtml += `<label class="flex items-center cursor-pointer"><input type="radio" name="tcrFormat" value="${index}" class="form-radio" ${index === currentTCRFormatIndex ? 'checked' : ''}><span class="ml-2">${format.name}</span></label>`;
+            });
+            optionsHtml += '</div>';
+            const buttons = [{ text: 'Cancel' }, { text: 'Save', handler: () => {
+                const selected = document.querySelector('input[name="tcrFormat"]:checked');
+                if (selected) {
+                    currentTCRFormatIndex = parseInt(selected.value);
+                    updateTCRDisplay();
+                    updateAllTimestampsInEditor();
+                }
+            }}];
+            showModal('Select Timecode Format', '', buttons, optionsHtml);
+        }
+        
+        function updateAllTimestampsInEditor() {
+            editor.querySelectorAll('.timestamp').forEach(span => {
+                const seconds = parseFloat(span.dataset.seconds);
+                if (!isNaN(seconds)) {
+                    span.textContent = `[${tcrFormats[currentTCRFormatIndex].format(seconds, DEFAULT_FRAMERATE)}]`;
+                }
+            });
+        }
+
+        function showExportModal() {
+            const body = `
+                <div>
+                    <label for="filenameInput" class="block mb-2">${translations[currentLanguage].filenameLabel}</label>
+                    <input type="text" id="filenameInput" class="w-full p-2 border rounded mb-4" value="transcription">
+                    <label class="block mb-2">${translations[currentLanguage].formatLabel}</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center"><input type="radio" name="exportFormat" value="txt" class="form-radio" checked><span class="ml-2">.txt (Plain Text)</span></label>
+                        <label class="flex items-center"><input type="radio" name="exportFormat" value="html" class="form-radio"><span class="ml-2">.html (Formatted)</span></label>
+                        <label class="flex items-center"><input type="radio" name="exportFormat" value="pdf" class="form-radio"><span class="ml-2">.pdf (Document)</span></label>
+                    </div>
+                </div>
+            `;
+            const buttons = [{ text: 'Cancel' }, { text: translations[currentLanguage].exportBtnText, handler: () => {
+                const filename = document.getElementById('filenameInput').value || 'transcription';
+                const format = document.querySelector('input[name="exportFormat"]:checked').value;
+                exportContent(format, filename);
+            }}];
+            showModal(translations[currentLanguage].exportModalTitle, '', buttons, body);
+        }
+
+        function exportContent(format, filename) {
+            let content, mimeType, fileExtension;
+            if (format === 'txt') {
+                content = editor.innerText;
+                mimeType = 'text/plain';
+                fileExtension = '.txt';
+            } else if (format === 'html') {
+                content = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${filename}</title></head><body>${editor.innerHTML}</body></html>`;
+                mimeType = 'text/html';
+                fileExtension = '.html';
+            } else if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFont('Arial', 'normal');
+                doc.setFontSize(11);
+                const lines = doc.splitTextToSize(editor.innerText, 180);
+                doc.text(lines, 10, 10);
+                doc.save(`${filename}.pdf`);
+                return;
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${filename}${fileExtension}`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function saveBackup() {
+            if (!isEditorPristine) {
+                localStorage.setItem('pandascript_backup', editor.innerHTML);
+            }
+        }
+
+        function loadBackup() {
+            const backup = localStorage.getItem('pandascript_backup');
+            if (backup) {
+                const buttons = [
+                    { text: translations[currentLanguage].discard, handler: () => localStorage.removeItem('pandascript_backup') },
+                    { text: translations[currentLanguage].restore, handler: () => {
+                        editor.innerHTML = backup;
+                        isEditorPristine = false;
+                        localStorage.removeItem('pandascript_backup');
+                    }}
+                ];
+                showModal(translations[currentLanguage].backupFoundTitle, translations[currentLanguage].backupFoundMessage, buttons, '');
+            }
+        }
+        
+        function showBackupModal() {
+            const backup = localStorage.getItem('pandascript_backup');
+            if (backup) {
+                const body = `<div class="p-2 border rounded bg-white dark:bg-gray-800 text-black dark:text-white">${backup}</div>`;
+                const buttons = [
+                    { text: 'Close' },
+                    { text: translations[currentLanguage].restore, handler: () => {
+                        editor.innerHTML = backup;
+                        isEditorPristine = false;
+                    }}
+                ];
+                showModal(translations[currentLanguage].backup, '', buttons, body);
+            } else {
+                showModal(translations[currentLanguage].backup, translations[currentLanguage].noBackup, [{ text: 'OK' }]);
+            }
+        }
+
+        function showLanguageModal() {
+            let optionsHtml = '<div class="space-y-2">';
+            for (const [code, name] of Object.entries(availableLanguages)) {
+                optionsHtml += `<label class="flex items-center cursor-pointer">
+                    <input type="radio" name="language" value="${code}" class="form-radio" ${code === currentLanguage ? 'checked' : ''}>
+                    <span class="ml-2">${name}</span>
+                </label>`;
+            }
+            optionsHtml += '</div>';
+
+            const buttons = [
+                { text: translations[currentLanguage].cancel },
+                { text: translations[currentLanguage].save, handler: () => {
+                    const selectedLang = document.querySelector('input[name="language"]:checked').value;
+                    if (selectedLang) {
+                        localStorage.setItem('pandascript_language', selectedLang);
+                        applyLanguage(selectedLang);
+                    }
+                }}
+            ];
+            showModal(translations[currentLanguage].languageModalTitle, '', buttons, optionsHtml);
+        }
+
+        function resetApplication() {
+            video.src = '';
+            wavesurfer.empty();
+            waveformContainer.classList.add('hidden');
+            emptyPlayerOverlay.classList.remove('hidden');
+            video.style.visibility = 'hidden';
+            editor.innerHTML = `<p data-i18n="editorPlaceholder">${translations[currentLanguage].editorPlaceholder}</p>`;
+            isEditorPristine = true;
+            tcrOffsetSeconds = 0;
+            updateTCRDisplay();
+            togglePlaybackControls(true);
+            localStorage.removeItem('pandascript_backup');
+        }
+
+        function showNewTranscriptionConfirm() {
+            const buttons = [
+                { text: 'Cancel' },
+                { text: 'OK', handler: resetApplication }
+            ];
+            showModal('Start New Transcription', translations[currentLanguage].newTranscriptionConfirm, buttons, '');
+        }
+        
+        // --- Lógica de Atajos de Teclado ---
+        const defaultShortcuts = {
+            'playPause': 'Alt+P', 'rewind5s': 'Shift+ArrowLeft', 'forward5s': 'Shift+ArrowRight', 'rewind1s': 'Control+ArrowLeft', 'forward1s': 'Control+ArrowRight', 'rewind1frame': 'Alt+ArrowLeft', 'forward1frame': 'Alt+ArrowRight', 'speedUp': 'Alt+ArrowUp', 'speedDown': 'Alt+ArrowDown', 'insertTimecode': 'Alt+Q',
+            'bold': 'Control+B', 'italic': 'Control+I', 'find': 'Control+F', 'replace': 'Control+H'
+        };
+
+        function loadShortcuts() {
+            const saved = JSON.parse(localStorage.getItem('pandascript_shortcuts'));
+            shortcuts = { ...defaultShortcuts, ...saved };
+            for(let i = 1; i <= 9; i++) {
+                if (!shortcuts[`insertRecurringText${i}`]) {
+                    shortcuts[`insertRecurringText${i}`] = `Alt+${i}`;
+                }
+            }
+            updateTooltips();
+        }
+
+        function saveShortcutsToStorage() {
+            localStorage.setItem('pandascript_shortcuts', JSON.stringify(shortcuts));
+            updateTooltips();
+        }
+
+        function updateTooltips() {
+            boldBtn.title = `${translations[currentLanguage].shortcutLabel_bold} (${shortcuts.bold || ''})`;
+            italicBtn.title = `${translations[currentLanguage].shortcutLabel_italic} (${shortcuts.italic || ''})`;
+            uppercaseBtn.title = translations[currentLanguage].shortcutLabel_uppercase;
+            lowercaseBtn.title = translations[currentLanguage].shortcutLabel_lowercase;
+        }
+
+        function keyEventToString(e) {
+            let parts = [];
+            if (e.ctrlKey) parts.push('Control');
+            if (e.altKey) parts.push('Alt');
+            if (e.shiftKey) parts.push('Shift');
+            if (e.metaKey) parts.push('Meta');
+            if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+                parts.push(e.key.length === 1 ? e.key.toUpperCase() : e.key);
+            }
+            return parts.join('+');
+        }
+
+        function showShortcutsModal() {
+            tempShortcuts = JSON.parse(JSON.stringify(shortcuts));
+            
+            const renderShortcuts = () => {
+                let bodyHtml = '<div class="space-y-2">';
+                const actions = [
+                    'playPause', 'rewind5s', 'forward5s', 'rewind1s', 'forward1s', 'rewind1frame', 'forward1frame', 'speedUp', 'speedDown', 'insertTimecode', 'bold', 'italic', 'find', 'replace'
+                ];
+                actions.forEach(action => {
+                    let label = translations[currentLanguage][`shortcutLabel_${action}`] || action;
+                    bodyHtml += `<div class="flex justify-between items-center"><span>${label}</span><button class="shortcut-button font-mono p-1 px-2 border-2 rounded" data-action="${action}">${tempShortcuts[action] || 'Not set'}</button></div>`;
+                });
+                for (let i = 1; i <= recurringTextContainer.children.length; i++) {
+                    const action = `insertRecurringText${i}`;
+                    let label = `${translations[currentLanguage]['shortcutLabel_insertRecurringText']} ${i}`;
+                    bodyHtml += `<div class="flex justify-between items-center"><span>${label}</span><button class="shortcut-button font-mono p-1 px-2 border-2 rounded" data-action="${action}">${tempShortcuts[action] || 'Not set'}</button></div>`;
+                }
+                bodyHtml += '</div>';
+                return bodyHtml;
+            }
+
+            const buttons = [
+                { text: translations[currentLanguage].importShortcuts, handler: () => shortcutImportInput.click(), preventClose: true },
+                { text: translations[currentLanguage].exportShortcuts, handler: () => {
+                    const blob = new Blob([JSON.stringify(shortcuts, null, 2)], { type: 'application/json' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'pandascript_shortcuts.json';
+                    link.click();
+                }, preventClose: true },
+                { text: translations[currentLanguage].resetShortcuts, handler: () => {
+                    tempShortcuts = { ...defaultShortcuts };
+                    document.getElementById('modalBody').innerHTML = renderShortcuts();
+                    addShortcutButtonListeners();
+                }, preventClose: true },
+                { text: translations[currentLanguage].saveShortcuts, handler: () => {
+                    shortcuts = { ...tempShortcuts };
+                    saveShortcutsToStorage();
+                }}
+            ];
+
+            showModal(translations[currentLanguage].shortcutsModalTitle, translations[currentLanguage].shortcutsModalMessage, buttons, renderShortcuts(), confirmCloseShortcutsModal);
+            addShortcutButtonListeners();
+        }
+
+        function addShortcutButtonListeners() {
             document.querySelectorAll('.shortcut-button').forEach(button => {
                 button.addEventListener('click', (e) => {
                     if (listeningForShortcut) {
@@ -719,508 +824,257 @@
                     e.target.classList.add('is-listening');
                 });
             });
-        };
-        addShortcutButtonListeners();
-    }
-
-    function updateEmptyPlayerState() {
-        const hasMedia = video.src && video.src !== window.location.href;
-        emptyPlayerOverlay.classList.toggle('hidden', hasMedia);
-        document.getElementById('noMediaMessage').classList.toggle('hidden', hasMedia);
-        video.classList.toggle('hidden', !hasMedia);
-        if(!hasMedia) tcrDisplay.textContent = '--:--:--,---';
-    }
-
-    function seekMedia(seconds) {
-        if (!video.src || video.src === window.location.href) return;
-        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
-    }
-
-    function insertHtmlAtCursor(html) { 
-        if (isEditorPristine) {
-            editor.innerHTML = '';
-            isEditorPristine = false;
         }
-        editor.focus(); 
-        document.execCommand('insertHTML', false, html); 
-    }
-    
-    function showTCRFormatSelection() {
-        let optionsHtml = '<div class="space-y-2">';
-        tcrFormats.forEach((format, index) => {
-            optionsHtml += `<label class="inline-flex items-center cursor-pointer"><input type="radio" name="tcrFormat" value="${index}" class="form-radio" ${index === currentTCRFormatIndex ? 'checked' : ''}><span class="ml-2">${format.name}</span></label><br>`;
-        });
-        optionsHtml += '</div>';
-        showModal(translations[currentLanguage].tcrFormatModalTitle, translations[currentLanguage].tcrFormatModalMessage,
-            [{ text: translations[currentLanguage].tcrFormatModalSave, handler: () => { const sel = document.querySelector('input[name="tcrFormat"]:checked'); if (sel) currentTCRFormatIndex = parseInt(sel.value); updateTCRDisplay(); }, type: 'primary' },
-             { text: translations[currentLanguage].modalCancel, type: 'neutral' }], optionsHtml);
-    }
-    
-    function updateTCRDisplay() {
-        if (video.src && !isNaN(video.currentTime)) {
-            tcrDisplay.textContent = tcrFormats[currentTCRFormatIndex].format(video.currentTime + tcrOffsetSeconds, DEFAULT_FRAMERATE);
-        }
-    }
-
-    function showSetInitialTCRModal() {
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
-        let html = `<div><label for="modalInitialTCRInput" class="text-sm font-medium mb-1 block">TCR</label><input type="text" id="modalInitialTCRInput" placeholder="${translations[currentLanguage].setInitialTCRModalPlaceholder}" class="${inputClasses}" /></div>`;
-        showModal(translations[currentLanguage].setInitialTCRModalTitle, translations[currentLanguage].setInitialTCRModalMessage,
-            [{ text: translations[currentLanguage].setInitialTCRModalSet, handler: () => { const input = document.getElementById('modalInitialTCRInput'); if (input) setInitialTCR(input.value.trim()); }, type: 'primary' },
-             { text: translations[currentLanguage].modalCancel, type: 'neutral' }], html);
-    }
-
-    function parseTimeCodeToSeconds(timeCodeString, frameRate = DEFAULT_FRAMERATE) {
-        let matchMs = timeCodeString.match(/(\d{1,2}):(\d{2}):(\d{2}),(\d{3})/);
-        if (matchMs) return parseInt(matchMs[1])*3600 + parseInt(matchMs[2])*60 + parseInt(matchMs[3]) + parseInt(matchMs[4])/1000;
-        let matchFrames = timeCodeString.match(/(\d{1,2}):(\d{2}):(\d{2}):(\d{2})/);
-        if (matchFrames) return (parseInt(matchFrames[1])*3600 + parseInt(matchFrames[2])*60 + parseInt(matchFrames[3])) + (parseInt(matchFrames[4])/frameRate);
-        return null;
-    }
-
-    function setInitialTCR(timeCodeString) {
-        if (!video.src || video.src === window.location.href) return customAlert('noMediaWarning', 'modalAttention', [translations[currentLanguage].setInitialTimecode.toLowerCase()]);
-        const desiredTCRSeconds = parseTimeCodeToSeconds(timeCodeString);
-        if (desiredTCRSeconds === null) return customAlert('invalidTCRFormat');
-        tcrOffsetSeconds = desiredTCRSeconds - video.currentTime;
-        updateTCRDisplay();
-        customAlert('setTCRSuccess', 'modalConfirmAction', [timeCodeString]);
-    }
-
-    function showLanguageSelectionModal() {
-        let optionsHtml = '<div class="space-y-2">';
-        Object.keys(translations).forEach(langCode => {
-            const langNameKey = `language${langCode.charAt(0).toUpperCase() + langCode.slice(1)}`;
-            const langName = translations[currentLanguage][langNameKey] || langCode;
-            const isChecked = langCode === currentLanguage ? 'checked' : '';
-            optionsHtml += `
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="radio" name="languageSelect" value="${langCode}" class="form-radio" ${isChecked}>
-                    <span class="ml-2">${langName}</span>
-                </label><br>
-            `;
-        });
-        optionsHtml += '</div>';
-
-        showModal(
-            translations[currentLanguage].changeLanguageButton,
-            translations[currentLanguage].chooseLanguageMessage,
-            [
-                { text: translations[currentLanguage].modalAccept, handler: () => {
-                    const selectedLang = document.querySelector('input[name="languageSelect"]:checked');
-                    if (selectedLang) {
-                        applyLanguage(selectedLang.value);
-                        localStorage.setItem('language', selectedLang.value);
-                    }
-                }, type: 'primary' },
-                { text: translations[currentLanguage].modalCancel, handler: () => {}, type: 'neutral' }
-            ],
-            optionsHtml
-        );
-    }
-
-    function showExportFormatModal() {
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
         
-        let exportHtml = `
-            <div>
-                <label for="exportFilenameInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].exportFileMessage}</label>
-                <input type="text" id="exportFilenameInput" class="${inputClasses}" value="${translations[currentLanguage].exportFilenamePlaceholder}" />
-                <label class="text-sm font-medium mb-1 block mt-4">${translations[currentLanguage].exportFormatLabel}</label>
-                <div class="space-y-2">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="exportFormat" value="txt" class="form-radio" checked>
-                        <span class="ml-2">${translations[currentLanguage].exportFormatTxt}</span>
-                    </label><br>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="exportFormat" value="html" class="form-radio">
-                        <span class="ml-2">${translations[currentLanguage].exportFormatHtml}</span>
-                    </label><br>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="exportFormat" value="pdf" class="form-radio">
-                        <span class="ml-2">${translations[currentLanguage].exportFormatPdf}</span>
-                    </label>
-                </div>
-            </div>
-        `;
-
-        showModal(
-            translations[currentLanguage].exportFileModalTitle, '',
-            [
-                { text: translations[currentLanguage].modalCancel, type: 'neutral' },
-                { text: translations[currentLanguage].exportButton, handler: () => {
-                    const filenameBase = document.getElementById('exportFilenameInput').value || translations[currentLanguage].exportFilenamePlaceholder;
-                    const format = document.querySelector('input[name="exportFormat"]:checked').value;
-                    const filename = `${filenameBase}.${format}`;
-                    exportText(format, filename);
-                }, type: 'primary' }
-            ],
-            exportHtml
-        );
-    }
-
-    // CAMBIO: Función de exportación actualizada para reflejar la fuente y el tamaño
-    function exportText(type, filename) {
-      let content;
-      let mimeType;
-      if (type === 'txt') {
-        content = editor.innerText; 
-        mimeType = 'text/plain;charset=utf-8';
-      } else if (type === 'html') {
-        const styles = `
-            body { 
-                font-family: ${currentFontFamily}; 
-                font-size: ${currentFontSize}; 
-            } 
-            .timestamp { color: blue; text-decoration: none; }
-        `;
-        content = `<!DOCTYPE html><html lang="${currentLanguage}"><head><meta charset="UTF-8"><title>Exported Transcription</title><style>${styles}</style></head><body>${editor.innerHTML}</body></html>`;
-        mimeType = 'text/html;charset=utf-8';
-      } else if (type === 'pdf') {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        const mapFontForPdf = (font) => {
-            const fontLower = font.toLowerCase();
-            if (fontLower.includes('courier') || fontLower.includes('monospace')) return 'Courier';
-            if (fontLower.includes('times') || fontLower.includes('serif')) return 'Times-Roman';
-            return 'Helvetica';
-        };
-
-        const pdfFont = mapFontForPdf(currentFontFamily);
-        const pdfFontSize = parseInt(currentFontSize, 10);
-
-        doc.setFont(pdfFont);
-        doc.setFontSize(pdfFontSize);
-
-        const textContent = editor.innerText;
-        const lines = doc.splitTextToSize(textContent, 180);
-        doc.text(lines, 10, 10);
-        doc.save(filename);
-        clearBackup();
-        return;
-      } else { return; }
-
-      const blob = new Blob([content], { type: mimeType });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-      link.remove();
-      clearBackup();
-    }
-
-    // --- Funciones de Buscar y Reemplazar ---
-
-    function showFindModal() {
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
-        
-        let findHtml = `
-            <div>
-                <label for="findQueryInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}</label>
-                <input type="text" id="findQueryInput" class="${inputClasses}" value="${findReplaceState.query}" />
-                <label class="inline-flex items-center cursor-pointer mb-3">
-                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
-                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
-                </label>
-                <div id="findStatus" class="text-sm text-red-500"></div>
-            </div>
-        `;
-
-        showModal(
-            translations[currentLanguage].findModalTitle, '',
-            [
-                { text: translations[currentLanguage].modalClose, type: 'neutral' },
-                { text: translations[currentLanguage].findPrevious, handler: () => findNext(true), type: 'neutral' },
-                { text: translations[currentLanguage].findNext, handler: () => findNext(false), type: 'primary' }
-            ],
-            findHtml
-        );
-        editor.focus();
-    }
-
-    function showReplaceModal() {
-        const theme = themeClasses[isDarkMode ? 'dark' : 'light'];
-        const inputClasses = `w-full p-2 mb-3 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.inputBg} ${theme.inputText} ${theme.inputBorder}`;
-        
-        let replaceHtml = `
-            <div>
-                <label for="findQueryInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].findQueryLabel}</label>
-                <input type="text" id="findQueryInput" class="${inputClasses}" value="${findReplaceState.query}" />
-                <label for="replaceWithInput" class="text-sm font-medium mb-1 block">${translations[currentLanguage].replaceWithLabel}</label>
-                <input type="text" id="replaceWithInput" class="${inputClasses}" value="${findReplaceState.replacement}" />
-                <label class="inline-flex items-center cursor-pointer mb-3">
-                    <input type="checkbox" id="findCaseSensitive" class="form-checkbox" ${findReplaceState.caseSensitive ? 'checked' : ''}>
-                    <span class="ml-2 text-sm">${translations[currentLanguage].caseSensitiveLabel}</span>
-                </label>
-                <div id="findStatus" class="text-sm text-red-500"></div>
-            </div>
-        `;
-
-        showModal(
-            translations[currentLanguage].replaceModalTitle, '',
-            [
-                { text: translations[currentLanguage].modalClose, type: 'neutral' },
-                { text: translations[currentLanguage].replaceAllButton, handler: replaceAll, type: 'danger' },
-                { text: translations[currentLanguage].replaceButtonInModal, handler: replaceCurrent, type: 'neutral' },
-                { text: translations[currentLanguage].findPrevious, handler: () => findNext(true), type: 'neutral' },
-                { text: translations[currentLanguage].findNext, handler: () => findNext(false), type: 'primary' }
-            ],
-            replaceHtml
-        );
-        editor.focus();
-    }
-
-    function findNext(searchBackwards = false) {
-        const findQueryInput = document.getElementById('findQueryInput');
-        const findCaseSensitive = document.getElementById('findCaseSensitive');
-        const findStatus = document.getElementById('findStatus');
-        if (!findQueryInput || !findStatus) return;
-        const query = findQueryInput.value;
-        const caseSensitive = findCaseSensitive.checked;
-        if (!query) { findStatus.textContent = ''; return; }
-        findReplaceState.query = query;
-        findReplaceState.caseSensitive = caseSensitive;
-        if (query !== findReplaceState.lastQuery || caseSensitive !== findReplaceState.lastCaseSensitive) {
-            window.getSelection().empty();
-            findReplaceState.lastQuery = query;
-            findReplaceState.lastCaseSensitive = caseSensitive;
-        }
-        const found = window.find(query, caseSensitive, searchBackwards, true, false, false, false);
-        if (!found) {
-            findStatus.textContent = translations[currentLanguage].noMatchesFound;
-            window.getSelection().empty();
-            if (!window.find(query, caseSensitive, searchBackwards, true, false, false, false)) {
-                findStatus.textContent = translations[currentLanguage].noMatchesFound;
+        function confirmCloseShortcutsModal() {
+            const hasChanged = JSON.stringify(shortcuts) !== JSON.stringify(tempShortcuts);
+            if (hasChanged) {
+                const buttons = [
+                    { text: translations[currentLanguage].goBack, preventClose: true, handler: () => showShortcutsModal() },
+                    { text: translations[currentLanguage].continueAndClose, handler: () => document.getElementById('customModal').classList.remove('show') }
+                ];
+                showModal(translations[currentLanguage].unsavedChangesTitle, translations[currentLanguage].unsavedChangesMessage, buttons, '');
             } else {
-                findStatus.textContent = '';
+                document.getElementById('customModal').classList.remove('show');
             }
-        } else {
-            findStatus.textContent = '';
         }
-    }
-
-    function replaceCurrent() {
-        const findQueryInput = document.getElementById('findQueryInput');
-        const replaceWithInput = document.getElementById('replaceWithInput');
-        const findCaseSensitive = document.getElementById('findCaseSensitive');
-        const findStatus = document.getElementById('findStatus');
-        if (!findQueryInput || !replaceWithInput || !findStatus) return;
-        const query = findQueryInput.value;
-        const replacement = replaceWithInput.value;
-        const caseSensitive = findCaseSensitive.checked;
-        if (!query) { findStatus.textContent = ''; return; }
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const selectedText = range.toString();
-            const matchCondition = caseSensitive ? (selectedText === query) : (selectedText.toLowerCase() === query.toLowerCase());
-            if (matchCondition) {
-                range.deleteContents();
-                range.insertNode(document.createTextNode(replacement));
-                selection.collapseToEnd();
-                findStatus.textContent = '';
+        
+        // --- Lógica de Búsqueda y Reemplazo ---
+        function showFindReplaceBar(showReplace) {
+            findReplaceBar.classList.remove('hidden');
+            if (showReplace) {
+                replaceControls.classList.remove('hidden');
+                replaceControls.classList.add('flex');
+                toggleReplaceBtn.classList.add('rotate-90');
             } else {
-                findStatus.textContent = translations[currentLanguage].noMatchSelectedForReplace;
+                replaceControls.classList.add('hidden');
+                replaceControls.classList.remove('flex');
+                toggleReplaceBtn.classList.remove('rotate-90');
             }
-        } else {
-            findStatus.textContent = translations[currentLanguage].noMatchSelectedForReplace;
+            findInput.focus();
+            findInput.select();
+            updateFindResults();
         }
-        findNext(false); 
-    }
 
-    function replaceAll() {
-        const findQueryInput = document.getElementById('findQueryInput');
-        const replaceWithInput = document.getElementById('replaceWithInput');
-        const findCaseSensitive = document.getElementById('findCaseSensitive');
-        const findStatus = document.getElementById('findStatus');
-        if (!findQueryInput || !replaceWithInput || !findStatus) return;
-        const query = findQueryInput.value;
-        const replacement = replaceWithInput.value;
-        const caseSensitive = findCaseSensitive.checked;
-        if (!query) { findStatus.textContent = ''; return; }
-        const selection = window.getSelection();
-        const originalRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-        let editorHtml = editor.innerHTML;
-        const timecodePlaceholders = new Map();
-        let placeholderCounter = 0;
-        editorHtml = editorHtml.replace(/<span class="timestamp">\[.*?\]<\/span>/g, (match) => {
-            const placeholder = `__TIMECODE_PLACEHOLDER_${placeholderCounter++}__`;
-            timecodePlaceholders.set(placeholder, match);
-            return placeholder;
-        });
-        const flags = caseSensitive ? 'g' : 'gi';
-        const regex = new RegExp(query, flags);
-        editorHtml = editorHtml.replace(regex, replacement);
-        timecodePlaceholders.forEach((originalHtml, placeholder) => {
-            editorHtml = editorHtml.replace(new RegExp(placeholder, 'g'), originalHtml);
-        });
-        editor.innerHTML = editorHtml;
-        if (originalRange) {
-            try {
-                selection.removeAllRanges();
-                selection.addRange(originalRange);
-            } catch (e) {
-                editor.focus();
-            }
-        } else {
+        function hideFindReplaceBar() {
+            findReplaceBar.classList.add('hidden');
+            window.getSelection().removeAllRanges(); // Clear selection
             editor.focus();
         }
-        customAlert('replacementComplete', 'modalConfirmAction', [query]);
-        hideModal();
-    }
-    
-    function saveBackup() {
-        if (!isEditorPristine) {
-            const backupData = {
-                content: editor.innerHTML,
-                timestamp: new Date().getTime()
-            };
-            localStorage.setItem('pandascript_backup', JSON.stringify(backupData));
+
+        function findInEditor(backwards = false) {
+            const query = findInput.value;
+            if (!query) return;
+            // window.find is simple but has limitations. We use it to navigate.
+            window.find(query, matchCaseCheckbox.checked, backwards, true, false, false, false);
         }
-    }
 
-    function loadBackup() {
-        const backupJSON = localStorage.getItem('pandascript_backup');
-        if (backupJSON) {
-            const backupData = JSON.parse(backupJSON);
-            const date = new Date(backupData.timestamp).toLocaleString(currentLanguage);
-            const message = translations[currentLanguage].backupFoundMessage.replace('{0}', date);
-            showModal(
-                translations[currentLanguage].backupFoundTitle,
-                message,
-                [
-                    { text: translations[currentLanguage].discardButton, handler: clearBackup, type: 'danger' },
-                    { text: translations[currentLanguage].restoreButton, handler: () => {
-                        editor.innerHTML = backupData.content;
-                        isEditorPristine = false;
-                        clearBackup();
-                    }, type: 'primary' }
-                ]
-            );
+        function updateFindResults() {
+            const query = findInput.value;
+            if (!query) {
+                findResultsCount.textContent = '0/0';
+                return;
+            }
+            
+            const flags = matchCaseCheckbox.checked ? 'g' : 'gi';
+            const regex = new RegExp(query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), flags);
+            const matches = editor.innerText.match(regex) || [];
+            
+            let currentIndex = 0;
+            if (window.getSelection && window.getSelection().rangeCount > 0) {
+                const selection = window.getSelection();
+                const precedingText = editor.innerText.substring(0, selection.anchorOffset);
+                const precedingMatches = precedingText.match(regex) || [];
+                currentIndex = precedingMatches.length;
+            }
+            
+            findResultsCount.textContent = `${currentIndex}/${matches.length}`;
         }
-    }
-    
-    function clearBackup() {
-        localStorage.removeItem('pandascript_backup');
-    }
 
+        function replaceCurrent() {
+            const query = findInput.value;
+            const replacement = replaceInput.value;
+            const selection = window.getSelection();
+            
+            if (query && selection.rangeCount > 0 && selection.toString().length > 0) {
+                const text = selection.toString();
+                const comparisonText = matchCaseCheckbox.checked ? text : text.toLowerCase();
+                const comparisonQuery = matchCaseCheckbox.checked ? query : query.toLowerCase();
 
-    // --- Lógica de Inicialización y Eventos ---
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        // CAMBIO: Poblar los selectores de fuente y tamaño
-        const fonts = ['monospace', 'Arial', 'Verdana', 'Georgia', 'Times New Roman', 'Courier New'];
-        fonts.forEach(font => {
-            const option = document.createElement('option');
-            option.value = font;
-            option.textContent = font;
-            fontFamilySelect.appendChild(option);
-        });
+                if (comparisonText === comparisonQuery) {
+                    document.execCommand('insertText', false, replacement);
+                }
+                // Find the next one automatically
+                findInEditor(false);
+            }
+        }
 
-        const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px'];
-        fontSizes.forEach(size => {
-            const option = document.createElement('option');
-            option.value = size;
-            option.textContent = size;
-            fontSizeSelect.appendChild(option);
-        });
+        function replaceAll() {
+            const query = findInput.value;
+            const replacement = replaceInput.value;
+            if (!query) return;
 
+            const flags = matchCaseCheckbox.checked ? 'g' : 'gi';
+            const regex = new RegExp(query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), flags);
+            
+            const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            const nodesToModify = [];
+            while(node = walker.nextNode()) {
+                if (node.nodeValue.match(regex)) {
+                    nodesToModify.push(node);
+                }
+            }
+
+            // Modify nodes after finding them all to avoid issues with the TreeWalker
+            nodesToModify.forEach(textNode => {
+                textNode.nodeValue = textNode.nodeValue.replace(regex, replacement);
+            });
+            updateFindResults();
+        }
+
+        // --- Inicialización ---
+        
         const savedTheme = localStorage.getItem('theme') || 'light';
         isDarkMode = (savedTheme === 'dark');
-        loadShortcuts();
-        loadRecurringTexts();
-        const savedLanguage = localStorage.getItem('language') || 'en';
-        applyLanguage(savedLanguage);
         
-        // CAMBIO: Cargar y aplicar los ajustes de fuente guardados
-        const savedFontFamily = localStorage.getItem('pandascript_fontFamily') || 'monospace';
-        const savedFontSize = localStorage.getItem('pandascript_fontSize') || '14px';
-        applyFontSettings(savedFontFamily, savedFontSize);
-        
-        updateEmptyPlayerState();
-        loadBackup();
+        wavesurfer = WaveSurfer.create({
+            container: '#waveform-container', media: video, barWidth: 3, barRadius: 3, barGap: 2, height: 80, responsive: true,
+            waveColor: themeClasses[savedTheme].waveColor, progressColor: themeClasses[savedTheme].progressColor, cursorColor: themeClasses[savedTheme].cursorColor, cursorWidth: 2,
+            scrollParent: true, autoCenter: true, minPxPerSec: 100
+        });
 
-        backupInterval = setInterval(saveBackup, 60000);
+        applyLanguage(currentLanguage);
+        applyTheme(isDarkMode ? 'dark' : 'light');
+        togglePlaybackControls(true);
+        for(let i = 0; i < 4; i++) addRecurringTextField();
+        loadBackup();
+        loadShortcuts();
+        setInterval(saveBackup, 30000);
+
+        const fonts = ['Arial', 'Verdana', 'Georgia', 'Times New Roman', 'Courier New', 'monospace'];
+        fonts.forEach(font => {
+            const option = document.createElement('option');
+            option.value = font; option.textContent = font;
+            fontFamilySelect.appendChild(option);
+        });
+        const fontSizes = ['8px', '10px', '12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px'];
+        fontSizes.forEach(size => {
+            const option = document.createElement('option');
+            option.value = size; option.textContent = size;
+            fontSizeSelect.appendChild(option);
+        });
+        fontSizeSelect.value = '14px';
+
+        // --- Event Listeners ---
 
         importVideoAudioBtn.addEventListener('click', () => videoFileInput.click());
         videoFileInput.addEventListener('change', (e) => {
           const file = e.target.files[0];
           if (!file) return;
-          video.src = URL.createObjectURL(file);
+          togglePlaybackControls(true);
+          waveformContainer.classList.remove('hidden');
+          const url = URL.createObjectURL(file);
+          video.src = url;
           video.load();
-          video.onloadedmetadata = () => { updateEmptyPlayerState(); tcrOffsetSeconds = 0; updateTCRDisplay(); video.playbackRate = 1.0; speedDisplay.textContent = '1.0x'; };
-          video.onerror = () => customAlert('mediaLoadErrorWithFileProtocolHint');
+          wavesurfer.load(url);
         });
 
-        textFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => { 
-                editor.innerHTML = event.target.result.replace(/\n/g, '<br>'); 
-                isEditorPristine = false;
-                clearBackup();
-            };
-            reader.readAsText(file);
+        video.addEventListener('canplay', () => {
+            togglePlaybackControls(false);
+            emptyPlayerOverlay.classList.add('hidden');
+            video.style.visibility = 'visible';
+            updateTCRDisplay();
         });
 
-        editor.addEventListener('focus', () => {
-            if (isEditorPristine) {
-                editor.innerHTML = '';
-            }
-        });
-
-        editor.addEventListener('input', () => {
-            if (editor.innerText.trim() === '') {
-                isEditorPristine = true;
-                editor.innerHTML = `<p data-i18n="editorPlaceholder">${translations[currentLanguage].editorPlaceholder}</p>`;
-                applyTheme(isDarkMode ? 'dark' : 'light');
-                const range = document.createRange();
-                const sel = window.getSelection();
-                range.setStart(editor.firstChild, 0);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            } else {
-                isEditorPristine = false;
-            }
-        });
-        
-        editor.addEventListener('click', (e) => {
-            if (e.target.classList.contains('timestamp')) {
-                const timeCodeString = e.target.textContent.replace(/[\[\]]/g, '');
-                const timeInSeconds = parseTimeCodeToSeconds(timeCodeString);
-                if (timeInSeconds !== null && video.src && !isNaN(video.duration)) {
-                    const targetTime = timeInSeconds - tcrOffsetSeconds;
-                    if (targetTime >= 0 && targetTime <= video.duration) {
-                        video.currentTime = targetTime;
-                    }
-                }
+        video.addEventListener('play', () => playPauseBtn.classList.add('playing'));
+        video.addEventListener('pause', () => playPauseBtn.classList.remove('playing'));
+        video.addEventListener('timeupdate', () => {
+            updateTCRDisplay();
+            if (video.duration) {
+                const progress = (video.currentTime / video.duration) * 100;
+                progressBar.style.width = `${progress}%`;
             }
         });
 
         playPauseBtn.addEventListener('click', () => executeShortcut('playPause'));
-        video.addEventListener('play', () => playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>');
-        video.addEventListener('pause', () => playPauseBtn.innerHTML = '<i class="fas fa-play"></i>');
-        document.getElementById('speedUpBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.min(4.0, video.playbackRate + 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
-        document.getElementById('speedDownBtn').addEventListener('click', () => { if(video.src) video.playbackRate = Math.max(0.5, video.playbackRate - 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
-        volumeSlider.addEventListener('input', () => { if(video.src) { video.volume = volumeSlider.value; video.muted = video.volume === 0; muteBtn.innerHTML = `<i class="fas ${video.muted ? 'fa-volume-mute' : 'fa-volume-up'}"></i>`; if(!video.muted) lastVolume = video.volume; }});
-        muteBtn.addEventListener('click', () => { if(video.src) { video.muted = !video.muted; volumeSlider.value = video.muted ? 0 : lastVolume; video.volume = video.muted ? 0 : lastVolume; muteBtn.innerHTML = `<i class="fas ${video.muted ? 'fa-volume-mute' : 'fa-volume-up'}"></i>`; }});
-        video.addEventListener('timeupdate', () => updateTCRDisplay());
+        rewind5sBtn.addEventListener('click', () => seekMedia(-5));
+        rewind1sBtn.addEventListener('click', () => seekMedia(-1));
+        rewind1fBtn.addEventListener('click', () => seekMedia(-1 / DEFAULT_FRAMERATE));
+        forward1fBtn.addEventListener('click', () => seekMedia(1 / DEFAULT_FRAMERATE));
+        forward1sBtn.addEventListener('click', () => seekMedia(1));
+        forward5sBtn.addEventListener('click', () => seekMedia(5));
+        speedDownBtn.addEventListener('click', () => { video.playbackRate = Math.max(0.5, video.playbackRate - 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
+        speedUpBtn.addEventListener('click', () => { video.playbackRate = Math.min(4, video.playbackRate + 0.25); speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`; });
+        
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = parseFloat(e.target.value);
+            video.volume = volume;
+            lastVolume = volume;
+            muteBtn.innerHTML = volume > 0 ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+        });
+
+        muteBtn.addEventListener('click', () => {
+            video.muted = !video.muted;
+            volumeSlider.value = video.muted ? 0 : lastVolume;
+            muteBtn.innerHTML = video.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+        });
+
+        progressBarContainer.addEventListener('click', (e) => {
+            if (!video.duration) return;
+            const rect = progressBarContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const progress = clickX / rect.width;
+            video.currentTime = video.duration * progress;
+        });
+
+        insertTimecodeBtn.addEventListener('click', insertTimecode);
+        timecodeFormatBtn.addEventListener('click', showTCRFormatModal);
+        setInitialTimecodeBtn.addEventListener('click', showSetInitialTCRModal);
         
         addRecurringTextBtn.addEventListener('click', () => addRecurringTextField());
+        
+        boldBtn.addEventListener('click', () => document.execCommand('bold'));
+        italicBtn.addEventListener('click', () => document.execCommand('italic'));
+        uppercaseBtn.addEventListener('click', () => {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const selectedText = range.toString();
+                if (selectedText) {
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode(selectedText.toUpperCase()));
+                }
+            }
+        });
+        lowercaseBtn.addEventListener('click', () => {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const selectedText = range.toString();
+                if (selectedText) {
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode(selectedText.toLowerCase()));
+                }
+            }
+        });
+        
+        fontFamilySelect.addEventListener('change', (e) => document.execCommand('fontName', false, e.target.value));
+        fontSizeSelect.addEventListener('change', (e) => {
+            document.execCommand('fontSize', false, '7');
+            const fontElements = editor.querySelectorAll("font[size='7']");
+            fontElements.forEach(el => {
+                el.style.fontSize = e.target.value;
+                el.removeAttribute('size');
+            });
+        });
         
         function setupDropdown(button, dropdown) {
             button.addEventListener('click', (event) => {
                 event.stopPropagation();
-                [fileMenuDropdown, settingsMenuDropdown].forEach(dd => {
-                    if (dd !== dropdown) dd.classList.add('hidden');
-                });
-                dropdown.classList.toggle('hidden');
+                const isHidden = dropdown.classList.contains('hidden');
+                document.querySelectorAll('.origin-top-left').forEach(d => d.classList.add('hidden'));
+                if (isHidden) dropdown.classList.remove('hidden');
             });
         }
         setupDropdown(fileMenuBtn, fileMenuDropdown);
@@ -1230,25 +1084,120 @@
             settingsMenuDropdown.classList.add('hidden');
         });
 
-        importTextBtn.addEventListener('click', (e) => { e.preventDefault(); textFileInput.click(); });
-        exportBtn.addEventListener('click', (e) => { e.preventDefault(); showExportFormatModal(); });
-        shortcutsBtn.addEventListener('click', (e) => { e.preventDefault(); showShortcutsModal(); });
-        themeToggleBtn.addEventListener('click', (e) => { e.preventDefault(); applyTheme(isDarkMode ? 'light' : 'dark'); localStorage.setItem('theme', isDarkMode ? 'dark' : 'light'); });
-        languageToggleBtn.addEventListener('click', (e) => { e.preventDefault(); showLanguageSelectionModal(); });
-
-        boldBtn.addEventListener('click', () => document.execCommand('bold'));
-        italicBtn.addEventListener('click', () => document.execCommand('italic'));
-        findBtn.addEventListener('click', () => { showFindModal(); });
-        replaceBtn.addEventListener('click', () => { showReplaceModal(); });
-
-        // CAMBIO: Event listeners para los nuevos controles de fuente
-        fontFamilySelect.addEventListener('change', (e) => applyFontSettings(e.target.value, currentFontSize));
-        fontSizeSelect.addEventListener('change', (e) => applyFontSettings(currentFontFamily, e.target.value));
-
         resizer.addEventListener('mousedown', (e) => {
             e.preventDefault();
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
+        });
+
+        function handleMouseMove(e) {
+            const totalWidth = document.body.offsetWidth;
+            const leftWidth = e.clientX;
+            const rightWidth = totalWidth - e.clientX - resizer.offsetWidth;
+            if (leftWidth > 300 && rightWidth > 300) {
+                leftPanel.style.flexBasis = `${leftWidth}px`;
+                rightPanel.style.flexBasis = `${rightWidth}px`;
+            }
+        }
+        function handleMouseUp() {
+            document.removeEventListener('mousemove', handleMouseMove);
+        }
+
+        editor.addEventListener('focus', () => {
+            if (isEditorPristine) {
+                editor.innerHTML = '<div><br></div>';
+                isEditorPristine = false;
+            }
+        });
+
+        editor.addEventListener('click', (e) => {
+            if (e.target.classList.contains('timestamp')) {
+                const seconds = parseFloat(e.target.dataset.seconds);
+                if (!isNaN(seconds)) {
+                    video.currentTime = seconds;
+                }
+            }
+        });
+
+        newTranscriptionBtn.addEventListener('click', (e) => { e.preventDefault(); showNewTranscriptionConfirm(); });
+        importTextBtn.addEventListener('click', (e) => { e.preventDefault(); textFileInput.click(); });
+        
+        textFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                editor.innerHTML = event.target.result.replace(/\n/g, '<br>');
+                isEditorPristine = false;
+            };
+            reader.readAsText(file);
+        });
+
+        exportBtn.addEventListener('click', (e) => { e.preventDefault(); showExportModal(); });
+        backupBtn.addEventListener('click', (e) => { e.preventDefault(); showBackupModal(); });
+        shortcutsBtn.addEventListener('click', (e) => { e.preventDefault(); showShortcutsModal(); });
+        languageToggleBtn.addEventListener('click', (e) => { e.preventDefault(); showLanguageModal(); });
+
+        themeToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const newTheme = isDarkMode ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            // Handle shortcuts modal key listening
+            if (listeningForShortcut) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+                const newShortcutStr = keyEventToString(e);
+                tempShortcuts[listeningForShortcut] = newShortcutStr;
+                const button = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
+                if (button) {
+                    button.textContent = newShortcutStr;
+                    button.classList.remove('is-listening');
+                }
+                listeningForShortcut = null;
+                return;
+            }
+            
+            // Handle Find/Replace bar keydown
+            if (!findReplaceBar.classList.contains('hidden')) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    findInEditor(e.shiftKey); // Find previous on Shift+Enter
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideFindReplaceBar();
+                    return;
+                }
+            }
+
+            // Global shortcuts
+            const pressedShortcut = keyEventToString(e).replace('Meta', 'Control');
+            for (const action in shortcuts) {
+                if (shortcuts[action] && shortcuts[action].replace('Meta', 'Control') === pressedShortcut) {
+                    const activeEl = document.activeElement;
+                    if (activeEl.tagName === 'INPUT' && activeEl !== findInput && activeEl !== replaceInput) return;
+                    if (activeEl.isContentEditable && activeEl !== editor) return;
+                    
+                    // Allow Ctrl+F/H even if find bar is open to re-focus
+                    if (action === 'find' || action === 'replace') {
+                         e.preventDefault();
+                         executeShortcut(action);
+                         break;
+                    }
+                    
+                    if (activeEl === findInput || activeEl === replaceInput) return;
+
+                    e.preventDefault();
+                    executeShortcut(action);
+                    break;
+                }
+            }
         });
 
         shortcutImportInput.addEventListener('change', (e) => {
@@ -1257,75 +1206,36 @@
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
-                    const importedShortcuts = JSON.parse(event.target.result);
-                    if (typeof importedShortcuts === 'object' && importedShortcuts !== null) {
-                        tempShortcuts = { ...defaultShortcuts, ...importedShortcuts };
-                        showShortcutsModal();
-                        customAlert('shortcutsImported');
-                    } else {
-                        throw new Error("Invalid format");
-                    }
+                    const imported = JSON.parse(event.target.result);
+                    shortcuts = { ...shortcuts, ...imported };
+                    saveShortcutsToStorage();
+                    showShortcutsModal(); // Refresh modal
                 } catch (err) {
-                    customAlert('shortcutsImportError');
+                    alert(translations[currentLanguage].shortcutsImportError);
                 }
             };
             reader.readAsText(file);
         });
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (listeningForShortcut) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
-                return; 
-            }
-            const newShortcutStr = keyEventToString(e);
-            if (newShortcutStr.split('+').filter(p => !['Control', 'Alt', 'Shift', 'Meta'].includes(p)).length === 0) {
-                return;
-            }
-
-            tempShortcuts[listeningForShortcut] = newShortcutStr;
-            const button = document.querySelector(`.shortcut-button[data-action="${listeningForShortcut}"]`);
-            if (button) {
-                button.textContent = newShortcutStr;
-                button.classList.remove('is-listening');
-            }
-            listeningForShortcut = null;
-            return;
-        }
         
-        const isModalOpen = document.getElementById('customModal').classList.contains('show');
-        const activeEl = document.activeElement;
-        if (isModalOpen && activeEl.tagName !== 'INPUT' && !activeEl.isContentEditable) {
-        } else if (activeEl.tagName === 'INPUT' || (activeEl.isContentEditable && activeEl !== editor)) {
-            return;
-        }
-        
-        const pressedShortcut = keyEventToString(e).replace('Meta', 'Control');
-        for (const action in shortcuts) {
-            if (shortcuts[action] && shortcuts[action].replace('Meta', 'Control') === pressedShortcut) {
-                if (isModalOpen && activeEl.tagName === 'INPUT') continue;
-                e.preventDefault();
-                executeShortcut(action);
-                break; 
+        // Find & Replace Event Listeners
+        findReplaceCloseBtn.addEventListener('click', hideFindReplaceBar);
+        findInput.addEventListener('input', updateFindResults);
+        matchCaseCheckbox.addEventListener('change', updateFindResults);
+        findNextBtn.addEventListener('click', () => findInEditor(false));
+        findPrevBtn.addEventListener('click', () => findInEditor(true));
+        replaceBtn.addEventListener('click', replaceCurrent);
+        replaceAllBtn.addEventListener('click', replaceAll);
+        toggleReplaceBtn.addEventListener('click', () => {
+             replaceControls.classList.toggle('hidden');
+             replaceControls.classList.toggle('flex');
+             toggleReplaceBtn.classList.toggle('rotate-90');
+        });
+        document.addEventListener('selectionchange', () => {
+            if (!findReplaceBar.classList.contains('hidden')) {
+                updateFindResults();
             }
-        }
-    });
+        });
 
-    function handleMouseMove(e) {
-        const totalWidth = document.body.offsetWidth;
-        const leftWidth = e.clientX;
-        const rightWidth = totalWidth - e.clientX - resizer.offsetWidth;
-        if (leftWidth > 320 && rightWidth > 320) {
-            leftPanel.style.flexBasis = `${leftWidth}px`;
-            rightPanel.style.flexBasis = `${rightWidth}px`;
-        }
-    }
-    function handleMouseUp() {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-    }
   </script>
 </body>
 </html>
