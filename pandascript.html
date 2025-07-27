@@ -4,9 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="appTitle">PandaScript</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome para iconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- jsPDF para exportar a PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Wavesurfer.js CDN -->
   <script src="https://unpkg.com/wavesurfer.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; overflow: hidden; }
@@ -93,6 +97,7 @@
 </head>
 <body class="flex flex-row h-screen">
 
+  <!-- Panel Izquierdo -->
   <div id="left" class="p-4 flex flex-col relative" style="flex-basis: 40%;">
     
     <div id="video-player-container" class="relative w-full overflow-hidden rounded-lg mb-4 shadow-2xl" style="padding-top: 56.25%;">
@@ -128,6 +133,8 @@
     
     <button id="importVideoAudioBtn" class="w-full font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out mb-4" data-i18n="openMediaFile" data-i18n-title="openMediaFileTitle"><i class="fas fa-file-video mr-2"></i>Open Video/Audio File</button>
     <input type="file" id="videoFileInput" accept="video/*,audio/*" class="hidden" />
+    <input type="file" id="projectFileInput" accept=".pscript" class="hidden" />
+
 
     <div id="waveform-container" class="w-full h-24 mb-4 rounded-lg shadow-md hidden"></div>
     
@@ -148,10 +155,13 @@
     </div>
   </div>
 
+  <!-- Divisor Flexible -->
   <div id="resizer"></div>
 
+  <!-- Panel Derecho -->
   <div id="right" class="p-4 flex flex-col relative" style="flex-basis: 60%;">
     <div id="controls" class="mb-4 flex flex-wrap items-center gap-2">
+        <!-- Menú File -->
         <div class="relative inline-block text-left">
             <button id="fileMenuBtn" type="button" class="inline-flex justify-center rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
                 <span data-i18n="fileMenu">File</span>
@@ -159,13 +169,17 @@
             </button>
             <div id="fileMenuDropdown" class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10">
                 <div class="py-1" role="menu" aria-orientation="vertical">
-                    <a href="#" id="newTranscriptionBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-file-alt mr-3"></i><span data-i18n="newTranscription">Nueva transcripción</span></a>
+                    <a href="#" id="newTranscriptionBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-file-alt mr-3"></i><span data-i18n="newTranscription">New Transcription</span></a>
+                    <a href="#" id="openProjectBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-folder-open mr-3"></i><span data-i18n="openProject">Open Project</span></a>
+                    <a href="#" id="saveProjectBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-save mr-3"></i><span data-i18n="saveProject">Save Project</span></a>
+                    <hr class="my-1">
                     <a href="#" id="importTextBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-file-import mr-3"></i><span data-i18n="importText">Import .txt</span></a>
                     <a href="#" id="exportBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-file-export mr-3"></i><span data-i18n="export">Export</span></a>
-                    <a href="#" id="backupBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-save mr-3"></i><span data-i18n="backup">Copia de seguridad</span></a>
+                    <a href="#" id="backupBtn" class="dropdown-item px-4 py-2 text-sm flex items-center" role="menuitem"><i class="fas fa-save mr-3"></i><span data-i18n="backup">Backup</span></a>
                 </div>
             </div>
         </div>
+        <!-- Menú Settings -->
         <div class="relative inline-block text-left">
             <button id="settingsMenuBtn" type="button" class="inline-flex justify-center rounded-md border shadow-sm px-4 py-2 text-sm font-medium focus:outline-none">
                 <span data-i18n="settingsMenu">Settings</span>
@@ -179,7 +193,9 @@
                 </div>
             </div>
         </div>
+        <!-- Separador -->
         <div class="border-l h-6 mx-2" id="controlsSeparator"></div>
+        <!-- Botones restantes -->
         <div class="editor-button-group">
             <input type="file" id="textFileInput" accept=".txt" class="hidden" />
             <input type="file" id="shortcutImportInput" accept=".json" class="hidden" />
@@ -192,6 +208,7 @@
         </div>
     </div>
     
+    <!-- Barra de Búsqueda y Reemplazo -->
     <div id="find-replace-bar" class="hidden">
         <div class="flex flex-col gap-2 flex-grow">
             <div class="flex items-center gap-2">
@@ -215,11 +232,13 @@
         </div>
     </div>
 
+    <!-- Editor de Texto -->
     <div id="editor" contenteditable="true" spellcheck="true" aria-label="Text editor" class="w-full flex-1 rounded-lg p-4 text-sm overflow-y-auto outline-none shadow-inner">
       <p data-i18n="editorPlaceholder">Start transcribing here...</p>
     </div>
   </div>
 
+  <!-- Modal -->
   <div id="customModal" class="modal-overlay">
     <div class="modal-content">
       <span class="modal-close-btn">&times;</span>
@@ -234,6 +253,7 @@
         // --- DOM Element References ---
         const video = document.getElementById('video');
         const videoFileInput = document.getElementById('videoFileInput');
+        const projectFileInput = document.getElementById('projectFileInput');
         const importVideoAudioBtn = document.getElementById('importVideoAudioBtn');
         const textFileInput = document.getElementById('textFileInput');
         const editor = document.getElementById('editor');
@@ -265,6 +285,8 @@
         const settingsMenuBtn = document.getElementById('settingsMenuBtn');
         const settingsMenuDropdown = document.getElementById('settingsMenuDropdown');
         const newTranscriptionBtn = document.getElementById('newTranscriptionBtn');
+        const openProjectBtn = document.getElementById('openProjectBtn');
+        const saveProjectBtn = document.getElementById('saveProjectBtn');
         const importTextBtn = document.getElementById('importTextBtn');
         const exportBtn = document.getElementById('exportBtn');
         const backupBtn = document.getElementById('backupBtn');
@@ -304,11 +326,13 @@
         let isEditorPristine = true;
         let listeningForShortcut = null;
         let tempShortcuts = {};
+        let currentMediaFile = null; // To store the loaded media file object
+        let projectDB = null;
 
         // --- Traducciones ---
         const translations = {
-            en: { appTitle: "PandaScript", openMediaFile: "Open Video/Audio File", insertTimecode: "Insert timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode", recurringTextHeader: "Recurring Text", fileMenu: "File", settingsMenu: "Settings", newTranscription: "New transcription", importText: "Import .txt", export: "Export", backup: "Backup", shortcutsButton: "Keyboard Shortcuts", darkMode: "Dark Mode", lightMode: "Light Mode", changeLanguageButton: "Change Language", editorPlaceholder: "Open a video or audio file and start transcribing. Use the built-in commands and keyboard shortcuts to speed up your workflow.", exportModalTitle: "Export Transcription", filenameLabel: "Filename:", formatLabel: "Format:", exportBtnText: "Export", newTranscriptionConfirm: "Are you sure you want to start a new transcription? Any unsaved progress will be lost.", backupFoundTitle: "Backup Found", backupFoundMessage: "An automatic backup was found. Do you want to restore it?", restore: "Restore", discard: "Discard", noBackup: "No backup available.", shortcutsModalTitle: "Customize Keyboard Shortcuts", shortcutsModalMessage: "Click on a button to set a new shortcut.", resetShortcuts: "Restore", pressNewShortcut: "Press new keys...", saveShortcuts: "Save", importShortcuts: "Import", exportShortcuts: "Export", shortcutsImported: "Shortcuts imported successfully.", shortcutsImportError: "Error importing shortcuts. Invalid file format.", shortcutLabel_playPause: "Play/Pause", shortcutLabel_rewind5s: "Rewind 5s", shortcutLabel_forward5s: "Forward 5s", shortcutLabel_rewind1s: "Rewind 1s", shortcutLabel_forward1s: "Forward 1s", shortcutLabel_rewind1frame: "Rewind 1 frame", shortcutLabel_forward1frame: "Forward 1 frame", shortcutLabel_speedUp: "Speed Up", shortcutLabel_speedDown: "Speed Down", shortcutLabel_insertTimecode: "Insert timecode", shortcutLabel_insertRecurringText: "Insert recurring text", unsavedChangesTitle: "Unsaved Changes", unsavedChangesMessage: "You have unsaved changes in the shortcuts. Do you want to close without saving?", continueAndClose: "Continue and Close", goBack: "Go Back", findPlaceholder: "Find...", caseSensitive: "Match case", replace: "Replace", replaceAll: "Replace All", shortcutLabel_bold: "Bold", shortcutLabel_italic: "Italic", shortcutLabel_uppercase: "Uppercase", shortcutLabel_lowercase: "Lowercase", tooltip_add_recurring: "Add text to editor", tooltip_delete_recurring: "Delete field", shortcutLabel_find: "Find", shortcutLabel_replace: "Replace", tooltip_find_previous: "Find Previous", tooltip_find_next: "Find Next", tooltip_toggle_replace: "Toggle Replace", tooltip_close_find_bar: "Close", languageModalTitle: "Change Language", save: "Save", cancel: "Cancel" },
-            es: { appTitle: "PandaScript", openMediaFile: "Abrir Vídeo/Audio", insertTimecode: "Insertar código de tiempo", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial", recurringTextHeader: "Texto recurrente", fileMenu: "Archivo", settingsMenu: "Ajustes", newTranscription: "Nueva transcripción", importText: "Importar .txt", export: "Exportar", backup: "Copia de seguridad", shortcutsButton: "Atajos de teclado", darkMode: "Modo oscuro", lightMode: "Modo claro", changeLanguageButton: "Cambiar idioma", editorPlaceholder: "Abre un archivo de vídeo o audio y empieza a transcribir aquí. Utiliza los diferentes comandos y atajos de teclado para transcribir de manera productiva.", exportModalTitle: "Exportar Transcripción", filenameLabel: "Nombre del archivo:", formatLabel: "Formato:", exportBtnText: "Exportar", newTranscriptionConfirm: "¿Seguro que quieres empezar una nueva transcripción? Se perderá todo el progreso no guardado.", backupFoundTitle: "Copia de seguridad encontrada", backupFoundMessage: "Se encontró una copia de seguridad automática. ¿Quieres restaurarla?", restore: "Restaurar", discard: "Descartar", noBackup: "No hay ninguna copia de seguridad disponible.", shortcutsModalTitle: "Personalizar Atajos de Teclado", shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.", resetShortcuts: "Restaurar", pressNewShortcut: "Pulsa las nuevas teclas...", saveShortcuts: "Guardar", importShortcuts: "Importar", exportShortcuts: "Exportar", shortcutsImported: "Atajos importados correctamente.", shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.", shortcutLabel_playPause: "Reproducir/Pausar", shortcutLabel_rewind5s: "Retroceder 5s", shortcutLabel_forward5s: "Avanzar 5s", shortcutLabel_rewind1s: "Retroceder 1s", shortcutLabel_forward1s: "Avanzar 1s", shortcutLabel_rewind1frame: "Retroceder 1 fotograma", shortcutLabel_forward1frame: "Avanzar 1 fotograma", shortcutLabel_speedUp: "Acelerar", shortcutLabel_speedDown: "Ralentizar", shortcutLabel_insertTimecode: "Insertar código de tiempo", shortcutLabel_insertRecurringText: "Insertar texto recurrente", unsavedChangesTitle: "Cambios no guardados", unsavedChangesMessage: "Tienes cambios sin guardar en los atajos. ¿Quieres cerrar sin guardar?", continueAndClose: "Continuar y cerrar", goBack: "Volver", findPlaceholder: "Buscar...", caseSensitive: "Distinguir mayúsculas", replace: "Reemplazar", replaceAll: "Reemplazar todos", shortcutLabel_bold: "Negrita", shortcutLabel_italic: "Cursiva", shortcutLabel_uppercase: "Mayúsculas", shortcutLabel_lowercase: "Minúsculas", tooltip_add_recurring: "Añadir texto al editor", tooltip_delete_recurring: "Eliminar campo", shortcutLabel_find: "Buscar", shortcutLabel_replace: "Reemplazar", tooltip_find_previous: "Buscar anterior", tooltip_find_next: "Buscar siguiente", tooltip_toggle_replace: "Habilitar buscar y reemplazar", tooltip_close_find_bar: "Cerrar", languageModalTitle: "Cambiar Idioma", save: "Guardar", cancel: "Cancelar" }
+            en: { appTitle: "PandaScript", openMediaFile: "Open Video/Audio File", insertTimecode: "Insert timecode", timecodeFormat: "Timecode Format", setInitialTimecode: "Set Initial Timecode", recurringTextHeader: "Recurring Text", fileMenu: "File", settingsMenu: "Settings", newTranscription: "New Transcription", openProject: "Open Project", saveProject: "Save Project", importText: "Import .txt", export: "Export", backup: "Backup", shortcutsButton: "Keyboard Shortcuts", darkMode: "Dark Mode", lightMode: "Light Mode", changeLanguageButton: "Change Language", editorPlaceholder: "Open a video or audio file and start transcribing here. Use the different commands and keyboard shortcuts to transcribe productively.", exportModalTitle: "Export Transcription", filenameLabel: "Filename:", formatLabel: "Format:", exportBtnText: "Export", newTranscriptionConfirm: "Are you sure you want to start a new transcription? Any unsaved progress will be lost.", backupFoundTitle: "Backup Found", backupFoundMessage: "An automatic backup was found. Do you want to restore it?", restore: "Restore", discard: "Discard", noBackup: "No backup available.", shortcutsModalTitle: "Customize Keyboard Shortcuts", shortcutsModalMessage: "Click on a button to set a new shortcut.", resetShortcuts: "Restore", pressNewShortcut: "Press new keys...", saveShortcuts: "Save", importShortcuts: "Import", exportShortcuts: "Export", shortcutsImported: "Shortcuts imported successfully.", shortcutsImportError: "Error importing shortcuts. Invalid file format.", shortcutLabel_playPause: "Play/Pause", shortcutLabel_rewind5s: "Rewind 5s", shortcutLabel_forward5s: "Forward 5s", shortcutLabel_rewind1s: "Rewind 1s", shortcutLabel_forward1s: "Forward 1s", shortcutLabel_rewind1frame: "Rewind 1 frame", shortcutLabel_forward1frame: "Forward 1 frame", shortcutLabel_speedUp: "Speed Up", shortcutLabel_speedDown: "Speed Down", shortcutLabel_insertTimecode: "Insert timecode", shortcutLabel_insertRecurringText: "Insert recurring text", unsavedChangesTitle: "Unsaved Changes", unsavedChangesMessage: "You have unsaved changes in the shortcuts. Do you want to close without saving?", continueAndClose: "Continue and Close", goBack: "Go Back", findPlaceholder: "Find...", caseSensitive: "Match case", replace: "Replace", replaceAll: "Replace All", shortcutLabel_bold: "Bold", shortcutLabel_italic: "Italic", shortcutLabel_uppercase: "Uppercase", shortcutLabel_lowercase: "Lowercase", tooltip_add_recurring: "Add text to editor", tooltip_delete_recurring: "Delete field", shortcutLabel_find: "Find", shortcutLabel_replace: "Replace", tooltip_find_previous: "Find Previous", tooltip_find_next: "Find Next", tooltip_toggle_replace: "Toggle Replace", tooltip_close_find_bar: "Close", languageModalTitle: "Change Language", save: "Save", cancel: "Cancel", openProjectTitle: "Open Project", recentProjects: "Recent Projects", openFromFile: "Open from file...", noRecentProjects: "No recent projects found." },
+            es: { appTitle: "PandaScript", openMediaFile: "Abrir Vídeo/Audio", insertTimecode: "Insertar código de tiempo", timecodeFormat: "Formato TCR", setInitialTimecode: "TCR Inicial", recurringTextHeader: "Texto recurrente", fileMenu: "Archivo", settingsMenu: "Ajustes", newTranscription: "Nueva Transcripción", openProject: "Abrir Proyecto", saveProject: "Guardar Proyecto", importText: "Importar .txt", export: "Exportar", backup: "Copia de seguridad", shortcutsButton: "Atajos de teclado", darkMode: "Modo oscuro", lightMode: "Modo claro", changeLanguageButton: "Cambiar idioma", editorPlaceholder: "Abre un archivo de vídeo o audio y empieza a transcribir aquí. Utiliza los diferentes comandos y atajos de teclado para transcribir de manera productiva.", exportModalTitle: "Exportar Transcripción", filenameLabel: "Nombre del archivo:", formatLabel: "Formato:", exportBtnText: "Exportar", newTranscriptionConfirm: "¿Seguro que quieres empezar una nueva transcripción? Se perderá todo el progreso no guardado.", backupFoundTitle: "Copia de seguridad encontrada", backupFoundMessage: "Se encontró una copia de seguridad automática. ¿Quieres restaurarla?", restore: "Restaurar", discard: "Descartar", noBackup: "No hay ninguna copia de seguridad disponible.", shortcutsModalTitle: "Personalizar Atajos de Teclado", shortcutsModalMessage: "Haz clic en un botón para asignar un nuevo atajo.", resetShortcuts: "Restaurar", pressNewShortcut: "Pulsa las nuevas teclas...", saveShortcuts: "Guardar", importShortcuts: "Importar", exportShortcuts: "Exportar", shortcutsImported: "Atajos importados correctamente.", shortcutsImportError: "Error al importar atajos. Formato de archivo no válido.", shortcutLabel_playPause: "Reproducir/Pausar", shortcutLabel_rewind5s: "Retroceder 5s", shortcutLabel_forward5s: "Avanzar 5s", shortcutLabel_rewind1s: "Retroceder 1s", shortcutLabel_forward1s: "Avanzar 1s", shortcutLabel_rewind1frame: "Retroceder 1 fotograma", shortcutLabel_forward1frame: "Avanzar 1 fotograma", shortcutLabel_speedUp: "Acelerar", shortcutLabel_speedDown: "Ralentizar", shortcutLabel_insertTimecode: "Insertar código de tiempo", shortcutLabel_insertRecurringText: "Insertar texto recurrente", unsavedChangesTitle: "Cambios no guardados", unsavedChangesMessage: "Tienes cambios sin guardar en los atajos. ¿Quieres cerrar sin guardar?", continueAndClose: "Continuar y cerrar", goBack: "Volver", findPlaceholder: "Buscar...", caseSensitive: "Distinguir mayúsculas", replace: "Reemplazar", replaceAll: "Reemplazar todos", shortcutLabel_bold: "Negrita", shortcutLabel_italic: "Cursiva", shortcutLabel_uppercase: "Mayúsculas", shortcutLabel_lowercase: "Minúsculas", tooltip_add_recurring: "Añadir texto al editor", tooltip_delete_recurring: "Eliminar campo", shortcutLabel_find: "Buscar", shortcutLabel_replace: "Reemplazar", tooltip_find_previous: "Buscar anterior", tooltip_find_next: "Buscar siguiente", tooltip_toggle_replace: "Habilitar buscar y reemplazar", tooltip_close_find_bar: "Cerrar", languageModalTitle: "Cambiar Idioma", save: "Guardar", cancel: "Cancelar", openProjectTitle: "Abrir Proyecto", recentProjects: "Proyectos Recientes", openFromFile: "Abrir desde archivo...", noRecentProjects: "No se encontraron proyectos recientes." }
         };
 
         const availableLanguages = {
@@ -332,6 +356,62 @@
             { name: "MM:SS:FF", format: (t, fr) => { if(isNaN(t)) return '--:--:--'; const tf=Math.floor(t*fr),m=Math.floor(tf/(60*fr)),s=Math.floor(tf/fr%60),f=tf%fr; return `${pad(m)}:${pad(s)}:${pad(f)}`; }},
         ];
         let currentTCRFormatIndex = 0;
+
+        // --- Funciones de Base de Datos ---
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("PandaScriptDB", 1);
+                request.onerror = (event) => reject("Database error: " + event.target.errorCode);
+                request.onsuccess = (event) => {
+                    projectDB = event.target.result;
+                    resolve(projectDB);
+                };
+                request.onupgradeneeded = (event) => {
+                    let db = event.target.result;
+                    let store = db.createObjectStore("projects", { keyPath: "id", autoIncrement: true });
+                    store.createIndex("lastModified", "lastModified", { unique: false });
+                };
+            });
+        }
+
+        function saveProjectToDB(projectData) {
+            return new Promise((resolve, reject) => {
+                if (!projectDB) reject("DB not initialized");
+                const transaction = projectDB.transaction(["projects"], "readwrite");
+                const store = transaction.objectStore("projects");
+                const request = store.add(projectData);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject("Error saving project: " + event.target.error);
+            });
+        }
+
+        function getRecentProjects(limit = 3) {
+            return new Promise((resolve, reject) => {
+                if (!projectDB) reject("DB not initialized");
+                const transaction = projectDB.transaction(["projects"], "readonly");
+                const store = transaction.objectStore("projects");
+                const index = store.index("lastModified");
+                const request = index.getAll(null, limit); // Note: This gets all and we sort/slice after
+                
+                request.onsuccess = () => {
+                    const sorted = request.result.sort((a, b) => b.lastModified - a.lastModified);
+                    resolve(sorted.slice(0, limit));
+                };
+                request.onerror = (event) => reject("Error fetching recent projects: " + event.target.error);
+            });
+        }
+        
+        function getProjectFromDB(id) {
+            return new Promise((resolve, reject) => {
+                if (!projectDB) reject("DB not initialized");
+                const transaction = projectDB.transaction(["projects"], "readonly");
+                const store = transaction.objectStore("projects");
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject("Error fetching project: " + event.target.error);
+            });
+        }
+
 
         // --- Funciones Principales ---
         function applyLanguage(lang) {
@@ -689,6 +769,7 @@
 
         function resetApplication() {
             video.src = '';
+            currentMediaFile = null;
             wavesurfer.empty();
             waveformContainer.classList.add('hidden');
             emptyPlayerOverlay.classList.remove('hidden');
@@ -851,7 +932,6 @@
         function findInEditor(backwards = false) {
             const query = findInput.value;
             if (!query) return;
-            // window.find is simple but has limitations. We use it to navigate.
             window.find(query, matchCaseCheckbox.checked, backwards, true, false, false, false);
         }
 
@@ -890,7 +970,6 @@
                 if (comparisonText === comparisonQuery) {
                     document.execCommand('insertText', false, replacement);
                 }
-                // Find the next one automatically
                 findInEditor(false);
             }
         }
@@ -912,11 +991,163 @@
                 }
             }
 
-            // Modify nodes after finding them all to avoid issues with the TreeWalker
             nodesToModify.forEach(textNode => {
                 textNode.nodeValue = textNode.nodeValue.replace(regex, replacement);
             });
             updateFindResults();
+        }
+
+        // --- Lógica de Proyecto ---
+        function showSaveProjectModal() {
+             if (!currentMediaFile) {
+                alert("No media file is loaded to save in the project.");
+                return;
+            }
+            const defaultName = (currentMediaFile.name.split('.')[0] || 'project');
+            const body = `<div>
+                <label for="projectNameInput" class="block mb-2">${translations[currentLanguage].filenameLabel}</label>
+                <input type="text" id="projectNameInput" class="w-full p-2 border rounded" value="${defaultName}">
+            </div>`;
+            const buttons = [
+                { text: translations[currentLanguage].cancel },
+                { text: translations[currentLanguage].save, handler: () => {
+                    const projectName = document.getElementById('projectNameInput').value || defaultName;
+                    saveProject(projectName);
+                }}
+            ];
+            showModal(translations[currentLanguage].saveProject, '', buttons, body);
+        }
+
+        async function showOpenProjectModal() {
+            const recentProjects = await getRecentProjects(3);
+            let recentProjectsHtml = '';
+            if (recentProjects.length > 0) {
+                recentProjectsHtml = recentProjects.map(p => `
+                    <button data-project-id="${p.id}" class="recent-project-btn w-full text-left p-2 border-b hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <div class="font-bold">${p.name}</div>
+                        <div class="text-xs text-gray-500">${new Date(p.lastModified).toLocaleString()}</div>
+                    </button>
+                `).join('');
+            } else {
+                recentProjectsHtml = `<p class="text-sm text-gray-500">${translations[currentLanguage].noRecentProjects}</p>`;
+            }
+
+            const body = `
+                <h4 class="text-lg font-semibold mb-2">${translations[currentLanguage].recentProjects}</h4>
+                <div class="mb-4">${recentProjectsHtml}</div>
+                <button id="open-from-file-btn" class="w-full font-bold py-2 px-4 rounded-lg shadow-md">${translations[currentLanguage].openFromFile}</button>
+            `;
+
+            showModal(translations[currentLanguage].openProjectTitle, '', [], body);
+            
+            document.getElementById('open-from-file-btn').addEventListener('click', () => {
+                document.getElementById('customModal').classList.remove('show');
+                projectFileInput.click();
+            });
+
+            document.querySelectorAll('.recent-project-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const projectId = parseInt(e.currentTarget.dataset.projectId);
+                    const projectData = await getProjectFromDB(projectId);
+                    if (projectData) {
+                        await restoreProjectState(projectData);
+                        document.getElementById('customModal').classList.remove('show');
+                    }
+                });
+            });
+        }
+
+        function saveProject(projectName) {
+            const recurringTexts = Array.from(recurringTextContainer.querySelectorAll('input')).map(input => input.value);
+            const projectData = {
+                name: projectName,
+                mediaBlob: currentMediaFile,
+                lastModified: Date.now(),
+                editorContent: editor.innerHTML,
+                videoState: {
+                    currentTime: video.currentTime,
+                    playbackRate: video.playbackRate,
+                    volume: video.volume,
+                    muted: video.muted
+                },
+                appState: {
+                    tcrOffsetSeconds: tcrOffsetSeconds,
+                    recurringTexts: recurringTexts,
+                    theme: isDarkMode ? 'dark' : 'light',
+                    language: currentLanguage,
+                    tcrFormatIndex: currentTCRFormatIndex
+                }
+            };
+
+            // Save to IndexedDB for recent projects list
+            saveProjectToDB(projectData).catch(err => console.error("Could not save project to DB", err));
+            
+            // Also save as a .pscript file
+            const dataToExport = { ...projectData };
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                dataToExport.mediaFile = {
+                    name: currentMediaFile.name,
+                    type: currentMediaFile.type,
+                    data: e.target.result
+                };
+                delete dataToExport.mediaBlob; // Don't include blob in JSON file
+
+                const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${projectName}.pscript`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            };
+            reader.readAsDataURL(currentMediaFile);
+        }
+
+        async function restoreProjectState(data) {
+            resetApplication();
+
+            editor.innerHTML = data.editorContent;
+            isEditorPristine = false;
+            tcrOffsetSeconds = data.appState.tcrOffsetSeconds || 0;
+            currentTCRFormatIndex = data.appState.tcrFormatIndex || 0;
+            
+            recurringTextContainer.innerHTML = '';
+            (data.appState.recurringTexts || []).forEach(text => addRecurringTextField(text));
+
+            applyLanguage(data.appState.language || 'en');
+            applyTheme(data.appState.theme || 'light');
+            
+            let mediaBlob;
+            if (data.mediaBlob) { // From IndexedDB
+                mediaBlob = data.mediaBlob;
+                currentMediaFile = new File([mediaBlob], data.name, { type: mediaBlob.type });
+            } else { // From .pscript file
+                const res = await fetch(data.mediaFile.data);
+                mediaBlob = await res.blob();
+                currentMediaFile = new File([mediaBlob], data.mediaFile.name, { type: data.mediaFile.type });
+                
+                // Also save this opened project to IndexedDB
+                const dbData = { ...data, mediaBlob: mediaBlob, lastModified: Date.now() };
+                delete dbData.mediaFile;
+                saveProjectToDB(dbData);
+            }
+            
+            const url = URL.createObjectURL(mediaBlob);
+            video.src = url;
+            wavesurfer.load(url);
+
+            video.addEventListener('canplay', () => {
+                const vs = data.videoState;
+                video.currentTime = vs.currentTime || 0;
+                video.playbackRate = vs.playbackRate || 1;
+                video.volume = vs.volume || 1;
+                video.muted = vs.muted || false;
+                
+                speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`;
+                volumeSlider.value = video.volume;
+                muteBtn.innerHTML = video.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+
+            }, { once: true });
         }
 
         // --- Inicialización ---
@@ -930,13 +1161,16 @@
             scrollParent: true, autoCenter: true, minPxPerSec: 100
         });
 
-        applyLanguage(currentLanguage);
-        applyTheme(isDarkMode ? 'dark' : 'light');
-        togglePlaybackControls(true);
-        for(let i = 0; i < 4; i++) addRecurringTextField();
-        loadBackup();
-        loadShortcuts();
-        setInterval(saveBackup, 30000);
+        initDB().then(() => {
+            applyLanguage(currentLanguage);
+            applyTheme(isDarkMode ? 'dark' : 'light');
+            togglePlaybackControls(true);
+            for(let i = 0; i < 4; i++) addRecurringTextField();
+            loadBackup();
+            loadShortcuts();
+            setInterval(saveBackup, 30000);
+        }).catch(err => console.error(err));
+
 
         const fonts = ['Arial', 'Verdana', 'Georgia', 'Times New Roman', 'Courier New', 'monospace'];
         fonts.forEach(font => {
@@ -958,12 +1192,29 @@
         videoFileInput.addEventListener('change', (e) => {
           const file = e.target.files[0];
           if (!file) return;
+          currentMediaFile = file; // Store file object
           togglePlaybackControls(true);
           waveformContainer.classList.remove('hidden');
           const url = URL.createObjectURL(file);
           video.src = url;
           video.load();
           wavesurfer.load(url);
+        });
+
+        projectFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const projectData = JSON.parse(event.target.result);
+                    restoreProjectState(projectData);
+                } catch (err) {
+                    console.error("Error loading project file:", err);
+                    alert("Failed to load project file. It may be invalid or corrupted.");
+                }
+            };
+            reader.readAsText(file);
         });
 
         video.addEventListener('canplay', () => {
@@ -1106,6 +1357,8 @@
         });
 
         newTranscriptionBtn.addEventListener('click', (e) => { e.preventDefault(); showNewTranscriptionConfirm(); });
+        openProjectBtn.addEventListener('click', (e) => { e.preventDefault(); showOpenProjectModal(); });
+        saveProjectBtn.addEventListener('click', (e) => { e.preventDefault(); showSaveProjectModal(); });
         importTextBtn.addEventListener('click', (e) => { e.preventDefault(); textFileInput.click(); });
         
         textFileInput.addEventListener('change', (e) => {
@@ -1132,10 +1385,8 @@
         });
 
         document.addEventListener('keydown', (e) => {
-            // Handle shortcuts modal key listening
             if (listeningForShortcut) {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); e.stopPropagation();
                 if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
                 const newShortcutStr = keyEventToString(e);
                 tempShortcuts[listeningForShortcut] = newShortcutStr;
@@ -1148,21 +1399,15 @@
                 return;
             }
             
-            // Handle Find/Replace bar keydown
             if (!findReplaceBar.classList.contains('hidden')) {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
-                    findInEditor(e.shiftKey); // Find previous on Shift+Enter
-                    return;
+                    e.preventDefault(); findInEditor(e.shiftKey); return;
                 }
                 if (e.key === 'Escape') {
-                    e.preventDefault();
-                    hideFindReplaceBar();
-                    return;
+                    e.preventDefault(); hideFindReplaceBar(); return;
                 }
             }
 
-            // Global shortcuts
             const pressedShortcut = keyEventToString(e).replace('Meta', 'Control');
             for (const action in shortcuts) {
                 if (shortcuts[action] && shortcuts[action].replace('Meta', 'Control') === pressedShortcut) {
@@ -1170,11 +1415,8 @@
                     if (activeEl.tagName === 'INPUT' && activeEl !== findInput && activeEl !== replaceInput) return;
                     if (activeEl.isContentEditable && activeEl !== editor) return;
                     
-                    // Allow Ctrl+F/H even if find bar is open to re-focus
                     if (action === 'find' || action === 'replace') {
-                         e.preventDefault();
-                         executeShortcut(action);
-                         break;
+                         e.preventDefault(); executeShortcut(action); break;
                     }
                     
                     if (activeEl === findInput || activeEl === replaceInput) return;
@@ -1195,7 +1437,7 @@
                     const imported = JSON.parse(event.target.result);
                     shortcuts = { ...shortcuts, ...imported };
                     saveShortcutsToStorage();
-                    showShortcutsModal(); // Refresh modal
+                    showShortcutsModal();
                 } catch (err) {
                     alert(translations[currentLanguage].shortcutsImportError);
                 }
