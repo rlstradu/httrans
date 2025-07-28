@@ -1,0 +1,54 @@
+=========================================
+ subpandaTM v1.0.0 - Launch Announcement
+=========================================
+
+Release Date: July 28, 2025
+
+SubpandaTM is an all-in-one subtitle translation environment that runs entirely in your browser. It combines a synchronized video player, a powerful subtitle editor, and professional CAT (Computer-Assisted Translation) tools to streamline your entire workflow, all while keeping your data private and offline.
+
+---
+Key Features
+---
+
+### Integrated Translation Environment
+
+* **Synchronized Video Player**: Load your video and see it alongside your SRT file. Clicking a subtitle in the editor jumps the video to the correct time, and the video player can be controlled with extensive keyboard shortcuts.
+* **Subtitle Preview Overlay**: See how your translation will look on-screen with a live preview overlay on the video player. You can customize the font size and switch between viewing the original or the translated text.
+* **Side-by-Side Editor**: A clear editor view showing the original text next to a rich-text field for your translation for each subtitle entry.
+* **Real-time QA Checks**: Get instant feedback on your translations. The tool automatically checks for and flags issues related to Characters Per Second (CPS) and characters-per-line limits based on your settings.
+
+### Computer-Assisted Translation (CAT) Tools
+
+* **Translation Memory (TM)**: Import and export standard TMX files or create a TM from scratch. Get fuzzy match suggestions with similarity scores and a color-coded "diff" view that highlights the exact differences between the source text and the TM match.
+* **Terminology (Glossary)**: Manage your project's terminology with full TBX import/export support. Terms from your glossary are automatically highlighted in the source text for easy reference.
+* **Floating Panels**: The TM and Terminology tools are housed in fully draggable and resizable floating windows, allowing you to create a completely custom workspace.
+
+### Productivity & Workflow
+
+* **Comprehensive Shortcut System**: A massive set of keyboard shortcuts covers nearly every action: video playback, navigating between subtitles, inserting TM and glossary suggestions, and applying text formatting. The entire shortcut map can be customized, saved, and imported.
+* **Find & Replace**: A powerful tool to find and replace text across all subtitles in your file, with support for case sensitivity and regular expressions.
+* **Statistics Panel**: A collapsible panel keeps track of your progress, showing translated segments, word counts, and a summary of QA errors.
+
+### Project Management & Data Safety
+
+* **Full Project Files (.subpanda)**: Save your entire workspace—including the SRT file, TM, glossary, video reference, and settings—into a single `.subpanda` project file.
+* **Automatic Backup**: Your session is automatically backed up to your browser's local storage (IndexedDB) to prevent data loss. The tool will notify you if a restorable backup is available.
+* **Multilingual Interface**: The application is available in both English and Spanish.
+
+---
+Getting Started
+---
+
+1.  Open the `subpandatm.html` file in your web browser.
+2.  Click "Import .srt" to load your subtitle file.
+3.  Click "Load Video" in the player window to load your video file.
+4.  Optionally, open the Terminology and TM panels to load your CAT files.
+5.  Start translating!
+
+---
+Feedback & Contributions
+---
+
+This is the first version of subpandaTM. If you have any suggestions or encounter issues, your feedback is highly welcome.
+
+Thank you for using subpandaTM!
