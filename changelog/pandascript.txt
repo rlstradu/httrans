@@ -1,0 +1,60 @@
+=========================================
+ PandaScript v1.0.0 - Launch Announcement
+=========================================
+
+Release Date: July 28, 2025
+
+PandaScript is a comprehensive transcription tool designed for speed and efficiency. PandaScript runs entirely in your local browser, allowing you to work with your video and audio files privately and offline.
+
+---
+Key Features
+---
+
+### Media Playback & Control
+
+* **Local File Support**: Open any video or audio file directly from your computer.
+* **Audio Waveform Display**: For audio-only files, an interactive waveform is displayed, allowing for precise visual navigation.
+* **Advanced Playback Controls**: Control your media with precision. Features include play/pause, frame-by-frame seeking, various rewind/forward intervals (1s, 5s), and variable playback speed adjustment.
+* **Volume Control**: Adjust the volume with a slider and a one-click mute button.
+
+### Transcription & Editing Tools
+
+* **Rich Text Editor**: A full-featured editor that supports bold and italic formatting, case changes (uppercase/lowercase), and a selection of different fonts and font sizes.
+* **Clickable & Customizable Timecodes**:
+    * Insert timecodes directly into your transcript. These timecodes are clickable, allowing you to instantly jump the media player to that exact moment.
+    * Choose from multiple industry-standard timecode formats (e.g., HH:MM:SS,MSS or HH:MM:SS:FF).
+    * Set a custom starting timecode offset for projects that don't begin at zero.
+* **Find & Replace**: A powerful Find & Replace tool is built directly into the editor, with support for case sensitivity, single replacement, and "replace all" functionality.
+
+### Productivity & Workflow
+
+* **Comprehensive Shortcut System**:
+    * Control nearly every function—from media playback to text formatting—with keyboard shortcuts.
+    * A dedicated settings panel allows you to fully customize all shortcuts, as well as import and export your shortcut configurations.
+* **Recurring Text Snippets**: Define a list of frequently used words or phrases (like speaker names or specific terminology) and insert them instantly with a button click or a custom shortcut.
+* **Customizable Layout**: Adjust the size of the media and editor panels by dragging the divider to create a workspace that best suits your needs.
+* **Light & Dark Modes**: Instantly switch between light and dark themes for comfortable viewing in any lighting environment.
+* **Multilingual Interface**: The application is available in both English and Spanish.
+
+### Project & Data Management
+
+* **Project Files (.pscript)**: Save your entire session into a single `.pscript` file. This file bundles your transcript, a reference to your media file, and all your settings.
+* **Recent Projects Menu**: PandaScript keeps track of your recent work, allowing you to quickly open past projects from the "Open Project" menu.
+* **Multiple Export Options**: Export your final transcript as a plain text file (.txt), a formatted HTML file, or a professional PDF document.
+* **Automatic Backup**: Your work is automatically saved to your browser's local storage to prevent data loss. If the application closes unexpectedly, it will prompt you to restore this backup on your next visit.
+
+---
+Getting Started
+---
+
+1.  Open the `pandascript.html` file in your web browser.
+2.  Click "Open Video/Audio File" to load your media.
+3.  Use the editor on the right to start transcribing!
+
+---
+Feedback & Contributions
+---
+
+As this is the first version, we welcome your feedback. If you find any bugs, have feature suggestions, or want to contribute, please feel free to reach out.
+
+Thank you for using PandaScript!
