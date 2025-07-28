@@ -1,0 +1,68 @@
+=========================================
+ SubPandaQA v1.0.0 - Launch Announcement
+=========================================
+
+Release Date: July 28, 2025
+
+SubPandaQA is a powerful and detailed quality assurance tool for subtitle professionals. Designed to run entirely in your browser, SubPandaQA analyzes SRT files to detect a wide range of common technical, formatting, and stylistic errors, helping you deliver flawless subtitles.
+
+---
+Key Features
+---
+
+### Comprehensive Error Checking
+
+SubPandaQA comes with a suite of over 25 configurable checks to validate your subtitle files against common industry standards and style guides.
+
+**Technical & Timing Checks:**
+* **Reading Speed**: Detects subtitles that exceed configurable Characters Per Second (CPS) or Words Per Minute (WPM) limits.
+* **Duration**: Flags subtitles that are too short (less than 1s) or too long (more than 7s).
+* **Minimum Gap**: Checks for insufficient time gaps between consecutive subtitles, configurable in milliseconds or frames.
+* **Overlaps**: Identifies any subtitles with timestamps that overlap with the following subtitle.
+* **Tag Issues**: Finds unclosed, unopened, or malformed HTML tags (<i>, <b>, <font>).
+* **Empty Subtitles**: Detects subtitles that contain no text.
+* **SFX/Descriptions**: Identifies text enclosed in square brackets, which typically indicates sound effects or descriptions (e.g., [Music]).
+
+**Formatting & Punctuation Checks:**
+* **Line & Character Limits**: Verifies that subtitles do not exceed the configured character-per-line and line-per-subtitle limits.
+* **Dialogue Dashes**: Ensures a space follows a leading dash in a line of dialogue.
+* **Double Spaces**: Finds instances of two or more consecutive spaces within the text.
+* **Spanish Punctuation**: Checks for missing opening (¿, ¡) or closing (?, !) marks in questions and exclamations.
+* **Punctuation & Quotes**: Validates that punctuation is correctly placed outside of closing quotation marks and that all quotes are properly closed.
+* **Ellipsis Character**: Detects the use of three dots (...) instead of the correct single ellipsis character (…), and flags ellipses at the end of lines that may indicate linking issues.
+* **Number Punctuation**: Identifies English-style thousand separators (commas) in numbers.
+
+**Style & Consistency Checks:**
+* **Acronyms & Units**: Flags acronyms with incorrect formatting (e.g., "F.B.I") and measurement units with incorrect formatting (e.g., plurals or periods).
+* **Dialogue Hyphens**: Detects inconsistencies in dual-speaker subtitles where one line has a hyphen and the other does not.
+* **Numbers as Words**: Checks if numbers from 1 to 10 are written as digits instead of words.
+* **Thousand Separators**: Flags 4-digit numbers that incorrectly use a thousand separator (e.g., "1,234" instead of "1234").
+* **General Punctuation**: Detects the use of semicolons and checks for missing spaces after periods.
+
+### Filter Customization & Management
+
+* **Granular Control**: Every check can be individually enabled or disabled to match your project's specific requirements.
+* **Parameter Adjustment**: Key metrics like CPS, WPM, character limits, and gap duration are fully configurable.
+* **Save & Import Profiles**: Save your complete filter configuration to a JSON file and import it later, making it easy to switch between different client style guides.
+
+### Reporting & Export
+
+* **Clear Results**: Errors are displayed in a clean, easy-to-read format, grouped by subtitle with timestamps and the full text for context.
+* **PDF & HTML Export**: Export the full error report to a formatted PDF or a simple HTML table for sharing with colleagues or for archiving.
+
+---
+How It Works
+---
+
+1.  Use the "Upload subtitle file" button to load your .srt file.
+2.  Enable, disable, and configure the filters to match your needs.
+3.  Click the "CHECK SUBTITLES" button to run the analysis.
+4.  Review the results and export the report if needed.
+
+---
+Feedback & Contributions
+---
+
+This is the first version of SubPandaQA. If you find any bugs or have suggestions for new checks, your feedback is highly welcome.
+
+Thank you for using SubPandaQA!
