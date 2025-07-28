@@ -1,0 +1,49 @@
+=========================================
+ PandaTerm v1.0.0 - Launch Announcement
+=========================================
+
+Release Date: July 28, 2025
+
+Welcome to the first official release of PandaTerm!
+
+PandaTerm is a free, offline-first, browser-based tool designed for creating, editing, and managing terminologies in the standard TBX format. It runs entirely in your browser, ensuring your data always stays private and under your control. This release provides a comprehensive set of features for robust glossary management.
+
+---
+Key Features
+---
+
+### Core Glossary Management
+
+* **Create Glossaries from Scratch**: Start a new glossary by defining the source and target languages for your project.
+* **Import TBX Files**: Load existing glossaries in the standard TBX format. PandaTerm is built to be compatible with different TBX dialects (handling both `<martif>` and `<tbx>` root elements) and will auto-detect the primary languages from the file.
+* **Export to TBX**: Download your complete glossary as a clean, standards-compliant TBX file, ready for use in professional CAT tools.
+
+### Detailed Term Editing
+
+* **Rich Term Data**: Each glossary entry can include a source term, target term, definition, notes, and part of speech (e.g., noun, verb, adjective).
+* **User-Friendly Editing**: Click on any term in the table to open a clear and simple modal window for editing all its details.
+* **Clickable Links**: Any URLs included in the "Definition" or "Notes" fields are automatically converted into clickable links for easy access.
+
+### Productivity & User Experience
+
+* **Powerful Search**: Instantly filter your glossary as you type. You can scope your search to source terms only, target terms only, or all fields.
+* **Undo Functionality**: Made a mistake? Easily undo your last action (add, edit, or delete) with the "Undo" button or the standard Ctrl+Z keyboard shortcut.
+* **Light & Dark Themes**: Switch between a light and dark theme for your visual comfort with a single click.
+* **Keyboard Navigation**: Speed up new term creation by using the Enter key to navigate through the input fields.
+* **Multilingual Interface**: The PandaTerm user interface is available in both English and Spanish.
+
+---
+Getting Started
+---
+
+1.  Open the `pandaterm.html` file in your preferred web browser.
+2.  Configure your source and target languages or import an existing TBX file.
+3.  Begin building your glossary!
+
+---
+Feedback & Contributions
+---
+
+As this is the first version, your feedback is incredibly valuable. If you encounter any issues, have ideas for new features, or would like to contribute, please don't hesitate to reach out.
+
+Thank you for using PandaTerm!
