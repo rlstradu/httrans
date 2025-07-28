@@ -1,0 +1,49 @@
+=========================================
+ Diffpanda v1.0.0 - Launch Announcement
+=========================================
+
+Release Date: July 28, 2025
+
+Diffpanda is a powerful yet simple browser-based tool for comparing two versions of a text. Built for translators, editors, and reviewers, Diffpanda helps you visualize changes clearly and create professional reports, all while working offline in your browser.
+
+---
+Key Features
+---
+
+### Core Comparison Engine
+
+* **Line and Word-level Diffing**: The tool compares texts line by line. For lines that have changed, it performs a detailed word-level comparison to precisely highlight added, deleted, and modified words.
+* **Three-Panel View**: Results are shown in a clear three-column layout: the original text, the revised text, and a merged "comparison" view that shows all changes in context for easy review.
+* **Color-Coded Results**: Added, removed, and unchanged lines are clearly distinguished by color, making it easy to spot differences at a glance.
+
+### Smart File Support
+
+* **Paste or Upload**: You can paste text directly into the comparison fields or upload files from your computer.
+* **Specialized Parsers**: Diffpanda intelligently extracts the main text content from various file formats, ignoring metadata. It supports plain text (.txt), subtitles (.srt), gettext files (.po), and translation memories (.tmx).
+
+### Reviewing & Reporting
+
+* **Commenting System**: Activate a dedicated comments column in the results table to add notes and feedback directly alongside each change, perfect for collaborative reviews.
+* **PDF & HTML Export**: Export a complete report of the differences. The exported document includes all changes, word-level highlights, and any comments you have added, formatted in a clean HTML or PDF file.
+
+### User Experience
+
+* **Multilingual Interface**: The tool is available in both English and Spanish.
+* **Simple & Fast**: A clean, straightforward interface designed to help you compare texts and generate reports quickly, without unnecessary complexity.
+
+---
+How It Works
+---
+
+1.  Open the `diffpanda.html` file in your web browser.
+2.  Paste or upload your original and revised texts into the respective fields.
+3.  Click the "Compare texts" button.
+4.  Review the differences, add comments if needed, and export your report.
+
+---
+Feedback
+---
+
+This is the first version of Diffpanda. If you have any suggestions or feedback, please feel free to reach out.
+
+Thank you for using Diffpanda!
