@@ -1,0 +1,43 @@
+========================================
+ Pandoria v1.0.0 - Launch Announcement
+========================================
+
+Release Date: July 28, 2025
+
+Pandoria is a free, browser-based tool with two primary functions: a straightforward TMX editor and a powerful text alignment tool for creating new translation memories from existing documents. It runs entirely offline in your browser, ensuring your data remains secure on your computer.
+
+---
+Key Features
+---
+
+### TMX Editor Features
+
+* **Create, Import & Download TMX**: You can create a new Translation Memory (TMX) from scratch by defining language pairs, or import an existing TMX file to continue your work. When you're done, export your work as a standard TMX 1.4 file.
+* **Direct Inline Editing**: Edit source and target segments directly within the main table for a fast and seamless workflow.
+* **Add & Delete Entries**: Easily add new translation units to your TM or delete unwanted ones with a single click.
+* **Live Search**: Quickly filter your entire translation memory by searching for terms in both the source and target languages simultaneously.
+* **Undo Support**: Reverse any recent changes (additions, edits, or deletions) with the dedicated Undo button or the universal Ctrl+Z shortcut.
+
+### Text Alignment Tool
+
+* **Create TMs from Existing Texts**: Align a source document with its translation to create a brand new TMX file from scratch.
+* **Multiple Input Formats**: You can upload plain text (`.txt`) or subtitle files (`.srt`). The tool automatically parses the text content from SRT files. You can also paste your texts directly into the provided areas.
+* **Alignment Wizard**: If your source and target texts have a different number of lines, Pandoria launches a powerful wizard. This side-by-side view allows you to manually edit, merge, or add lines to ensure the segments are perfectly matched before the TM is created.
+* **Multilingual UI**: The Pandoria interface is available in both English and Spanish.
+
+---
+Getting Started
+---
+
+1.  Open the `pandoria.html` file in your web browser.
+2.  To edit an existing TM, click "Import TMX".
+3.  To create a new TM from scratch, click "Create new TMX".
+4.  To align documents, click "Align Texts".
+
+---
+Feedback & Contributions
+---
+
+This is the very first version, and we welcome your feedback. If you find any bugs, have feature suggestions, or want to contribute, please feel free to reach out.
+
+Thank you for using Pandoria!
