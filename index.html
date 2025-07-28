@@ -934,22 +934,27 @@
             const aboutModalCloseBtn = document.getElementById('about-modal-close-btn');
 
             let currentLang = localStorage.getItem('selectedLang') || 'en';
+            let currentHugCount = 0;
 
-            // --- LÓGICA DEL CONTADOR DE PANDA HUGS CON FIREBASE ---
+            // --- LÓGICA DEL CONTADOR DE PANDA HUGS ---
+            const updatePandaButtonUI = () => {
+                const hasHugged = localStorage.getItem('httransHasHugged');
+                if (hasHugged) {
+                    pandaHugCtaText.textContent = `${translations[currentLang].pandaHugCtaSent}${currentHugCount}`;
+                    pandaHugButton.disabled = true;
+                } else {
+                    pandaHugCtaText.textContent = translations[currentLang].pandaHugCta;
+                    pandaHugButton.disabled = false;
+                }
+            };
+            
             const setupPandaHugs = () => {
                 if (window.db && window.doc && window.onSnapshot && window.runTransaction && window.appId) {
                     const hugsDocRef = doc(db, "artifacts", appId, "public/data/globals/pandaHugs");
-                    let currentHugCount = 0;
 
                     onSnapshot(hugsDocRef, (doc) => {
                         currentHugCount = doc.exists() ? (doc.data().count || 0) : 0;
-                        if (localStorage.getItem('httransHasHugged')) {
-                            pandaHugCtaText.textContent = `${translations[currentLang].pandaHugCtaSent}${currentHugCount}`;
-                            pandaHugButton.disabled = true;
-                        } else {
-                             pandaHugCtaText.textContent = translations[currentLang].pandaHugCta;
-                             pandaHugButton.disabled = false;
-                        }
+                        updatePandaButtonUI();
                     });
 
                     pandaHugButton.addEventListener('click', async (e) => {
@@ -994,9 +999,7 @@
                 document.querySelectorAll('[data-key]').forEach(element => {
                     const key = element.dataset.key;
                     if (translations[lang] && translations[lang][key]) {
-                        if (key !== 'pandaHugCta' && key !== 'pandaHugCtaSent') {
-                           element.innerHTML = translations[lang][key];
-                        }
+                        element.innerHTML = translations[lang][key];
                     }
                 });
             }
@@ -1013,14 +1016,7 @@
                     localStorage.setItem('selectedLang', currentLang);
                     updateLangButtons(currentLang);
                     updateText(currentLang);
-                    
-                    if (localStorage.getItem('httransHasHugged')) {
-                         const countMatch = pandaHugCtaText.textContent.match(/\d+/);
-                         const count = countMatch ? countMatch[0] : '...';
-                         pandaHugCtaText.textContent = `${translations[currentLang].pandaHugCtaSent}${count}`;
-                    } else {
-                        pandaHugCtaText.textContent = translations[currentLang].pandaHugCta;
-                    }
+                    updatePandaButtonUI(); // Actualizar texto del botón al cambiar idioma
                 });
             });
 
@@ -1107,7 +1103,6 @@
             renderTools();
             updateLangButtons(currentLang);
             updateText(currentLang);
-            // Wait for the custom 'firebaseReady' event before setting up the hugs counter
             document.addEventListener('firebaseReady', setupPandaHugs);
         });
     </script>
