@@ -1,0 +1,47 @@
+=======================================
+ CharPanda v1.0.0 - Launch Announcement
+=======================================
+
+Release Date: July 28, 2025
+
+Introducing CharPanda, a clean and simple tool for all your character and word counting needs. Designed for translators, localizers, students, and anyone working with text, CharPanda offers a straightforward, dual-panel interface that runs entirely in your browser.
+
+---
+Key Features
+---
+
+### Core Functionality
+
+* **Dual Text Panels**: Work with two text areas side-by-side, perfect for comparing original and revised texts or managing two pieces of content at once.
+* **Live Counters**: Get an instant, real-time count of both characters and words as you type or paste text into either panel.
+* **Custom Character Limits**: Set a specific character limit for each text area and see a live countdown of remaining characters. The counter will turn red if you go over the specified limit, providing immediate visual feedback.
+
+### Text Manipulation Tools
+
+* **One-Click Actions**: Each panel has its own dedicated set of tools, allowing you to quickly perform actions on your text.
+* **Clipboard Operations**: Easily Copy text from a panel or Paste text from your clipboard into a panel.
+* **Text Transformation**: Instantly convert the entire text to UPPERCASE or lowercase with a single click.
+* **Clear Text**: A "Clear" button is available for each panel to quickly erase all content.
+
+### User Experience
+
+* **Light & Dark Modes**: Switch between a light and dark theme to suit your preference and working environment.
+* **Multilingual Interface**: The tool is available in both English and Spanish.
+* **Resizable Text Areas**: You can manually resize the text areas both vertically and horizontally to better fit your content and screen size.
+* **Responsive Design**: The layout adapts for a seamless experience on both desktop and mobile devices.
+
+---
+How to Use
+---
+
+1.  Open the `charpanda.html` file in any web browser.
+2.  Type or paste your text into one or both of the text areas.
+3.  The character and word counts will update automatically.
+
+---
+Feedback
+---
+
+This is the first version of CharPanda. If you have any suggestions for improvement or new features, your feedback is highly welcome.
+
+Thank you for using CharPanda!
