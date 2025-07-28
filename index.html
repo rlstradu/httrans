@@ -492,6 +492,8 @@
             color: #E23B5D;
             font-weight: 600;
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            min-width: 180px; /* Ancho mínimo para que no cambie de tamaño */
+            justify-content: center;
         }
         .panda-hug-button:hover {
             transform: scale(1.05);
@@ -704,8 +706,7 @@
                 <p class="panda-hug-text" data-key="pandaHugMessage"></p>
                 <button id="pandaHugButton" class="panda-hug-button">
                     <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/panda-hug-love.png" alt="Panda Hug Icon" class="panda-hug-icon">
-                    <span data-key="pandaHugCta"></span>
-                    <span id="likeCount" class="like-count">0</span>
+                    <span id="panda-hug-cta-text" data-key="pandaHugCta"></span>
                 </button>
             </div>
         </footer>
@@ -842,7 +843,8 @@
                     githubRepo: 'GitHub',
                     changelogLink: 'Novedades',
                     pandaHugMessage: 'Envía un abrazo de panda al desarrollador como agradecimiento',
-                    pandaHugCta: 'Abrazo',
+                    pandaHugCta: 'Enviar abrazo',
+                    pandaHugCtaSent: 'Abrazos enviados: ',
                     footerCollaboratorText: 'Un proyecto libre y gratuito con la colaboración de',
                     changelogTitle: 'Registro de Cambios',
                     changelogView: 'Ver cambios',
@@ -886,7 +888,8 @@
                     githubRepo: 'GitHub',
                     changelogLink: 'What\'s New',
                     pandaHugMessage: 'Send a panda hug to the developer as a thank you',
-                    pandaHugCta: 'Hug',
+                    pandaHugCta: 'Send hug',
+                    pandaHugCtaSent: 'Hugs sent: ',
                     footerCollaboratorText: 'A free and open-source project in collaboration with',
                     changelogTitle: 'Changelog',
                     changelogView: 'View changes',
@@ -913,7 +916,7 @@
             const toolGrid = document.querySelector('.tool-grid');
             const langButtons = document.querySelectorAll('.lang-button');
             const pandaHugButton = document.getElementById('pandaHugButton');
-            const likeCountSpan = document.getElementById('likeCount');
+            const pandaHugCtaText = document.getElementById('panda-hug-cta-text');
             const newsletterPopup = document.getElementById('newsletterPopup');
             const newsletterCloseBtn = document.getElementById('newsletterCloseBtn');
             const notificationBar = document.getElementById('notification-bar');
@@ -936,38 +939,40 @@
             const setupPandaHugs = () => {
                 if (window.db && window.doc && window.onSnapshot && window.runTransaction && window.appId) {
                     const hugsDocRef = doc(db, "artifacts", appId, "public/data/globals/pandaHugs");
+                    let currentHugCount = 0;
 
                     onSnapshot(hugsDocRef, (doc) => {
-                        if (doc.exists()) {
-                            const count = doc.data().count || 0;
-                            likeCountSpan.textContent = count;
+                        currentHugCount = doc.exists() ? (doc.data().count || 0) : 0;
+                        if (localStorage.getItem('httransHasHugged')) {
+                            pandaHugCtaText.textContent = `${translations[currentLang].pandaHugCtaSent}${currentHugCount}`;
+                            pandaHugButton.disabled = true;
                         } else {
-                            likeCountSpan.textContent = '0';
+                             pandaHugCtaText.textContent = translations[currentLang].pandaHugCta;
+                             pandaHugButton.disabled = false;
                         }
                     });
 
                     pandaHugButton.addEventListener('click', async (e) => {
                         e.preventDefault();
+                        if (localStorage.getItem('httransHasHugged')) return;
+
                         pandaHugButton.classList.add('clicked');
                         setTimeout(() => pandaHugButton.classList.remove('clicked'), 500);
 
                         try {
                             await runTransaction(db, async (transaction) => {
                                 const sfDoc = await transaction.get(hugsDocRef);
-                                if (!sfDoc.exists()) {
-                                    transaction.set(hugsDocRef, { count: 1 });
-                                } else {
-                                    const newCount = (sfDoc.data().count || 0) + 1;
-                                    transaction.update(hugsDocRef, { count: newCount });
-                                }
+                                const newCount = (sfDoc.exists() ? sfDoc.data().count : 0) + 1;
+                                transaction.set(hugsDocRef, { count: newCount }, { merge: true });
                             });
+                            localStorage.setItem('httransHasHugged', 'true');
                         } catch (error) {
                             console.error("Error al incrementar el abrazo de panda: ", error);
                         }
                     });
                 } else {
                     console.error("Firebase no está inicializado. El contador de abrazos no funcionará.");
-                    likeCountSpan.textContent = '...';
+                    pandaHugCtaText.textContent = '...';
                 }
             };
 
@@ -989,7 +994,9 @@
                 document.querySelectorAll('[data-key]').forEach(element => {
                     const key = element.dataset.key;
                     if (translations[lang] && translations[lang][key]) {
-                        element.innerHTML = translations[lang][key];
+                        if (key !== 'pandaHugCta' && key !== 'pandaHugCtaSent') {
+                           element.innerHTML = translations[lang][key];
+                        }
                     }
                 });
             }
@@ -1006,6 +1013,14 @@
                     localStorage.setItem('selectedLang', currentLang);
                     updateLangButtons(currentLang);
                     updateText(currentLang);
+                    
+                    if (localStorage.getItem('httransHasHugged')) {
+                         const countMatch = pandaHugCtaText.textContent.match(/\d+/);
+                         const count = countMatch ? countMatch[0] : '...';
+                         pandaHugCtaText.textContent = `${translations[currentLang].pandaHugCtaSent}${count}`;
+                    } else {
+                        pandaHugCtaText.textContent = translations[currentLang].pandaHugCta;
+                    }
                 });
             });
 
@@ -1092,6 +1107,7 @@
             renderTools();
             updateLangButtons(currentLang);
             updateText(currentLang);
+            // Wait for the custom 'firebaseReady' event before setting up the hugs counter
             document.addEventListener('firebaseReady', setupPandaHugs);
         });
     </script>
@@ -1110,4 +1126,3 @@
     </script>
 </body>
 </html>
-"
