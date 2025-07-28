@@ -1,0 +1,49 @@
+=======================================
+ CalPanda v1.0.0 - Launch Announcement
+=======================================
+
+Release Date: July 28, 2025
+
+Introducing CalPanda, a free, browser-based invoice generator designed for freelancers and small businesses. Create and customize professional invoices quickly and easily, with all data processed and stored locally on your machine.
+
+---
+Key Features
+---
+
+### Invoice Creation & Customization
+
+* **Fully Editable Template**: Almost every label on the invoice is editable, from "Client details:" and "Invoice number:" to the table headers, allowing for complete personalization of your document.
+* **Dynamic Item List**: Add as many line items as you need to your invoice. Each item can be based on a rate and volume, or set as a single flat-price entry for fixed-cost projects.
+* **Flexible Descriptions**: Use multi-line descriptions for each invoice item to provide detailed information about the services rendered.
+
+### Financial Calculations
+
+* **Automatic Totals**: Subtotals and the final grand total are calculated automatically in real-time as you add or edit items.
+* **Custom Taxes & Deductions**: Add multiple custom taxes or deductions. Each can be set as a positive percentage (like VAT) or a negative percentage (like a withholding tax), providing full flexibility.
+* **Decimal Separator Toggle**: Instantly switch between using a decimal point (0.00) or a comma (0,00) for all monetary values to suit your regional formatting needs.
+
+### Template & Data Management
+
+* **Save & Load Configurations**: Save your entire invoice setup—including client data, your details, custom labels, and tax settings—as a reusable template.
+* **Local & File-Based Storage**: Save templates directly in your browser for quick, private access, or download them as a `.json` file to share, back up, or use on another machine.
+* **Multilingual Interface**: The CalPanda interface is available in both English and Spanish.
+
+### Exporting
+
+* **Professional PDF Export**: Generate a clean, professional-looking PDF of your invoice with a single click, ready to be sent to your client.
+
+---
+Getting Started
+---
+
+1.  Open the `calpanda.html` file in your web browser.
+2.  Fill in your client's details, your details, and the invoice items.
+3.  Click the "GENERATE PDF" button to download your invoice.
+
+---
+Feedback & Contributions
+---
+
+This is the first version of CalPanda, and your feedback is highly valued. If you have any suggestions or encounter issues, please feel free to reach out.
+
+Thank you for using CalPanda!
