@@ -13,44 +13,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK -->
-    <script type="module">
-      // Importa las funciones que necesitas de los SDKs
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-      import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-      import { getFirestore, doc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-      // La configuración de Firebase se inyectará aquí automáticamente.
-      const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
-      const appId = typeof __app_id !== 'undefined' ? __app_id : 'httrans-default';
-
-      // Inicializa Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      // Inicia sesión (de forma anónima si no hay un token)
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        console.error("Firebase Auth Error:", error);
-      }
-
-      // Hacemos que la base de datos (db) y sus funciones estén disponibles globalmente
-      window.db = db;
-      window.doc = doc;
-      window.onSnapshot = onSnapshot;
-      window.runTransaction = runTransaction;
-      window.appId = appId;
-
-      // Dispatch a custom event to signal that Firebase is ready
-      document.dispatchEvent(new Event('firebaseReady'));
-    </script>
-
     <style>
         /* Estilos base y fondo animado */
         body {
@@ -499,22 +461,9 @@
             transform: scale(1.05);
             box-shadow: 0 4px 15px rgba(226, 59, 93, 0.2);
         }
-        .panda-hug-button.clicked .panda-hug-icon {
-            animation: panda-hug-anim 0.5s ease-out;
-        }
-        @keyframes panda-hug-anim {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2) rotate(-10deg); }
-            100% { transform: scale(1); }
-        }
         .panda-hug-icon {
             width: 30px;
             height: auto;
-        }
-        .panda-hug-text {
-            font-size: 0.85rem;
-            color: #777;
-            margin-bottom: 10px;
         }
 
         /* Estilos para el Pop-up del Newsletter */
@@ -703,10 +652,9 @@
             </div>
 
             <div class="panda-hug-section">
-                <p class="panda-hug-text" data-key="pandaHugMessage"></p>
                 <button id="pandaHugButton" class="panda-hug-button">
                     <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/panda-hug-love.png" alt="Panda Hug Icon" class="panda-hug-icon">
-                    <span id="panda-hug-cta-text"></span>
+                    <span id="panda-hug-cta-text" data-key="pandaHugCta"></span>
                 </button>
             </div>
         </footer>
@@ -796,6 +744,15 @@
         </div>
     </div>
 
+    <!-- MODAL DE ABRAZO DE PANDA -->
+    <div id="panda-hug-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; padding: 1.5rem;">
+            <button id="panda-hug-modal-close-btn" class="modal-close-btn">&times;</button>
+            <img src="https://media.tenor.com/nOYJcoyj8uIAAAAM/panda-cute.gif" alt="Panda Hug GIF" class="w-full rounded-lg mb-4" style="border-radius: 0.75rem; margin-bottom: 1rem;">
+            <p class="description" data-key="pandaHugMessage" style="margin-bottom: 0;"></p>
+        </div>
+    </div>
+
     <!-- FOOTER DE COLABORACIÓN (FUERA DEL CONTAINER) -->
     <div class="collaboration-footer-wrapper">
         <span data-key="footerCollaboratorText"></span>
@@ -842,9 +799,8 @@
                     instagramLink: 'Instagram',
                     githubRepo: 'GitHub',
                     changelogLink: 'Novedades',
-                    pandaHugMessage: 'Envía un abrazo de panda al desarrollador como agradecimiento',
-                    pandaHugCta: 'Enviar abrazo',
-                    pandaHugCtaSent: 'Abrazos enviados: ',
+                    pandaHugMessage: 'Las herramientas son gratuitas, y este abrazo de panda también.',
+                    pandaHugCta: 'Abrazo de panda',
                     footerCollaboratorText: 'Un proyecto libre y gratuito con la colaboración de',
                     changelogTitle: 'Registro de Cambios',
                     changelogView: 'Ver cambios',
@@ -887,9 +843,8 @@
                     instagramLink: 'Instagram',
                     githubRepo: 'GitHub',
                     changelogLink: 'What\'s New',
-                    pandaHugMessage: 'Send a panda hug to the developer as a thank you',
-                    pandaHugCta: 'Send hug',
-                    pandaHugCtaSent: 'Hugs sent: ',
+                    pandaHugMessage: 'The tools are free... and so is this panda hug.',
+                    pandaHugCta: 'Panda hug',
                     footerCollaboratorText: 'A free and open-source project in collaboration with',
                     changelogTitle: 'Changelog',
                     changelogView: 'View changes',
@@ -916,7 +871,6 @@
             const toolGrid = document.querySelector('.tool-grid');
             const langButtons = document.querySelectorAll('.lang-button');
             const pandaHugButton = document.getElementById('pandaHugButton');
-            const pandaHugCtaText = document.getElementById('panda-hug-cta-text');
             const newsletterPopup = document.getElementById('newsletterPopup');
             const newsletterCloseBtn = document.getElementById('newsletterCloseBtn');
             const notificationBar = document.getElementById('notification-bar');
@@ -932,56 +886,11 @@
             const aboutModal = document.getElementById('about-modal');
             const aboutTrigger = document.getElementById('about-trigger');
             const aboutModalCloseBtn = document.getElementById('about-modal-close-btn');
+            const pandaHugModal = document.getElementById('panda-hug-modal');
+            const pandaHugModalCloseBtn = document.getElementById('panda-hug-modal-close-btn');
 
             let currentLang = localStorage.getItem('selectedLang') || 'en';
-            let currentHugCount = 0;
 
-            // --- LÓGICA DEL CONTADOR DE PANDA HUGS ---
-            const updatePandaButtonUI = () => {
-                const hasHugged = localStorage.getItem('httransHasHugged');
-                if (hasHugged) {
-                    pandaHugCtaText.textContent = `${translations[currentLang].pandaHugCtaSent}${currentHugCount}`;
-                    pandaHugButton.disabled = true;
-                } else {
-                    pandaHugCtaText.textContent = translations[currentLang].pandaHugCta;
-                    pandaHugButton.disabled = false;
-                }
-            };
-            
-            const setupPandaHugs = () => {
-                if (window.db && window.doc && window.onSnapshot && window.runTransaction && window.appId) {
-                    const hugsDocRef = doc(db, "artifacts", appId, "public/data/globals/pandaHugs");
-
-                    onSnapshot(hugsDocRef, (doc) => {
-                        currentHugCount = doc.exists() ? (doc.data().count || 0) : 0;
-                        updatePandaButtonUI();
-                    });
-
-                    pandaHugButton.addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        if (localStorage.getItem('httransHasHugged')) return;
-
-                        pandaHugButton.classList.add('clicked');
-                        setTimeout(() => pandaHugButton.classList.remove('clicked'), 500);
-
-                        try {
-                            await runTransaction(db, async (transaction) => {
-                                const sfDoc = await transaction.get(hugsDocRef);
-                                const newCount = (sfDoc.exists() ? sfDoc.data().count : 0) + 1;
-                                transaction.set(hugsDocRef, { count: newCount }, { merge: true });
-                            });
-                            localStorage.setItem('httransHasHugged', 'true');
-                        } catch (error) {
-                            console.error("Error al incrementar el abrazo de panda: ", error);
-                        }
-                    });
-                } else {
-                    console.error("Firebase no está inicializado. El contador de abrazos no funcionará.");
-                    pandaHugCtaText.textContent = '...';
-                }
-            };
-
-            // --- El resto de la lógica ---
             function renderTools() {
                 toolGrid.innerHTML = '';
                 tools.forEach((tool, index) => {
@@ -1016,7 +925,6 @@
                     localStorage.setItem('selectedLang', currentLang);
                     updateLangButtons(currentLang);
                     updateText(currentLang);
-                    updatePandaButtonUI(); // Actualizar texto del botón al cambiar idioma
                 });
             });
 
@@ -1099,11 +1007,22 @@
                 if (e.target === aboutModal) aboutModal.style.display = 'none';
             });
 
+            // Lógica del Modal de Abrazo de Panda
+            pandaHugButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                pandaHugModal.style.display = 'flex';
+            });
+            pandaHugModalCloseBtn.addEventListener('click', () => pandaHugModal.style.display = 'none');
+            pandaHugModal.addEventListener('click', (e) => {
+                if (e.target === pandaHugModal) {
+                    pandaHugModal.style.display = 'none';
+                }
+            });
+
             // --- INICIALIZACIÓN ---
             renderTools();
             updateLangButtons(currentLang);
             updateText(currentLang);
-            document.addEventListener('firebaseReady', setupPandaHugs);
         });
     </script>
 
