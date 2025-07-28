@@ -11,17 +11,57 @@
     <!-- Carga de Google Fonts (Montserrat) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+      // Importa las funciones que necesitas de los SDKs
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+      import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+      import { getFirestore, doc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+      // La configuración de Firebase se inyectará aquí automáticamente.
+      const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
+      const appId = typeof __app_id !== 'undefined' ? __app_id : 'httrans-default';
+
+      // Inicializa Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Inicia sesión (de forma anónima si no hay un token)
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Firebase Auth Error:", error);
+      }
+
+      // Hacemos que la base de datos (db) y sus funciones estén disponibles globalmente
+      window.db = db;
+      window.doc = doc;
+      window.onSnapshot = onSnapshot;
+      window.runTransaction = runTransaction;
+      window.appId = appId;
+
+      // FIX: Dispatch a custom event to signal that Firebase is ready
+      document.dispatchEvent(new Event('firebaseReady'));
+    </script>
+
     <style>
         /* Estilos base y fondo animado */
         body {
             font-family: 'Montserrat', sans-serif;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 2rem;
+            padding: 2rem 0 0 0;
             box-sizing: border-box;
             background: linear-gradient(45deg, #fde7ea, #e8eaf6, #e0f2f1, #fce4ec);
             background-size: 400% 400%;
@@ -47,6 +87,7 @@
             padding: 2.5rem;
             text-align: center;
             position: relative;
+            margin: 0 1rem;
         }
 
         /* Animaciones de entrada */
@@ -143,23 +184,268 @@
             text-transform: none;
         }
 
-        /* Footer */
+        /* --- ESTILOS ACTUALIZADOS Y NUEVOS --- */
+
+        /* Footer General */
         .footer-info {
             margin-top: 3rem;
-            font-size: 0.9rem;
-            color: #4a5568;
         }
-        .footer-info p {
-            margin-bottom: 0.5rem;
-        }
-        .footer-info a {
-            color: #E23B5D;
+        
+        /* Enlace al foro full-width */
+        .footer-link-full {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
             text-decoration: none;
+            color: #374151;
             font-weight: 600;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            margin: 0 auto 1rem auto;
+            max-width: 500px;
+            cursor: pointer;
         }
-        .footer-info a:hover {
+        .footer-link-full:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            color: #E23B5D;
+        }
+        .footer-link-full svg {
+            color: #E23B5D;
+            height: 24px;
+            width: 24px;
+            transition: color 0.2s ease;
+        }
+        .footer-link-full:hover svg {
+             color: #E23B5D;
+        }
+
+
+        /* Grid de enlaces del footer 2x2 */
+        .footer-links-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            max-width: 500px;
+            margin: 0 auto 2.5rem auto;
+        }
+        .footer-link {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            cursor: pointer;
+        }
+        .footer-link:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            color: #E23B5D;
+        }
+        .footer-link svg {
+            color: #E23B5D;
+            height: 24px;
+            width: 24px;
+            display: inline-block;
+            transition: color 0.2s ease;
+        }
+        .footer-link:hover svg {
+            color: #E23B5D;
+        }
+
+        /* Barra de Notificación Superior */
+        .notification-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #373737;
+            color: white;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transform: translateY(-100%);
+            transition: transform 0.5s ease-out;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 0.9rem;
+        }
+        .notification-bar.visible {
+            transform: translateY(0);
+        }
+        .notification-bar a {
+            background-color: #E23B5D;
+            color: white !important;
+            padding: 6px 15px;
+            border-radius: 20px;
+            margin-left: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+        .notification-bar a:hover {
+            background-color: #d02a4c;
+            text-decoration: none;
+        }
+        .notification-close-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            line-height: 1;
+            margin-left: 20px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        .notification-close-btn:hover {
+            opacity: 1;
+        }
+
+        /* Footer de Colaboración (Ahora estático y fuera del container) */
+        .collaboration-footer-wrapper {
+            width: 100%;
+            background-color: #373737;
+            padding: 1rem 1rem;
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .collaboration-footer-wrapper span {
+            color: #ccc;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .traduversia-logo-footer {
+            height: 22px;
+        }
+
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 3000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            text-align: center;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e0e0e0;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            transform: rotate(90deg);
+        }
+        
+        /* Modal de Changelog */
+        #changelog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .changelog-item {
+            text-align: center;
+        }
+        .changelog-item img {
+            height: 80px;
+            object-fit: contain;
+            margin: 0 auto 0.5rem auto;
+        }
+        .changelog-item a {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: #E23B5D;
+        }
+        .changelog-item a:hover {
             text-decoration: underline;
         }
+        
+        /* Modal de Feedback */
+        #feedback-modal .modal-content {
+            max-width: 450px;
+        }
+        .feedback-email {
+            background-color: rgba(0,0,0,0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #373737;
+            margin: 1rem 0;
+            display: inline-block;
+        }
+        .copy-email-btn {
+            background-color: #E23B5D;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .copy-email-btn:hover {
+            background-color: #d02a4c;
+        }
+        
+        /* Modal "Sobre mí" */
+        #about-modal .modal-content {
+            text-align: left;
+        }
+        #about-modal .content-text p {
+            color: #4a5568;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
 
         /* Selector de idioma */
         .language-selector {
@@ -191,7 +477,7 @@
 
         /* Botón Panda Hug */
         .panda-hug-section {
-            margin-top: 2rem;
+            margin-top: 2.5rem;
         }
         .panda-hug-button {
             background-color: #fce4ec;
@@ -232,18 +518,18 @@
         /* Estilos para el Pop-up del Newsletter */
         .newsletter-popup {
             position: fixed;
-            bottom: -100%; /* Empieza fuera de la pantalla */
+            bottom: -100%;
             right: 2rem;
             width: 90%;
             max-width: 450px;
             z-index: 1000;
-            transition: bottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Animación suave */
+            transition: bottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             opacity: 0;
             transition: opacity 0.8s ease, bottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
         .newsletter-popup.show {
-            bottom: 2rem; /* Posición final */
+            bottom: 2rem;
             opacity: 1;
         }
 
@@ -279,8 +565,22 @@
             transform: rotate(90deg);
         }
 
-        /* Responsive para el Pop-up */
+        /* Responsive */
+        @media (max-width: 520px) {
+            .footer-links-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
+            body { padding-top: 1rem; }
+            .main-container { padding: 1.5rem; margin: 0 1rem; }
+            .logo { max-width: 250px; }
+            .toolkit-title { font-size: 1.2rem; }
+            .description { font-size: 0.9rem; }
+            .tool-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .language-selector { top: 10px; right: 10px; }
+            
             .newsletter-popup {
                 right: 50%;
                 transform: translateX(50%);
@@ -289,20 +589,27 @@
             .newsletter-popup.show {
                 bottom: 1rem;
             }
-        }
-        
-        /* Responsive general */
-        @media (max-width: 768px) {
-            body { padding: 1rem; }
-            .main-container { padding: 1.5rem; }
-            .logo { max-width: 250px; }
-            .toolkit-title { font-size: 1.2rem; }
-            .description { font-size: 0.9rem; }
-            .tool-grid { grid-template-columns: 1fr; gap: 1rem; }
-            .language-selector { top: 10px; right: 10px; }
+            .notification-bar {
+                flex-direction: column;
+                padding: 15px;
+                text-align: center;
+            }
+            .notification-bar a {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            .notification-close-btn {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+            }
+            .collaboration-footer-wrapper {
+                padding: 10px;
+                text-align: center;
+            }
         }
     </style>
-    <!-- Estilos del formulario de MailerLite -->
+    <!-- Estilos del formulario de MailerLite (sin cambios) -->
     <style type="text/css">@import url("https://assets.mlcdn.com/fonts.css?version=1752130");</style>
     <style type="text/css">
     .ml-form-embedSubmitLoad { display: inline-block; width: 20px; height: 20px; }
@@ -318,7 +625,6 @@
     #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button { background-color: #E23B5D !important; font-family: 'Montserrat', sans-serif !important; font-weight: 700 !important; }
     #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button:hover { background-color: #d02a4c !important; }
     #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedPermissions .ml-form-embedPermissionsContent.privacy-policy p, #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedPermissions .ml-form-embedPermissionsContent.privacy-policy p a { color: #718096 !important; font-size: 11px !important; }
-    /* Simplificación de los estilos largos de MailerLite */
     #mlb2-28422372.ml-form-embedContainer h4, #mlb2-28422372.ml-form-embedContainer p, #mlb2-28422372.ml-form-embedContainer span, #mlb2-28422372.ml-form-embedContainer button { text-transform: none !important; letter-spacing: normal !important; }
     #mlb2-28422372.ml-form-embedContainer .ml-form-embedWrapper.embedForm { max-width: 100%; }
     #mlb2-28422372.ml-form-embedContainer .ml-form-align-center { text-align: center; }
@@ -338,6 +644,13 @@
     </style>
 </head>
 <body>
+    <!-- BARRA DE NOTIFICACIÓN -->
+    <div id="notification-bar" class="notification-bar">
+        <span data-key="notificationText"></span>
+        <a href="https://traduversia.com/curso/introduccion-a-las-herramientas-de-traduccion-con-httrans/" target="_blank" rel="noopener" data-key="notificationButton"></a>
+        <button id="notification-close-btn" class="notification-close-btn">&times;</button>
+    </div>
+
     <div class="main-container">
         <!-- Selector de idioma -->
         <div class="language-selector">
@@ -356,10 +669,36 @@
 
         <!-- Footer -->
         <footer class="footer-info fade-in" style="animation-delay: 0.8s;">
-            <p data-key="projectBy"></p>
-            <p data-key="feedback"></p>
-            <p data-key="instagramLink"></p>
-            <p data-key="githubRepo"></p>
+            <!-- ENLACE AL FORO -->
+            <a href="https://foro.traduversia.com/c/cursos/introduccion-herramientas-traduccion-httrans/51" target="_blank" rel="noopener" class="footer-link-full">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="Interface / Chat_Bubble_Message"><path id="Vector" d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 13.4876 3.33365 14.8971 3.92486 16.1627C4.09333 16.5113 4.03223 16.9203 3.76116 17.1914L3.23884 17.7137C2.60156 18.351 3.06334 19.4367 3.92486 19.5751C6.48971 20.0013 9.18613 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+                <span data-key="forumLink"></span>
+            </a>
+
+            <!-- GRID DE ENLACES 2x2 -->
+            <div class="footer-links-grid">
+                <a href="#" id="changelog-trigger" class="footer-link">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 14L11 16L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span data-key="changelogLink"></span>
+                </a>
+                <a href="#" id="feedback-trigger" class="footer-link">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="User / User_Feedback"><path id="Vector" d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path id="Vector_2" d="M15 13.9999C14.4133 14.9332 13.28 15.4999 12 15.4999C10.72 15.4999 9.58667 14.9332 9 13.9999" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path id="Vector_3" d="M9 10C9.55228 10 10 9.55228 10 9C10 8.44772 9.55228 8 9 8C8.44772 8 8 8.44772 8 9C8 9.55228 8.44772 10 9 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path id="Vector_4" d="M15 10C15.5523 10 16 9.55228 16 9C16 8.44772 15.5523 8 15 8C14.4477 8 14 8.44772 14 9C14 9.55228 14.4477 10 15 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+                    <span data-key="feedback"></span>
+                </a>
+                <a href="https://github.com/rlstradu/httrans" target="_blank" rel="noopener" class="footer-link">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.168 6.839 9.492.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.942.359.308.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd"></path></svg>
+                    <span data-key="githubRepo"></span>
+                </a>
+                <a href="https://www.instagram.com/httrans_org" target="_blank" rel="noopener" class="footer-link">
+                    <svg fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.282.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.282-.705.166-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.282-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.232s.008-2.389.046-3.232c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/></svg>
+                    <span data-key="instagramLink"></span>
+                </a>
+            </div>
+            
+            <div id="about-trigger" class="footer-link-full">
+                <i class="ph-fill ph-user"></i>
+                <span data-key="projectBy"></span>
+            </div>
 
             <div class="panda-hug-section">
                 <p class="panda-hug-text" data-key="pandaHugMessage"></p>
@@ -420,7 +759,49 @@
             </div>
         </div>
     </div>
+    
+    <!-- MODAL DE CHANGELOG -->
+    <div id="changelog-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+            <h2 class="toolkit-title" data-key="changelogTitle"></h2>
+            <div id="changelog-grid">
+                <!-- El contenido se generará con JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL DE FEEDBACK -->
+    <div id="feedback-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="feedback-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h2 class="toolkit-title" data-key="feedback"></h2>
+            <p class="description" style="margin-bottom: 1rem;" data-key="feedbackText"></p>
+            <p class="feedback-email">rlstradu@gmail.com</p>
+            <button id="copy-email-btn" class="copy-email-btn" data-key="copyEmailBtn"></button>
+        </div>
+    </div>
+    
+    <!-- MODAL "SOBRE MÍ" -->
+    <div id="about-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="about-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h1 class="toolkit-title" data-key="aboutTitle" style="text-align: center;"></h1>
+            <div class="content-text">
+                <p data-key="p1"></p><p data-key="p2"></p><p data-key="p3"></p><p data-key="p4"></p>
+                <p data-key="p5"></p><p data-key="p6"></p><p data-key="p7"></p><p data-key="p8"></p>
+                <p data-key="p9"></p>
+            </div>
+        </div>
+    </div>
 
+    <!-- FOOTER DE COLABORACIÓN (FUERA DEL CONTAINER) -->
+    <div class="collaboration-footer-wrapper">
+        <span data-key="footerCollaboratorText"></span>
+        <a href="https://traduversia.com/" target="_blank" rel="noopener">
+            <img src="https://traduversia.com/wp-content/uploads/2014/09/logotipo_traduversia_transparente-06-460x78.png" alt="Logo Traduversia" class="traduversia-logo-footer">
+        </a>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -440,6 +821,9 @@
             const translations = {
                 es: {
                     description: 'Una colección de herramientas sencillas y prácticas, diseñadas por un traductor al que le encantan los pandas y pensadas para facilitar el trabajo diario de otros traductores. Son completamente gratuitas, no requieren instalación y pueden usarse directamente desde cualquier navegador.',
+                    notificationText: 'Aprende a usar estas herramientas en un curso gratuito en Traduversia',
+                    notificationButton: '¡Apúntate ya!',
+                    forumLink: 'Foro oficial de httrans',
                     poandaMain: 'Poanda', poandaSub: 'Editor de archivos PO',
                     pandatermMain: 'Pandaterm', pandatermSub: 'Editor de glosarios TBX',
                     pandoriaMain: 'Pandoria', pandoriaSub: 'Editor de memorias TMX',
@@ -449,21 +833,41 @@
                     diffpandaMain: 'DiffPanda', diffpandaSub: 'Comparador de textos',
                     charpandaMain: 'Charpanda', charpandaSub: 'Contador de caracteres',
                     calpandaMain: 'Calpanda', calpandaSub: 'Herramienta de facturación',
-                    projectBy: 'Proyecto creado por <a href="https://www.linkedin.com/in/rlstradu/" target="_blank">Rafael López Sánchez</a>',
-                    feedback: 'Para feedback o sugerencias: <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>',
-                    instagramLink: 'Sigue a httrans en <a href="https://www.instagram.com/httrans_org" target="_blank">Instagram</a>',
-                    githubRepo: 'Repositorio en <a href="https://github.com/rlstradu/httrans" target="_blank">GitHub</a>',
+                    projectBy: 'Proyecto de Rafael López Sánchez',
+                    feedback: 'Feedback y sugerencias',
+                    feedbackText: 'Para cualquier sugerencia o para informar de un error, puedes escribir a la siguiente dirección de correo:',
+                    copyEmailBtn: 'Copiar correo',
+                    copiedEmailBtn: '¡Copiado!',
+                    instagramLink: 'Instagram',
+                    githubRepo: 'GitHub',
+                    changelogLink: 'Novedades',
                     pandaHugMessage: 'Envía un abrazo de panda al desarrollador como agradecimiento',
                     pandaHugCta: 'Abrazo',
+                    footerCollaboratorText: 'Un proyecto libre y gratuito con la colaboración de',
+                    changelogTitle: 'Registro de Cambios',
+                    changelogView: 'Ver cambios',
                     newsletterTitle: '¡No te pierdas nada!',
                     newsletterDescription: 'Suscríbete para recibir noticias y actualizaciones sobre <strong>httrans</strong> y tecnología de traducción.',
                     newsletterPrivacy: 'Puedes darte de baja en cualquier momento. Para más detalles, consulta nuestra <a href="https://rlstradu.github.io/httrans/privacy-policy.html" target="_blank">Política de Privacidad</a>.',
                     newsletterSubmit: 'Suscribirse',
                     newsletterSuccessTitle: '¡Gracias!',
                     newsletterSuccessMessage: 'Te has unido correctamente a nuestra lista de suscriptores.',
+                    aboutTitle: "Sobre mí",
+                    p1: "¡Muy buenas! Soy Rafa. Llevo en el mundo de la traducción audiovisual y la localización desde que terminé la carrera en la Universidad de Granada, allá por 2012.",
+                    p2: "Esto va a sonar muy a Troy McClure, pero quizá me conozcas por mi antiguo blog, 'Jugando a traducir', por la plataforma de formación 'Traduversia', o por alguno de mis artículos sobre traducción audiovisual y localización en alguna revista. También me encanta aparecer por eventos del sector y dar formaciones siempre que tengo la oportunidad.",
+                    p3: "Aunque la traducción es mi vocación, la tecnología siempre ha sido mi otra gran pasión. Mi historia con los ordenadores comenzó muy pronto: empecé a usar HTML a los 11 años, y de ahí pasé a hacer un curso de Dreamweaver a los 14 que me descubrió un mundo de posibilidades, y desde entonces, un montón de horas de estudio autodidacta de CSS, Javascript, XML, Basic, Wordpress... La lista es interminable.",
+                    p4: "Al final, era inevitable que mis dos pasiones chocaran. Hacia el final de la carrera me obsesioné con los editores de subtítulos, y me puse a investigar a fondo cómo funcionaban. Esto me convirtió en el 'friki de las herramientas' entre mis colegas, un papel que abracé de buena gana y al que di rienda suelta en mi blog, Jugando a traducir, donde me iba compartiendo todo lo que descubría.",
+                    p5: "Desde entonces, siempre he tenido la espinita de crear mis propias herramientas. Como traductores, a menudo usamos programas creados por gente que, con la mejor intención, no siempre entiende los pequeños detalles de nuestro oficio. De hecho, en 2015 publiqué una pequeña aplicación que desarrollé en Visual Studio, AVEditor, que servía para hacer transcripciones con atajos de teclado, pero no pude seguir con ella por falta de tiempo. Este proyecto es mi forma de retomar esta curiosidad, la de crear herramientas desde la perspectiva de un traductor.",
+                    p6: "Algunos colegas precisamente me han preguntado de dónde he sacado el tiempo para esto. La verdad es que la respuesta es agridulce. En 2024, mi vida dio un vuelco con la pérdida de mi hijo, Mateo. En medio de un vacío inmenso, de repente me vi con mucho tiempo que llenar. Y en ese vacío, encontré algunas pequeñas luces en la oscuridad: ayudar al desarrollador de Tero Subtitler, sumergirme en las últimas novedades tecnológicas de nuestra industria y... sí, ver vídeos de panditas en Instagram.",
+                    p7: "Esas pequeñas luces, sobre todo la de los pandas, encendieron una idea. ¿Por qué no unir mi regreso a la programación con lo único que me estaba haciendo sonreír? Y así nació este proyecto. Ha sido una especie de terapia para mí, una manera de construir <strong><u>algo positivo</u></strong>. Ver cómo tomaba forma ha sido mi manera de dar un pequeño paso adelante cada día.",
+                    p8: "Así que, en esencia, esto es lo que encontrarás aquí: herramientas sencillas, hechas con mucho cariño para mis colegas de profesión, y envueltas en un abrazo de panda. El proceso de crearlas ha sido un refugio y una distracción para mí. Solo con eso el proyecto ya ha cumplido su misión. Pero si además alguna de ellas puede hacerte el día un poquito más fácil o sacarte una sonrisa, entonces todo esto habrá merecido la pena.",
+                    p9: "PD: Qué suerte ser uno de los cofundadores de Traduversia, porque gracias a eso (y a mi colega Pablo Muñoz) httrans dispone de un foro y un curso con certificado que son gratuitos.",
                 },
                 en: {
                     description: 'A handy set of simple, practical tools created by a fellow translator who loves pandas, designed to make your day-to-day work easier. They’re completely free, require no installation, and work right from your browser.',
+                    notificationText: 'Learn to master these tools with a free course on Traduversia',
+                    notificationButton: 'Join now',
+                    forumLink: 'Official httrans Forum',
                     poandaMain: 'Poanda', poandaSub: 'PO File Editor',
                     pandatermMain: 'Pandaterm', pandatermSub: 'TBX Glossary Editor',
                     pandoriaMain: 'Pandoria', pandoriaSub: 'TMX Memory Editor',
@@ -473,18 +877,35 @@
                     diffpandaMain: 'DiffPanda', diffpandaSub: 'Text Comparison Tool',
                     charpandaMain: 'Charpanda', charpandaSub: 'Character Counter',
                     calpandaMain: 'Calpanda', calpandaSub: 'Invoice Generator',
-                    projectBy: 'Project by <a href="https://www.linkedin.com/in/rlstradu/" target="_blank">Rafael López Sánchez</a>',
-                    feedback: 'For feedback or suggestions: <a href="mailto:rlstradu@gmail.com">rlstradu@gmail.com</a>',
-                    instagramLink: 'Follow httrans on <a href="https://www.instagram.com/httrans_org" target="_blank">Instagram</a>',
-                    githubRepo: 'Repository on <a href="https://github.com/rlstradu/httrans" target="_blank">GitHub</a>',
+                    projectBy: 'Project by Rafael López Sánchez',
+                    feedback: 'Feedback & Suggestions',
+                    feedbackText: 'For any suggestions or to report an error, you can write to the following email address:',
+                    copyEmailBtn: 'Copy Email',
+                    copiedEmailBtn: 'Copied!',
+                    instagramLink: 'Instagram',
+                    githubRepo: 'GitHub',
+                    changelogLink: 'What\'s New',
                     pandaHugMessage: 'Send a panda hug to the developer as a thank you',
                     pandaHugCta: 'Hug',
+                    footerCollaboratorText: 'A free and open-source project in collaboration with',
+                    changelogTitle: 'Changelog',
+                    changelogView: 'View changes',
                     newsletterTitle: 'Stay in the loop!',
                     newsletterDescription: 'Subscribe to receive updates and news about <strong>httrans</strong> and translation technology.',
                     newsletterPrivacy: 'You can unsubscribe anytime. For more details, review our <a href="https://rlstradu.github.io/httrans/privacy-policy.html" target="_blank">Privacy Policy</a>.',
                     newsletterSubmit: 'Subscribe',
                     newsletterSuccessTitle: 'Thank you!',
                     newsletterSuccessMessage: 'You have successfully joined our subscriber list.',
+                    aboutTitle: "About me",
+                    p1: "Hey there! I'm Rafa. I've been in the world of audiovisual translation and localization since I graduated from the University of Granada back in 2012.",
+                    p2: "This might sound a bit like Troy McClure, but you may know me from my old blog, 'Jugando a traducir,' my training platform 'Traduversia,' or maybe from one of my papers on audiovisual translation and localization in a magazine. I also love popping up at industry events and giving training sessions whenever I get the chance.",
+                    p3: "Although translation is my calling, technology has always been my other great passion. My story with computers started very early: I began using HTML at 11, then took a Dreamweaver course at 14 that opened up a world of possibilities, and since then, countless hours of self-study in CSS, Javascript, XML, Basic, Wordpress... The list is endless.",
+                    p4: "Eventually, these two passions were bound to collide. Towards the end of my degree, I became obsessed with subtitling editors, diving deep into how they worked. This turned me into the go-to 'tools geek' among my colleagues, a role I happily embraced and gave free rein to on my blog, 'Jugando a traducir,' where I shared everything I discovered.",
+                    p5: "Since then, I've always had this little itch to build my own tools. As translators, we often use software created by people who, with the best intentions, don't always grasp the little details of our craft. In fact, in 2015 I released a small application I developed in Visual Studio, AVEditor, which was used for transcription with keyboard shortcuts, but I couldn't keep up with it due to lack of time. This project is my way of rekindling that curiosity, of creating tools from a translator's perspective.",
+                    p6: "Some colleagues have asked where I found the time for all this. The truth is, the answer is bittersweet. In 2024, my life was turned upside down by the loss of my son, Mateo. In the midst of an immense void, I suddenly found myself with a lot of time to fill. And in that void, I found a few small lights in the darkness: helping the developer of Tero Subtitler, diving deep into the latest tech in our industry, and... yes, watching videos of little pandas on Instagram.",
+                    p7: "Those little lights, especially the pandas, sparked an idea. Why not combine my return to programming with the one thing that was making me smile? And so, this project was born. It's been a kind of therapy for me, a way to build <strong><u>something positive</u></strong>. Watching it take shape has been my way of taking a small step forward each day.",
+                    p8: "So, in essence, this is what you'll find here: simple, lovingly-made tools for my fellow translators, wrapped in a panda hug. The process of creating them has been a refuge and a distraction for me. With that alone, the project has already fulfilled its mission. But if any of them can also make your day a little bit easier or bring a smile to your face, then all of this will have been worthwhile.",
+                    p9: "P.S. I'm lucky to be one of the co-founders of Traduversia, because thanks to that (and my colleague Pablo Muñoz), httrans has a free forum and a course with a certificate.",
                 }
             };
 
@@ -495,10 +916,62 @@
             const likeCountSpan = document.getElementById('likeCount');
             const newsletterPopup = document.getElementById('newsletterPopup');
             const newsletterCloseBtn = document.getElementById('newsletterCloseBtn');
-            
-            let currentLang = localStorage.getItem('selectedLang') || 'en';
-            let likeCount = parseInt(localStorage.getItem('pandaHugCount') || '0');
+            const notificationBar = document.getElementById('notification-bar');
+            const notificationCloseBtn = document.getElementById('notification-close-btn');
+            const changelogModal = document.getElementById('changelog-modal');
+            const changelogTrigger = document.getElementById('changelog-trigger');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const changelogGrid = document.getElementById('changelog-grid');
+            const feedbackModal = document.getElementById('feedback-modal');
+            const feedbackTrigger = document.getElementById('feedback-trigger');
+            const feedbackModalCloseBtn = document.getElementById('feedback-modal-close-btn');
+            const copyEmailBtn = document.getElementById('copy-email-btn');
+            const aboutModal = document.getElementById('about-modal');
+            const aboutTrigger = document.getElementById('about-trigger');
+            const aboutModalCloseBtn = document.getElementById('about-modal-close-btn');
 
+            let currentLang = localStorage.getItem('selectedLang') || 'en';
+
+            // --- LÓGICA DEL CONTADOR DE PANDA HUGS CON FIREBASE ---
+            const setupPandaHugs = () => {
+                if (window.db && window.doc && window.onSnapshot && window.runTransaction && window.appId) {
+                    const hugsDocRef = doc(db, "artifacts", appId, "public/data/globals/pandaHugs");
+
+                    onSnapshot(hugsDocRef, (doc) => {
+                        if (doc.exists()) {
+                            const count = doc.data().count || 0;
+                            likeCountSpan.textContent = count;
+                        } else {
+                            likeCountSpan.textContent = '0';
+                        }
+                    });
+
+                    pandaHugButton.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        pandaHugButton.classList.add('clicked');
+                        setTimeout(() => pandaHugButton.classList.remove('clicked'), 500);
+
+                        try {
+                            await runTransaction(db, async (transaction) => {
+                                const sfDoc = await transaction.get(hugsDocRef);
+                                if (!sfDoc.exists()) {
+                                    transaction.set(hugsDocRef, { count: 1 });
+                                } else {
+                                    const newCount = (sfDoc.data().count || 0) + 1;
+                                    transaction.update(hugsDocRef, { count: newCount });
+                                }
+                            });
+                        } catch (error) {
+                            console.error("Error al incrementar el abrazo de panda: ", error);
+                        }
+                    });
+                } else {
+                    console.error("Firebase no está inicializado. El contador de abrazos no funcionará.");
+                    likeCountSpan.textContent = '...';
+                }
+            };
+
+            // --- El resto de la lógica ---
             function renderTools() {
                 toolGrid.innerHTML = '';
                 tools.forEach((tool, index) => {
@@ -527,19 +1000,6 @@
                 });
             }
 
-            function updateLikeCount() {
-                likeCountSpan.textContent = likeCount;
-                localStorage.setItem('pandaHugCount', likeCount);
-            }
-
-            pandaHugButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                likeCount++;
-                updateLikeCount();
-                pandaHugButton.classList.add('clicked');
-                setTimeout(() => pandaHugButton.classList.remove('clicked'), 500);
-            });
-
             langButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     currentLang = button.dataset.lang;
@@ -551,24 +1011,88 @@
 
             // Lógica del Pop-up del Newsletter
             setTimeout(() => {
-                // Solo mostrar si no se ha cerrado antes en esta sesión
                 if (!sessionStorage.getItem('newsletterClosed')) {
                     newsletterPopup.classList.add('show');
                 }
-            }, 5000); // 5000ms = 5 segundos
-
+            }, 5000); 
             newsletterCloseBtn.addEventListener('click', () => {
                 newsletterPopup.classList.remove('show');
-                // Recordar que se ha cerrado para esta sesión
                 sessionStorage.setItem('newsletterClosed', 'true');
             });
 
+            // Lógica de la Barra de Notificación
+            if (!sessionStorage.getItem('notificationClosed')) {
+                setTimeout(() => {
+                    notificationBar.classList.add('visible');
+                }, 3000);
+            }
+            notificationCloseBtn.addEventListener('click', () => {
+                notificationBar.classList.remove('visible');
+                sessionStorage.setItem('notificationClosed', 'true');
+            });
+
+            // Lógica del Modal de Changelog
+            changelogTrigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                changelogGrid.innerHTML = '';
+                tools.forEach(tool => {
+                    const item = document.createElement('div');
+                    item.className = 'changelog-item';
+                    const changelogUrl = `https://rlstradu.github.io/httrans/changelog/${tool.id}.txt`;
+                    item.innerHTML = `
+                        <img src="${tool.icon}" alt="${tool.id} Logo">
+                        <a href="${changelogUrl}" target="_blank" rel="noopener" data-key="changelogView"></a>
+                    `;
+                    changelogGrid.appendChild(item);
+                });
+                updateText(currentLang);
+                changelogModal.style.display = 'flex';
+            });
+            modalCloseBtn.addEventListener('click', () => changelogModal.style.display = 'none');
+            changelogModal.addEventListener('click', (e) => {
+                if (e.target === changelogModal) changelogModal.style.display = 'none';
+            });
+
+            // Lógica del Modal de Feedback
+            feedbackTrigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                feedbackModal.style.display = 'flex';
+            });
+            feedbackModalCloseBtn.addEventListener('click', () => feedbackModal.style.display = 'none');
+            feedbackModal.addEventListener('click', (e) => {
+                if (e.target === feedbackModal) feedbackModal.style.display = 'none';
+            });
+            copyEmailBtn.addEventListener('click', () => {
+                const email = 'rlstradu@gmail.com';
+                const tempInput = document.createElement('textarea');
+                tempInput.value = email;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                const originalText = translations[currentLang].copyEmailBtn;
+                copyEmailBtn.textContent = translations[currentLang].copiedEmailBtn;
+                setTimeout(() => {
+                    copyEmailBtn.textContent = originalText;
+                }, 2000);
+            });
+            
+            // Lógica del Modal "Sobre mí"
+            aboutTrigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                aboutModal.style.display = 'flex';
+            });
+            aboutModalCloseBtn.addEventListener('click', () => aboutModal.style.display = 'none');
+            aboutModal.addEventListener('click', (e) => {
+                if (e.target === aboutModal) aboutModal.style.display = 'none';
+            });
 
             // --- INICIALIZACIÓN ---
             renderTools();
             updateLangButtons(currentLang);
             updateText(currentLang);
-            updateLikeCount();
+            document.addEventListener('firebaseReady', setupPandaHugs);
         });
     </script>
 
