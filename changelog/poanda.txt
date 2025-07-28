@@ -1,0 +1,64 @@
+=======================================
+ Poanda v1.0.0 - Launch Announcement
+=======================================
+
+Release Date: July 28, 2025
+
+Welcome to the first official release of Poanda!
+
+Poanda is a free, offline-first, browser-based tool designed to make editing .po files simple and efficient. It runs entirely in your browser, ensuring your data stays private. This initial release is packed with features to streamline your translation workflow.
+
+---
+Key Features
+---
+
+### Core Translation Workflow
+
+* **Load & Edit .po Files**: Easily load your .po files via the file dialog or by dragging and dropping them directly into the application.
+* **Segment-by-Segment Editor**: A clean, two-column layout to compare the original (msgid) and the translation (msgstr). Support for context (msgctxt) is included.
+* **Real-time Statistics**: Keep track of your progress with a live-updating stats bar showing segment completion, total words, translated words, and remaining words.
+* **PO to MO Conversion**: Compile your final .po file into a binary .mo file directly in the browser, ready for use.
+* **In-File Search**: Quickly search for text within the original or translated segments of your PO file.
+
+### Professional CAT Tool Features
+
+* **Translation Memory (TM)**:
+    * Import and export standard TMX files.
+    * The TM is automatically populated with your validated translations as you work.
+    * Get fuzzy match suggestions (with a similarity score) for the active segment.
+    * A diff view highlights the differences between the source text and the TM match.
+
+* **Terminology (Glossary)**:
+    * Import and export standard TBX files.
+    * Build and maintain a project-specific glossary.
+    * Terms from your glossary are automatically highlighted in the current source segment.
+
+### Productivity and Quality of Life
+
+* **Customizable Keyboard Shortcuts**: Speed up your workflow with shortcuts for validating, navigating segments, and inserting TM/Glossory matches. You can customize them and even import/export your configuration.
+* **Powerful Find & Replace**: A dedicated modal for finding and replacing text across all translation segments, with support for case sensitivity and regular expressions.
+* **Automatic Data Backup**: Poanda automatically saves your entire session (PO file, TM, and Glossary) to your browser's local storage every 10 seconds.
+* **Session Restore**: If you accidentally close your browser, Poanda will ask if you want to restore your previous session upon reopening. You can also save/load backups to/from a file.
+* **Customizable Interface**: The Terminology and Translation Memory sidebars are fully draggable and resizable to fit your screen and workflow.
+* **Multilingual UI**: The Poanda interface is available in both English and Spanish.
+
+### Project Management
+
+* **Poanda Projects (.poanda)**: Save your entire workspace—the .po file, the Translation Memory, and the Terminology—into a single `.poanda` project file (a zip archive).
+* **Easy Project Handling**: Start a new project, open an existing one, or save your current work for later.
+
+---
+Getting Started
+---
+
+1.  Simply open the `poanda.html` file in your web browser.
+2.  Drag and drop a `.po` file onto the window or use the "Load .po file" button.
+3.  Start translating!
+
+---
+Feedback & Contributions
+---
+
+This is the very first version, and your feedback is invaluable! If you find any bugs, have feature suggestions, or want to contribute, please feel free to reach out.
+
+Thank you for using Poanda!
