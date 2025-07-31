@@ -541,7 +541,7 @@
 
         <!-- Botones de Acción -->
         <div class="mt-8 text-center flex justify-center gap-4">
-            <button id="decimalToggleBtn" class="px-4 py-2" data-key="decimalPoint"></button>
+            <button id="decimalToggleBtn" class="px-4 py-2" data-key="decimalToggle"></button>
             <button id="saveLoadConfigBtn" class="px-6 py-3 text-lg" data-key="saveLoadConfigButton">Guardar / cargar configuración</button>
             <button id="generatePdfBtn" class="px-8 py-4 text-lg" data-key="generatePdfButton">GENERAR PDF</button>
         </div>
@@ -667,7 +667,7 @@
                 generatePdfButton: "GENERAR PDF",
                 paymentInfoLabelDefault: "Información de pago:",
                 paymentInfoPlaceholder: "Condiciones de pago, datos bancarios, notas adicionales, etc.",
-                saveLoadConfigButton: "GUARDAR/CARGAR PLANTILLA", // Updated text
+                saveLoadConfigButton: "GUARDAR/CARGAR PLANTILLA",
                 configModalTitle: "Guardar / cargar configuración",
                 saveToFileButton: "Guardar a archivo",
                 loadFromFileButton: "Cargar desde archivo",
@@ -679,7 +679,7 @@
                 modalMessageSuccessLoadLocal: "Configuración cargada localmente.",
                 modalMessageErrorLoad: "Error al cargar la configuración.",
                 modalMessageErrorParse: "Error: El archivo no es un formato de configuración válido.",
-                pdfTitle: "Factura", // Este se elimina en el PDF, pero se mantiene para la traducción del key.
+                pdfTitle: "Factura",
                 pdfInvoiceNumber: "Número de factura:",
                 pdfDate: "Fecha:",
                 pdfClientData: "Datos del cliente:",
@@ -688,7 +688,7 @@
                 pdfSubtotal: "Subtotal:",
                 pdfTotal: "Total:",
                 pdfPaymentInfo: "Información de pago:",
-                deleteButton: "X", // Changed to 'X'
+                deleteButton: "X",
                 deleteTaxButton: "Eliminar",
                 languageToggleText: "English",
                 taxDefaultIvaName: "IVA",
@@ -713,9 +713,10 @@
                 loadLocalDeleteButton: "Eliminar",
                 loadLocalNoSettings: "No hay ajustes guardados localmente.",
                 loadLocalConfirmDelete: "¿Estás seguro de que quieres eliminar este ajuste?",
-                decimalPoint: "CAMBIAR A COMA (0,00)", // Text when current is POINT
-                decimalComma: "CAMBIAR A PUNTO (0.00)",  // Text when current is COMMA
-                singlePriceLabel: "Precio único" // New translation
+                decimalToggle: "placeholder",
+                decimalPoint: "CAMBIAR A COMA (0,00)",
+                decimalComma: "CAMBIAR A PUNTO (0.00)",
+                singlePriceLabel: "Precio único"
             },
             en: {
                 appTitle: "CalPanda",
@@ -731,7 +732,7 @@
                 tableHeaderRate: "Rate (€)",
                 tableHeaderQuantity: "Volume",
                 tableHeaderTotal: "Total (€)",
-                tableHeaderActions: "", // Remove Actions header text
+                tableHeaderActions: "",
                 addItemButton: "Add item",
                 subtotalLabel: "Subtotal:",
                 addTaxButton: "Add tax",
@@ -739,7 +740,7 @@
                 generatePdfButton: "GENERATE PDF",
                 paymentInfoLabelDefault: "Payment information:",
                 paymentInfoPlaceholder: "Payment terms, bank details, additional notes, etc.",
-                saveLoadConfigButton: "SAVE/LOAD TEMPLATE", // Updated text
+                saveLoadConfigButton: "SAVE/LOAD TEMPLATE",
                 configModalTitle: "Save / load configuration",
                 saveToFileButton: "Save to file",
                 loadFromFileButton: "Load from file",
@@ -760,7 +761,7 @@
                 pdfSubtotal: "Subtotal:",
                 pdfTotal: "Total:",
                 pdfPaymentInfo: "Payment information:",
-                deleteButton: "X", // Changed to 'X'
+                deleteButton: "X",
                 deleteTaxButton: "Delete",
                 languageToggleText: "Español",
                 taxDefaultIvaName: "VAT",
@@ -770,9 +771,25 @@
                 configModalExplanationPara2: "For example, you can create a custom configuration for each client, including their details, your sender information, tax settings, and payment terms.",
                 configModalExplanationLocalStorage: "If you choose to save the settings locally, the data is stored in your browser only and can't be accessed by anyone else.",
                 configModalExplanationFile: "You can also download your configuration as a file and load it whenever you need it.",
-                decimalPoint: "USE DECIMAL COMMA (0,00)", // Updated text for point to comma toggle
-                decimalComma: "USE DECIMAL POINT (0.00)",  // Updated text for comma to point toggle
-                singlePriceLabel: "Single Price" // New translation
+                pdfNameModalTitle: "Name PDF File",
+                pdfFileNameLabel: "File name:",
+                confirmPdfNameButton: "Generate",
+                saveFileModalTitle: "Save configuration as...",
+                saveFileNameLabel: "File name:",
+                confirmSaveFileNameButton: "Save",
+                saveLocalModalTitle: "Save setting locally as...",
+                saveLocalNameLabel: "Setting name:",
+                confirmSaveLocalNameButton: "Save",
+                loadLocalModalTitle: "Load local setting",
+                loadLocalExplanation: "Locally saved settings are stored in your browser and cannot be accessed by anyone else.",
+                loadLocalLoadButton: "Load",
+                loadLocalDeleteButton: "Delete",
+                loadLocalNoSettings: "No locally saved settings found.",
+                loadLocalConfirmDelete: "Are you sure you want to delete this setting?",
+                decimalToggle: "placeholder",
+                decimalPoint: "USE DECIMAL COMMA (0,00)",
+                decimalComma: "USE DECIMAL POINT (0.00)",
+                singlePriceLabel: "Single Price"
             }
         };
 
@@ -882,45 +899,43 @@
          * @returns {number} The parsed number.
          */
         function parseNumber(str) {
+            if (typeof str !== 'string') str = String(str);
             if (currentDecimalSeparator === ',') {
                 str = str.replace(',', '.');
             }
-            return parseFloat(str);
+            return parseFloat(str) || 0;
         }
 
         /**
          * Updates all UI texts to the current language and decimal separator.
          */
         function updateTexts() {
+            const decimalToggleKey = (currentDecimalSeparator === '.') ? 'decimalPoint' : 'decimalComma';
+            decimalToggleBtn.textContent = translations[currentLanguage][decimalToggleKey];
+
             const elements = document.querySelectorAll('[data-key]');
             elements.forEach(element => {
                 const key = element.dataset.key;
+                if (!key || key === 'decimalToggle') return;
+
                 let translatedText = translations[currentLanguage][key];
 
-                // Special handling for decimal toggle button
-                if (element.id === 'decimalToggleBtn') {
-                    // This logic is inverse: if current is '.', show text to change to ','
-                    // if current is ',', show text to change to '.'
-                    element.textContent = (currentDecimalSeparator === '.') ? 
-                                          translations[currentLanguage].decimalComma : 
-                                          translations[currentLanguage].decimalPoint;
-                } else if (element.id === 'generatePdfBtn' || element.id === 'saveLoadConfigBtn') {
-                    element.textContent = translatedText.toUpperCase(); 
-                } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'LABEL') { // Added LABEL
+                if (element.id === 'generatePdfBtn' || element.id === 'saveLoadConfigBtn') {
+                    element.textContent = translatedText.toUpperCase();
+                } else if (element.tagName === 'LABEL') { // ** CORRECTED LOGIC: Handle all labels here **
+                    element.textContent = toSentenceCase(translatedText);
+                } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                     if (element.id === 'servicesTitle' || element.id === 'paymentInfoLabel' ||
                         element.id === 'clientDataLabelInput' || element.id === 'invoiceNumberLabelInput' ||
                         element.id === 'invoiceDateLabelInput' || element.id === 'senderDataLabelInput') {
-                         if (!element._isUserModified) {
+                        if (!element._isUserModified) {
                             element.value = toSentenceCase(translatedText);
                         }
                     } else if (element.closest('th')) {
                         element.value = toSentenceCase(translatedText);
-                    } else if (element.classList.contains('item-rate') || element.classList.contains('item-quantity') || element.classList.contains('tax-percentage-input') || element.classList.contains('item-total-editable')) { // Added item-total-editable
+                    } else if (element.classList.contains('item-rate') || element.classList.contains('item-quantity') || element.classList.contains('tax-percentage-input') || element.classList.contains('item-total-editable')) {
                         element.value = formatNumber(parseNumber(element.value));
-                    } else if (element.tagName === 'LABEL' && element.classList.contains('single-price-label')) { // Specific for single price label
-                        element.textContent = toSentenceCase(translatedText);
-                    }
-                    else {
+                    } else {
                         element.placeholder = toSentenceCase(translatedText);
                     }
                 } else if (element.tagName === 'TITLE') {
@@ -972,15 +987,15 @@
                     </div>
                 </td>
                 <td>
-                    <input type="number" step="0.01" value="${formatNumber(0.00)}" class="item-rate py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center">
+                    <input type="text" value="${formatNumber(0.00)}" class="item-rate py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center">
                     <div class="flex items-center justify-center mt-1">
                         <input type="checkbox" class="single-price-toggle" id="single-price-toggle-${itemCount}">
                         <label for="single-price-toggle-${itemCount}" class="text-xs ml-1 text-gray-600 single-price-label" data-key="singlePriceLabel">${toSentenceCase(translations[currentLanguage].singlePriceLabel)}</label>
                     </div>
                 </td>
-                <td><input type="number" step="1" value="${formatNumber(0)}" class="item-quantity py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
+                <td><input type="text" value="${formatNumber(1, 0)}" class="item-quantity py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-center"></td>
                 <td>
-                    <input type="number" step="0.01" value="${formatNumber(0.00)}" class="item-total-editable py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-right hidden-input">
+                    <input type="text" value="${formatNumber(0.00)}" class="item-total-editable py-2 focus:ring-blue-500 focus:border-blue-500 w-full text-right hidden-input">
                     <span class="item-total text-right block w-full">${formatNumber(0.00)}</span>
                 </td>
             `;
@@ -1062,7 +1077,7 @@
             taxRow.innerHTML = `
                 <button class="tax-operation-btn" data-operation="${defaultOperation}">${defaultOperation}</button>
                 <input type="text" value="${defaultName}" class="tax-name-input">
-                <input type="number" step="0.01" value="${formatNumber(defaultValue)}" class="tax-percentage-input">
+                <input type="text" value="${formatNumber(defaultValue)}" class="tax-percentage-input">
                 <span>%:</span>
                 <span class="tax-amount font-bold ml-2">${formatNumber(0.00)}</span>
                 <button class="delete-tax-btn">${toSentenceCase(translations[currentLanguage].deleteTaxButton)}</button>
@@ -1095,7 +1110,8 @@
          */
         function calculateTotals() {
             let subTotal = 0;
-            document.querySelectorAll('.item-total').forEach(itemTotalSpan => {
+            document.querySelectorAll('#invoiceItems tr').forEach(row => {
+                const itemTotalSpan = row.querySelector('.item-total');
                 subTotal += parseNumber(itemTotalSpan.textContent);
             });
             subTotalAmountSpan.textContent = formatNumber(subTotal) + ' €';
@@ -1135,7 +1151,7 @@
         function addMultiLineText(doc, text, x, y, maxWidth, align = "left") {
             const lines = doc.splitTextToSize(text, maxWidth);
             doc.text(lines, x, y, { align: align });
-            return y + (lines.length * doc.getLineHeight());
+            return y + (lines.length * (doc.getLineHeight() / doc.internal.scaleFactor));
         }
 
         /**
@@ -1152,34 +1168,31 @@
             let currentY = 40; // Y inicial para elementos superiores
 
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(12);
+            doc.setFontSize(10);
 
             // --- Draw Header Content for the FIRST PAGE ONLY ---
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.text(`${toSentenceCase(invoiceNumberLabelInput.value)} ${invoiceNumberInput.value}`, pdfRightAlignedX, currentY, null, null, "right");
-            let yAfterInvoiceNumber = currentY + 15; // Espacio después del número de factura
+            // Invoice Number and Date
+            doc.text(`${toSentenceCase(invoiceNumberLabelInput.value)} ${invoiceNumberInput.value}`, pdfRightAlignedX, currentY, { align: "right" });
+            currentY += 15;
+            doc.text(`${toSentenceCase(invoiceDateLabelInput.value)} ${invoiceDateInput.value}`, pdfRightAlignedX, currentY, { align: "right" });
+            let yAfterRightBlock = currentY;
 
+
+            // Client and Sender Data
+            currentY = 40; // Reset Y for left column
             doc.setFont("helvetica", "bold");
             doc.text(toSentenceCase(clientDataLabelInput.value), pdfMarginX, currentY);
             doc.setFont("helvetica", "normal");
-            let yAfterClientData = addMultiLineText(doc, clientDataInput.value, pdfMarginX, currentY + 15, 200, "left");
+            let yAfterClientData = addMultiLineText(doc, clientDataInput.value, pdfMarginX, currentY + 15, 250, "left");
 
-            // Calcular la altura de los datos del emisor para un posicionamiento dinámico
-            const senderDataLines = doc.splitTextToSize(senderDataInput.value, 200); // 200 es el ancho máximo para los datos del emisor
-            const senderDataHeight = senderDataLines.length * doc.getLineHeight();
-            
-            // Posicionar la etiqueta de los datos del emisor. Debe estar debajo del bloque de número de factura/fecha,
-            // y también dejar espacio suficiente.
-            let senderLabelY = Math.max(yAfterInvoiceNumber + 15, 70); // 15pt de buffer, y al menos 70pt desde arriba
-            
             doc.setFont("helvetica", "bold");
-            doc.text(toSentenceCase(senderDataLabelInput.value), pdfRightAlignedX, senderLabelY, null, null, "right");
+            doc.text(toSentenceCase(senderDataLabelInput.value), pdfMarginX, yAfterClientData + 20);
             doc.setFont("helvetica", "normal");
-            let yAfterSenderData = addMultiLineText(doc, senderDataInput.value, pdfRightAlignedX, senderLabelY + 15, 200, "right");
+            let yAfterSenderData = addMultiLineText(doc, senderDataInput.value, pdfMarginX, yAfterClientData + 35, 250, "left");
+
 
             // Determinar la posición Y para el título "Servicios". Debe estar debajo de ambos bloques de datos (cliente y emisor).
-            let yForServicesTitle = Math.max(yAfterClientData, yAfterSenderData) + 20; // 20pt de buffer
+            let yForServicesTitle = Math.max(yAfterRightBlock, yAfterSenderData) + 40; // 40pt de buffer
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(16);
@@ -1271,7 +1284,7 @@
             // Dibujar Subtotal
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
-doc.text(toSentenceCase(translations[currentLanguage].subtotalLabel), totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
+            doc.text(toSentenceCase(translations[currentLanguage].subtotalLabel), totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
             doc.text(subTotalAmountSpan.textContent, totalsSectionX + totalsSectionWidth, finalY, { align: 'right' });
             finalY += 15;
 
@@ -1299,7 +1312,7 @@ doc.text(toSentenceCase(translations[currentLanguage].subtotalLabel), totalsSect
             finalY += 10; // Padding antes del total final
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
-doc.text(toSentenceCase(translations[currentLanguage].finalTotalLabel), totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
+            doc.text(toSentenceCase(translations[currentLanguage].finalTotalLabel), totalsSectionX + totalsSectionWidth - 100, finalY, { align: 'right' });
             doc.text(grandTotalSpan.textContent, totalsSectionX + totalsSectionWidth, finalY, { align: 'right' });
             finalY += 20; // Ajustar para el tamaño de fuente del total final
 
