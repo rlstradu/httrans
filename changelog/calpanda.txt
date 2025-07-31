@@ -1,4 +1,19 @@
 =======================================
+Changelog - July 31, 2025
+=======================================
+
+This update focuses on improving the internationalization (i18n) support and fixing user interface bugs for a smoother experience.
+
+Bug Fixes & Improvements
+Fixed Decimal Separator Toggle: The button to switch between decimal point (.) and decimal comma (,) now correctly displays the action to be performed, rather than showing the current state. This makes the button's function more intuitive for the user.
+
+Corrected PDF Generation Modal: The dialog box that appears after clicking "Generate PDF" is now fully translated into English. This includes the modal title, the "File name:" label, and the "Generate" button.
+
+Enhanced Internationalization: Completed all English translations across all modals (including Save to File, Load from File, Save Locally, and Load Locally) to ensure a fully consistent bilingual experience. All labels, buttons, and explanatory texts in pop-up dialogs will now correctly switch between Spanish and English.
+
+
+
+=======================================
  CalPanda v1.0.0 - Launch Announcement
 =======================================
 
