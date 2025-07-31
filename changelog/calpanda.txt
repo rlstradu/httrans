@@ -1,5 +1,5 @@
 =======================================
-Changelog - July 31, 2025
+ CalPanda v1.0.1 - July 31, 2025
 =======================================
 
 This update focuses on improving the internationalization (i18n) support and fixing user interface bugs for a smoother experience.
