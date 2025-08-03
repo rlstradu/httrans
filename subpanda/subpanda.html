@@ -2304,24 +2304,10 @@ const renderShotChanges = () => {
 let wasm; // La variable para guardar el módulo Wasm sigue aquí
 
 const detectSceneChanges = async (options = {}) => {
-    // NOTA: Toda la lógica de carga del módulo se ha movido aquí dentro.
-    // Ahora, solo se carga cuando se necesita y nos aseguramos de que está listo.
-    if (!wasm) {
-        try {
-            showModalAlert('Cargando módulo de detección rápida por primera vez...', 'Cargando');
-            wasm = await import('./build/release.js');
-            console.log('Módulo WebAssembly cargado.');
-            alertModal.style.display = 'none'; // Ocultar el aviso de carga
-        } catch (err) {
-            console.error("Error al cargar el módulo WebAssembly:", err);
-            showModalAlert('No se pudo cargar el módulo de detección rápida. Revisa la consola para más detalles.');
-            return;
-        }
-    }
-
+    if (!wasm) return showModalAlert("El módulo de detección rápida aún no ha cargado...");
     if (!videoPlayer.src || !wavesurfer?.getDuration()) return showModalAlert("Carga un vídeo primero.");
-    
-    const { sampleRate = 5, threshold = 0.4 } = options;
+
+    const { sampleRate = 5, sensitivity = 3.0 } = options;
     isDetectionCancelled = false;
     detectShotsBtn.disabled = true;
     progressModal.style.display = 'flex';
@@ -2332,49 +2318,69 @@ const detectSceneChanges = async (options = {}) => {
     canvas.width = videoPlayer.videoWidth * scale;
     canvas.height = videoPlayer.videoHeight * scale;
     const frameInterval = 1 / frameRate;
-    
-    let prevHist = new Uint32Array(256); // NOTA: Corregimos el tamaño para que coincida con el histograma de luminancia
+
     let originalTime = videoPlayer.currentTime;
-    let isFirstFrame = true;
     videoPlayer.pause();
 
     try {
+        // --- PASO 1: ANÁLISIS ---
+        const differences = [];
+        let prevHist = null; // Empezamos con el histograma anterior vacío
+
         for (let time = 0; time < videoPlayer.duration; time += frameInterval * sampleRate) {
-            if (isDetectionCancelled) { showModalAlert('Detección cancelada.'); break; }
-            
-            await new Promise(resolve => {
+            if (isDetectionCancelled) { throw new Error('Detección cancelada.'); }
+
+            // NOTA: La lógica se ha simplificado y corregido aquí
+            const currentHist = await new Promise(resolve => {
                 videoPlayer.currentTime = time;
                 videoPlayer.onseeked = () => {
                     ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    
-wasm.createLuminanceHistogram(imageData.data); // NOTA: Corregimos el nombre de la función
-
-                    
-                    if (!isFirstFrame) {
-                        const diff = wasm.compareHistograms(prevHist, imageData.data.length / 4);
-                        if (diff > threshold) {
-                            shotChanges.push(time);
-                        }
-                    }
-                    
-                    prevHist.set(wasm.histogram);
-                    isFirstFrame = false;
-
-                    const progress = Math.round((time / videoPlayer.duration) * 100);
-                    shotDetectionProgressBar.style.width = `${progress}%`;
-                    shotDetectionProgressText.textContent = `${progress}%`;
-                    requestAnimationFrame(resolve);
+                    // Creamos el histograma del fotograma actual y lo devolvemos
+                    resolve(wasm.createLuminanceHistogram(imageData.data));
                 };
             });
+
+            if (prevHist) {
+                // Comparamos el histograma anterior con el actual
+                const diff = wasm.compareHistograms(prevHist, currentHist);
+                differences.push({ time, diff });
+            }
+
+            prevHist = currentHist; // Guardamos el histograma actual para la siguiente vuelta
+
+            const progress = Math.round((time / videoPlayer.duration) * 50);
+            shotDetectionProgressBar.style.width = `${progress}%`;
+            shotDetectionProgressText.textContent = `Analizando... ${progress}%`;
         }
-        if (!isDetectionCancelled) { 
-            renderShotChanges(); 
-            showModalAlert(`${shotChanges.length} cambios de plano detectados.`); 
+
+        // --- PASO 2: DETECCIÓN ---
+        if (differences.length > 0) {
+            const diffValues = differences.map(d => d.diff);
+            const avgDiff = diffValues.reduce((a, b) => a + b, 0) / diffValues.length;
+            const stdDev = Math.sqrt(diffValues.map(x => Math.pow(x - avgDiff, 2)).reduce((a, b) => a + b, 0) / diffValues.length);
+            const dynamicThreshold = avgDiff + (stdDev * sensitivity);
+
+            differences.forEach((frame, index) => {
+                const progress = 50 + Math.round((index / differences.length) * 50);
+                shotDetectionProgressBar.style.width = `${progress}%`;
+                shotDetectionProgressText.textContent = `Detectando cortes... ${progress}%`;
+                if (frame.diff > dynamicThreshold) {
+                    shotChanges.push(frame.time);
+                }
+            });
         }
-    } catch (err) { 
-        console.error("Error en detección:", err); 
-        showModalAlert("Error al detectar cambios de plano."); 
+
+        renderShotChanges();
+        showModalAlert(`${shotChanges.length} cambios de plano detectados.`);
+
+    } catch (err) {
+        if (err.message.includes('cancelada')) {
+            showModalAlert(err.message);
+        } else {
+             console.error("Error en detección:", err);
+             showModalAlert("Error al detectar cambios de plano.");
+        }
     } finally {
         videoPlayer.currentTime = originalTime;
         progressModal.style.display = 'none';
@@ -2383,6 +2389,7 @@ wasm.createLuminanceHistogram(imageData.data); // NOTA: Corregimos el nombre de 
         detectShotsBtn.disabled = false;
     }
 };
+
 // --- FIN: Nueva función detectSceneChanges con WebAssembly ---
 
 
