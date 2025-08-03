@@ -2323,38 +2323,34 @@ const detectSceneChanges = async (options = {}) => {
     videoPlayer.pause();
 
     try {
-        // --- PASO 1: ANÁLISIS ---
         const differences = [];
-        let prevHist = null; // Empezamos con el histograma anterior vacío
+        let prevHist = null;
 
         for (let time = 0; time < videoPlayer.duration; time += frameInterval * sampleRate) {
             if (isDetectionCancelled) { throw new Error('Detección cancelada.'); }
 
-            // NOTA: La lógica se ha simplificado y corregido aquí
             const currentHist = await new Promise(resolve => {
                 videoPlayer.currentTime = time;
                 videoPlayer.onseeked = () => {
                     ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    // Creamos el histograma del fotograma actual y lo devolvemos
                     resolve(wasm.createLuminanceHistogram(imageData.data));
                 };
             });
 
             if (prevHist) {
-                // Comparamos el histograma anterior con el actual
                 const diff = wasm.compareHistograms(prevHist, currentHist);
                 differences.push({ time, diff });
             }
 
-            prevHist = currentHist; // Guardamos el histograma actual para la siguiente vuelta
+            // NOTA: Este es el cambio clave. Forzamos una copia real del resultado.
+            prevHist = new Uint32Array(currentHist);
 
             const progress = Math.round((time / videoPlayer.duration) * 50);
             shotDetectionProgressBar.style.width = `${progress}%`;
             shotDetectionProgressText.textContent = `Analizando... ${progress}%`;
         }
 
-        // --- PASO 2: DETECCIÓN ---
         if (differences.length > 0) {
             const diffValues = differences.map(d => d.diff);
             const avgDiff = diffValues.reduce((a, b) => a + b, 0) / diffValues.length;
