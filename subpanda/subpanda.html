@@ -2304,24 +2304,10 @@ const renderShotChanges = () => {
 let wasm; // La variable para guardar el módulo Wasm sigue aquí
 
 const detectSceneChanges = async (options = {}) => {
-    // NOTA: Toda la lógica de carga del módulo se ha movido aquí dentro.
-    // Ahora, solo se carga cuando se necesita y nos aseguramos de que está listo.
-    if (!wasm) {
-        try {
-            showModalAlert('Cargando módulo de detección rápida por primera vez...', 'Cargando');
-            wasm = await import('./build/release.js');
-            console.log('Módulo WebAssembly cargado.');
-            alertModal.style.display = 'none'; // Ocultar el aviso de carga
-        } catch (err) {
-            console.error("Error al cargar el módulo WebAssembly:", err);
-            showModalAlert('No se pudo cargar el módulo de detección rápida. Revisa la consola para más detalles.');
-            return;
-        }
-    }
-
+    if (!wasm) return showModalAlert("El módulo de detección rápida aún no ha cargado...");
     if (!videoPlayer.src || !wavesurfer?.getDuration()) return showModalAlert("Carga un vídeo primero.");
-    
-    const { sampleRate = 5, threshold = 0.4 } = options;
+
+    const { sampleRate = 5, sensitivity = 3.0 } = options; // Sensibilidad como nuevo parámetro
     isDetectionCancelled = false;
     detectShotsBtn.disabled = true;
     progressModal.style.display = 'flex';
@@ -2332,48 +2318,71 @@ const detectSceneChanges = async (options = {}) => {
     canvas.width = videoPlayer.videoWidth * scale;
     canvas.height = videoPlayer.videoHeight * scale;
     const frameInterval = 1 / frameRate;
-    
-    let prevHist = new Uint32Array(4096); // 16*16*16
+
     let originalTime = videoPlayer.currentTime;
-    let isFirstFrame = true;
     videoPlayer.pause();
 
     try {
+        // --- PASO 1: ANÁLISIS ---
+        // Recopilamos la diferencia de luminancia entre cada fotograma analizado
+        const differences = [];
+        let prevHist = new Uint32Array(256);
+        let isFirstFrame = true;
+
         for (let time = 0; time < videoPlayer.duration; time += frameInterval * sampleRate) {
-            if (isDetectionCancelled) { showModalAlert('Detección cancelada.'); break; }
-            
+            if (isDetectionCancelled) { throw new Error('Detección cancelada.'); }
+
             await new Promise(resolve => {
                 videoPlayer.currentTime = time;
                 videoPlayer.onseeked = () => {
                     ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    
-                    wasm.createHistogram(imageData.data); 
-                    
+
+                    wasm.createLuminanceHistogram(imageData.data);
+
                     if (!isFirstFrame) {
                         const diff = wasm.compareHistograms(prevHist, imageData.data.length / 4);
-                        if (diff > threshold) {
-                            shotChanges.push(time);
-                        }
+                        differences.push({ time, diff });
                     }
-                    
+
                     prevHist.set(wasm.histogram);
                     isFirstFrame = false;
 
-                    const progress = Math.round((time / videoPlayer.duration) * 100);
+                    const progress = Math.round((time / videoPlayer.duration) * 50); // 50% para el primer paso
                     shotDetectionProgressBar.style.width = `${progress}%`;
-                    shotDetectionProgressText.textContent = `${progress}%`;
+                    shotDetectionProgressText.textContent = `Analizando... ${progress}%`;
                     requestAnimationFrame(resolve);
                 };
             });
         }
-        if (!isDetectionCancelled) { 
-            renderShotChanges(); 
-            showModalAlert(`${shotChanges.length} cambios de plano detectados.`); 
+
+        // --- PASO 2: DETECCIÓN ---
+        // Calculamos el umbral dinámico a partir de los resultados del análisis
+        const diffValues = differences.map(d => d.diff);
+        const avgDiff = diffValues.reduce((a, b) => a + b, 0) / diffValues.length;
+        const stdDev = Math.sqrt(diffValues.map(x => Math.pow(x - avgDiff, 2)).reduce((a, b) => a + b, 0) / diffValues.length);
+        const dynamicThreshold = avgDiff + (stdDev * sensitivity);
+
+        // Marcamos solo los picos que superan nuestro umbral inteligente
+        differences.forEach((frame, index) => {
+            const progress = 50 + Math.round((index / differences.length) * 50); // 50% para el segundo paso
+            shotDetectionProgressBar.style.width = `${progress}%`;
+            shotDetectionProgressText.textContent = `Detectando cortes... ${progress}%`;
+            if (frame.diff > dynamicThreshold) {
+                shotChanges.push(frame.time);
+            }
+        });
+
+        renderShotChanges();
+        showModalAlert(`${shotChanges.length} cambios de plano detectados.`);
+
+    } catch (err) {
+        if (err.message !== 'Detección cancelada.') {
+             console.error("Error en detección:", err);
+             showModalAlert("Error al detectar cambios de plano.");
+        } else {
+            showModalAlert(err.message);
         }
-    } catch (err) { 
-        console.error("Error en detección:", err); 
-        showModalAlert("Error al detectar cambios de plano."); 
     } finally {
         videoPlayer.currentTime = originalTime;
         progressModal.style.display = 'none';
@@ -2382,8 +2391,6 @@ const detectSceneChanges = async (options = {}) => {
         detectShotsBtn.disabled = false;
     }
 };
-// --- FIN: Nueva función detectSceneChanges con WebAssembly ---
-
 
         // --- INICIO: Lógica para la nueva ventana de ajustes de detección de planos ---
 const sceneDetectionSettingsModal = document.getElementById('scene-detection-settings-modal');
