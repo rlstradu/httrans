@@ -17,22 +17,20 @@ async function instantiate(module, imports = {}) {
   const { exports } = await WebAssembly.instantiate(module, adaptedImports);
   const memory = exports.memory || imports.env.memory;
   const adaptedExports = Object.setPrototypeOf({
-    histogram: {
-      // assembly/index/histogram: ~lib/typedarray/Uint32Array
-      valueOf() { return this.value; },
-      get value() {
-        return __liftTypedArray(Uint32Array, exports.histogram.value >>> 0);
-      }
-    },
     createLuminanceHistogram(imageData) {
-      // assembly/index/createLuminanceHistogram(~lib/typedarray/Uint8ClampedArray) => void
-      imageData = __lowerTypedArray(Uint8ClampedArray, 5, 0, imageData) || __notnull();
-      exports.createLuminanceHistogram(imageData);
+      // assembly/index/createLuminanceHistogram(~lib/typedarray/Uint8ClampedArray) => ~lib/typedarray/Uint32Array
+      imageData = __lowerTypedArray(Uint8ClampedArray, 4, 0, imageData) || __notnull();
+      return __liftTypedArray(Uint32Array, exports.createLuminanceHistogram(imageData) >>> 0);
     },
-    compareHistograms(prevHist, totalPixels) {
-      // assembly/index/compareHistograms(~lib/typedarray/Uint32Array, i32) => f64
-      prevHist = __lowerTypedArray(Uint32Array, 4, 2, prevHist) || __notnull();
-      return exports.compareHistograms(prevHist, totalPixels);
+    compareHistograms(prevHist, currentHist) {
+      // assembly/index/compareHistograms(~lib/typedarray/Uint32Array, ~lib/typedarray/Uint32Array) => f64
+      prevHist = __retain(__lowerTypedArray(Uint32Array, 5, 2, prevHist) || __notnull());
+      currentHist = __lowerTypedArray(Uint32Array, 5, 2, currentHist) || __notnull();
+      try {
+        return exports.compareHistograms(prevHist, currentHist);
+      } finally {
+        __release(prevHist);
+      }
     },
   }, exports);
   function __liftString(pointer) {
@@ -67,6 +65,23 @@ async function instantiate(module, imports = {}) {
     exports.__unpin(buffer);
     return header;
   }
+  const refcounts = new Map();
+  function __retain(pointer) {
+    if (pointer) {
+      const refcount = refcounts.get(pointer);
+      if (refcount) refcounts.set(pointer, refcount + 1);
+      else refcounts.set(exports.__pin(pointer), 1);
+    }
+    return pointer;
+  }
+  function __release(pointer) {
+    if (pointer) {
+      const refcount = refcounts.get(pointer);
+      if (refcount === 1) exports.__unpin(pointer), refcounts.delete(pointer);
+      else if (refcount) refcounts.set(pointer, refcount - 1);
+      else throw Error(`invalid refcount '${refcount}' for reference '${pointer}'`);
+    }
+  }
   function __notnull() {
     throw TypeError("value must not be null");
   }
@@ -91,7 +106,6 @@ async function instantiate(module, imports = {}) {
 }
 export const {
   memory,
-  histogram,
   createLuminanceHistogram,
   compareHistograms,
 } = await (async url => instantiate(
