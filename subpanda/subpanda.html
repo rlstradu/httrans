@@ -2439,7 +2439,7 @@ sensitivitySlider.value = '3.0'; // NOTA: Reseteamos la sensibilidad a un valor 
 startDetectionBtn.addEventListener('click', () => {
     const sampleRate = parseInt(precisionSlider.value, 10);
     // NOTA: Leemos el valor del nuevo deslizador de sensibilidad
-    const sensitivity = parseFloat(sensitivitySlider.value); 
+const sensitivity = 6.5 - parseFloat(sensitivitySlider.value); // NOTA: Invertimos el valor para que sea correcto
 
     sceneDetectionSettingsModal.style.display = 'none';
 
