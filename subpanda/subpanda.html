@@ -2348,7 +2348,8 @@ const detectSceneChanges = async (options = {}) => {
                     ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     
-                    wasm.createHistogram(imageData.data); 
+wasm.createLuminanceHistogram(imageData.data); // NOTA: Corregimos el nombre de la función
+
                     
                     if (!isFirstFrame) {
                         const diff = wasm.compareHistograms(prevHist, imageData.data.length / 4);
