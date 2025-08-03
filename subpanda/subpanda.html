@@ -894,6 +894,14 @@ min-width: 25ch;
                 <span>Rápido</span>
             </div>
             <p id="precision-feedback" class="text-center text-sm font-semibold text-yellow-400 h-10"></p>
+<div class="space-y-4 mt-4">
+    <label for="sensitivity-slider" class="text-sm font-medium text-gray-300">Sensibilidad de corte</label>
+    <input type="range" id="sensitivity-slider" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer" min="1.5" max="5.0" step="0.1" value="3.0">
+    <div class="flex justify-between text-xs text-gray-400 px-1">
+        <span>Menos sensible (pocos cortes)</span>
+        <span>Más sensible (muchos cortes)</span>
+    </div>
+</div>
         </div>
 
         <div class="flex justify-end gap-4 mt-4 pt-4 border-t border-light-gray">
@@ -2404,6 +2412,7 @@ const detectSceneChanges = async (options = {}) => {
 const sceneDetectionSettingsModal = document.getElementById('scene-detection-settings-modal');
 const precisionSlider = document.getElementById('precision-slider');
 const precisionFeedback = document.getElementById('precision-feedback');
+const sensitivitySlider = document.getElementById('sensitivity-slider');
 const startDetectionBtn = document.getElementById('start-detection-btn');
 
 const updatePrecisionFeedback = () => {
@@ -2422,15 +2431,20 @@ precisionSlider.addEventListener('input', updatePrecisionFeedback);
 detectShotsBtn.addEventListener('click', () => {
     // Al abrir, reseteamos el slider al modo Equilibrado y mostramos la ventana
     precisionSlider.value = '5';
+sensitivitySlider.value = '3.0'; // NOTA: Reseteamos la sensibilidad a un valor por defecto
     updatePrecisionFeedback();
     sceneDetectionSettingsModal.style.display = 'flex';
 });
 
 startDetectionBtn.addEventListener('click', () => {
     const sampleRate = parseInt(precisionSlider.value, 10);
+    // NOTA: Leemos el valor del nuevo deslizador de sensibilidad
+    const sensitivity = parseFloat(sensitivitySlider.value); 
+
     sceneDetectionSettingsModal.style.display = 'none';
-    // Llamamos a la detección con los ajustes seleccionados
-    detectSceneChanges({ sampleRate: sampleRate });
+
+    // NOTA: Pasamos ambos valores a la función de detección
+    detectSceneChanges({ sampleRate: sampleRate, sensitivity: sensitivity });
 });
 
 sceneDetectionSettingsModal.querySelector('.close-scene-detection-modal').addEventListener('click', () => {
