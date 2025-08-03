@@ -16,8 +16,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/wavesurfer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/plugins/regions.min.js"></script>
 
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js"></script>
     
     <!-- jsPDF para generar PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -408,7 +407,7 @@ min-width: 25ch;
 
     <!-- Encabezado -->
     <header class="flex justify-between items-center bg-transparent py-2 flex-shrink-0">
-        <img id="logo" src="subpanda-logo.png" alt="Logotipo de Subpanda" onerror="this.outerHTML='<h1 class=\'text-2xl font-bold\'>Subpanda</h1>'">
+        <img id="logo" src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-logo.png" alt="Logotipo de Subpanda" onerror="this.outerHTML='<h1 class=\'text-2xl font-bold\'>Subpanda</h1>'">
         <div class="flex items-center gap-2">
             
             <div class="menu-wrapper">
@@ -2283,94 +2282,216 @@ const renderShotChanges = () => {
 
 
 
-const detectSceneChangesFFmpeg = async (options = {}) => {
+// --- INICIO: CÓDIGO DEL WEB WORKER ---
+// Este código se ejecutará en segundo plano para no congelar la aplicación.
+const getWorkerCode = () => `
+    // Importamos la librería MP4Box dentro del worker
+    self.importScripts('https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js');
+
+    let videoDecoder = null;
+    let mp4boxfile = null;
+    let lastHistogram = null;
+    let canvas = null;
+    let ctx = null;
+
+    // Función para crear un histograma de una imagen (simplificado)
+    const createHistogram = (imageData) => {
+        const histogram = new Uint32Array(256);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const grayscale = Math.round(data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+            histogram[grayscale]++;
+        }
+        return histogram;
+    };
+
+    // Función para comparar dos histogramas
+    const compareHistograms = (h1, h2) => {
+        let diff = 0;
+        for (let i = 0; i < 256; i++) {
+            diff += Math.abs(h1[i] - h2[i]);
+        }
+        return diff / (canvas.width * canvas.height);
+    };
+
+    // El worker espera a recibir el archivo de vídeo desde la página principal
+    self.onmessage = (e) => {
+        const { file } = e.data;
+        if (file) {
+            startProcessing(file);
+        }
+    };
+
+    function startProcessing(file) {
+        // Configuramos el decodificador de vídeo (WebCodecs API)
+        videoDecoder = new VideoDecoder({
+            output: (frame) => {
+                if (!canvas) {
+                    canvas = new OffscreenCanvas(frame.codedWidth, frame.codedHeight);
+                    ctx = canvas.getContext('2d');
+                }
+                
+                ctx.drawImage(frame, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const currentHistogram = createHistogram(imageData);
+                
+                if (lastHistogram) {
+                    const diff = compareHistograms(lastHistogram, currentHistogram);
+                    // Umbral de diferencia para detectar un cambio de plano
+                    if (diff > 0.3) { 
+                        // Enviamos el timestamp del cambio de plano a la página principal
+                        self.postMessage({ type: 'shot', timestamp: frame.timestamp / 1000000 });
+                    }
+                }
+                lastHistogram = currentHistogram;
+                frame.close(); // Liberamos la memoria del fotograma
+            },
+            error: (err) => {
+                console.error('VideoDecoder Error:', err);
+                self.postMessage({ type: 'error', message: 'Error decodificando el vídeo.' });
+            },
+        });
+
+        // Configuramos MP4Box para "desempaquetar" el vídeo
+        mp4boxfile = MP4Box.createFile();
+        
+        mp4boxfile.onReady = (info) => {
+            const track = info.videoTracks[0];
+            if (!track) {
+                self.postMessage({ type: 'error', message: 'No se encontró una pista de vídeo en el archivo.' });
+                return;
+            }
+            videoDecoder.configure({ codec: track.codec });
+            mp4boxfile.setExtractionOptions(track.id, null, { nbSamples: 100 });
+            mp4boxfile.start();
+        };
+
+        mp4boxfile.onSamples = (track_id, ref, samples) => {
+            for (const sample of samples) {
+                const chunk = new EncodedVideoChunk({
+                    type: sample.is_sync ? 'key' : 'delta',
+                    timestamp: sample.cts * (1000000 / sample.timescale),
+                    duration: sample.duration * (1000000 / sample.timescale),
+                    data: sample.data,
+                });
+                videoDecoder.decode(chunk);
+            }
+        };
+
+        // Empezamos a leer el archivo de vídeo y a pasárselo a MP4Box
+        let offset = 0;
+        const reader = file.stream().getReader();
+        reader.read().then(function processChunk({ done, value }) {
+            if (done) {
+                mp4boxfile.flush();
+                // Esperamos a que los últimos fotogramas se procesen y luego finalizamos
+                setTimeout(() => self.postMessage({ type: 'done' }), 2000);
+                return;
+            }
+            const buffer = value.buffer;
+            buffer.fileStart = offset;
+            offset += buffer.byteLength;
+            
+            // Enviamos el progreso a la página principal
+            self.postMessage({ type: 'progress', progress: (offset / file.size) * 100 });
+            
+            mp4boxfile.appendBuffer(buffer);
+            reader.read().then(processChunk);
+        });
+    }
+`;
+// --- FIN: CÓDIGO DEL WEB WORKER ---
+
+
+// --- INICIO: FUNCIÓN PRINCIPAL DE DETECCIÓN ---
+// Esta función coordina el Web Worker.
+let sceneDetectionWorker = null;
+
+const detectSceneChangesWebCodecs = (options = {}) => {
     const videoFile = videoLoader.files[0];
     if (!videoPlayer.src || !videoFile) {
         return showModalAlert("Primero carga un vídeo desde tu equipo.");
     }
 
-    const { threshold = 0.4 } = options;
-
     isDetectionCancelled = false;
     detectShotsBtn.disabled = true;
     progressModal.style.display = 'flex';
     shotDetectionProgressBar.style.width = '0%';
-    shotDetectionProgressText.textContent = 'Inicializando FFmpeg v0.11.0...';
+    shotDetectionProgressText.textContent = 'Inicializando análisis...';
     shotChanges = [];
+    renderShotChanges();
 
     try {
-        // --- CAMBIO DE SINTAXIS (v0.11) ---
-        // Desestructuramos para obtener las funciones necesarias
-        const { createFFmpeg, fetchFile } = FFmpeg;
+        // Creamos el worker a partir del código de la función getWorkerCode
+        const blob = new Blob([getWorkerCode()], { type: 'application/javascript' });
+        sceneDetectionWorker = new Worker(URL.createObjectURL(blob));
 
-        // Creamos la instancia de FFmpeg
-        const ffmpeg = createFFmpeg({
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
-            log: true, // Habilitamos los logs para capturar la salida
-        });
+        // Escuchamos los mensajes que nos envía el worker
+        sceneDetectionWorker.onmessage = (e) => {
+            if (isDetectionCancelled) return;
+            const { type, progress, timestamp, message } = e.data;
 
-        // La carga se hace en un paso separado
-        if (!ffmpeg.isLoaded()) {
-            await ffmpeg.load();
-        }
-        
-        // El monitor de progreso es diferente en esta versión
-        ffmpeg.setLogger(({ type, message }) => {
-            if (type === 'fferr' && message.includes('pts_time:')) {
-                const match = message.match(/pts_time:([\d.]+)/);
-                if (match && match[1]) {
-                    shotChanges.push(parseFloat(match[1]));
-                }
+            switch (type) {
+                case 'progress':
+                    shotDetectionProgressBar.style.width = \`${progress.toFixed(1)}%\`;
+                    shotDetectionProgressText.textContent = \`Analizando... ${progress.toFixed(1)}%\`;
+                    break;
+                case 'shot':
+                    shotChanges.push(timestamp);
+                    break;
+                case 'done':
+                    renderShotChanges();
+                    progressModal.style.display = 'none';
+                    detectShotsBtn.disabled = false;
+                    showModalAlert(\`${shotChanges.length} cambios de plano detectados.\`);
+                    if (sceneDetectionWorker) sceneDetectionWorker.terminate();
+                    sceneDetectionWorker = null;
+                    break;
+                case 'error':
+                    progressModal.style.display = 'none';
+                    detectShotsBtn.disabled = false;
+                    showModalAlert(\`Error en la detección: ${message}\`);
+                    if (sceneDetectionWorker) sceneDetectionWorker.terminate();
+                    sceneDetectionWorker = null;
+                    break;
             }
-        });
+        };
 
-        ffmpeg.setProgress(({ ratio }) => {
-            const progressPercent = Math.round(ratio * 100);
-            if (progressPercent > 0 && progressPercent <= 100) {
-                 shotDetectionProgressBar.style.width = `${progressPercent}%`;
-                 shotDetectionProgressText.textContent = `Analizando... ${progressPercent}%`;
-            }
-        });
-
-        shotDetectionProgressText.textContent = 'Preparando archivo...';
-        // La escritura de archivos también cambia
-        ffmpeg.FS('writeFile', videoFile.name, await fetchFile(videoFile));
-
-        shotDetectionProgressText.textContent = 'Análisis en curso...';
-        // El comando se ejecuta con .run() en vez de .exec()
-        await ffmpeg.run(
-            '-i', videoFile.name,
-            '-vf', `select='gt(scene,${threshold})',showinfo`,
-            '-f', 'null', '-'
-        );
-
-        if (!isDetectionCancelled) {
-            renderShotChanges();
-            showModalAlert(`${shotChanges.length} cambios de plano detectados.`);
-        }
+        // Enviamos el archivo de vídeo al worker para que empiece a trabajar
+        sceneDetectionWorker.postMessage({ file: videoFile });
 
     } catch (err) {
-        console.error("Error en detección con FFmpeg:", err);
-        showModalAlert("Error al detectar cambios de plano con FFmpeg. Consulta la consola para más detalles.");
-    } finally {
-        progressModal.style.display = 'none';
+        console.error("Error iniciando el worker de detección:", err);
+        showModalAlert("Error al iniciar el análisis. Es posible que tu navegador no sea compatible con la API WebCodecs.");
         detectShotsBtn.disabled = false;
+        progressModal.style.display = 'none';
     }
 };
+// --- FIN: FUNCIÓN PRINCIPAL DE DETECCIÓN ---
 
 
+// --- INICIO: CONEXIÓN CON LOS BOTONES ---
 detectShotsBtn.addEventListener('click', () => {
-    detectSceneChangesFFmpeg({ threshold: 0.4 }); 
+    // Usamos una confirmación porque este proceso puede consumir bastante CPU
+    showConfirmationModal(
+        'Este proceso analizará el vídeo fotograma a fotograma en tu navegador, lo que puede consumir bastantes recursos de la CPU. ¿Deseas continuar?',
+        () => detectSceneChangesWebCodecs()
+    );
 });
 
-cancelDetectionBtn.addEventListener('click', () => { 
-    isDetectionCancelled = true; 
-    if (ffmpeg) {
-        // Esta función intenta detener el proceso en curso en ffmpeg.wasm
-        ffmpeg.terminate();
-        ffmpeg = null; // Forzamos la recarga en el próximo uso
+cancelDetectionBtn.addEventListener('click', () => {
+    isDetectionCancelled = true;
+    if (sceneDetectionWorker) {
+        sceneDetectionWorker.terminate();
+        sceneDetectionWorker = null;
     }
+    detectShotsBtn.disabled = false;
+    progressModal.style.display = 'none';
+    showModalAlert('Análisis cancelado por el usuario.');
 });
+// --- FIN: CONEXIÓN CON LOS BOTONES ---
+
+
 
         // --- TOOLTIPS, RESIZERS, DRAG & DROP ---
         const initializeTooltips = () => {
@@ -3622,4 +3743,3 @@ background-color: #202020;
     </style>
 </body>
 </html>
-
