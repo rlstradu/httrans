@@ -24,10 +24,10 @@ async function instantiate(module, imports = {}) {
         return __liftTypedArray(Uint32Array, exports.histogram.value >>> 0);
       }
     },
-    createHistogram(imageData) {
-      // assembly/index/createHistogram(~lib/typedarray/Uint8ClampedArray) => void
+    createLuminanceHistogram(imageData) {
+      // assembly/index/createLuminanceHistogram(~lib/typedarray/Uint8ClampedArray) => void
       imageData = __lowerTypedArray(Uint8ClampedArray, 5, 0, imageData) || __notnull();
-      exports.createHistogram(imageData);
+      exports.createLuminanceHistogram(imageData);
     },
     compareHistograms(prevHist, totalPixels) {
       // assembly/index/compareHistograms(~lib/typedarray/Uint32Array, i32) => f64
@@ -92,7 +92,7 @@ async function instantiate(module, imports = {}) {
 export const {
   memory,
   histogram,
-  createHistogram,
+  createLuminanceHistogram,
   compareHistograms,
 } = await (async url => instantiate(
   await (async () => {
