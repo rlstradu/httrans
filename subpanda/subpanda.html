@@ -2304,7 +2304,20 @@ const renderShotChanges = () => {
 let wasm; // La variable para guardar el módulo Wasm sigue aquí
 
 const detectSceneChanges = async (options = {}) => {
-    if (!wasm) return showModalAlert("El módulo de detección rápida aún no ha cargado...");
+    // NOTA: Reintegramos aquí la lógica para cargar el módulo de forma segura
+    if (!wasm) {
+        try {
+            showModalAlert('Cargando módulo de detección rápida por primera vez...', 'Cargando');
+            wasm = await import('./build/release.js');
+            console.log('Módulo WebAssembly cargado.');
+            alertModal.style.display = 'none';
+        } catch (err) {
+            console.error("Error al cargar el módulo WebAssembly:", err);
+            showModalAlert('No se pudo cargar el módulo de detección rápida. Revisa la consola para más detalles.');
+            return;
+        }
+    }
+
     if (!videoPlayer.src || !wavesurfer?.getDuration()) return showModalAlert("Carga un vídeo primero.");
 
     const { sampleRate = 5, sensitivity = 3.0 } = options;
@@ -2343,7 +2356,6 @@ const detectSceneChanges = async (options = {}) => {
                 differences.push({ time, diff });
             }
 
-            // NOTA: Este es el cambio clave. Forzamos una copia real del resultado.
             prevHist = new Uint32Array(currentHist);
 
             const progress = Math.round((time / videoPlayer.duration) * 50);
@@ -2385,7 +2397,6 @@ const detectSceneChanges = async (options = {}) => {
         detectShotsBtn.disabled = false;
     }
 };
-
 // --- FIN: Nueva función detectSceneChanges con WebAssembly ---
 
 
