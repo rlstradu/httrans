@@ -17,11 +17,16 @@ export function compareHistograms(prevHist: Uint32Array, currentHist: Uint32Arra
   let diff: f64 = 0;
   let totalPixels: f64 = 0;
 
+  // NOTA: Se calcula primero el total de píxeles del fotograma actual.
   for (let i = 0; i < currentHist.length; i++) {
-    diff += Math.abs(prevHist[i] - currentHist[i]);
     totalPixels += currentHist[i];
   }
+ if (totalPixels === 0) return 0;
 
-  if (totalPixels === 0) return 0;
+  // NOTA: Se calcula la diferencia después.
+  for (let i = 0; i < currentHist.length; i++) {
+    diff += Math.abs(prevHist[i] - currentHist[i]);
+  }
+
   return diff / totalPixels;
 }
