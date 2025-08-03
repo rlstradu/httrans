@@ -2333,7 +2333,7 @@ const detectSceneChanges = async (options = {}) => {
     canvas.height = videoPlayer.videoHeight * scale;
     const frameInterval = 1 / frameRate;
     
-    let prevHist = new Uint32Array(4096); // 16*16*16
+    let prevHist = new Uint32Array(256); // NOTA: Corregimos el tamaño para que coincida con el histograma de luminancia
     let originalTime = videoPlayer.currentTime;
     let isFirstFrame = true;
     videoPlayer.pause();
