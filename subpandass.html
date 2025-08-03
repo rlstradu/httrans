@@ -15,7 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/wavesurfer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/plugins/regions.min.js"></script>
 
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js?v=1.0"></script>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
 
     
     <!-- jsPDF para generar PDFs -->
@@ -2280,6 +2280,8 @@ const renderShotChanges = () => {
     });
 };
 
+
+
 const detectSceneChangesFFmpeg = async (options = {}) => {
     const videoFile = videoLoader.files[0];
     if (!videoPlayer.src || !videoFile) {
@@ -2292,42 +2294,54 @@ const detectSceneChangesFFmpeg = async (options = {}) => {
     detectShotsBtn.disabled = true;
     progressModal.style.display = 'flex';
     shotDetectionProgressBar.style.width = '0%';
-    shotDetectionProgressText.textContent = 'Inicializando FFmpeg...';
+    shotDetectionProgressText.textContent = 'Inicializando FFmpeg v0.11.0...';
     shotChanges = [];
 
     try {
-        if (!ffmpeg) {
-            ffmpeg = new FFmpeg.FFmpeg();
-            ffmpeg.on('log', ({ message }) => {
-                if (message.includes('pts_time:')) {
-                    const match = message.match(/pts_time:([\d.]+)/);
-                    if (match && match[1]) {
-                        shotChanges.push(parseFloat(match[1]));
-                    }
-                }
-            });
-            await ffmpeg.load({
-                 coreURL: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js"
-            });
-        }
+        // --- CAMBIO DE SINTAXIS (v0.11) ---
+        // Desestructuramos para obtener las funciones necesarias
+        const { createFFmpeg, fetchFile } = FFmpeg;
 
-        ffmpeg.on('progress', ({ progress }) => {
-            const progressPercent = Math.round(progress * 100);
+        // Creamos la instancia de FFmpeg
+        const ffmpeg = createFFmpeg({
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+            log: true, // Habilitamos los logs para capturar la salida
+        });
+
+        // La carga se hace en un paso separado
+        if (!ffmpeg.isLoaded()) {
+            await ffmpeg.load();
+        }
+        
+        // El monitor de progreso es diferente en esta versión
+        ffmpeg.setLogger(({ type, message }) => {
+            if (type === 'fferr' && message.includes('pts_time:')) {
+                const match = message.match(/pts_time:([\d.]+)/);
+                if (match && match[1]) {
+                    shotChanges.push(parseFloat(match[1]));
+                }
+            }
+        });
+
+        ffmpeg.setProgress(({ ratio }) => {
+            const progressPercent = Math.round(ratio * 100);
             if (progressPercent > 0 && progressPercent <= 100) {
                  shotDetectionProgressBar.style.width = `${progressPercent}%`;
                  shotDetectionProgressText.textContent = `Analizando... ${progressPercent}%`;
             }
         });
-        
+
         shotDetectionProgressText.textContent = 'Preparando archivo...';
-        await ffmpeg.writeFile(videoFile.name, await FFmpeg.fetchFile(videoFile));
-        
+        // La escritura de archivos también cambia
+        ffmpeg.FS('writeFile', videoFile.name, await fetchFile(videoFile));
+
         shotDetectionProgressText.textContent = 'Análisis en curso...';
-        await ffmpeg.exec([
+        // El comando se ejecuta con .run() en vez de .exec()
+        await ffmpeg.run(
             '-i', videoFile.name,
             '-vf', `select='gt(scene,${threshold})',showinfo`,
             '-f', 'null', '-'
-        ]);
+        );
 
         if (!isDetectionCancelled) {
             renderShotChanges();
@@ -2342,6 +2356,7 @@ const detectSceneChangesFFmpeg = async (options = {}) => {
         detectShotsBtn.disabled = false;
     }
 };
+
 
 detectShotsBtn.addEventListener('click', () => {
     detectSceneChangesFFmpeg({ threshold: 0.4 }); 
@@ -3606,5 +3621,3 @@ background-color: #202020;
     </style>
 </body>
 </html>
-
-
