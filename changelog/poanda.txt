@@ -1,4 +1,15 @@
 =======================================
+Poanda v1.0.1 - UX & Clarity Update
+=======================================
+
+Release Date: August 9, 2025
+
+This is a minor update focused on improving the user experience based on initial feedback. The main goal of this release is to make the project creation workflow more intuitive and clear for new users.
+
+Improvements & Fixes
+Enhanced 'New Project' Workflow: Addressed a point of confusion for new users. The application now starts with a clearer welcome message explaining that you are already in a new project. Additionally, the 'New Project' button will now always show a confirmation dialog, providing consistent feedback and preventing accidental data loss.
+
+=======================================
  Poanda v1.0.0 - Launch Announcement
 =======================================
 
