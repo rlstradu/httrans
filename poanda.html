@@ -666,7 +666,7 @@
                 'char_count_original': 'Original: ',
                 'char_count_translation': 'Translation: ',
                 'char_units': ' characters',
-                'no_translations': 'Load a .po file or open a project to start editing.',
+                'no_translations': 'Welcome to Poanda! You are in a new, empty project. Load a `.po` file to edit it or open an existing `.poanda` project.',
                 'error_reading_file': 'Error reading or parsing .po file: ',
                 'error_saving_file': 'Error saving .po file: ',
                 'file_saved_successfully': '.po file saved successfully.',
@@ -832,7 +832,7 @@
                 'char_count_original': 'Original: ',
                 'char_count_translation': 'Traducción: ',
                 'char_units': ' caracteres',
-                'no_translations': 'Carga un archivo .po o abre un proyecto para empezar a editar.',
+                'no_translations': '¡Te damos la bienvenida a Poanda! Ya te encuentras en un proyecto nuevo y vacío. Carga un archivo `.po` o abre un proyecto para empezar a trabajar.',
                 'error_reading_file': 'Error al leer o analizar archivo .po: ',
                 'error_saving_file': 'Error al guardar archivo .po: ',
                 'file_saved_successfully': 'Archivo .po guardado con éxito.',
@@ -3410,13 +3410,10 @@ setTimeout(() => {
         }
 
         function newProject() {
-            if (poEntries.length > 0) {
-                if (!confirm(translations[currentLanguage]['new_project_confirm'])) {
-                    return;
-                }
+            if (confirm(translations[currentLanguage]['new_project_confirm'])) {
+                resetProjectState();
+                clearBackup();
             }
-            resetProjectState();
-            clearBackup();
         }
 
         function showSaveProjectModal() {
