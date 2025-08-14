@@ -1,3 +1,16 @@
+======================================= 
+CalPanda v1.0.2 - August 14, 2025
+=======================================
+
+This update introduces full currency customization, giving users the freedom to create invoices in any currency they need.
+
+New Features
+Customizable Currency Symbol: The currency dropdown has been replaced with a text input field. Users can now enter any currency symbol (e.g., $, ¥, kr, CHF) directly, and the entire invoice—including totals and the final PDF—will update instantly.
+
+Currency Saved in Templates: The custom currency symbol is now saved as part of the invoice configuration. When loading a template, your preferred currency will be applied automatically.
+
+
+
 =======================================
  CalPanda v1.0.1 - July 31, 2025
 =======================================
