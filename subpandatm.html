@@ -3082,9 +3082,22 @@ function setupIntersectionObserver() {
             showTMEditorSection();
         }
 
-        async function loadTMX(file) {
+        
+async function loadTMX(file) {
             showLoadingOverlay(errorMessages[currentLanguage]['loading_file']);
             hideTMInternalMessage();
+
+            // Helper function to unescape XML special characters back to HTML.
+            const unescapeXml = (safe) => {
+                if (typeof safe !== 'string') return '';
+                // The order matters for correctness
+                return safe.replace(/&lt;/g, '<')
+                           .replace(/&gt;/g, '>')
+                           .replace(/&apos;/g, '\'')
+                           .replace(/&quot;/g, '"')
+                           .replace(/&amp;/g, '&');
+            };
+
             try {
                 const reader = new FileReader();
                 await new Promise((resolve, reject) => {
@@ -3092,37 +3105,57 @@ function setupIntersectionObserver() {
                         try {
                             const parser = new DOMParser();
                             const xmlDoc = parser.parseFromString(reader.result, "application/xml");
-                            if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
-                                throw new Error("Invalid XML/TMX format: " + xmlDoc.getElementsByTagName("parsererror")[0].textContent);
+                            const parserError = xmlDoc.getElementsByTagName("parsererror");
+
+                            if (parserError.length > 0) {
+                                console.error("Parser Error:", parserError[0].textContent);
+                                throw new Error("The file contains invalid XML and could not be parsed.");
                             }
+                            
                             if (xmlDoc.getElementsByTagName("termEntry").length > 0) {
                                 showTMInternalMessage(errorMessages[currentLanguage]['tmx_file_expected_tbx_found'], true);
                                 reject(new Error("Attempted to load TBX into Translation Memory."));
                                 return;
                             }
+                            
                             const tuElements = xmlDoc.getElementsByTagName("tu");
                             let newTM = [];
-                            let detectedSrcLang = '', detectedTgtLang = '';
-                            if (tuElements.length > 0) {
-                                const tuvElements = tuElements[0].getElementsByTagName("tuv");
-                                if (tuvElements.length >= 2) {
-                                    detectedSrcLang = tuvElements[0].getAttribute("xml:lang");
-                                    detectedTgtLang = tuvElements[1].getAttribute("xml:lang");
-                                }
-                            }
+                            
+                            const header = xmlDoc.getElementsByTagName("header")[0];
+                            let detectedSrcLang = header ? header.getAttribute('srclang') : '';
+                            let detectedTgtLang = ''; // Target language is not a standard header attribute
+
                             for (let tu of tuElements) {
                                 const tuvElements = tu.getElementsByTagName("tuv");
                                 if (tuvElements.length >= 2) {
                                     const srcTuv = tuvElements[0], tgtTuv = tuvElements[1];
                                     const srcLang = srcTuv.getAttribute("xml:lang"), tgtLang = tgtTuv.getAttribute("xml:lang");
-                                    const srcSeg = srcTuv.getElementsByTagName("seg")[0]?.textContent || '', tgtSeg = tgtTuv.getElementsByTagName("seg")[0]?.textContent || '';
-                                    newTM.push({ srcLang, srcText: srcSeg, tgtLang, tgtText: tgtSeg, srcWordCount: countWords(srcSeg), tgtWordCount: countWords(tgtSeg) });
+                                    
+                                    const srcSeg = srcTuv.getElementsByTagName("seg")[0]?.textContent || '';
+                                    const tgtSeg = tgtTuv.getElementsByTagName("seg")[0]?.textContent || '';
+
+                                    const unescapedSrcText = unescapeXml(srcSeg);
+                                    const unescapedTgtText = unescapeXml(tgtSeg);
+
+                                    newTM.push({
+                                        srcLang,
+                                        srcText: unescapedSrcText,
+                                        tgtLang,
+                                        tgtText: unescapedTgtText,
+                                        srcWordCount: countWords(unescapedSrcText),
+                                        tgtWordCount: countWords(unescapedTgtText)
+                                    });
+                                    
+                                    if (!detectedSrcLang) detectedSrcLang = srcLang;
+                                    if (!detectedTgtLang) detectedTgtLang = tgtLang;
                                 }
                             }
+                            
                             translationMemory = newTM;
                             tmSourceLanguage = detectedSrcLang || (tmConfigSrcLang ? tmConfigSrcLang.value : 'en-US');
                             tmTargetLanguage = detectedTgtLang || (tmConfigTgtLang ? tmConfigTgtLang.value : 'es-ES');
-                            showTMInternalMessage(`TMX loaded with ${translationMemory.length} translation units.`);
+                            
+                            showTMInternalMessage(`TMX loaded successfully with ${translationMemory.length} translation units.`);
                             showTMEditorSection();
                             tmSearch();
                             resolve();
@@ -3136,7 +3169,7 @@ function setupIntersectionObserver() {
             } catch (error) {
                 console.error("Error loading TMX file:", error);
                 if (!error.message.includes("Attempted to load TBX")) {
-                    showTMInternalMessage(errorMessages[currentLanguage]['error_loading_tmx_file'], true);
+                    showTMInternalMessage(`${errorMessages[currentLanguage]['error_loading_tmx_file']} - ${error.message}`, true);
                 }
                 resetTM();
             } finally {
@@ -3144,20 +3177,49 @@ function setupIntersectionObserver() {
             }
         }
 
-        function generateTMX() {
+
+
+function generateTMX() {
             if (translationMemory.length === 0) {
                 showTMInternalMessage(errorMessages[currentLanguage]['cannot_download_empty_tm'], true);
                 return null;
             }
-            const header = `<?xml version="1.0" encoding="UTF-8"?><tmx version="1.4"><header creationtool="subpandaTM" creationtoolversion="1.0" datatype="unknown" segtype="sentence" changeid="subpandaTMUser" srclang="${tmSourceLanguage || 'en-US'}" o-tmf="subpandaTM" adminlang="en-US" ${tmTargetLanguage ? `targetlang="${tmTargetLanguage}"` : ''}> </header><body>`;
-            const xml = [header];
-            translationMemory.forEach(entry => {
-                xml.push(`    <tu><tuv xml:lang="${entry.srcLang}"><seg>${entry.srcText}</seg></tuv><tuv xml:lang="${entry.tgtLang}"><seg>${entry.tgtText}</seg></tuv></tu>`);
-            });
-            xml.push(`  </body></tmx>`);
-            return xml.join("\n");
-        }
 
+            // Helper function to escape characters that are special in XML.
+            const escapeXml = (unsafe) => {
+                if (typeof unsafe !== 'string') return '';
+                return unsafe.replace(/[<>&'"]/g, (c) => {
+                    switch (c) {
+                        case '<': return '&lt;';
+                        case '>': return '&gt;';
+                        case '&': return '&amp;';
+                        case '\'': return '&apos;';
+                        case '"': return '&quot;';
+                    }
+                });
+            };
+            
+            // Generate a UTC timestamp as required by the TMX standard for creationdate
+            const creationDate = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+            // A more compliant TMX header
+            const header = `<?xml version="1.0" encoding="UTF-8"?>\n<tmx version="1.4">\n  <header\n    creationtool="subpandaTM"\n    creationtoolversion="1.0"\n    segtype="sentence"\n    o-tmf="subpandaTM"\n    adminlang="en-US"\n    srclang="${escapeXml(tmSourceLanguage || 'en-US')}"\n    datatype="unknown"\n    creationdate="${creationDate}"\n  >\n  </header>\n  <body>`;
+            
+            const xml = [header];
+            
+            translationMemory.forEach(entry => {
+                const safeSrcText = escapeXml(entry.srcText);
+                const safeTgtText = escapeXml(entry.tgtText);
+                
+                // Using template literals for better readability and ensuring no extra whitespace
+                const tu = `    <tu creationdate="${creationDate}">\n      <tuv xml:lang="${escapeXml(entry.srcLang)}">\n        <seg>${safeSrcText}</seg>\n      </tuv>\n      <tuv xml:lang="${escapeXml(entry.tgtLang)}">\n        <seg>${safeTgtText}</seg>\n      </tuv>\n    </tu>`;
+                xml.push(tu);
+            });
+
+            xml.push(`  </body>\n</tmx>`);
+            // The .join('\n') ensures proper line breaks for readability
+            return xml.join('\n');
+        }
         /**
          * Opens a modal to ask for a filename before downloading the TMX file.
          */
