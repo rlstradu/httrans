@@ -1,4 +1,21 @@
 =========================================
+subpandaTM v1.0.1 - Glossary workflow improved
+=========================================
+
+Release Date: September 14, 2025
+
+This update focuses on improving the glossary workflow and overall application stability based on user feedback.
+
+New Features & Improvements
+Glossary Context Tooltip: A new context-aware tooltip now appears directly above the active subtitle you are translating. When a term from your glossary is detected in the source text, this tooltip instantly shows its corresponding translation, saving you from looking away to the terminology panel and speeding up your work.
+
+Editor Stability and Workflow Fix: A critical issue has been resolved where adding or deleting a term from the glossary would cause the entire subtitle editor to refresh. This interruption not only caused users to lose their scroll position, but also incorrectly reset the confirmed status of already validated subtitles. The update process is now instantaneous, preserving both your position in the editor and the status of all your subtitles for a seamless workflow.
+
+Special Thanks
+A special thank you to all the students of Damián Santilli's subtitling specialization for their invaluable feedback and suggestions, which were crucial for this update.
+
+
+=========================================
  subpandaTM v1.0.0 - Launch Announcement
 =========================================
 
