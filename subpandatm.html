@@ -1154,6 +1154,8 @@
         let tmBestMatchForActiveSegment = null;
         let currentTMLatestSearchResults = [];
         let timeUpdateListener = null;
+let lastActiveSubtitleIndex = 0;
+
         
         const DIFF_DELETE = -1;
         const DIFF_INSERT = 1;
@@ -1686,7 +1688,7 @@
          * Renders subtitle entries in the user interface.
          * @param {Array<Object>} entries The array of subtitle objects to render.
          */
-        function renderTranslations(entries) {
+        function renderTranslations(entries, activeIndexToPreserve = null, preserveScroll = false) {
             translationsContainer.innerHTML = '';
             termsFoundInActiveSegment.clear();
             const t = translations[currentLanguage];
@@ -1713,8 +1715,12 @@
                             <pre id="original-pre-${entryIndex}" class="subtitle-display-code p-1 rounded-md text-base overflow-auto max-h-24">${entry.original}</pre>
                         </div>
                         <div class="translation-col">
-                            <label class="block text-sm font-medium mb-1">${t.translation_text}</label>
-                            <div id="translation-${entryIndex}" class="subtitle-editor mt-1 block w-full focus:ring-blue-500 focus:border-blue-500 text-base" contenteditable="true" data-entry-index="${entryIndex}" data-original-length="${entry.charCountOriginal}" data-duration-ms="${entry.durationMs}">${entry.translation}</div>
+    <div class="flex justify-between items-center">
+        <label class="block text-sm font-medium">${t.translation_text}</label>
+<span id="glossary-match-${entryIndex}" class="hidden flex items-center gap-1 text-xs font-semibold text-black bg-yellow-300 px-2 py-0.5 rounded-md truncate"></span>
+    </div>
+    <div id="translation-${entryIndex}" class="subtitle-editor mt-1 block w-full focus:ring-blue-500 focus:border-blue-500 text-base" contenteditable="true" data-entry-index="${entryIndex}" data-original-length="${entry.charCountOriginal}" data-duration-ms="${entry.durationMs}">${entry.translation}</div>
+</div>
                         </div>
                     </div>
                     <div class="flex items-center justify-between mt-1 w-full">
@@ -1736,6 +1742,15 @@
                 const originalColPre = translationUnit.querySelector(`#original-pre-${entryIndex}`);
                 const validateButton = translationUnit.querySelector(`#validateBtn-${entryIndex}`);
                 const editButton = translationUnit.querySelector(`#editBtn-${entryIndex}`);
+const checkIcon = translationUnit.querySelector(`#checkIcon-${entryIndex}`);
+
+
+if (entry.isTranslated) {
+    translationEditor.contentEditable = false;
+    validateButton.style.display = 'none';
+    editButton.style.display = 'inline-block';
+    checkIcon.style.display = 'inline-block';
+}
 
       // --- INICIO DE LA SOLUCIÓN DEFINITIVA ---
                 translationEditor.addEventListener('keydown', (event) => {
@@ -1771,7 +1786,6 @@
                     const currentEntry = srtEntries[entryIndex];
                     currentEntry.translation = event.target.innerHTML;
                     currentEntry.wordCountTranslation = countWords(event.target.innerText);
-                    currentEntry.isTranslated = event.target.innerText.trim() !== '';
                     currentEntry.charCountTranslation = countCharactersWithoutTags(event.target.innerHTML);
                     currentEntry.cpsTranslation = calculateCPS(event.target.innerHTML, currentEntry.durationMs);
                     autoResizeTextarea(event.target, originalColPre);
@@ -1789,18 +1803,59 @@
                         originalColPre.innerHTML = highlightResult.html;
                         highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
                     }
+
+// --- INICIO DEL BLOQUE MODIFICADO ---
+const glossaryMatchContainer = document.getElementById(`glossary-match-${entryIndex}`);
+glossaryMatchContainer.innerHTML = ''; // Limpiamos por completo
+glossaryMatchContainer.title = '';
+// --> NUEVO: Ocultamos el contenedor por defecto
+glossaryMatchContainer.classList.add('hidden');
+
+if (termsFoundInActiveSegment.size > 0) {
+    let hintText = '';
+    let fullHintText = '';
+
+    termsFoundInActiveSegment.forEach(foundTerm => {
+        const glossaryEntry = glossary.find(g => g.srcTerm === foundTerm);
+        if (glossaryEntry) {
+            // --> CAMBIADO: Usamos el nuevo separador
+            const part = `${glossaryEntry.srcTerm} -> ${glossaryEntry.tgtTerm}`;
+            hintText += part + ' | ';
+            fullHintText += part + ' | ';
+        }
+    });
+
+    if (hintText) {
+        // --> CAMBIADO: Construimos el HTML con el icono SVG y el texto
+        glossaryMatchContainer.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <span>${hintText.slice(0, -3)}</span>
+        `;
+        glossaryMatchContainer.title = `Glosario: ${fullHintText.slice(0, -3)}`;
+
+        // --> NUEVO: Mostramos el contenedor
+        glossaryMatchContainer.classList.remove('hidden');
+    }
+}
+// --- FIN DEL BLOQUE MODIFICADO ---
+
                     updateGlossaryTableHighlights();
                     autoResizeTextarea(event.target, originalColPre);
                     event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     tmSearch(srtEntries[entryIndex].original);
                 });
 
-                translationEditor.addEventListener('blur', () => {
-                    originalColPre.textContent = entry.original;
-                    termsFoundInActiveSegment.clear();
-                    updateGlossaryTableHighlights();
-                    tmSearch();
-                });
+              translationEditor.addEventListener('blur', () => {
+    originalColPre.textContent = entry.original;
+    termsFoundInActiveSegment.clear();
+
+    // --> NUEVO: Limpia el aviso del glosario al salir del campo.
+    document.getElementById(`glossary-match-${entryIndex}`).classList.add('hidden');
+    document.getElementById(`glossary-match-${entryIndex}`).title = '';
+
+    updateGlossaryTableHighlights();
+    tmSearch();
+});
 
                 validateButton.addEventListener('click', () => {
                     setTranslationEditableState(entryIndex, false);
@@ -1817,14 +1872,44 @@
             saveProjectBtn.disabled = false;
             statsContainer.classList.remove('hidden');
             updateStatsDisplay();
+ setupIntersectionObserver();
 
-            const firstEditableSegment = getFirstEditableSegment();
-            if (firstEditableSegment) {
-                navigateToTranslation(firstEditableSegment.entryIndex);
-            }
+          // Solo ejecutamos la navegación automática si NO estamos conservando el scroll
+if (!preserveScroll) {
+    if (activeIndexToPreserve !== null && activeIndexToPreserve < srtEntries.length) {
+        navigateToTranslation(activeIndexToPreserve);
+    } else {
+        const firstEditableSegment = getFirstEditableSegment();
+        if (firstEditableSegment) {
+            navigateToTranslation(firstEditableSegment.entryIndex);
         }
+    }
+}
+}
+      
+function updateTranslations() {
+    // Primero, actualizamos la tabla del glosario para que muestre los nuevos términos.
+    renderGlossary();
 
-        /**
+    // Luego, recorremos cada subtítulo para ver si necesita una actualización visual.
+    srtEntries.forEach((entry, entryIndex) => {
+        const originalColPre = document.getElementById(`original-pre-${entryIndex}`);
+        if (!originalColPre) return; // Si el subtítulo no está en pantalla, no hacemos nada.
+
+        // La principal razón para refrescar es aplicar el resaltado del nuevo
+        // término del glosario en el subtítulo que esté activo.
+        if (lastActiveSubtitleIndex === entryIndex) {
+            const highlightResult = applyGlossaryHighlightToText(entry.original);
+            originalColPre.innerHTML = highlightResult.html;
+        }
+    });
+
+    // Finalmente, actualizamos las estadísticas generales (contador de palabras, etc.).
+    updateStatsDisplay();
+}
+
+
+  /**
          * Updates the display of translation progress and word counts.
          */
         function updateStatsDisplay() {
@@ -1870,12 +1955,20 @@
          * Finds the first editable segment.
          * @returns {{entryIndex: number} | null} The object with index, or null.
          */
-        function getFirstEditableSegment() {
-            if (srtEntries.length > 0) {
-                return { entryIndex: 0 };
-            }
-            return null;
+       function getFirstEditableSegment() {
+    // Recorremos todos los subtítulos buscando el primero que no esté validado.
+    for (let i = 0; i < srtEntries.length; i++) {
+        // Si encontramos uno que NO está traducido (`isTranslated` es false)...
+        if (!srtEntries[i].isTranslated) {
+            // ...devolvemos su índice para que el programa salte directamente a él.
+            return { entryIndex: i };
         }
+    }
+
+    // Si el bucle termina y no hemos encontrado ninguno sin traducir
+    // (es decir, todos están validados), no devolvemos nada (null).
+    return null;
+}
 
 
         /**
@@ -1930,6 +2023,30 @@
                 showMessage(errorMessages[currentLanguage]['reached_first']);
             }
         }
+
+function setupIntersectionObserver() {
+    const options = {
+        root: document.getElementById('editorMainContent'),
+        rootMargin: '-50% 0px -50% 0px', // Elige el elemento que está en el centro
+        threshold: 0
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Cuando un subtítulo entra en el centro de la vista,
+                // guardamos su índice como el último activo.
+                lastActiveSubtitleIndex = parseInt(entry.target.querySelector('.subtitle-editor').dataset.entryIndex, 10);
+            }
+        });
+    }, options);
+
+    // Hacemos que el observador vigile cada uno de los subtítulos
+    document.querySelectorAll('.translation-unit-bg').forEach(unit => {
+        observer.observe(unit);
+    });
+}
+
 
         // --- Event Handlers ---
 
@@ -2605,7 +2722,7 @@
                 }
             });
 
-            renderTranslations(srtEntries);
+            updateTranslations();
             showMessage(`${replacedCount} ${errorMessages[currentLanguage]['replaced_all']}`);
             findState.lastFound = null;
             updateStatsDisplay();
@@ -2715,29 +2832,34 @@
         }
 
         function addTerm() {
-            const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
-            const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
-            if (!srcTerm || !tgtTerm) {
-                showMessage(errorMessages[currentLanguage]['both_terms_required']);
-                return;
-            }
-            glossary.push({
-                srcLang: glossarySourceLanguage,
-                srcTerm: srcTerm,
-                tgtLang: glossaryTargetLanguage,
-                tgtTerm: tgtTerm
-            });
-            if (srcTermInput) srcTermInput.value = "";
-            if (tgtTermInput) tgtTermInput.value = "";
-            renderGlossary();
-            renderTranslations(srtEntries);
-        }
+    const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
+    const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
+    if (!srcTerm || !tgtTerm) {
+        showMessage(errorMessages[currentLanguage]['both_terms_required']);
+        return;
+    }
+
+    // 1. Añadimos el término al array de datos.
+    glossary.push({
+        srcLang: glossarySourceLanguage,
+        srcTerm: srcTerm,
+        tgtLang: glossaryTargetLanguage,
+        tgtTerm: tgtTerm
+    });
+
+    // 2. Limpiamos los campos de entrada.
+    if (srcTermInput) srcTermInput.value = "";
+    if (tgtTermInput) tgtTermInput.value = "";
+
+    // 3. Llamamos a nuestra nueva función para que actualice la pantalla SIN MOVERLA.
+    updateTranslations();
+}
 
         function deleteTerm(index) {
-            glossary.splice(index, 1);
-            renderGlossary();
-            renderTranslations(srtEntries);
-        }
+    glossary.splice(index, 1);
+    // Llamamos a la nueva función, que ya se encarga de todo.
+    updateTranslations();
+}
 
         function renderGlossary() {
             if (!glossaryTableBody) return;
@@ -2842,7 +2964,7 @@
                                     showMessage(errorMessages[currentLanguage]['error_loading_tbx_file']);
                                 }
                                 showGlossaryEditorSection();
-                                renderTranslations(srtEntries);
+                                updateTranslations();
                                 resolve();
                             } catch (error) {
                                 reject(error);
