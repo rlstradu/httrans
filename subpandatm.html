@@ -1519,14 +1519,22 @@ let lastActiveSubtitleIndex = 0;
          * @param {Array<Object>} entries The array of subtitle objects.
          * @returns {string} The reconstructed SRT file content.
          */
-        function reconstructSrt(entries) {
+            function reconstructSrt(entries) {
             let srtContent = '';
             entries.forEach(entry => {
                 srtContent += `${entry.index}\n`;
                 srtContent += `${entry.timecodes}\n`;
-                srtContent += `${entry.translation || entry.original}\n\n`; // Use translation if available, otherwise original
+
+                // Obtenemos el texto de la traducción o el original
+                let textToWrite = entry.translation || entry.original;
+                
+                // Reemplazamos todas las etiquetas <br> por un salto de línea real (\n)
+                // La expresión regular /<br\s*\/?>/gi busca <br>, <br/>, <br />, etc.
+                textToWrite = textToWrite.replace(/<br\s*\/?>/gi, '\n');
+
+                srtContent += `${textToWrite}\n\n`;
             });
-            return srtContent.trim(); // Trim last double newline
+            return srtContent.trim();
         }
 
         /**
