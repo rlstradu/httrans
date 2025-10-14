@@ -14,9 +14,9 @@
     box-sizing: border-box;
     color: #333;
     transition: background 0.3s ease, color 0.3s ease;
-    display: flex; /* Para centrar el contenido principal y el footer */
+    display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Asegura que el body ocupe al menos el 100% del viewport */
+    min-height: 100vh;
   }
   header {
     max-width: 900px;
@@ -32,13 +32,13 @@
     user-select: none;
   }
   main {
-    flex-grow: 1; /* Permite que el main ocupe el espacio disponible */
+    flex-grow: 1;
     display: flex;
     gap: 30px;
     max-width: 900px;
     margin: 0 auto;
-    justify-content: center; /* Centrar los elementos flex horizontalmente */
-    align-items: flex-start; /* Alinear los elementos flex al inicio del eje cruzado (arriba) */
+    justify-content: center;
+    align-items: flex-start;
   }
   .container {
     flex: 1;
@@ -58,10 +58,36 @@
     user-select: none;
     transition: color 0.3s ease;
   }
+  /* MODIFICADO: Estilos para las opciones de límite */
+  .limit-options {
+    display: flex;
+    gap: 15px 25px; /* Espacio vertical y horizontal */
+    margin-top: 20px; /* Espacio sobre las opciones */
+    align-items: left;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #444;
+    padding: 10px;
+    background: #f0f3f7;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+  }
+  .limit-options div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .limit-options input[type="number"] {
+    width: 60px;
+    padding: 3px 6px;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    border: 1px solid #d0d7de;
+    text-align: center;
+  }
   textarea {
-    /* Eliminado flex: 1; para permitir el redimensionamiento manual */
-    resize: both; /* Permite el redimensionamiento horizontal y vertical manual */
-    min-height: 150px; /* Altura mínima para los textareas */
+    resize: both; 
+    min-height: 150px; 
     border: 2px solid #d0d7de;
     border-radius: 10px;
     padding: 15px 18px;
@@ -72,7 +98,7 @@
     outline-offset: 2px;
     color: #2c3e50;
     background: #fafafa;
-    overflow: auto; /* Asegura que la barra de desplazamiento aparezca si el contenido excede el tamaño */
+    overflow: auto; 
   }
   textarea:focus {
     border-color: #3b82f6;
@@ -83,9 +109,9 @@
     text-align: right;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 25px; /* Increased horizontal gap for counters */
+    gap: 10px 25px; 
     justify-content: flex-end;
-    align-items: center; /* Vertically align items in the counter area */
+    align-items: center; 
     font-weight: 700;
     font-size: 1rem;
     color: #3b82f6;
@@ -97,10 +123,10 @@
     font-size: 1.2rem;
     white-space: nowrap;
   }
-  .counter-area .limit-group { /* New style to group label and input */
+  .counter-area .limit-group { 
     display: flex;
     align-items: center;
-    gap: 8px; /* Gap between "Limit:" label and the input field */
+    gap: 8px; 
   }
   .counter-area input[type="number"] {
     width: 80px;
@@ -118,39 +144,39 @@
     background: #fff;
   }
   .counter-area .limit-exceeded {
-    color: #f44336; /* Red for limit exceeded */
+    color: #f44336; 
   }
 
   .button-container {
-    margin-top: 20px; /* Increased margin-top for separation */
-    padding: 10px 15px; /* Adjusted padding to make it feel like a bar and accommodate smaller buttons */
-    background: #f0f3f7; /* Subtle background for the button bar */
-    border-radius: 8px; /* Rounded corners for the button bar */
+    margin-top: 20px; 
+    padding: 10px 15px; 
+    background: #f0f3f7; 
+    border-radius: 8px; 
     display: flex;
-    flex-wrap: nowrap; /* Prevent wrapping to keep buttons in one row */
-    gap: 8px; /* Reduced gap between buttons to make them closer */
-    justify-content: center; /* Centered buttons */
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); /* Subtle inner shadow */
+    flex-wrap: nowrap; 
+    gap: 8px; 
+    justify-content: center; 
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); 
     transition: background 0.3s ease, box-shadow 0.3s ease;
-    overflow-x: auto; /* Allow horizontal scrolling if buttons exceed container width */
+    overflow-x: auto; 
   }
   button.action-btn {
     background: #3b82f6;
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 8px 15px; /* Adjusted padding for text buttons */
-    font-size: 1rem; /* Adjusted font size for text buttons */
+    padding: 8px 15px; 
+    font-size: 1rem; 
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.15s ease;
     user-select: none;
-    white-space: nowrap; /* Ensure button text doesn't wrap */
+    white-space: nowrap; 
   }
   button.action-btn svg {
-    width: 20px; /* Icon size */
-    height: 20px; /* Icon size */
-    fill: currentColor; /* Inherit color from button text color */
+    width: 20px; 
+    height: 20px; 
+    fill: currentColor; 
   }
   .settings-buttons button {
     background: #3b82f6;
@@ -178,7 +204,7 @@
     background: #059669;
   }
   button.action-btn.cleared {
-    background: #ff9800; /* Orange for cleared */
+    background: #ff9800; 
   }
   .settings-buttons {
     margin-top: 20px;
@@ -187,7 +213,7 @@
     gap: 15px;
   }
   .app-logo {
-    max-width: 300px; /* Increased size */
+    max-width: 300px; 
     height: auto;
     margin-bottom: 10px;
   }
@@ -203,92 +229,99 @@
     transition: color 0.3s ease, border-color 0.3s ease;
   }
   footer .httrans-link {
-    display: inline-flex; /* Para alinear el texto y la imagen */
-    align-items: center; /* Centrar verticalmente */
-    text-decoration: none; /* Quitar subrayado del enlace */
-    color: inherit; /* Heredar color del padre */
+    display: inline-flex; 
+    align-items: center; 
+    text-decoration: none; 
+    color: inherit; 
   }
   footer .httrans-logo {
-    height: 40px; /* Tamaño más grande para el logo */
+    height: 40px; 
     vertical-align: middle;
-    margin-left: 8px; /* Aumentar espacio entre texto y logo */
-    transition: filter 0.3s ease; /* Transición para el efecto de sombra */
+    margin-left: 8px; 
+    transition: filter 0.3s ease; 
   }
   footer .httrans-logo:hover {
-    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.7)); /* Halo rojo al pasar el ratón */
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.7)); 
   }
 
   /* Dark mode styles */
   body.dark-mode {
-    background: #282c34; /* Darker background */
-    color: #f0f0f0; /* Original lighter text color */
+    background: #282c34; 
+    color: #f0f0f0; 
+  }
+  body.dark-mode .limit-options {
+    color: #bbb;
+    background: #30343a;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
   }
   body.dark-mode header p {
-    color: #bbb; /* Original header paragraph color */
+    color: #bbb; 
   }
   body.dark-mode .container {
-    background: #3a3f47; /* Darker container background */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    background: #3a3f47; 
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); 
   }
   body.dark-mode h2 {
-    color: #e0e0e0; /* Original heading color */
+    color: #e0e0e0; 
   }
   body.dark-mode textarea {
-    background: #4a4f57; /* Original textarea background */
+    background: #4a4f57; 
     border-color: #5a5f67;
-    color: #f0f0f0; /* Original textarea text color */
+    color: #f0f0f0; 
   }
   body.dark-mode textarea:focus {
-    border-color: #6a9dfa; /* Original focus border */
+    border-color: #6a9dfa; 
     background: #5a5f67;
   }
   body.dark-mode .counter-area {
-    color: #8ab4f8; /* Original counter text color */
+    color: #8ab4f8; 
   }
-  body.dark-mode .counter-area input[type="number"] {
-    background: #4a4f57; /* Original input background */
+  body.dark-mode .counter-area input[type="number"], 
+  body.dark-mode .limit-options input[type="number"] {
+    background: #4a4f57; 
     border-color: #5a5f67;
-    color: #f0f0f0; /* Original input text color */
+    color: #f0f0f0; 
   }
-  body.dark-mode .counter-area input[type="number"]:focus {
-    border-color: #6a9dfa; /* Original input focus border */
+  body.dark-mode .counter-area input[type="number"]:focus,
+  body.dark-mode .limit-options input[type="number"]:focus {
+    border-color: #6a9dfa; 
     background: #5a5f67;
   }
   body.dark-mode .counter-area .limit-exceeded {
-    color: #ff7961; /* Original red for dark mode limit exceeded */
+    color: #ff7961; 
   }
-  body.dark-mode .button-container { /* Dark mode specific background for button bar */
-    background: #30343a; /* Darker button bar background */
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); /* Original inner shadow */
+  body.dark-mode .button-container { 
+    background: #30343a; 
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); 
   }
   body.dark-mode button.action-btn, body.dark-mode .settings-buttons button {
-    background: #6a9dfa; /* Original blue for buttons */
+    background: #6a9dfa; 
   }
   body.dark-mode button.action-btn:hover, body.dark-mode .settings-buttons button:hover {
-    background: #4d8df6; /* Original blue on hover */
+    background: #4d8df6; 
   }
   body.dark-mode button.action-btn.copied {
-    background: #4CAF50; /* Original green for copied */
+    background: #4CAF50; 
   }
   body.dark-mode button.action-btn.pasted {
-    background: #388E3C; /* Original green for pasted */
+    background: #388E3C; 
   }
   body.dark-mode button.action-btn.cleared {
-    background: #FFB300; /* Original orange for cleared */
+    background: #FFB300; 
   }
-  /* Added drop-shadow for the logo in dark mode */
+  
   body.dark-mode .app-logo {
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Light glow/shadow */
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); 
   }
   body.dark-mode footer {
     color: #999;
     border-color: #444;
   }
   body.dark-mode footer .httrans-logo {
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7)); /* Halo blanco en dark mode */
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7)); 
   }
   body.dark-mode footer .httrans-logo:hover {
-    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.9)); /* Halo rojo más intenso en dark mode */
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.9)); 
   }
 
   /* Responsive design */
@@ -298,7 +331,7 @@
     }
     main {
       flex-direction: column;
-      height: auto; /* Allow content to dictate height */
+      height: auto; 
     }
     .container {
       margin-bottom: 20px;
@@ -312,12 +345,12 @@
       padding: 0 20px;
     }
     .button-container {
-      flex-direction: row; /* Keep buttons in a row for small screens, allow wrap */
-      justify-content: center; /* Center buttons horizontally */
-      gap: 8px; /* Keep consistent gap */
+      flex-direction: row; 
+      justify-content: center; 
+      gap: 8px; 
     }
     .counter-area {
-      justify-content: flex-start; /* Align counters to the left on small screens */
+      justify-content: flex-start; 
     }
   }
 </style>
@@ -374,6 +407,20 @@
       <button class="action-btn" id="upperWrite"></button>
       <button class="action-btn" id="lowerWrite"></button>
     </div>
+    <!-- INICIO DE CONTROLES REUBICADOS -->
+    <div class="limit-options">
+      <div>
+        <input type="checkbox" id="matchSourceLimit">
+        <label for="matchSourceLimit" id="matchSourceLimitLabel"></label>
+      </div>
+      <div>
+        <input type="checkbox" id="percentageLimit">
+        <label for="percentageLimit" id="percentageLimitLabel"></label>
+        <input type="number" id="percentageInput" value="30" min="0">
+        <span>%</span>
+      </div>
+    </div>
+    <!-- FIN DE CONTROLES REUBICADOS -->
   </div>
 </main>
 
@@ -404,7 +451,7 @@
   const copyPasteBtn = document.getElementById('copyPaste');
   const copyWriteBtn = document.getElementById('copyWrite');
   const pasteBtn = document.getElementById('pasteBtn');
-  const pasteWriteBtn = document.getElementById('pasteWrite'); // New paste button for write area
+  const pasteWriteBtn = document.getElementById('pasteWrite');
   const clearPasteBtn = document.getElementById('clearPaste');
   const clearWriteBtn = document.getElementById('clearWrite');
   const upperPasteBtn = document.getElementById('upperPaste');
@@ -414,7 +461,14 @@
 
   const modeToggleBtn = document.getElementById('modeToggle');
   const languageToggleBtn = document.getElementById('languageToggle');
-  const footerTextSpan = document.getElementById('footer-text'); // Nuevo elemento para el texto del footer
+  const footerTextSpan = document.getElementById('footer-text');
+
+  // Get new DOM elements for limit options
+  const matchSourceLimitCheckbox = document.getElementById('matchSourceLimit');
+  const matchSourceLimitLabel = document.getElementById('matchSourceLimitLabel');
+  const percentageLimitCheckbox = document.getElementById('percentageLimit');
+  const percentageLimitLabel = document.getElementById('percentageLimitLabel');
+  const percentageInput = document.getElementById('percentageInput');
 
   // Elements to translate
   const appDescription = document.getElementById('app-description');
@@ -425,11 +479,11 @@
   const translations = {
     es: {
       appDescription: 'CharPanda es una aplicación sencilla para contar caracteres. Tienes dos campos por si necesitas comparar dos textos. Que la disfrutes.',
-      modeToggleDark: 'Modo oscuro',   // Text for button when in LIGHT mode
-      modeToggleLight: 'Modo claro',  // Text for button when in DARK mode
+      modeToggleDark: 'Modo oscuro',
+      modeToggleLight: 'Modo claro',
       languageToggle: 'English',
-      text1Title: 'Texto 1',
-      text2Title: 'Texto 2',
+      text1Title: 'Texto 1 (Original)',
+      text2Title: 'Texto 2 (Traducido)',
       pastePlaceholder: 'Pega tu texto aquí...',
       writePlaceholder: 'Escribe tu texto aquí...',
       characters: 'Caracteres',
@@ -447,15 +501,17 @@
       copyError: 'Error al copiar. Intenta de nuevo.',
       pasteError: 'No se pudo pegar el texto. Por favor, permite el acceso al portapapeles.',
       limitExceeded: 'Límite de caracteres excedido',
-      footerText: 'Esta aplicación ha sido desarrollada por Rafael López Sánchez y forma parte del proyecto httrans.'
+      footerText: 'Esta aplicación ha sido desarrollada por Rafael López Sánchez y forma parte del proyecto httrans.',
+      matchSourceLimitLabel: 'El texto de origen no puede superar el límite del texto traducido',
+      percentageLimitLabel: 'El texto traducido no puede exceder el original en más de un'
     },
     en: {
       appDescription: 'CharPanda is a simple character counting application. There are two fields in case you need to compare texts. Enjoy!',
-      modeToggleDark: 'Dark mode',   // Text for button when in LIGHT mode
-      modeToggleLight: 'Light mode',  // Text for button when in DARK mode
+      modeToggleDark: 'Dark mode',
+      modeToggleLight: 'Light mode',
       languageToggle: 'Español',
-      text1Title: 'Text 1',
-      text2Title: 'Text 2',
+      text1Title: 'Text 1 (Source)',
+      text2Title: 'Text 2 (Target)',
       pastePlaceholder: 'Paste your text here...',
       writePlaceholder: 'Write your text here...',
       characters: 'Characters',
@@ -473,17 +529,18 @@
       copyError: 'Error copying. Please try again.',
       pasteError: 'Could not paste text. Please allow clipboard access.',
       limitExceeded: 'Character limit exceeded',
-      footerText: 'This application has been developed by Rafael López Sánchez and is part of the httrans project.'
+      footerText: 'This application has been developed by Rafael López Sánchez and is part of the httrans project.',
+      matchSourceLimitLabel: 'Target cannot exceed source limit',
+      percentageLimitLabel: 'Target cannot exceed source by more than'
     }
   };
 
-  let currentLanguage = localStorage.getItem('language') || 'en'; // Default to English
+  let currentLanguage = localStorage.getItem('language') || 'en';
 
   // Function to update character and word count, and remaining characters
   function updateCounts(textarea, charCounter, wordCounter, limitInput, remainingCounter) {
     const text = textarea.value;
     const charLength = text.length;
-    // Regex to split by whitespace and filter out empty strings for accurate word count
     const words = text.split(/\s+/).filter(word => word.length > 0).length;
     const limit = parseInt(limitInput.value, 10);
 
@@ -501,9 +558,28 @@
         charCounter.classList.remove('limit-exceeded');
       }
     } else {
-      remainingCounter.textContent = ''; // Clear remaining count if no valid limit
+      remainingCounter.textContent = '';
       charCounter.classList.remove('limit-exceeded');
     }
+  }
+
+  // Updates the limit of the write area based on the options
+  function updateWriteAreaLimit() {
+    const sourceLength = pasteArea.value.length;
+
+    if (matchSourceLimitCheckbox.checked) {
+      writeLimitInput.value = sourceLength;
+      writeLimitInput.disabled = true;
+    } else if (percentageLimitCheckbox.checked) {
+      const percentage = parseFloat(percentageInput.value) || 0;
+      const newLimit = Math.ceil(sourceLength * (1 + percentage / 100));
+      writeLimitInput.value = newLimit;
+      writeLimitInput.disabled = true;
+    } else {
+      writeLimitInput.disabled = false;
+    }
+    // Call updateCounts for the write area to reflect the new limit
+    updateCounts(writeArea, writeCharCount, writeWordCount, writeLimitInput, writeRemainingCount);
   }
 
   // Function to set the language
@@ -519,9 +595,11 @@
     writeArea.placeholder = translations[lang].writePlaceholder;
     pasteLimitLabel.textContent = translations[lang].limit + ':';
     writeLimitLabel.textContent = translations[lang].limit + ':';
-    footerTextSpan.textContent = translations[lang].footerText; // Actualizar el texto del footer
+    footerTextSpan.textContent = translations[lang].footerText;
+    
+    matchSourceLimitLabel.textContent = translations[lang].matchSourceLimitLabel;
+    percentageLimitLabel.textContent = translations[lang].percentageLimitLabel;
 
-    // Update action button text and tooltips
     pasteBtn.textContent = translations[lang].pasteButton;
     copyPasteBtn.textContent = translations[lang].copyButton;
     clearPasteBtn.textContent = translations[lang].clearButton;
@@ -534,41 +612,39 @@
     upperWriteBtn.textContent = translations[lang].uppercaseButton;
     lowerWriteBtn.textContent = translations[lang].lowercaseButton;
 
-
-    // Update mode toggle button text based on current dark mode state
     const isDarkMode = document.body.classList.contains('dark-mode');
     modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
 
     updateAllCounts();
   }
 
-  // Helper to update all counts for both text areas
   function updateAllCounts() {
     updateCounts(pasteArea, pasteCharCount, pasteWordCount, pasteLimitInput, pasteRemainingCount);
-    updateCounts(writeArea, writeCharCount, writeWordCount, writeLimitInput, writeRemainingCount);
+    updateWriteAreaLimit();
   }
-
+  
   // Function to handle copy text
   function copyText(textarea, button) {
     if (textarea.value.length === 0) return;
-    // Use the new Clipboard API if available, fallback to execCommand
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(textarea.value).then(() => {
+        button.textContent = translations[currentLanguage].copied;
         button.classList.add('copied');
-        setTimeout(() => {
+        setTimeout(() => { 
           button.classList.remove('copied');
+          button.textContent = translations[currentLanguage].copyButton;
         }, 1800);
       }).catch(err => {
         showMessage(translations[currentLanguage].copyError, 'error');
-        console.error('Error copying text using Clipboard API:', err);
       });
     } else {
-      // Fallback for older browsers or iframes where Clipboard API might be restricted
       textarea.select();
       document.execCommand('copy');
+      button.textContent = translations[currentLanguage].copied;
       button.classList.add('copied');
       setTimeout(() => {
         button.classList.remove('copied');
+        button.textContent = translations[currentLanguage].copyButton;
       }, 1800);
     }
   }
@@ -580,11 +656,12 @@
       if (text.length === 0) return;
       textarea.value = text;
       updateAllCounts();
+      button.textContent = translations[currentLanguage].pasted;
       button.classList.add('pasted');
       setTimeout(() => {
         button.classList.remove('pasted');
+        button.textContent = translations[currentLanguage].pasteButton;
       }, 1800);
-      autoResize(textarea); // Llamar a autoResize después de pegar
     } catch (err) {
       showMessage(translations[currentLanguage].pasteError, 'error');
     }
@@ -594,11 +671,12 @@
   function clearText(textarea, button) {
     textarea.value = '';
     updateAllCounts();
+    button.textContent = translations[currentLanguage].cleared;
     button.classList.add('cleared');
     setTimeout(() => {
       button.classList.remove('cleared');
+      button.textContent = translations[currentLanguage].clearButton;
     }, 1800);
-    autoResize(textarea); // Llamar a autoResize después de borrar
   }
 
   // Function to transform text (uppercase/lowercase)
@@ -610,14 +688,40 @@
       textarea.value = textarea.value.toLowerCase();
     }
     updateAllCounts();
-    autoResize(textarea); // Llamar a autoResize después de transformar
   }
+  
+  pasteArea.addEventListener('input', () => {
+    updateCounts(pasteArea, pasteCharCount, pasteWordCount, pasteLimitInput, pasteRemainingCount);
+    updateWriteAreaLimit();
+  });
+  
+  writeArea.addEventListener('input', () => updateCounts(writeArea, writeCharCount, writeWordCount, writeLimitInput, writeRemainingCount));
+  pasteLimitInput.addEventListener('input', () => updateCounts(pasteArea, pasteCharCount, pasteWordCount, pasteLimitInput, pasteRemainingCount));
+  writeLimitInput.addEventListener('input', () => updateCounts(writeArea, writeCharCount, writeWordCount, writeLimitInput, writeRemainingCount));
 
-  // Event Listeners for textareas and limit inputs
-  pasteArea.addEventListener('input', updateAllCounts);
-  writeArea.addEventListener('input', updateAllCounts);
-  pasteLimitInput.addEventListener('input', updateAllCounts);
-  writeLimitInput.addEventListener('input', updateAllCounts);
+  // Event listeners for the limit options
+  matchSourceLimitCheckbox.addEventListener('change', () => {
+    if (matchSourceLimitCheckbox.checked) {
+      percentageLimitCheckbox.checked = false;
+    }
+    updateWriteAreaLimit();
+  });
+
+  percentageLimitCheckbox.addEventListener('change', () => {
+    if (percentageLimitCheckbox.checked) {
+      matchSourceLimitCheckbox.checked = false;
+    }
+    updateWriteAreaLimit();
+  });
+
+  percentageInput.addEventListener('input', () => {
+    if (!percentageLimitCheckbox.checked) {
+      percentageLimitCheckbox.checked = true;
+      matchSourceLimitCheckbox.checked = false;
+    }
+    updateWriteAreaLimit();
+  });
+
 
   // Initial count update
   updateAllCounts();
@@ -638,40 +742,26 @@
   function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
     const isDarkMode = document.body.classList.contains('dark-mode');
-    // Update button text based on the NEW state
     modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
     localStorage.setItem('darkMode', isDarkMode);
   }
 
   // Language Toggle functionality
   languageToggleBtn.addEventListener('click', () => {
-    if (currentLanguage === 'es') {
-      setLanguage('en');
-    } else {
-      setLanguage('es');
-    }
-    // setLanguage already updates the modeToggleBtn text, no need to call again here
+    setLanguage(currentLanguage === 'es' ? 'en' : 'es');
   });
 
   modeToggleBtn.addEventListener('click', toggleDarkMode);
 
   // Load saved preferences on page load
   document.addEventListener('DOMContentLoaded', () => {
-    // Set language first to ensure translations are available for mode button text
-    setLanguage(localStorage.getItem('language') || 'en'); // Changed default to 'en'
-
+    setLanguage(localStorage.getItem('language') || 'en'); 
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode === 'true') {
       document.body.classList.add('dark-mode');
     }
-    // Ensure the mode toggle button text is correct based on the loaded dark mode state
     const isDarkMode = document.body.classList.contains('dark-mode');
     modeToggleBtn.textContent = isDarkMode ? translations[currentLanguage].modeToggleLight : translations[currentLanguage].modeToggleDark;
-
-    // Inicializar auto-resize para textareas al cargar la página
-    [pasteArea, writeArea].forEach(area => {
-      autoResize(area);
-    });
   });
 
   // Custom message box function (replaces alert)
@@ -694,25 +784,13 @@
     messageBox.textContent = message;
     document.body.appendChild(messageBox);
 
-    setTimeout(() => {
-      messageBox.style.opacity = '1';
-    }, 100);
+    setTimeout(() => { messageBox.style.opacity = '1'; }, 100);
 
     setTimeout(() => {
       messageBox.style.opacity = '0';
       messageBox.addEventListener('transitionend', () => messageBox.remove());
     }, 3000);
   }
-
-  // Función para auto-redimensionar el textarea según el contenido
-  function autoResize(textarea) {
-    textarea.style.height = 'auto'; // Reset height to recalculate
-    textarea.style.height = textarea.scrollHeight + 'px'; // Set height to scrollHeight
-  }
-
-  // Adjuntar event listeners para auto-redimensionar al escribir
-  pasteArea.addEventListener('input', () => autoResize(pasteArea));
-  writeArea.addEventListener('input', () => autoResize(writeArea));
 
 </script>
 
