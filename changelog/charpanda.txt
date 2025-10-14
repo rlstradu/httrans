@@ -1,4 +1,26 @@
 =======================================
+ CharPanda v1.1.0 - Smart Limits Update
+=======================================
+
+Release Date: October 14, 2025
+
+This update introduces smart limit controls for the target text area, making it easier than ever for translators and writers to work within specific constraints. These new features were designed to streamline workflows where text length is critical.
+
+-------
+A huge thank you to Pablo Muñoz Sánchez (@pmstrad) for suggesting these fantastic new features! Your feedback has been invaluable in making CharPanda even better.
+-------
+
+What's New
+Smart Limit Options for Target Text
+Two new checkbox options have been added to the target text panel to automate character limit setting:
+
+Match Source Limit: With this option enabled, the character limit of the target text area will automatically equal the character count of the source text area. This is perfect for projects where the translation cannot exceed the original length.
+
+Percentage-Based Limit: This option allows you to set a flexible limit based on the source text's length plus a specified percentage (e.g., 30% longer). The percentage is customizable, giving you precise control over your text expansion allowance.
+
+When either of these smart limits is active, the manual limit input for the target text area is disabled to prevent conflicts, ensuring the limit is always calculated correctly based on the source text.
+
+=======================================
  CharPanda v1.0.0 - Launch Announcement
 =======================================
 
