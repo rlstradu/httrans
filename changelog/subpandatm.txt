@@ -1,4 +1,64 @@
 =========================================
+subpandaTM v1.1.0 - AI Assistant, Editor Tools & Major UX Overhaul
+=========================================
+
+Release Date: October 17, 2025
+
+This major update introduces powerful new subtitle editing tools, a comprehensive Undo/Redo system, a project planner, an AI Assistant for translation suggestions, and numerous user experience enhancements.
+
+## New Features & Improvements
+
+* **Undo/Redo System**:
+    * Full **Undo** (Ctrl+Z) and **Redo** (Ctrl+Y / Ctrl+Shift+Z) functionality has been implemented.
+    * Works for both text edits within subtitles and structural changes (Merge, Split, Delete).
+
+* **Subtitle Editing Tools**:
+    * **Merge**: Combine the current subtitle with the next one.
+    * **Split**: Divide the current subtitle into two at the cursor's position.
+    * **Delete**: Remove the current subtitle (with confirmation).
+    * **Direct Timecode Editing**: Start and end times can now be directly edited in input fields within each subtitle unit.
+    * **Timecode Nudging**: Buttons added to nudge start/end times forward or backward by one frame (40ms).
+    * **Video Nudging**: Buttons added to nudge the video playback forward or backward by one frame.
+    * **Duration Display**: Each subtitle unit now clearly displays its duration.
+
+* **Project Planner**:
+    * A new collapsible panel in the video section allows you to divide the project into manageable sessions.
+    * Calculate sessions based on the number of subtitles, word count, or video time.
+    * Track time spent on each session with integrated start/pause/reset timers.
+    * Includes a final session dedicated to Review/QA.
+
+* **Navigation & UI Enhancements**:
+    * **"Go To..." Panel**: A new floating panel allows jumping directly to a specific subtitle number or timecode.
+    * **"Tools" Menu**: A new dropdown menu consolidates Undo, Redo, Find & Replace, Shortcuts, and the new "Go To..." function.
+    * **"Validate All Previous" Button**: Quickly validate the current subtitle and all preceding unvalidated ones.
+    * **Redesigned Video Player Controls**: Controls are now in a sleek top bar that appears on hover, including:
+        * Buttons to switch the **Subtitle Preview Overlay** between Original and Translation.
+        * Dedicated buttons (+/-) for adjusting **Subtitle Preview Font Size**.
+        * A custom **Fullscreen Button** designed for the application.
+        * **Adaptive Controls**: The control bar layout adjusts automatically for smaller screen widths.
+    * **Floating Find & Replace**: The Find & Replace tool is now a floating, draggable, and resizable panel instead of a modal.
+    * **Line Break Tooltip**: A helpful tooltip reminds users that Shift+Enter creates line breaks in the editor (can be dismissed).
+    * **Improved Project Menu**: Now includes "Backup" and "Reset Application" options.
+    * **Global Video Shortcuts**: Play/pause, seek, and play segment shortcuts now work even when the editor isn't focused.
+
+* **Project Management**:
+    * **Enhanced `.subpanda` Format**: Saving a project now correctly bundles *all* data including the session plan from the Planner.
+    * **Application Reset**: A new option in the Project menu allows resetting the application completely, clearing all stored data (projects, backups, settings) in the browser.
+
+* **AI Context Assistant**:
+    * A new floating panel integrates AI suggestions directly into your workflow.
+    * Generate a custom prompt based on your QA settings and additional instructions.
+    * Copy the prompt to use with your preferred AI.
+    * Import AI-generated JSON data (via file upload or pasting) to display contextual translation suggestions, explanations of idioms/references, and QA compliance notes directly within the panel for the active subtitle.
+    * Customize AI prompts via a new settings modal.
+
+* **Code & Stability**:
+    * Refactored JavaScript for better organization and performance.
+    * Improved handling of editor focus and state updates.
+    * Fixed various minor bugs and improved overall stability.
+
+
+=========================================
 subpandaTM v1.0.1 - Glossary workflow improved
 =========================================
 
