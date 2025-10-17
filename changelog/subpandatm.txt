@@ -26,7 +26,7 @@ This major update introduces powerful new subtitle editing tools, a comprehensiv
     * Calculate sessions based on the number of subtitles, word count, or video time.
     * Track time spent on each session with integrated start/pause/reset timers.
     * Includes a final session dedicated to Review/QA.
-(Special thanks to Guillermo Parra for the inspiration behind this feature!)
+(Special thanks to Guillermo Parra @guillermosubs for the inspiration behind this feature!)
 
 
 * **Navigation & UI Enhancements**:
