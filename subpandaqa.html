@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SubPandaQA - Advanced Subtitle Quality Control</title>
-    <!-- Google Fonts: Montserrat & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- jsPDF CDN for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -23,9 +20,11 @@
             --text-secondary: #475569;
             --card-background: #ffffff;
             --success-color: #10b981;
-            --error-color: #ef4444;
-            --neutral-color: #373737;
-            --neutral-color-dark: #2a2a2a;
+            /* --- New category colors --- */
+            --color-rules: #3498DB;      /* Blue */
+            --color-timing: #2ECC71;    /* Green */
+            --color-spelling: #E74C3C;   /* Red */
+            --color-tags: #9B59B6;       /* Magenta/Purple */
         }
         body {
             font-family: 'Montserrat', sans-serif;
@@ -90,8 +89,8 @@
             color: white;
         }
         .error-item {
-            background-color: #fff1f2;
-            border-left: 5px solid var(--error-color);
+            background-color: #fffafb;
+            border-left: 5px solid #cbd5e1;
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
             margin-bottom: 1rem;
@@ -114,16 +113,33 @@
             max-height: 500px;
             overflow-y: auto;
         }
+        /* --- New styles for categories --- */
+        .category-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 2px solid;
+        }
+        .category-title.rules { border-color: var(--color-rules); color: var(--color-rules); }
+        .category-title.timing { border-color: var(--color-timing); color: var(--color-timing); }
+        .category-title.spelling { border-color: var(--color-spelling); color: var(--color-spelling); }
+        .category-title.tags { border-color: var(--color-tags); color: var(--color-tags); }
+        
+        .error-category-rules { color: var(--color-rules); }
+        .error-category-timing { color: var(--color-timing); }
+        .error-category-spelling { color: var(--color-spelling); }
+        .error-category-tags { color: var(--color-tags); }
+        .error-category-default { color: var(--text-secondary); }
     </style>
 </head>
 <body class="p-4 sm:p-6 lg:p-8">
 
     <div class="container mx-auto max-w-4xl">
 
-        <!-- Main Content Layout -->
         <div class="flex flex-col gap-8">
 
-            <!-- Header with white background -->
             <header class="wow-header p-8 relative">
                 <div class="absolute top-4 right-4 flex space-x-2">
                     <button id="lang-en" class="lang-btn active">EN</button>
@@ -135,14 +151,12 @@
                 </div>
             </header>
 
-            <!-- File Upload Section -->
             <section class="section-card">
                 <h2 class="section-title"><span class="material-icons">upload_file</span><span data-lang="upload_title">1. Upload subtitle file (.srt)</span></h2>
                 <input type="file" id="subtitleFile" accept=".srt" class="w-full text-gray-700 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-100 hover:border-brand-color transition-colors">
                 <p id="fileName" class="mt-3 text-sm text-gray-500"></p>
             </section>
 
-            <!-- Filter Configuration Section -->
             <section class="section-card">
                 <h2 class="section-title"><span class="material-icons">filter_alt</span><span data-lang="filters_title">2. Configure filters</span></h2>
                 <div class="flex items-center space-x-4 mb-6 flex-wrap gap-y-2">
@@ -161,17 +175,14 @@
                     <input type="file" id="importFiltersInput" class="hidden" accept=".json">
                 </div>
                 <div id="filters-container" class="flex flex-col space-y-4 max-h-96 overflow-y-auto pr-2">
-                    <!-- Filters will be populated by JS to support i18n -->
-                </div>
+                    </div>
             </section>
             
-            <!-- Check Button -->
             <button id="checkButton" class="btn-primary w-full py-4 text-xl">
                 <span class="material-icons">spellcheck</span>
                 <span data-lang="check_button">CHECK SUBTITLES</span>
             </button>
 
-            <!-- Results Section -->
             <section id="results-container" class="section-card flex-grow flex flex-col">
                 <h2 class="section-title"><span class="material-icons">error</span><span data-lang="results_title">3. Review results</span></h2>
                 <div id="results" class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm flex-grow">
@@ -182,7 +193,6 @@
                 </div>
             </section>
 
-            <!-- Export Section -->
             <section class="section-card">
                  <h2 class="section-title"><span class="material-icons">save</span><span data-lang="export_title">Export error report</span></h2>
                 <div class="flex flex-col sm:flex-row gap-4">
@@ -199,7 +209,6 @@
         </div>
     </div>
 
-    <!-- Generic Modal -->
     <div id="genericModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-xl bg-white">
             <div class="mt-3 text-center">
@@ -247,11 +256,18 @@
                 no_valid_subs: "Could not parse valid subtitles from the file.",
                 file_process_error: "Error processing file: {errorMessage}. Make sure it is a valid SRT file.",
                 upload_first: "Please upload a subtitle file first.",
+                // Category translations
+                category_rules: "Rules",
+                category_timing: "Timing & Spotting",
+                category_spelling: "Spelling & Punctuation",
+                category_tags: "Tags & Code",
+                // Filter names
                 filter_cps: "Reading speed (CPS)",
                 filter_wpm: "Reading speed (WPM)",
                 filter_char_limit: "Character limit per line",
                 filter_line_limit: "Line limit",
-                filter_dash_space: "Space after dash",
+                filter_dash_space: "No space after dash",
+                filter_space_after_dash: "Space after dash", // NEW
                 filter_duration: "Min/max duration",
                 filter_min_gap: "Minimum gap between subtitles",
                 filter_unclosed_tags: "Tag issues",
@@ -273,14 +289,17 @@
                 filter_numbers_1_to_10: "Cardinal numbers as digits (1-10)",
                 filter_four_digit_separator: "Thousand separator in 4-digit numbers",
                 filter_semicolons: "Use of semicolons",
-                filter_ids_sfx_format: "SFX/description detection (brackets)",
-                desc_cps: "Detects subtitles exceeding the configured CPS.",
+                filter_ids_sfx_format: "SFX/description detection (brackets/parentheses)", // UPDATED
+                filter_forbidden_sequences: "Forbidden sequences", // NEW
+                // Filter descriptions
+                desc_cps: "Detects subtitles exceeding the configured CPS (newlines are not counted).", // UPDATED
                 desc_wpm: "Detects subtitles exceeding the configured WPM.",
-                desc_char_limit: "Detects lines exceeding the configured number of characters.",
+                desc_char_limit: "Detects lines exceeding the configured number of characters (tags are not counted).", // UPDATED
                 desc_line_limit: "Identifies subtitles with more than 2 lines.",
                 desc_dash_space: 'Detects "-Hello" instead of "- Hello".',
+                desc_space_after_dash: 'Detects "- Hello" instead of "-Hello". For styles that omit the space.', // NEW
                 desc_duration: "Flags subtitles shorter than 1s or longer than 7s.",
-                desc_min_gap: "Detects gaps smaller than 100ms or 4 frames between subtitles.",
+                desc_min_gap: "Detects gaps smaller than the configured value (in ms or frames).", // UPDATED
                 desc_unclosed_tags: "Identifies unclosed, unopened, or malformed tags.",
                 desc_double_spaces: "Flags the presence of two or more consecutive spaces.",
                 desc_question_marks: "Detects missing opening or closing marks for questions and exclamations.",
@@ -288,9 +307,9 @@
                 desc_empty_subtitle: "Detects subtitles that have been mistakenly left empty.",
                 desc_overlap: "Detects subtitles that overlap with subsequent subtitles.",
                 desc_no_space_after_period: "Detects a period followed immediately by a word or letter, without an intervening space.",
-                desc_unclosed_quotes: "Identifies 'Unclosed single quote text' or \"Unclosed double quote text\".",
+                desc_unclosed_quotes: "Identifies 'Unclosed single quote text' or \"Unclosed double quote text\" (apostrophe-safe).", // UPDATED
                 desc_quote_period: 'Detects if the final period of a quoted sentence is inside the closing quotes (e.g., "Text." instead of "Text".).',
-                desc_no_period_after_quote: 'Detects a closing quote (") at the end of a line that is not followed by a period.',
+                desc_no_period_after_quote: 'Detects a closing quote (") at the end of a line that is not followed by a period (ignores `?"` and `!"`).', // UPDATED
                 desc_ellipsis: 'Flags subtitles ending with "..." suggesting a continuation.',
                 desc_number_punctuation: 'Detects English-style punctuation "1,234.56" instead of "1.234,56".',
                 desc_units_format: 'Detects measurement units (e.g., "km.", "cms") ending in a period or in plural form.',
@@ -300,26 +319,31 @@
                 desc_numbers_1_to_10: 'Detects if numbers from 1 to 10 are written in digits instead of letters (e.g., "5 dogs" instead of "five dogs").',
                 desc_four_digit_separator: 'Detects if four-digit numbers have separators (e.g., "2,000" instead of "2000").',
                 desc_semicolons: "Detects the presence of a semicolon (;).",
-                desc_ids_sfx_format: "Detects the presence of text enclosed in square brackets (e.g., [Music], [Applause]).",
+                desc_ids_sfx_format: "Detects the presence of text enclosed in [square brackets] or (parentheses).", // UPDATED
+                desc_forbidden_sequences: "Detects custom text sequences (e.g., '..', ',.'). Separate with spaces.", // NEW
+                // Error messages
                 errors: {
                     high_cps: "High reading speed: {cps} CPS (Max: {max})",
                     high_wpm: "High reading speed: {wpm} WPM (Max: {max})",
                     line_char_limit: "Line {lineIndex} exceeds character limit ({length} > {max})",
                     line_limit: "Exceeds line limit ({count} > {max})",
                     no_space_after_dash: "No space after a dash.",
+                    space_after_dash: "Contains a space after a dash.", // NEW
                     duration_too_short: "Duration too short ({duration}ms < {min}ms)",
                     duration_too_long: "Duration too long ({duration}ms > {max}ms)",
-                    gap_too_small: "Gap between subtitles is too small ({gap}ms)",
+                    // --- MODIFICADO ---
+                    gap_too_small: "Gap too small ({gap}ms). Sub {currentIndex} ends: {endTime} / Sub {nextIndex} starts: {startTime}.",
                     unclosed_tag: "Unclosed <{tag}> tag.",
                     unopened_tag: "Unopened </{tag}> tag.",
                     double_spaces: "Contains double or triple spaces.",
-                    missing_closing_question: "Line {lineIndex}: Missing closing question mark (?).",
-                    missing_opening_question: "Line {lineIndex}: Missing opening question mark (¿).",
-                    missing_closing_exclamation: "Line {lineIndex}: Missing closing exclamation mark (!).",
-                    missing_opening_exclamation: "Line {lineIndex}: Missing opening exclamation mark (¡).",
+                    missing_closing_question: "Missing closing question mark (?).",
+                    missing_opening_question: "Missing opening question mark (¿).",
+                    missing_closing_exclamation: "Missing closing exclamation mark (!).",
+                    missing_opening_exclamation: "Missing opening exclamation mark (¡).",
                     lowercase_after_period: "Starts with lowercase after a period.",
                     empty_subtitle: "Empty subtitle.",
-                    overlap: "Overlaps with the next subtitle.",
+                    // --- MODIFICADO ---
+                    overlap: "Overlaps with the next subtitle (subtitle {nextIndex}).",
                     no_space_after_period: "A period is followed by a letter without a space.",
                     unclosed_single_quote: "Unclosed single quote (').",
                     unclosed_double_quote: "Unclosed double quote (\").",
@@ -334,7 +358,8 @@
                     number_as_digit: "Number from 1-10 is written as a digit instead of a word.",
                     four_digit_separator: "Four-digit number has a thousand separator.",
                     semicolon_present: "Contains a semicolon (;).",
-                    sfx_brackets: "Contains SFX/description in brackets."
+                    sfx_brackets: "Contains SFX/description in [brackets] or (parentheses).", // UPDATED
+                    forbidden_sequence_found: "Forbidden sequence(s) found: {sequences}" // NEW
                 }
             },
             es: {
@@ -365,11 +390,18 @@
                 no_valid_subs: "No se pudieron analizar subtítulos válidos del archivo.",
                 file_process_error: "Error al procesar el archivo: {errorMessage}. Asegúrate de que es un archivo SRT válido.",
                 upload_first: "Por favor, primero sube un archivo de subtítulos.",
+                // Category translations
+                category_rules: "Convenciones",
+                category_timing: "Sincronización",
+                category_spelling: "Ortografía y ortotipografía",
+                category_tags: "Etiquetas y código",
+                // Filter names
                 filter_cps: "Velocidad de lectura (CPS)",
                 filter_wpm: "Velocidad de lectura (WPM)",
                 filter_char_limit: "Límite de caracteres por línea",
                 filter_line_limit: "Límite de líneas",
-                filter_dash_space: "Espacio después de un guion",
+                filter_dash_space: "Sin espacio después de guion",
+                filter_space_after_dash: "Espacio después de guion", // NEW
                 filter_duration: "Duración mínima/máxima",
                 filter_min_gap: "Espacio mínimo entre subtítulos",
                 filter_unclosed_tags: "Problemas con etiquetas",
@@ -391,14 +423,17 @@
                 filter_numbers_1_to_10: "Números cardinales en cifras (1-10)",
                 filter_four_digit_separator: "Separador de miles en 4 dígitos",
                 filter_semicolons: "Uso de punto y coma",
-                filter_ids_sfx_format: "Detección de acotaciones o SFX (corchetes)",
-                desc_cps: "Detecta subtítulos que excedan los CPS que configures.",
+                filter_ids_sfx_format: "Detección de acotaciones o SFX (corchetes/paréntesis)", // UPDATED
+                filter_forbidden_sequences: "Secuencias prohibidas", // NEW
+                // Filter descriptions
+                desc_cps: "Detecta subtítulos que excedan los CPS (no se cuentan saltos de línea).", // UPDATED
                 desc_wpm: "Detecta subtítulos que excedan los WPM que configures.",
-                desc_char_limit: "Detecta líneas que exceden el número de caracteres que configures.",
+                desc_char_limit: "Detecta líneas que exceden el número de caracteres (no se cuentan las etiquetas).", // UPDATED
                 desc_line_limit: "Identifica subtítulos con más de 2 líneas.",
                 desc_dash_space: 'Detecta "-Hola" en lugar de "- Hola".',
+                desc_space_after_dash: 'Detecta "- Hola" en lugar de "-Hola". Para estilos que omiten el espacio.', // NEW
                 desc_duration: "Marca subtítulos con duración menor a 1 segundo o mayor a 7 segundos.",
-                desc_min_gap: "Detecta gaps menores a 100ms o 4 frames entre subtítulos.",
+                desc_min_gap: "Detecta gaps menores al valor configurado (en ms o frames).", // UPDATED
                 desc_unclosed_tags: "Identifica etiquetas HTML (ej: <i>, <b>) sin cerrar, sin abrir o mal formadas.",
                 desc_double_spaces: 'Marca la presencia de dos ("  ") o tres ("   ") espacios consecutivos.',
                 desc_question_marks: 'Detecta "¿Qué tal?" sin el signo de cierre o "Qué tal?" sin el de apertura, y de forma similar para "¡Hola!"',
@@ -406,9 +441,9 @@
                 desc_empty_subtitle: "Detecta subtítulos que se han quedado vacíos o sin texto por despiste.",
                 desc_overlap: "Detecta subtítulos que pisan o se superponen con otros subtítulos.",
                 desc_no_space_after_period: "Detecta un punto seguido directamente de una palabra o letra, sin espacio intermedio.",
-                desc_unclosed_quotes: 'Identifica "Texto de comillas simples sin cerrar\' o "Texto de comillas dobles sin cerrar".',
+                desc_unclosed_quotes: 'Identifica "comillas simples sin cerrar\' o "comillas dobles sin cerrar" (ignora apóstrofos).', // UPDATED
                 desc_quote_period: 'Detecta si el punto final de una oración citada se encuentra dentro de las comillas de cierre (ej. "Texto." en lugar de "Texto".).',
-                desc_no_period_after_quote: 'Detecta unas comillas de cierre (") al final de una línea que no van seguidas de un punto.',
+                desc_no_period_after_quote: 'Detecta comillas de cierre (") al final de línea sin punto (ignora `?"` y `!"`).', // UPDATED
                 desc_ellipsis: 'Marca subtítulos que terminan con "..." sugiriendo una continuación.',
                 desc_number_punctuation: 'Detecta la puntuación "1,234.56" típica del inglés en lugar de "1.234,56".',
                 desc_units_format: 'Detecta unidades de medida (ej. "km.", "cms") que terminan en punto o están en plural.',
@@ -418,26 +453,31 @@
                 desc_numbers_1_to_10: 'Detecta si los números del 1 al 10 están escritos en cifras en lugar de letras (ej. "5 perros" en lugar de "cinco perros").',
                 desc_four_digit_separator: 'Detecta si los números de cuatro dígitos tienen separadores (ej. "2.000" en lugar de "2000").',
                 desc_semicolons: "Detecta la presencia de punto y coma (;).",
-                desc_ids_sfx_format: "Detecta la presencia de texto encerrado entre corchetes (ej. [Música], [Aplausos]).",
+                desc_ids_sfx_format: "Detecta la presencia de texto encerrado entre [corchetes] o (paréntesis).", // UPDATED
+                desc_forbidden_sequences: "Detecta secuencias de texto personalizadas (ej. '..', ',.'). Separar con espacios.", // NEW
+                // Error messages
                 errors: {
                     high_cps: "Velocidad de lectura alta: {cps} CPS (Máx: {max})",
                     high_wpm: "Velocidad de lectura alta: {wpm} WPM (Máx: {max})",
                     line_char_limit: "Línea {lineIndex} excede el límite de caracteres ({length} > {max})",
                     line_limit: "Excede el límite de líneas ({count} > {max})",
                     no_space_after_dash: "No hay espacio después de un guion.",
+                    space_after_dash: "Contiene un espacio después de un guion.", // NEW
                     duration_too_short: "Duración demasiado corta ({duration}ms < {min}ms)",
                     duration_too_long: "Duración demasiado larga ({duration}ms > {max}ms)",
-                    gap_too_small: "Espacio entre subtítulos demasiado pequeño ({gap}ms)",
+                    // --- MODIFICADO ---
+                    gap_too_small: "Gap demasiado pequeño ({gap}ms). Sub {currentIndex} acaba: {endTime} / Sub {nextIndex} empieza: {startTime}.",
                     unclosed_tag: "Etiqueta <{tag}> sin cerrar.",
                     unopened_tag: "Etiqueta </{tag}> sin abrir.",
                     double_spaces: "Contiene espacios dobles o triples.",
-                    missing_closing_question: "Línea {lineIndex}: Falta signo de cierre de interrogación (?).",
-                    missing_opening_question: "Línea {lineIndex}: Falta signo de apertura de interrogación (¿).",
-                    missing_closing_exclamation: "Línea {lineIndex}: Falta signo de cierre de exclamación (!).",
-                    missing_opening_exclamation: "Línea {lineIndex}: Falta signo de apertura de exclamación (¡).",
+                    missing_closing_question: "Falta signo de cierre de interrogación (?).",
+                    missing_opening_question: "Falta signo de apertura de interrogación (¿).",
+                    missing_closing_exclamation: "Falta signo de cierre de exclamación (!).",
+                    missing_opening_exclamation: "Falta signo de apertura de exclamación (¡).",
                     lowercase_after_period: "El subtítulo comienza con minúscula después de un punto.",
                     empty_subtitle: "Subtítulo vacío.",
-                    overlap: "Overlap con el siguiente subtítulo.",
+                    // --- MODIFICADO ---
+                    overlap: "Overlap con el siguiente subtítulo (subtítulo {nextIndex}).",
                     no_space_after_period: "Un punto seguido directamente de una palabra o letra, sin espacio intermedio.",
                     unclosed_single_quote: "Comilla simple (') sin cerrar.",
                     unclosed_double_quote: "Comilla doble (\") sin cerrar.",
@@ -452,62 +492,75 @@
                     number_as_digit: "Número del 1 al 10 escrito en cifra en lugar de letra.",
                     four_digit_separator: "Número de cuatro dígitos con separador de miles.",
                     semicolon_present: "Contiene punto y coma (;).",
-                    sfx_brackets: "Contiene acotaciones o efectos de sonido entre corchetes."
+                    sfx_brackets: "Contiene acotaciones o efectos de sonido entre [corchetes] o (paréntesis).", // UPDATED
+                    forbidden_sequence_found: "Secuencia(s) prohibida(s) encontrada(s): {sequences}" // NEW
                 }
             }
         };
 
         let currentLang = 'en';
 
-        function setLanguage(lang) {
-            currentLang = lang;
-            document.documentElement.lang = lang;
-            document.querySelectorAll('[data-lang]').forEach(el => {
-                const key = el.getAttribute('data-lang');
-                if (translations[lang][key]) {
-                    el.textContent = translations[lang][key];
-                }
-            });
+        // --- NEW: ERROR CATEGORY MAPPING ---
+        const errorCategories = {
+            // Rules (Blue)
+            'high_cps': 'rules', 'high_wpm': 'rules', 'line_char_limit': 'rules', 'line_limit': 'rules',
+            'no_space_after_dash': 'rules', 'space_after_dash': 'rules', // NEW
+            'ellipsis_linking': 'rules', 'inconsistent_dialogue_hyphen': 'rules', 'sfx_brackets': 'rules',
+            // Timing (Green)
+            'duration_too_short': 'timing', 'duration_too_long': 'timing', 'gap_too_small': 'timing',
+            'overlap': 'timing', 'empty_subtitle': 'timing',
+            // Spelling (Red)
+            'double_spaces': 'spelling', 'missing_closing_question': 'spelling', 'missing_opening_question': 'spelling',
+            'missing_closing_exclamation': 'spelling', 'missing_opening_exclamation': 'spelling', 'no_space_after_period': 'spelling',
+            'unclosed_single_quote': 'spelling', 'unclosed_double_quote': 'spelling', 'quote_punctuation': 'spelling',
+            'no_period_after_quote': 'spelling', 'english_number_punctuation': 'spelling', 'incorrect_unit_format': 'spelling',
+            'incorrect_acronym_format': 'spelling', 'incorrect_ellipsis_char': 'spelling', 'number_as_digit': 'spelling',
+            'four_digit_separator': 'spelling', 'semicolon_present': 'spelling', 'lowercase_after_period': 'spelling',
+            'forbidden_sequence_found': 'spelling', // NEW
+            // Tags (Magenta)
+            'unclosed_tag': 'tags', 'unopened_tag': 'tags'
+        };
 
-            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
-            document.getElementById('lang-es').classList.toggle('active', lang === 'es');
-            
-            renderFilters();
-        }
-
-        // --- FILTER DEFINITIONS ---
+        // --- UPDATED: FILTER DEFINITIONS WITH CATEGORIES ---
         const filterDefinitions = [
-            { id: 'filterCps', name: 'filter_cps', desc: 'desc_cps', inputs: [{type: 'number', id: 'maxCps', value: 20, title: 'Max CPS'}] },
-            { id: 'filterWpm', name: 'filter_wpm', desc: 'desc_wpm', inputs: [{type: 'number', id: 'maxWpm', value: 150, title: 'Max WPM'}] },
-            { id: 'filterCharLimit', name: 'filter_char_limit', desc: 'desc_char_limit', inputs: [{type: 'number', id: 'maxCharsPerLine', value: 42, title: 'Max chars per line'}] },
-            { id: 'filterLineLimit', name: 'filter_line_limit', desc: 'desc_line_limit', inputs: [{type: 'number', id: 'maxLines', value: 2, title: 'Max lines'}] },
-            { id: 'filterDashSpace', name: 'filter_dash_space', desc: 'desc_dash_space', inputs: [] },
-            { id: 'filterDuration', name: 'filter_duration', desc: 'desc_duration', inputs: [{type: 'number', id: 'minDuration', value: 1000, title: 'Min duration (ms)'}, {type: 'number', id: 'maxDuration', value: 7000, title: 'Max duration (ms)'}] },
-            { id: 'filterMinGap', name: 'filter_min_gap', desc: 'desc_min_gap', inputs: [
+            // Category: Rules
+            { id: 'filterCps', name: 'filter_cps', desc: 'desc_cps', category: 'rules', inputs: [{type: 'number', id: 'maxCps', value: 20, title: 'Max CPS'}] },
+            { id: 'filterWpm', name: 'filter_wpm', desc: 'desc_wpm', category: 'rules', inputs: [{type: 'number', id: 'maxWpm', value: 150, title: 'Max WPM'}] },
+            { id: 'filterCharLimit', name: 'filter_char_limit', desc: 'desc_char_limit', category: 'rules', inputs: [{type: 'number', id: 'maxCharsPerLine', value: 42, title: 'Max chars per line'}] },
+            { id: 'filterLineLimit', name: 'filter_line_limit', desc: 'desc_line_limit', category: 'rules', inputs: [{type: 'number', id: 'maxLines', value: 2, title: 'Max lines'}] },
+            { id: 'filterDashSpace', name: 'filter_dash_space', desc: 'desc_dash_space', category: 'rules', inputs: [] },
+            { id: 'filterSpaceAfterDash', name: 'filter_space_after_dash', desc: 'desc_space_after_dash', category: 'rules', inputs: [] }, // NEW
+            { id: 'filterEllipsis', name: 'filter_ellipsis', desc: 'desc_ellipsis', category: 'rules', inputs: [] },
+            { id: 'filterDualSpeakerHyphen', name: 'filter_dual_speaker_hyphen', desc: 'desc_dual_speaker_hyphen', category: 'rules', inputs: [] },
+            { id: 'filterIdsSfxFormat', name: 'filter_ids_sfx_format', desc: 'desc_ids_sfx_format', category: 'rules', inputs: [] },
+            // Category: Timing
+            { id: 'filterDuration', name: 'filter_duration', desc: 'desc_duration', category: 'timing', inputs: [{type: 'number', id: 'minDuration', value: 1000, title: 'Min duration (ms)'}, {type: 'number', id: 'maxDuration', value: 7000, title: 'Max duration (ms)'}] },
+            { id: 'filterMinGap', name: 'filter_min_gap', desc: 'desc_min_gap', category: 'timing', inputs: [
                 {type: 'number', id: 'minGap', value: 100, title: 'Gap value'},
                 {type: 'select', id: 'gapUnit', options: ['ms', 'frames']},
                 {type: 'number', id: 'frameRate', value: 25, title: 'FPS', style: 'display:none;'}
             ] },
-            { id: 'filterUnclosedTags', name: 'filter_unclosed_tags', desc: 'desc_unclosed_tags', inputs: [] },
-            { id: 'filterDoubleSpaces', name: 'filter_double_spaces', desc: 'desc_double_spaces', inputs: [] },
-            { id: 'filterQuestionMarks', name: 'filter_question_marks', desc: 'desc_question_marks', inputs: [] },
-            { id: 'filterLowercaseAfterPeriod', name: 'filter_lowercase_after_period', desc: 'desc_lowercase_after_period', inputs: [] },
-            { id: 'filterEmptySubtitle', name: 'filter_empty_subtitle', desc: 'desc_empty_subtitle', inputs: [] },
-            { id: 'filterOverlap', name: 'filter_overlap', desc: 'desc_overlap', inputs: [] },
-            { id: 'filterNoSpaceAfterPeriod', name: 'filter_no_space_after_period', desc: 'desc_no_space_after_period', inputs: [] },
-            { id: 'filterUnclosedQuotes', name: 'filter_unclosed_quotes', desc: 'desc_unclosed_quotes', inputs: [] },
-            { id: 'filterQuotePeriod', name: 'filter_quote_period', desc: 'desc_quote_period', inputs: [] },
-            { id: 'filterNoPeriodAfterQuote', name: 'filter_no_period_after_quote', desc: 'desc_no_period_after_quote', inputs: [] },
-            { id: 'filterEllipsis', name: 'filter_ellipsis', desc: 'desc_ellipsis', inputs: [] },
-            { id: 'filterNumberPunctuation', name: 'filter_number_punctuation', desc: 'desc_number_punctuation', inputs: [] },
-            { id: 'filterUnitsFormat', name: 'filter_units_format', desc: 'desc_units_format', inputs: [] },
-            { id: 'filterAcronymsFormat', name: 'filter_acronyms_format', desc: 'desc_acronyms_format', inputs: [] },
-            { id: 'filterEllipsisChar', name: 'filter_ellipsis_char', desc: 'desc_ellipsis_char', inputs: [] },
-            { id: 'filterDualSpeakerHyphen', name: 'filter_dual_speaker_hyphen', desc: 'desc_dual_speaker_hyphen', inputs: [] },
-            { id: 'filterNumbers1to10', name: 'filter_numbers_1_to_10', desc: 'desc_numbers_1_to_10', inputs: [] },
-            { id: 'filterFourDigitSeparator', name: 'filter_four_digit_separator', desc: 'desc_four_digit_separator', inputs: [] },
-            { id: 'filterSemicolons', name: 'filter_semicolons', desc: 'desc_semicolons', inputs: [] },
-            { id: 'filterIdsSfxFormat', name: 'filter_ids_sfx_format', desc: 'desc_ids_sfx_format', inputs: [] }
+            { id: 'filterOverlap', name: 'filter_overlap', desc: 'desc_overlap', category: 'timing', inputs: [] },
+            { id: 'filterEmptySubtitle', name: 'filter_empty_subtitle', desc: 'desc_empty_subtitle', category: 'timing', inputs: [] },
+            // Category: Spelling & Punctuation
+            { id: 'filterDoubleSpaces', name: 'filter_double_spaces', desc: 'desc_double_spaces', category: 'spelling', inputs: [] },
+            { id: 'filterQuestionMarks', name: 'filter_question_marks', desc: 'desc_question_marks', category: 'spelling', inputs: [] },
+            { id: 'filterNoSpaceAfterPeriod', name: 'filter_no_space_after_period', desc: 'desc_no_space_after_period', category: 'spelling', inputs: [] },
+            { id: 'filterUnclosedQuotes', name: 'filter_unclosed_quotes', desc: 'desc_unclosed_quotes', category: 'spelling', inputs: [] },
+            { id: 'filterQuotePeriod', name: 'filter_quote_period', desc: 'desc_quote_period', category: 'spelling', inputs: [] },
+            { id: 'filterNoPeriodAfterQuote', name: 'filter_no_period_after_quote', desc: 'desc_no_period_after_quote', category: 'spelling', inputs: [] },
+            { id: 'filterNumberPunctuation', name: 'filter_number_punctuation', desc: 'desc_number_punctuation', category: 'spelling', inputs: [] },
+            { id: 'filterUnitsFormat', name: 'filter_units_format', desc: 'desc_units_format', category: 'spelling', inputs: [] },
+            { id: 'filterAcronymsFormat', name: 'filter_acronyms_format', desc: 'desc_acronyms_format', category: 'spelling', inputs: [] },
+            { id: 'filterEllipsisChar', name: 'filter_ellipsis_char', desc: 'desc_ellipsis_char', category: 'spelling', inputs: [] },
+            { id: 'filterNumbers1to10', name: 'filter_numbers_1_to_10', desc: 'desc_numbers_1_to_10', category: 'spelling', inputs: [] },
+            { id: 'filterFourDigitSeparator', name: 'filter_four_digit_separator', desc: 'desc_four_digit_separator', category: 'spelling', inputs: [] },
+            { id: 'filterSemicolons', name: 'filter_semicolons', desc: 'desc_semicolons', category: 'spelling', inputs: [] },
+            // NEW
+            { id: 'filterForbiddenSequences', name: 'filter_forbidden_sequences', desc: 'desc_forbidden_sequences', category: 'spelling', inputs: [{type: 'text', id: 'forbiddenSequences', value: '.. ,. .? .! ?, !?', title: 'Sequences (space separated)', style: 'width: 100%;'}] },
+            { id: 'filterLowercaseAfterPeriod', name: 'filter_lowercase_after_period', desc: 'desc_lowercase_after_period', category: 'spelling', inputs: [] },
+            // Category: Tags & Code
+            { id: 'filterUnclosedTags', name: 'filter_unclosed_tags', desc: 'desc_unclosed_tags', category: 'tags', inputs: [] }
         ];
 
         // --- STATE MANAGEMENT ---
@@ -518,62 +571,95 @@
 
         function initializeFilterDefaults() {
             filterDefinitions.forEach(filter => {
-                // Set default checkbox state (all true except WPM)
-                filterStates[filter.id] = filter.id !== 'filterWpm';
+                // Set default checkbox state (all true except WPM, filterSpaceAfterDash, filterForbiddenSequences)
+                filterStates[filter.id] = 
+                    filter.id !== 'filterWpm' && 
+                    filter.id !== 'filterSpaceAfterDash' && 
+                    filter.id !== 'filterForbiddenSequences';
+
                 // Set default input values
                 filter.inputs.forEach(input => {
                     filterValues[input.id] = input.value;
                 });
             });
+            // Specific default values for new filters
+            filterValues['forbiddenSequences'] = '.. ,. .? .! ?, !?';
             allFiltersCheckedState = true;
         }
 
+        // --- UPDATED: renderFilters with categories ---
         function renderFilters() {
             const container = document.getElementById('filters-container');
             container.innerHTML = '';
             const langDict = translations[currentLang];
+            
+            const categories = [...new Set(filterDefinitions.map(f => f.category))];
 
-            filterDefinitions.forEach(filter => {
-                const filterDiv = document.createElement('div');
-                filterDiv.className = 'flex flex-col';
-                
-                let inputsHTML = '';
-                filter.inputs.forEach(input => {
-                    const value = filterValues[input.id]; // Read from state
-                    if(input.type === 'select') {
-                        inputsHTML += `<select id="${input.id}" class="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500">${input.options.map(o => `<option value="${o}" ${value == o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+            categories.forEach(category => {
+                const categoryTitle = document.createElement('h3');
+                categoryTitle.className = `category-title ${category}`;
+                categoryTitle.textContent = langDict['category_' + category] || category;
+                container.appendChild(categoryTitle);
+
+                filterDefinitions.filter(f => f.category === category).forEach(filter => {
+                    const filterDiv = document.createElement('div');
+                    filterDiv.className = 'flex flex-col mb-2';
+                    
+                    let inputsHTML = '';
+                    filter.inputs.forEach(input => {
+                        const value = filterValues[input.id];
+                        if(input.type === 'select') {
+                            inputsHTML += `<select id="${input.id}" class="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500">${input.options.map(o => `<option value="${o}" ${value == o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+                        } else {
+                            // UPDATED for full-width text input
+                            const inputClass = input.type === 'text' ? 'w-full mt-1' : 'w-20 ml-2';
+                            const title = input.title || '';
+                            const style = input.style || '';
+                            inputsHTML += `<input type="${input.type}" id="${input.id}" value="${value}" class="${inputClass} px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="${title}" style="${style}">`;
+                        }
+                    });
+
+                    // UPDATED: Handle text input layout differently
+                    const isTextInput = filter.inputs.some(inp => inp.type === 'text');
+                    if (isTextInput) {
+                        filterDiv.innerHTML = `
+                            <div class="flex items-center">
+                                <input type="checkbox" id="${filter.id}" class="h-4 w-4 text-green-600 rounded focus:ring-green-500" ${filterStates[filter.id] ? 'checked' : ''}>
+                                <label for="${filter.id}" class="ml-2 text-gray-700 font-semibold">${langDict[filter.name]}</label>
+                            </div>
+                            <div class="ml-6">
+                                ${inputsHTML}
+                                <p class="text-xs text-gray-500 mt-1">${langDict[filter.desc]}</p>
+                            </div>
+                        `;
                     } else {
-                        inputsHTML += `<input type="${input.type}" id="${input.id}" value="${value}" class="ml-2 w-20 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" title="${input.title}" style="${input.style || ''}">`;
+                         filterDiv.innerHTML = `
+                            <div class="flex items-center">
+                                <input type="checkbox" id="${filter.id}" class="h-4 w-4 text-green-600 rounded focus:ring-green-500" ${filterStates[filter.id] ? 'checked' : ''}>
+                                <label for="${filter.id}" class="ml-2 text-gray-700 font-semibold">${langDict[filter.name]}</label>
+                                ${inputsHTML}
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1 ml-6">${langDict[filter.desc]}</p>
+                        `;
                     }
-                });
+                    
+                    container.appendChild(filterDiv);
 
-                filterDiv.innerHTML = `
-                    <div class="flex items-center">
-                        <input type="checkbox" id="${filter.id}" class="h-4 w-4 text-green-600 rounded focus:ring-green-500" ${filterStates[filter.id] ? 'checked' : ''}>
-                        <label for="${filter.id}" class="ml-2 text-gray-700 font-semibold">${langDict[filter.name]}</label>
-                        ${inputsHTML}
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1 ml-6">${langDict[filter.desc]}</p>
-                `;
-                container.appendChild(filterDiv);
+                    document.getElementById(filter.id).addEventListener('change', (e) => {
+                        filterStates[filter.id] = e.target.checked;
+                    });
 
-                // Add event listener for checkbox state
-                document.getElementById(filter.id).addEventListener('change', (e) => {
-                    filterStates[filter.id] = e.target.checked;
-                });
-
-                // Add event listeners to update input values in state
-                filter.inputs.forEach(input => {
-                    const inputEl = document.getElementById(input.id);
-                    if (inputEl) {
-                        inputEl.addEventListener('change', (e) => {
-                            filterValues[input.id] = e.target.value;
-                        });
-                    }
+                    filter.inputs.forEach(input => {
+                        const inputEl = document.getElementById(input.id);
+                        if (inputEl) {
+                            inputEl.addEventListener('change', (e) => {
+                                filterValues[input.id] = (e.target.type === 'number') ? parseFloat(e.target.value) : e.target.value;
+                            });
+                        }
+                    });
                 });
             });
             
-            // Special logic for gap unit selector
             const gapUnitEl = document.getElementById('gapUnit');
             if (gapUnitEl) {
                 gapUnitEl.addEventListener('change', function() {
@@ -587,7 +673,7 @@
         let subtitles = [];
         let errorsFound = [];
 
-        // DOM Elements
+        // DOM Elements (unchanged)
         const subtitleFile = document.getElementById('subtitleFile');
         const fileNameDisplay = document.getElementById('fileName');
         const checkButton = document.getElementById('checkButton');
@@ -608,69 +694,49 @@
         const confirmModalButton = document.getElementById('confirmModalButton');
         const cancelModalButton = document.getElementById('cancelModalButton');
 
-        // --- Core Functions (Original Logic Preserved) ---
-        function formatTime(ms) {
-            if (isNaN(ms) || ms < 0) return "00:00:00,000";
-            const date = new Date(ms);
-            return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')},${String(date.getUTCMilliseconds()).padStart(3, '0')}`;
-        }
-
-        function timeToMs(timeString) {
-            const parts = timeString.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})/);
-            if (!parts) return 0;
-            const [, h, m, s, ms] = parts.map(Number);
-            return (h * 3600 + m * 60 + s) * 1000 + ms;
-        }
-
-        function calculateCps(text, durationMs) {
-            if (durationMs <= 0) return 0;
-            const cleanText = text.replace(/<[^>]*>/g, '');
-            return cleanText.length / (durationMs / 1000);
+        // --- Core Functions (Original Logic Preserved, error adding logic changed) ---
+        function formatTime(ms) { if (isNaN(ms) || ms < 0) return "00:00:00,000"; const date = new Date(ms); return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')},${String(date.getUTCMilliseconds()).padStart(3, '0')}`; }
+        function timeToMs(timeString) { const parts = timeString.match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})/); if (!parts) return 0; const [, h, m, s, ms] = parts.map(Number); return (h * 3600 + m * 60 + s) * 1000 + ms; }
+        
+        // --- MODIFICADO (No contar \n en CPS) ---
+        function calculateCps(text, durationMs) { 
+            if (durationMs <= 0) return 0; 
+            const cleanText = text.replace(/<[^>]*>/g, '')
+                                 .replace(/\.{3}/g, '…')
+                                 .replace(/\n/g, ''); // <-- MODIFICADO: No contar saltos de línea
+            return cleanText.length / (durationMs / 1000); 
         }
         
-        function calculateWpm(text, durationMs) {
-            if (durationMs <= 0) return 0;
-            const cleanText = text.replace(/<[^>]*>/g, '');
-            const words = cleanText.split(/\s+/).filter(word => word.length > 0).length;
-            return words / (durationMs / 60000);
+        // --- MODIFICADO (Contar \n como espacio en WPM) ---
+        function calculateWpm(text, durationMs) { 
+            if (durationMs <= 0) return 0; 
+            const cleanText = text.replace(/<[^>]*>/g, '')
+                                 .replace(/\.{3}/g, '…')
+                                 .replace(/\n/g, ' '); // <-- MODIFICADO: Reemplazar \n por espacio
+            const words = cleanText.split(/\s+/).filter(word => word.length > 0).length; 
+            return words / (durationMs / 60000); 
         }
-
+        
         function parseSrt(srtText) {
             const entries = srtText.trim().split(/\r?\n\r?\n/);
             return entries.map((entry, index) => {
                 const lines = entry.split(/\r?\n/);
                 const timeMatch = lines[1] ? lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/) : null;
-                let startMs = 0, endMs = 0;
-                if (timeMatch) {
-                    [startMs, endMs] = [timeToMs(timeMatch[1]), timeToMs(timeMatch[2])];
-                }
+                let startMs = 0, endMs = 0; if (timeMatch) { [startMs, endMs] = [timeToMs(timeMatch[1]), timeToMs(timeMatch[2])]; }
                 const text = lines.slice(2).join('\n').trim();
-                return {
-                    index: parseInt(lines[0], 10) || (index + 1),
-                    startMs, endMs, durationMs: endMs - startMs, text,
-                    originalLines: text.split(/\r?\n/), errors: []
-                };
-            }).filter(sub => !isNaN(sub.index) && sub.text !== '');
+                return { index: parseInt(lines[0], 10) || (index + 1), startMs, endMs, durationMs: endMs - startMs, text, originalLines: text.split(/\r?\n/), errors: [] };
+            }).filter(sub => !isNaN(sub.index)); // Allow empty subs for empty subtitle check
         }
 
         function handleFileSelect(event) {
-            const file = event.target.files[0];
-            const langDict = translations[currentLang];
+            const file = event.target.files[0]; const langDict = translations[currentLang];
             if (file) {
                 fileNameDisplay.textContent = langDict.selected_file.replace('{fileName}', file.name);
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    try {
-                        subtitles = parseSrt(e.target.result);
-                        resultsDiv.innerHTML = `<p class="text-gray-500">${subtitles.length > 0 ? langDict.file_loaded : langDict.no_valid_subs}</p>`;
-                        noErrorsMessage.classList.add('hidden');
-                        errorsFound = [];
-                    } catch (error) {
-                        resultsDiv.innerHTML = `<p class="text-red-600">${langDict.file_process_error.replace('{errorMessage}', error.message)}</p>`;
-                        subtitles = [];
-                    }
-                };
-                reader.readAsText(file);
+                    try { subtitles = parseSrt(e.target.result); resultsDiv.innerHTML = `<p class="text-gray-500">${subtitles.length > 0 ? langDict.file_loaded : langDict.no_valid_subs}</p>`; noErrorsMessage.classList.add('hidden'); errorsFound = [];
+                    } catch (error) { resultsDiv.innerHTML = `<p class="text-red-600">${langDict.file_process_error.replace('{errorMessage}', error.message)}</p>`; subtitles = []; }
+                }; reader.readAsText(file);
             }
         }
         
@@ -679,159 +745,176 @@
         
         function getErrorMessage(key, params = {}) {
             let message = translations[currentLang].errors[key] || key;
-            for (const p in params) {
-                message = message.replace(`{${p}}`, params[p]);
-            }
+            for (const p in params) { message = message.replace(`{${p}}`, params[p]); }
             return message;
         }
 
+        function addError(sub, key, params = {}) {
+            sub.errors.push({
+                message: getErrorMessage(key, params),
+                category: errorCategories[key] || 'default'
+            });
+        }
+
+        // --- UPDATED: checkSubtitles ---
         function checkSubtitles() {
             const langDict = translations[currentLang];
-            if (subtitles.length === 0) {
-                resultsDiv.innerHTML = `<p class="text-red-600">${langDict.upload_first}</p>`;
-                return;
-            }
+            if (subtitles.length === 0) { resultsDiv.innerHTML = `<p class="text-red-600">${langDict.upload_first}</p>`; return; }
 
             errorsFound = [];
+            
+            // --- Helper function for Question Mark check ---
+            const getPunctuationCount = (text) => ({
+                openQ: (text.match(/¿/g) || []).length,
+                closeQ: (text.match(/\?/g) || []).length,
+                openE: (text.match(/¡/g) || []).length,
+                closeE: (text.match(/!/g) || []).length,
+            });
+            // --- End Helper ---
+            
             subtitles.forEach((sub, i) => {
                 sub.errors = [];
+                const subTextClean = sub.text.replace(/<[^>]*>/g, ''); // Clean text (no tags) for relevant checks
                 
-                if (isFilterChecked('filterCps')) {
-                    const cps = calculateCps(sub.text, sub.durationMs);
-                    if (cps > parseFloat(getFilterValue('maxCps'))) {
-                        sub.errors.push(getErrorMessage('high_cps', { cps: cps.toFixed(2), max: getFilterValue('maxCps') }));
-                    }
-                }
-                if (isFilterChecked('filterWpm')) {
-                    const wpm = calculateWpm(sub.text, sub.durationMs);
-                    if (wpm > parseFloat(getFilterValue('maxWpm'))) {
-                        sub.errors.push(getErrorMessage('high_wpm', { wpm: wpm.toFixed(2), max: getFilterValue('maxWpm') }));
-                    }
-                }
-                if (isFilterChecked('filterCharLimit')) {
-                    sub.originalLines.forEach((line, lineIndex) => {
-                        if (line.length > parseInt(getFilterValue('maxCharsPerLine'))) {
-                            sub.errors.push(getErrorMessage('line_char_limit', { lineIndex: lineIndex + 1, length: line.length, max: getFilterValue('maxCharsPerLine') }));
-                        }
-                    });
-                }
-                if (isFilterChecked('filterLineLimit')) {
-                    if (sub.originalLines.length > parseInt(getFilterValue('maxLines'))) {
-                        sub.errors.push(getErrorMessage('line_limit', { count: sub.originalLines.length, max: getFilterValue('maxLines') }));
-                    }
-                }
-                if (isFilterChecked('filterDashSpace')) {
-                    if (sub.text.match(/-(?!\s)/) && !sub.text.match(/-\n/)) {
-                        sub.errors.push(getErrorMessage('no_space_after_dash'));
-                    }
-                }
-                if (isFilterChecked('filterDuration')) {
-                    if (sub.durationMs < parseInt(getFilterValue('minDuration'))) {
-                        sub.errors.push(getErrorMessage('duration_too_short', { duration: sub.durationMs, min: getFilterValue('minDuration') }));
-                    }
-                    if (sub.durationMs > parseInt(getFilterValue('maxDuration'))) {
-                        sub.errors.push(getErrorMessage('duration_too_long', { duration: sub.durationMs, max: getFilterValue('maxDuration') }));
-                    }
-                }
-                if (isFilterChecked('filterMinGap') && i < subtitles.length - 1) {
-                    const nextSub = subtitles[i + 1];
-                    let requiredGapMs;
-                    const minGapValue = parseInt(getFilterValue('minGap'));
-                    if (getFilterValue('gapUnit') === 'ms') {
-                        requiredGapMs = minGapValue;
-                    } else {
-                        const frameRateValue = parseFloat(getFilterValue('frameRate'));
-                        requiredGapMs = (minGapValue / frameRateValue) * 1000;
-                    }
-                    const actualGap = nextSub.startMs - sub.endMs;
-                    if (actualGap < requiredGapMs && actualGap >= 0) {
-                        sub.errors.push(getErrorMessage('gap_too_small', { gap: actualGap }));
-                    }
-                }
-                if (isFilterChecked('filterUnclosedTags')) {
-                    ['i', 'b', 'font'].forEach(tag => {
-                        const openCount = (sub.text.match(new RegExp(`<${tag}[^>]*>`, 'g')) || []).length;
-                        const closeCount = (sub.text.match(new RegExp(`</${tag}>`, 'g')) || []).length;
-                        if (openCount > closeCount) sub.errors.push(getErrorMessage('unclosed_tag', { tag: tag }));
-                        if (closeCount > openCount) sub.errors.push(getErrorMessage('unopened_tag', { tag: tag }));
-                    });
-                }
-                if (isFilterChecked('filterDoubleSpaces') && sub.text.match(/\s\s+/)) {
-                    sub.errors.push(getErrorMessage('double_spaces'));
-                }
-                if (isFilterChecked('filterQuestionMarks')) {
-                    sub.originalLines.forEach((line, lineIndex) => {
-                        if (line.includes('¿') && !line.includes('?')) sub.errors.push(getErrorMessage('missing_closing_question', { lineIndex: lineIndex + 1 }));
-                        if (!line.includes('¿') && line.includes('?')) sub.errors.push(getErrorMessage('missing_opening_question', { lineIndex: lineIndex + 1 }));
-                        if (line.includes('¡') && !line.includes('!')) sub.errors.push(getErrorMessage('missing_closing_exclamation', { lineIndex: lineIndex + 1 }));
-                        if (!line.includes('¡') && line.includes('!')) sub.errors.push(getErrorMessage('missing_opening_exclamation', { lineIndex: lineIndex + 1 }));
-                    });
-                }
-                if (isFilterChecked('filterLowercaseAfterPeriod') && sub.text.match(/\.\s*([a-záéíóúüñ])/)) {
-                    sub.errors.push(getErrorMessage('lowercase_after_period'));
-                }
-                if (isFilterChecked('filterEmptySubtitle') && sub.text.trim() === '') {
-                    sub.errors.push(getErrorMessage('empty_subtitle'));
-                }
-                if (isFilterChecked('filterOverlap') && i < subtitles.length - 1) {
-                    const nextSub = subtitles[i + 1];
-                    if (sub.endMs > nextSub.startMs) {
-                        sub.errors.push(getErrorMessage('overlap'));
-                    }
-                }
-                if (isFilterChecked('filterNoSpaceAfterPeriod') && sub.text.match(/\.(?!\s|$)(?!\d)(?!\.)/g)) {
-                    sub.errors.push(getErrorMessage('no_space_after_period'));
-                }
-                if (isFilterChecked('filterUnclosedQuotes')) {
-                    if ((sub.text.match(/'/g) || []).length % 2 !== 0) sub.errors.push(getErrorMessage('unclosed_single_quote'));
-                    if ((sub.text.match(/"/g) || []).length % 2 !== 0) sub.errors.push(getErrorMessage('unclosed_double_quote'));
-                }
-                if (isFilterChecked('filterQuotePeriod') && sub.text.match(/"\.[ \n\r]*$/)) {
-                    sub.errors.push(getErrorMessage('quote_punctuation'));
-                }
-                if (isFilterChecked('filterNoPeriodAfterQuote')) {
-                    if (sub.originalLines.some(line => line.trim().endsWith('"'))) {
-                        sub.errors.push(getErrorMessage('no_period_after_quote'));
-                    }
-                }
-                if (isFilterChecked('filterEllipsis') && sub.originalLines.some(line => line.trim().endsWith('...'))) {
-                    sub.errors.push(getErrorMessage('ellipsis_linking'));
-                }
-                if (isFilterChecked('filterNumberPunctuation') && sub.text.match(/\d{1,3}(,\d{3})+(\.\d+)?/)) {
-                    sub.errors.push(getErrorMessage('english_number_punctuation'));
-                }
-                if (isFilterChecked('filterUnitsFormat') && sub.text.match(/\b(\d+(\.\d+)?\s*(km|cm|m|kg|g|L|ml|A|V|Hz)(s|\.))\b/gi)) {
-                    sub.errors.push(getErrorMessage('incorrect_unit_format'));
-                }
-                if (isFilterChecked('filterAcronymsFormat') && sub.text.match(/\b[A-ZÑÁÉÍÓÚÄËÏÖÜ]\.([A-ZÑÁÉÍÓÚÄËÏÖÜ]\.)+\b|\b[A-ZÑÁÉÍÓÚÄËÏÖÜ]( [A-ZÑÁÉÍÓÚÄËÏÖÜ])+\b/g)) {
-                    sub.errors.push(getErrorMessage('incorrect_acronym_format'));
-                }
-                if (isFilterChecked('filterEllipsisChar') && sub.text.includes('...') && !sub.text.includes('…')) {
-                    sub.errors.push(getErrorMessage('incorrect_ellipsis_char'));
-                }
-                if (isFilterChecked('filterDualSpeakerHyphen') && sub.originalLines.length === 2) {
-                    const line1HasHyphen = sub.originalLines[0].trim().startsWith('-');
-                    const line2HasHyphen = sub.originalLines[1].trim().startsWith('-');
-                    if (line1HasHyphen !== line2HasHyphen) sub.errors.push(getErrorMessage('inconsistent_dialogue_hyphen'));
-                }
-                if (isFilterChecked('filterNumbers1to10') && sub.text.match(/\b([1-9]|10)\b/g)) {
-                    sub.errors.push(getErrorMessage('number_as_digit'));
-                }
-                if (isFilterChecked('filterFourDigitSeparator') && sub.text.match(/\b\d{1}[.,]\d{3}\b/g)) {
-                    sub.errors.push(getErrorMessage('four_digit_separator'));
-                }
-                if (isFilterChecked('filterSemicolons') && sub.text.includes(';')) {
-                    sub.errors.push(getErrorMessage('semicolon_present'));
-                }
-                if (isFilterChecked('filterIdsSfxFormat') && sub.text.match(/\[.*?\]/)) {
-                    sub.errors.push(getErrorMessage('sfx_brackets'));
+                if (isFilterChecked('filterCps')) { const cps = calculateCps(sub.text, sub.durationMs); if (cps > parseFloat(getFilterValue('maxCps'))) { addError(sub, 'high_cps', { cps: cps.toFixed(2), max: getFilterValue('maxCps') }); } }
+                if (isFilterChecked('filterWpm')) { const wpm = calculateWpm(sub.text, sub.durationMs); if (wpm > parseFloat(getFilterValue('maxWpm'))) { addError(sub, 'high_wpm', { wpm: wpm.toFixed(2), max: getFilterValue('maxWpm') }); } }
+                
+                // --- MODIFICADO (Punto 1: Tags no cuentan en CPL) ---
+                if (isFilterChecked('filterCharLimit')) { 
+                    sub.originalLines.forEach((line, lineIndex) => { 
+                        const cleanLine = line.replace(/<[^>]*>/g, ''); // Strip tags
+                        const effectiveLength = cleanLine.replace(/\.{3}/g, '…').length; // Count ellipsis
+                        if (effectiveLength > parseInt(getFilterValue('maxCharsPerLine'))) { 
+                            addError(sub, 'line_char_limit', { lineIndex: lineIndex + 1, length: effectiveLength, max: getFilterValue('maxCharsPerLine') }); 
+                        } 
+                    }); 
                 }
 
+                if (isFilterChecked('filterLineLimit')) { if (sub.originalLines.length > parseInt(getFilterValue('maxLines'))) { addError(sub, 'line_limit', { count: sub.originalLines.length, max: getFilterValue('maxLines') }); } }
+                if (isFilterChecked('filterDashSpace')) { if (sub.text.match(/-(?!\s)/) && !sub.text.match(/-\n/)) { addError(sub, 'no_space_after_dash'); } }
+                if (isFilterChecked('filterSpaceAfterDash')) { if (sub.text.match(/-\s/)) { addError(sub, 'space_after_dash'); } } // NEW
+                if (isFilterChecked('filterDuration')) { if (sub.durationMs < parseInt(getFilterValue('minDuration'))) { addError(sub, 'duration_too_short', { duration: sub.durationMs, min: getFilterValue('minDuration') }); } if (sub.durationMs > parseInt(getFilterValue('maxDuration'))) { addError(sub, 'duration_too_long', { duration: sub.durationMs, max: getFilterValue('maxDuration') }); } }
+                
+                // --- MODIFICADO (Error de Gap más detallado) ---
+                if (isFilterChecked('filterMinGap') && i < subtitles.length - 1) { 
+                    const nextSub = subtitles[i + 1]; 
+                    let requiredGapMs; 
+                    const minGapValue = parseInt(getFilterValue('minGap')); 
+                    if (getFilterValue('gapUnit') === 'ms') { 
+                        requiredGapMs = minGapValue; 
+                    } else { 
+                        const frameRateValue = parseFloat(getFilterValue('frameRate')); 
+                        requiredGapMs = (minGapValue / frameRateValue) * 1000; 
+                    } 
+                    const actualGap = nextSub.startMs - sub.endMs; 
+                    if (actualGap < requiredGapMs && actualGap >= 0) { 
+                        addError(sub, 'gap_too_small', { 
+                            gap: actualGap,
+                            currentIndex: sub.index,
+                            nextIndex: nextSub.index,
+                            endTime: formatTime(sub.endMs),
+                            startTime: formatTime(nextSub.startMs)
+                        }); 
+                    } 
+                }
+                
+                if (isFilterChecked('filterUnclosedTags')) { ['i', 'b', 'font'].forEach(tag => { const openCount = (sub.text.match(new RegExp(`<${tag}[^>]*>`, 'g')) || []).length; const closeCount = (sub.text.match(new RegExp(`</${tag}>`, 'g')) || []).length; if (openCount > closeCount) addError(sub, 'unclosed_tag', { tag: tag }); if (closeCount > openCount) addError(sub, 'unopened_tag', { tag: tag }); }); }
+                if (isFilterChecked('filterDoubleSpaces') && subTextClean.match(/\s\s+/)) { addError(sub, 'double_spaces'); }
+                
+                // --- (Lógica de Guille 2 - sin cambios) ---
+                if (isFilterChecked('filterQuestionMarks')) {
+                    let counts = getPunctuationCount(sub.text);
+                    const prevSub1 = subtitles[i-1] ? getPunctuationCount(subtitles[i-1].text) : null;
+                    const prevSub2 = subtitles[i-2] ? getPunctuationCount(subtitles[i-2].text) : null;
+                    const nextSub1 = subtitles[i+1] ? getPunctuationCount(subtitles[i+1].text) : null;
+                    const nextSub2 = subtitles[i+2] ? getPunctuationCount(subtitles[i+2].text) : null;
+                    
+                    if (counts.closeQ > counts.openQ) { if (prevSub1 && prevSub1.openQ > prevSub1.closeQ) counts.openQ++; else if (prevSub2 && prevSub2.openQ > prevSub2.closeQ) counts.openQ++; }
+                    if (counts.openQ > counts.closeQ) { if (nextSub1 && nextSub1.closeQ > nextSub1.openQ) counts.closeQ++; else if (nextSub2 && nextSub2.closeQ > nextSub2.openQ) counts.closeQ++; }
+                    if (counts.closeE > counts.openE) { if (prevSub1 && prevSub1.openE > prevSub1.closeE) counts.openE++; else if (prevSub2 && prevSub2.openE > prevSub2.closeE) counts.openE++; }
+                    if (counts.openE > counts.closeE) { if (nextSub1 && nextSub1.closeE > nextSub1.openE) counts.closeE++; else if (nextSub2 && nextSub2.closeE > nextSub2.openE) counts.closeE++; }
+                    
+                    if (counts.openQ > counts.closeQ) addError(sub, 'missing_closing_question');
+                    if (counts.closeQ > counts.openQ) addError(sub, 'missing_opening_question');
+                    if (counts.openE > counts.closeE) addError(sub, 'missing_closing_exclamation');
+                    if (counts.closeE > counts.openE) addError(sub, 'missing_opening_exclamation');
+                }
+
+                if (isFilterChecked('filterLowercaseAfterPeriod') && subTextClean.match(/\.\s*([a-záéíóúüñ])/)) { addError(sub, 'lowercase_after_period'); }
+                if (isFilterChecked('filterEmptySubtitle') && sub.text.trim() === '') { addError(sub, 'empty_subtitle'); }
+                
+                // --- MODIFICADO (Error de Overlap más detallado) ---
+                if (isFilterChecked('filterOverlap') && i < subtitles.length - 1) { 
+                    const nextSub = subtitles[i + 1]; 
+                    if (sub.endMs > nextSub.startMs) { 
+                        addError(sub, 'overlap', { nextIndex: nextSub.index }); 
+                    } 
+                }
+                
+                // --- MODIFICADO (Punto 1: Tags no afectan puntuación) ---
+                if (isFilterChecked('filterNoSpaceAfterPeriod')) {
+                    if (subTextClean.match(/\.(?!\s|$)(?!\d)(?!\.)/g)) { // Run regex on clean text
+                        addError(sub, 'no_space_after_period');
+                    }
+                }
+                
+                // --- MODIFICADO (Punto 6: Apóstrofos) ---
+                if (isFilterChecked('filterUnclosedQuotes')) { 
+                    // Apostrophe-safe single quote check (uses negative lookbehind/ahead)
+                    const singleQuotes = (sub.text.match(/(?<!\w)'(?!\w)/g) || []).length;
+                    if (singleQuotes % 2 !== 0) addError(sub, 'unclosed_single_quote');
+                    // Regular double quote check:
+                    if ((sub.text.match(/"/g) || []).length % 2 !== 0) addError(sub, 'unclosed_double_quote'); 
+                }
+
+                if (isFilterChecked('filterQuotePeriod') && subTextClean.match(/"\.[ \n\r]*$/)) { addError(sub, 'quote_punctuation'); }
+
+                // --- MODIFICADO (Punto 5: Excepciones ?"/!") ---
+                if (isFilterChecked('filterNoPeriodAfterQuote')) { 
+                    if (sub.originalLines.some(line => {
+                        const trimmedLine = line.trim();
+                        // Check if it ends with " but NOT ?" or !"
+                        return trimmedLine.endsWith('"') && !trimmedLine.endsWith('?"') && !trimmedLine.endsWith('!"');
+                    })) { 
+                        addError(sub, 'no_period_after_quote'); 
+                    } 
+                }
+
+                if (isFilterChecked('filterEllipsis') && sub.originalLines.some(line => line.trim().endsWith('...'))) { addError(sub, 'ellipsis_linking'); }
+                if (isFilterChecked('filterNumberPunctuation') && subTextClean.match(/\d{1,3}(,\d{3})+(\.\d+)?/)) { addError(sub, 'english_number_punctuation'); }
+                if (isFilterChecked('filterUnitsFormat') && subTextClean.match(/\b(\d+(\.\d+)?\s*(km|cm|m|kg|g|L|ml|A|V|Hz)(s|\.))\b/gi)) { addError(sub, 'incorrect_unit_format'); }
+                if (isFilterChecked('filterAcronymsFormat') && subTextClean.match(/\b[A-ZÑÁÉÍÓÚÄËÏÖÜ]\.([A-ZÑÁÉÍÓÚÄËÏÖÜ]\.)+\b|\b[A-ZÑÁÉÍÓÚÄËÏÖÜ]( [A-ZÑÁÉÍÓÚÄËÏÖÜ])+\b/g)) { addError(sub, 'incorrect_acronym_format'); }
+                if (isFilterChecked('filterEllipsisChar') && sub.text.includes('...') && !sub.text.includes('…')) { addError(sub, 'incorrect_ellipsis_char'); }
+                if (isFilterChecked('filterDualSpeakerHyphen') && sub.originalLines.length === 2) { const line1HasHyphen = sub.originalLines[0].trim().startsWith('-'); const line2HasHyphen = sub.originalLines[1].trim().startsWith('-'); if (line1HasHyphen !== line2HasHyphen) addError(sub, 'inconsistent_dialogue_hyphen'); }
+                if (isFilterChecked('filterNumbers1to10') && subTextClean.match(/\b([1-9]|10)\b/g)) { addError(sub, 'number_as_digit'); }
+                if (isFilterChecked('filterFourDigitSeparator') && subTextClean.match(/\b\d{1}[.,]\d{3}\b/g)) { addError(sub, 'four_digit_separator'); }
+                if (isFilterChecked('filterSemicolons') && subTextClean.includes(';')) { addError(sub, 'semicolon_present'); }
+
+                // --- MODIFICADO (Punto 8: Paréntesis en SFX) ---
+                if (isFilterChecked('filterIdsSfxFormat') && (sub.text.match(/\[.*?\]/) || sub.text.match(/\(.*?\)/))) { 
+                    addError(sub, 'sfx_brackets'); 
+                }
+                
+                // --- NEW (Punto 9: Secuencias prohibidas) ---
+                if (isFilterChecked('filterForbiddenSequences')) {
+                    const sequences = getFilterValue('forbiddenSequences').split(' ').filter(s => s.length > 0);
+                    const found = [];
+                    sequences.forEach(seq => {
+                        if (subTextClean.includes(seq)) {
+                            found.push(seq);
+                        }
+                    });
+                    if (found.length > 0) {
+                        addError(sub, 'forbidden_sequence_found', { sequences: found.join(', ') });
+                    }
+                }
+                
                 if (sub.errors.length > 0) errorsFound.push(sub);
             });
             displayResults();
         }
 
+        // --- UPDATED: displayResults uses category classes ---
         function displayResults() {
             resultsDiv.innerHTML = '';
             if (errorsFound.length === 0) {
@@ -841,73 +924,50 @@
             }
             noErrorsMessage.classList.add('hidden');
             resultsDiv.classList.remove('hidden');
+            
             errorsFound.forEach(sub => {
                 const subElement = document.createElement('div');
                 subElement.className = 'error-item';
                 const headerText = translations[currentLang].result_subtitle_header.replace('{index}', sub.index);
+                
+                const errorsHtml = sub.errors.map(e => 
+                    `<li class="error-category-${e.category || 'default'}">${escapeHtml(e.message)}</li>`
+                ).join('');
+                
                 subElement.innerHTML = `
-                    <p class="font-bold text-lg text-red-700 mb-1">${headerText} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})</p>
-                    <pre class="bg-white p-2 rounded-md border border-red-200 text-gray-900 text-sm whitespace-pre-wrap mb-2">${escapeHtml(sub.text)}</pre>
-                    <ul class="list-disc list-inside text-red-600 font-semibold">${sub.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul>`;
+                    <p class="font-bold text-lg text-slate-700 mb-1">${headerText} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})</p>
+                    <pre class="bg-white p-2 rounded-md border border-slate-200 text-gray-900 text-sm whitespace-pre-wrap mb-2">${escapeHtml(sub.text)}</pre>
+                    <ul class="list-disc list-inside font-semibold">${errorsHtml}</ul>`;
                 resultsDiv.appendChild(subElement);
             });
         }
         
-        function escapeHtml(text) {
-            return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
-        }
+        function escapeHtml(text) { return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]); }
         
-        // --- MODAL & EXPORT/IMPORT FUNCTIONS ---
+        // --- MODAL & EXPORT/IMPORT FUNCTIONS (unchanged) ---
         function showModal(type) {
-            currentModalAction.type = type;
-            const langDict = translations[currentLang];
-
-            if (type === 'exportPdf' || type === 'exportTable') {
-                if (errorsFound.length === 0) return;
-                modalTitle.textContent = langDict.export_modal_title;
-                modalFileNameLabel.textContent = langDict.export_modal_filename;
-                modalFileNameInput.value = langDict.default_report_name;
-            } else if (type === 'saveFilters') {
-                modalTitle.textContent = langDict.save_modal_title;
-                modalFileNameLabel.textContent = langDict.export_modal_filename;
-                modalFileNameInput.value = langDict.default_filter_config_name;
-            }
-            
+            currentModalAction.type = type; const langDict = translations[currentLang];
+            if (type === 'exportPdf' || type === 'exportTable') { if (errorsFound.length === 0) return; modalTitle.textContent = langDict.export_modal_title; modalFileNameLabel.textContent = langDict.export_modal_filename; modalFileNameInput.value = langDict.default_report_name; } 
+            else if (type === 'saveFilters') { modalTitle.textContent = langDict.save_modal_title; modalFileNameLabel.textContent = langDict.export_modal_filename; modalFileNameInput.value = langDict.default_filter_config_name; }
             genericModal.classList.remove('hidden');
         }
-
-        function hideModal() {
-            genericModal.classList.add('hidden');
-        }
+        function hideModal() { genericModal.classList.add('hidden'); }
 
         function exportToPdf(fileName) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let y = 20;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.text("SubPandaQA Error Report", 105, y, { align: 'center' });
-            y += 15;
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); let y = 20;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text("SubPandaQA Error Report", 105, y, { align: 'center' }); y += 15;
             errorsFound.forEach(sub => {
                 if (y > 270) { doc.addPage(); y = 20; }
                 const headerText = translations[currentLang].result_subtitle_header.replace('{index}', sub.index);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(12);
-                doc.text(`${headerText} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})`, 10, y);
-                y += 7;
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                const textLines = doc.splitTextToSize(sub.text, 180);
-                doc.text(textLines, 15, y);
-                y += textLines.length * 5 + 2;
-                doc.setTextColor(255, 0, 0);
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(`${headerText} (${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)})`, 10, y); y += 7;
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(10); const textLines = doc.splitTextToSize(sub.text, 180); doc.text(textLines, 15, y); y += textLines.length * 5 + 2;
                 sub.errors.forEach(error => {
-                    const errorLines = doc.splitTextToSize(`- ${error}`, 175);
-                    doc.text(errorLines, 20, y);
-                    y += errorLines.length * 5;
+                    const color = { rules: [52, 152, 219], timing: [46, 204, 113], spelling: [231, 76, 60], tags: [155, 89, 182], default: [0,0,0] }[error.category];
+                    doc.setTextColor(color[0], color[1], color[2]);
+                    const errorLines = doc.splitTextToSize(`- ${error.message}`, 175);
+                    doc.text(errorLines, 20, y); y += errorLines.length * 5;
                 });
-                doc.setTextColor(0, 0, 0);
-                y += 5;
+                doc.setTextColor(0, 0, 0); y += 5;
             });
             doc.save(`${fileName || 'SubPandaQA_Report'}.pdf`);
         }
@@ -916,54 +976,39 @@
             let tableHtml = `<thead><tr><th>ID</th><th>Timestamps</th><th>Text</th><th>Errors</th></tr></thead><tbody>`;
             errorsFound.forEach(sub => {
                 const headerText = translations[currentLang].result_subtitle_header.replace('{index}', sub.index);
-                tableHtml += `<tr><td>${headerText}</td><td>${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)}</td><td><pre>${escapeHtml(sub.text)}</pre></td><td><ul>${sub.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></td></tr>`;
+                tableHtml += `<tr><td>${headerText}</td><td>${formatTime(sub.startMs)} --> ${formatTime(sub.endMs)}</td><td><pre>${escapeHtml(sub.text)}</pre></td><td><ul>${sub.errors.map(e => `<li style="color:var(--color-${e.category})">${escapeHtml(e.message)}</li>`).join('')}</ul></td></tr>`;
             });
             const newWindow = window.open();
-            newWindow.document.write(`<style>body{font-family:sans-serif}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}tr:nth-child(even){background-color:#f2f2f2}pre{white-space:pre-wrap}</style><h2>${fileName || 'Error Report'}</h2><table>${tableHtml}</tbody></table>`);
+            newWindow.document.write(`<style>:root{--color-rules:#3498DB;--color-timing:#2ECC71;--color-spelling:#E74C3C;--color-tags:#9B59B6;--color-default:#475569;}body{font-family:sans-serif}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}tr:nth-child(even){background-color:#f2f2f2}pre{white-space:pre-wrap}</style><h2>${fileName || 'Error Report'}</h2><table>${tableHtml}</tbody></table>`);
             newWindow.document.close();
         }
 
         function saveFiltersConfig(fileName) {
-            const settings = {
-                filterStates,
-                filterValues
-            };
-            const blob = new Blob([JSON.stringify(settings, null, 2)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${fileName || 'filter-settings'}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const settings = { filterStates, filterValues }; const blob = new Blob([JSON.stringify(settings, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${fileName || 'filter-settings'}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
         function handleImportFilters(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
+            const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const settings = JSON.parse(e.target.result);
-                    if (settings.filterStates && settings.filterValues) {
-                        filterStates = settings.filterStates;
-                        filterValues = settings.filterValues;
-                        renderFilters();
-                    } else {
-                        alert('Invalid filter configuration file.');
-                    }
-                } catch (error) {
-                    alert('Error reading or parsing the file.');
-                }
+                    if (settings.filterStates && settings.filterValues) { filterStates = settings.filterStates; filterValues = settings.filterValues; renderFilters(); } 
+                    else { alert('Invalid filter configuration file.'); }
+                } catch (error) { alert('Error reading or parsing the file.'); }
             };
-            reader.readAsText(file);
-            // Reset input value to allow re-importing the same file
-            event.target.value = '';
+            reader.readAsText(file); event.target.value = '';
         }
         
         // --- EVENT LISTENERS ---
+        function setLanguage(lang) {
+            currentLang = lang; document.documentElement.lang = lang;
+            document.querySelectorAll('[data-lang]').forEach(el => { const key = el.getAttribute('data-lang'); if (translations[lang][key]) { el.textContent = translations[lang][key]; } });
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en'); document.getElementById('lang-es').classList.toggle('active', lang === 'es');
+            renderFilters();
+        }
+
         subtitleFile.addEventListener('change', handleFileSelect);
         checkButton.addEventListener('click', checkSubtitles);
         exportPdfButton.addEventListener('click', () => showModal('exportPdf'));
@@ -971,36 +1016,14 @@
         saveFiltersButton.addEventListener('click', () => showModal('saveFilters'));
         importFiltersButton.addEventListener('click', () => importFiltersInput.click());
         importFiltersInput.addEventListener('change', handleImportFilters);
-
         document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
         document.getElementById('lang-es').addEventListener('click', () => setLanguage('es'));
-        
-        toggleAllFiltersButton.addEventListener('click', () => {
-            allFiltersCheckedState = !allFiltersCheckedState;
-            Object.keys(filterStates).forEach(id => filterStates[id] = allFiltersCheckedState);
-            renderFilters();
-        });
-
-        resetFiltersButton.addEventListener('click', () => {
-            initializeFilterDefaults();
-            renderFilters();
-        });
-
-        // Modal listeners
+        toggleAllFiltersButton.addEventListener('click', () => { allFiltersCheckedState = !allFiltersCheckedState; Object.keys(filterStates).forEach(id => filterStates[id] = allFiltersCheckedState); renderFilters(); });
+        resetFiltersButton.addEventListener('click', () => { initializeFilterDefaults(); renderFilters(); });
         cancelModalButton.addEventListener('click', hideModal);
         confirmModalButton.addEventListener('click', () => {
             const fileName = modalFileNameInput.value;
-            switch (currentModalAction.type) {
-                case 'exportPdf':
-                    exportToPdf(fileName);
-                    break;
-                case 'exportTable':
-                    exportToTable(fileName);
-                    break;
-                case 'saveFilters':
-                    saveFiltersConfig(fileName);
-                    break;
-            }
+            switch (currentModalAction.type) { case 'exportPdf': exportToPdf(fileName); break; case 'exportTable': exportToTable(fileName); break; case 'saveFilters': saveFiltersConfig(fileName); break; }
             hideModal();
         });
 
