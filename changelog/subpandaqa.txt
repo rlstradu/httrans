@@ -1,4 +1,50 @@
 =========================================
+SubPandaQA v1.1.0 - The Categorization Update
+=========================================
+
+Release Date: October 19, 2025
+
+This update introduces a major new feature: error categorization. All errors are now grouped into logical categories, complete with new UI elements and color-coding, to help you prioritize your QA workflow. This release also includes two new filters and several important improvements to existing checks.
+
+---
+New Features
+---
+
+### Error Categorization
+
+All filters and errors are now classified into four distinct categories to improve clarity and workflow:
+
+- **Rules (Blue):** Project-specific conventions (CPS, CPL, line limits, etc.).
+- **Timing (Green):** Duration, gaps, overlaps, and spotting.
+- **Spelling (Red):** Punctuation, grammar, typos, and orthography.
+- **Tags (Magenta):** HTML tag formatting and integrity.
+
+**New UI:** The "Configure filters" section now groups all filters by their category, making the list easier to navigate.
+
+**Color-Coded Results:** Errors in the results list, the exported PDF, and the HTML table are now color-coded to match their category, allowing for at-a-glance identification of error types.
+
+---
+New Filters
+---
+
+- **Space After Dash:** Added a new *opt-in* filter (`filter_space_after_dash`) to detect dialogue that *does* contain a space after a dash (e.g., "- Hello"). This is intended for style guides that specifically require omitting the space (e.g., "-Hello").
+- **Forbidden Sequences:** Added a new *opt-in* filter (`filter_forbidden_sequences`) with a customizable text field. This allows you to detect any custom sequence of characters (e.g., '..', ',.', '.?'). Multiple sequences can be added, separated by a space.
+
+---
+Improvements & Bug Fixes
+---
+
+- **Character Limit (CPL):** The Character Limit check (`filter_char_limit`) now correctly **ignores** HTML tags when counting characters, preventing false positives on formatted lines.
+- **Reading Speed (CPS/WPM):** CPS and WPM calculations are now more accurate. The CPS check (`filter_cps`) ignores newlines in its count, while the WWPM check (`filter_wpm`) treats newlines as a word separator.
+- **Unclosed Quotes (Apostrophe-safe):** The "Unclosed Quotes" check (`filter_unclosed_quotes`) is now **apostrophe-safe**. It correctly ignores apostrophes inside words (e.g., "it's", "don't") and will no longer flag them as unclosed single quotes.
+- **SFX/Description Detection:** The "SFX/Description" check (`filter_ids_sfx_format`) has been expanded. It now detects text enclosed in both **[square brackets]** and **(parentheses)**.
+- **Punctuation Checks (Tags):** Punctuation checks like "No Space After Period" (`filter_no_space_after_period`) now properly ignore HTML tags, preventing false positives where a period is followed by a tag (e.g., 'Hello.</i>').
+- **Quote Punctuation:** The "No Period After Quote" check (`filter_no_period_after_quote`) has been improved to ignore lines ending in `?"` or `!"`, reducing false positives.
+- **Error Message Detail:** Error messages for "Minimum Gap" (`gap_too_small`) and "Overlap" (`overlap`) are now more descriptive, providing the exact timestamps and subtitle indexes involved to make debugging faster.
+- **Filter Default State:** The new "Space After Dash" and "Forbidden Sequences" filters, along with the "WPM" filter, are now disabled by default.
+
+
+=========================================
  SubPandaQA v1.0.0 - Launch Announcement
 =========================================
 
