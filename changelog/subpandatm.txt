@@ -1,4 +1,40 @@
 =========================================
+subpandaTM v1.1.1 - Waveform Integration & Advanced Timecode Control
+=========================================
+
+Release Date: October 22, 2025
+
+This version introduces a major new feature: an interactive audio waveform display powered by Wavesurfer.js. It also significantly enhances timecode management with FPS settings, frame-based display, and improved editing precision, along with UI refinements like a persistent status bar.
+
+## New Features & Improvements
+
+* **Audio Waveform Integration**:
+    * A **visual audio waveform** now appears below the video player when a video is loaded.
+    * Subtitles are displayed as **interactive regions** on the waveform.
+    * Region Content: Each region shows subtitle number, original/translation text preview, and key stats (CPS, line lengths).
+    * **Click to Navigate**: Clicking a region jumps the video and editor focus to that subtitle.
+    * **Drag & Resize Timing**: Drag regions or their handles to visually adjust subtitle start/end times (can be locked). Changes are reflected in the editor and are undoable.
+    * **Waveform Controls**: New controls added below the waveform:
+        * **Lock/Unlock**: Prevent accidental timing changes.
+        * **Zoom In/Out**: Adjust the waveform's horizontal zoom level.
+        * **Follow Playback**: Toggle mode where the waveform scrolls automatically, and the active subtitle region/editor unit is highlighted/focused during video playback.
+
+* **Advanced Timecode Management**:
+    * **Project FPS Settings**: A new "Timecode Settings" option under the "Tools" menu opens a modal to define the project's Frames Per Second (FPS).
+    * **Frame-Based Display**: Option in Timecode Settings to display and edit timecodes in `HH:MM:SS:FF` format (SRT export remains in milliseconds for compatibility).
+    * **Frame-Accurate Nudging**: Timecode nudge buttons now adjust timing by exactly one frame based on the set project FPS.
+    * **Undo/Redo for Time Changes**: All timing adjustments (manual input, nudging, waveform region manipulation) are now correctly tracked in the Undo/Redo history.
+
+* **UI & UX Enhancements**:
+    * **Persistent Status Bar**: Replaces the collapsible Statistics panel with a permanent bar at the bottom displaying progress, word counts, and QA status. Can be toggled via the "Tools" menu.
+    * **Improved Playback Tracking**: Editor focus and highlighting now reliably follow video playback when "Follow Playback" is enabled.
+    * **Refined Play Segment Behavior**: The "Play Segment" action (and shortcut) now plays precisely until the subtitle's end time.
+    * Improved active/hover states for toggle buttons.
+
+* **Bug Fixes**:
+    * **Split Subtitle Gap**: The "Split" function now correctly calculates and inserts a 2-frame gap based on the project FPS.
+
+=========================================
 subpandaTM v1.1.0 - AI Assistant, Editor Tools & Major UX Overhaul
 =========================================
 
