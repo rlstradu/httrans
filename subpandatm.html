@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/plugins/regions.min.js"></script>
     <style>
         /* General styles for body and font */
         body {
@@ -39,6 +41,108 @@
             height: 20px;
             color: #22c55e;
         }
+
+#statsContainer {
+            display: none !important; /* Oculta el div de estadísticas permanentemente */
+        }
+
+/* --- ESTILOS PARA LAS REGIONES DE WAVESURFER (MODIFICADO v2) --- */
+        #waveform ::part(region) {
+            z-index: 10;
+            overflow: visible !important;
+            background-color: rgba(7, 91, 162, 0.7);
+            border-left: 1px solid rgba(7, 91, 162, 0.9);
+            border-right: 1px solid rgba(7, 91, 162, 0.9);
+            transition: background-color 0.15s ease;
+font-size: small;
+    color: #fff !important;
+    padding: 10px;
+        }
+        #waveform ::part(region):hover {
+            background-color: rgba(6, 78, 138, 0.8);
+        }
+        #waveform ::part(region-handle-left),
+        #waveform ::part(region-handle-right) {
+            background-color: rgba(7, 91, 162, 0.9);
+            width: 5px;
+            cursor: ew-resize;
+        }
+        .region-content {
+            position: absolute;
+            top: -65px; /* Ajustado para 4 líneas */
+            left: 0;
+            width: 100%;
+            font-size: 8px;
+            line-height: 1.3; /* Espaciado entre líneas */
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 3px 6px; /* Padding reducido verticalmente */
+            border-radius: 3px;
+            pointer-events: none;
+            box-sizing: border-box;
+            overflow: hidden; /* Oculta el desbordamiento general */
+        }
+        .region-content .region-line {
+            white-space: nowrap; /* Evita que el texto salte de línea */
+            overflow: hidden; /* Oculta el texto que se sale */
+            text-overflow: ellipsis; /* Añade puntos suspensivos (...) */
+            margin-bottom: 1px; /* Pequeño espacio entre líneas */
+        }
+        .region-content .region-line:last-child {
+            margin-bottom: 0; /* Sin margen inferior en la última línea */
+        }
+        .region-content .region-line1 { /* Número */
+            font-weight: bold;
+            color: #E0E0E0; /* Blanco un poco más tenue */
+        }
+        .region-content .region-line2 { /* Original */
+            color: #A0A0A0; /* Grisáceo para diferenciar */
+        }
+        .region-content .region-line3 { /* Traducción */
+            color: #FFFFFF; /* Blanco brillante */
+            min-height: 1.3em; /* Asegura altura mínima aunque esté vacío */
+        }
+        .region-content .region-line4 { /* Stats */
+            color: #facc15; /* Amarillo para stats */
+            font-family: monospace; /* Fuente monoespaciada para stats */
+        }
+        /* --- FIN ESTILOS REGIONES --- */
+
+/* --- INICIO: ESTILOS PARA ONDA BLOQUEADA --- */
+        #waveform.is-locked ::part(region) {
+            opacity: 0.4 !important; /* Más transparente */
+            transition: opacity 0.3s ease; /* Transición para la opacidad */
+        }
+
+        /* Oculta el icono de candado que no corresponda */
+        #lockWaveformBtn .lock-icon-open.hidden,
+        #lockWaveformBtn .lock-icon-closed.hidden {
+            display: none;
+        }
+        /* --- FIN: ESTILOS PARA ONDA BLOQUEADA --- */
+
+/* --- INICIO: ESTILO PARA REGIÓN ACTIVA EN SEGUIMIENTO --- */
+        #waveform ::part(region.region-playback-active) {
+            background-color: rgba(255, 165, 0, 0.6) !important; /* Naranja semi-transparente */
+            border-left: 2px solid rgba(255, 140, 0, 0.9);
+            border-right: 2px solid rgba(255, 140, 0, 0.9);
+            transition: background-color 0.1s ease-out, border-color 0.1s ease-out;
+        }
+        /* --- FIN: ESTILO PARA REGIÓN ACTIVA --- */
+
+/* --- INICIO: ESTILOS PARA SUBTÍTULO ACTIVO EN EDITOR --- */
+        /* Estilo para el div editable cuando tiene el foco */
+        .translation-editor-wrapper div[contenteditable="true"]:focus {
+            border-color: #333 !important; /* Borde más oscuro */
+            box-shadow: 0 0 0 1px #333; /* Opcional: una sombra sutil para realzar */
+        }
+
+        /* Estilo para la unidad completa del subtítulo cuando un editor interno tiene el foco */
+        .translation-unit-active {
+            background-color: #ffffff !important; 
+            transition: background-color 0.2s ease-in-out; /* Transición suave */
+        }
+        /* --- FIN: ESTILOS PARA SUBTÍTULO ACTIVO EN EDITOR --- */
 
         /* --- UNIFIED BUTTON STYLES --- */
         .btn {
@@ -77,8 +181,16 @@
             color: #1f2937;
             border-color: #d1d5db;
         }
-        .btn-secondary:hover:not(:disabled) {
-            background-color: #d1d5db;
+
+       .btn-secondary:hover:not(:disabled) {
+            background-color: #d1d5db; /* Gris claro al pasar el ratón */
+        }
+
+        /* AÑADIR ESTA REGLA: Mantener azul en hover si está activo */
+        .btn-secondary.active:hover:not(:disabled) {
+            background-color: #064f8a; /* Un azul ligeramente más oscuro que el activo, opcional */
+            /* O si prefieres que NO cambie NADA al hacer hover cuando está activo: */
+            /* background-color: #075BA2 !important; /* Mantiene el azul primario */
         }
 
 /* Active style for toggle buttons */
@@ -782,6 +894,34 @@ video::-ms-fullscreen-button {
     }
 }
 /* --- FIN: CÓDIGO PARA LA BARRA DE CONTROLES ADAPTABLE --- */
+
+/* --- INICIO: AÑADIR ESTE BLOQUE DE CSS --- */
+        #statusBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px; /* Altura de la barra */
+            background-color: #ffffff;
+            border-top: 1px solid #d1d5db; /* Borde superior sutil */
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05); /* Sombra ligera */
+            z-index: 980; /* Encima del contenido, debajo de modales */
+            padding: 0 1rem; /* Espaciado horizontal */
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Para contenido futuro */
+            font-size: 0.875rem;
+            color: #374151; /* Color de texto gris oscuro */
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(100%); /* Oculto por defecto (movido hacia abajo) */
+        }
+        #statusBar.is-visible {
+            transform: translateY(0); /* Visible (en su posición original) */
+        }
+
+
+/* --- FIN: AÑADIR ESTE BLOQUE DE CSS --- */
+
     </style>
 </head>
 <body class="bg-gray-100">
@@ -846,6 +986,12 @@ video::-ms-fullscreen-button {
 <button id="goToSubtitleBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
         <span data-i18n="go_to_subtitle_menu">Ir a...</span>
     </button>
+<button id="timecodeSettingsBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+    <span data-i18n="timecode_settings_btn">Ajustes de Timecode</span>
+</button>
+<button id="toggleStatusBarBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+                <span data-i18n="show_status_bar_btn">Mostrar barra de estado</span>
+            </button>
         </div>
     </div>
 </div>
@@ -870,90 +1016,117 @@ video::-ms-fullscreen-button {
     </header>
 
     <div class="main-app-content">
-         <div class="video-player-section flex flex-col items-center justify-center p-4">
+       <div class="video-player-section flex flex-col items-center justify-center p-4">
 
-<div id="videoPlayerContainer" class="w-full">
-    <div id="videoPlayerWrapper" class="relative bg-black rounded-lg group">
-        <div id="videoControlsBar" class="absolute top-0 left-0 right-0 z-10 w-full flex justify-between items-center p-2 bg-black bg-opacity-50 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+    <div id="videoPlayerContainer" class="w-full">
+        <div id="videoPlayerWrapper" class="relative bg-black rounded-lg group">
+            <div id="videoControlsBar" class="absolute top-0 left-0 right-0 z-10 w-full flex justify-between items-center p-2 bg-black bg-opacity-50 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+        
+        <label for="videoFileInput" id="videoControlsLeft" class="btn btn-primary py-2">
+            <span data-i18n="load_video">Cargar vídeo</span>
+            <input type="file" id="videoFileInput" accept="video/*" class="hidden">
+        </label>
     
-    <label for="videoFileInput" id="videoControlsLeft" class="btn btn-primary py-2">
-        <span data-i18n="load_video">Cargar vídeo</span>
-        <input type="file" id="videoFileInput" accept="video/*" class="hidden">
-    </label>
-
-    <div id="videoControlsRight" class="flex items-center gap-4">
-        <div class="flex items-center gap-1 p-1 bg-gray-700 rounded-md">
-            <button id="setPreviewOriginal" class="btn py-2 btn-secondary" data-i18n="original_text_option">Original</button>
-            <button id="setPreviewTranslation" class="btn py-2 btn-secondary" data-i18n="translation_text_option">Traducción</button>
+        <div id="videoControlsRight" class="flex items-center gap-4">
+            <div class="flex items-center gap-1 p-1 bg-gray-700 rounded-md">
+                <button id="setPreviewOriginal" class="btn py-2 btn-secondary" data-i18n="original_text_option">Original</button>
+                <button id="setPreviewTranslation" class="btn py-2 btn-secondary" data-i18n="translation_text_option">Traducción</button>
+            </div>
+            <div class="flex items-center gap-2 text-white">
+                <button id="decreaseFontSize" class="btn btn-secondary w-8 h-8 flex items-center justify-center text-lg">-</button>
+                <span id="fontSizeDisplay" class="font-semibold text-sm w-12 text-center">22px</span>
+                <button id="increaseFontSize" class="btn btn-secondary w-8 h-8 flex items-center justify-center text-lg">+</button>
+                <button id="customFullscreenBtn" class="btn btn-secondary w-8 h-8 flex items-center justify-center">
+                    <span id="fullscreen-enter-char">⛶</span>
+                    <span id="fullscreen-exit-char" class="hidden">⤡</span>
+                </button>
+            </div>
         </div>
-        <div class="flex items-center gap-2 text-white">
-            <button id="decreaseFontSize" class="btn btn-secondary w-8 h-8 flex items-center justify-center text-lg">-</button>
-            <span id="fontSizeDisplay" class="font-semibold text-sm w-12 text-center">22px</span>
-            <button id="increaseFontSize" class="btn btn-secondary w-8 h-8 flex items-center justify-center text-lg">+</button>
-            <button id="customFullscreenBtn" class="btn btn-secondary w-8 h-8 flex items-center justify-center">
-                <span id="fullscreen-enter-char">⛶</span>
-                <span id="fullscreen-exit-char" class="hidden">⤡</span>
+    </div>
+    <video id="videoPlayer" class="w-full h-auto rounded-lg"></video>
+    
+            <div id="videoLogoPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
+            </div>
+    
+            <div id="subtitlePreviewOverlay">
+                <span id="subtitlePreviewText"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="waveform" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 hidden">
+        </div>
+        <div id="waveformControls" class="w-full bg-gray-50 p-2 rounded-b-lg shadow-lg flex justify-center items-center gap-3 -mt-1 hidden">
+            <button id="lockWaveformBtn" class="btn btn-secondary" title="Bloquear/Desbloquear onda">
+                <svg class="lock-icon-open w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                </svg>
+                <svg class="lock-icon-closed hidden w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                </svg>
+            </button>
+<button id="followPlaybackBtn" class="btn btn-secondary">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+    </button>
+            <button id="zoomOutBtn" class="btn btn-secondary" data-i18n-title="zoom_out">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM7.5 10.5h6" /> </svg>
+            </button>
+            <button id="zoomInBtn" class="btn btn-secondary" data-i18n-title="zoom_in">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v3m0 0v3m0-3h3m-3 0h-3" />
+                </svg>
             </button>
         </div>
-    </div>
-</div>
-<video id="videoPlayer" class="w-full h-auto rounded-lg"></video>
-
-        <div id="videoLogoPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png" alt="subpandaTM Logo" class="h-24 w-auto opacity-75">
-        </div>
-
-        <div id="subtitlePreviewOverlay">
-            <span id="subtitlePreviewText"></span>
-        </div>
-    </div>
-</div>
-<div id="statsContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 hidden">
-                <div class="accordion-item">
-                    <div class="accordion-header" id="statsAccordionHeader">
-                        <h3 class="text-lg font-bold" data-i18n="translation_stats_title">Estadísticas</h3>
-                        <svg class="w-5 h-5 accordion-icon rotated" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                    <div class="accordion-content collapsed" id="statsAccordionContent">
-                        <div class="bg-gray-100 p-3 rounded-md shadow-sm text-sm text-center space-y-1">
-                            <p><span id="segmentsProgress"></span></p>
-                            <p><span id="wordsTranslated"></span> / <span id="wordsTotal"></span></p>
-                            <p><span id="wordsRemaining"></span></p>
-                            <p id="qaErrorStats"></p>
+                <div id="statsContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 hidden">
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="statsAccordionHeader">
+                            <h3 class="text-lg font-bold" data-i18n="translation_stats_title">Estadísticas</h3>
+                            <svg class="w-5 h-5 accordion-icon rotated" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div class="accordion-content collapsed" id="statsAccordionContent">
+                            <div class="bg-gray-100 p-3 rounded-md shadow-sm text-sm text-center space-y-1">
+                                <p><span id="segmentsProgress"></span></p>
+                                <p><span id="wordsTranslated"></span> / <span id="wordsTotal"></span></p>
+                                <p><span id="wordsRemaining"></span></p>
+                                <p id="qaErrorStats"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
+    <div id="plannerContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 hidden">
+        <div class="accordion-item">
+            <div class="accordion-header" id="plannerAccordionHeader">
+                <h3 class="text-lg font-bold" data-i18n="planner_title">Planificador</h3>
+                <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
-<div id="plannerContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 hidden">
-    <div class="accordion-item">
-        <div class="accordion-header" id="plannerAccordionHeader">
-            <h3 class="text-lg font-bold" data-i18n="planner_title">Planificador</h3>
-            <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            <div class="accordion-content collapsed" id="plannerAccordionContent">
+                <div class="flex flex-col sm:flex-row items-center gap-2 p-2 bg-gray-50 rounded-lg">
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <label for="sessionCount" class="text-sm font-medium" data-i18n="planner_divide_in">Dividir en:</label>
+            <input type="number" id="sessionCount" value="3" min="1" class="w-16 p-1 border border-gray-300 rounded-md text-center">
+            <label for="sessionCount" class="text-sm font-medium" data-i18n="planner_sessions">sesiones</label>
         </div>
-        <div class="accordion-content collapsed" id="plannerAccordionContent">
-            <div class="flex flex-col sm:flex-row items-center gap-2 p-2 bg-gray-50 rounded-lg">
-    <div class="flex items-center gap-2 flex-shrink-0">
-        <label for="sessionCount" class="text-sm font-medium" data-i18n="planner_divide_in">Dividir en:</label>
-        <input type="number" id="sessionCount" value="3" min="1" class="w-16 p-1 border border-gray-300 rounded-md text-center">
-        <label for="sessionCount" class="text-sm font-medium" data-i18n="planner_sessions">sesiones</label>
+        <div class="flex-grow w-full">
+            <select id="divisionMethod" class="w-full p-1.5 border border-gray-300 rounded-md text-sm">
+                <option value="subtitles" data-i18n="planner_method_subs">Por número de subtítulos</option>
+                <option value="words" data-i18n="planner_method_words">Por número de palabras</option>
+                <option value="time" data-i18n="planner_method_time">Por tiempo</option>
+            </select>
+        </div>
+        <button id="calculateSessionsBtn" class="btn btn-primary w-full sm:w-auto" data-i1admin="planner_calculate">Calcular</button>
     </div>
-    <div class="flex-grow w-full">
-        <select id="divisionMethod" class="w-full p-1.5 border border-gray-300 rounded-md text-sm">
-            <option value="subtitles" data-i18n="planner_method_subs">Por número de subtítulos</option>
-            <option value="words" data-i18n="planner_method_words">Por número de palabras</option>
-            <option value="time" data-i18n="planner_method_time">Por tiempo</option>
-        </select>
-    </div>
-    <button id="calculateSessionsBtn" class="btn btn-primary w-full sm:w-auto" data-i18n="planner_calculate">Calcular</button>
-</div>
-            <div id="sessionResults" class="mt-4 space-y-2">
-                </div>
+                <div id="sessionResults" class="mt-4 space-y-2">
+                    </div>
+            </div>
         </div>
     </div>
-</div>
-</div>
 
-        <div id="horizontal-resizer"></div>
+</div> <div id="horizontal-resizer"></div>
 
         <div class="right-panel-content">
             <div class="editor-and-sidebars-wrapper" id="editorAndSidebarsWrapper">
@@ -1451,6 +1624,45 @@ video::-ms-fullscreen-button {
         </div>
     </div>
 
+<div id="timecodeModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="timecode_modal_title" class="text-xl font-bold mb-4">Ajustes de Timecode</h2>
+            <div class="space-y-4">
+                
+                <div class="qa-input-group">
+                    <label for="projectFpsInput" data-i18n="project_fps_label" class="block text-sm font-medium mb-1">FPS del Proyecto:</label>
+                    <select id="projectFpsInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                        <option value="23.976">23.976</option>
+                        <option value="24">24</option>
+                        <option value="25" selected>25</option>
+                        <option value="29.97">29.97</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                        <option value="59.94">59.94</option>
+                        <option value="60">60</option>
+                        <option value="custom">Otro...</option>
+                    </select>
+                    <input type="number" id="projectFpsCustomInput" step="0.001" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white mt-2 hidden" placeholder="Escribe FPS personalizado">
+                </div>
+                
+                <div class="glossary-info-box bg-blue-50 border-blue-200">
+                    <p data-i18n="fps_recommendation_note" class="text-blue-700"></p>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="useFrameTimecodeToggle" class="mr-2 rounded">
+                    <label for="useFrameTimecodeToggle" data-i18n="show_frames_label" class="text-sm font-medium">Mostrar timecode en frames (ej. 00:00:10:05)</label>
+                </div>
+                <div class="glossary-info-box">
+                    <p data-i18n="timecode_warning">Aviso: La exportación SRT siempre usará milisegundos por compatibilidad.</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                 <button id="closeTimecodeModalBtn" class="btn btn-secondary" data-i18n="close_btn">Cerrar</button>
+                <button id="saveTimecodeSettingsBtn" class="btn btn-primary" data-i18n="save_and_apply_btn">Guardar y aplicar</button>
+            </div>
+        </div>
+    </div>
+
 <div id="goToSubtitlePanel" class="floating-panel" style="width: 320px; height: auto;">
     <div class="sidebar-header">
         <h3 class="text-lg font-bold" data-i18n="go_to_subtitle_title">Ir a Subtítulo / TC</h3>
@@ -1494,6 +1706,8 @@ video::-ms-fullscreen-button {
         let srtEntries = [];
         let currentFileName = 'subtitles.srt';
         let videoFileName = null;
+let wavesurfer = null;
+let wsRegions = null;
         let currentLanguage = 'es';
         let findState = { query: '', replace: '', caseSensitive: false, useRegex: false, lastFound: null };
         let previewSource = 'translation';
@@ -1514,11 +1728,19 @@ let contextData = [];
 let lastActiveSubtitleIndex = 0;
 let afterSaveAction = null;
 let messageTimeout = null;
-
+let projectFPS = 25;
+let useFrameTimecode = false;
 let historyStack = [];
 let redoStack = [];
 let debounceTimeout = null;
 let isApplyingState = false; 
+let isWaveformLocked = false;
+let currentWaveformZoom = 100; // Valor inicial (minPxPerSec)
+const ZOOM_STEP = 20; // Cuánto zoom añadir/quitar cada vez
+let isFollowPlaybackActive = false;
+let currentlyTrackedRegionId = null;
+let currentlyTrackedEditorIndex = -1;
+let lastFocusedEditorUnitIndex = -1;
         
         const DIFF_DELETE = -1;
         const DIFF_INSERT = 1;
@@ -1677,6 +1899,15 @@ const goToTimecodeInput = document.getElementById('goToTimecodeInput');
 const goToTimecodeActionBtn = document.getElementById('goToTimecodeActionBtn');
 const contextHelpHeader = document.getElementById('contextHelpHeader');
 const contextHelpContent = document.getElementById('contextHelpContent');
+// --- INICIO: Nuevos elementos DOM de la botonera ---
+const waveformControls = document.getElementById('waveformControls');
+const lockWaveformBtn = document.getElementById('lockWaveformBtn');
+const zoomInBtn = document.getElementById('zoomInBtn');
+const zoomOutBtn = document.getElementById('zoomOutBtn');
+const lockIconOpen = document.querySelector('.lock-icon-open');
+const lockIconClosed = document.querySelector('.lock-icon-closed');
+const followPlaybackBtn = document.getElementById('followPlaybackBtn'); 
+// --- FIN: Nuevos elementos DOM de la botonera ---
 
         // --- I18N & SHORTCUTS SETUP ---
 
@@ -1762,6 +1993,21 @@ const contextHelpContent = document.getElementById('contextHelpContent');
 'merge_next_tooltip': 'Fusionar con el subtítulo siguiente',
     'split_tooltip': 'Separar subtítulo en la posición del cursor',
     'delete_tooltip': 'Eliminar subtítulo',
+'lock_waveform': 'Bloquear onda',
+'unlock_waveform': 'Desbloquear onda',
+'zoom_out': 'Alejar zoom',
+'zoom_in': 'Aumentar zoom',
+'follow_playback_on': 'Activar seguimiento de reproducción',
+'follow_playback_off': 'Desactivar seguimiento de reproducción',
+'show_status_bar_btn': 'Mostrar estadísticas',
+            'hide_status_bar_btn': 'Ocultar estadísticas',
+'timecode_settings_btn': 'Ajustes de tiempo',
+'timecode_modal_title': 'Ajustes de tiempo',
+'project_fps_label': 'FPS del proyecto:',
+'fps_recommendation_note': 'Sugerencia: Para una sincronización precisa, comprueba los FPS de tu archivo de vídeo en las propiedades y selecciona el mismo valor aquí.', 
+'show_frames_label': 'Mostrar código de tiempo en frames (ej. 00:00:10:05)',
+'timecode_warning': 'Aviso: La exportación SRT siempre usará milisegundos por compatibilidad.',
+'timecode_format_error': 'El formato del código de tiempo noes válido. Usa HH:MM:SS:FF.',
 
             },
             'en': {
@@ -1858,7 +2104,21 @@ const contextHelpContent = document.getElementById('contextHelpContent');
 'merge_next_tooltip': 'Merge with next subtitle',
     'split_tooltip': 'Split subtitle at cursor position',
     'delete_tooltip': 'Delete subtitle',
-
+'lock_waveform': 'Lock waveform',
+'unlock_waveform': 'Unlock waveform',
+'zoom_out': 'Zoom out',
+'zoom_in': 'Zoom in',
+'follow_playback_on': 'Enable playback tracking',
+'follow_playback_off': 'Disable playback tracking',
+'show_status_bar_btn': 'Show statss bar',
+            'hide_status_bar_btn': 'Hide stats bar',
+'timecode_settings_btn': 'Timecode Settings',
+'timecode_modal_title': 'Timecode Settings',
+'project_fps_label': 'Project FPS:',
+'fps_recommendation_note': "Tip: For accurate timing, check your video file's FPS (Right-click > Properties > Details) and select the same value here.", 
+'show_frames_label': 'Show timecode in frames (e.g. 00:00:10:05)',
+'timecode_warning': 'Note: SRT export will always use milliseconds for compatibility.',
+'timecode_format_error': 'Invalid timecode format. Use HH:MM:SS:FF.',
             }
         };
 
@@ -1987,6 +2247,50 @@ Ahora, analiza el siguiente contenido SRT y genera el JSON completo:
             return (h * 3600 + m * 60 + s) * 1000 + ms;
         }
 
+/**
+         * Convierte milisegundos a formato de frames (HH:MM:SS:FF).
+         * @param {number} ms Milliseconds.
+         * @param {number} fps Project FPS.
+         * @returns {string} Formatted time string.
+         */
+        function formatFrameTime(ms, fps) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            const remainingMs = ms % 1000;
+            const frames = Math.round((remainingMs / 1000) * fps);
+
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                seconds.toString().padStart(2, '0')
+            ].join(':') + ':' + frames.toString().padStart(2, '0');
+        }
+
+        /**
+         * Convierte formato de frames (HH:MM:SS:FF) a milisegundos.
+         * @param {string} timeStr Time string in frame format.
+         * @param {number} fps Project FPS.
+         * @returns {number} Milliseconds.
+         */
+        function parseFrameTime(timeStr, fps) {
+            const parts = timeStr.split(':');
+            if (parts.length !== 4) throw new Error("Invalid frame time format");
+            
+            const [h, m, s, f] = parts.map(Number);
+            let totalMs = 0;
+            totalMs += h * 3600000;
+            totalMs += m * 60000;
+            totalMs += s * 1000;
+            
+            // Convierte los frames a los milisegundos más cercanos
+            totalMs += Math.round((f / fps) * 1000);
+            
+            return totalMs;
+        }
+
         /**
          * Calculates Characters Per Second (CPS) for a given text and duration.
          * @param {string} text The text of the subtitle.
@@ -2084,6 +2388,197 @@ Ahora, analiza el siguiente contenido SRT y genera el JSON completo:
     return srtContent.trim();
 }
 
+// --- INICIO: Funciones de Bloqueo y Zoom de Onda ---
+
+/**
+ * Alterna el estado de bloqueo de la onda de sonido.
+ * Evita que las regiones se puedan arrastrar o redimensionar.
+ */
+function toggleWaveformLock() {
+    isWaveformLocked = !isWaveformLocked;
+    const waveformEl = document.getElementById('waveform');
+    
+    // Alternar estado visual
+    waveformEl.classList.toggle('is-locked', isWaveformLocked);
+    lockIconOpen.classList.toggle('hidden', isWaveformLocked);
+    lockIconClosed.classList.toggle('hidden', !isWaveformLocked);
+lockWaveformBtn.classList.toggle('active', isWaveformLocked);
+lockWaveformBtn.title = isWaveformLocked ? translations[currentLanguage]['unlock_waveform'] : translations[currentLanguage]['lock_waveform'];
+
+    // Deshabilitar/Habilitar drag y resize en TODAS las regiones
+    if (wsRegions) {
+        wsRegions.getRegions().forEach(region => {
+            region.setOptions({
+                drag: !isWaveformLocked,
+                resize: !isWaveformLocked
+            });
+        });
+    }
+}
+
+/**
+ * Aplica zoom a la onda de sonido.
+ * @param {number} direction - 1 para Zoom In, -1 para Zoom Out.
+ */
+function zoomWaveform(direction) {
+    if (!wavesurfer) return;
+    
+    const newZoom = currentWaveformZoom + (direction * ZOOM_STEP);
+    
+    // Establecemos un límite mínimo de zoom para que no se "pierda"
+    if (newZoom >= 20) { 
+        currentWaveformZoom = newZoom;
+        wavesurfer.zoom(currentWaveformZoom);
+    }
+}
+// --- FIN: Funciones de Bloqueo y Zoom de Onda ---
+
+// --- Funciones de Regiones de WaveSurfer (NUEVAS y MODIFICADAS) ---
+        /** Limpia todas las regiones de subtítulos de la onda. */
+        function clearSubtitleRegions() {
+            if (wsRegions) {
+                // Limpia solo regiones de subtítulos, preservando otras si las hubiera
+                wsRegions.getRegions().forEach(region => {
+                    if (region.id.startsWith('sub-')) { // Asume que los IDs de subtítulos empiezan con 'sub-'
+                        region.remove();
+                    }
+                });
+            }
+        }
+
+        /** Añade una región a WaveSurfer para un subtítulo específico. */
+        function addSubtitleRegion(entry) {
+            // No añade región si no hay plugin, los tiempos no son válidos o la duración es cero o negativa
+            if (!wsRegions || entry.startTimeMs < 0 || entry.endTimeMs <= entry.startTimeMs) return;
+
+            // Asegúrate de que el ID es único y estable
+            if (!entry.regionId) {
+                 entry.regionId = `sub-${entry.index}-${Date.now()}`; // Genera ID si no existe
+            }
+
+            // Evita añadir regiones duplicadas
+            if (wsRegions.getRegions().some(r => r.id === entry.regionId)) {
+                return;
+            }
+
+            try {
+                const region = wsRegions.addRegion({
+                    id: entry.regionId,
+                    start: entry.startTimeMs / 1000, // Convertir ms a segundos
+                    end: entry.endTimeMs / 1000,   // Convertir ms a segundos
+                    color: 'rgba(7, 91, 162, 0.3)',
+                    drag: !isWaveformLocked,
+                    resize: !isWaveformLocked,
+                    attributes: { // Añadir atributos para posible estilado o selección
+                        'data-subtitle-index': entry.index
+                    }
+                });
+
+              // --- INICIO: NUEVO BLOQUE para el formato de 4 líneas ---
+                const content = document.createElement('div');
+                content.className = 'region-content';
+
+                // Línea 1: Número de subtítulo
+                const line1 = `#${entry.index}`;
+
+                // Línea 2: Texto original (preview)
+                const originalPreview = entry.original.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                const line2 = originalPreview.substring(0, 40) + (originalPreview.length > 40 ? '...' : '');
+
+                // Línea 3: Texto traducido (preview, o vacío)
+                let line3 = '';
+                if (entry.translation) {
+                    const translationPreview = entry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+                    line3 = translationPreview.split('\n').join(' ').substring(0, 40) + (translationPreview.length > 40 ? '...' : '');
+                }
+
+                // Línea 4: Estadísticas de la traducción
+                let line4 = '---'; // Placeholder si no hay traducción
+                if (entry.translation) {
+                    const translationTextClean = entry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+                    const transLines = translationTextClean.split('\n');
+                    const transL1 = transLines[0] ? countCharactersWithoutTags(transLines[0]) : 0;
+                    const transL2 = transLines.length > 1 && transLines[1] ? countCharactersWithoutTags(transLines[1]) : 0;
+                    const transCPS = calculateCPS(translationTextClean.replace(/\n/g, ''), entry.durationMs);
+                    line4 = `CPS: ${transCPS} | L1: ${transL1}${transLines.length > 1 ? ` / L2: ${transL2}` : ''}`;
+                }
+
+                content.innerHTML = `
+                    <div class="region-line region-line1">${line1}</div>
+                    <div class="region-line region-line2">${line2}</div>
+                    <div class="region-line region-line3">${line3}&nbsp;</div> <div class="region-line region-line4">${line4}</div>
+                `;
+                // --- FIN: NUEVO BLOQUE ---
+                // Pequeño timeout para asegurar que el elemento de la región se ha renderizado en el DOM
+                setTimeout(() => {
+                    const regionEl = region?.element; // Usa optional chaining por si region no está definida
+                    if (regionEl && !regionEl.querySelector('.region-content')) { // Verifica que no se haya añadido ya
+                        regionEl.appendChild(content);
+                    }
+                }, 50); // Un pequeño retardo podría ser necesario
+
+            } catch (error) {
+                console.error(`Error adding region for subtitle ${entry.index}:`, error, entry);
+            }
+        }
+
+/** Actualiza una región existente si sus tiempos cambian en el editor. */
+        function updateRegionIfNeeded(entryIndex) {
+            if (!wsRegions) return;
+            const entry = srtEntries[entryIndex];
+            const region = wsRegions.getRegions().find(r => r.id === entry.regionId);
+
+            if (region) {
+                const newStart = entry.startTimeMs / 1000;
+                const newEnd = entry.endTimeMs / 1000;
+
+                if ((Math.abs(region.start - newStart) > 0.001 || Math.abs(region.end - newEnd) > 0.001) && newEnd > newStart) {
+                    region.setOptions({ start: newStart, end: newEnd });
+
+                    // Actualizar el contenido de la región también (CON LA NUEVA LÓGICA)
+                    const content = region.element?.querySelector('.region-content');
+                     if (content) {
+                         // --- INICIO: NUEVO BLOQUE para el formato de 4 líneas ---
+                         // Línea 1: Número de subtítulo
+                         const line1 = `#${entry.index}`;
+
+                         // Línea 2: Texto original (preview)
+                         const originalPreview = entry.original.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                         const line2 = originalPreview.substring(0, 40) + (originalPreview.length > 40 ? '...' : '');
+
+                         // Línea 3: Texto traducido (preview, o vacío)
+                         let line3 = '';
+                         if (entry.translation) {
+                             const translationPreview = entry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+                             line3 = translationPreview.split('\n').join(' ').substring(0, 40) + (translationPreview.length > 40 ? '...' : '');
+                         }
+
+                         // Línea 4: Estadísticas de la traducción
+                         let line4 = '---'; // Placeholder si no hay traducción
+                         if (entry.translation) {
+                             const translationTextClean = entry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+                             const transLines = translationTextClean.split('\n');
+                             const transL1 = transLines[0] ? countCharactersWithoutTags(transLines[0]) : 0;
+                             const transL2 = transLines.length > 1 && transLines[1] ? countCharactersWithoutTags(transLines[1]) : 0;
+                             const transCPS = calculateCPS(translationTextClean.replace(/\n/g, ''), entry.durationMs);
+                             line4 = `CPS: ${transCPS} | L1: ${transL1}${transLines.length > 1 ? ` / L2: ${transL2}` : ''}`;
+                         }
+
+                         content.innerHTML = `
+                             <div class="region-line region-line1">${line1}</div>
+                             <div class="region-line region-line2">${line2}</div>
+                             <div class="region-line region-line3">${line3}&nbsp;</div> <div class="region-line region-line4">${line4}</div>
+                         `;
+                         // --- FIN: NUEVO BLOQUE ---
+                     }
+                } else if (newEnd <= newStart) {
+                    region.remove();
+                }
+            } else if (entry.endTimeMs > entry.startTimeMs) {
+                addSubtitleRegion(entry);
+            }
+        }
+
    // --- Funciones para Edición de Tiempos ---
 
         /**
@@ -2102,9 +2597,14 @@ Ahora, analiza el siguiente contenido SRT y genera el JSON completo:
             entry.durationMs = entry.endTimeMs - entry.startTimeMs;
 
             // 3. Formatear las nuevas cadenas de tiempo
-            const newStartTimeStr = formatTime(entry.startTimeMs);
-            const newEndTimeStr = formatTime(entry.endTimeMs);
-            entry.timecodes = `${newStartTimeStr} --> ${newEndTimeStr}`;
+            let newStartTimeStr, newEndTimeStr;
+if (useFrameTimecode) {
+    newStartTimeStr = formatFrameTime(entry.startTimeMs, projectFPS);
+    newEndTimeStr = formatFrameTime(entry.endTimeMs, projectFPS);
+} else {
+    newStartTimeStr = formatTime(entry.startTimeMs);
+    newEndTimeStr = formatTime(entry.endTimeMs);
+}
 
             // 4. Actualizar los elementos de la interfaz
             document.getElementById(`startTime-${entryIndex}`).value = newStartTimeStr;
@@ -2116,6 +2616,7 @@ Ahora, analiza el siguiente contenido SRT y genera el JSON completo:
             if (translationEditor) {
                 updateSubtitleStats(translationEditor, entry.charCountOriginal, entry.durationMs);
             }
+updateRegionIfNeeded(entryIndex);
         }
 
         /**
@@ -2125,9 +2626,25 @@ Ahora, analiza el siguiente contenido SRT y genera el JSON completo:
          * @param {HTMLInputElement} inputElement - El propio campo de input.
          */
         function handleTimecodeChange(entryIndex, isStartTime, inputElement) {
-            try {
-                const newTimeMs = parseTime(inputElement.value);
-                const entry = srtEntries[entryIndex];
+    let newTimeMs;
+    try {
+        if (useFrameTimecode) {
+            newTimeMs = parseFrameTime(inputElement.value, projectFPS);
+        } else {
+            newTimeMs = parseTime(inputElement.value);
+        }
+        const entry = srtEntries[entryIndex];
+
+// --- INICIO: Guardar historial de tiempo ---
+                const oldTimes = { startTimeMs: entry.startTimeMs, endTimeMs: entry.endTimeMs };
+                const newTimes = { ...oldTimes };
+                if (isStartTime) {
+                    newTimes.startTimeMs = newTimeMs;
+                } else {
+                    newTimes.endTimeMs = newTimeMs;
+                }
+                saveTimeChange(entryIndex, oldTimes, newTimes);
+                // --- FIN: Guardar historial de tiempo ---
                 
                 if (isStartTime) {
                     entry.startTimeMs = newTimeMs;
@@ -2136,13 +2653,30 @@ Ahora, analiza el siguiente contenido SRT y genera el JSON completo:
                 }
                 
                 updateEntryTimes(entryIndex);
-            } catch (error) {
+           } catch (error) {
                 // Si el formato es inválido, revertir al valor anterior
                 console.error("Formato de tiempo inválido:", error);
-                const entry = srtEntries[entryIndex];
-                const [startTimeStr, endTimeStr] = entry.timecodes.split(' --> ');
-                inputElement.value = isStartTime ? startTimeStr : endTimeStr;
-                showMessage("El formato del tiempo introducido no es válido. Usa HH:MM:SS,ms");
+                
+                // --- INICIO DE LA VERSIÓN CORREGIDA ---
+                const entry = srtEntries[entryIndex]; // Se declara solo UNA VEZ
+                let oldTimeStr;
+                
+                if (useFrameTimecode) {
+                    // Si estamos en modo frames, generamos el string de frames
+                    oldTimeStr = isStartTime ? formatFrameTime(entry.startTimeMs, projectFPS) : formatFrameTime(entry.endTimeMs, projectFPS);
+                } else {
+                    // Si estamos en modo ms, usamos la lógica original
+                    const [startTime, endTime] = entry.timecodes.split(' --> ');
+                    oldTimeStr = isStartTime ? startTime : endTime;
+                }
+                
+                inputElement.value = oldTimeStr; // Revertimos al valor correcto
+                
+                // Lógica para mostrar el mensaje de error (esto ya lo tenías bien)
+                const errorKey = useFrameTimecode ? 'timecode_format_error' : 'time_format_error'; 
+                const errorMsg = translations[currentLanguage][errorKey] || "Formato de tiempo inválido.";
+                showMessage(errorMsg);
+                // --- FIN DE LA VERSIÓN CORREGIDA ---
             }
         }
 
@@ -2154,7 +2688,18 @@ Ahora, analiza el siguiente contenido SRT y genera el JSON completo:
          */
         function nudgeTimecode(entryIndex, isStartTime, direction) {
             const entry = srtEntries[entryIndex];
-            const frameDurationMs = 40; // Duración de un fotograma a 25fps
+const frameDurationMs = Math.round(1000 / projectFPS); // Duración de 1 frame
+
+// --- INICIO: Guardar historial de tiempo ---
+            const oldTimes = { startTimeMs: entry.startTimeMs, endTimeMs: entry.endTimeMs };
+            const newTimes = { ...oldTimes };
+            if (isStartTime) {
+                newTimes.startTimeMs = oldTimes.startTimeMs + (direction * frameDurationMs);
+            } else {
+                newTimes.endTimeMs = oldTimes.endTimeMs + (direction * frameDurationMs);
+            }
+            saveTimeChange(entryIndex, oldTimes, newTimes);
+            // --- FIN: Guardar historial de tiempo ---
 
             if (isStartTime) {
                 entry.startTimeMs += direction * frameDurationMs;
@@ -2705,7 +3250,9 @@ function renderTranslations(entries, activeIndexToPreserve = null, preserveScrol
                 `;
             }
 
-            if (entries.length === 0) {
+clearSubtitleRegions();            
+
+if (entries.length === 0) {
                 translationsContainer.innerHTML = `<div data-i18n="no_translations" id="initialMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md">${t.no_translations}</div>`;
                 saveSrtButton.disabled = true;
                 saveProjectBtn.disabled = true;
@@ -2718,7 +3265,13 @@ function renderTranslations(entries, activeIndexToPreserve = null, preserveScrol
                 translationUnit.id = `translation-unit-${entryIndex}`;
                 translationUnit.className = 'translation-unit-bg p-2 rounded-lg shadow-sm border border-gray-200 mb-4';
 
-                const [startTime, endTime] = entry.timecodes.split(' --> ');
+                let startTime, endTime;
+if (useFrameTimecode) {
+    startTime = formatFrameTime(entry.startTimeMs, projectFPS);
+    endTime = formatFrameTime(entry.endTimeMs, projectFPS);
+} else {
+    [startTime, endTime] = entry.timecodes.split(' --> ');
+}
                 const durationInSeconds = (entry.durationMs / 1000).toFixed(3);
 
                 translationUnit.innerHTML = `
@@ -2729,7 +3282,7 @@ function renderTranslations(entries, activeIndexToPreserve = null, preserveScrol
                         <div class="flex items-center gap-2">
                             <label class="text-sm font-medium" data-i18n="entry_time">${t.entry_time}</label>
                             <div class="flex items-center">
-                                <input type="text" id="startTime-${entryIndex}" value="${startTime}" onchange="handleTimecodeChange(${entryIndex}, true, this)" class="w-32 p-1 rounded-md border-gray-300 shadow-sm text-sm">
+                                <input type="text" id="startTime-${entryIndex}" value="${startTime}" onchange="handleTimecodeChange(${entryIndex}, true, this)" class="w-32 p-1 rounded-md border-2 border-gray-100 shadow-sm text-sm">
                                 <div class="flex items-center gap-1 ml-2">
                                     <button class="btn btn-secondary p-1" onclick="nudgeTimecode(${entryIndex}, true, 1)">
                                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
@@ -2744,7 +3297,7 @@ function renderTranslations(entries, activeIndexToPreserve = null, preserveScrol
                         <div class="flex items-center gap-2">
                             <label class="text-sm font-medium" data-i18n="exit_time">${t.exit_time}</label>
                             <div class="flex items-center">
-                                <input type="text" id="endTime-${entryIndex}" value="${endTime}" onchange="handleTimecodeChange(${entryIndex}, false, this)" class="w-32 p-1 rounded-md border-gray-300 shadow-sm text-sm">
+                                <input type="text" id="endTime-${entryIndex}" value="${endTime}" onchange="handleTimecodeChange(${entryIndex}, false, this)" class="w-32 p-1 rounded-md border-2 border-gray-100 shadow-sm text-sm">
                                 <div class="flex items-center gap-1 ml-2">
                                     <button class="btn btn-secondary p-1" onclick="nudgeTimecode(${entryIndex}, false, 1)">
                                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
@@ -2850,6 +3403,43 @@ function renderTranslations(entries, activeIndexToPreserve = null, preserveScrol
                     updateStatsDisplay();
                     updateSubtitlePreview();
 
+// --- INICIO CÓDIGO AÑADIDO ---
+                    // Actualizar el contenido de la región en tiempo real
+                    if (wsRegions) {
+                        const region = wsRegions.getRegions().find(r => r.id === currentEntry.regionId);
+                        if (region) {
+                            const content = region.element?.querySelector('.region-content');
+                            if (content) {
+                                // Reutilizamos la lógica para generar el contenido de 4 líneas
+                                const line1 = `#${currentEntry.index}`;
+                                const originalPreview = currentEntry.original.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                                const line2 = originalPreview.substring(0, 40) + (originalPreview.length > 40 ? '...' : '');
+                                let line3 = '';
+                                if (currentEntry.translation) {
+                                    const translationPreview = currentEntry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+                                    line3 = translationPreview.split('\n').join(' ').substring(0, 40) + (translationPreview.length > 40 ? '...' : '');
+                                }
+                                let line4 = '---';
+                                if (currentEntry.translation) {
+                                     const translationTextClean = currentEntry.translation.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+                                     const transLines = translationTextClean.split('\n');
+                                     const transL1 = transLines[0] ? countCharactersWithoutTags(transLines[0]) : 0;
+                                     const transL2 = transLines.length > 1 && transLines[1] ? countCharactersWithoutTags(transLines[1]) : 0;
+                                     const transCPS = calculateCPS(translationTextClean.replace(/\n/g, ''), currentEntry.durationMs);
+                                     line4 = `CPS: ${transCPS} | L1: ${transL1}${transLines.length > 1 ? ` / L2: ${transL2}` : ''}`;
+                                }
+
+                                content.innerHTML = `
+                                    <div class="region-line region-line1">${line1}</div>
+                                    <div class="region-line region-line2">${line2}</div>
+                                    <div class="region-line region-line3">${line3}&nbsp;</div>
+                                    <div class="region-line region-line4">${line4}</div>
+                                `;
+                            }
+                        }
+                    }
+                    // --- FIN CÓDIGO AÑADIDO ---
+
                     debounceTimeout = setTimeout(() => {
                         const newValue = event.target.innerHTML;
                         saveState(entryIndex, oldValue, newValue);
@@ -2905,9 +3495,9 @@ translationEditor.addEventListener('keydown', (event) => {
                         event.preventDefault();
                         switch (triggeredAction) {
                             case 'validateAndNext':
-                                setTranslationEditableState(entryIndex, false);
-                                goToNextTranslation(entryIndex);
-                                break;
+    setTranslationEditableState(entryIndex, false);
+    goToNextTranslation(entryIndex, true);
+    break;
                             // Se añaden los casos de navegación de nuevo
                             case 'goToNext':
                                 goToNextTranslation(entryIndex);
@@ -3067,6 +3657,7 @@ translationEditor.addEventListener('keydown', (event) => {
 
                 translationsContainer.appendChild(translationUnit);
                 updateSubtitleStats(translationEditor, entry.charCountOriginal, entry.durationMs);
+addSubtitleRegion(entry);
             });
             
             saveSrtButton.disabled = false;
@@ -3105,7 +3696,7 @@ plannerContainer.classList.remove('hidden');
                 }
                 
                 // Una vez terminado, salta al siguiente subtítulo pendiente
-                goToNextTranslation(entryIndex);
+                goToNextTranslation(entryIndex, false);
                 hideLoadingOverlay(); // Oculta el mensaje de carga
             }, 50); // Un pequeño retardo de 50ms es suficiente
         }
@@ -3157,6 +3748,47 @@ function updateTranslations() {
             } else {
                 qaErrorStats.textContent = t.qa_no_errors;
                 qaErrorStats.className = 'qa-success';
+            }
+
+const statusBar = document.getElementById('statusBar');
+            if (statusBar) {
+                // Obtenemos el texto de cada span
+                const progressText = segmentsProgress.textContent;
+                const translatedText = wordsTranslated.textContent;
+                const totalText = wordsTotal.textContent;
+                const remainingText = wordsRemaining.textContent;
+                const qaText = qaErrorStats.textContent;
+                const isQaClickable = qaErrorStats.classList.contains('clickable'); // Verificamos si hay errores
+
+                // Determinamos las clases CSS para el texto QA
+                const qaClasses = isQaClickable ? 'qa-error' : 'qa-success'; // Usa las clases existentes
+
+                // Creamos el HTML para el texto QA
+                let qaHtml = '';
+                if (isQaClickable) {
+                    // Si hay errores (clickable), usa un span con ID y clases
+                    qaHtml = `<span id="statusBarQaLink" class="cursor-pointer underline ${qaClasses}">${qaText}</span>`;
+                } else {
+                    // Si no hay errores, usa un span solo con las clases de estilo
+                    qaHtml = `<span class="${qaClasses}">${qaText}</span>`;
+                }
+
+                // Combinamos todo en el innerHTML, añadiendo el espacio antes de qaHtml
+                statusBar.innerHTML = `${progressText} | ${translatedText} / ${totalText} | ${remainingText} |&nbsp; ${qaHtml}`; //
+
+                // Si añadimos el span clickable, le añadimos el listener AHORA
+                if (isQaClickable) {
+                    const statusBarQaLink = document.getElementById('statusBarQaLink');
+                    if (statusBarQaLink) {
+                        statusBarQaLink.addEventListener('click', () => {
+                            // Reutilizamos la lógica del listener original de qaErrorStats
+                            if (calculateAllQaErrors().length > 0) {
+                                renderQaErrorList();
+                                qaErrorListModal.classList.remove('hidden');
+                            }
+                        });
+                    }
+                }
             }
         }
 
@@ -3210,9 +3842,12 @@ function updateTranslations() {
         targetEditor.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
        
-        if (videoPlayer.src) {
-            jumpToCurrentSubtitleTime(entryIndex);
+        // --- MODIFIED BLOCK ---
+        if (videoPlayer.src && srtEntries[entryIndex]) {
+            // Set the video time to the start of the focused subtitle, but DO NOT play.
+            videoPlayer.currentTime = srtEntries[entryIndex].startTimeMs / 1000;
         }
+        // --- END MODIFIED BLOCK ---
     }
 }
 
@@ -3220,13 +3855,19 @@ function updateTranslations() {
          * Moves focus to the next translation field.
          * @param {number} currentEntryIndex The current index of the SRT entry.
          */
-        function goToNextTranslation(currentEntryIndex) {
+        function goToNextTranslation(currentEntryIndex, autoPlayNext = false) {
             if (srtEntries.length === 0) return;
 
             let nextEntryIndex = currentEntryIndex + 1;
 
             if (nextEntryIndex < srtEntries.length) {
+                // Esto enfoca, hace scroll y ajusta el tiempo del vídeo
                 navigateToTranslation(nextEntryIndex);
+                
+                // Si la orden fue "validar y seguir", reproducimos el segmento
+                if (autoPlayNext) {
+                    jumpToCurrentSubtitleTime(nextEntryIndex);
+                }
             } else {
                 showMessage(errorMessages[currentLanguage]['reached_last']);
             }
@@ -3287,17 +3928,20 @@ function setupIntersectionObserver() {
             }
         }
 
-        /**
-         * Guarda el estado actual de un subtítulo en el historial.
+       /**
+         * Guarda el estado de un cambio de texto en el historial. // <- Texto modificado
          * @param {number} entryIndex - El índice del subtítulo modificado.
          * @param {string} oldValue - El contenido ANTES del cambio.
          * @param {string} newValue - El contenido DESPUÉS del cambio.
          */
         function saveState(entryIndex, oldValue, newValue) {
+            // AÑADIR ESTA LÍNEA ->
+            if (isApplyingState) return; // No guardar estados mientras se deshace/rehace
             // Si el valor no ha cambiado, no guardamos nada.
             if (oldValue === newValue) return;
 
-            historyStack.push({ entryIndex, oldValue, newValue });
+            // AÑADIR type: 'text' ->
+            historyStack.push({ type: 'text', entryIndex, oldValue, newValue });
             redoStack = []; // Un nuevo cambio borra el historial de "rehacer"
             updateUndoRedoButtons();
         }
@@ -4043,6 +4687,13 @@ async function loadShortcuts() {
         updateContextPanel(lastActiveSubtitleIndex);
     }
     // --- FIN DE LA CORRECCIÓN ---
+
+// Actualizar títulos de botones dinámicamente
+    document.getElementById('zoomOutBtn').title = t['zoom_out'];
+    document.getElementById('zoomInBtn').title = t['zoom_in'];
+    // Actualiza el título del botón de bloqueo según su estado actual
+    lockWaveformBtn.title = isWaveformLocked ? t['unlock_waveform'] : t['lock_waveform'];
+followPlaybackBtn.title = isFollowPlaybackActive ? t['follow_playback_off'] : t['follow_playback_on'];
 }
 
 
@@ -4803,10 +5454,11 @@ function generateTMX() {
                 videoFileName = file.name; // Store video file name
                 const videoURL = URL.createObjectURL(file);
                 videoPlayer.src = videoURL;
-videoPlayer.controls = true;
+                wavesurfer.load(videoURL);
+                document.getElementById('waveform').classList.remove('hidden');
+                videoPlayer.controls = true;
                 videoPlayer.load();
-                videoPlayer.play();
-        
+                     
                 document.getElementById('videoLogoPlaceholder').classList.add('hidden');
         
                 const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
@@ -4825,7 +5477,8 @@ videoPlayer.controls = true;
         function jumpToCurrentSubtitleTime(entryIndex) {
             if (srtEntries[entryIndex] && videoPlayer.src) {
                 const entry = srtEntries[entryIndex];
-                const stopTime = (entry.endTimeMs - 250) / 1000; // Restamos 250ms
+                // CORRECCIÓN: Quitamos el "- 200". Ahora se detiene justo al final.
+                const stopTime = entry.endTimeMs / 1000; 
                 videoPlayer.currentTime = entry.startTimeMs / 1000;
                 videoPlayer.play();
 
@@ -4834,17 +5487,168 @@ videoPlayer.controls = true;
                 }
 
                 timeUpdateListener = () => {
-                    if (videoPlayer.currentTime >= stopTime) {
-                        videoPlayer.pause();
+                    // CORRECCIÓN: El listener ahora también se detiene si el vídeo se pausa
+                    // por cualquier otro motivo (ej. el usuario le da a la pausa).
+                    if (videoPlayer.currentTime >= stopTime || videoPlayer.paused) {
+                        videoPlayer.pause(); // Pausa
                         videoPlayer.removeEventListener('timeupdate', timeUpdateListener);
                         timeUpdateListener = null;
                     }
                 };
                 
                 videoPlayer.addEventListener('timeupdate', timeUpdateListener);
-            }
+
+// Centra la vista de la onda en la región (AÑADIDO)
+                 if (wsRegions) {
+                     const region = wsRegions.getRegions().find(r => r.id === entry.regionId);
+                     if (region) {
+                         // Centrar la región en la vista de la onda
+                         const duration = wavesurfer.getDuration();
+                         const regionCenter = (region.start + region.end) / 2;
+                         // Opcional: un pequeño zoom si es necesario
+                         // wavesurfer.zoom(Number(document.getElementById('zoom-slider')?.value || 100));
+         }
+                 }
+             }
+        } // Fin de jumpToCurrentSubtitleTime
+       
+/**
+ * Gestiona el resaltado y scroll automático durante la reproducción si el seguimiento está activo.
+ */
+function handlePlaybackTracking() {
+    if (!isFollowPlaybackActive || !videoPlayer.src || srtEntries.length === 0 || !wsRegions) {
+        // Si la función está desactivada o no hay nada que seguir, limpiamos resaltados
+        clearPlaybackHighlights();
+        return;
+    }
+
+    const currentTime = videoPlayer.currentTime;
+    let activeEntryIndex = -1;
+    let activeEntry = null;
+
+    // Encuentra el subtítulo activo (igual que en updateSubtitlePreview)
+    for (let i = 0; i < srtEntries.length; i++) {
+        const entry = srtEntries[i];
+        const startTime = entry.startTimeMs / 1000;
+        const endTime = entry.endTimeMs / 1000;
+        if (currentTime >= startTime && currentTime < endTime) { // Usamos < endTime para evitar solapamientos
+            activeEntryIndex = i;
+            activeEntry = entry;
+            break;
         }
-        
+    }
+
+    // Si NO encontramos un subtítulo activo
+    if (activeEntryIndex === -1) {
+        clearPlaybackHighlights();
+        currentlyTrackedRegionId = null;
+        currentlyTrackedEditorIndex = -1;
+// --- INICIO CÓDIGO AÑADIDO ---
+        // Limpiar la clase activa si no hay ningún subtítulo en reproducción
+        if (lastFocusedEditorUnitIndex !== -1) {
+            const prevUnit = document.getElementById(`translation-unit-${lastFocusedEditorUnitIndex}`);
+            if (prevUnit) prevUnit.classList.remove('translation-unit-active');
+            lastFocusedEditorUnitIndex = -1;
+        }
+        // --- FIN CÓDIGO AÑADIDO ---
+        return;
+    }
+
+    // Si el subtítulo activo es el MISMO que ya estábamos siguiendo, no hacemos nada más
+    if (currentlyTrackedEditorIndex === activeEntryIndex) {
+        return;
+    }
+
+    // --- HEMOS ENCONTRADO UN NUEVO SUBTÍTULO ACTIVO ---
+
+    // 1. Limpia los resaltados anteriores
+    clearPlaybackHighlights();
+
+    // 2. Resalta la nueva región en la onda
+    const activeRegion = wsRegions.getRegions().find(r => r.id === activeEntry.regionId);
+    if (activeRegion && activeRegion.element) {
+        activeRegion.element.classList.add('region-playback-active');
+        currentlyTrackedRegionId = activeEntry.regionId; // Guarda el ID actual
+    }
+
+    // 3. Haz scroll y activa el foco en el editor
+        const editorUnit = document.getElementById(`translation-unit-${activeEntryIndex}`);
+        if (editorUnit) {
+            // --- INICIO CÓDIGO AÑADIDO ---
+            // Busca el div editable DENTRO de la unidad del subtítulo
+            const editorDiv = editorUnit.querySelector(`div[contenteditable="true"][data-entry-index="${activeEntryIndex}"]`);
+            // --- FIN CÓDIGO AÑADIDO ---
+
+            // Solo hacemos scroll si el elemento no está ya visible en el centro
+            const rect = editorUnit.getBoundingClientRect();
+            // CORRECCIÓN: Asegúrate de que parentElement.parentElement existe
+            const parentContainer = document.getElementById('editorMainContent'); // Usar ID es más seguro
+            const parentRect = parentContainer ? parentContainer.getBoundingClientRect() : null;
+            const isVisible = parentRect && rect.top >= parentRect.top && rect.bottom <= parentRect.bottom;
+
+
+            if (!isVisible) {
+                 editorUnit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                 // --- CÓDIGO AÑADIDO (Focus después del scroll) ---
+                 // Añadimos un pequeño retardo para asegurar que el scroll ha terminado
+                 // antes de intentar poner el foco, especialmente con 'smooth' scroll.
+                 if (editorDiv) {
+// --- INICIO CÓDIGO AÑADIDO ---
+                // Limpiar la clase del anterior subtítulo con foco si existe
+                if (lastFocusedEditorUnitIndex !== -1 && lastFocusedEditorUnitIndex !== activeEntryIndex) {
+                    const prevUnit = document.getElementById(`translation-unit-${lastFocusedEditorUnitIndex}`);
+                    if (prevUnit) prevUnit.classList.remove('translation-unit-active');
+                }
+                // Añadir la clase al actual
+                if (editorUnit) editorUnit.classList.add('translation-unit-active');
+                lastFocusedEditorUnitIndex = activeEntryIndex; // Actualizar
+                // --- FIN CÓDIGO AÑADIDO ---
+                    setTimeout(() => editorDiv.focus(), 300); // 300ms de retardo
+                 }
+                 // --- FIN CÓDIGO AÑADIDO ---
+            } else {
+                // --- CÓDIGO AÑADIDO (Focus si ya es visible) ---
+                 // Si ya estaba visible, ponemos el foco directamente
+                 if (editorDiv && document.activeElement !== editorDiv) {
+// --- INICIO CÓDIGO AÑADIDO ---
+                // Limpiar la clase del anterior subtítulo con foco si existe
+                if (lastFocusedEditorUnitIndex !== -1 && lastFocusedEditorUnitIndex !== activeEntryIndex) {
+                    const prevUnit = document.getElementById(`translation-unit-${lastFocusedEditorUnitIndex}`);
+                    if (prevUnit) prevUnit.classList.remove('translation-unit-active');
+                }
+                // Añadir la clase al actual
+                if (editorUnit) editorUnit.classList.add('translation-unit-active');
+                lastFocusedEditorUnitIndex = activeEntryIndex; // Actualizar
+                // --- FIN CÓDIGO AÑADIDO ---
+                     editorDiv.focus();
+                 }
+                 // --- FIN CÓDIGO AÑADIDO ---
+            }
+
+            currentlyTrackedEditorIndex = activeEntryIndex; // Guarda el índice actual
+        }
+    }
+
+/**
+ * Limpia los resaltados visuales aplicados por handlePlaybackTracking.
+ */
+function clearPlaybackHighlights() {
+    // Limpiar región de la onda
+    if (currentlyTrackedRegionId && wsRegions) {
+        const previousRegion = wsRegions.getRegions().find(r => r.id === currentlyTrackedRegionId);
+        if (previousRegion && previousRegion.element) {
+            previousRegion.element.classList.remove('region-playback-active');
+        }
+    }
+    // Limpiar editor (si añadiste una clase específica)
+    // if (currentlyTrackedEditorIndex !== -1) {
+    //     const previousEditorUnit = document.getElementById(`translation-unit-${currentlyTrackedEditorIndex}`);
+    //     if (previousEditorUnit) {
+    //         previousEditorUnit.classList.remove('playback-active');
+    //     }
+    // }
+}
+ 
         /**
          * Updates the subtitle preview overlay based on the video's current time and user selection.
          */
@@ -4958,7 +5762,12 @@ function goToSubtitleByNumber() {
 function goToSubtitleByTimecode() {
     if (srtEntries.length === 0 || !videoPlayer.src) return;
     try {
-        const targetTimeMs = parseTime(goToTimecodeInput.value);
+        let targetTimeMs;
+if (useFrameTimecode) {
+    targetTimeMs = parseFrameTime(goToTimecodeInput.value, projectFPS);
+} else {
+    targetTimeMs = parseTime(goToTimecodeInput.value);
+}
         videoPlayer.currentTime = targetTimeMs / 1000;
 
         // Buscamos el subtítulo cuyo inicio es más cercano (pero no posterior) al tiempo introducido.
@@ -4978,14 +5787,33 @@ function goToSubtitleByTimecode() {
 
 // --- START: Subtitle Structural Editing & Undo/Redo Logic ---
 
-        /**
-         * Guarda un cambio estructural (añadir, eliminar, fusionar subtítulos) en la pila de historial.
-         */
         function saveStructuralState(oldState, newState) {
+            // AÑADIR ESTA LÍNEA ->
+            if (isApplyingState) return;
             historyStack.push({ type: 'structural', oldState, newState });
             redoStack = []; // Un nuevo cambio borra el historial de "rehacer"
             updateUndoRedoButtons();
         }
+
+
+
+        /** <- AÑADIR ESTE BLOQUE COMPLETO ->
+         * Guarda el estado de un cambio de tiempo en el historial.
+         * @param {number} entryIndex - El índice del subtítulo modificado.
+         * @param {object} oldValue - {startTimeMs, endTimeMs} ANTES del cambio.
+         * @param {object} newValue - {startTimeMs, endTimeMs} DESPUÉS del cambio.
+         */
+        function saveTimeChange(entryIndex, oldValue, newValue) {
+            if (isApplyingState) return;
+            // No guardar si los tiempos no han cambiado realmente
+            if (oldValue.startTimeMs === newValue.startTimeMs && oldValue.endTimeMs === newValue.endTimeMs) return;
+
+            historyStack.push({ type: 'timeChange', entryIndex, oldValue, newValue });
+            redoStack = [];
+            updateUndoRedoButtons();
+        }
+        // <- FIN DEL BLOQUE AÑADIDO ->
+
         
         /**
          * Deshace la última acción del historial (textual o estructural).
@@ -5001,14 +5829,23 @@ function goToSubtitleByTimecode() {
                 // Si es un cambio estructural, restauramos toda la lista de subtítulos
                 srtEntries = JSON.parse(JSON.stringify(lastAction.oldState));
                 renderTranslations(srtEntries, 0, true);
-            } else {
-                // Si es un cambio de texto, restauramos solo ese subtítulo
-                const { entryIndex, oldValue } = lastAction;
-                const entry = srtEntries[entryIndex];
-                const editor = document.getElementById(`translation-${entryIndex}`);
+           } else if (lastAction.type === 'timeChange') { // <-- CORREGIDO
+            // --- NUEVO: Manejar deshacer cambio de tiempo ---
+            const { entryIndex, oldValue } = lastAction; // <-- CORREGIDO
+            const entry = srtEntries[entryIndex];
+            if (entry) {
+                entry.startTimeMs = oldValue.startTimeMs;
+                entry.endTimeMs = oldValue.endTimeMs;
+                updateEntryTimes(entryIndex); // Actualiza UI y región de la onda
+            }
+        } else { // <-- MODIFICAR: Este 'else' ahora solo maneja 'text'
+            // Manejar cambio de texto
+            const { entryIndex, newValue } = lastUndo;
+            const entry = srtEntries[entryIndex];
+            const editor = document.getElementById(`translation-${entryIndex}`);
                 if (entry && editor) {
-                    entry.translation = oldValue;
-                    editor.innerHTML = oldValue;
+                    entry.translation = newValue; // <-- CORREGIDO
+                    editor.innerHTML = newValue;  // <-- CORREGIDO
                     editor.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
@@ -5088,6 +5925,10 @@ function goToSubtitleByTimecode() {
          * Separa un subtítulo en dos en la posición del cursor.
          * @param {number} entryIndex - El índice del subtítulo a separar.
          */
+        /**
+         * Separa un subtítulo en dos en la posición del cursor.
+         * @param {number} entryIndex - El índice del subtítulo a separar.
+         */
         function splitSubtitle(entryIndex) {
             const editor = document.getElementById(`translation-${entryIndex}`);
             const selection = window.getSelection();
@@ -5104,6 +5945,12 @@ function goToSubtitleByTimecode() {
             
             const oldState = JSON.parse(JSON.stringify(srtEntries)); // Guardar estado PREVIO
 
+            // --- INICIO DE LA MODIFICACIÓN ---
+
+            // 1. Calculamos el hueco de 2 fotogramas
+            const frameDurationMs = Math.round(1000 / projectFPS);
+            const gapMs = frameDurationMs * 2;
+
             const currentEntry = srtEntries[entryIndex];
             const firstPartTranslation = editor.innerHTML.substring(0, splitPoint);
             const secondPartTranslation = editor.innerHTML.substring(splitPoint);
@@ -5113,15 +5960,51 @@ function goToSubtitleByTimecode() {
             const firstPartOriginal = currentEntry.original.substring(0, originalSplitPoint).trim();
             const secondPartOriginal = currentEntry.original.substring(originalSplitPoint).trim();
 
+            // 2. Calculamos los nuevos tiempos
             const midPointTimeMs = currentEntry.startTimeMs + Math.round(currentEntry.durationMs * splitRatio);
-
-            const newEntry = { ...currentEntry, index: currentEntry.index + 1, original: secondPartOriginal, translation: secondPartTranslation, startTimeMs: midPointTimeMs, durationMs: currentEntry.endTimeMs - midPointTimeMs, timecodes: `${formatTime(midPointTimeMs)} --> ${formatTime(currentEntry.endTimeMs)}` };
             
+            // El primer subtítulo termina en el punto de corte
+            const firstPartEndTimeMs = midPointTimeMs;
+            
+            // El segundo subtítulo empieza DESPUÉS del hueco
+            let secondPartStartTimeMs = midPointTimeMs + gapMs;
+
+            // Guardamos el tiempo final original
+            const originalEndTimeMs = currentEntry.endTimeMs;
+
+            // 3. Comprobación de seguridad:
+            // Si el hueco de 2 fotogramas es tan grande que "come" todo el segundo subtítulo...
+            if (secondPartStartTimeMs >= originalEndTimeMs) {
+                // ...lo forzamos a tener una duración mínima (ej. 1 fotograma)
+                secondPartStartTimeMs = originalEndTimeMs - frameDurationMs;
+                // Y nos aseguramos de que el primero no se solape
+                if (firstPartEndTimeMs >= secondPartStartTimeMs) {
+                    firstPartEndTimeMs = secondPartStartTimeMs - 1; // Dejamos 1ms de separación
+                }
+            }
+
+            // 4. Creamos y actualizamos los subtítulos con los tiempos corregidos
+
+            const newEntry = { 
+                ...currentEntry, 
+                index: currentEntry.index + 1, 
+                original: secondPartOriginal, 
+                translation: secondPartTranslation, 
+                startTimeMs: secondPartStartTimeMs,         // <--- MODIFICADO
+                endTimeMs: originalEndTimeMs,               // <--- MODIFICADO (usa el final original)
+                durationMs: originalEndTimeMs - secondPartStartTimeMs, // <--- MODIFICADO
+                timecodes: `${formatTime(secondPartStartTimeMs)} --> ${formatTime(originalEndTimeMs)}` // <--- MODIFICADO
+            };
+            
+            delete newEntry.regionId; // (Esto es de tu corrección anterior, y está perfecto)
+
             currentEntry.original = firstPartOriginal;
             currentEntry.translation = firstPartTranslation;
-            currentEntry.endTimeMs = midPointTimeMs;
+            currentEntry.endTimeMs = firstPartEndTimeMs;        // <--- MODIFICADO
             currentEntry.durationMs = currentEntry.endTimeMs - currentEntry.startTimeMs;
-            currentEntry.timecodes = `${formatTime(currentEntry.startTimeMs)} --> ${formatTime(currentEntry.endTimeMs)}`;
+            currentEntry.timecodes = `${formatTime(currentEntry.startTimeMs)} --> ${formatTime(firstPartEndTimeMs)}`; // <--- MODIFICADO
+            
+            // --- FIN DE LA MODIFICACIÓN ---
 
             srtEntries.splice(entryIndex + 1, 0, newEntry);
             renumberSubtitles(entryIndex + 1);
@@ -5403,6 +6286,11 @@ historyStack = [];
             
             videoPlayer.pause();
             videoPlayer.src = '';
+if (wavesurfer) {
+                wavesurfer.empty();
+clearSubtitleRegions();
+                document.getElementById('waveform').classList.add('hidden');
+            }
 sessionPlan = []; // <-- AÑADIR ESTA LÍNEA
 if (document.getElementById('plannerContainer')) { 
     document.getElementById('plannerContainer').classList.add('hidden');
@@ -5842,6 +6730,74 @@ makePanelResizable(goToSubtitlePanel);
            makePanelDraggable(findReplacePanel);
             makePanelResizable(findReplacePanel);
 
+// --- INICIO: Inicialización de WaveSurfer ---
+            const waveformContainer = document.getElementById('waveform');
+            const videoPlayer = document.getElementById('videoPlayer'); // Ya tienes esta variable
+            
+           wavesurfer = WaveSurfer.create({
+                container: waveformContainer,
+                media: videoPlayer,
+                waveColor: '#A8DBA8',
+                progressColor: '#3B8686',
+                cursorColor: '#FFD700',
+                cursorWidth: 2,
+                barWidth: 3,
+                barRadius: 3,
+                barGap: 2,
+                height: 96,
+                responsive: true,
+                minPxPerSec: 100,
+                plugins: [
+                    WaveSurfer.Regions.create(),
+                ]
+            });
+
+            wsRegions = wavesurfer.plugins[0];
+
+             wavesurfer.on('ready', () => {
+                 document.getElementById('waveform').classList.remove('hidden');
+waveformControls.classList.remove('hidden');
+                 // AÑADIDO: Solo renderiza si hay subtítulos cargados
+                 if (srtEntries && srtEntries.length > 0) {
+                     renderTranslations(srtEntries, lastActiveSubtitleIndex, true); // Renderiza subtítulos Y regiones
+                 }
+             });
+            wavesurfer.on('error', (err) => {
+                 console.error('WaveSurfer error:', err);
+                 // MODIFICADO: Mensaje más genérico o quitarlo si no se carga video
+                 // showMessage("Error con la onda de sonido.");
+             });
+              // Listener para cuando una región se mueve o redimensiona
+             wsRegions.on('region-updated', (region) => {
+                 const entryIndex = srtEntries.findIndex(e => e.regionId === region.id);
+                 if (entryIndex !== -1) {
+                     const entry = srtEntries[entryIndex];
+                     const newStartTimeMs = Math.round(region.start * 1000);
+                     const newEndTimeMs = Math.round(region.end * 1000);
+
+                     // Comprueba si los tiempos realmente cambiaron para evitar bucles infinitos
+                     if (entry.startTimeMs !== newStartTimeMs || entry.endTimeMs !== newEndTimeMs) {
+                         // Guarda el estado ANTES de modificar los datos
+if (!isApplyingState) { // Solo guarda si no estamos deshaciendo/rehaciendo
+                        const oldTimes = { startTimeMs: entry.startTimeMs, endTimeMs: entry.endTimeMs };
+                        const newTimes = { startTimeMs: newStartTimeMs, endTimeMs: newEndTimeMs };
+                        saveTimeChange(entryIndex, oldTimes, newTimes);
+                    }
+                         entry.startTimeMs = newStartTimeMs;
+                         entry.endTimeMs = newEndTimeMs;
+                         updateEntryTimes(entryIndex); // Actualiza la tabla y la propia región
+                     }
+                 }
+             });
+              // Listener para clic en una región
+             wsRegions.on('region-clicked', (region, e) => {
+                 e.stopPropagation(); // Evita que el clic se propague al contenedor de la onda
+                 const entryIndex = srtEntries.findIndex(e => e.regionId === region.id);
+                 if (entryIndex !== -1) {
+                      wavesurfer.setTime(region.start); // Va al inicio de la región
+                      navigateToTranslation(entryIndex); // Activa el subtítulo en la lista
+                 }
+             });
 
 // --- AÑADIR ESTE BLOQUE ---
 const plannerContainer = document.getElementById('plannerContainer');
@@ -5890,7 +6846,11 @@ goToTimecodeActionBtn.addEventListener('click', goToSubtitleByTimecode);
             if (addTermContent) addTermContent.classList.add('collapsed');
             if (statsAccordionContent) statsAccordionContent.classList.add('collapsed');
             
-                        videoPlayer.addEventListener('timeupdate', updateSubtitlePreview);
+videoPlayer.addEventListener('timeupdate', () => {
+    updateSubtitlePreview(); // Actualiza el texto de vista previa
+    handlePlaybackTracking(); // Gestiona el resaltado/scroll automático
+});
+
             // Inicializa los nuevos controles del reproductor
 updateFontSize(subtitleFontSize);
 setPreviewSource('translation'); // Establece el estado inicial
@@ -6139,6 +7099,44 @@ confirmRestoreBtn.addEventListener('click', async () => {
                 }
             });
 
+// --- Timecode Modal Listeners ---
+            const timecodeModal = document.getElementById('timecodeModal');
+            const timecodeSettingsBtn = document.getElementById('timecodeSettingsBtn');
+            const closeTimecodeModalBtn = document.getElementById('closeTimecodeModalBtn');
+            const saveTimecodeSettingsBtn = document.getElementById('saveTimecodeSettingsBtn');
+            const projectFpsInput = document.getElementById('projectFpsInput');
+            const useFrameTimecodeToggle = document.getElementById('useFrameTimecodeToggle');
+
+            timecodeSettingsBtn.addEventListener('click', () => {
+                // Cargar valores actuales en el modal
+                projectFpsInput.value = projectFPS;
+                useFrameTimecodeToggle.checked = useFrameTimecode;
+                timecodeModal.classList.remove('hidden');
+            });
+
+            closeTimecodeModalBtn.addEventListener('click', () => {
+                timecodeModal.classList.add('hidden');
+            });
+
+            saveTimecodeSettingsBtn.addEventListener('click', () => {
+                // Guardar nuevos valores
+                const newFPS = parseFloat(projectFpsInput.value);
+                projectFPS = isNaN(newFPS) || newFPS <= 0 ? 25 : newFPS;
+                useFrameTimecode = useFrameTimecodeToggle.checked;
+
+                // Actualizar el placeholder del panel "Ir a..."
+                if (useFrameTimecode) {
+                    goToTimecodeInput.value = formatFrameTime(0, projectFPS);
+                } else {
+                    goToTimecodeInput.value = formatTime(0);
+                }
+                
+                // Refrescar la lista de traducción para mostrar el nuevo formato
+                renderTranslations(srtEntries, lastActiveSubtitleIndex, true);
+                
+                timecodeModal.classList.add('hidden');
+            });
+
 // --- Lógica de importación de contexto ---
 const contextFileInput = document.getElementById('contextFileInput');
 const importFromPasteBtn = document.getElementById('importFromPasteBtn');
@@ -6243,14 +7241,15 @@ contextPasteArea.addEventListener('input', validateJsonInTextarea);
 
       reselectVideoInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
-                if (file) {
-                    videoFileName = file.name;
-                    const videoURL = URL.createObjectURL(file);
-                    videoPlayer.src = videoURL;
-videoPlayer.controls = true;
+              if (file) {
+        videoFileName = file.name;
+        const videoURL = URL.createObjectURL(file); // <-- CORREGIDO: Creada ANTES
+        videoPlayer.src = videoURL; // <-- CORREGIDO: Mover src aquí también
+        wavesurfer.load(videoURL); // <-- Ahora videoURL existe
+        document.getElementById('waveform').classList.remove('hidden');
+        videoPlayer.controls = true;
                     videoPlayer.load();
-                    videoPlayer.play();
-            
+                                
                     document.getElementById('videoLogoPlaceholder').classList.add('hidden');
             
                     const loadVideoBtnSpan = document.querySelector('#loadVideoBtn span');
@@ -6352,6 +7351,81 @@ if (contextHelpHeader && contextHelpContent) {
                 });
             }
 
+// --- INICIO: Listeners para la botonera de la onda ---
+        lockWaveformBtn.addEventListener('click', toggleWaveformLock);
+        zoomInBtn.addEventListener('click', () => zoomWaveform(1));
+        zoomOutBtn.addEventListener('click', () => zoomWaveform(-1));
+        // --- FIN: Listeners para la botonera de la onda ---
+
+// --- INICIO: Listener para botón de seguimiento ---
+followPlaybackBtn.addEventListener('click', () => {
+    isFollowPlaybackActive = !isFollowPlaybackActive;
+    followPlaybackBtn.classList.toggle('active', isFollowPlaybackActive); // Usa la clase 'active' genérica
+    followPlaybackBtn.title = isFollowPlaybackActive
+        ? translations[currentLanguage]['follow_playback_off']
+        : translations[currentLanguage]['follow_playback_on'];
+
+    // Si se acaba de desactivar, limpia los resaltados
+    if (!isFollowPlaybackActive) {
+        clearPlaybackHighlights();
+        currentlyTrackedRegionId = null;
+        currentlyTrackedEditorIndex = -1;
+    } else {
+         handlePlaybackTracking(); // Intenta resaltar inmediatamente si se activa
+    }
+});
+// --- FIN: Listener para botón de seguimiento ---
+
+const statusBar = document.getElementById('statusBar');
+    const toggleStatusBarBtn = document.getElementById('toggleStatusBarBtn');
+
+// --- INICIO: MODIFICAR ESTE BLOQUE (Lógica de la Barra de Estado) ---
+        if (statusBar && toggleStatusBarBtn) {
+            // Comprueba el estado guardado al cargar la página
+            const savedState = localStorage.getItem('statusBarVisible') === 'true';
+            let textKey = 'show_status_bar_btn'; // Texto por defecto
+
+            if (savedState) {
+                statusBar.classList.add('is-visible');
+                document.body.classList.add('status-bar-visible'); // Mantenemos esto por si acaso, aunque no afecte visualmente ahora
+                textKey = 'hide_status_bar_btn'; // Texto si está visible
+            }
+            // Establecemos el atributo i18n para que se actualice con el idioma
+            const buttonSpan = toggleStatusBarBtn.querySelector('span'); // Guardamos el span en una variable
+            if (buttonSpan) { // Comprobamos si el span existe
+                 buttonSpan.setAttribute('data-i18n', textKey);
+                 // Añadimos esta línea para asegurar que el texto se actualice al cargar
+                 buttonSpan.textContent = translations[currentLanguage][textKey];
+            }
+
+
+            // Listener del botón
+            toggleStatusBarBtn.addEventListener('click', () => {
+                // Añadimos un console.log para depurar
+                console.log("Botón de barra de estado pulsado. Estado actual:", statusBar.classList.contains('is-visible'));
+
+                const isVisible = statusBar.classList.toggle('is-visible');
+                document.body.classList.toggle('status-bar-visible', isVisible);
+
+                // Actualiza el texto del botón y el atributo i18n
+                const newTextKey = isVisible ? 'hide_status_bar_btn' : 'show_status_bar_btn';
+                if (buttonSpan) { // Usamos la variable guardada
+                    buttonSpan.textContent = translations[currentLanguage][newTextKey];
+                    buttonSpan.setAttribute('data-i18n', newTextKey);
+                }
+
+                // Guardar el estado en el navegador
+                localStorage.setItem('statusBarVisible', isVisible);
+
+                // Añadimos otro console.log para ver el estado después del toggle
+                console.log("Nuevo estado:", isVisible);
+            });
+        } else {
+             // Añadimos un log si los elementos no se encuentran
+             console.error("Error: No se encontró statusBar o toggleStatusBarBtn.");
+        }
+        // --- FIN: MODIFICAR ESTE BLOQUE ---
+
 // --- INICIO: NUEVO ESCUCHA GLOBAL DE ATAJOS DE TECLADO ---
 document.addEventListener('keydown', (event) => {
     const activeElement = document.activeElement;
@@ -6432,10 +7506,11 @@ document.addEventListener('keydown', (event) => {
 });
 // --- FIN: NUEVO ESCUCHA GLOBAL DE ATAJOS DE TECLADO ---
    
-
+followPlaybackBtn.title = translations[currentLanguage]['follow_playback_on'];
     });
 
    
 </script>
+<div id="statusBar"></div>
 </body>
 </html>
