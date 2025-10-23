@@ -220,6 +220,15 @@
     z-index: 1001;
 }
 
+.dropdown-content a.disabled-link {
+        color: #9ca3af; /* Lighter gray text */
+        cursor: not-allowed;
+        background-color: #f9fafb; /* Match normal background */
+    }
+    .dropdown-content a.disabled-link:hover {
+        background-color: #f9fafb; /* Prevent hover effect */
+    }
+
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
@@ -243,6 +252,12 @@
                     <a id="saveProjectBtn" data-i18n="save_project_btn">Save Project</a>
                 </div>
             </div>
+            <div class="dropdown">
+            <button id="fileBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="file_menu_btn">File</span> </button>
+            <div class="dropdown-content">
+                <a id="loadFilePoBtn" data-i18n="load_po_menu">Load .po File</a> <a id="saveFilePoBtn" data-i18n="save_po_menu" class="disabled-link">Save .po File</a> <hr class="my-1 border-gray-200"> <a id="loadFileJsonBtn" data-i18n="load_json_menu">Load JSON Project</a> <a id="saveFileJsonBtn" data-i18n="save_json_menu" class="disabled-link">Save JSON File</a> <hr class="my-1 border-gray-200"> <a id="convertFileMoBtn" data-i18n="convert_mo_menu" class="disabled-link">Convert to .mo</a> </div>
+        </div>
             <button id="backupBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
                 <span data-i18n="backup_btn">Backup</span>
                 <span id="backupIndicator"></span>
@@ -275,6 +290,8 @@
                 <input type="file" id="poFile" accept=".po" class="hidden">
                 <input type="file" id="projectFile" accept=".zip,.poanda" class="hidden">
                 <input type="file" id="backupFile" accept=".json,.poanda-backup" class="hidden">
+                <input type="file" id="jsonSourceFile" accept=".json" class="hidden">
+                <input type="file" id="jsonTargetFile" accept=".json" class="hidden">
             </label>
             <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
                 <span data-i18n="save_file" id="saveBtnText"></span>
@@ -496,6 +513,9 @@
         };
         let searchResults = [];
         let currentSearchIndex = -1;
+        let currentFileType = null; // Can be 'po', 'json', or null
+        let currentJsonSourceFileName = null;
+        let currentJsonTargetFileName = null;
 
         // Global variable to keep track of terms found in the currently active/focused segment's original text
         let termsFoundInActiveSegment = new Set(); // Stores terms found in the currently focused original segment
@@ -670,7 +690,7 @@
                 'error_reading_file': 'Error reading or parsing .po file: ',
                 'error_saving_file': 'Error saving .po file: ',
                 'file_saved_successfully': '.po file saved successfully.',
-'tbx_saved_successfully': 'TBX file saved successfully.',
+                'tbx_saved_successfully': 'TBX file saved successfully.',
                 'no_translations_to_save': 'No translations to save. Load a .po file first.',
                 'reached_last': 'You have reached the last translation.',
                 'reached_first': 'You are already at the first translation.',
@@ -682,7 +702,7 @@
                 'shortcut_validate': 'Validate & Next Segment',
                 'shortcut_next': 'Next Segment',
                 'shortcut_prev': 'Previous Segment',
-              'shortcut_tm_insert_1': 'Insert TM Match 1',
+                'shortcut_tm_insert_1': 'Insert TM Match 1',
                 'shortcut_tm_insert_2': 'Insert TM Match 2',
                 'shortcut_tm_insert_3': 'Insert TM Match 3',
                 'shortcut_tm_insert_4': 'Insert TM Match 4',
@@ -810,13 +830,32 @@
                 'delete_local_backup_btn_confirm': 'Are you sure you want to delete the local backup? This action cannot be undone.',
                 'mo_converter_title': 'PO to MO Converter',
                 'mo_converter_info': 'This will compile the current .po file into a binary .mo file. The conversion happens entirely in your browser.',
-                'mo_converter_action_btn': 'Convert and Download .mo',
+                'mo_converter_action_btn': 'Convert and download .mo',
                 'mo_conversion_success': 'MO file converted and downloaded successfully.',
                 'mo_conversion_error': 'Error during MO conversion. Check the browser console (F12) for details.',
                 'no_file_to_convert': 'No .po file loaded to convert.',
                 'po_search_placeholder': 'Search in file...',
                 'search_in_original': 'Search in original',
                 'search_in_translation': 'Search in translation',
+                'file_menu_btn': 'File',
+                'load_po_menu': 'Load .po file',
+                'save_po_menu': 'Save .po file',
+                'load_json_menu': 'Load .json file',
+                'save_json_menu': 'Save .json file',
+                'convert_mo_menu': 'Convert to .mo',
+                'prompt_select_source_json': 'Please select the SOURCE language JSON file (e.g., en.json)',
+                'prompt_select_target_json': 'Please select the TARGET language JSON file (e.g., es.json). Cancel if this is a new translation.',
+                'error_loading_json': 'Error reading or parsing JSON file: ',
+                'json_loaded_success': 'JSON project loaded successfully.',
+                'json_save_filename_prompt': 'Enter filename for the target JSON (e.g., es.json):',
+                'error_saving_json': 'Error saving JSON file: ',
+                'json_saved_success': 'JSON file saved successfully.',
+                'not_a_json_project': 'Cannot save as JSON. Please load a JSON project first.',
+                'not_a_po_project': 'Cannot save as PO/MO. Please load a .po file first.',
+                'select_file_error': 'File selection failed or cancelled.',
+                'copy_original_btn': 'Copy original text to translation field',
+                'copy_error': 'Failed to copy text.', 
+                'edit_first_message': 'Please click Edit before copying.',
             },
             'es': {
                 'title': 'Poanda',
@@ -836,7 +875,7 @@
                 'error_reading_file': 'Error al leer o analizar archivo .po: ',
                 'error_saving_file': 'Error al guardar archivo .po: ',
                 'file_saved_successfully': 'Archivo .po guardado con éxito.',
-'tbx_saved_successfully': 'Archivo TBX guardado con éxito.',
+                'tbx_saved_successfully': 'Archivo TBX guardado con éxito.',
                 'no_translations_to_save': 'No hay traducciones para guardar. Carga un archivo .po primero.',
                 'reached_last': 'Has llegado a la última traducción.',
                 'reached_first': 'Ya estás en la primera traducción.',
@@ -848,8 +887,7 @@
                 'shortcut_validate': 'Validar e ir al siguiente segmento',
                 'shortcut_next': 'Siguiente segmento',
                 'shortcut_prev': 'Segmento anterior',
-
-           'shortcut_tm_insert_1': 'Insertar concordancia de MT 1',
+                'shortcut_tm_insert_1': 'Insertar concordancia de MT 1',
                 'shortcut_tm_insert_2': 'Insertar concordancia de MT 2',
                 'shortcut_tm_insert_3': 'Insertar concordancia de MT 3',
                 'shortcut_tm_insert_4': 'Insertar concordancia de MT 4',
@@ -859,7 +897,6 @@
                 'shortcut_glossary_insert_3': 'Insertar término del glosario 3',
                 'shortcut_glossary_insert_4': 'Insertar término del glosario 4',
                 'shortcut_glossary_insert_5': 'Insertar término del glosario 5',
-
                 'save_shortcuts_btn': 'Guardar atajos',
                 'import_shortcuts_btn': 'Importar',
                 'export_shortcuts_btn': 'Exportar',
@@ -985,6 +1022,25 @@
                 'po_search_placeholder': 'Buscar en el archivo...',
                 'search_in_original': 'Buscar en original',
                 'search_in_translation': 'Buscar en traducción',
+                'file_menu_btn': 'Archivo',
+                'load_po_menu': 'Cargar archivo .po',
+                'save_po_menu': 'Guardar archivo .po',
+                'load_json_menu': 'Cargar archivo .json',
+                'save_json_menu': 'Guardar archivo .json',
+                'convert_mo_menu': 'Convertir a .mo',
+                'prompt_select_source_json': 'Selecciona el archivo JSON del idioma ORIGEN (ej: en.json)',
+                'prompt_select_target_json': 'Selecciona el archivo JSON del idioma DESTINO (ej: es.json). Cancela si es una traducción nueva.',
+                'error_loading_json': 'Error al leer o analizar el archivo JSON: ',
+                'json_loaded_success': 'Proyecto JSON cargado con éxito.',
+                'json_save_filename_prompt': 'Introduce el nombre para el JSON de destino (ej: es.json):',
+                'error_saving_json': 'Error al guardar el archivo JSON: ',
+                'json_saved_success': 'Archivo JSON guardado con éxito.',
+                'not_a_json_project': 'No se puede guardar como JSON. Carga primero un archivo JSON.',
+                'not_a_po_project': 'No se puede guardar como PO/MO. Carga primero un archivo .po.',
+                'select_file_error': 'Selección de archivo fallida o cancelada.',
+                'copy_original_btn': 'Copiar texto original al campo de traducción',
+                'copy_error': 'Error al copiar el texto.',
+                'edit_first_message': 'Haz clic en Editar antes de copiar.',
             }
         };
 
@@ -1031,7 +1087,9 @@
         const arrowDownIcon = `<svg class="shortcut-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 12a1 1 0 01-.707-.293l-4-4a1 1 0 011.414-1.414L10 9.586l3.293-3.293a1 1 0 111.414 1.414l-4 4A1 1 0 0110 12z" clip-rule="evenodd"></path></svg>`;
         const arrowUpIcon = `<svg class="shortcut-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 8a1 1 0 01.707.293l4 4a1 1 0 01-1.414 1.414L10 10.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4A1 1 0 0110 8z" clip-rule="evenodd"></path></svg>`;
 
-        // List of common ISO 639-1 language codes for the datalist (for Terminology)
+const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>`;
+      
+// List of common ISO 639-1 language codes for the datalist (for Terminology)
         const isoLanguagesData = [
           { code: "en", name: "English" }, { code: "en-US", name: "English (United States)" }, { code: "en-GB", name: "English (United Kingdom)" },
           { code: "es", name: "Español" }, { code: "es-ES", name: "Español (España)" }, { code: "es-MX", name: "Español (México)" },
@@ -1270,6 +1328,41 @@
             return entries;
         }
 
+/**
+         * Parses a single JSON content into the poEntries structure.
+         * Key -> msgctxt, Value -> msgid AND initial msgstr.
+         * @param {string} jsonContent Content of the JSON file.
+         * @returns {Array<Object>} An array of PO entry-like objects.
+         */
+        function parseJsonProject(jsonContent) {
+            const jsonData = JSON.parse(jsonContent);
+            const entries = [];
+            const sortedKeys = Object.keys(jsonData).sort(); // Sort keys
+
+            for (const key of sortedKeys) {
+                if (Object.hasOwnProperty.call(jsonData, key)) {
+                    const value = String(jsonData[key] || ''); // Ensure it's a string
+
+                    const entry = {
+                        comments: [],
+                        msgctxt: key,      // Key -> Context
+                        msgid: value,      // Value -> Original (for reference)
+                        msgstr: '',         // <-- CAMBIADO a cadena vacía
+                        isHeader: false,
+                        fuzzy: false,
+                        sentenceSegments: [{ // Maintain segment structure
+                            original: value,    // Value goes here too
+                            translation: '',    // <-- CAMBIADO a cadena vacía
+                            wordCountOriginal: countWords(value),
+                            wordCountTranslation: 0, // <-- CAMBIADO a 0
+                            isTranslated: false      // <-- CAMBIADO a false
+                        }]
+                    };
+                    entries.push(entry);
+                }
+            }
+            return entries;
+        }
 
         /**
          * Reconstructs the content of a PO file from an array of entries.
@@ -1315,6 +1408,169 @@
             });
             return poContent;
         }
+
+/**
+     * Reconstructs a JSON translation object from an array of entries.
+     * Uses msgctxt as the key and the combined msgstr from segments as the value.
+     * @param {Array<Object>} entries The array of translation objects.
+     * @returns {string} The JSON string content.
+     */
+    function reconstructJson(entries) {
+        const translations = {};
+        entries.forEach(entry => {
+            // Only process entries that likely came from JSON (have msgctxt)
+            if (entry.msgctxt && !entry.isHeader) {
+                // Reconstruct the full translation string from segments
+                const fullMsgstr = (entry.sentenceSegments || [])
+                                     .map(s => s.translation || '') // Ensure segments exist
+                                     .join(' ') // Join segments back (simple join, might need refinement for complex cases)
+                                     .trim();
+                translations[entry.msgctxt] = fullMsgstr;
+            }
+        });
+        return JSON.stringify(translations, null, 2); // Pretty print JSON
+    }
+
+    /**
+     * Saves the current translations as a JSON file.
+     */
+    /**
+         * Saves the current translations as a JSON file. Always prompts for filename.
+         */
+        async function saveJsonFile() {
+            // Allow saving if ANY entries exist, regardless of original file type
+            if (poEntries.length === 0) {
+                showMessage(translations[currentLanguage]['no_translations_to_save']);
+                return;
+            }
+
+            // Always prompt for filename in this simplified flow
+            let targetFileName = prompt(translations[currentLanguage]['json_save_filename_prompt'], `translations_${currentLanguage}.json`);
+            if (!targetFileName) {
+                showMessage(translations[currentLanguage]['select_file_error']); // User cancelled prompt
+                return;
+            }
+            // Ensure it ends with .json
+            if (!targetFileName.toLowerCase().endsWith('.json')) {
+                targetFileName += '.json';
+            }
+
+        showLoadingOverlay(translations[currentLanguage]['saving_file']);
+        try {
+            const updatedJsonContent = reconstructJson(poEntries);
+            const blob = new Blob([updatedJsonContent], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = targetFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+             showMessage(translations[currentLanguage]['json_saved_success']);
+        } catch (error) {
+             showMessage(`${translations[currentLanguage]['error_saving_json']} ${error.message}`);
+            console.error("Error saving JSON file:", error);
+        } finally {
+            hideLoadingOverlay();
+        }
+    }
+
+/**
+     * Updates the enabled/disabled state of save buttons and menu items.
+     */
+    function updateSaveButtonsState() {
+        const hasEntries = poEntries.length > 0;
+        const isPo = currentFileType === 'po';
+        const isJson = currentFileType === 'json';
+
+        // Main buttons
+        savePoButton.disabled = !hasEntries || !isPo;
+        convertToMoButton.disabled = !hasEntries || !isPo;
+
+        // Menu items (using class manipulation)
+        const savePoMenuItem = document.getElementById('saveFilePoBtn');
+        const saveJsonMenuItem = document.getElementById('saveFileJsonBtn');
+        const convertMoMenuItem = document.getElementById('convertFileMoBtn');
+
+        if (savePoMenuItem) {
+            if (hasEntries && isPo) savePoMenuItem.classList.remove('disabled-link');
+            else savePoMenuItem.classList.add('disabled-link');
+        }
+        if (saveJsonMenuItem) {
+            if (hasEntries) saveJsonMenuItem.classList.remove('disabled-link'); // <-- Nueva condición más simple
+            else saveJsonMenuItem.classList.add('disabled-link');
+        }
+        if (convertMoMenuItem) {
+            if (hasEntries && isPo) convertMoMenuItem.classList.remove('disabled-link');
+            else convertMoMenuItem.classList.add('disabled-link');
+        }
+    }
+
+function processPoContent(content) {
+         showLoadingOverlay(translations[currentLanguage]['loading_file']);
+         try {
+            poEntries = parsePoContent(content);
+            // ADD THESE LINES:
+            currentFileType = 'po';
+            currentJsonSourceFileName = null;
+            currentJsonTargetFileName = null;
+            // END ADD
+
+            setTimeout(() => { // Keep the timeout if needed for rendering large files
+                renderTranslations(poEntries);
+                updateStatsDisplay();
+            }, 0);
+            poSearchInput.value = '';
+            filterPOEntries();
+            updateSaveButtonsState(); // ADD THIS CALL
+
+         } catch (error) {
+             // ... (existing error handling) ...
+            updateSaveButtonsState(); // ADD THIS CALL
+         } finally {
+            hideLoadingOverlay();
+         }
+    }
+
+    /**
+     * Handles the process of loading source and target JSON files.
+     */
+   /**
+         * Handles loading a single JSON file for translation.
+         */
+        async function loadSingleJsonFile() {
+            showLoadingOverlay(translations[currentLanguage]['loading_file']);
+            try {
+                // Use the 'jsonSourceFile' input, but treat it as the main file
+                const fileData = await selectFile('jsonSourceFile', translations[currentLanguage]['load_json_menu']);
+
+                poEntries = parseJsonProject(fileData.content);
+                currentFileType = 'json'; // Mark as JSON type
+                currentFileName = fileData.name; // Use the loaded filename
+                // Reset other JSON names as they aren't relevant in this flow
+                currentJsonSourceFileName = fileData.name;
+                currentJsonTargetFileName = null;
+
+
+                renderTranslations(poEntries);
+                updateStatsDisplay();
+                updateSaveButtonsState(); // Enable JSON saving
+                showMessage(translations[currentLanguage]['json_loaded_success']);
+
+            } catch (error) {
+                showMessage(`${translations[currentLanguage]['error_loading_json']} ${error.message || error}`);
+                console.error("Error loading single JSON file:", error);
+                // Consider resetting if load fails
+                 // resetProjectState();
+            } finally {
+                hideLoadingOverlay();
+                 // Ensure file input is reset
+                 document.getElementById('jsonSourceFile').value = '';
+            }
+        }
+
+    
 
         /**
          * Adjusts the height of a textarea to fit its content.
@@ -1562,6 +1818,24 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                     `;
                     actionButtonsContainer.appendChild(checkIcon);
 
+                    // --- START: UPDATED COPY ORIGINAL BUTTON ---
+                    const copyOriginalButton = document.createElement('button');
+                    copyOriginalButton.id = `copyOriginalBtn-${entryIndex}-${segmentIndex}`;
+                    // Adjusted classes for padding with icon
+                    copyOriginalButton.className = 'copy-original-button font-medium py-1 px-2 rounded-md shadow-sm transition duration-300 btn-modal-neutral';
+                    copyOriginalButton.dataset.entryIndex = entryIndex;
+                    copyOriginalButton.dataset.segmentIndex = segmentIndex;
+
+                    // Set tooltip text using the title attribute and translation key
+                    const tooltipText = translations[currentLanguage]['copy_original_btn'] || 'Copy Original';
+                    copyOriginalButton.setAttribute('title', tooltipText);
+
+                    // Set the button content to the SVG icon
+                    copyOriginalButton.innerHTML = copyIconSVG;
+
+                    actionButtonsContainer.appendChild(copyOriginalButton); // Add BEFORE validate button
+                    // --- END: UPDATED COPY ORIGINAL BUTTON ---
+
                     const validateButton = document.createElement('button');
                     validateButton.id = `validateBtn-${entryIndex}-${segmentIndex}`;
                     validateButton.className = 'validate-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-validate';
@@ -1581,6 +1855,34 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
 
                     controlsContainer.appendChild(actionButtonsContainer);
                     translationUnit.appendChild(controlsContainer);
+
+                    // --- START: UPDATED EVENT LISTENER FOR COPY BUTTON ---
+                    copyOriginalButton.addEventListener('click', (event) => {
+                        // Use currentTarget to ensure we get the button, even if SVG is clicked
+                        const btn = event.currentTarget;
+                        const currentEntryIndex = parseInt(btn.dataset.entryIndex);
+                        const currentSegmentIndex = parseInt(btn.dataset.segmentIndex);
+                        const originalText = poEntries[currentEntryIndex]?.sentenceSegments[currentSegmentIndex]?.original;
+                        const targetTextarea = document.getElementById(`msgstr-${currentEntryIndex}-${currentSegmentIndex}`);
+
+                        if (originalText !== undefined && targetTextarea && !targetTextarea.readOnly) {
+                            // Paste original text into the translation textarea
+                            targetTextarea.value = originalText;
+
+                            // Trigger input event to update counts, stats, etc.
+                            const inputEvent = new Event('input', { bubbles: true });
+                            targetTextarea.dispatchEvent(inputEvent);
+
+                            // Optional: Briefly focus the textarea
+                            targetTextarea.focus();
+                            // Optional: Move cursor to the end
+                            targetTextarea.setSelectionRange(targetTextarea.value.length, targetTextarea.value.length);
+                        } else if (targetTextarea && targetTextarea.readOnly) {
+                            // Optional: Inform user if textarea is read-only
+                            showMessage(translations[currentLanguage]['edit_first_message'] || 'Click Edit first'); // Need a new translation string
+                        }
+                    });
+                    // --- END: UPDATED EVENT LISTENER ---
 
                     msgstrTextarea.addEventListener('input', (event) => {
                         const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
@@ -2110,6 +2412,44 @@ setTimeout(() => {
             messageText.textContent = msg;
             messageBox.classList.remove('hidden');
         }
+
+        /**
+     * Prompts the user to select a file and returns its content and name.
+     * @param {string} inputId The ID of the hidden file input element.
+     * @param {string} promptMessage A message to show the user (optional).
+     * @returns {Promise<{content: string, name: string}>}
+     */
+    function selectFile(inputId, promptMessage = 'Please select a file:') {
+        return new Promise((resolve, reject) => {
+            const fileInput = document.getElementById(inputId);
+            if (!fileInput) {
+                return reject(`File input with ID "${inputId}" not found.`);
+            }
+
+            // Optional: Show a message if needed (could use your showMessage modal)
+            // alert(promptMessage); // Simple alert for now
+
+            const changeHandler = async (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    try {
+                        const content = await file.text();
+                        resolve({ content: content, name: file.name });
+                    } catch (error) {
+                        reject(`Error reading file: ${error.message}`);
+                    }
+                } else {
+                    reject(translations[currentLanguage]['select_file_error'] || 'File selection failed or cancelled.');
+                }
+                // Clean up listener and reset input
+                fileInput.removeEventListener('change', changeHandler);
+                fileInput.value = ''; // Allows selecting the same file again
+            };
+
+            fileInput.addEventListener('change', changeHandler);
+            fileInput.click();
+        });
+    }
 
         messageClose.addEventListener('click', () => {
             messageBox.classList.add('hidden');
@@ -3396,6 +3736,11 @@ setTimeout(() => {
         function resetProjectState() {
             poEntries = [];
             currentFileName = 'translations.po';
+
+            currentFileType = null;
+        currentJsonSourceFileName = null;
+        currentJsonTargetFileName = null;
+
             renderTranslations([]);
             updateStatsDisplay();
 
@@ -3407,6 +3752,7 @@ setTimeout(() => {
             statsContainer.classList.remove('show');
             updateMainContentOffset();
             updateUtilityButtonStates();
+            updateSaveButtonsState();
         }
 
         function newProject() {
@@ -4048,6 +4394,52 @@ function makeModalDraggable(modalElement) {
                 reader.readAsText(file);
             });
 
+            // ADD LISTENERS FOR NEW FILE MENU ITEMS
+        const loadFilePoBtn = document.getElementById('loadFilePoBtn');
+        const saveFilePoBtn = document.getElementById('saveFilePoBtn');
+        const loadFileJsonBtn = document.getElementById('loadFileJsonBtn');
+        const saveFileJsonBtn = document.getElementById('saveFileJsonBtn');
+        const convertFileMoBtn = document.getElementById('convertFileMoBtn');
+        const poFileInput = document.getElementById('poFile'); // Get reference
+
+        if (loadFilePoBtn && poFileInput) {
+            loadFilePoBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                poFileInput.click(); // Trigger the original PO file input
+            });
+        }
+        if (saveFilePoBtn && savePoButton) {
+             saveFilePoBtn.addEventListener('click', (e) => {
+                 e.preventDefault();
+                 if (!saveFilePoBtn.classList.contains('disabled-link')) {
+                     savePoButton.click(); // Trigger the original PO save button
+                 }
+             });
+        }
+       if (loadFileJsonBtn) {
+             loadFileJsonBtn.addEventListener('click', (e) => {
+                 e.preventDefault();
+                 loadSingleJsonFile(); // <-- Llama a la NUEVA función
+             });
+        }
+        if (saveFileJsonBtn) {
+             saveFileJsonBtn.addEventListener('click', (e) => {
+                 e.preventDefault();
+                 if (!saveFileJsonBtn.classList.contains('disabled-link')) {
+                     saveJsonFile(); // Call the new JSON saving function
+                 }
+             });
+        }
+         if (convertFileMoBtn && convertToMoButton) {
+             convertFileMoBtn.addEventListener('click', (e) => {
+                 e.preventDefault();
+                 if (!convertFileMoBtn.classList.contains('disabled-link')) {
+                     convertToMoButton.click(); // Trigger the original MO conversion button
+                 }
+             });
+        }
+        // END ADD LISTENERS
+
             convertToMoButton.addEventListener('click', () => {
                 if (poEntries.length > 0) {
                     convertToMoModal.classList.remove('hidden');
@@ -4129,8 +4521,9 @@ function makeModalDraggable(modalElement) {
             if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar');
 
             updateMainContentOffset();
-
+            updateSaveButtonsState();
             await checkForBackup();
+            
 
  makeModalDraggable(document.getElementById('findReplaceModal'));
 
