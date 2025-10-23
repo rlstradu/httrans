@@ -177,13 +177,16 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.08);
             color: #E23B5D;
         }
-        .footer-link-full svg {
+        .footer-link-full svg,
+        .footer-link-full i { /* Añadido <i> para Phosphor Icons */
             color: #E23B5D;
             height: 24px;
             width: 24px;
             transition: color 0.2s ease;
+            font-size: 24px; /* Tamaño para Phosphor Icon */
         }
-        .footer-link-full:hover svg {
+        .footer-link-full:hover svg,
+        .footer-link-full:hover i {
              color: #E23B5D;
         }
 
@@ -397,15 +400,28 @@
             background-color: #d02a4c;
         }
         
-        /* Modal "Sobre mí" */
-        #about-modal .modal-content {
+        /* Modal "Sobre mí" y "Agradecimientos" */
+        #about-modal .modal-content,
+        #thanks-modal .modal-content { /* Aplicado a ambos */
             text-align: left;
         }
-        #about-modal .content-text p {
+        #about-modal .content-text p,
+        #thanks-modal .content-text p { /* Aplicado a ambos */
             color: #4a5568;
             margin-bottom: 1.5rem;
             font-size: 1rem;
             line-height: 1.7;
+        }
+
+        /* NUEVO: Estilo para enlaces en modal de agradecimientos */
+        .thanks-link {
+            color: #E23B5D;
+            font-weight: 600;
+            text-decoration: none;
+            transition: text-decoration 0.2s ease;
+        }
+        .thanks-link:hover {
+            text-decoration: underline;
         }
 
 
@@ -651,6 +667,12 @@
                 <span data-key="projectBy"></span>
             </div>
 
+            <!-- NUEVO: Enlace de Agradecimientos -->
+            <div id="thanks-trigger" class="footer-link-full" style="margin-top: 1rem;">
+                <i class="ph-fill ph-heart"></i>
+                <span data-key="thanksLink"></span>
+            </div>
+
             <div class="panda-hug-section">
                 <button id="pandaHugButton" class="panda-hug-button">
                     <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/panda-hug-love.png" alt="Panda Hug Icon" class="panda-hug-icon">
@@ -736,10 +758,33 @@
         <div class="modal-content">
             <button id="about-modal-close-btn" class="modal-close-btn">&times;</button>
             <h1 class="toolkit-title" data-key="aboutTitle" style="text-align: center;"></h1>
+            
+            <!-- Ruta de la imagen actualizada -->
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Rafa-About-Httrans-v2.png" alt="Rafa López Sánchez" style="width: 40%; min-width: 200px; max-width: 300px; margin: 1.5rem auto 1rem auto; border-radius: 1rem; display: block;">
+            
             <div class="content-text">
                 <p data-key="p1"></p><p data-key="p2"></p><p data-key="p3"></p><p data-key="p4"></p>
                 <p data-key="p5"></p><p data-key="p6"></p><p data-key="p7"></p><p data-key="p8"></p>
                 <p data-key="p9"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL "AGRADECIMIENTOS" -->
+    <div id="thanks-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="thanks-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h1 class="toolkit-title" data-key="thanksTitle" style="text-align: center;"></h1>
+            <div class="content-text">
+                <p data-key="t1"></p>
+                <p data-key="t2"></p>
+                <!-- Párrafo modificado para incluir enlaces (se rellenará con JS) y estilo corregido -->
+                <p data-key="t3" style="font-weight: 500;"></p>
+                
+                <!-- Imagen de Jin Xi añadida -->
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Jinxi%20Birthday.png" alt="Jin Xi Panda" style="width: 30%; min-width: 150px; max-width: 250px; margin: 1rem auto 1.5rem auto; border-radius: 1rem; display: block;">
+                
+                <p data-key="t4"></p>
             </div>
         </div>
     </div>
@@ -820,6 +865,14 @@
                     p7: "Esas pequeñas luces, sobre todo la de los pandas, encendieron una idea. ¿Por qué no unir mi regreso a la programación con lo único que me estaba haciendo sonreír? Y así nació este proyecto. Ha sido una especie de terapia para mí, una manera de construir <strong><u>algo positivo</u></strong>. Ver cómo tomaba forma ha sido mi manera de dar un pequeño paso adelante cada día.",
                     p8: "Así que, en esencia, esto es lo que encontrarás aquí: herramientas sencillas, hechas con mucho cariño para mis colegas de profesión, y envueltas en un abrazo de panda. El proceso de crearlas ha sido un refugio y una distracción para mí. Solo con eso el proyecto ya ha cumplido su misión. Pero si además alguna de ellas puede hacerte el día un poquito más fácil o sacarte una sonrisa, entonces todo esto habrá merecido la pena.",
                     p9: "PD: Qué suerte ser uno de los cofundadores de Traduversia, porque gracias a eso (y a mi colega Pablo Muñoz) httrans dispone de un foro y un curso con certificado que son gratuitos.",
+                    // Textos de Agradecimientos
+                    thanksLink: 'Agradecimientos especiales',
+                    thanksTitle: 'Agradecimientos especiales',
+                    t1: "A lo largo del proceso de creación, publicación y testeo de httrans desde su lanzamiento en 2025, varios colegas han hecho contribuciones de distinto tipo a este proyecto. La mayoría han sido sugerencias de nuevas características, mejoras de las características actuales, comunicación de errores o bugs, redacción de reseñas o artículos con menciones especiales, difusión del proyecto... ",
+                    t2: "Aunque las mejoras técnicas se recogen en los changelogs y ahí suelo mencionar o dar agradecimientos de manera más específica, he querido crear este apartado para dar visibilidad a todas las personas que, de un modo u otro han contribuido a httrans. Estas son:",
+                    // LÍNEA MODIFICADA con enlaces
+                    t3: "<a href='https://www.linkedin.com/in/pmstrad/' target='_blank' rel='noopener' class='thanks-link'>Pablo Muñoz Sánchez</a>, <a href='https://www.linkedin.com/in/drsantilli/' target='_blank' rel='noopener' class='thanks-link'>Damián Santilli</a>, <a href='https://www.linkedin.com/in/guillermosubtitles/' target='_blank' rel='noopener' class='thanks-link'>Guillermo Parra López</a>, <a href='https://www.linkedin.com/in/carolina-veltri/' target='_blank' rel='noopener' class='thanks-link'>Carolina Veltri</a>, <a href='https://www.linkedin.com/in/garcialledom/' target='_blank' rel='noopener' class='thanks-link'>Merche García Lledó</a>, <a href='https://www.linkedin.com/in/milagroseckardt/' target='_blank' rel='noopener' class='thanks-link'>Milagros Eckardt</a>, <a href='https://www.linkedin.com/in/matiasedesalvo/' target='_blank' rel='noopener' class='thanks-link'>Matías Desalvo</a>, Aída Parra Díaz, la comunidad de Traduversia y nuestro precioso pandita \"madrileño\" Jin Xi.",
+                    t4: "Y por supuesto, este proyecto está dedicado a mi hijo Mateo, que nos cuida desde arriba. Beso enorme al cielo."
                 },
                 en: {
                     description: 'A handy set of simple, practical tools created by a fellow translator who loves pandas, designed to make your day-to-day work easier. They’re completely free, require no installation, and work right from your browser.',
@@ -864,6 +917,15 @@
                     p7: "Those little lights, especially the pandas, sparked an idea. Why not combine my return to programming with the one thing that was making me smile? And so, this project was born. It's been a kind of therapy for me, a way to build <strong><u>something positive</u></strong>. Watching it take shape has been my way of taking a small step forward each day.",
                     p8: "So, in essence, this is what you'll find here: simple, lovingly-made tools for my fellow translators, wrapped in a panda hug. The process of creating them has been a refuge and a distraction for me. With that alone, the project has already fulfilled its mission. But if any of them can also make your day a little bit easier or bring a smile to your face, then all of this will have been worthwhile.",
                     p9: "P.S. I'm lucky to be one of the co-founders of Traduversia, because thanks to that (and my colleague Pablo Muñoz), httrans has a free forum and a course with a certificate.",
+                    
+                    // Textos de Agradecimientos (Inglés) - MODIFICADOS
+                    thanksLink: 'Special Thanks',
+                    thanksTitle: 'Special Thanks',
+                    t1: "Since httrans first launched in 2025, many colleagues have contributed to its creation, publishing, and testing. These contributions have come in all forms: suggestions for new features, ideas for improving existing ones, bug reports, reviews, special mentions in articles, and simply spreading the word.",
+                    t2: "While technical improvements are noted in the changelogs (where I usually give specific shout-outs), I wanted to create this special section to publicly thank everyone who has helped httrans grow, in one way or another. They are:",
+                    // LÍNEA MODIFICADA con enlaces
+                    t3: "<a href='https://www.linkedin.com/in/pmstrad/' target='_blank' rel='noopener' class='thanks-link'>Pablo Muñoz Sánchez</a>, <a href='https://www.linkedin.com/in/drsantilli/' target='_blank' rel='noopener' class='thanks-link'>Damián Santilli</a>, <a href='https://www.linkedin.com/in/guillermosubtitles/' target='_blank' rel='noopener' class='thanks-link'>Guillermo Parra López</a>, <a href='https://www.linkedin.com/in/carolina-veltri/' target='_blank' rel='noopener' class='thanks-link'>Carolina Veltri</a>, <a href='https://www.linkedin.com/in/garcialledom/' target='_blank' rel='noopener' class='thanks-link'>Merche García Lledó</a>, <a href='https://www.linkedin.com/in/milagroseckardt/' target='_blank' rel='noopener' class='thanks-link'>Milagros Eckardt</a>, <a href='https://www.linkedin.com/in/matiasedesalvo/' target='_blank' rel='noopener' class='thanks-link'>Matías Desalvo</a>, Aída Parra Díaz, the Traduversia community, and our precious \"Madrilenian\" panda, Jin Xi.",
+                    t4: "And of course, this project is dedicated to my son Mateo, who watches over us from above. A huge kiss to the sky."
                 }
             };
 
@@ -888,6 +950,12 @@
             const aboutModalCloseBtn = document.getElementById('about-modal-close-btn');
             const pandaHugModal = document.getElementById('panda-hug-modal');
             const pandaHugModalCloseBtn = document.getElementById('panda-hug-modal-close-btn');
+
+            // Elementos del Modal de Agradecimientos
+            const thanksModal = document.getElementById('thanks-modal');
+            const thanksTrigger = document.getElementById('thanks-trigger');
+            const thanksModalCloseBtn = document.getElementById('thanks-modal-close-btn');
+
 
             let currentLang = localStorage.getItem('selectedLang') || 'en';
 
@@ -1007,6 +1075,16 @@
                 if (e.target === aboutModal) aboutModal.style.display = 'none';
             });
 
+            // Lógica del Modal "Agradecimientos"
+            thanksTrigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                thanksModal.style.display = 'flex';
+            });
+            thanksModalCloseBtn.addEventListener('click', () => thanksModal.style.display = 'none');
+            thanksModal.addEventListener('click', (e) => {
+                if (e.target === thanksModal) thanksModal.style.display = 'none';
+            });
+
             // Lógica del Modal de Abrazo de Panda
             pandaHugButton.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1040,3 +1118,5 @@
     </script>
 </body>
 </html>
+
+
