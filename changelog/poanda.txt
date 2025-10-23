@@ -1,4 +1,19 @@
 =======================================
+Poanda v1.0.2 - JSON Support & Workflow Enhancements
+=======================================
+
+Release Date: October 23, 2025
+
+This release introduces a major new feature: the ability to translate simple key-value JSON files directly within Poanda. Additionally, several workflow enhancements have been added based on user feedback to improve efficiency during translation.
+
+New Features & Improvements
+---------------------------
+* **Direct JSON File Translation:** Added the capability to load single `.json` files (simple key-value format) via the new "File" > "Load JSON File" menu. Poanda will display the JSON key as the context (`msgctxt`) and the original value as the source text (`msgid`), leaving the translation field (`msgstr`) empty for you to fill in.
+* **Save Translations as JSON:** Complementing the loading feature, you can now save your work back into a `.json` file using "File" > "Save JSON File". Poanda will prompt for a filename and export the context (`msgctxt`) as the key and the translated text (`msgstr`) as the value.
+* **New "File" Menu:** Introduced a dedicated "File" menu in the top utility bar, organizing file operations. Existing actions ("Load .po", "Save .po", "Convert to .mo") are now accessible here alongside the new JSON options, while the quick access buttons remain on the main interface for convenience.
+* **"Copy Original to Translation" Button:** Added a new icon button (copy icon) next to the "Validate" button within each translation segment. Clicking this button instantly copies the full text from the "Original (msgid)" field into the "Translation (msgstr)" field, useful for minor edits or as a starting point. A tooltip clarifies the button's action on hover.
+
+=======================================
 Poanda v1.0.1 - UX & Clarity Update
 =======================================
 
