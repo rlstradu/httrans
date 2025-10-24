@@ -46,6 +46,37 @@
             display: none !important; /* Oculta el div de estadísticas permanentemente */
         }
 
+        /* Estilo del contenedor principal de la barra */
+.cps-bar-container {
+    width: 100%;
+    height: 6px; /* Altura fina */
+    background-color: #e5e7eb; /* Fondo gris claro */
+    border-radius: 3px;
+    margin-top: 5px; /* Separación del editor */
+    position: relative;
+    overflow: hidden; /* Asegura que la barra de llenado no se salga */
+}
+
+/* Estilo de la barra de llenado */
+.cps-bar-fill {
+    height: 100%;
+    width: 0; /* Inicialmente a 0 */
+    background-color: #22c55e; /* Verde por debajo del límite */
+    transition: width 0.1s ease-out, background-color 0.3s ease; /* Transición suave */
+}
+
+/* Estilo del indicador de límite (la 'línea') */
+.cps-bar-limit-marker {
+    position: absolute;
+    top: 0;
+    width: 2px; /* Ancho de la línea de límite */
+    height: 100%;
+    background-color: #075BA2; /* Color de la línea de límite */
+    z-index: 10; /* Asegura que esté por encima del relleno */
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+    /* Se posicionará dinámicamente con JavaScript */
+}
+
 /* --- ESTILOS PARA LAS REGIONES DE WAVESURFER (MODIFICADO v2) --- */
         #waveform ::part(region) {
             z-index: 10;
@@ -3133,6 +3164,34 @@ function updateContextPanel(entryIndex) {
                     lineCharCountsDiv.appendChild(lineSpan);
                 });
             }
+// --- INICIO: LÓGICA DE LA BARRA DE PROGRESO CPS ---
+            const currentCPS = calculateCPS(editorDiv.innerHTML, durationMs);
+            const cpsLimit = qaSettings.cpsLimit;
+            
+            // 1. Calcula el 'porcentaje de llenado' en relación con el límite
+            const fillPercentage = (currentCPS / (cpsLimit * 1.5)) * 100; // Multiplica por 1.5 para que el 100% no sature la barra
+            
+            // 2. Calcula la posición del límite (ej. 20 CPS)
+            const limitPosition = (cpsLimit / (cpsLimit * 1.5)) * 100;
+
+            const barFill = document.getElementById(`cpsBarFill-${entryIndex}`);
+            const barLimit = document.getElementById(`cpsBarLimit-${entryIndex}`);
+            
+            if (barFill && barLimit) {
+                // Posiciona el límite
+                barLimit.style.left = `${Math.min(limitPosition, 100)}%`;
+                
+                // Actualiza el relleno
+                barFill.style.width = `${Math.min(fillPercentage, 100)}%`;
+                
+                // Asigna color (Verde si está por debajo, Rojo si está por encima)
+                if (currentCPS > cpsLimit) {
+                    barFill.style.backgroundColor = '#ef4444'; // Rojo (utilizando un color Tailwind predefinido)
+                } else {
+                    barFill.style.backgroundColor = '#22c55e'; // Verde
+                }
+            }
+            // --- FIN: LÓGICA DE LA BARRA DE PROGRESO CPS ---
         }
 
         /**
@@ -3346,7 +3405,12 @@ if (useFrameTimecode) {
                                 <span id="glossary-match-${entryIndex}" class="hidden flex items-center gap-1 text-xs font-semibold text-black bg-yellow-300 px-2 py-0.5 rounded-md truncate"></span>
                             </div>
                             <div id="translation-${entryIndex}" class="subtitle-editor mt-1 block w-full focus:ring-blue-500 focus:border-blue-500 text-base" contenteditable="true" data-entry-index="${entryIndex}" data-original-length="${entry.charCountOriginal}" data-duration-ms="${entry.durationMs}">${entry.translation}</div>
-                        </div>
+<div id="cpsBarContainer-${entryIndex}" class="cps-bar-container">
+                                <div id="cpsBarFill-${entryIndex}" class="cps-bar-fill"></div>
+                                <div id="cpsBarLimit-${entryIndex}" class="cps-bar-limit-marker"></div>
+                            </div>
+                            </div>
+                            </div>
                     </div>
                     <div class="flex items-center justify-end mt-1 w-full">
     <div class="flex items-center space-x-2">
