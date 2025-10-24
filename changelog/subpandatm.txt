@@ -1,4 +1,20 @@
 =========================================
+subpandaTM v1.1.2 - Visual CPS Feedback
+=========================================
+
+Release Date: October 24, 2025
+This version introduces a highly requested visual aid for translation quality control.
+
+New Features & Improvements
+Visual CPS Progress Bar: A thin, interactive bar is now displayed below the translation editor for each subtitle, offering immediate feedback on reading speed.
+
+The bar fills dynamically based on the current Characters Per Second (CPS) rate.
+
+A limit marker indicates the maximum CPS configured in the QA settings.
+
+The bar changes color from green to red when the calculated CPS exceeds the set limit, providing an instant visual warning.
+
+=========================================
 subpandaTM v1.1.1 - Waveform Integration & Advanced Timecode Control
 =========================================
 
