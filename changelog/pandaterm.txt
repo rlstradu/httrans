@@ -1,3 +1,28 @@
+========================================= 
+PandaTerm v1.1.0 - CSV Support & Session Restore
+=========================================
+Release Date: November 7, 2025
+
+This is a major feature update that introduces full support for the CSV format (import and export) and adds a critical session restore feature to prevent data loss. The user interface has also been streamlined for a cleaner, more efficient workflow.
+
+Key Features
+* **CSV & TBX Management
+* **CSV Import: You can now import glossaries from .csv files. The importer intelligently finds your terms by looking for headers like "Source Term" and "Target Term" or the glossary's language codes (e.g., "en-US", "es-ES").
+
+* **CSV & TBX Export: Glossaries can now be exported to .csv format (in addition to TBX) via a new export dialog. The CSV is saved with UTF-8 BOM to ensure compatibility with accents and special characters in Excel.
+
+* **Unified Interface: The main buttons have been renamed from "Import TBX" / "Download TBX" to the more general "Import" and "Export" to reflect multi-format support. The app description is updated to "A simple TBX/CSV glossary editor".
+
+* **Session Backup & Restore
+Automatic Session Saving: Your work is now automatically saved to your browser's local storage every time you add, edit, delete, or import a term.
+
+* **Restore on Launch: Never lose your work again! If you accidentally close the tab or refresh the page, PandaTerm will find your previous session on startup and ask if you want to restore or discard it.
+
+* **Productivity & User Experience
+Collapsible Sections: The "Current glossary languages" and "Add term" sections are now collapsible, allowing you to hide them for a cleaner view of your glossary table.
+
+* **Toast Notifications: Informational messages (like "Import successful") now appear as non-intrusive "toast" notifications at the bottom of the screen, replacing the previous modal pop-ups for non-critical alerts.
+
 =========================================
  PandaTerm v1.0.0 - Launch Announcement
 =========================================
