@@ -1,4 +1,16 @@
 ========================================
+Pandoria v1.1.0 - Auto-Backup
+========================================
+
+Release Date: November 7, 2025
+
+This update introduces a crucial quality-of-life feature: automatic session backup.
+
+New Features
+
+Automatic Backup & Restore: Pandoria now automatically saves your progress (in both the TMX editor and the alignment tool) to your browser's local storage. If you accidentally close the tab or browser, a prompt will appear the next time you open the application, asking if you want to restore the previous session. The backup is automatically cleared when you create a "New TMX" or "Download TMX," ensuring a clean start.
+
+========================================
  Pandoria v1.0.0 - Launch Announcement
 ========================================
 
