@@ -196,8 +196,26 @@
         display: flex;
         flex-direction: column; /* Stack rows vertically */
         gap: 20px; /* Increased gap between rows for better spacing */
-        margin-bottom: 20px;
+        /* margin-bottom: 20px; -- REMOVED, Handled by collapsible logic */
     }
+    
+    /* === BEGIN COLLAPSIBLE STYLES === */
+    .add-term {
+        transition: max-height 0.4s ease-out, opacity 0.3s ease-out, margin 0.4s ease-out;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        margin-top: 0;
+        margin-bottom: 0; /* Override default */
+    }
+    .add-term.open {
+        max-height: 1500px; /* Large value */
+        opacity: 1;
+        margin-top: 20px;
+        margin-bottom: 20px; /* Re-add default */
+    }
+    /* === END COLLAPSIBLE STYLES === */
+
 
     .add-term-row {
         display: flex;
@@ -240,6 +258,23 @@
         gap: 15px; /* Consistent gap */
         align-items: flex-end; /* Align labels/inputs */
     }
+    
+    /* === BEGIN COLLAPSIBLE STYLES === */
+    #currentLangContent {
+        transition: max-height 0.4s ease-out, opacity 0.3s ease-out, margin 0.4s ease-out;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+    #currentLangContent.open {
+         max-height: 1000px;
+         opacity: 1;
+         margin-top: 20px;
+         margin-bottom: 20px;
+    }
+    /* === END COLLAPSIBLE STYLES === */
 
     .lang-display .input-group {
         flex: 1 1 calc(50% - 7.5px); /* Each input group takes half the width */
@@ -450,11 +485,34 @@
 
     h2 {
         font-weight: 600;
-        margin-bottom: 20px;
+        margin-bottom: 10px; /* Reduced margin, spacing handled by collapsible content */
         padding-bottom: 10px;
         border-bottom: 1px solid var(--border-color);
         color: var(--text-color);
     }
+    
+    /* === BEGIN COLLAPSIBLE HEADER STYLES === */
+    .collapsible-header {
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+        padding-right: 30px; /* Space for arrow */
+        margin-bottom: 10px; /* Keep it consistent */
+    }
+    .collapsible-header .arrow {
+        position: absolute;
+        right: 10px;
+        top: calc(50% - 1px); /* Align with h2 text */
+        transform: translateY(-50%) rotate(0deg); /* Start pointing right */
+        transition: transform 0.3s ease;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    .collapsible-header.open .arrow {
+        transform: translateY(-50%) rotate(90deg); /* Point down when open */
+    }
+    /* === END COLLAPSIBLE HEADER STYLES === */
+
 
     .message-box {
       position: fixed;
@@ -675,25 +733,35 @@
         display: none; /* Always hidden */
     }
 
-    /* === NUEVO ESTILO PARA NOTIFICACIÓN "TOAST" === */
+    /* === NUEVO ESTILO PARA NOTIFICACIÓN "TOAST" (MODIFICADO) === */
+    #toastContainer { /* New container */
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column; /* New toasts appear below old ones */
+        gap: 10px;
+        max-width: 350px;
+    }
+
     .toast-notification {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px); /* Start off-screen */
+      position: relative; /* Changed from fixed */
+      width: 100%;
+      box-sizing: border-box;
+      transform: translateX(-120%); /* Start off-screen left */
       background-color: var(--text-color-dark);
       color: var(--background-color-light);
       padding: 12px 20px;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 2000;
       font-weight: 500;
       opacity: 0;
       transition: opacity 0.4s ease-out, transform 0.4s ease-out;
     }
 
     .toast-notification.show {
-      transform: translateX(-50%) translateY(0);
+      transform: translateX(0); /* Slide in */
       opacity: 1;
     }
 
@@ -717,26 +785,17 @@
 
 
   <div class="container">
-    <!-- === SECCIÓN DE CONTROLES MODIFICADA === -->
     <div class="controls">
-      <!-- 1. Botón "New glossary" -->
       <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn-secondary">Nuevo glosario</button>
       
-      <!-- 2. Botón "Import" -->
       <button onclick="document.getElementById('fileInput').click()" data-i18n="import_button" class="btn-secondary">Importar</button>
-      <!-- Input de archivo oculto, ahora con ID genérico y acepta .csv -->
       <input type="file" id="fileInput" accept=".xml,.tbx,.csv" />
       
-      <!-- 3. Botón "Export" -->
       <button onclick="showExportDialog()" data-i18n="export_button" class="btn-secondary">Exportar</button>
       
-      <!-- Botones restantes -->
       <button onclick="toggleTheme()" id="themeToggleButton" data-i18n="toggle_theme" class="btn-secondary">Cambiar tema</button>
       <button onclick="undo()" id="undoButton" data-i18n="undo_button" class="btn-secondary" disabled>Deshacer</button>
     </div>
-    <!-- === FIN DE SECCIÓN DE CONTROLES MODIFICADA === -->
-
-
     <div id="languageConfigSection">
       <h2 data-i18n="config_lang_title">Configurar idiomas del glosario</h2>
       <div class="info-box">
@@ -758,8 +817,8 @@
     </div>
 
     <div id="editorSection" class="hidden-section">
-        <h2 data-i18n="current_lang_title">Idiomas actuales del glosario</h2>
-        <div class="lang-display">
+        <h2 data-i18n="current_lang_title" class="collapsible-header" onclick="toggleCollapse('currentLangContent')">Idiomas actuales del glosario<span class="arrow">►</span></h2>
+        <div class="lang-display" id="currentLangContent">
             <div class="input-group">
                 <label data-i18n="source_language">Idioma de origen:</label>
                 <input id="displaySrcLang" disabled />
@@ -769,9 +828,8 @@
                 <input id="displayTgtLang" disabled />
             </div>
         </div>
-
-        <h2 data-i18n="add_term_title">Añadir término</h2>
-        <div class="add-term">
+        <h2 data-i18n="add_term_title" class="collapsible-header" onclick="toggleCollapse('addTermContent')">Añadir término<span class="arrow">►</span></h2>
+        <div class="add-term" id="addTermContent">
             <div class="add-term-row">
                 <div class="input-group">
                     <label for="srcTerm" data-i18n="term">Término:<span class="required-asterisk">*</span></label>
@@ -808,7 +866,6 @@
                 <button onclick="addTerm()" data-i18n="add_button" class="btn-primary">Añadir</button>
             </div>
         </div>
-
         <h2 data-i18n="search_title">Buscar</h2>
         <div class="search-section">
             <input id="searchTerm" placeholder="Buscar término..." oninput="renderGlossary()" data-i18n-placeholder="search_placeholder" />
@@ -848,6 +905,8 @@
     <datalist id="isoLanguages">
       </datalist>
   </div>
+  
+  <div id="toastContainer"></div>
 
   <script>
     // Global array to store glossary terms
@@ -933,6 +992,10 @@
         // --- TRADUCCIONES DE BACKUP ---
         "backup_restored": "Your previous work has been restored.",
         "backup_corrupt": "Could not restore backup. It may be corrupt. Starting new session.",
+        "backup_confirm_title": "Restore Session?",
+        "backup_confirm_text": "We found a previous session with {count} terms. Would you like to restore it?",
+        "backup_confirm_button": "Restore",
+        "backup_discard_button": "Discard",
         // --- NUEVAS TRADUCCIONES (CSV Y EXPORT) ---
         "export_dialog_title": "Export Glossary",
         "export_filename": "Filename:",
@@ -943,7 +1006,8 @@
         "csv_import_error": "Error loading CSV file. Please ensure it's a valid file.",
         "csv_header_error": "The CSV must have headers like \"Source Term\" and \"Target Term\", or \"{srcLang}\" and \"{tgtLang}\".",
         "csv_empty_error": "The CSV is empty or has no headers.",
-        "unsupported_file_error": "Unsupported file type. Please select a .tbx, .xml, or .csv file."
+        "unsupported_file_error": "Unsupported file type. Please select a .tbx, .xml, or .csv file.",
+        "tbx_import_success": "Imported {count} new terms from TBX."
       },
       es: {
         title: "PandaTerm",
@@ -1004,6 +1068,10 @@
         // --- TRADUCCIONES DE BACKUP ---
         "backup_restored": "Se ha restaurado tu trabajo anterior.",
         "backup_corrupt": "No se pudo restaurar la copia de seguridad. Puede que esté corrupta. Empezando una nueva sesión.",
+        "backup_confirm_title": "¿Restaurar sesión?",
+        "backup_confirm_text": "Encontramos una sesión anterior con {count} términos. ¿Quieres restaurarla?",
+        "backup_confirm_button": "Restaurar",
+        "backup_discard_button": "Descartar",
         // --- NUEVAS TRADUCCIONES (CSV Y EXPORT) ---
         "export_dialog_title": "Exportar Glosario",
         "export_filename": "Nombre de archivo:",
@@ -1014,7 +1082,8 @@
         "csv_import_error": "Error al cargar el archivo CSV. Asegúrate de que sea un archivo válido.",
         "csv_header_error": "El CSV debe tener cabeceras como \"Source Term\" y \"Target Term\", o \"{srcLang}\" y \"{tgtLang}\".",
         "csv_empty_error": "El CSV está vacío o no tiene cabeceras.",
-        "unsupported_file_error": "Tipo de archivo no compatible. Por favor, selecciona un archivo .tbx, .xml, o .csv."
+        "unsupported_file_error": "Tipo de archivo no compatible. Por favor, selecciona un archivo .tbx, .xml, o .csv.",
+        "tbx_import_success": "Se importaron {count} términos nuevos del TBX."
       }
     };
 
@@ -1080,7 +1149,16 @@
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (translations[currentUILanguage][key]) {
-          el.textContent = translations[currentUILanguage][key];
+          // Si el elemento es un header colapsable, preserva la flecha
+          if (el.classList.contains('collapsible-header')) {
+            const arrow = el.querySelector('.arrow');
+            el.textContent = translations[currentUILanguage][key];
+            if (arrow) {
+              el.appendChild(arrow);
+            }
+          } else {
+            el.textContent = translations[currentUILanguage][key];
+          }
         }
       });
 
@@ -1141,6 +1219,22 @@
         saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
       }
     }
+    
+    /**
+     * (NUEVA) Alterna la visibilidad de una sección colapsable.
+     * @param {string} contentId - El ID del elemento de contenido a colapsar/expandir.
+     */
+    function toggleCollapse(contentId) {
+        const content = document.getElementById(contentId);
+        const header = content.previousElementSibling; // Obtiene el h2
+        if (content.classList.contains('open')) {
+            content.classList.remove('open');
+            header.classList.remove('open');
+        } else {
+            content.classList.add('open');
+            header.classList.add('open');
+        }
+    }
 
     /**
      * Performs the actual reset of the glossary after confirmation.
@@ -1160,6 +1254,12 @@
       document.getElementById('searchTerm').value = '';
       // Reset search scope to 'all'
       document.querySelector('input[name="searchScope"][value="all"]').checked = true;
+      
+      // Cerrar secciones colapsables
+      document.getElementById('currentLangContent').classList.remove('open');
+      document.getElementById('currentLangContent').previousElementSibling.classList.remove('open');
+      document.getElementById('addTermContent').classList.remove('open');
+      document.getElementById('addTermContent').previousElementSibling.classList.remove('open');
 
       showSection('languageConfigSection');
       renderGlossary();
@@ -1172,7 +1272,8 @@
     function resetGlossary() {
       const title = translations[currentUILanguage]['new_glossary_confirm_title'];
       const message = translations[currentUILanguage]['new_glossary_confirm_text'];
-      showConfirmationDialog(title, message, performResetGlossary);
+      // Usar la función de confirmación modificada
+      showConfirmationDialog(title, message, performResetGlossary, null, null, null, 'btn-danger');
     }
 
     /**
@@ -1193,6 +1294,9 @@
       document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
       showSection('editorSection');
       renderGlossary();
+      
+      // Abrir la sección de añadir término por defecto al confirmar
+      toggleCollapse('addTermContent');
 
       // Clear history when starting a new glossary configuration
       history = [];
@@ -1249,13 +1353,16 @@
     function deleteTerm(originalIndex) {
         const title = translations[currentUILanguage]['delete_term_confirm_title'];
         const message = translations[currentUILanguage]['delete_term_confirm_text'];
-        showConfirmationDialog(title, message, () => {
+        
+        const performDelete = () => {
             saveState();
             glossary.splice(originalIndex, 1);
             renderGlossary();
             closeModal('editModal'); // Close modal if open after deleting
             saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
-        });
+        };
+        
+        showConfirmationDialog(title, message, performDelete, null, null, null, 'btn-danger');
     }
 
     /**
@@ -1458,7 +1565,6 @@
           
           <div class="input-group">
             <label data-i18n="export_format">${translations[currentUILanguage]['export_format']}</label>
-            <!-- Reutilizamos el estilo de .search-options para los radio buttons -->
             <div class="search-options" style="margin-top: 5px; margin-bottom: 0; justify-content: flex-start; gap: 25px;">
               <label>
                 <input type="radio" name="exportFormat" value="tbx" checked>
@@ -1755,6 +1861,10 @@
             showSection('editorSection');
             renderGlossary();
             saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+            
+            // (NUEVO) Mostrar toast de éxito
+            let successMsg = translations[currentUILanguage]['tbx_import_success'] || "Imported {count} new terms from TBX.";
+            showToast(successMsg.replace('{count}', newGlossary.length));
             console.log("TBX import completed successfully.");
 
           } catch (error) {
@@ -1845,7 +1955,7 @@
       const delimiter = lines[0].includes(';') ? ';' : ',';
       
       // 1. Extraer Cabeceras y Mapear
-const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
+      const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
 
       // Creamos un mapa de índices
       const map = {
@@ -1899,9 +2009,11 @@ const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
         renderGlossary();
         saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
         let successMsg = translations[currentUILanguage]['csv_import_success'];
-        showMessageBox(successMsg.replace('{count}', newGlossary.length));
+        // (MODIFICADO) Usar toast en lugar de messageBox
+        showToast(successMsg.replace('{count}', newGlossary.length));
       } else {
-        showMessageBox(translations[currentUILanguage]['csv_import_no_terms']);
+        // (MODIFICADO) Usar toast en lugar de messageBox
+        showToast(translations[currentUILanguage]['csv_import_no_terms']);
       }
     }
 
@@ -1911,6 +2023,7 @@ const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
 
     /**
      * Displays a simple message box to the user.
+     * (Usado para errores que requieren acción)
      * @param {string} message - The message to display.
      */
     function showMessageBox(message) {
@@ -1942,11 +2055,16 @@ const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
 
     /**
      * Displays a confirmation dialog to the user.
+     * (MODIFICADA para aceptar callback de cancelación, texto de botones y clase de confirmación)
      * @param {string} title - The title of the dialog.
      * @param {string} message - The message to display.
      * @param {function} onConfirm - Callback function to execute if confirmed.
+     * @param {function} onCancelCallback - (Nuevo) Callback function to execute if cancelled.
+     * @param {string} confirmText - (Nuevo) Texto para el botón de confirmar.
+     * @param {string} cancelText - (Nuevo) Texto para el botón de cancelar.
+     * @param {string} confirmClass - (Nuevo) Clase CSS para el botón de confirmar (ej. 'btn-primary').
      */
-    function showConfirmationDialog(title, message, onConfirm) {
+    function showConfirmationDialog(title, message, onConfirm, onCancelCallback = null, confirmText = null, cancelText = null, confirmClass = 'btn-danger') {
       const existingMessageBox = document.querySelector('.message-box');
       if (existingMessageBox) {
         existingMessageBox.remove();
@@ -1965,17 +2083,20 @@ const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
       buttonContainer.className = 'dialog-buttons';
 
       const confirmButton = document.createElement('button');
-      confirmButton.textContent = translations[currentUILanguage]['confirm_button'] || 'Confirm';
-      confirmButton.className = 'btn-danger';
+      confirmButton.textContent = confirmText || translations[currentUILanguage]['confirm_button'] || 'Confirm';
+      confirmButton.className = confirmClass; // Usar clase parámetro
       confirmButton.onclick = () => {
         onConfirm();
         document.body.removeChild(messageBox);
       };
 
       const cancelButton = document.createElement('button');
-      cancelButton.textContent = translations[currentUILanguage]['cancel_button'] || 'Cancel';
+      cancelButton.textContent = cancelText || translations[currentUILanguage]['cancel_button'] || 'Cancel';
       cancelButton.className = 'btn-secondary';
-      cancelButton.onclick = () => document.body.removeChild(messageBox);
+      cancelButton.onclick = () => {
+        if (onCancelCallback) onCancelCallback(); // Ejecutar callback de cancelar
+        document.body.removeChild(messageBox);
+      };
 
       buttonContainer.appendChild(cancelButton);
       buttonContainer.appendChild(confirmButton);
@@ -2060,26 +2181,33 @@ const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
 
     /**
      * Muestra una notificación "toast" temporal.
+     * (MODIFICADA para usar el #toastContainer)
      * @param {string} message - El mensaje a mostrar.
      */
     function showToast(message) {
+      const container = document.getElementById('toastContainer');
+      if (!container) {
+          console.error('Toast container not found!');
+          return;
+      }
       const toast = document.createElement('div');
       toast.className = 'toast-notification';
       toast.textContent = message;
-      document.body.appendChild(toast);
       
-      setTimeout(() => {
+      container.appendChild(toast); // Añadir al contenedor
+      
+      setTimeout(() => { // Animar entrada
         toast.classList.add('show');
-      }, 100); 
+      }, 10); 
 
-      setTimeout(() => {
+      setTimeout(() => { // Animar salida
         toast.classList.remove('show');
-        setTimeout(() => {
-          if (toast.parentNode === document.body) {
-             document.body.removeChild(toast);
+        setTimeout(() => { // Eliminar del DOM
+          if (toast.parentNode === container) {
+             container.removeChild(toast);
           }
-        }, 500);
-      }, 3000); 
+        }, 500); // Coincidir con la transición CSS
+      }, 4000); // 4 segundos visible
     }
 
 
@@ -2102,28 +2230,26 @@ const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
 
     /**
      * Carga el estado del glosario desde localStorage.
-     * @returns {boolean} - Devuelve true si se cargó un backup, false en caso contrario.
+     * (MODIFICADA para devolver los datos, no para establecerlos)
+     * @returns {object} - Objeto con { success: boolean, data: object, error: string }
      */
     function loadBackupFromLocalStorage() {
       try {
         const backupString = localStorage.getItem('pandaTermBackup');
         if (!backupString) {
-          return false;
+          return { success: false, data: null, error: 'nobackup' };
         }
         const backupData = JSON.parse(backupString);
         if (backupData && backupData.glossary && backupData.sourceLang && backupData.targetLang) {
-          glossary = backupData.glossary;
-          glossarySourceLanguage = backupData.sourceLang;
-          glossaryTargetLanguage = backupData.targetLang;
-          console.log('Backup restaurado desde localStorage.');
-          return true;
+          console.log('Backup data found.');
+          return { success: true, data: backupData, error: null };
         } else {
           console.warn('Backup en localStorage corrupto o incompleto.');
-          return false;
+          return { success: false, data: null, error: 'corrupt' };
         }
       } catch (e) {
         console.error('Error al cargar o parsear el backup de localStorage:', e);
-        return false;
+        return { success: false, data: null, error: 'corrupt' };
       }
     }
 
@@ -2137,37 +2263,62 @@ const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
         localStorage.setItem('language', 'en');
         currentUILanguage = 'en';
       }
-
-      // 2. Intentar cargar backup
-      const backupLoaded = loadBackupFromLocalStorage();
-      let backupWasCorrupt = false;
-      if (!backupLoaded && localStorage.getItem('pandaTermBackup') !== null) {
-          backupWasCorrupt = true;
-          localStorage.removeItem('pandaTermBackup');
-          console.warn('Se eliminó un backup corrupto de localStorage.');
-      }
       
-      // 3. Aplicar tema e idioma (Actualiza las traducciones)
+      // 2. Aplicar tema e idioma (NECESARIO ANTES for a la lógica de backup)
       applyTheme(currentTheme);
       setUILanguage(currentUILanguage); 
+
+      // 3. Intentar cargar backup (MODIFICADO)
+      const backupResult = loadBackupFromLocalStorage();
       
       // 4. Poblar datalist de idiomas
       populateIsoLanguagesDatalist();
 
-      // 5. Decidir qué pantalla mostrar
-      if (backupLoaded) {
-        document.getElementById('configSrcLang').value = glossarySourceLanguage;
-        document.getElementById('configTgtLang').value = glossaryTargetLanguage;
-        document.getElementById('displaySrcLang').value = glossarySourceLanguage;
-        document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
-        showSection('editorSection'); 
-        renderGlossary();
-        showToast(translations[currentUILanguage]['backup_restored']);
+      // 5. Decidir qué pantalla mostrar (LÓGICA DE CONFIRMACIÓN DE BACKUP)
+      if (backupResult.success) {
+        // Backup encontrado, PREGUNTAR al usuario
+        const backupData = backupResult.data;
+        const termCount = backupData.glossary.length;
+        
+        const title = translations[currentUILanguage]['backup_confirm_title'];
+        let message = translations[currentUILanguage]['backup_confirm_text'];
+        message = message.replace('{count}', termCount);
+        const confirmBtnText = translations[currentUILanguage]['backup_confirm_button'];
+        const cancelBtnText = translations[currentUILanguage]['backup_discard_button'];
+        
+        const restoreAction = () => {
+            // Usuario pulsa "Restaurar"
+            glossary = backupData.glossary;
+            glossarySourceLanguage = backupData.sourceLang;
+            glossaryTargetLanguage = backupData.targetLang;
+            
+            document.getElementById('configSrcLang').value = glossarySourceLanguage;
+            document.getElementById('configTgtLang').value = glossaryTargetLanguage;
+            document.getElementById('displaySrcLang').value = glossarySourceLanguage;
+            document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
+            showSection('editorSection'); 
+            renderGlossary();
+            showToast(translations[currentUILanguage]['backup_restored']);
+        };
+        
+        const discardAction = () => {
+            // Usuario pulsa "Descartar"
+            localStorage.removeItem('pandaTermBackup');
+            showSection('languageConfigSection');
+        };
+        
+        // Usar la función de confirmación modificada
+        showConfirmationDialog(title, message, restoreAction, discardAction, confirmBtnText, cancelBtnText, 'btn-primary');
+
       } else {
-        showSection('languageConfigSection');
-        if (backupWasCorrupt) {
+        // No hay backup o está corrupto
+        if (backupResult.error === 'corrupt') {
+            localStorage.removeItem('pandaTermBackup');
+            console.warn('Se eliminó un backup corrupto de localStorage.');
             showToast(translations[currentUILanguage]['backup_corrupt']);
         }
+        // Mostrar la configuración inicial de idioma
+        showSection('languageConfigSection');
       }
 
       // 6. Configurar listeners
