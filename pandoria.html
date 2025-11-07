@@ -305,7 +305,7 @@
       
       <div class="relative flex items-center my-4">
         <div class="flex-grow border-t border-gray-300"></div>
-        <span class="flex-shrink mx-4 text-gray-500 text-sm" data-i18n="or_paste_below">O pega el texto manualmente</span>
+        <span class="flex-shrink mx-4 text-gray-500 text-sm" data-i18n="or_paste_below">O pega el texto manually</span>
         <div class="flex-grow border-t border-gray-300"></div>
       </div>
 
@@ -345,6 +345,18 @@
             <div class="flex justify-center gap-4">
                  <button id="confirmCancelBtn" class="btn btn-secondary min-w-[120px]" data-i18n="cancel">Cancelar</button>
                  <button id="confirmProceedBtn" class="btn btn-primary min-w-[120px]" data-i18n="proceed">Continuar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NUEVO: Modal de Restauración -->
+    <div id="restoreModal" class="modal">
+        <div class="modal-content">
+            <h3 id="restoreTitle" class="text-xl font-bold mb-2"></h3>
+            <p id="restoreText" class="mb-6 text-gray-600"></p>
+            <div class="flex justify-center gap-4">
+                 <button id="restoreDiscardBtn" class="btn btn-secondary min-w-[120px]" data-i18n="discard">Descartar</button>
+                 <button id="restoreProceedBtn" class="btn btn-primary min-w-[120px]" data-i18n="restore">Restaurar</button>
             </div>
         </div>
     </div>
@@ -426,6 +438,10 @@
             'alignment_wizard_title': 'Asistente de alineación',
             'alignment_wizard_desc': 'El número de líneas no coincide. Edita el texto o usa los botones para unir o añadir líneas hasta que ambos lados tengan el mismo número de segmentos.',
             'wizard_confirm_button': 'Usar estos textos',
+            'restore_title': 'Restaurar trabajo no guardado',
+            'restore_text': 'Detectamos trabajo no guardado de una sesión anterior. ¿Quieres restaurarlo?',
+            'discard': 'Descartar',
+            'restore': 'Restaurar',
         },
         en: {
             'import_tmx': 'Import TMX',
@@ -476,6 +492,10 @@
             'alignment_wizard_title': 'Alignment wizard',
             'alignment_wizard_desc': 'The number of lines does not match. Edit the text or use the buttons to merge or add empty lines until both sides have the same number of segments.',
             'wizard_confirm_button': 'Use these texts',
+            'restore_title': 'Restore unsaved work',
+            'restore_text': 'We found unsaved work from a previous session. Would you like to restore it?',
+            'discard': 'Discard',
+            'restore': 'Restore',
         }
     };
 
@@ -507,6 +527,7 @@
     const targetTextArea = document.getElementById('targetTextArea');
     const startAlignmentBtn = document.getElementById('startAlignmentBtn');
     const isoLanguagesDatalist = document.getElementById('isoLanguages');
+    // Modales
     const messageBox = document.getElementById('messageBox');
     const messageText = document.getElementById('messageText');
     const messageCloseBtn = document.getElementById('messageCloseBtn');
@@ -515,6 +536,11 @@
     const confirmText = document.getElementById('confirmText');
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');
     const confirmProceedBtn = document.getElementById('confirmProceedBtn');
+    const restoreModal = document.getElementById('restoreModal');
+    const restoreTitle = document.getElementById('restoreTitle');
+    const restoreText = document.getElementById('restoreText');
+    const restoreDiscardBtn = document.getElementById('restoreDiscardBtn');
+    const restoreProceedBtn = document.getElementById('restoreProceedBtn');
     
     // Asistente de Alineación
     const alignmentWizardModal = document.getElementById('alignmentWizardModal');
@@ -563,6 +589,12 @@
             alignmentWizardModal.style.display = 'none';
             performAlignment(); // Re-intenta la alineación con los textos corregidos
         });
+        
+        // Listeners para backup en alineación
+        sourceTextArea.addEventListener('input', saveBackup);
+        targetTextArea.addEventListener('input', saveBackup);
+        alignSrcLang.addEventListener('input', saveBackup);
+        alignTgtLang.addEventListener('input', saveBackup);
 
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key.toLowerCase() === 'z') {
@@ -572,6 +604,9 @@
         });
         
         updateUndoButton();
+        
+        // Comprobar backup al cargar
+        checkBackup();
     });
     
     // --- Gestión del Historial (Undo) ---
@@ -584,6 +619,7 @@
         if (historyStack.length > 0) {
             translationMemory = historyStack.pop();
             renderTM(translationMemory, false);
+            saveBackup(); // Guardar el estado restaurado
         } else {
             showMessage(translations[currentLanguage]['no_more_undo']);
         }
@@ -658,6 +694,7 @@
         languageConfigSection.style.display = 'block';
         editorSection.classList.add('hidden');
         renderTM([], false);
+        clearBackup(); // Limpiar backup al crear nuevo TMX
     }
 
     function confirmLanguages() {
@@ -681,6 +718,7 @@
         languageConfigSection.style.display = 'none';
         editorSection.classList.remove('hidden');
         renderTM([], false);
+        saveBackup(); // Guardar estado inicial
     }
 
     // --- Carga y Parseo de Archivo TMX (Editor Principal) ---
@@ -699,6 +737,7 @@
                 alignmentSection.classList.add('hidden');
                 editorSection.classList.remove('hidden');
                 renderTM(translationMemory, false);
+                saveBackup(); // Guardar el TMX cargado
             } catch (error) {
                 showMessage(`${translations[currentLanguage]['error_processing_tmx']}${error.message}`);
                 console.error(error);
@@ -762,9 +801,14 @@
         noResultsMessage.classList.toggle('hidden', !(filteredTM.length === 0 && tm.length > 0));
 
         filteredTM.forEach((entry) => {
-            const originalIndex = translationMemory.findIndex(origEntry => origEntry === entry);
+            // Encontrar el índice original en la memoria *antes* de filtrar
+            const originalIndex = translationMemory.findIndex(origEntry => 
+                origEntry.srcText === entry.srcText && origEntry.tgtText === entry.tgtText
+            );
+            
             const row = document.createElement('tr');
             row.className = "border-b";
+            // Usar 'originalIndex' que es el índice correcto en 'translationMemory'
             row.innerHTML = `
                 <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="srcText">${escapeHTML(entry.srcText)}</td>
                 <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="tgtText">${escapeHTML(entry.tgtText)}</td>
@@ -784,10 +828,12 @@
         });
     }
 
+
     function addEntry() {
         saveStateToHistory();
         translationMemory.unshift({ srcText: '', tgtText: '' });
         renderTM(translationMemory, false);
+        saveBackup(); // Guardar cambio
         const newCell = tmTableBody.querySelector('tr:first-child .editable-cell');
         if(newCell) newCell.focus();
     }
@@ -796,7 +842,10 @@
         const index = event.target.dataset.index;
         const field = event.target.dataset.field;
         const value = event.target.textContent;
-        if (translationMemory[index]) translationMemory[index][field] = value;
+        if (translationMemory[index]) {
+            translationMemory[index][field] = value;
+            saveBackup(); // Guardar cambio
+        }
     }
 
     function deleteEntry(event) {
@@ -804,6 +853,7 @@
         const index = event.target.dataset.index;
         translationMemory.splice(index, 1);
         renderTM(translationMemory, false);
+        saveBackup(); // Guardar cambio
     }
 
     // --- Generación y Descarga de TMX ---
@@ -847,7 +897,116 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         showMessage(translations[currentLanguage]['tm_saved_success']);
+        clearBackup(); // Limpiar backup al descargar
     }
+    
+    // --- Backup / Restore ---
+    const BACKUP_KEY = 'pandoriaBackup';
+
+    function saveBackup() {
+        // No guardar si estamos en la pantalla de configuración (no hay datos)
+        if (!editorSection.classList.contains('hidden')) {
+            const backupState = {
+                view: 'editor',
+                timestamp: Date.now(),
+                editorData: {
+                    translationMemory: translationMemory,
+                    tmSourceLanguage: tmSourceLanguage,
+                    tmTargetLanguage: tmTargetLanguage
+                },
+                uiLang: currentLanguage
+            };
+            localStorage.setItem(BACKUP_KEY, JSON.stringify(backupState));
+        } else if (!alignmentSection.classList.contains('hidden')) {
+            const backupState = {
+                view: 'alignment',
+                timestamp: Date.now(),
+                alignmentData: {
+                    sourceText: sourceTextArea.value,
+                    targetText: targetTextArea.value,
+                    alignSrcLang: alignSrcLang.value,
+                    alignTgtLang: alignTgtLang.value
+                },
+                uiLang: currentLanguage
+            };
+            localStorage.setItem(BACKUP_KEY, JSON.stringify(backupState));
+        }
+    }
+
+    function clearBackup() {
+        localStorage.removeItem(BACKUP_KEY);
+    }
+
+    function checkBackup() {
+        const backupData = localStorage.getItem(BACKUP_KEY);
+        if (backupData) {
+            try {
+                const parsedData = JSON.parse(backupData);
+                // Usar el idioma del backup para el aviso, o 'es' por defecto
+                const promptLang = parsedData.uiLang || 'es';
+                
+                restoreTitle.textContent = translations[promptLang]['restore_title'];
+                restoreText.textContent = translations[promptLang]['restore_text'];
+                restoreDiscardBtn.textContent = translations[promptLang]['discard'];
+                restoreProceedBtn.textContent = translations[promptLang]['restore'];
+                
+                restoreModal.style.display = 'flex';
+
+                restoreDiscardBtn.onclick = () => {
+                    clearBackup();
+                    restoreModal.style.display = 'none';
+                };
+                restoreProceedBtn.onclick = () => {
+                    restoreBackup(parsedData);
+                    restoreModal.style.display = 'none';
+                };
+
+            } catch (error) {
+                console.error('Backup corrupto, eliminando:', error);
+                clearBackup();
+            }
+        }
+    }
+    
+    function restoreBackup(data) {
+        try {
+            setLanguage(data.uiLang || 'es');
+
+            if (data.view === 'editor' && data.editorData) {
+                translationMemory = data.editorData.translationMemory;
+                tmSourceLanguage = data.editorData.tmSourceLanguage;
+                tmTargetLanguage = data.editorData.tmTargetLanguage;
+
+                displaySrcLangSpan.textContent = tmSourceLanguage;
+                displayTgtLangSpan.textContent = tmTargetLanguage;
+                
+                historyStack = []; 
+                updateUndoButton();
+
+                languageConfigSection.style.display = 'none';
+                alignmentSection.classList.add('hidden');
+                editorSection.classList.remove('hidden');
+                renderTM(translationMemory, false);
+
+            } else if (data.view === 'alignment' && data.alignmentData) {
+                sourceTextArea.value = data.alignmentData.sourceText;
+                targetTextArea.value = data.alignmentData.targetText;
+                alignSrcLang.value = data.alignmentData.alignSrcLang;
+                alignTgtLang.value = data.alignmentData.alignTgtLang;
+
+                languageConfigSection.style.display = 'none';
+                editorSection.classList.add('hidden');
+                alignmentSection.classList.remove('hidden');
+            }
+            // No limpiamos el backup aquí, se limpiará en la próxima acción de "nuevo" o "descargar"
+        } catch (error) {
+            console.error('Error al restaurar el backup:', error);
+            showMessage('Error al restaurar el backup. Empezando de cero.');
+            clearBackup();
+            resetTM();
+        }
+    }
+
 
     // --- Funcionalidad de Alineación ---
     function showAlignmentView() {
@@ -877,6 +1036,7 @@
         targetFileName.textContent = '';
         sourceFileInput.value = '';
         targetFileInput.value = '';
+        saveBackup(); // Guardar el estado "vacío" de alineación
     }
 
     async function handleAlignmentFileUpload(event, type) {
@@ -905,6 +1065,7 @@
             } else {
                 targetTextArea.value = segments.join('\n');
             }
+            saveBackup(); // Guardar al cargar archivo
         } catch (error) {
             showMessage(`${translations[currentLanguage]['file_read_error']}: ${error.message}`);
             console.error(error);
@@ -945,6 +1106,7 @@
         alignmentSection.classList.add('hidden');
         editorSection.classList.remove('hidden');
         renderTM(translationMemory, false);
+        saveBackup(); // Guardar el resultado de la alineación
     }
 
     // --- Asistente de Alineación ---
@@ -1004,6 +1166,7 @@
             lines[index] = newText;
             textarea.value = lines.join('\n');
         }
+        saveBackup(); // Guardar cambio del asistente
     }
 
     function mergeLine(type, index) {
@@ -1014,6 +1177,7 @@
             lines.splice(index, 1);
             textarea.value = lines.join('\n');
             renderWizard();
+            saveBackup(); // Guardar cambio del asistente
         }
     }
 
@@ -1023,6 +1187,7 @@
         lines.splice(index, 0, '');
         textarea.value = lines.join('\n');
         renderWizard();
+        saveBackup(); // Guardar cambio del asistente
     }
 
 
