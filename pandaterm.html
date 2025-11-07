@@ -675,6 +675,34 @@
         display: none; /* Always hidden */
     }
 
+    /* === NUEVO ESTILO PARA NOTIFICACIÓN "TOAST" === */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px); /* Start off-screen */
+      background-color: var(--text-color-dark);
+      color: var(--background-color-light);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 2000;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    }
+
+    .toast-notification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    body.dark-mode .toast-notification {
+       background-color: var(--background-color-light);
+       color: var(--text-color-dark);
+    }
+    /* === FIN DE ESTILOS "TOAST" === */
+
   </style>
 </head>
 <body>
@@ -689,14 +717,25 @@
 
 
   <div class="container">
+    <!-- === SECCIÓN DE CONTROLES MODIFICADA === -->
     <div class="controls">
-      <button onclick="loadTBX()" data-i18n="import_tbx" class="btn-secondary">Importar TBX</button>
-      <input type="file" id="tbxFileInput" accept=".xml,.tbx" />
-      <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn-secondary">Descargar TBX</button>
+      <!-- 1. Botón "New glossary" -->
       <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn-secondary">Nuevo glosario</button>
+      
+      <!-- 2. Botón "Import" -->
+      <button onclick="document.getElementById('fileInput').click()" data-i18n="import_button" class="btn-secondary">Importar</button>
+      <!-- Input de archivo oculto, ahora con ID genérico y acepta .csv -->
+      <input type="file" id="fileInput" accept=".xml,.tbx,.csv" />
+      
+      <!-- 3. Botón "Export" -->
+      <button onclick="showExportDialog()" data-i18n="export_button" class="btn-secondary">Exportar</button>
+      
+      <!-- Botones restantes -->
       <button onclick="toggleTheme()" id="themeToggleButton" data-i18n="toggle_theme" class="btn-secondary">Cambiar tema</button>
       <button onclick="undo()" id="undoButton" data-i18n="undo_button" class="btn-secondary" disabled>Deshacer</button>
     </div>
+    <!-- === FIN DE SECCIÓN DE CONTROLES MODIFICADA === -->
+
 
     <div id="languageConfigSection">
       <h2 data-i18n="config_lang_title">Configurar idiomas del glosario</h2>
@@ -838,9 +877,11 @@
       en: {
         title: "PandaTerm",
         main_title: "PandaTerm",
-        app_description: "A simple TBX glossary editor",
-        import_tbx: "Import TBX",
-        download_tbx: "Download TBX",
+        app_description: "A simple TBX/CSV glossary editor",
+        // === TRADUCCIONES MODIFICADAS ===
+        import_button: "Import", // Antes "import_tbx"
+        export_button: "Export", // Antes "download_button"
+        // === FIN DE MODIFICACIONES ===
         new_glossary: "New glossary",
         toggle_theme: "Toggle theme",
         undo_button: "Undo",
@@ -862,7 +903,6 @@
         search_all: "All",
         search_source: "Source only",
         search_target: "Target only",
-        // toggle_columns_button: "Toggle Columns", // Removed
         source_term_col: "Source term",
         target_term_col: "Target term",
         definition_col: "Definition",
@@ -880,8 +920,8 @@
         new_glossary_confirm_text: "All current glossary data will be lost. If you don't want to lose it, click cancel and export it as a TBX file. Click confirm to create a new glossary from scratch.",
         confirm_button: "Confirm",
         cancel_button: "Cancel",
-        download_dialog_title: "Enter filename",
-        download_dialog_placeholder: "glossary",
+        download_dialog_title: "Enter filename", // Reutilizado por el modal de exportación
+        download_dialog_placeholder: "glossary", // Reutilizado por el modal de exportación
         save_button: "Save",
         edit_term_title: "Edit Term",
         update_button: "Update",
@@ -889,14 +929,30 @@
         show_more_fields: "Show more fields",
         hide_more_fields: "Hide fields",
         delete_term_confirm_title: "Confirm Delete",
-        delete_term_confirm_text: "Are you sure you want to delete this term? This action cannot be undone."
+        delete_term_confirm_text: "Are you sure you want to delete this term? This action cannot be undone.",
+        // --- TRADUCCIONES DE BACKUP ---
+        "backup_restored": "Your previous work has been restored.",
+        "backup_corrupt": "Could not restore backup. It may be corrupt. Starting new session.",
+        // --- NUEVAS TRADUCCIONES (CSV Y EXPORT) ---
+        "export_dialog_title": "Export Glossary",
+        "export_filename": "Filename:",
+        "export_format": "Format:",
+        "export_action_button": "Export",
+        "csv_import_success": "Imported {count} new terms.",
+        "csv_import_no_terms": "No new terms found to import.",
+        "csv_import_error": "Error loading CSV file. Please ensure it's a valid file.",
+        "csv_header_error": "The CSV must have headers like \"Source Term\" and \"Target Term\", or \"{srcLang}\" and \"{tgtLang}\".",
+        "csv_empty_error": "The CSV is empty or has no headers.",
+        "unsupported_file_error": "Unsupported file type. Please select a .tbx, .xml, or .csv file."
       },
       es: {
         title: "PandaTerm",
         main_title: "PandaTerm",
-        app_description: "Un sencillo editor de glosarios TBX",
-        import_tbx: "Importar TBX",
-        download_tbx: "Descargar TBX",
+        app_description: "Un sencillo editor de glosarios TBX/CSV",
+        // === TRADUCCIONES MODIFICADAS ===
+        import_button: "Importar", // Antes "import_tbx"
+        export_button: "Exportar", // Antes "download_button"
+        // === FIN DE MODIFICACIONES ===
         new_glossary: "Nuevo glosario",
         toggle_theme: "Cambiar tema",
         undo_button: "Deshacer",
@@ -918,7 +974,6 @@
         search_all: "Todos",
         search_source: "Solo origen",
         search_target: "Solo destino",
-        // toggle_columns_button: "Mostrar/Ocultar Columnas", // Removed
         source_term_col: "Término de origen",
         target_term_col: "Término de destino",
         definition_col: "Definición",
@@ -936,8 +991,8 @@
         new_glossary_confirm_text: "Se perderá toda la información del glosario actual. Si no quieres perderlo, haz clic en cancelar y expórtalo como archivo TBX. Haz clic en confirmar para crear un glosario nuevo desde cero.",
         confirm_button: "Confirmar",
         cancel_button: "Cancelar",
-        download_dialog_title: "Introducir nombre de archivo",
-        download_dialog_placeholder: "glosario",
+        download_dialog_title: "Introducir nombre de archivo", // Reutilizado
+        download_dialog_placeholder: "glosario", // Reutilizado
         save_button: "Guardar",
         edit_term_title: "Editar término",
         update_button: "Actualizar",
@@ -945,7 +1000,21 @@
         show_more_fields: "Mostrar más campos",
         hide_more_fields: "Ocultar campos",
         delete_term_confirm_title: "Confirmar eliminación",
-        delete_term_confirm_text: "¿Estás seguro de que quieres eliminar este término? Esta acción no se puede deshacer."
+        delete_term_confirm_text: "¿Estás seguro de que quieres eliminar este término? Esta acción no se puede deshacer.",
+        // --- TRADUCCIONES DE BACKUP ---
+        "backup_restored": "Se ha restaurado tu trabajo anterior.",
+        "backup_corrupt": "No se pudo restaurar la copia de seguridad. Puede que esté corrupta. Empezando una nueva sesión.",
+        // --- NUEVAS TRADUCCIONES (CSV Y EXPORT) ---
+        "export_dialog_title": "Exportar Glosario",
+        "export_filename": "Nombre de archivo:",
+        "export_format": "Formato:",
+        "export_action_button": "Exportar",
+        "csv_import_success": "Se importaron {count} términos nuevos.",
+        "csv_import_no_terms": "No se encontraron términos nuevos para importar.",
+        "csv_import_error": "Error al cargar el archivo CSV. Asegúrate de que sea un archivo válido.",
+        "csv_header_error": "El CSV debe tener cabeceras como \"Source Term\" y \"Target Term\", o \"{srcLang}\" y \"{tgtLang}\".",
+        "csv_empty_error": "El CSV está vacío o no tiene cabeceras.",
+        "unsupported_file_error": "Tipo de archivo no compatible. Por favor, selecciona un archivo .tbx, .xml, o .csv."
       }
     };
 
@@ -1069,6 +1138,7 @@
         glossary = history.pop();
         renderGlossary();
         updateUndoButtonState();
+        saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
       }
     }
 
@@ -1093,6 +1163,7 @@
 
       showSection('languageConfigSection');
       renderGlossary();
+      saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
     }
 
     /**
@@ -1126,6 +1197,7 @@
       // Clear history when starting a new glossary configuration
       history = [];
       updateUndoButtonState();
+      saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
     }
 
     /**
@@ -1159,7 +1231,6 @@
         definition: definition,
         notes: notes,
         srcPartOfSpeech: partOfSpeech
-        // We're not storing tgtPartOfSpeech separately for now, assuming it's usually the same or derived.
       });
       srcTermInput.value = "";
       tgtTermInput.value = "";
@@ -1168,6 +1239,7 @@
       partOfSpeechInput.value = "";
       srcTermInput.focus();
       renderGlossary(true); // Pass true to animate the last row
+      saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
     }
 
     /**
@@ -1182,6 +1254,7 @@
             glossary.splice(originalIndex, 1);
             renderGlossary();
             closeModal('editModal'); // Close modal if open after deleting
+            saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
         });
     }
 
@@ -1195,7 +1268,6 @@
         modalOverlay.className = 'modal-overlay';
         modalOverlay.id = 'editModal';
 
-        // Create options for partOfSpeech select
         const posOptions = ['noun', 'verb', 'adj', 'adv'].map(pos =>
             `<option value="${pos}" ${term.srcPartOfSpeech === pos ? 'selected' : ''}>${pos}</option>`
         ).join('');
@@ -1263,6 +1335,7 @@
 
         closeModal('editModal');
         renderGlossary();
+        saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
     }
 
     /**
@@ -1283,14 +1356,12 @@
      */
     function formatTextWithLinks(text) {
         if (!text) return '';
-        // Regular expression to find URLs
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
     }
 
     /**
      * Applies the current column visibility settings to the table.
-     * Since the toggle button is removed, all columns are always visible.
      */
     function applyColumnVisibility() {
         const table = document.querySelector('table');
@@ -1300,9 +1371,7 @@
         const rows = Array.from(table.querySelectorAll('tbody tr'));
 
         headers.forEach((th, index) => {
-            // All columns are always visible
             th.style.display = '';
-
             rows.forEach(row => {
                 const cell = row.children[index];
                 if (cell) {
@@ -1339,7 +1408,6 @@
       });
 
       filteredGlossary.forEach((entry, i) => {
-          // Find original index to pass to deleteTerm and editTerm
           const originalIndex = glossary.findIndex(g => g === entry);
           const row = document.createElement("tr");
           row.innerHTML = `
@@ -1360,10 +1428,81 @@
       applyColumnVisibility(); // Apply visibility after rendering
     }
 
+    // ===============================================
+    // === LÓGICA DE EXPORTACIÓN (TBX Y CSV) =======
+    // ===============================================
+
     /**
-     * Generates the TBX XML string from the current glossary data.
-     * It uses the <martif> structure for broader compatibility.
-     * @returns {string} The TBX XML string.
+     * Muestra el modal de exportación para elegir formato y nombre.
+     */
+    function showExportDialog() {
+      if (glossary.length === 0 || !glossarySourceLanguage || !glossaryTargetLanguage) {
+        showMessageBox(translations[currentUILanguage]["Cannot download empty or unconfigured glossary."]);
+        return;
+      }
+
+      const modalOverlay = document.createElement('div');
+      modalOverlay.className = 'modal-overlay';
+      modalOverlay.id = 'exportModal';
+
+      // Usamos las traducciones para el modal
+      modalOverlay.innerHTML = `
+        <div class="modal-content">
+          <button class="close-modal-btn" onclick="closeModal('exportModal')">&times;</button>
+          <h3 data-i18n="export_dialog_title">${translations[currentUILanguage]['export_dialog_title']}</h3>
+          
+          <div class="input-group">
+            <label for="exportFilename" data-i18n="export_filename">${translations[currentUILanguage]['export_filename']}</label>
+            <input id="exportFilename" type="text" value="${translations[currentUILanguage]['download_dialog_placeholder']}" />
+          </div>
+          
+          <div class="input-group">
+            <label data-i18n="export_format">${translations[currentUILanguage]['export_format']}</label>
+            <!-- Reutilizamos el estilo de .search-options para los radio buttons -->
+            <div class="search-options" style="margin-top: 5px; margin-bottom: 0; justify-content: flex-start; gap: 25px;">
+              <label>
+                <input type="radio" name="exportFormat" value="tbx" checked>
+                <span>TBX</span>
+              </label>
+              <label>
+                <input type="radio" name="exportFormat" value="csv">
+                <span>CSV</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="dialog-buttons">
+            <button class="btn-secondary" onclick="closeModal('exportModal')" data-i18n="cancel_button">${translations[currentUILanguage]['cancel_button']}</button>
+            <button class="btn-primary" onclick="performExport()" data-i18n="export_action_button">${translations[currentUILanguage]['export_action_button']}</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modalOverlay);
+      
+      const filenameInput = document.getElementById('exportFilename');
+      filenameInput.focus();
+      filenameInput.select(); // Seleccionar el texto por defecto
+    }
+
+    /**
+     * Se llama desde el modal de exportación. Obtiene los valores y llama a la función de descarga correspondiente.
+     */
+    function performExport() {
+      const filename = document.getElementById('exportFilename').value.trim() || translations[currentUILanguage]['download_dialog_placeholder'];
+      const format = document.querySelector('input[name="exportFormat"]:checked').value;
+
+      if (format === 'tbx') {
+        generateAndDownloadTBX(filename);
+      } else if (format === 'csv') {
+        generateAndDownloadCSV(filename);
+      }
+
+      closeModal('exportModal');
+    }
+
+    /**
+     * Genera el contenido del string TBX.
+     * @returns {string} El contenido del archivo TBX como string.
      */
     function generateTBX() {
       const xml = [`<?xml version="1.0" encoding="UTF-8"?>`,
@@ -1373,28 +1512,23 @@
 
       glossary.forEach(entry => {
         xml.push(`      <termEntry>`);
-        xml.push(`        <LangSet xml:lang="${entry.srcLang}">`);
+        xml.push(`        <LangSet xml:lang="${entry.srcLang || glossarySourceLanguage}">`);
         xml.push(`          <tig>`);
         xml.push(`            <term>${entry.srcTerm}</term>`);
-        // Add source part of speech if present
         if (entry.srcPartOfSpeech) {
             xml.push(`            <termNote type="partOfSpeech">${entry.srcPartOfSpeech}</termNote>`);
         }
         xml.push(`          </tig>`);
         xml.push(`        </LangSet>`);
-        xml.push(`        <LangSet xml:lang="${entry.tgtLang}">`);
+        xml.push(`        <LangSet xml:lang="${entry.tgtLang || glossaryTargetLanguage}">`);
         xml.push(`          <tig>`);
         xml.push(`            <term>${entry.tgtTerm}</term>`);
-        // Add definition if present
         if (entry.definition) {
             xml.push(`            <descrip type="definition">${entry.definition}</descrip>`);
         }
-        // Add notes if present
         if (entry.notes) {
             xml.push(`            <termNote type="comment">${entry.notes}</termNote>`);
         }
-        // If a target part of speech was ever stored, it would go here.
-        // For now, we only store srcPartOfSpeech, so we don't add it to the target tig.
         xml.push(`          </tig>`);
         xml.push(`        </LangSet>`);
         xml.push(`      </termEntry>`);
@@ -1404,45 +1538,83 @@
       return xml.join("\n");
     }
 
-    /**
-     * Initiates the download of the current glossary as a TBX file.
+     /**
+     * Genera y descarga el glosario actual como un archivo TBX.
+     * @param {string} filename - El nombre de archivo (sin extensión).
      */
-    function downloadTBX() {
-      if (glossary.length === 0 || !glossarySourceLanguage || !glossaryTargetLanguage) {
-        showMessageBox(translations[currentUILanguage]["Cannot download empty or unconfigured glossary."]);
-        return;
-      }
-
-      const title = translations[currentUILanguage]['download_dialog_title'];
-      const placeholder = translations[currentUILanguage]['download_dialog_placeholder'];
-
-      showInputDialog(title, '', placeholder, (filename) => {
-        const blob = new Blob([generateTBX()], { type: "application/xml" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename.endsWith('.tbx') ? filename : `${filename}.tbx`;
-        a.click();
-        URL.revokeObjectURL(url);
-      });
+    function generateAndDownloadTBX(filename) {
+      const blob = new Blob([generateTBX()], { type: "application/xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename.endsWith('.tbx') ? filename : `${filename}.tbx`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     /**
-     * Loads a TBX file selected by the user.
-     * This function now handles both <martif> and <tbx> root structures.
+     * Escapa un campo de texto para su uso en CSV.
+     * @param {string} field - El contenido del campo.
+     * @returns {string} El campo formateado para CSV.
      */
-    function loadTBX() {
-      console.log("Starting TBX import process...");
-      document.getElementById("tbxFileInput").click();
-      document.getElementById("tbxFileInput").onchange = (event) => {
-        const file = event.target.files[0];
-        if (!file) {
-          console.log("No file selected.");
-          return;
-        }
+    function escapeCSV(field) {
+      if (field === null || field === undefined) {
+        return '""';
+      }
+      const str = String(field);
+      const escaped = str.replace(/"/g, '""'); // Duplica las comillas dobles
+      // Si el campo contiene comillas, punto y coma, o saltos de línea, se entrecomilla
+      if (str.includes('"') || str.includes(';') || str.includes('\n') || str.includes('\r')) {
+        return `"${escaped}"`;
+      }
+      return escaped; // Devolver sin comillas si no es necesario
+    }
 
-        console.log(`Selected file: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+    /**
+     * Genera y descarga el glosario actual como un archivo CSV compatible.
+     * @param {string} filename - El nombre de archivo (sin extensión).
+     */
+    function generateAndDownloadCSV(filename) {
+      const headers = [
+        "Source Language", "Source Term", "Target Language", "Target Term",
+        "Definition", "Notes", "Part of Speech"
+      ];
+      // Usamos punto y coma para mejor compatibilidad con Excel
+      let csvContent = headers.join(";") + "\n"; 
 
+      glossary.forEach(entry => {
+        const row = [
+          entry.srcLang || glossarySourceLanguage,
+          entry.srcTerm,
+          entry.tgtLang || glossaryTargetLanguage,
+          entry.tgtTerm,
+          entry.definition || '',
+          entry.notes || '',
+          entry.srcPartOfSpeech || ''
+        ];
+        csvContent += row.map(escapeCSV).join(";") + "\n";
+      });
+
+      // Aseguramos UTF-8 con BOM para que Excel abra los acentos correctamente
+      const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+      const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ===============================================
+    // === LÓGICA DE IMPORTACIÓN (TBX Y CSV) =======
+    // ===============================================
+
+    /**
+     * Lee y procesa el contenido de un archivo TBX.
+     * @param {File} file - El archivo TBX/XML a leer.
+     */
+    function readTBXFile(file) {
         const reader = new FileReader();
         reader.onload = () => {
           try {
@@ -1450,53 +1622,39 @@
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(reader.result, "application/xml");
 
-            // Check for parsing errors
             const parserError = xmlDoc.querySelector("parsererror");
             if (parserError) {
                 const errorText = parserError.textContent || "Unknown XML parsing error.";
                 console.error("XML Parsing Error:", errorText, xmlDoc);
                 throw new Error(`Parsing error: The file is not a valid XML/TBX. Details: ${errorText.substring(0, 100)}...`);
             }
-            console.log("Parsed XML document:", xmlDoc);
-
+            
             let entryTagName, langSetTagName, termGroupTagName, rootElement;
 
-            // Determine the TBX dialect based on the root element
             if (xmlDoc.getElementsByTagName("martif").length > 0) {
                 rootElement = "martif";
                 entryTagName = "termEntry";
-                langSetTagName = "LangSet"; // Based on user's previous TBX and Subpanda's
+                langSetTagName = "LangSet";
                 termGroupTagName = "tig";
-                console.log("Detected TBX dialect: martif (older style)");
             } else if (xmlDoc.getElementsByTagName("tbx").length > 0) {
                 rootElement = "tbx";
                 entryTagName = "conceptEntry";
                 langSetTagName = "langSec";
                 termGroupTagName = "termSec";
-                console.log("Detected TBX dialect: tbx (TBX 3.0 style)");
             } else {
                 throw new Error("Unsupported TBX root element. Expected <martif> or <tbx>.");
             }
 
             const entries = xmlDoc.getElementsByTagName(entryTagName);
-            console.log(`Found ${entries.length} <${entryTagName}> elements.`);
-
             const newGlossary = [];
-            const langCounts = {}; // To determine most frequent source/target languages
-
-            if (entries.length === 0) {
-                console.warn(`No <${entryTagName}> elements found in the TBX file.`);
-            }
+            const langCounts = {}; 
 
             for (let i = 0; i < entries.length; i++) {
               const entry = entries[i];
               const langSets = entry.getElementsByTagName(langSetTagName);
-              console.log(`Processing ${entryTagName} ${i+1}. Found ${langSets.length} <${langSetTagName}> elements.`);
-
               let conceptDefinition = '';
               let conceptNotes = '';
 
-              // Try to get concept-level definition/notes for TBX 3.0 style
               if (rootElement === "tbx") {
                   const conceptDefinitionElement = entry.querySelector('descrip[type="definition"]');
                   const conceptNotesElement = entry.querySelector('note');
@@ -1504,42 +1662,30 @@
                   conceptNotes = conceptNotesElement ? conceptNotesElement.textContent || '' : '';
               }
 
-
               if (langSets.length >= 2) {
-                let srcLang = '';
-                let srcTerm = '';
-                let srcPartOfSpeech = '';
-                let tgtLang = '';
-                let tgtTerm = '';
-                let tgtPartOfSpeech = '';
-                let entryDefinition = conceptDefinition; // Start with concept-level definition
-                let entryNotes = conceptNotes; // Start with concept-level notes
+                let srcLang = '', srcTerm = '', srcPartOfSpeech = '';
+                let tgtLang = '', tgtTerm = '', tgtPartOfSpeech = '';
+                let entryDefinition = conceptDefinition;
+                let entryNotes = conceptNotes;
 
-                // Process first langSet (assumed source)
                 const firstLangSet = langSets[0];
                 srcLang = firstLangSet.getAttribute("xml:lang") || '';
                 const firstTermGroup = firstLangSet.getElementsByTagName(termGroupTagName)[0];
                 if (firstTermGroup) {
                     srcTerm = firstTermGroup.getElementsByTagName("term")[0]?.textContent || '';
-                    
-                    // Try to extract partOfSpeech using the 'min' namespace first
                     let minPartOfSpeechElement = firstTermGroup.getElementsByTagNameNS("http://www.tbxinfo.net/ns/min", "partOfSpeech")[0];
                     if (minPartOfSpeechElement) {
                         srcPartOfSpeech = minPartOfSpeechElement.textContent || '';
                     } else {
-                        // Fallback to termNote type="partOfSpeech" if 'min' namespace element is not found
                         srcPartOfSpeech = firstTermGroup.querySelector('termNote[type="partOfSpeech"]')?.textContent || '';
                     }
                 }
 
-                // Process second langSet (assumed target)
                 const secondLangSet = langSets[1];
                 tgtLang = secondLangSet.getAttribute("xml:lang") || '';
                 const secondTermGroup = secondLangSet.getElementsByTagName(termGroupTagName)[0];
                 if (secondTermGroup) {
                     tgtTerm = secondTermGroup.getElementsByTagName("term")[0]?.textContent || '';
-
-                    // Apply the same logic for target part of speech
                     let minPartOfSpeechElement = secondTermGroup.getElementsByTagNameNS("http://www.tbxinfo.net/ns/min", "partOfSpeech")[0];
                     if (minPartOfSpeechElement) {
                         tgtPartOfSpeech = minPartOfSpeechElement.textContent || '';
@@ -1547,14 +1693,13 @@
                         tgtPartOfSpeech = secondTermGroup.querySelector('termNote[type="partOfSpeech"]')?.textContent || '';
                     }
 
-                    // Prioritize term-level definition/notes if available in target langSet/termGroup
                     const termGroupDefinitionElement = secondTermGroup.querySelector('descrip[type="definition"]');
                     const termGroupNotesElement = secondTermGroup.querySelector('termNote[type="comment"]');
-                    const termGroupContextElement = secondTermGroup.querySelector('descrip[type="context"]'); // Often used as definition/notes
+                    const termGroupContextElement = secondTermGroup.querySelector('descrip[type="context"]');
 
                     if (termGroupDefinitionElement) {
                         entryDefinition = termGroupDefinitionElement.textContent || '';
-                    } else if (termGroupContextElement) { // If no explicit definition, context might serve as one
+                    } else if (termGroupContextElement) {
                         entryDefinition = termGroupContextElement.textContent || '';
                     }
 
@@ -1563,62 +1708,35 @@
                     }
                 }
 
-                console.log(`  TermPair: ${srcLang}:${srcTerm} (POS: ${srcPartOfSpeech}) - ${tgtLang}:${tgtTerm} (POS: ${tgtPartOfSpeech}). Definition: "${entryDefinition}", Notes: "${entryNotes}"`);
-
-                // Only add if at least one term is present.
                 if (srcTerm || tgtTerm) {
                     newGlossary.push({
-                        srcLang: srcLang,
-                        srcTerm: srcTerm,
-                        srcPartOfSpeech: srcPartOfSpeech, // Store source part of speech
-                        tgtLang: tgtLang,
-                        tgtTerm: tgtTerm,
-                        tgtPartOfSpeech: tgtPartOfSpeech, // Store target part of speech (even if not displayed, good for data integrity)
-                        definition: entryDefinition,
-                        notes: entryNotes
+                        srcLang: srcLang, srcTerm: srcTerm, srcPartOfSpeech: srcPartOfSpeech,
+                        tgtLang: tgtLang, tgtTerm: tgtTerm, tgtPartOfSpeech: tgtPartOfSpeech,
+                        definition: entryDefinition, notes: entryNotes
                     });
-
                     langCounts[srcLang] = (langCounts[srcLang] || 0) + 1;
                     langCounts[tgtLang] = (langCounts[tgtLang] || 0) + 1;
-                } else {
-                    console.warn(`  ${entryTagName} ${i+1} has two ${langSetTagName}s but no terms found. Skipping.`);
                 }
-
-              } else {
-                console.warn(`  ${entryTagName} ${i+1} does not have at least two <${langSetTagName}> elements. Skipping.`);
               }
             }
 
-            console.log("Language counts:", langCounts);
             const sortedLangs = Object.keys(langCounts).sort((a, b) => langCounts[b] - langCounts[a]);
-            console.log("Sorted languages by frequency:", sortedLangs);
-
             let detectedSrcLang, detectedTgtLang;
 
             if (sortedLangs.length >= 2) {
                 detectedSrcLang = sortedLangs[0];
                 detectedTgtLang = sortedLangs[1];
-                console.log(`Detected source language: ${detectedSrcLang}, Target language: ${detectedTgtLang}`);
-
                 newGlossary.forEach(entry => {
-                    // If the srcLang of an entry doesn't match the globally detected srcLang, swap them.
-                    // This ensures consistency even if a TBX has entries with languages in different orders.
                     if (entry.srcLang !== detectedSrcLang && entry.tgtLang === detectedSrcLang) {
-                        console.log(`Swapping language pair for entry: ${entry.srcTerm}`);
                         [entry.srcLang, entry.tgtLang] = [entry.tgtLang, entry.srcLang];
                         [entry.srcTerm, entry.tgtTerm] = [entry.tgtTerm, entry.srcTerm];
-                        // Also swap part of speech if they were explicitly stored for each language
                         [entry.srcPartOfSpeech, entry.tgtPartOfSpeech] = [entry.tgtPartOfSpeech, entry.srcPartOfSpeech];
                     }
                 });
             } else {
-                // Fallback if not enough distinct languages are found in term entries
-                // Try to get xml:lang from the root element itself
                 const rootXmlLang = xmlDoc.documentElement.getAttribute("xml:lang");
-
-                detectedSrcLang = rootXmlLang || 'en-US'; // Use root xml:lang or default
-                detectedTgtLang = 'es-ES'; // Default target
-                console.warn(`No valid language pairs found in TBX entries. Defaulting glossary languages to ${detectedSrcLang}/${detectedTgtLang}.`);
+                detectedSrcLang = rootXmlLang || 'en-US';
+                detectedTgtLang = 'es-ES';
                 if (newGlossary.length > 0) {
                      showMessageBox(translations[currentUILanguage]["No valid language pairs found in TBX. Defaulting to en-US/es-ES."]);
                 }
@@ -1636,17 +1754,160 @@
 
             showSection('editorSection');
             renderGlossary();
+            saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
             console.log("TBX import completed successfully.");
 
           } catch (error) {
             console.error("Error during TBX file processing:", error);
-            showMessageBox(translations[currentUILanguage]["Error loading TBX file. Please ensure it's a valid XML/TBX."]);
+            showMessageBox(translations[currentUILanguage]["Error loading TBX file. Please ensure it's a valid XML/TBX."] + " " + error.message);
           }
         };
         reader.readAsText(file);
-        event.target.value = ''; // Clear the file input
-      };
     }
+
+    /**
+     * Lee y procesa el contenido de un archivo CSV.
+     * @param {File} file - El archivo CSV a leer.
+     */
+    function readCSVFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          console.log("Cargando CSV...");
+          parseCSV(reader.result);
+        } catch (error) {
+          console.error("Error durante el procesamiento del archivo CSV:", error);
+          showMessageBox(error.message); // Mostrar el mensaje de error específico
+        }
+      };
+      reader.readAsText(file, "UTF-8"); // Forzamos la lectura como UTF-8
+    }
+
+    /**
+     * Parsea una sola línea de CSV, respetando las comillas dobles.
+     * @param {string} row - La línea de texto CSV.
+     * @param {string} delimiter - El delimitador (ej. ';').
+     * @returns {string[]} Un array de los campos.
+     */
+    function parseCSVRow(row, delimiter) {
+      const fields = [];
+      let inQuote = false;
+      let field = '';
+
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        
+        if (char === '"') {
+          if (inQuote && row[i+1] === '"') {
+            // Es una comilla doble escapada ("")
+            field += '"';
+            i++; // Saltamos la siguiente comilla
+          } else {
+            // Es el inicio o fin de un campo entrecomillado
+            inQuote = !inQuote;
+          }
+        } else if (char === delimiter && !inQuote) {
+          // Fin de un campo
+          fields.push(field);
+          field = '';
+        } else {
+          // Carácter normal (incluyendo los que no son el delimitador)
+          field += char;
+        }
+      }
+      
+      fields.push(field); // Añadimos el último campo
+      
+      // Limpiamos las comillas de encapsulamiento (ej. "hola" -> hola)
+      // Solo si el campo empieza Y termina con comillas
+      return fields.map(f => {
+          if (f.startsWith('"') && f.endsWith('"')) {
+              return f.substring(1, f.length - 1).replace(/""/g, '"');
+          }
+          return f;
+      });
+    }
+
+    /**
+     * Parsea el contenido de un string CSV y lo añade al glosario.
+     * @param {string} textContent - El contenido completo del archivo CSV.
+     */
+    function parseCSV(textContent) {
+      const newGlossary = [];
+      // Dividimos en líneas, manejando \n y \r\n
+      const lines = textContent.split(/\r?\n/);
+
+      if (lines.length < 2 || !lines[0].trim()) {
+        throw new Error(translations[currentUILanguage]['csv_empty_error']);
+      }
+
+      // Detectamos el delimitador (coma o punto y coma) por la cabecera
+      const delimiter = lines[0].includes(';') ? ';' : ',';
+      
+      // 1. Extraer Cabeceras y Mapear
+const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
+
+      // Creamos un mapa de índices
+      const map = {
+        srcTerm: headers.indexOf("Source Term"),
+        tgtTerm: headers.indexOf("Target Term"),
+        definition: headers.indexOf("Definition"),
+        notes: headers.indexOf("Notes"),
+        partOfSpeech: headers.indexOf("Part of Speech")
+      };
+
+      // Verificación mínima: ¿encontramos los términos?
+      if (map.srcTerm === -1 || map.tgtTerm === -1) {
+          // Intentamos una segunda vez con los códigos de idioma (ej. "en-US")
+          map.srcTerm = headers.indexOf(glossarySourceLanguage);
+          map.tgtTerm = headers.indexOf(glossaryTargetLanguage);
+          
+          if (map.srcTerm === -1 || map.tgtTerm === -1) {
+            let errorMsg = translations[currentUILanguage]['csv_header_error'];
+            errorMsg = errorMsg.replace('{srcLang}', glossarySourceLanguage).replace('{tgtLang}', glossaryTargetLanguage);
+            throw new Error(errorMsg);
+          }
+      }
+
+      // 2. Procesar las filas
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue; // Ignorar líneas vacías
+
+        const values = parseCSVRow(lines[i], delimiter);
+
+        const srcTerm = values[map.srcTerm] || '';
+        const tgtTerm = values[map.tgtTerm] || '';
+
+        // Solo añadimos si tenemos los términos obligatorios
+        if (srcTerm && tgtTerm) {
+          newGlossary.push({
+            srcLang: glossarySourceLanguage,
+            srcTerm: srcTerm,
+            tgtLang: glossaryTargetLanguage,
+            tgtTerm: tgtTerm,
+            definition: (map.definition > -1 ? values[map.definition] : '') || '',
+            notes: (map.notes > -1 ? values[map.notes] : '') || '',
+            srcPartOfSpeech: (map.partOfSpeech > -1 ? values[map.partOfSpeech] : '') || ''
+          });
+        }
+      }
+
+      // 3. Añadir al glosario
+      if (newGlossary.length > 0) {
+        saveState(); // Guardamos el estado actual antes de añadir los nuevos
+        glossary = glossary.concat(newGlossary);
+        renderGlossary();
+        saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+        let successMsg = translations[currentUILanguage]['csv_import_success'];
+        showMessageBox(successMsg.replace('{count}', newGlossary.length));
+      } else {
+        showMessageBox(translations[currentUILanguage]['csv_import_no_terms']);
+      }
+    }
+
+    // ===============================================
+    // === LÓGICA DE DIÁLOGOS Y MENSAJES ===========
+    // ===============================================
 
     /**
      * Displays a simple message box to the user.
@@ -1662,8 +1923,7 @@
       messageBox.className = 'message-box';
 
       const titleEl = document.createElement('h3');
-      // For simple messages, title is usually not needed or can be a generic "Info"
-      titleEl.textContent = translations[currentUILanguage]['title']; // Using app title as generic info title
+      titleEl.textContent = translations[currentUILanguage]['title']; 
 
       const messageText = document.createElement('p');
       messageText.textContent = message;
@@ -1674,7 +1934,7 @@
       closeButton.className = 'btn-primary';
       closeButton.onclick = () => document.body.removeChild(messageBox);
 
-      messageBox.appendChild(titleEl); // Add title element
+      messageBox.appendChild(titleEl);
       messageBox.appendChild(messageText);
       messageBox.appendChild(closeButton);
       document.body.appendChild(messageBox);
@@ -1727,11 +1987,7 @@
     }
 
     /**
-     * Displays an input dialog to the user.
-     * @param {string} title - The title of the dialog.
-     * @param {string} message - An optional message to display.
-     * @param {string} placeholder - The placeholder text for the input field.
-     * @param {function} onConfirm - Callback function with the input value if confirmed.
+     * Displays an input dialog (LEGADO - AHORA USADO SOLO POR EXPORT)
      */
     function showInputDialog(title, message, placeholder, onConfirm) {
       const existingMessageBox = document.querySelector('.message-box');
@@ -1797,53 +2053,171 @@
       input.focus();
     }
 
-    // Removed showColumnVisibilityMenu and toggleColumnVisibilityMenu functions
-    // Removed columnVisibilityMenu global variable
+
+    // ===============================================
+    // === FUNCIONES DE BACKUP Y CARGA INICIAL =====
+    // ===============================================
+
+    /**
+     * Muestra una notificación "toast" temporal.
+     * @param {string} message - El mensaje a mostrar.
+     */
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100); 
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (toast.parentNode === document.body) {
+             document.body.removeChild(toast);
+          }
+        }, 500);
+      }, 3000); 
+    }
+
+
+    /**
+     * Guarda el estado actual del glosario en localStorage.
+     */
+    function saveBackupToLocalStorage() {
+      try {
+        const backupData = {
+          glossary: glossary,
+          sourceLang: glossarySourceLanguage,
+          targetLang: glossaryTargetLanguage
+        };
+        localStorage.setItem('pandaTermBackup', JSON.stringify(backupData));
+        console.log('Backup guardado en localStorage.');
+      } catch (e) {
+        console.error('Error al guardar el backup en localStorage:', e);
+      }
+    }
+
+    /**
+     * Carga el estado del glosario desde localStorage.
+     * @returns {boolean} - Devuelve true si se cargó un backup, false en caso contrario.
+     */
+    function loadBackupFromLocalStorage() {
+      try {
+        const backupString = localStorage.getItem('pandaTermBackup');
+        if (!backupString) {
+          return false;
+        }
+        const backupData = JSON.parse(backupString);
+        if (backupData && backupData.glossary && backupData.sourceLang && backupData.targetLang) {
+          glossary = backupData.glossary;
+          glossarySourceLanguage = backupData.sourceLang;
+          glossaryTargetLanguage = backupData.targetLang;
+          console.log('Backup restaurado desde localStorage.');
+          return true;
+        } else {
+          console.warn('Backup en localStorage corrupto o incompleto.');
+          return false;
+        }
+      } catch (e) {
+        console.error('Error al cargar o parsear el backup de localStorage:', e);
+        return false;
+      }
+    }
+
+    // ===============================================
+    // === INICIALIZACIÓN DE LA APLICACIÓN =========
+    // ===============================================
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Set initial language if not already set
+      // 1. Configurar idioma de la UI
       if (!localStorage.getItem('language')) {
         localStorage.setItem('language', 'en');
         currentUILanguage = 'en';
       }
-      // Apply theme and language
+
+      // 2. Intentar cargar backup
+      const backupLoaded = loadBackupFromLocalStorage();
+      let backupWasCorrupt = false;
+      if (!backupLoaded && localStorage.getItem('pandaTermBackup') !== null) {
+          backupWasCorrupt = true;
+          localStorage.removeItem('pandaTermBackup');
+          console.warn('Se eliminó un backup corrupto de localStorage.');
+      }
+      
+      // 3. Aplicar tema e idioma (Actualiza las traducciones)
       applyTheme(currentTheme);
-      setUILanguage(currentUILanguage);
-      // Populate language list for inputs
+      setUILanguage(currentUILanguage); 
+      
+      // 4. Poblar datalist de idiomas
       populateIsoLanguagesDatalist();
-      // Start with the initial configuration screen
-      showSection('languageConfigSection');
-      // Set initial state for undo button
+
+      // 5. Decidir qué pantalla mostrar
+      if (backupLoaded) {
+        document.getElementById('configSrcLang').value = glossarySourceLanguage;
+        document.getElementById('configTgtLang').value = glossaryTargetLanguage;
+        document.getElementById('displaySrcLang').value = glossarySourceLanguage;
+        document.getElementById('displayTgtLang').value = glossaryTargetLanguage;
+        showSection('editorSection'); 
+        renderGlossary();
+        showToast(translations[currentUILanguage]['backup_restored']);
+      } else {
+        showSection('languageConfigSection');
+        if (backupWasCorrupt) {
+            showToast(translations[currentUILanguage]['backup_corrupt']);
+        }
+      }
+
+      // 6. Configurar listeners
       updateUndoButtonState();
 
-      // Add key listeners for adding terms
+      // Listener para el input de archivo (centralizado)
+      const fileInput = document.getElementById('fileInput');
+      fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+          fileInput.value = ''; // Limpiar por si acaso
+          return;
+        }
+
+        if (!glossarySourceLanguage || !glossaryTargetLanguage) {
+            showMessageBox(translations[currentUILanguage]['lang_config_required']);
+            showSection('languageConfigSection');
+            fileInput.value = ''; // Limpiar input
+            return;
+        }
+
+        const fileName = file.name.toLowerCase();
+        if (fileName.endsWith('.tbx') || fileName.endsWith('.xml')) {
+          console.log(`Importando TBX: ${file.name}`);
+          readTBXFile(file);
+        } else if (fileName.endsWith('.csv')) {
+          console.log(`Importando CSV: ${file.name}`);
+          readCSVFile(file);
+        } else {
+          console.warn(`Unsupported file type: ${fileName}`);
+          showMessageBox(translations[currentUILanguage]['unsupported_file_error']);
+        }
+        
+        fileInput.value = ''; // Limpiar siempre el input
+      });
+
+      // Listeners de teclado
       document.getElementById('srcTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('tgtTerm').focus(); });
-      document.getElementById('tgtTerm').addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-              document.getElementById('definition').focus();
-          }
-      });
-      document.getElementById('definition').addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-              document.getElementById('notes').focus();
-          }
-      });
-      document.getElementById('notes').addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-              document.getElementById('partOfSpeech').focus();
-          }
-      });
+      document.getElementById('tgtTerm').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('definition').focus(); });
+      document.getElementById('definition').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('notes').focus(); });
+      document.getElementById('notes').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('partOfSpeech').focus(); });
       document.getElementById('partOfSpeech').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTerm(); });
 
-      // Add undo shortcut
       document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key.toLowerCase() === 'z') {
-          e.preventDefault(); // Prevent browser's default undo action
+          e.preventDefault();
           undo();
         }
       });
       
-      // Apply initial column visibility (all true by default now)
       applyColumnVisibility();
     });
   </script>
