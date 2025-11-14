@@ -1754,6 +1754,7 @@ let subtitleFontSize = 20; // Tamaño de fuente inicial en píxeles
         let tmTargetLanguage = '';
         let tmBestMatchForActiveSegment = null;
         let currentTMLatestSearchResults = [];
+        let editingTermIndex = -1; 
         let timeUpdateListener = null;
 let contextData = [];
 let lastActiveSubtitleIndex = 0;
@@ -1946,7 +1947,7 @@ const followPlaybackBtn = document.getElementById('followPlaybackBtn');
             'es': {
                 'title': 'subpandaTM', 'import_srt': 'Importar .srt', 'export_srt': 'Exportar .srt', 'backup_btn': 'Copia de seguridad', 'qa_btn': 'QA', 'shortcuts_btn': 'Atajos', 'find_replace_btn': 'Buscar y reemplazar', 'terminology_btn': 'Terminología', 'tm_btn': 'Memoria de traducción', 'load_video': 'Cargar vídeo', 'change_video': 'Cambiar vídeo', 'preview_size': 'Tamaño:', 'preview_source': 'Mostrar:', 'translation_text_option': 'Traducción', 'original_text_option': 'Original', 'translation_stats_title': 'Estadísticas', 'segments_progress_text': '{0}/{1} subtítulos traducidos ({2}%)', 'words_translated_text': '{0} palabras traducidas', 'words_total_text': '{0} palabras originales totales', 'words_remaining_text': '{0} palabras pendientes', 'no_translations': 'Importa un archivo .srt y un vídeo para empezar a trabajar. Si lo deseas, puedes trabajar con una memoria de traducción TMX y un glosario TBX, que puedes importar o crear desde cero.', 'time_codes': 'Códigos de tiempo:', 'original_text': 'Original:', 'translation_text': 'Traducción:', 'validate': 'Validar', 'edit': 'Editar', 'char_count_original': 'Original: ', 'char_count_translation': 'Traducción: ', 'char_units': ' c', 'cps': ' CPS', 'ok': 'OK', 'close_btn': 'Cerrar', 'save_btn': 'Guardar', 'cancel_btn': 'Cancelar', 'shortcuts_title': 'Atajos de teclado',
                 'shortcut_desc_validateAndNext': 'Validar traducción y pasar a la siguiente', 'shortcut_desc_goToNext': 'Ir al siguiente subtítulo', 'shortcut_desc_goToPrevious': 'Ir al subtítulo anterior', 'shortcut_desc_insertTM1': 'Insertar 1ª sugerencia de la MT', 'shortcut_desc_insertTM2': 'Insertar 2ª sugerencia de la MT', 'shortcut_desc_insertTM3': 'Insertar 3ª sugerencia de la MT', 'shortcut_desc_insertTM4': 'Insertar 4ª sugerencia de la MT', 'shortcut_desc_insertTM5': 'Insertar 5ª sugerencia de la MT', 'shortcut_desc_insertGloss1': 'Insertar 1er término del glosario', 'shortcut_desc_insertGloss2': 'Insertar 2º término del glosario', 'shortcut_desc_insertGloss3': 'Insertar 3er término del glosario', 'shortcut_desc_insertGloss4': 'Insertar 4º término del glosario', 'shortcut_desc_insertGloss5': 'Insertar 5º término del glosario', 'shortcut_desc_jumpToTime': 'Saltar al tiempo de inicio del subtítulo actual', 'shortcut_desc_playSegment': 'Reproducir el subtítulo actual', 'shortcut_desc_playPause': 'Reproducir/pausar vídeo', 'shortcut_desc_seekForward': 'Avanzar 3 segundos', 'shortcut_desc_seekBackward': 'Retroceder 3 segundos', 'shortcut_desc_seekForwardFast': 'Avanzar 5 segundos', 'shortcut_desc_seekBackwardFast': 'Retroceder 5 segundos', 'shortcut_desc_bold': 'Aplicar negrita', 'shortcut_desc_italic': 'Aplicar cursiva',
-                'find_replace_title': 'Buscar y reemplazar', 'find_label': 'Buscar:', 'replace_label': 'Reemplazar con:', 'case_sensitive': 'Distinguir mayúsculas y minúsculas', 'regular_expression': 'Expresión regular', 'find_prev': 'Buscar anterior', 'find_next': 'Buscar siguiente', 'replace': 'Reemplazar', 'replace_all': 'Reemplazar todo', 'save_srt_title': 'Exportar Archivo SRT', 'save_tbx_title': 'Exportar Archivo TBX', 'save_tmx_title': 'Exportar Archivo TMX', 'file_name_label': 'Nombre del archivo:', 'backup_modal_title': 'Copia de Seguridad', 'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.', 'file_label': 'Archivo:', 'last_modified_label': 'Última modificación:', 'export_srt_btn': 'Exportar SRT', 'delete_backup_btn': 'Borrar Backup', 'restore_btn': 'Restaurar', 'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.', 'qa_modal_title': 'Configuración de QA', 'cps_limit_label': 'Límite de CPS:', 'chars_per_line_limit_label': 'Límite de caracteres por línea:', 'save_and_apply_btn': 'Guardar y aplicar', 'qa_error_list_title': 'Lista de Errores de QA', 'qa_errors_found': '{0} errores de QA encontrados', 'qa_no_errors': 'No se han encontrado errores de QA.', 'terminology_sidebar_title': 'Terminología', 'config_lang_title': 'Configurar idiomas del glosario', 'config_lang_info': 'Define los idiomas de origen y destino de tu glosario. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear un glosario desde cero.', 'source_language': 'Idioma de origen:', 'target_language': 'Idioma de destino:', 'confirm_languages': 'Confirmar idiomas', 'current_lang_title': 'Idiomas actuales del glosario', 'add_term_title': 'Añadir término', 'term': 'Término:', 'translation': 'Traducción:', 'add_button': 'Añadir', 'search_title': 'Buscar', 'search_placeholder': 'Buscar término...', 'import_tbx': 'Importar TBX', 'download_tbx': 'Descargar TBX', 'new_glossary': 'Nuevo glosario', 'glossary_list_title': 'Glosario', 'source_term_col': 'Término de origen', 'target_term_col': 'Término de destino', 'actions_col': 'Acciones', 'delete_button': 'Eliminar', 'tm_sidebar_title': 'Memoria de traducción', 'tm_config_lang_title': 'Configurar idiomas de la TM', 'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.', 'current_tm_lang_title': 'Idiomas actuales de la TM', 'new_tm': 'Nueva TM', 'import_tmx': 'Importar TMX', 'download_tmx': 'Descargar TMX', 'tm_search_title': 'Buscar en TM', 'tm_search_placeholder': 'Buscar en la memoria...', 'tm_search_results_title': 'Resultados de búsqueda en TM', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Traducción', 'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
+                'find_replace_title': 'Buscar y reemplazar', 'find_label': 'Buscar:', 'replace_label': 'Reemplazar con:', 'case_sensitive': 'Distinguir mayúsculas y minúsculas', 'regular_expression': 'Expresión regular', 'find_prev': 'Buscar anterior', 'find_next': 'Buscar siguiente', 'replace': 'Reemplazar', 'replace_all': 'Reemplazar todo', 'save_srt_title': 'Exportar Archivo SRT', 'save_tbx_title': 'Exportar Archivo TBX', 'save_tmx_title': 'Exportar Archivo TMX', 'file_name_label': 'Nombre del archivo:', 'backup_modal_title': 'Copia de Seguridad', 'restore_backup_info': 'Se ha encontrado una copia de seguridad de una sesión no guardada.', 'file_label': 'Archivo:', 'last_modified_label': 'Última modificación:', 'export_srt_btn': 'Exportar SRT', 'delete_backup_btn': 'Borrar Backup', 'restore_btn': 'Restaurar', 'no_backup_found_info': 'No se ha encontrado ninguna copia de seguridad automática.', 'qa_modal_title': 'Configuración de QA', 'cps_limit_label': 'Límite de CPS:', 'chars_per_line_limit_label': 'Límite de caracteres por línea:', 'save_and_apply_btn': 'Guardar y aplicar', 'qa_error_list_title': 'Lista de Errores de QA', 'qa_errors_found': '{0} errores de QA encontrados', 'qa_no_errors': 'No se han encontrado errores de QA.', 'terminology_sidebar_title': 'Terminología', 'config_lang_title': 'Configurar idiomas del glosario', 'config_lang_info': 'Define los idiomas de origen y destino de tu glosario. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear un glosario desde cero.', 'source_language': 'Idioma de origen:', 'target_language': 'Idioma de destino:', 'confirm_languages': 'Confirmar idiomas', 'current_lang_title': 'Idiomas actuales del glosario', 'add_term_title': 'Añadir término', 'term': 'Término:', 'translation': 'Traducción:', 'add_button': 'Añadir', 'search_title': 'Buscar', 'search_placeholder': 'Buscar término...', 'import_tbx': 'Importar TBX', 'download_tbx': 'Descargar TBX', 'new_glossary': 'Nuevo glosario', 'glossary_list_title': 'Glosario', 'source_term_col': 'Término de origen', 'target_term_col': 'Término de destino', 'actions_col': 'Acciones', 'edit_button': 'Editar', 'delete_button': 'Eliminar', 'save_changes_btn': 'Guardar cambios', 'tm_sidebar_title': 'Memoria de traducción', 'tm_config_lang_title': 'Configurar idiomas de la TM', 'tm_config_lang_info': 'Define los idiomas de origen y destino de tu memoria de traducción. Es fundamental que el código ISO sea correcto. Tras configurar el idioma, podrás importar o crear una memoria desde cero.', 'current_tm_lang_title': 'Idiomas actuales de la TM', 'new_tm': 'Nueva TM', 'import_tmx': 'Importar TMX', 'download_tmx': 'Descargar TMX', 'tm_search_title': 'Buscar en TM', 'tm_search_placeholder': 'Buscar en la memoria...', 'tm_search_results_title': 'Resultados de búsqueda en TM', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Traducción', 'tm_no_match_found': 'No se encontraron coincidencias en la TM.',
                 'import_shortcuts_btn': 'Importar', 'export_shortcuts_btn': 'Exportar', 'restore_defaults_btn': 'Restaurar valores por defecto', 'edit_shortcut_btn': 'Editar', 'recording_shortcut_text': 'Pulsar tecla...', 'project_menu': 'Proyecto', 'load_project': 'Cargar proyecto', 'save_project': 'Guardar proyecto', 'new_project': 'Nuevo proyecto', 'reselect_video_title': 'Seleccionar vídeo', 'reselect_video_info': 'Proyecto cargado. Para sincronizar el vídeo, por favor, selecciona el archivo de vídeo original:', 'reselect_video_prompt': 'Proyecto cargado. Por favor, selecciona el archivo de vídeo original: {0}', 'skip_btn': 'Omitir', 'confirm_new_project_title': 'Crear nuevo proyecto', 'confirm_new_project_message': 'Tienes cambios sin guardar. ¿Quieres guardar el proyecto actual antes de continuar?', 'continue_without_saving_btn': 'Continuar sin guardar',  'save_and_continue_btn': 'Guardar y continuar',
                 'confirm_new_glossary_title': 'Confirmar nuevo glosario', 'confirm_new_glossary_message': 'Solo puedes tener un glosario activo. Si continúas, se borrarán todos los datos del glosario actual. Para evitar perder tu trabajo, asegúrate de exportarlo primero como un archivo TBX.','confirm_new_tm_title': 'Confirmar nueva TM','confirm_new_tm_message': 'Solo puedes tener una memoria de traducción (TM) activa. Si continúas, se borrarán todos los datos de la TM actual. Para evitar perder tu trabajo, asegúrate de exportarla primero como un archivo TMX.', 'continue_btn': 'Continuar',
                 'productive_documentation': 'Documentación productiva', 'doc_resource_placeholder': 'Ej: https://dle.rae.es/{word}', 
@@ -2044,7 +2045,7 @@ const followPlaybackBtn = document.getElementById('followPlaybackBtn');
             'en': {
                 'title': 'subpandaTM', 'import_srt': 'Import .srt', 'export_srt': 'Export .srt', 'backup_btn': 'Backup', 'qa_btn': 'QA', 'shortcuts_btn': 'Shortcuts', 'find_replace_btn': 'Find & Replace', 'terminology_btn': 'Terminology', 'tm_btn': 'Translation Memory', 'load_video': 'Load Video', 'change_video': 'Change Video', 'preview_size': 'Size:', 'preview_source': 'Show:', 'translation_text_option': 'Translation', 'original_text_option': 'Original', 'translation_stats_title': 'Statistics', 'segments_progress_text': '{0}/{1} subtitles translated ({2}%)', 'words_translated_text': '{0} words translated', 'words_total_text': '{0} total original words', 'words_remaining_text': '{0} words remaining', 'no_translations': 'Import an .srt file and a video to start working. If you wish, you can work with a TMX translation memory and a TBX glossary, which you can import or create from scratch.', 'time_codes': 'Time codes:', 'original_text': 'Original:', 'translation_text': 'Translation:', 'validate': 'Validate', 'edit': 'Edit', 'char_count_original': 'Original: ', 'char_count_translation': 'Translation: ', 'char_units': ' c', 'cps': ' CPS', 'ok': 'OK', 'close_btn': 'Close', 'save_btn': 'Save', 'cancel_btn': 'Cancel', 'shortcuts_title': 'Keyboard Shortcuts',
                 'shortcut_desc_validateAndNext': 'Validate translation and move to next', 'shortcut_desc_goToNext': 'Go to next subtitle', 'shortcut_desc_goToPrevious': 'Go to previous subtitle', 'shortcut_desc_insertTM1': 'Insert 1st TM suggestion', 'shortcut_desc_insertTM2': 'Insert 2nd TM suggestion', 'shortcut_desc_insertTM3': 'Insert 3rd TM suggestion', 'shortcut_desc_insertTM4': 'Insert 4th TM suggestion', 'shortcut_desc_insertTM5': 'Insert 5th TM suggestion', 'shortcut_desc_insertGloss1': 'Insert 1st glossary term', 'shortcut_desc_insertGloss2': 'Insert 2nd glossary term', 'shortcut_desc_insertGloss3': 'Insert 3rd glossary term', 'shortcut_desc_insertGloss4': 'Insert 4th glossary term', 'shortcut_desc_insertGloss5': 'Insert 5th glossary term', 'shortcut_desc_jumpToTime': 'Jump to current subtitle start time', 'shortcut_desc_playSegment': 'Play current subtitle', 'shortcut_desc_playPause': 'Play/pause video', 'shortcut_desc_seekForward': 'Seek forward 3 seconds', 'shortcut_desc_seekBackward': 'Seek backward 3 seconds', 'shortcut_desc_seekForwardFast': 'Seek forward 5 seconds', 'shortcut_desc_seekBackwardFast': 'Seek backward 5 seconds', 'shortcut_desc_bold': 'Apply bold', 'shortcut_desc_italic': 'Apply italics',
-                'find_replace_title': 'Find and Replace', 'find_label': 'Find:', 'replace_label': 'Replace with:', 'case_sensitive': 'Case sensitive', 'regular_expression': 'Regular expression', 'find_prev': 'Find previous', 'find_next': 'Find next', 'replace': 'Replace', 'replace_all': 'Replace all', 'save_srt_title': 'Export SRT File', 'save_tbx_title': 'Export TBX File', 'save_tmx_title': 'Export TMX File', 'file_name_label': 'File name:', 'backup_modal_title': 'Backup', 'restore_backup_info': 'A backup of an unsaved session has been found.', 'file_label': 'File:', 'last_modified_label': 'Last modified:', 'export_srt_btn': 'Export SRT', 'delete_backup_btn': 'Delete Backup', 'restore_btn': 'Restore', 'no_backup_found_info': 'No automatic backup has been found.', 'qa_modal_title': 'QA Settings', 'cps_limit_label': 'CPS Limit:', 'chars_per_line_limit_label': 'Characters per line limit:', 'save_and_apply_btn': 'Save and apply', 'qa_error_list_title': 'QA Error List', 'qa_errors_found': '{0} QA errors found', 'qa_no_errors': 'No QA errors found.', 'terminology_sidebar_title': 'Terminology', 'config_lang_title': 'Set up glossary languages', 'config_lang_info': 'Define the source and target languages for your glossary. The ISO code must be correct. After setting the language, you can import or create a glossary from scratch.', 'source_language': 'Source language:', 'target_language': 'Target language:', 'confirm_languages': 'Confirm languages', 'current_lang_title': 'Current glossary languages', 'add_term_title': 'Add term', 'term': 'Term:', 'translation': 'Translation:', 'add_button': 'Add', 'search_title': 'Search', 'search_placeholder': 'Search term...', 'import_tbx': 'Import TBX', 'download_tbx': 'Download TBX', 'new_glossary': 'New glossary', 'glossary_list_title': 'Glossary', 'source_term_col': 'Source term', 'target_term_col': 'Target term', 'actions_col': 'Actions', 'delete_button': 'Delete', 'tm_sidebar_title': 'Translation Memory', 'tm_config_lang_title': 'Set up TM languages', 'tm_config_lang_info': 'Define the source and target languages for your translation memory. The ISO code must be correct. After setting the language, you can import or create a memory from scratch.', 'current_tm_lang_title': 'Current TM languages', 'new_tm': 'New TM', 'import_tmx': 'Import TMX', 'download_tmx': 'Download TMX', 'tm_search_title': 'Search TM', 'tm_search_placeholder': 'Search in memory...', 'tm_search_results_title': 'TM Search Results', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Translation', 'tm_no_match_found': 'No matches found in the TM.',
+                'find_replace_title': 'Find and Replace', 'find_label': 'Find:', 'replace_label': 'Replace with:', 'case_sensitive': 'Case sensitive', 'regular_expression': 'Regular expression', 'find_prev': 'Find previous', 'find_next': 'Find next', 'replace': 'Replace', 'replace_all': 'Replace all', 'save_srt_title': 'Export SRT File', 'save_tbx_title': 'Export TBX File', 'save_tmx_title': 'Export TMX File', 'file_name_label': 'File name:', 'backup_modal_title': 'Backup', 'restore_backup_info': 'A backup of an unsaved session has been found.', 'file_label': 'File:', 'last_modified_label': 'Last modified:', 'export_srt_btn': 'Export SRT', 'delete_backup_btn': 'Delete Backup', 'restore_btn': 'Restore', 'no_backup_found_info': 'No automatic backup has been found.', 'qa_modal_title': 'QA Settings', 'cps_limit_label': 'CPS Limit:', 'chars_per_line_limit_label': 'Characters per line limit:', 'save_and_apply_btn': 'Save and apply', 'qa_error_list_title': 'QA Error List', 'qa_errors_found': '{0} QA errors found', 'qa_no_errors': 'No QA errors found.', 'terminology_sidebar_title': 'Terminology', 'config_lang_title': 'Set up glossary languages', 'config_lang_info': 'Define the source and target languages for your glossary. The ISO code must be correct. After setting the language, you can import or create a glossary from scratch.', 'source_language': 'Source language:', 'target_language': 'Target language:', 'confirm_languages': 'Confirm languages', 'current_lang_title': 'Current glossary languages', 'add_term_title': 'Add term', 'term': 'Term:', 'translation': 'Translation:', 'add_button': 'Add', 'search_title': 'Search', 'search_placeholder': 'Search term...', 'import_tbx': 'Import TBX', 'download_tbx': 'Download TBX', 'new_glossary': 'New glossary', 'glossary_list_title': 'Glossary', 'source_term_col': 'Source term', 'target_term_col': 'Target term', 'actions_col': 'Actions', 'delete_button': 'Delete', 'edit_button': 'Edit', 'save_changes_btn': 'Save Changes', 'tm_sidebar_title': 'Translation Memory', 'tm_config_lang_title': 'Set up TM languages', 'tm_config_lang_info': 'Define the source and target languages for your translation memory. The ISO code must be correct. After setting the language, you can import or create a memory from scratch.', 'current_tm_lang_title': 'Current TM languages', 'new_tm': 'New TM', 'import_tmx': 'Import TMX', 'download_tmx': 'Download TMX', 'tm_search_title': 'Search TM', 'tm_search_placeholder': 'Search in memory...', 'tm_search_results_title': 'TM Search Results', 'tm_score_col': '%', 'tm_original_col': 'Original', 'tm_translation_col': 'Translation', 'tm_no_match_found': 'No matches found in the TM.',
                 'import_shortcuts_btn': 'Import', 'export_shortcuts_btn': 'Export', 'restore_defaults_btn': 'Restore Defaults', 'edit_shortcut_btn': 'Edit', 'recording_shortcut_text': 'Press key...',
                 'project_menu': 'Project', 'load_project': 'Load project', 'save_project': 'Save project', 'new_project': 'New project', 'reselect_video_title': 'Select Video', 'reselect_video_info': 'Project loaded. To sync the video, please select the original video file:', 'reselect_video_prompt': 'Project loaded. Please select the original video file: {0}', 'skip_btn': 'Skip', 'confirm_new_project_title': 'Create new project', 'confirm_new_project_message': 'You have unsaved changes. Do you want to save the current project before continuing?',
                 'continue_without_saving_btn': 'Continue without saving', 
@@ -4839,30 +4840,132 @@ followPlaybackBtn.title = isFollowPlaybackActive ? t['follow_playback_off'] : t[
         }
 
         function addTerm() {
-    const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
-    const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
-    if (!srcTerm || !tgtTerm) {
-        showMessage(errorMessages[currentLanguage]['both_terms_required']);
-        return;
-    }
+            const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
+            const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
+            if (!srcTerm || !tgtTerm) {
+                showMessage(errorMessages[currentLanguage]['both_terms_required']);
+                return;
+            }
 
-    // 1. Añadimos el término al array de datos.
-    glossary.push({
-        srcLang: glossarySourceLanguage,
-        srcTerm: srcTerm,
-        tgtLang: glossaryTargetLanguage,
-        tgtTerm: tgtTerm
-    });
+            const t = translations[currentLanguage];
 
-    // 2. Limpiamos los campos de entrada.
-    if (srcTermInput) srcTermInput.value = "";
-    if (tgtTermInput) tgtTermInput.value = "";
+            if (editingTermIndex !== -1) {
+                // --- MODO EDICIÓN ---
+                // 1. Actualizar el término existente
+                glossary[editingTermIndex].srcTerm = srcTerm;
+                glossary[editingTermIndex].tgtTerm = tgtTerm;
 
-    // 3. Llamamos a nuestra nueva función para que actualice la pantalla SIN MOVERLA.
-    updateTranslations();
-}
+                // 2. Resetear el estado de edición
+                editingTermIndex = -1;
+
+                // 3. Cambiar el botón de nuevo a "Añadir"
+                const addBtn = document.querySelector('button[onclick="addTerm()"]');
+                addBtn.textContent = t.add_button;
+
+            } else {
+                // --- MODO AÑADIR (Lógica original) ---
+                glossary.push({
+                    srcLang: glossarySourceLanguage,
+                    srcTerm: srcTerm,
+                    tgtLang: glossaryTargetLanguage,
+                    tgtTerm: tgtTerm
+                });
+            }
+
+            // Lógica de limpieza (común para ambos modos)
+            if (srcTermInput) srcTermInput.value = "";
+            if (tgtTermInput) tgtTermInput.value = "";
+            
+            updateTranslations();
+        }
+        function editTerm(index) {
+            const entry = glossary[index];
+            if (!entry) return;
+
+            // 1. Rellenar los campos de entrada
+            srcTermInput.value = entry.srcTerm;
+            tgtTermInput.value = entry.tgtTerm;
+
+            // 2. Guardar el índice que estamos editando
+            editingTermIndex = index;
+
+            // 3. Cambiar el texto del botón "Añadir" a "Guardar cambios"
+            const addBtn = document.querySelector('button[onclick="addTerm()"]');
+            const t = translations[currentLanguage];
+            addBtn.textContent = t.save_changes_btn;
+
+            // 4. (Opcional) Asegurarse de que el acordeón esté abierto y visible
+            if (addTermContent.classList.contains('collapsed')) {
+                addTermHeader.click(); // Simula un clic para abrirlo
+            }
+            // 5. (Opcional) Mover la vista al formulario de edición
+            addTermHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            srcTermInput.focus();
+        }
+        function deleteTerm(index) {
+            const t = translations[currentLanguage];
+            // --- AÑADIR ESTE BLOQUE ---
+            if (index === editingTermIndex) {
+                // Si eliminamos el término que estamos editando, reseteamos el formulario
+                editingTermIndex = -1;
+                srcTermInput.value = "";
+                tgtTermInput.value = "";
+                const addBtn = document.querySelector('button[onclick="addTerm()"]');
+                addBtn.textContent = translations[currentLanguage].add_button;
+            } else if (index < editingTermIndex) {
+                // Si eliminamos un término anterior, el índice de edición debe disminuir
+                editingTermIndex--;
+            }
+            // --- FIN DEL BLOQUE AÑADIDO ---
+            glossary.splice(index, 1);
+            // Llamamos a la nueva función, que ya se encarga de todo.
+            updateTranslations();
+        }
+// --- AÑADIR TODA ESTA NUEVA FUNCIÓN ---
+        /**
+         * Carga un término existente en los campos de entrada para su edición.
+         * @param {number} index - El índice del término en el array 'glossary'.
+         */
+        function editTerm(index) {
+            const entry = glossary[index];
+            if (!entry) return;
+
+            // 1. Rellenar los campos de entrada
+            srcTermInput.value = entry.srcTerm;
+            tgtTermInput.value = entry.tgtTerm;
+
+            // 2. Guardar el índice que estamos editando
+            editingTermIndex = index;
+
+            // 3. Cambiar el texto del botón "Añadir" a "Guardar cambios"
+            const addBtn = document.querySelector('button[onclick="addTerm()"]');
+            const t = translations[currentLanguage];
+            addBtn.textContent = t.save_changes_btn;
+
+            // 4. (Opcional) Asegurarse de que el acordeón esté abierto y visible
+            if (addTermContent.classList.contains('collapsed')) {
+                addTermHeader.click(); // Simula un clic para abrirlo
+            }
+            // 5. (Opcional) Mover la vista al formulario de edición
+            addTermHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            srcTermInput.focus();
+        }
+        // --- FIN DE LA NUEVA FUNCIÓN ---
 
         function deleteTerm(index) {
+            // --- AÑADIR ESTE BLOQUE ---
+            if (index === editingTermIndex) {
+                // Si eliminamos el término que estamos editando, reseteamos el formulario
+                editingTermIndex = -1;
+                srcTermInput.value = "";
+                tgtTermInput.value = "";
+                const addBtn = document.querySelector('button[onclick="addTerm()"]');
+                addBtn.textContent = translations[currentLanguage].add_button;
+            } else if (index < editingTermIndex) {
+                // Si eliminamos un término anterior, el índice de edición debe disminuir
+                editingTermIndex--;
+            }
+            // --- FIN DEL BLOQUE AÑADIDO ---
     glossary.splice(index, 1);
     // Llamamos a la nueva función, que ya se encarga de todo.
     updateTranslations();
@@ -4893,7 +4996,15 @@ followPlaybackBtn.title = isFollowPlaybackActive ? t['follow_playback_off'] : t[
                 if (highlightedTerms.includes(entry)) {
                     row.classList.add('glossary-row-highlight');
                 }
-                row.innerHTML = `<td>${entry.srcTerm}</td><td>${entry.tgtTerm}</td><td><button class="btn btn-destructive text-xs" onclick="deleteTerm(${glossary.indexOf(entry)})">${t.delete_button}</button></td>`;
+                const originalIndex = glossary.indexOf(entry);
+                row.innerHTML = `
+                    <td>${entry.srcTerm}</td>
+                    <td>${entry.tgtTerm}</td>
+                    <td class="flex gap-1">
+                        <button class="btn btn-secondary text-xs" onclick="editTerm(${originalIndex})" data-i18n="edit_button">${t.edit_button}</button>
+                        <button class="btn btn-destructive text-xs" onclick="deleteTerm(${originalIndex})" data-i18n="delete_button">${t.delete_button}</button>
+                    </td>
+                `;
                 glossaryTableBody.appendChild(row);
             };
 
@@ -7572,7 +7683,6 @@ document.addEventListener('keydown', (event) => {
    
 followPlaybackBtn.title = translations[currentLanguage]['follow_playback_on'];
     });
-
    
 </script>
 <div id="statusBar"></div>
