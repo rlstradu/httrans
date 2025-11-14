@@ -1,4 +1,20 @@
 =========================================
+subpandaTM v1.1.3 - Glossary Editing Functionality
+=========================================
+
+Release Date: November 14, 2025
+This version introduces a key quality-of-life feature that simplifies glossary management by allowing direct modification of existing term pairs.
+
+New Features & Improvements
+In-Place Glossary Editing: Users can now modify any term in the glossary without having to delete and re-add it for minor corrections.
+
+A new **"Edit"** button is displayed next to the **"Delete"** button for every glossary entry.
+
+Clicking **"Edit"** automatically loads the source and target terms into the main **Add Term** form, reusing the existing interface for a seamless experience.
+
+The **"Add term"** button is temporarily replaced with a **"Save changes"** button, which, when pressed, updates the existing entry and automatically resets the form.
+
+=========================================
 subpandaTM v1.1.2 - Visual CPS Feedback
 =========================================
 
