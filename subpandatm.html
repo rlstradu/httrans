@@ -14,6 +14,7 @@
     <script src="https://unpkg.com/wavesurfer.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/plugins/regions.min.js"></script>
     <style>
+
         /* General styles for body and font */
         body {
             font-family: 'Montserrat', sans-serif;
@@ -991,6 +992,10 @@ video::-ms-fullscreen-button {
                 <span data-i18n="import_srt">Importar .srt</span>
                 <input type="file" id="srtFile" accept=".srt" class="hidden">
             </label>
+            <label for="translatedSrtFile" class="btn btn-secondary" title="Carga un SRT traducido para rellenar la columna derecha">
+    <span data-i18n="import_translated_srt">Importar traducción (.srt)</span>
+    <input type="file" id="translatedSrtFile" accept=".srt" class="hidden">
+</label>
             <button id="saveSrt" class="btn btn-secondary" disabled>
                 <span data-i18n="export_srt">Exportar .srt</span>
             </button>
@@ -1780,6 +1785,7 @@ let lastFocusedEditorUnitIndex = -1;
 
         // DOM elements
         const srtFile = document.getElementById('srtFile');
+        const translatedSrtFile = document.getElementById('translatedSrtFile');
         const saveSrtButton = document.getElementById('saveSrt');
         const translationsContainer = document.getElementById('translationsContainer');
         const messageBox = document.getElementById('messageBox');
@@ -2040,6 +2046,10 @@ const followPlaybackBtn = document.getElementById('followPlaybackBtn');
 'show_frames_label': 'Mostrar código de tiempo en frames (ej. 00:00:10:05)',
 'timecode_warning': 'Aviso: La exportación SRT siempre usará milisegundos por compatibilidad.',
 'timecode_format_error': 'El formato del código de tiempo noes válido. Usa HH:MM:SS:FF.',
+'import_translated_srt': 'Importar traducción (.srt)',
+'error_no_original_srt': 'Primero debes cargar el archivo SRT original.',
+'translation_imported_success': 'Se han importado {0} subtítulos traducidos.',
+'translation_mismatch_warning': 'Aviso: El archivo traducido tiene {0} subtítulos, pero el original tiene {1}. Se han fusionado hasta donde ha sido posible.',
 
             },
             'en': {
@@ -2151,6 +2161,10 @@ const followPlaybackBtn = document.getElementById('followPlaybackBtn');
 'show_frames_label': 'Show timecode in frames (e.g. 00:00:10:05)',
 'timecode_warning': 'Note: SRT export will always use milliseconds for compatibility.',
 'timecode_format_error': 'Invalid timecode format. Use HH:MM:SS:FF.',
+'import_translated_srt': 'Load Translated',
+'error_no_original_srt': 'You must load the original SRT file first.',
+'translation_imported_success': '{0} translated subtitles imported successfully.',
+'translation_mismatch_warning': 'Warning: The translated file has {0} subtitles, but the original has {1}. Merged as much as possible.',
             }
         };
 
@@ -4066,6 +4080,96 @@ isApplyingState = false;
         // --- FIN DEL CÓDIGO A AÑADIR ---
 
         // --- Event Handlers ---
+
+// --- INICIO: LÓGICA PARA IMPORTAR SRT TRADUCIDO ---
+
+translatedSrtFile.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 1. Validar que ya existe un proyecto cargado con un original
+    if (srtEntries.length === 0) {
+        showMessage(translations[currentLanguage]['error_no_original_srt']);
+        event.target.value = ''; // Resetear el input para permitir reintentar
+        return;
+    }
+
+    showLoadingOverlay(translations[currentLanguage]['loading_file']);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const content = e.target.result;
+            // Reutilizamos la función de parseo existente para leer el nuevo archivo
+            const translatedEntries = parseSrtContent(content);
+            
+            mergeTranslatedEntries(translatedEntries);
+            
+        } catch (error) {
+            console.error("Error importando traducción:", error);
+            showMessage(`${errorMessages[currentLanguage]['error_reading_file']} ${error.message}`);
+        } finally {
+            hideLoadingOverlay();
+            event.target.value = ''; // Resetear input
+        }
+    };
+    reader.readAsText(file);
+});
+
+/**
+ * Fusiona los subtítulos de un segundo archivo SRT en la columna de traducción.
+ * Mantiene la sincronización por índice (1 con 1, 2 con 2, etc).
+ */
+function mergeTranslatedEntries(newEntries) {
+    // 1. Guardar estado actual para el sistema de Deshacer (Undo)
+    // Usamos JSON.parse/stringify para una copia profunda segura
+    const oldState = JSON.parse(JSON.stringify(srtEntries));
+
+    let mergedCount = 0;
+    // Solo iteramos hasta el límite del archivo más corto para evitar errores
+    const limit = Math.min(srtEntries.length, newEntries.length);
+
+    // 2. Bucle de fusión
+    for (let i = 0; i < limit; i++) {
+        const originalEntry = srtEntries[i];
+        const translatedEntry = newEntries[i];
+
+        // IMPORTANTE: parseSrtContent pone el texto en .original.
+        // Nosotros queremos coger ese texto y ponerlo en .translation del proyecto actual.
+        const textToImport = translatedEntry.original.trim();
+
+        if (textToImport) {
+            originalEntry.translation = textToImport;
+            
+            // Actualizamos todas las estadísticas asociadas
+            originalEntry.isTranslated = true;
+            originalEntry.wordCountTranslation = countWords(textToImport);
+            originalEntry.charCountTranslation = countCharactersWithoutTags(textToImport);
+            originalEntry.cpsTranslation = calculateCPS(textToImport, originalEntry.durationMs);
+            
+            mergedCount++;
+        }
+    }
+
+    // 3. Guardar en el historial de deshacer usando tu función existente
+    const newState = JSON.parse(JSON.stringify(srtEntries));
+    saveStructuralState(oldState, newState);
+
+    // 4. Renderizar la interfaz actualizada
+    renderTranslations(srtEntries, 0, true); // true = mantener scroll si es posible
+    updateStatsDisplay();
+
+    // 5. Mensajes de feedback al usuario
+    if (srtEntries.length !== newEntries.length) {
+        const warningMsg = translations[currentLanguage]['translation_mismatch_warning']
+            .replace('{0}', newEntries.length)
+            .replace('{1}', srtEntries.length);
+        showMessage(warningMsg);
+    } else {
+        showMessage(translations[currentLanguage]['translation_imported_success'].replace('{0}', mergedCount));
+    }
+}
+// --- FIN: LÓGICA PARA IMPORTAR SRT TRADUCIDO ---
 
         srtFile.addEventListener('change', async (event) => {
             const file = event.target.files[0];
