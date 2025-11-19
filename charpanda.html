@@ -718,9 +718,21 @@
   localStorage.setItem('darkMode', isDarkMode);
 }
 
-// Language Toggle functionality
+// Definimos el orden de rotación de los idiomas
+  const supportedLanguages = ['en', 'es', 'fr'];
+
+  // Funcionalidad del botón de cambio de idioma (Rotación)
   languageToggleBtn.addEventListener('click', async () => {
-    const newLang = currentLanguage === 'es' ? 'en' : 'es';
+    // 1. Averiguamos en qué posición de la lista estamos ahora
+    const currentIndex = supportedLanguages.indexOf(currentLanguage);
+
+    // 2. Calculamos la siguiente posición (el operador % hace que vuelva a 0 al llegar al final)
+    const nextIndex = (currentIndex + 1) % supportedLanguages.length;
+
+    // 3. Obtenemos el código del nuevo idioma
+    const newLang = supportedLanguages[nextIndex];
+
+    // 4. Aplicamos el cambio
     await setLanguage(newLang); 
   });
 
