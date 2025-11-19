@@ -218,6 +218,41 @@
     margin-bottom: 10px;
   }
 
+/* Estilos para el selector de idioma */
+  .lang-select {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s ease;
+  }
+  .lang-select:hover {
+    background: #2563eb;
+  }
+  /* Estilo de las opciones internas (para que sean legibles) */
+  .lang-select option {
+    background: #fff;
+    color: #333;
+  }
+
+  /* Ajuste para MODO OSCURO */
+  body.dark-mode .lang-select {
+    background: #6a9dfa;
+    color: #fff;
+  }
+  body.dark-mode .lang-select:hover {
+    background: #4d8df6;
+  }
+  body.dark-mode .lang-select option {
+    background: #3a3f47;
+    color: #f0f0f0;
+  }
+
   /* Footer styles */
   footer {
     margin-top: 40px;
@@ -362,7 +397,11 @@
   <p id="app-description"></p>
   <div class="settings-buttons">
     <button id="modeToggle"></button>
-    <button id="languageToggle"></button>
+<select id="languageSelector" class="lang-select">
+  <option value="en">English</option>
+  <option value="es">Español</option>
+  <option value="fr">Français</option>
+</select>
   </div>
 </header>
 
@@ -460,7 +499,7 @@
   const lowerWriteBtn = document.getElementById('lowerWrite');
 
   const modeToggleBtn = document.getElementById('modeToggle');
-  const languageToggleBtn = document.getElementById('languageToggle');
+  const languageSelector = document.getElementById('languageSelector');
   const footerTextSpan = document.getElementById('footer-text');
 
   // Get new DOM elements for limit options
@@ -553,12 +592,13 @@
     currentLanguage = lang;
     localStorage.setItem('language', lang);
 
+languageSelector.value = lang;
+
     // 1. Carga el archivo JSON
     i18n = await fetchLanguage(lang);
 
     // 2. Aplica las traducciones desde el objeto 'i18n'
     appDescription.textContent = i18n.appDescription;
-    languageToggleBtn.textContent = i18n.languageToggle;
     text1Title.textContent = i18n.text1Title;
     text2Title.textContent = i18n.text2Title;
     pasteArea.placeholder = i18n.pastePlaceholder;
@@ -718,21 +758,9 @@
   localStorage.setItem('darkMode', isDarkMode);
 }
 
-// Definimos el orden de rotación de los idiomas
-  const supportedLanguages = ['en', 'es', 'fr'];
-
-  // Funcionalidad del botón de cambio de idioma (Rotación)
-  languageToggleBtn.addEventListener('click', async () => {
-    // 1. Averiguamos en qué posición de la lista estamos ahora
-    const currentIndex = supportedLanguages.indexOf(currentLanguage);
-
-    // 2. Calculamos la siguiente posición (el operador % hace que vuelva a 0 al llegar al final)
-    const nextIndex = (currentIndex + 1) % supportedLanguages.length;
-
-    // 3. Obtenemos el código del nuevo idioma
-    const newLang = supportedLanguages[nextIndex];
-
-    // 4. Aplicamos el cambio
+// Funcionalidad del Selector de Idioma (Dropdown)
+  languageSelector.addEventListener('change', async (event) => {
+    const newLang = event.target.value; 
     await setLanguage(newLang); 
   });
 
@@ -784,3 +812,4 @@
 
 </body>
 </html>
+
