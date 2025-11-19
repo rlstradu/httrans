@@ -1,4 +1,17 @@
 =========================================
+subpandaTM v1.1.4 - Translated SRT Import & Interface Improvements
+=========================================
+
+Release Date: November 19, 2025
+This version introduces a major workflow improvement for reviewing external translations, alongside interface cleanup and enhanced localization.
+
+New Features
+Translated SRT Import: Users can now import a secondary .srt file to automatically populate the translation column.
+* The system matches subtitles by index number, merging the text into the editor.
+* Includes validation to ensure an original file is loaded first.
+* Provides specific warnings if the translated file has a different number of lines than the original project.
+
+=========================================
 subpandaTM v1.1.3 - Glossary Editing Functionality
 =========================================
 
