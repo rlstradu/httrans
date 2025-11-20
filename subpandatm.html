@@ -1030,6 +1030,9 @@ video::-ms-fullscreen-button {
             <button id="shortcutsBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
                 <span data-i18n="shortcuts_btn">Atajos</span>
             </button>
+            <button id="notesBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+    <span data-i18n="notes_btn">Notas</span>
+</button>
 <button id="goToSubtitleBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
         <span data-i18n="go_to_subtitle_menu">Ir a...</span>
     </button>
@@ -1592,6 +1595,73 @@ video::-ms-fullscreen-button {
         <p id="loadingMessage"></p>
     </div>
 
+<div id="notesSidebar" class="floating-panel" style="width: 350px; height: 500px;">
+    <div class="sidebar-header">
+        <h3 class="text-lg font-bold">
+            <span data-i18n="notes_sidebar_title">Notas</span> 
+            <span id="notesSubtitleIndex" class="text-sm font-normal text-gray-500 ml-2"></span>
+        </h3>
+        <div class="flex items-center">
+            <button class="reset-panel-btn text-gray-500 hover:text-gray-700 mr-2" title="Restaurar posición">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20l6-6M20 4l-6 6"></path></svg>
+            </button>
+            <button id="closeNotesSidebarBtn" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+    <div class="sidebar-content p-4 flex flex-col gap-4 h-full overflow-y-auto">
+        <div class="glossary-info-box mb-2">
+            <p data-i18n="notes_info">Guarda borradores y consulta sus estadísticas.</p>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center">
+                <label class="text-xs font-bold text-gray-500 uppercase">Opción 1</label>
+                <button onclick="insertNoteToEditor(1)" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded flex items-center gap-1 transition-colors" title="Añadir al editor">
+                    <span>Insertar</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                </button>
+            </div>
+            <textarea id="noteArea1" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500 resize-none h-20 font-mono"></textarea>
+            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div id="noteBar1" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div id="noteStats1" class="text-xs text-right text-gray-500 font-mono">CPS: 0 | L1: 0</div>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center">
+                <label class="text-xs font-bold text-gray-500 uppercase">Opción 2</label>
+                <button onclick="insertNoteToEditor(2)" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded flex items-center gap-1 transition-colors" title="Añadir al editor">
+                    <span>Insertar</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                </button>
+            </div>
+            <textarea id="noteArea2" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500 resize-none h-20 font-mono"></textarea>
+            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div id="noteBar2" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div id="noteStats2" class="text-xs text-right text-gray-500 font-mono">CPS: 0 | L1: 0</div>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center">
+                <label class="text-xs font-bold text-gray-500 uppercase">Opción 3</label>
+                <button onclick="insertNoteToEditor(3)" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded flex items-center gap-1 transition-colors" title="Añadir al editor">
+                    <span>Insertar</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                </button>
+            </div>
+            <textarea id="noteArea3" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500 resize-none h-20 font-mono"></textarea>
+            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div id="noteBar3" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div id="noteStats3" class="text-xs text-right text-gray-500 font-mono">CPS: 0 | L1: 0</div>
+        </div>
+    </div>
+</div>
+
     <div id="contextSidebar" class="floating-panel">
         <div class="sidebar-header">
             <h3 class="text-lg font-bold" data-i18n="context_sidebar_title">Contexto IA</h3>
@@ -1795,6 +1865,14 @@ let lastFocusedEditorUnitIndex = -1;
         const DIFF_EQUAL = 0;
 
         // DOM elements
+        const notesBtn = document.getElementById('notesBtn');
+        const notesSidebar = document.getElementById('notesSidebar');
+        const closeNotesSidebarBtn = document.getElementById('closeNotesSidebarBtn');
+        const notesSubtitleIndex = document.getElementById('notesSubtitleIndex');
+        const noteArea1 = document.getElementById('noteArea1');
+        const noteArea2 = document.getElementById('noteArea2');
+        const noteArea3 = document.getElementById('noteArea3');
+        let activeNoteSubtitleIndex = -1;
         const srtFile = document.getElementById('srtFile');
         const translatedSrtFile = document.getElementById('translatedSrtFile');
         const saveSrtButton = document.getElementById('saveSrt');
@@ -2062,6 +2140,10 @@ const followPlaybackBtn = document.getElementById('followPlaybackBtn');
 'error_no_original_srt': 'Primero debes cargar el archivo SRT original.',
 'translation_imported_success': 'Se han importado {0} subtítulos traducidos.',
 'translation_mismatch_warning': 'Aviso: El archivo traducido tiene {0} subtítulos, pero el original tiene {1}. Se han fusionado hasta donde ha sido posible.',
+'notes_btn': 'Notas',
+'notes_sidebar_title': 'Notas del subtítulo',
+'notes_info': 'Estas notas se guardan con el proyecto y están asociadas a este subtítulo específico.',
+'notes_placeholder': 'Escribe aquí tus notas...',
 
             },
             'en': {
@@ -2178,6 +2260,10 @@ const followPlaybackBtn = document.getElementById('followPlaybackBtn');
 'error_no_original_srt': 'You must load the original SRT file first.',
 'translation_imported_success': '{0} translated subtitles imported successfully.',
 'translation_mismatch_warning': 'Warning: The translated file has {0} subtitles, but the original has {1}. Merged as much as possible.',
+'notes_btn': 'Notes',
+'notes_sidebar_title': 'Subtitle Notes',
+'notes_info': 'These notes are saved with the project and linked to this specific subtitle.',
+'notes_placeholder': 'Type your notes here...',
             }
         };
 
@@ -2832,6 +2918,107 @@ const frameDurationMs = Math.round(1000 / projectFPS); // Duración de 1 frame
             }
         }
 
+function updateNotesPanel(index) {
+    activeNoteSubtitleIndex = index;
+    const entry = srtEntries[index];
+    
+    if (entry) {
+        if (notesSubtitleIndex) notesSubtitleIndex.textContent = `#${entry.index}`;
+        
+        // Cargar texto
+        noteArea1.value = entry.note1 || '';
+        noteArea2.value = entry.note2 || '';
+        noteArea3.value = entry.note3 || '';
+        
+        // Habilitar campos
+        noteArea1.disabled = false;
+        noteArea2.disabled = false;
+        noteArea3.disabled = false;
+
+        // --- NUEVO: Calcular estadísticas iniciales para las 3 notas ---
+        updateSingleNoteStats(1);
+        updateSingleNoteStats(2);
+        updateSingleNoteStats(3);
+
+    } else {
+        notesSubtitleIndex.textContent = '';
+        noteArea1.value = '';
+        noteArea2.value = '';
+        noteArea3.value = '';
+        
+        noteArea1.disabled = true;
+        noteArea2.disabled = true;
+        noteArea3.disabled = true;
+        
+        // Limpiar visuales visuales si no hay subtítulo
+        [1,2,3].forEach(n => {
+            document.getElementById(`noteBar${n}`).style.width = '0%';
+            document.getElementById(`noteStats${n}`).textContent = '';
+        });
+    }
+}
+
+// --- Función de cálculo de estadísticas para Notas ---
+function updateSingleNoteStats(noteNum) {
+    // 1. Obtener elementos
+    const textArea = document.getElementById(`noteArea${noteNum}`);
+    const bar = document.getElementById(`noteBar${noteNum}`);
+    const statsText = document.getElementById(`noteStats${noteNum}`);
+    
+    // 2. Obtener datos del subtítulo actual (para la duración)
+    const entry = srtEntries[activeNoteSubtitleIndex];
+    if (!entry || !textArea) return;
+
+    const text = textArea.value;
+    const durationMs = entry.durationMs;
+
+    // 3. Calcular CPS
+    // Usamos las mismas funciones globales que usa el editor principal
+    const cps = calculateCPS(text.replace(/\n/g, ''), durationMs); 
+    
+    // 4. Calcular caracteres por línea
+    const lines = text.split('\n');
+    let lineStatsHtml = '';
+    lines.forEach((line, i) => {
+        const len = countCharactersWithoutTags(line);
+        // Si se pasa del límite, lo ponemos en rojo en el texto
+        const colorClass = len > qaSettings.charsPerLineLimit ? 'text-red-500 font-bold' : '';
+        lineStatsHtml += `${i > 0 ? ' | ' : ''}L${i + 1}: <span class="${colorClass}">${len}</span>`;
+    });
+
+    // 5. Actualizar Texto de Estadísticas
+    const cpsClass = cps > qaSettings.cpsLimit ? 'text-red-500 font-bold' : '';
+    statsText.innerHTML = `CPS: <span class="${cpsClass}">${cps}</span> | ${lineStatsHtml}`;
+
+    // 6. Actualizar Barra Visual (Lógica idéntica al editor)
+    const cpsLimit = qaSettings.cpsLimit;
+    // Calculamos porcentaje (usamos 1.5 veces el límite como tope visual para que no se llene al 100% con 1 CPS de más)
+    const fillPercentage = Math.min((cps / (cpsLimit * 1.5)) * 100, 100);
+    
+    bar.style.width = `${fillPercentage}%`;
+    
+    if (cps > cpsLimit) {
+        bar.classList.remove('bg-green-500');
+        bar.classList.add('bg-red-500');
+    } else {
+        bar.classList.remove('bg-red-500');
+        bar.classList.add('bg-green-500');
+    }
+}
+
+function insertNoteToEditor(noteNum) {
+    const entry = srtEntries[activeNoteSubtitleIndex];
+    if (!entry) return;
+    const textToInsert = entry[`note${noteNum}`]; 
+    if (!textToInsert) return; 
+
+    const editor = document.getElementById(`translation-${activeNoteSubtitleIndex}`);
+    if (editor) {
+        editor.focus();
+        document.execCommand('insertText', false, textToInsert);
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}  
 /**
  * Inserta la sugerencia de la IA en el editor del subtítulo activo.
  * @param {number} entryIndex - El índice del subtítulo.
@@ -3725,6 +3912,7 @@ translationEditor.addEventListener('keydown', (event) => {
                     updateGlossaryTableHighlights();
                     autoResizeTextarea(event.target, originalColPre);
                     event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    updateNotesPanel(entryIndex);
                     tmSearch(srtEntries[entryIndex].original);
                     updateContextPanel(entryIndex);
                 });
@@ -7026,6 +7214,24 @@ makePanelDraggable(goToSubtitlePanel);
 makePanelResizable(goToSubtitlePanel);
            makePanelDraggable(findReplacePanel);
             makePanelResizable(findReplacePanel);
+
+// --- Inicialización del Panel de Notas ---
+setupPanel('notesSidebar', 'notesBtn');
+makePanelDraggable(notesSidebar);
+makePanelResizable(notesSidebar);
+
+function saveAndCalcNote(num, value) {
+    if (activeNoteSubtitleIndex !== -1 && srtEntries[activeNoteSubtitleIndex]) {
+        // 1. Guardar
+        srtEntries[activeNoteSubtitleIndex][`note${num}`] = value;
+        // 2. Calcular estadísticas visuales
+        updateSingleNoteStats(num);
+    }
+}
+
+noteArea1.addEventListener('input', (e) => saveAndCalcNote(1, e.target.value));
+noteArea2.addEventListener('input', (e) => saveAndCalcNote(2, e.target.value));
+noteArea3.addEventListener('input', (e) => saveAndCalcNote(3, e.target.value));
 
 // --- INICIO: Inicialización de WaveSurfer ---
             const waveformContainer = document.getElementById('waveform');
