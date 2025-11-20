@@ -1,3 +1,22 @@
+========================================= 
+subpandaTM v1.1.5 - Advanced Notes Workbench
+=========================================
+
+Release Date: November 20, 2025 
+This version transforms the workflow by introducing a dedicated Notes system and refining the interface for a smoother experience.
+
+New Features Subtitle Notes Panel: A dedicated Notes panel has been added to the "Tools" menu. This floating window allows users to attach comments, context, or doubts to specific subtitles, ensuring that all auxiliary information is stored within the project file and retrieved automatically upon navigation.
+
+Smart Notes Workbench: The new Notes panel features a robust drafting workspace:
+
+* Multiple Options: Users can now save up to three different translation alternatives (Option 1, 2, & 3) for every subtitle.
+
+* Real-time Statistics: Each note field displays real-time technical data, including CPS, character counts per line (L1/L2), and visual progress bars that mirror the main editor's validation logic.
+
+* Quick Insert: Added an "Insert" button to each slot, allowing users to instantly send a specific draft from the notes directly into the active translation editor.
+
+Interface Improvements Menu Organization: The "Notes" feature is now permanently integrated into the "Tools" dropdown menu, grouping it logically with other utility features like "Search & Replace" and "Shortcuts."
+
 =========================================
 subpandaTM v1.1.4 - Translated SRT Import & Interface Improvements
 =========================================
