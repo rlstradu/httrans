@@ -261,7 +261,7 @@
             <button id="fileBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="file_menu_btn">File</span> </button>
             <div class="dropdown-content">
-                <a id="loadFilePoBtn" data-i18n="load_po_menu">Load .po File</a> <a id="saveFilePoBtn" data-i18n="save_po_menu" class="disabled-link">Save .po File</a> <hr class="my-1 border-gray-200"> <a id="loadFileJsonBtn" data-i18n="load_json_menu">Load JSON Project</a> <a id="saveFileJsonBtn" data-i18n="save_json_menu" class="disabled-link">Save JSON File</a> <hr class="my-1 border-gray-200"> <a id="convertFileMoBtn" data-i18n="convert_mo_menu" class="disabled-link">Convert to .mo</a> </div>
+                <a id="loadFilePoBtn" data-i18n="load_po_menu">Load .po File</a> <a id="saveFilePoBtn" data-i18n="save_po_menu" class="disabled-link">Save .po File</a> <hr class="my-1 border-gray-200"> <a id="loadFileJsonBtn" data-i18n="load_json_menu">Load JSON Project</a> <a id="saveFileJsonBtn" data-i18n="save_json_menu" class="disabled-link">Save JSON File</a> <hr class="my-1 border-gray-200"><a id="loadFileHtmlBtn">Load .html File</a> <a id="saveFileHtmlBtn" class="disabled-link">Save .html File</a> <hr class="my-1 border-gray-200"> <a id="convertFileMoBtn" data-i18n="convert_mo_menu" class="disabled-link">Convert to .mo</a> </div>
         </div>
             <button id="backupBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
                 <span data-i18n="backup_btn">Backup</span>
@@ -297,6 +297,7 @@
                 <input type="file" id="backupFile" accept=".json,.poanda-backup" class="hidden">
                 <input type="file" id="jsonSourceFile" accept=".json" class="hidden">
                 <input type="file" id="jsonTargetFile" accept=".json" class="hidden">
+                <input type="file" id="htmlSourceFile" accept=".html,.htm" class="hidden">
             </label>
             <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
                 <span data-i18n="save_file" id="saveBtnText"></span>
@@ -521,6 +522,9 @@
         let currentFileType = null; // Can be 'po', 'json', or null
         let currentJsonSourceFileName = null;
         let currentJsonTargetFileName = null;
+        // Global variables for HTML handling
+        let currentHtmlDoc = null; 
+        let htmlNodeMap = [];
 
         // Global variable to keep track of terms found in the currently active/focused segment's original text
         let termsFoundInActiveSegment = new Set(); // Stores terms found in the currently focused original segment
@@ -1436,6 +1440,168 @@ const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewB
         return JSON.stringify(translations, null, 2); // Pretty print JSON
     }
 
+// --- HTML PARSING & RECONSTRUCTION LOGIC ---
+    
+    function parseHtmlProject(htmlContent) {
+        const parser = new DOMParser();
+        currentHtmlDoc = parser.parseFromString(htmlContent, 'text/html');
+        const entries = [];
+        htmlNodeMap = []; 
+        
+        let nodeCounter = 0;
+
+        function traverse(node) {
+            if (node.nodeName === 'SCRIPT' || node.nodeName === 'STYLE' || node.nodeName === 'NOSCRIPT') return;
+
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                // 1. Content Translation (innerHTML logic)
+                const hasDirectText = Array.from(node.childNodes).some(child => 
+                    child.nodeType === Node.TEXT_NODE && child.textContent.trim().length > 0
+                );
+
+                if (hasDirectText) {
+                    const originalText = node.innerHTML.trim();
+                    nodeCounter++;
+                    const entry = {
+                        msgctxt: `${node.tagName.toLowerCase()}_${nodeCounter}`, 
+                        msgid: originalText,
+                        msgstr: '', 
+                        sentenceSegments: [{
+                            original: originalText,
+                            translation: '',
+                            wordCountOriginal: countWords(originalText),
+                            wordCountTranslation: 0,
+                            isTranslated: false
+                        }]
+                    };
+                    htmlNodeMap.push({ type: 'element', node: node }); 
+                    entries.push(entry);
+                }
+                
+                // 2. Attribute Translation
+                ['alt', 'title', 'placeholder', 'aria-label', 'meta[content]'].forEach(attr => {
+                    let attrVal = '';
+                    let attrName = attr;
+                    
+                    // Handle meta description specifically
+                    if(attr === 'meta[content]' && node.tagName === 'META' && node.getAttribute('name') === 'description') {
+                        attrVal = node.getAttribute('content');
+                        attrName = 'content';
+                    } else if (attr !== 'meta[content]' && node.hasAttribute(attr)) {
+                        attrVal = node.getAttribute(attr);
+                    }
+
+                    if (attrVal && attrVal.trim()) {
+                        nodeCounter++;
+                        const entry = {
+                            msgctxt: `${node.tagName.toLowerCase()}_attr_${attrName}_${nodeCounter}`,
+                            msgid: attrVal,
+                            msgstr: '',
+                            sentenceSegments: [{
+                                original: attrVal,
+                                translation: '',
+                                wordCountOriginal: countWords(attrVal),
+                                wordCountTranslation: 0,
+                                isTranslated: false
+                            }]
+                        };
+                        htmlNodeMap.push({ type: 'attribute', node: node, attr: attrName });
+                        entries.push(entry);
+                    }
+                });
+            }
+
+            for (let i = 0; i < node.children.length; i++) {
+                traverse(node.children[i]);
+            }
+        }
+
+        traverse(currentHtmlDoc.body); // Start body
+        // Optionally parse head for title/meta
+        if(currentHtmlDoc.head) {
+             const titleNode = currentHtmlDoc.head.querySelector('title');
+             if(titleNode) {
+                 const text = titleNode.innerText;
+                 htmlNodeMap.push({ type: 'element_text', node: titleNode });
+                 entries.push({
+                    msgctxt: 'title_tag', msgid: text, msgstr: '',
+                    sentenceSegments: [{original: text, translation: '', wordCountOriginal: countWords(text), wordCountTranslation: 0, isTranslated: false}]
+                 });
+             }
+             // Trigger meta logic
+             Array.from(currentHtmlDoc.head.children).forEach(child => traverse(child));
+        }
+
+        return entries;
+    }
+
+    function reconstructHtml(entries) {
+        if (!currentHtmlDoc || htmlNodeMap.length === 0) return null;
+
+        entries.forEach((entry, index) => {
+            let translatedText = entry.sentenceSegments.map(s => s.translation).join(' ').trim();
+            if (!translatedText) return; 
+
+            const mapItem = htmlNodeMap[index];
+            if (!mapItem) return;
+
+            if (mapItem.type === 'element') {
+                mapItem.node.innerHTML = translatedText; 
+            } else if (mapItem.type === 'element_text') {
+                mapItem.node.innerText = translatedText;
+            } else if (mapItem.type === 'attribute') {
+                mapItem.node.setAttribute(mapItem.attr, translatedText);
+            }
+        });
+        return "<!DOCTYPE html>\n" + currentHtmlDoc.documentElement.outerHTML;
+    }
+
+    async function loadHtmlFile() {
+        showLoadingOverlay(translations[currentLanguage]['loading_file']);
+        try {
+            const fileData = await selectFile('htmlSourceFile', 'Select HTML file');
+            poEntries = parseHtmlProject(fileData.content);
+            currentFileType = 'html'; 
+            currentFileName = fileData.name;
+            
+            renderTranslations(poEntries);
+            updateStatsDisplay();
+            updateSaveButtonsState();
+            showMessage("HTML file loaded successfully.");
+        } catch (e) {
+            console.error(e);
+            showMessage("Error loading HTML: " + e.message);
+        } finally {
+            hideLoadingOverlay();
+            document.getElementById('htmlSourceFile').value = '';
+        }
+    }
+
+    async function saveHtmlFile() {
+        if (poEntries.length === 0) return;
+        const targetFileName = prompt("Enter filename for HTML", currentFileName);
+        if (!targetFileName) return;
+
+        showLoadingOverlay(translations[currentLanguage]['saving_file']);
+        try {
+            const htmlContent = reconstructHtml(poEntries);
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = targetFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showMessage("HTML saved successfully.");
+        } catch (error) {
+             showMessage("Error saving HTML: " + error.message);
+        } finally {
+            hideLoadingOverlay();
+        }
+    }
+
     /**
      * Saves the current translations as a JSON file.
      */
@@ -1486,33 +1652,27 @@ const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewB
      */
     function updateSaveButtonsState() {
         const hasEntries = poEntries.length > 0;
-        // CORRECCIÓN: En lugar de exigir que sea 'po', permitimos guardar 
-        // siempre que haya datos y NO sea explícitamente 'json'.
-        // Esto arregla el problema si la variable 'currentFileType' se pierde o es nula.
-        const isJson = currentFileType === 'json'; 
-        const canSavePo = hasEntries && !isJson;
+        const isJson = currentFileType === 'json';
+        const isHtml = currentFileType === 'html';
+        
+        // Solo se puede guardar PO/MO si NO es json Y NO es html
+        const canSavePo = hasEntries && !isJson && !isHtml;
 
-        // Main buttons
-        savePoButton.disabled = !canSavePo;
-        convertToMoButton.disabled = !canSavePo;
-
-        // Menu items
+        // Menu items handling
         const savePoMenuItem = document.getElementById('saveFilePoBtn');
         const saveJsonMenuItem = document.getElementById('saveFileJsonBtn');
+        const saveHtmlMenuItem = document.getElementById('saveFileHtmlBtn'); // NEW
         const convertMoMenuItem = document.getElementById('convertFileMoBtn');
 
-        if (savePoMenuItem) {
-            if (canSavePo) savePoMenuItem.classList.remove('disabled-link');
-            else savePoMenuItem.classList.add('disabled-link');
-        }
-        if (saveJsonMenuItem) {
-            if (hasEntries) saveJsonMenuItem.classList.remove('disabled-link');
-            else saveJsonMenuItem.classList.add('disabled-link');
-        }
-        if (convertMoMenuItem) {
-            if (canSavePo) convertMoMenuItem.classList.remove('disabled-link');
-            else convertMoMenuItem.classList.add('disabled-link');
-        }
+        // Reset states
+        savePoButton.disabled = !canSavePo;
+        convertToMoButton.disabled = !canSavePo;
+        
+        if (savePoMenuItem) savePoMenuItem.classList.toggle('disabled-link', !canSavePo);
+        if (convertMoMenuItem) convertMoMenuItem.classList.toggle('disabled-link', !canSavePo);
+        
+        if (saveJsonMenuItem) saveJsonMenuItem.classList.toggle('disabled-link', !(hasEntries && isJson));
+        if (saveHtmlMenuItem) saveHtmlMenuItem.classList.toggle('disabled-link', !(hasEntries && isHtml));
     }
 
 function processPoContent(content) {
@@ -4523,6 +4683,26 @@ function makeModalDraggable(modalElement) {
                  }
              });
         }
+
+        // HTML LISTENERS
+        const loadFileHtmlBtn = document.getElementById('loadFileHtmlBtn');
+        const saveFileHtmlBtn = document.getElementById('saveFileHtmlBtn');
+
+        if (loadFileHtmlBtn) {
+            loadFileHtmlBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                loadHtmlFile();
+            });
+        }
+        if (saveFileHtmlBtn) {
+            saveFileHtmlBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!saveFileHtmlBtn.classList.contains('disabled-link')) {
+                    saveHtmlFile();
+                }
+            });
+        }
+
          if (convertFileMoBtn && convertToMoButton) {
              convertFileMoBtn.addEventListener('click', (e) => {
                  e.preventDefault();
