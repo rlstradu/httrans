@@ -66,7 +66,12 @@
         
         .po-display-code { background-color: var(--color-medium-gray); border: 1px solid #d1d5db; color: var(--color-dark); }
         .msgstr-textarea { background-color: var(--color-white); color: var(--color-dark); min-height: 80px; }
-        .translation-unit-bg { background-color: var(--color-white); border-color: var(--color-medium-gray); }
+        .translation-unit-bg { 
+            background-color: var(--color-white); 
+            border-color: var(--color-medium-gray); 
+            content-visibility: auto; 
+            contain-intrinsic-size: 200px; 
+        }
         .text-on-light-contrast { color: var(--color-dark); }
         .translation-row { display: flex; flex-direction: column; gap: 1rem; }
         @media (min-width: 768px) {
@@ -1902,32 +1907,51 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                     });
                     // --- END: UPDATED EVENT LISTENER ---
 
+                   // Variable para el temporizador (Debounce)
+                    let inputDebounceTimer;
+
                     msgstrTextarea.addEventListener('input', (event) => {
-                        const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
-                        const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
-                        const segment = poEntries[currentEntryIndex].sentenceSegments[currentSegmentIndex];
+                        // --- A. ACCIONES VISUALES INMEDIATAS (Lo que el ojo ve) ---
+                        // Usamos la variable 'msgidPre' que ya existe en el ámbito, 
+                        // en lugar de buscarla en el DOM con querySelector (más lento).
+                        autoResizeTextarea(event.target, msgidPre);
+                        
+                        const charCountSpan = document.getElementById(`charCount-${entryIndex}-${segmentIndex}`);
+                        updateCharCount(event.target, parseInt(event.target.dataset.originalLength), charCountSpan);
 
-                        segment.translation = event.target.value;
-                        segment.wordCountTranslation = countWords(event.target.value);
-                        segment.isTranslated = event.target.value.trim() !== '';
+                        // --- B. LÓGICA PESADA (Retardada 300ms) ---
+                        // Si el usuario sigue escribiendo, cancelamos el cálculo anterior
+                        clearTimeout(inputDebounceTimer);
 
-                        const originalSegmentPre = originalCol.querySelector('pre');
-                        autoResizeTextarea(event.target, originalSegmentPre);
-      const charCountSpan = document.getElementById(`charCount-${currentEntryIndex}-${currentSegmentIndex}`);
-updateCharCount(event.target, parseInt(event.target.dataset.originalLength), charCountSpan);
-                        updateStatsDisplay();
+                        inputDebounceTimer = setTimeout(() => {
+                            const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
+                            const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
+                            const segment = poEntries[currentEntryIndex].sentenceSegments[currentSegmentIndex];
 
-                        if (document.activeElement === msgstrTextarea) {
-                            const tempOriginalText = segment.original;
-                            originalCol.querySelector('pre').textContent = tempOriginalText;
-                            termsFoundInActiveSegment.clear();
-                            const highlightResult = applyGlossaryHighlightToText(tempOriginalText);
-                            originalCol.querySelector('pre').innerHTML = highlightResult.html;
-                            highlightResult.foundTerms.forEach(term => termsFoundInActiveSegment.add(term));
-                            updateGlossaryTableHighlights();
-                        }
+                            // 1. Guardar estado ANTERIOR
+                            const oldWordCount = segment.wordCountTranslation;
+                            const wasTranslated = segment.isTranslated;
+
+                            // 2. Actualizar modelo con NUEVOS datos
+                            const newText = event.target.value;
+                            segment.translation = newText;
+                            segment.wordCountTranslation = countWords(newText);
+                            segment.isTranslated = newText.trim() !== '';
+
+                            // 3. Cálculo Diferencial (Optimizado)
+                            if (wasTranslated !== segment.isTranslated) {
+                                updateStatsDisplay(); 
+                            } else {
+                                const diffWords = segment.wordCountTranslation - oldWordCount;
+                                if (diffWords !== 0) {
+                                    const currentTotal = parseInt(wordsTranslated.textContent) || 0;
+                                    wordsTranslated.textContent = currentTotal + diffWords;
+                                }
+                                updateSaveButtonsState();
+                            }
+                        }, 300); // Espera 300ms después de la última pulsación
                     });
-
+                        
                     msgstrTextarea.addEventListener('focus', (event) => {
                         document.querySelectorAll('.translation-unit-active').forEach(unit => {
                             unit.classList.remove('translation-unit-active');
