@@ -1,3 +1,21 @@
+======================================= 
+Poanda v1.0.3 - Glossary Visuals & Stability
+======================================= 
+
+Release Date: November 24, 2025
+
+This update brings a highly requested feature from SubpandaTM to Poanda: visual glossary aids directly in the editor. We have also focused heavily on stability, specifically addressing issues where save buttons would become unresponsive during long translation sessions or after reloading.
+
+New Features & Improvements
+Visual Glossary Matches: Inspired by SubpandaTM, Poanda now displays a yellow badge directly above the translation field whenever terms from your active glossary are detected in the source text. This badge provides an immediate reference of the "Source Term -> Target Term" pair.
+
+Responsive Glossary Labels: The new glossary badge is designed to adapt to content length. Instead of truncating long terms with ellipses (...), the label now wraps text automatically, ensuring that complex terminology is fully visible without hovering.
+
+Bug Fixes & Stability
+Persistent Save Functionality: Fixed a critical logic error where the "Save .po File" button (both the main button and the File menu item) would incorrectly disable itself after validating a segment. The editor now uses a more robust check to ensure save options remain available as long as data exists.
+
+Session Restoration Improvements: The backup and restore system now correctly saves and retrieves the active file type (.po vs .json). This ensures that when you reload the page or restore a session, the editor "remembers" exactly which mode you were working in, keeping the correct save buttons enabled.
+
 =======================================
 Poanda v1.0.2 - JSON Support & Workflow Enhancements
 =======================================
