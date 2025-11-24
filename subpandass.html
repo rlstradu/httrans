@@ -3970,7 +3970,24 @@ const updateTableRow = (index) => {
 inVideoEditor.addEventListener('input', () => {
     if (activeSubtitleIndex === -1) return;
     const sub = subtitles[activeSubtitleIndex];
-    sub.text = inVideoEditor.innerText.replace(/\r/g, '');
+    
+    // 1. Obtenemos el HTML para conservar <b> y <i>
+    let rawHtml = inVideoEditor.innerHTML;
+
+    // 2. Limpieza: Chrome añade <div> para saltos de línea, otros usan <br>
+    // Convertimos todo eso a saltos de línea estándar \n
+    let cleanText = rawHtml
+        .replace(/<br\s*\/?>/gi, '\n')       // <br> a \n
+        .replace(/<div>/gi, '\n')            // <div> a \n (Chrome)
+        .replace(/<\/div>/gi, '')            // Eliminar cierres de div
+        .replace(/&nbsp;/g, ' ');            // Espacios duros a normales
+
+    // 3. Opcional: Limpiar estilos basura si pegan texto de Word (spans, colores, etc.)
+    // Dejamos solo tags básicos permitidos en SRT
+    // (Si confías en que no pegarán cosas raras, esto no es estricto, pero ayuda)
+    
+    sub.text = cleanText.trim(); // Guardamos con etiquetas
+    
     updateInVideoStats(sub);
     updateTableRow(activeSubtitleIndex);
 });
@@ -5612,7 +5629,7 @@ translationLoader.addEventListener('change', (e) => {
 
   
         exportAssBtn.addEventListener('click', () => {
-            if (subtitles.length === 0) return showModalAlert('No hay subtítulos para exportar.');
+            if (subtitles.length === 0) return showModalAlert(t('alert_no_subs_export'));
             
             const scriptInfo = `[Script Info]
 Title: Subpanda Project
@@ -5632,9 +5649,28 @@ Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour,
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
+            
+            // FUNCIÓN HELPER PARA CONVERTIR HTML A TAGS ASS
+            const htmlToAssTags = (text) => {
+                let assText = text.replace(/\n/g, '\\N'); // Saltos de línea
+                
+                // Negrita <b> o <strong> -> {\b1}...{\b0}
+                assText = assText.replace(/<b>/gi, '{\\b1}').replace(/<\/b>/gi, '{\\b0}');
+                assText = assText.replace(/<strong>/gi, '{\\b1}').replace(/<\/strong>/gi, '{\\b0}');
+                
+                // Cursiva <i> o <em> -> {\i1}...{\i0}
+                assText = assText.replace(/<i>/gi, '{\\i1}').replace(/<\/i>/gi, '{\\i0}');
+                assText = assText.replace(/<em>/gi, '{\\i1}').replace(/<\/em>/gi, '{\\i0}');
+                
+                // Subrayado <u> -> {\u1}...{\u0}
+                assText = assText.replace(/<u>/gi, '{\\u1}').replace(/<\/u>/gi, '{\\u0}');
+
+                return assText;
+            };
+
             const eventLines = subtitles
                 .sort((a, b) => a.start - b.start)
-                .map(s => `Dialogue: 0,${formatAssTime(s.start)},${formatAssTime(s.end)},${s.style},,0,0,0,,${s.text.replace(/\n/g, '\\N')}`)
+                .map(s => `Dialogue: 0,${formatAssTime(s.start)},${formatAssTime(s.end)},${s.style},,0,0,0,,${htmlToAssTags(s.text)}`)
                 .join('\n');
 
             const assContent = scriptInfo + styleHeader + styleLines + eventHeader + eventLines;
