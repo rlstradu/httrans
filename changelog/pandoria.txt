@@ -1,4 +1,17 @@
 ========================================
+Pandoria v1.1.1 - Code Import & Shortcuts
+
+Release Date: November 25, 2025
+
+This update focuses on workflow flexibility and speed, adding direct code handling and improved editor navigation.
+
+New Features
+
+Direct TMX Code Import: You can now import a TMX translation memory by simply pasting the raw XML code, removing the need to upload a physical file. The new "Import Code" modal includes real-time validation, displaying a green indicator for valid code or a red warning for errors before importing.
+
+Keyboard Navigation Shortcuts: To speed up the editing process, you can now navigate between segments using your keyboard. Use Ctrl + Down Arrow to jump to the next segment and Ctrl + Up Arrow to return to the previous one.
+
+========================================
 Pandoria v1.1.0 - Auto-Backup
 ========================================
 
