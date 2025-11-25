@@ -1,4 +1,21 @@
 ========================================= 
+PandaTerm v1.2.0 - Direct Code Import
+========================================= 
+Release Date: November 25, 2025
+
+This update focuses on workflow efficiency by allowing users to import glossary data directly from the clipboard, eliminating the need to save and upload temporary text files. The import process is now faster and includes intelligent validation to ensure data integrity.
+
+Key Features
+
+**Quick Import & Validation
+
+Import from Code: A new "Import Code" button has been added to the control panel. You can now paste XML or TBX content directly into a dedicated editor window—perfect for quick transfers when you already have the raw code in your clipboard.
+
+Real-time Syntax Checking: The new import modal features a live validator that checks your XML syntax as you paste. It instantly provides visual feedback—a green checkmark for valid structures or a red warning for errors—preventing invalid imports before they happen.
+
+Smart Language Detection: The direct code importer utilizes the same intelligent parsing engine as the file importer, automatically detecting source and target languages (e.g., en-US/es-ES) from the pasted content without manual configuration.
+
+========================================= 
 PandaTerm v1.1.0 - CSV Support & Session Restore
 =========================================
 Release Date: November 7, 2025
