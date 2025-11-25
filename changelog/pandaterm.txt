@@ -1,5 +1,5 @@
 ========================================= 
-PandaTerm v1.2.0 - Direct Code Import
+PandaTerm v1.1.1 - Direct Code Import
 ========================================= 
 Release Date: November 25, 2025
 
