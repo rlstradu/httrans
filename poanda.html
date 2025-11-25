@@ -333,6 +333,12 @@
                         </label>
                     </div>
                 </div>
+                <div class="mb-4 p-2 bg-blue-50 rounded-lg border border-blue-200 flex items-center">
+                    <label class="flex items-center cursor-pointer text-sm font-medium text-blue-800 select-none">
+                        <input type="checkbox" id="autoPropagateCheckbox" class="mr-2 w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                        <span>Auto-propagate translations</span>
+                    </label>
+                </div>
                 <!-- Scrolling Content Area -->
                 <div class="translations-container-scrolling pr-2">
                     <div id="translationsContainer" class="space-y-4">
@@ -525,6 +531,7 @@
         // Global variables for HTML handling
         let currentHtmlDoc = null; 
         let htmlNodeMap = [];
+        let currentRawHtml = "";
 
         // Global variable to keep track of terms found in the currently active/focused segment's original text
         let termsFoundInActiveSegment = new Set(); // Stores terms found in the currently focused original segment
@@ -1560,6 +1567,12 @@ const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewB
         showLoadingOverlay(translations[currentLanguage]['loading_file']);
         try {
             const fileData = await selectFile('htmlSourceFile', 'Select HTML file');
+            
+            // --- CAMBIO IMPORTANTE ---
+            currentRawHtml = fileData.content; 
+            console.log("HTML cargado en memoria, longitud:", currentRawHtml.length); // <--- DEBUG
+            // -------------------------
+
             poEntries = parseHtmlProject(fileData.content);
             currentFileType = 'html'; 
             currentFileName = fileData.name;
@@ -1568,6 +1581,10 @@ const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewB
             updateStatsDisplay();
             updateSaveButtonsState();
             showMessage("HTML file loaded successfully.");
+            
+            // Forzar un backup inicial manual para probar
+            setTimeout(saveBackup, 1000); 
+
         } catch (e) {
             console.error(e);
             showMessage("Error loading HTML: " + e.message);
@@ -1815,6 +1832,49 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                 // Ensure cursor is at the end of the text
                 msgstrTextarea.setSelectionRange(msgstrTextarea.value.length, msgstrTextarea.value.length);
             }
+        }
+
+// --- AUTO-PROPAGATION LOGIC ---
+        function performAutoPropagation(originalText, translationText, sourceEntryIndex, sourceSegmentIndex) {
+            // Si la casilla no está marcada o el texto está vacío, no hacemos nada
+            const checkbox = document.getElementById('autoPropagateCheckbox');
+            if (!checkbox || !checkbox.checked || !translationText) return;
+
+            let propagatedCount = 0;
+
+            poEntries.forEach((entry, eIdx) => {
+                if (entry.isHeader) return;
+
+                entry.sentenceSegments.forEach((segment, sIdx) => {
+                    // 1. No nos sobrescribimos a nosotros mismos
+                    if (eIdx === sourceEntryIndex && sIdx === sourceSegmentIndex) return;
+
+                    // 2. Verificamos si el original es idéntico
+                    if (segment.original === originalText) {
+                        
+                        // 3. Actualizamos los datos
+                        segment.translation = translationText;
+                        segment.wordCountTranslation = countWords(translationText);
+                        segment.isTranslated = true;
+                        propagatedCount++;
+
+                        // 4. Actualizamos lo visual (el textarea) si está renderizado en pantalla
+                        const textarea = document.getElementById(`msgstr-${eIdx}-${sIdx}`);
+                        if (textarea) {
+                            textarea.value = translationText;
+                            // Disparamos input para que se recalculen alturas y contadores de ese textarea
+                            textarea.dispatchEvent(new Event('input', { bubbles: true })); 
+                            
+                            // Efecto visual para saber que ha cambiado (flash amarillo rápido)
+                            textarea.classList.add('bg-yellow-100');
+                            setTimeout(() => textarea.classList.remove('bg-yellow-100'), 500);
+                        }
+                    }
+                });
+            });
+            
+            // Si quieres notificar cuántos se cambiaron, descomenta la siguiente línea:
+            // if (propagatedCount > 0) console.log(`Propagated to ${propagatedCount} segments.`);
         }
 
         /**
@@ -2168,6 +2228,13 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                     });
 
                     msgstrTextarea.addEventListener('blur', (event) => {
+                        // 1. Disparar Autopropagación al salir del campo
+                        const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
+                        const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
+                        const segmentData = poEntries[currentEntryIndex].sentenceSegments[currentSegmentIndex];
+                        
+                        // Llamamos a la función que creamos en el Paso 2
+                        performAutoPropagation(segmentData.original, event.target.value, currentEntryIndex, currentSegmentIndex);
                         // --- NUEVO: Ocultar etiqueta ---
                         const glossaryMatchContainer = document.getElementById(`glossary-match-${entryIndex}-${segmentIndex}`);
                         if (glossaryMatchContainer) {
@@ -2198,6 +2265,10 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                     validateButton.addEventListener('click', (event) => {
                         const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
                         const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
+                        // Disparar Autopropagación al validar
+                        const txtArea = document.getElementById(`msgstr-${currentEntryIndex}-${currentSegmentIndex}`);
+                        const segOriginal = poEntries[currentEntryIndex].sentenceSegments[currentSegmentIndex].original;
+                        performAutoPropagation(segOriginal, txtArea.value, currentEntryIndex, currentSegmentIndex);
                         setTranslationEditableState(currentEntryIndex, currentSegmentIndex, false);
                         goToNextTranslation(currentEntryIndex, currentSegmentIndex);
                     });
@@ -4133,26 +4204,49 @@ setTimeout(() => {
         }
 
         async function saveBackup() {
-            if (!db || poEntries.length === 0) return;
+            // 1. Comprobación de seguridad: Si no hay base de datos o entradas, salimos.
+            if (!db || typeof poEntries === 'undefined' || poEntries.length === 0) return;
+
+            // 2. Preparar el HTML Crudo de forma segura
+            // Nos aseguramos de que currentRawHtml exista, si no, guardamos cadena vacía.
+            let htmlToSave = "";
+            if (typeof currentRawHtml !== 'undefined' && currentRawHtml) {
+                htmlToSave = currentRawHtml;
+            }
+
             const sessionData = {
                 id: 'currentSession',
-                poEntries,
-                currentFileType, // <--- AÑADIR ESTO
-                currentFileName,
-                glossary,
-                glossarySourceLanguage,
-                glossaryTargetLanguage,
-                translationMemory,
-                tmSourceLanguage,
-                tmTargetLanguage,
+                poEntries: poEntries, // Tus traducciones
+                currentFileType: (typeof currentFileType !== 'undefined') ? currentFileType : 'po',
+                currentFileName: currentFileName,
+                currentRawHtml: htmlToSave, // <--- AQUÍ GUARDAMOS EL HTML ORIGINAL
+                glossary: glossary || [],
+                glossarySourceLanguage: glossarySourceLanguage || '',
+                glossaryTargetLanguage: glossaryTargetLanguage || '',
+                translationMemory: translationMemory || [],
+                tmSourceLanguage: tmSourceLanguage || '',
+                tmTargetLanguage: tmTargetLanguage || '',
                 timestamp: new Date()
             };
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.put(sessionData);
-            request.onsuccess = () => {
-                 updateBackupStatusUI();
-            };
+
+            // 3. Intentar guardar en la Base de Datos
+            try {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(sessionData);
+                
+                request.onsuccess = () => {
+                     updateBackupStatusUI();
+                     // Si abres la consola (F12), verás este mensaje cada 10s si funciona:
+                     console.log("✅ Backup guardado correctamente a las " + new Date().toLocaleTimeString());
+                };
+                
+                request.onerror = (e) => {
+                    console.error("❌ Error al escribir en IndexedDB:", e.target.error);
+                };
+            } catch (err) {
+                console.error("❌ Error fatal dentro de saveBackup:", err);
+            }
         }
 
         async function loadBackup() {
@@ -4192,11 +4286,22 @@ setTimeout(() => {
             try {
                 const backup = backupData || await loadBackup();
                 if (backup) {
-                    poEntries = backup.poEntries || [];
-                    // --- Recuperar el tipo de archivo (por defecto 'po') ---
-                    currentFileType = backup.currentFileType || 'po'; 
-                    // -------------------------------------------------------
+                    // 1. Restaurar variables básicas
+                    currentFileType = backup.currentFileType || 'po';
                     currentFileName = backup.currentFileName || 'translations.po';
+                    currentRawHtml = backup.currentRawHtml || ""; // Recuperar el HTML crudo
+                    
+                    // 2. LÓGICA ESPECIAL PARA HTML
+                    if (currentFileType === 'html' && currentRawHtml) {
+                        // Volvemos a parsear el HTML original para reconstruir htmlNodeMap y currentHtmlDoc
+                        // Esto llena htmlNodeMap pero crea poEntries vacíos
+                        parseHtmlProject(currentRawHtml);
+                    }
+
+                    // 3. Sobrescribir con las traducciones guardadas
+                    // Al hacer esto, mantenemos el mapa creado en el paso 2, pero inyectamos los textos del backup
+                    poEntries = backup.poEntries || [];
+
                     glossary = backup.glossary || [];
                     glossarySourceLanguage = backup.glossarySourceLanguage || '';
                     glossaryTargetLanguage = backup.glossaryTargetLanguage || '';
@@ -4218,7 +4323,6 @@ setTimeout(() => {
                         showTMLanguageConfigSection();
                     }
                     
-                    // --- Forzar actualización de botones ---
                     updateSaveButtonsState();
                 }
             } catch (error) {
@@ -4556,6 +4660,46 @@ function makeModalDraggable(modalElement) {
             resizeObserver.observe(sidebar);
         }
 
+        // --- FUNCIÓN QUE FALTABA ---
+function makeModalDraggable(modalElement) {
+    // Si el elemento no existe, salimos para evitar errores
+    if (!modalElement) return;
+
+    const handle = modalElement.querySelector('h2'); // Usamos el título H2 como "agarradera"
+    const content = modalElement.querySelector('.modal-content');
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    if (handle && content) {
+        handle.style.cursor = 'move';
+        handle.onmousedown = dragMouseDown;
+    }
+
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        content.style.top = (content.offsetTop - pos2) + "px";
+        content.style.left = (content.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+// ---------------------------
 
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
