@@ -105,7 +105,7 @@
     }
 
     .logo {
-      max-width: 220px; /* Increased logo size */
+      max-width: 220px; 
       height: auto;
       cursor: pointer;
       transition: transform 0.3s ease-out, filter 0.3s ease-out;
@@ -113,15 +113,15 @@
     }
 
     .logo:hover {
-      transform: scale(1.05); /* Added hover effect */
+      transform: scale(1.05); 
     }
 
     body.dark-mode .logo {
-      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)); /* Sharper, more intense white halo */
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)); 
     }
 
     body.dark-mode .logo:hover {
-      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8)); /* Even brighter halo on hover */
+      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8)); 
     }
 
     .description {
@@ -156,7 +156,6 @@
         align-items: center;
     }
 
-    /* Unified style for all input fields and textareas in add-term and general input groups */
     .controls button,
     .search-section input {
       padding: 12px 20px;
@@ -169,7 +168,7 @@
       box-sizing: border-box;
       transition: all 0.2s ease;
       font-family: 'Montserrat', sans-serif;
-      background-color: var(--card-background); /* Ensure background matches */
+      background-color: var(--card-background);
     }
 
     .add-term input,
@@ -188,78 +187,66 @@
         transition: all 0.2s ease;
         font-family: 'Montserrat', sans-serif;
         background-color: var(--card-background);
-        height: 50px; /* Fixed height for all input fields in add-term section */
+        height: 50px; 
     }
 
-    /* Flex container for add-term section to keep fields in one column of rows */
     .add-term {
         display: flex;
-        flex-direction: column; /* Stack rows vertically */
-        gap: 20px; /* Increased gap between rows for better spacing */
-        /* margin-bottom: 20px; -- REMOVED, Handled by collapsible logic */
-    }
-    
-    /* === BEGIN COLLAPSIBLE STYLES === */
-    .add-term {
+        flex-direction: column; 
+        gap: 20px; 
         transition: max-height 0.4s ease-out, opacity 0.3s ease-out, margin 0.4s ease-out;
         max-height: 0;
         opacity: 0;
         overflow: hidden;
         margin-top: 0;
-        margin-bottom: 0; /* Override default */
+        margin-bottom: 0; 
     }
     .add-term.open {
-        max-height: 1500px; /* Large value */
+        max-height: 1500px; 
         opacity: 1;
         margin-top: 20px;
-        margin-bottom: 20px; /* Re-add default */
+        margin-bottom: 20px; 
     }
-    /* === END COLLAPSIBLE STYLES === */
-
 
     .add-term-row {
         display: flex;
-        flex-wrap: wrap; /* Allow wrapping within rows */
-        gap: 20px; /* Increased gap between items in a row */
-        align-items: flex-start; /* Align items to the top to prevent label overlap */
-        width: 100%; /* Ensure rows take full width */
+        flex-wrap: wrap; 
+        gap: 20px; 
+        align-items: flex-start; 
+        width: 100%; 
         box-sizing: border-box;
     }
 
-    /* All input groups and buttons within add-term-row should share space equally */
     .add-term-row .input-group {
-        flex: 1 1 calc(50% - 10px); /* Each takes 50% of the row, accounting for 20px gap */
-        min-width: 150px; /* Ensure a minimum width for responsiveness */
-        display: flex; /* Make input-group a flex container */
-        flex-direction: column; /* Stack label and input vertically */
+        flex: 1 1 calc(50% - 10px); 
+        min-width: 150px; 
+        display: flex; 
+        flex-direction: column; 
     }
 
     .add-term-row button {
-        flex: 1 1 calc(50% - 10px); /* Button takes 50% of the row */
-        min-width: 150px; /* Ensure a minimum width for responsiveness */
-        height: 50px; /* Ensure button also matches input height */
-        align-self: flex-end; /* Align button to the bottom of its row */
+        flex: 1 1 calc(50% - 10px); 
+        min-width: 150px; 
+        height: 50px; 
+        align-self: flex-end; 
     }
 
-    /* Special handling for textareas to allow vertical resizing and proper min-height */
     .add-term textarea,
     .modal-content .input-group textarea {
-        resize: both; /* Allow both vertical and horizontal resizing */
-        min-height: 80px; /* Increased minimum height for textareas */
-        height: auto; /* Allow height to adjust if user resizes */
-        min-width: 100%; /* Ensure it doesn't shrink too much horizontally */
-        width: 100%; /* Default to 100% width */
+        resize: both; 
+        min-height: 80px; 
+        height: auto; 
+        min-width: 100%; 
+        width: 100%; 
     }
 
-    /* Language configuration and display sections */
     .lang-display {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px; /* Consistent gap */
-        align-items: flex-end; /* Align labels/inputs */
+        gap: 15px; 
+        align-items: flex-end; 
     }
     
-    /* === BEGIN COLLAPSIBLE STYLES === */
     #currentLangContent {
         transition: max-height 0.4s ease-out, opacity 0.3s ease-out, margin 0.4s ease-out;
         max-height: 0;
@@ -274,45 +261,41 @@
          margin-top: 20px;
          margin-bottom: 20px;
     }
-    /* === END COLLAPSIBLE STYLES === */
 
     .lang-display .input-group {
-        flex: 1 1 calc(50% - 7.5px); /* Each input group takes half the width */
-        min-width: 150px; /* Ensure responsiveness */
-        display: flex; /* Make input-group a flex container */
-        flex-direction: column; /* Stack label and input vertically */
+        flex: 1 1 calc(50% - 7.5px); 
+        min-width: 150px; 
+        display: flex; 
+        flex-direction: column; 
     }
 
-    /* Ensure inputs inside lang-display .input-group take full width of their parent */
     .lang-display .input-group input {
         width: 100%;
-        min-width: unset; /* Override general min-width for these specific inputs */
-        height: 50px; /* Consistent height for language inputs */
-        padding: 12px 20px; /* Consistent padding */
-        border: 1px solid var(--input-border); /* Consistent border */
-        border-radius: 8px; /* Consistent border-radius */
-        background-color: var(--card-background); /* Consistent background */
-        color: var(--text-color); /* Consistent text color */
-        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        min-width: unset; 
+        height: 50px; 
+        padding: 12px 20px; 
+        border: 1px solid var(--input-border); 
+        border-radius: 8px; 
+        background-color: var(--card-background); 
+        color: var(--text-color); 
+        box-sizing: border-box; 
     }
 
     .lang-display button {
-        flex: 1 1 100%; /* Button takes full width on a new line */
-        min-width: unset; /* Override general min-width */
-        padding: 12px 20px; /* Standard button padding */
-        font-size: 1rem; /* Standard font size */
+        flex: 1 1 100%; 
+        min-width: unset; 
+        padding: 12px 20px; 
+        font-size: 1rem; 
     }
 
-    /* Ensure labels in lang-display also behave well */
     .lang-display .input-group label {
-        display: block; /* Ensure label is above input */
-        margin-bottom: 8px; /* Increased margin-bottom for labels */
+        display: block; 
+        margin-bottom: 8px; 
         font-size: 0.9rem;
         color: var(--text-color);
     }
 
-
-    input:focus, select:focus, textarea:focus { /* Added textarea to focus styles */
+    input:focus, select:focus, textarea:focus { 
         outline: none;
         border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(125, 206, 199, 0.3);
@@ -399,14 +382,13 @@
       font-weight: 500;
       margin-right: 5px;
       white-space: nowrap;
-      /* margin-bottom: 4px; Removed as input-group handles it */
-      display: block; /* Revert to block for labels without checkboxes */
+      display: block; 
       font-size: 0.9rem;
       color: var(--text-color);
     }
 
     .required-asterisk {
-        color: var(--btn-danger-bg); /* Red color for asterisk */
+        color: var(--btn-danger-bg); 
         margin-left: 4px;
         font-size: 1.1em;
         vertical-align: middle;
@@ -423,9 +405,9 @@
     }
 
     .table-container {
-      max-height: 80vh; /* Increased max-height for more visible rows */
+      max-height: 80vh; 
       overflow-y: auto;
-      overflow-x: auto; /* Added horizontal scroll for wide content */
+      overflow-x: auto; 
       border-radius: 8px;
       margin-top: 20px;
       border: 1px solid var(--border-color);
@@ -434,7 +416,7 @@
 
     table {
       width: 100%;
-      min-width: 900px; /* Ensure table can expand horizontally, increased from 700px */
+      min-width: 900px; 
       border-collapse: collapse;
       background-color: var(--card-background);
     }
@@ -443,17 +425,15 @@
       border-bottom: 1px solid var(--border-color);
       padding: 14px 16px;
       text-align: left;
-      vertical-align: top; /* Align content to the top for multi-line text */
+      vertical-align: top; 
     }
 
-    /* Give specific columns a minimum width to ensure content pushes the table wider */
-    th:nth-child(1), td:nth-child(1) { min-width: 150px; } /* Source Term */
-    th:nth-child(2), td:nth-child(2) { min-width: 150px; } /* Target Term */
-    th:nth-child(3), td:nth-child(3) { min-width: 250px; } /* Definition */
-    th:nth-child(4), td:nth-child(4) { min-width: 200px; } /* Notes */
-    th:nth-child(5), td:nth-child(5) { min-width: 120px; } /* Part of Speech */
-    th:nth-child(6), td:nth-child(6) { width: 80px; } /* Actions */
-
+    th:nth-child(1), td:nth-child(1) { min-width: 150px; } 
+    th:nth-child(2), td:nth-child(2) { min-width: 150px; } 
+    th:nth-child(3), td:nth-child(3) { min-width: 250px; } 
+    th:nth-child(4), td:nth-child(4) { min-width: 200px; } 
+    th:nth-child(5), td:nth-child(5) { min-width: 120px; } 
+    th:nth-child(6), td:nth-child(6) { width: 80px; } 
 
     td {
         color: var(--text-color);
@@ -468,7 +448,7 @@
       letter-spacing: 0.5px;
       position: sticky;
       top: 0;
-      z-index: 10; /* Added z-index for opaque background when sticky */
+      z-index: 10; 
     }
 
     body.dark-mode th {
@@ -485,33 +465,31 @@
 
     h2 {
         font-weight: 600;
-        margin-bottom: 10px; /* Reduced margin, spacing handled by collapsible content */
+        margin-bottom: 10px; 
         padding-bottom: 10px;
         border-bottom: 1px solid var(--border-color);
         color: var(--text-color);
     }
     
-    /* === BEGIN COLLAPSIBLE HEADER STYLES === */
     .collapsible-header {
         cursor: pointer;
         position: relative;
         user-select: none;
-        padding-right: 30px; /* Space for arrow */
-        margin-bottom: 10px; /* Keep it consistent */
+        padding-right: 30px; 
+        margin-bottom: 10px; 
     }
     .collapsible-header .arrow {
         position: absolute;
         right: 10px;
-        top: calc(50% - 1px); /* Align with h2 text */
-        transform: translateY(-50%) rotate(0deg); /* Start pointing right */
+        top: calc(50% - 1px); 
+        transform: translateY(-50%) rotate(0deg); 
         transition: transform 0.3s ease;
         font-size: 1.2rem;
         font-weight: 600;
     }
     .collapsible-header.open .arrow {
-        transform: translateY(-50%) rotate(90deg); /* Point down when open */
+        transform: translateY(-50%) rotate(90deg); 
     }
-    /* === END COLLAPSIBLE HEADER STYLES === */
 
 
     .message-box {
@@ -556,7 +534,7 @@
     #languageConfigSection, #editorSection {
         transition: opacity 0.4s ease-out, transform 0.4s ease-out, max-height 0.4s ease-out;
         overflow: hidden;
-        max-height: 1000px; /* Arbitrary large value */
+        max-height: 1000px; 
     }
 
     .hidden-section {
@@ -567,7 +545,6 @@
         pointer-events: none;
     }
 
-    /* Styles for editable cells */
     td.editable {
         cursor: pointer;
         position: relative;
@@ -580,7 +557,7 @@
     td.editable input[type="text"],
     td.editable textarea,
     td.editable select {
-        width: calc(100% - 10px); /* Adjust for padding */
+        width: calc(100% - 10px); 
         padding: 5px;
         border: 1px solid var(--primary-color);
         border-radius: 4px;
@@ -588,8 +565,8 @@
         color: var(--text-color);
         font-family: 'Montserrat', sans-serif;
         box-sizing: border-box;
-        resize: vertical; /* Allow vertical resizing for textareas */
-        min-height: 30px; /* Minimum height for textarea */
+        resize: vertical; 
+        min-height: 30px; 
     }
 
     td.editable input[type="text"]:focus,
@@ -605,14 +582,14 @@
         align-items: center;
         margin-top: 10px;
         margin-bottom: 20px;
-        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        flex-wrap: wrap; 
     }
 
     .search-options label {
         display: flex;
         align-items: center;
         gap: 5px;
-        margin-bottom: 0; /* Override default label margin */
+        margin-bottom: 0; 
         font-size: 1rem;
         font-weight: 400;
     }
@@ -650,6 +627,10 @@
         position: relative;
     }
 
+    .modal-content.large-modal {
+        max-width: 800px;
+    }
+
     .modal-content h3 {
         margin-top: 0;
         margin-bottom: 20px;
@@ -681,6 +662,38 @@
         box-sizing: border-box;
     }
 
+    /* Code editor specific styles */
+    .code-editor {
+        font-family: 'Consolas', 'Monaco', monospace !important;
+        font-size: 0.9rem !important;
+        line-height: 1.4;
+        white-space: pre;
+        min-height: 300px !important;
+        background-color: var(--background-color-light);
+    }
+    
+    body.dark-mode .code-editor {
+        background-color: #303030;
+    }
+
+    .validation-status {
+        margin-top: 5px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        height: 24px;
+    }
+    
+    .status-valid {
+        color: #4CAF50;
+    }
+    
+    .status-invalid {
+        color: #f44336;
+    }
+
     .modal-content .input-group textarea {
         min-height: 80px;
         resize: vertical;
@@ -693,11 +706,11 @@
         margin-top: 25px;
     }
 
-    .modal-content .dialog-buttons button { /* Specific styling for modal buttons */
-        height: 50px; /* Consistent height */
-        padding: 12px 20px; /* Consistent padding */
-        font-size: 1rem; /* Consistent font size */
-        border-radius: 8px; /* Consistent border-radius */
+    .modal-content .dialog-buttons button { 
+        height: 50px; 
+        padding: 12px 20px; 
+        font-size: 1rem; 
+        border-radius: 8px; 
     }
 
     .close-modal-btn {
@@ -718,7 +731,6 @@
         background-color: rgba(0,0,0,0.1);
     }
 
-    /* Styles for clickable links in table cells */
     td a {
         color: var(--primary-color);
         text-decoration: underline;
@@ -728,28 +740,26 @@
         text-decoration: none;
     }
 
-    /* Column visibility menu (removed from functionality, but leaving styles just in case for now) */
     .column-visibility-menu {
-        display: none; /* Always hidden */
+        display: none; 
     }
 
-    /* === NUEVO ESTILO PARA NOTIFICACIÓN "TOAST" (MODIFICADO) === */
-    #toastContainer { /* New container */
+    #toastContainer { 
         position: fixed;
         bottom: 20px;
         left: 20px;
         z-index: 2000;
         display: flex;
-        flex-direction: column; /* New toasts appear below old ones */
+        flex-direction: column; 
         gap: 10px;
         max-width: 350px;
     }
 
     .toast-notification {
-      position: relative; /* Changed from fixed */
+      position: relative; 
       width: 100%;
       box-sizing: border-box;
-      transform: translateX(-120%); /* Start off-screen left */
+      transform: translateX(-120%); 
       background-color: var(--text-color-dark);
       color: var(--background-color-light);
       padding: 12px 20px;
@@ -761,7 +771,7 @@
     }
 
     .toast-notification.show {
-      transform: translateX(0); /* Slide in */
+      transform: translateX(0); 
       opacity: 1;
     }
 
@@ -769,7 +779,6 @@
        background-color: var(--background-color-light);
        color: var(--text-color-dark);
     }
-    /* === FIN DE ESTILOS "TOAST" === */
 
   </style>
 </head>
@@ -790,6 +799,8 @@
       
       <button onclick="document.getElementById('fileInput').click()" data-i18n="import_button" class="btn-secondary">Importar</button>
       <input type="file" id="fileInput" accept=".xml,.tbx,.csv" />
+
+      <button onclick="showImportCodeDialog()" data-i18n="import_code_button" class="btn-secondary">Importar código</button>
       
       <button onclick="showExportDialog()" data-i18n="export_button" class="btn-secondary">Exportar</button>
       
@@ -937,10 +948,9 @@
         title: "PandaTerm",
         main_title: "PandaTerm",
         app_description: "A simple TBX/CSV glossary editor",
-        // === TRADUCCIONES MODIFICADAS ===
-        import_button: "Import", // Antes "import_tbx"
-        export_button: "Export", // Antes "download_button"
-        // === FIN DE MODIFICACIONES ===
+        import_button: "Import File",
+        import_code_button: "Import Code", 
+        export_button: "Export", 
         new_glossary: "New glossary",
         toggle_theme: "Toggle theme",
         undo_button: "Undo",
@@ -979,8 +989,8 @@
         new_glossary_confirm_text: "All current glossary data will be lost. If you don't want to lose it, click cancel and export it as a TBX file. Click confirm to create a new glossary from scratch.",
         confirm_button: "Confirm",
         cancel_button: "Cancel",
-        download_dialog_title: "Enter filename", // Reutilizado por el modal de exportación
-        download_dialog_placeholder: "glossary", // Reutilizado por el modal de exportación
+        download_dialog_title: "Enter filename", 
+        download_dialog_placeholder: "glossary", 
         save_button: "Save",
         edit_term_title: "Edit Term",
         update_button: "Update",
@@ -989,14 +999,12 @@
         hide_more_fields: "Hide fields",
         delete_term_confirm_title: "Confirm Delete",
         delete_term_confirm_text: "Are you sure you want to delete this term? This action cannot be undone.",
-        // --- TRADUCCIONES DE BACKUP ---
         "backup_restored": "Your previous work has been restored.",
         "backup_corrupt": "Could not restore backup. It may be corrupt. Starting new session.",
         "backup_confirm_title": "Restore Session?",
         "backup_confirm_text": "We found a previous session with {count} terms. Would you like to restore it?",
         "backup_confirm_button": "Restore",
         "backup_discard_button": "Discard",
-        // --- NUEVAS TRADUCCIONES (CSV Y EXPORT) ---
         "export_dialog_title": "Export Glossary",
         "export_filename": "Filename:",
         "export_format": "Format:",
@@ -1007,16 +1015,21 @@
         "csv_header_error": "The CSV must have headers like \"Source Term\" and \"Target Term\", or \"{srcLang}\" and \"{tgtLang}\".",
         "csv_empty_error": "The CSV is empty or has no headers.",
         "unsupported_file_error": "Unsupported file type. Please select a .tbx, .xml, or .csv file.",
-        "tbx_import_success": "Imported {count} new terms from TBX."
+        "tbx_import_success": "Imported {count} new terms from TBX.",
+        // Import code translations
+        "import_code_title": "Import TBX Code",
+        "paste_code_here": "Paste your XML/TBX code here...",
+        "import_action_button": "Import Code",
+        "valid_xml": "✓ Valid XML Structure",
+        "invalid_xml": "⚠ Invalid XML"
       },
       es: {
         title: "PandaTerm",
         main_title: "PandaTerm",
         app_description: "Un sencillo editor de glosarios TBX/CSV",
-        // === TRADUCCIONES MODIFICADAS ===
-        import_button: "Importar", // Antes "import_tbx"
-        export_button: "Exportar", // Antes "download_button"
-        // === FIN DE MODIFICACIONES ===
+        import_button: "Importar archivo", 
+        import_code_button: "Importar código",
+        export_button: "Exportar", 
         new_glossary: "Nuevo glosario",
         toggle_theme: "Cambiar tema",
         undo_button: "Deshacer",
@@ -1055,8 +1068,8 @@
         new_glossary_confirm_text: "Se perderá toda la información del glosario actual. Si no quieres perderlo, haz clic en cancelar y expórtalo como archivo TBX. Haz clic en confirmar para crear un glosario nuevo desde cero.",
         confirm_button: "Confirmar",
         cancel_button: "Cancelar",
-        download_dialog_title: "Introducir nombre de archivo", // Reutilizado
-        download_dialog_placeholder: "glosario", // Reutilizado
+        download_dialog_title: "Introducir nombre de archivo", 
+        download_dialog_placeholder: "glosario", 
         save_button: "Guardar",
         edit_term_title: "Editar término",
         update_button: "Actualizar",
@@ -1065,14 +1078,12 @@
         hide_more_fields: "Ocultar campos",
         delete_term_confirm_title: "Confirmar eliminación",
         delete_term_confirm_text: "¿Estás seguro de que quieres eliminar este término? Esta acción no se puede deshacer.",
-        // --- TRADUCCIONES DE BACKUP ---
         "backup_restored": "Se ha restaurado tu trabajo anterior.",
         "backup_corrupt": "No se pudo restaurar la copia de seguridad. Puede que esté corrupta. Empezando una nueva sesión.",
         "backup_confirm_title": "¿Restaurar sesión?",
         "backup_confirm_text": "Encontramos una sesión anterior con {count} términos. ¿Quieres restaurarla?",
         "backup_confirm_button": "Restaurar",
         "backup_discard_button": "Descartar",
-        // --- NUEVAS TRADUCCIONES (CSV Y EXPORT) ---
         "export_dialog_title": "Exportar Glosario",
         "export_filename": "Nombre de archivo:",
         "export_format": "Formato:",
@@ -1083,7 +1094,13 @@
         "csv_header_error": "El CSV debe tener cabeceras como \"Source Term\" y \"Target Term\", o \"{srcLang}\" y \"{tgtLang}\".",
         "csv_empty_error": "El CSV está vacío o no tiene cabeceras.",
         "unsupported_file_error": "Tipo de archivo no compatible. Por favor, selecciona un archivo .tbx, .xml, o .csv.",
-        "tbx_import_success": "Se importaron {count} términos nuevos del TBX."
+        "tbx_import_success": "Se importaron {count} términos nuevos del TBX.",
+        // Import code translations
+        "import_code_title": "Importar código TBX",
+        "paste_code_here": "Pega tu código XML/TBX aquí...",
+        "import_action_button": "Importar código",
+        "valid_xml": "✓ Estructura XML Válida",
+        "invalid_xml": "⚠ XML Inválido"
       }
     };
 
@@ -1216,12 +1233,12 @@
         glossary = history.pop();
         renderGlossary();
         updateUndoButtonState();
-        saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+        saveBackupToLocalStorage(); 
       }
     }
     
     /**
-     * (NUEVA) Alterna la visibilidad de una sección colapsable.
+     * Alterna la visibilidad de una sección colapsable.
      * @param {string} contentId - El ID del elemento de contenido a colapsar/expandir.
      */
     function toggleCollapse(contentId) {
@@ -1248,9 +1265,9 @@
       document.getElementById('configTgtLang').value = 'es-ES';
       document.getElementById('srcTerm').value = '';
       document.getElementById('tgtTerm').value = '';
-      document.getElementById('definition').value = ''; // Clear definition
-      document.getElementById('notes').value = ''; // Clear notes
-      document.getElementById('partOfSpeech').value = ''; // Clear part of speech
+      document.getElementById('definition').value = ''; 
+      document.getElementById('notes').value = ''; 
+      document.getElementById('partOfSpeech').value = ''; 
       document.getElementById('searchTerm').value = '';
       // Reset search scope to 'all'
       document.querySelector('input[name="searchScope"][value="all"]').checked = true;
@@ -1263,7 +1280,7 @@
 
       showSection('languageConfigSection');
       renderGlossary();
-      saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+      saveBackupToLocalStorage(); 
     }
 
     /**
@@ -1272,7 +1289,6 @@
     function resetGlossary() {
       const title = translations[currentUILanguage]['new_glossary_confirm_title'];
       const message = translations[currentUILanguage]['new_glossary_confirm_text'];
-      // Usar la función de confirmación modificada
       showConfirmationDialog(title, message, performResetGlossary, null, null, null, 'btn-danger');
     }
 
@@ -1301,7 +1317,7 @@
       // Clear history when starting a new glossary configuration
       history = [];
       updateUndoButtonState();
-      saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+      saveBackupToLocalStorage(); 
     }
 
     /**
@@ -1343,7 +1359,7 @@
       partOfSpeechInput.value = "";
       srcTermInput.focus();
       renderGlossary(true); // Pass true to animate the last row
-      saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+      saveBackupToLocalStorage(); 
     }
 
     /**
@@ -1359,7 +1375,7 @@
             glossary.splice(originalIndex, 1);
             renderGlossary();
             closeModal('editModal'); // Close modal if open after deleting
-            saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+            saveBackupToLocalStorage(); 
         };
         
         showConfirmationDialog(title, message, performDelete, null, null, null, 'btn-danger');
@@ -1442,7 +1458,7 @@
 
         closeModal('editModal');
         renderGlossary();
-        saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+        saveBackupToLocalStorage(); 
     }
 
     /**
@@ -1539,9 +1555,6 @@
     // === LÓGICA DE EXPORTACIÓN (TBX Y CSV) =======
     // ===============================================
 
-    /**
-     * Muestra el modal de exportación para elegir formato y nombre.
-     */
     function showExportDialog() {
       if (glossary.length === 0 || !glossarySourceLanguage || !glossaryTargetLanguage) {
         showMessageBox(translations[currentUILanguage]["Cannot download empty or unconfigured glossary."]);
@@ -1552,7 +1565,6 @@
       modalOverlay.className = 'modal-overlay';
       modalOverlay.id = 'exportModal';
 
-      // Usamos las traducciones para el modal
       modalOverlay.innerHTML = `
         <div class="modal-content">
           <button class="close-modal-btn" onclick="closeModal('exportModal')">&times;</button>
@@ -1587,12 +1599,9 @@
       
       const filenameInput = document.getElementById('exportFilename');
       filenameInput.focus();
-      filenameInput.select(); // Seleccionar el texto por defecto
+      filenameInput.select(); 
     }
 
-    /**
-     * Se llama desde el modal de exportación. Obtiene los valores y llama a la función de descarga correspondiente.
-     */
     function performExport() {
       const filename = document.getElementById('exportFilename').value.trim() || translations[currentUILanguage]['download_dialog_placeholder'];
       const format = document.querySelector('input[name="exportFormat"]:checked').value;
@@ -1606,10 +1615,6 @@
       closeModal('exportModal');
     }
 
-    /**
-     * Genera el contenido del string TBX.
-     * @returns {string} El contenido del archivo TBX como string.
-     */
     function generateTBX() {
       const xml = [`<?xml version="1.0" encoding="UTF-8"?>`,
         `<martif type="TBX" xml:lang="${glossarySourceLanguage}">`,
@@ -1644,10 +1649,6 @@
       return xml.join("\n");
     }
 
-     /**
-     * Genera y descarga el glosario actual como un archivo TBX.
-     * @param {string} filename - El nombre de archivo (sin extensión).
-     */
     function generateAndDownloadTBX(filename) {
       const blob = new Blob([generateTBX()], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
@@ -1658,34 +1659,23 @@
       URL.revokeObjectURL(url);
     }
 
-    /**
-     * Escapa un campo de texto para su uso en CSV.
-     * @param {string} field - El contenido del campo.
-     * @returns {string} El campo formateado para CSV.
-     */
     function escapeCSV(field) {
       if (field === null || field === undefined) {
         return '""';
       }
       const str = String(field);
-      const escaped = str.replace(/"/g, '""'); // Duplica las comillas dobles
-      // Si el campo contiene comillas, punto y coma, o saltos de línea, se entrecomilla
+      const escaped = str.replace(/"/g, '""'); 
       if (str.includes('"') || str.includes(';') || str.includes('\n') || str.includes('\r')) {
         return `"${escaped}"`;
       }
-      return escaped; // Devolver sin comillas si no es necesario
+      return escaped; 
     }
 
-    /**
-     * Genera y descarga el glosario actual como un archivo CSV compatible.
-     * @param {string} filename - El nombre de archivo (sin extensión).
-     */
     function generateAndDownloadCSV(filename) {
       const headers = [
         "Source Language", "Source Term", "Target Language", "Target Term",
         "Definition", "Notes", "Part of Speech"
       ];
-      // Usamos punto y coma para mejor compatibilidad con Excel
       let csvContent = headers.join(";") + "\n"; 
 
       glossary.forEach(entry => {
@@ -1701,7 +1691,6 @@
         csvContent += row.map(escapeCSV).join(";") + "\n";
       });
 
-      // Aseguramos UTF-8 con BOM para que Excel abra los acentos correctamente
       const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
       const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -1717,22 +1706,19 @@
     // ===============================================
 
     /**
-     * Lee y procesa el contenido de un archivo TBX.
-     * @param {File} file - El archivo TBX/XML a leer.
+     * Shared logic to parse XML content and import into glossary
+     * @param {string} xmlString - The raw XML content
      */
-    function readTBXFile(file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            console.log("File read successfully. Attempting to parse XML...");
+    function parseAndImportTBXString(xmlString) {
+        try {
+            console.log("Parsing TBX content...");
             const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(reader.result, "application/xml");
+            const xmlDoc = parser.parseFromString(xmlString, "application/xml");
 
             const parserError = xmlDoc.querySelector("parsererror");
             if (parserError) {
                 const errorText = parserError.textContent || "Unknown XML parsing error.";
-                console.error("XML Parsing Error:", errorText, xmlDoc);
-                throw new Error(`Parsing error: The file is not a valid XML/TBX. Details: ${errorText.substring(0, 100)}...`);
+                throw new Error(`Parsing error: The content is not a valid XML/TBX. Details: ${errorText.substring(0, 100)}...`);
             }
             
             let entryTagName, langSetTagName, termGroupTagName, rootElement;
@@ -1860,9 +1846,8 @@
 
             showSection('editorSection');
             renderGlossary();
-            saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+            saveBackupToLocalStorage(); 
             
-            // (NUEVO) Mostrar toast de éxito
             let successMsg = translations[currentUILanguage]['tbx_import_success'] || "Imported {count} new terms from TBX.";
             showToast(successMsg.replace('{count}', newGlossary.length));
             console.log("TBX import completed successfully.");
@@ -1871,14 +1856,16 @@
             console.error("Error during TBX file processing:", error);
             showMessageBox(translations[currentUILanguage]["Error loading TBX file. Please ensure it's a valid XML/TBX."] + " " + error.message);
           }
+    }
+
+    function readTBXFile(file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+            parseAndImportTBXString(reader.result);
         };
         reader.readAsText(file);
     }
 
-    /**
-     * Lee y procesa el contenido de un archivo CSV.
-     * @param {File} file - El archivo CSV a leer.
-     */
     function readCSVFile(file) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -1887,18 +1874,12 @@
           parseCSV(reader.result);
         } catch (error) {
           console.error("Error durante el procesamiento del archivo CSV:", error);
-          showMessageBox(error.message); // Mostrar el mensaje de error específico
+          showMessageBox(error.message); 
         }
       };
-      reader.readAsText(file, "UTF-8"); // Forzamos la lectura como UTF-8
+      reader.readAsText(file, "UTF-8"); 
     }
 
-    /**
-     * Parsea una sola línea de CSV, respetando las comillas dobles.
-     * @param {string} row - La línea de texto CSV.
-     * @param {string} delimiter - El delimitador (ej. ';').
-     * @returns {string[]} Un array de los campos.
-     */
     function parseCSVRow(row, delimiter) {
       const fields = [];
       let inQuote = false;
@@ -1909,27 +1890,21 @@
         
         if (char === '"') {
           if (inQuote && row[i+1] === '"') {
-            // Es una comilla doble escapada ("")
             field += '"';
-            i++; // Saltamos la siguiente comilla
+            i++; 
           } else {
-            // Es el inicio o fin de un campo entrecomillado
             inQuote = !inQuote;
           }
         } else if (char === delimiter && !inQuote) {
-          // Fin de un campo
           fields.push(field);
           field = '';
         } else {
-          // Carácter normal (incluyendo los que no son el delimitador)
           field += char;
         }
       }
       
-      fields.push(field); // Añadimos el último campo
+      fields.push(field); 
       
-      // Limpiamos las comillas de encapsulamiento (ej. "hola" -> hola)
-      // Solo si el campo empieza Y termina con comillas
       return fields.map(f => {
           if (f.startsWith('"') && f.endsWith('"')) {
               return f.substring(1, f.length - 1).replace(/""/g, '"');
@@ -1938,26 +1913,18 @@
       });
     }
 
-    /**
-     * Parsea el contenido de un string CSV y lo añade al glosario.
-     * @param {string} textContent - El contenido completo del archivo CSV.
-     */
     function parseCSV(textContent) {
       const newGlossary = [];
-      // Dividimos en líneas, manejando \n y \r\n
       const lines = textContent.split(/\r?\n/);
 
       if (lines.length < 2 || !lines[0].trim()) {
         throw new Error(translations[currentUILanguage]['csv_empty_error']);
       }
 
-      // Detectamos el delimitador (coma o punto y coma) por la cabecera
       const delimiter = lines[0].includes(';') ? ';' : ',';
       
-      // 1. Extraer Cabeceras y Mapear
-      const headers = parseCSVRow(lines[0], delimiter); // ¡Usa tu propio parser!
+      const headers = parseCSVRow(lines[0], delimiter); 
 
-      // Creamos un mapa de índices
       const map = {
         srcTerm: headers.indexOf("Source Term"),
         tgtTerm: headers.indexOf("Target Term"),
@@ -1966,9 +1933,7 @@
         partOfSpeech: headers.indexOf("Part of Speech")
       };
 
-      // Verificación mínima: ¿encontramos los términos?
       if (map.srcTerm === -1 || map.tgtTerm === -1) {
-          // Intentamos una segunda vez con los códigos de idioma (ej. "en-US")
           map.srcTerm = headers.indexOf(glossarySourceLanguage);
           map.tgtTerm = headers.indexOf(glossaryTargetLanguage);
           
@@ -1979,16 +1944,14 @@
           }
       }
 
-      // 2. Procesar las filas
       for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue; // Ignorar líneas vacías
+        if (!lines[i].trim()) continue; 
 
         const values = parseCSVRow(lines[i], delimiter);
 
         const srcTerm = values[map.srcTerm] || '';
         const tgtTerm = values[map.tgtTerm] || '';
 
-        // Solo añadimos si tenemos los términos obligatorios
         if (srcTerm && tgtTerm) {
           newGlossary.push({
             srcLang: glossarySourceLanguage,
@@ -2002,17 +1965,14 @@
         }
       }
 
-      // 3. Añadir al glosario
       if (newGlossary.length > 0) {
-        saveState(); // Guardamos el estado actual antes de añadir los nuevos
+        saveState(); 
         glossary = glossary.concat(newGlossary);
         renderGlossary();
-        saveBackupToLocalStorage(); // <-- GUARDAR BACKUP
+        saveBackupToLocalStorage(); 
         let successMsg = translations[currentUILanguage]['csv_import_success'];
-        // (MODIFICADO) Usar toast en lugar de messageBox
         showToast(successMsg.replace('{count}', newGlossary.length));
       } else {
-        // (MODIFICADO) Usar toast en lugar de messageBox
         showToast(translations[currentUILanguage]['csv_import_no_terms']);
       }
     }
@@ -2021,11 +1981,6 @@
     // === LÓGICA DE DIÁLOGOS Y MENSAJES ===========
     // ===============================================
 
-    /**
-     * Displays a simple message box to the user.
-     * (Usado para errores que requieren acción)
-     * @param {string} message - The message to display.
-     */
     function showMessageBox(message) {
       const existingMessageBox = document.querySelector('.message-box');
       if (existingMessageBox) {
@@ -2053,17 +2008,6 @@
       document.body.appendChild(messageBox);
     }
 
-    /**
-     * Displays a confirmation dialog to the user.
-     * (MODIFICADA para aceptar callback de cancelación, texto de botones y clase de confirmación)
-     * @param {string} title - The title of the dialog.
-     * @param {string} message - The message to display.
-     * @param {function} onConfirm - Callback function to execute if confirmed.
-     * @param {function} onCancelCallback - (Nuevo) Callback function to execute if cancelled.
-     * @param {string} confirmText - (Nuevo) Texto para el botón de confirmar.
-     * @param {string} cancelText - (Nuevo) Texto para el botón de cancelar.
-     * @param {string} confirmClass - (Nuevo) Clase CSS para el botón de confirmar (ej. 'btn-primary').
-     */
     function showConfirmationDialog(title, message, onConfirm, onCancelCallback = null, confirmText = null, cancelText = null, confirmClass = 'btn-danger') {
       const existingMessageBox = document.querySelector('.message-box');
       if (existingMessageBox) {
@@ -2084,7 +2028,7 @@
 
       const confirmButton = document.createElement('button');
       confirmButton.textContent = confirmText || translations[currentUILanguage]['confirm_button'] || 'Confirm';
-      confirmButton.className = confirmClass; // Usar clase parámetro
+      confirmButton.className = confirmClass; 
       confirmButton.onclick = () => {
         onConfirm();
         document.body.removeChild(messageBox);
@@ -2094,7 +2038,7 @@
       cancelButton.textContent = cancelText || translations[currentUILanguage]['cancel_button'] || 'Cancel';
       cancelButton.className = 'btn-secondary';
       cancelButton.onclick = () => {
-        if (onCancelCallback) onCancelCallback(); // Ejecutar callback de cancelar
+        if (onCancelCallback) onCancelCallback(); 
         document.body.removeChild(messageBox);
       };
 
@@ -2107,71 +2051,84 @@
       document.body.appendChild(messageBox);
     }
 
-    /**
-     * Displays an input dialog (LEGADO - AHORA USADO SOLO POR EXPORT)
-     */
-    function showInputDialog(title, message, placeholder, onConfirm) {
-      const existingMessageBox = document.querySelector('.message-box');
-      if (existingMessageBox) {
-        existingMessageBox.remove();
-      }
+    // ===============================================
+    // === NUEVA LÓGICA DE IMPORTACIÓN DE CÓDIGO ===
+    // ===============================================
 
-      const messageBox = document.createElement('div');
-      messageBox.className = 'message-box';
-
-      const titleEl = document.createElement('h3');
-      titleEl.textContent = title;
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.placeholder = placeholder;
-      input.style.width = '100%';
-      input.style.padding = '10px';
-      input.style.boxSizing = 'border-box';
-      input.style.marginTop = '10px';
-      input.style.borderRadius = '8px';
-      input.style.border = '1px solid var(--input-border)';
-      input.style.backgroundColor = 'var(--card-background)';
-      input.style.color = 'var(--text-color)';
-
-      const buttonContainer = document.createElement('div');
-      buttonContainer.className = 'dialog-buttons';
-
-      const confirmButton = document.createElement('button');
-      confirmButton.textContent = translations[currentUILanguage]['save_button'] || 'Save';
-      confirmButton.className = 'btn-primary';
-      confirmButton.onclick = () => {
-        const filename = input.value.trim();
-        if (filename) {
-          onConfirm(filename);
-          document.body.removeChild(messageBox);
+    function showImportCodeDialog() {
+        if (!glossarySourceLanguage || !glossaryTargetLanguage) {
+            showMessageBox(translations[currentUILanguage]['lang_config_required']);
+            showSection('languageConfigSection');
+            return;
         }
-      };
 
-      const cancelButton = document.createElement('button');
-      cancelButton.textContent = translations[currentUILanguage]['cancel_button'] || 'Cancel';
-      cancelButton.className = 'btn-secondary';
-      cancelButton.onclick = () => document.body.removeChild(messageBox);
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.id = 'importCodeModal';
 
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          confirmButton.click();
+        modalOverlay.innerHTML = `
+            <div class="modal-content large-modal">
+                <button class="close-modal-btn" onclick="closeModal('importCodeModal')">&times;</button>
+                <h3 data-i18n="import_code_title">${translations[currentUILanguage]['import_code_title']}</h3>
+                <div class="input-group">
+                    <label data-i18n="paste_code_here">${translations[currentUILanguage]['paste_code_here']}</label>
+                    <textarea id="tbCodeInput" class="code-editor" spellcheck="false" placeholder="<martif..."></textarea>
+                    <div id="codeValidationStatus" class="validation-status"></div>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="btn-secondary" onclick="closeModal('importCodeModal')" data-i18n="cancel_button">${translations[currentUILanguage]['cancel_button']}</button>
+                    <button id="btnConfirmImportCode" class="btn-primary" onclick="importFromCode()" data-i18n="import_action_button" disabled>${translations[currentUILanguage]['import_action_button']}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalOverlay);
+
+        const textarea = document.getElementById('tbCodeInput');
+        textarea.focus();
+        
+        // Add real-time validation listener
+        textarea.addEventListener('input', checkCodeValidity);
+    }
+
+    function checkCodeValidity() {
+        const code = document.getElementById('tbCodeInput').value.trim();
+        const statusDiv = document.getElementById('codeValidationStatus');
+        const confirmBtn = document.getElementById('btnConfirmImportCode');
+
+        if (!code) {
+            statusDiv.innerHTML = '';
+            confirmBtn.disabled = true;
+            return;
         }
-      });
 
-      buttonContainer.appendChild(cancelButton);
-      buttonContainer.appendChild(confirmButton);
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(code, "application/xml");
+            const parserError = xmlDoc.querySelector("parsererror");
 
-      messageBox.appendChild(titleEl);
-      if (message) {
-          const messageText = document.createElement('p');
-          messageText.textContent = message;
-          messageBox.appendChild(messageText);
-      }
-      messageBox.appendChild(input);
-      messageBox.appendChild(buttonContainer);
-      document.body.appendChild(messageBox);
-      input.focus();
+            if (parserError) {
+                statusDiv.innerHTML = `<span class="status-invalid">${translations[currentUILanguage]['invalid_xml']}</span>`;
+                confirmBtn.disabled = true;
+            } else {
+                // Check if it has TBX root elements
+                if (xmlDoc.getElementsByTagName("martif").length > 0 || xmlDoc.getElementsByTagName("tbx").length > 0) {
+                     statusDiv.innerHTML = `<span class="status-valid">${translations[currentUILanguage]['valid_xml']}</span>`;
+                     confirmBtn.disabled = false;
+                } else {
+                     statusDiv.innerHTML = `<span class="status-invalid">XML valid but no Martif/TBX root found</span>`;
+                     confirmBtn.disabled = true;
+                }
+            }
+        } catch (e) {
+            statusDiv.innerHTML = `<span class="status-invalid">${translations[currentUILanguage]['invalid_xml']}</span>`;
+            confirmBtn.disabled = true;
+        }
+    }
+
+    function importFromCode() {
+        const code = document.getElementById('tbCodeInput').value;
+        closeModal('importCodeModal');
+        parseAndImportTBXString(code);
     }
 
 
@@ -2179,11 +2136,6 @@
     // === FUNCIONES DE BACKUP Y CARGA INICIAL =====
     // ===============================================
 
-    /**
-     * Muestra una notificación "toast" temporal.
-     * (MODIFICADA para usar el #toastContainer)
-     * @param {string} message - El mensaje a mostrar.
-     */
     function showToast(message) {
       const container = document.getElementById('toastContainer');
       if (!container) {
@@ -2194,26 +2146,23 @@
       toast.className = 'toast-notification';
       toast.textContent = message;
       
-      container.appendChild(toast); // Añadir al contenedor
+      container.appendChild(toast); 
       
-      setTimeout(() => { // Animar entrada
+      setTimeout(() => { 
         toast.classList.add('show');
       }, 10); 
 
-      setTimeout(() => { // Animar salida
+      setTimeout(() => { 
         toast.classList.remove('show');
-        setTimeout(() => { // Eliminar del DOM
+        setTimeout(() => { 
           if (toast.parentNode === container) {
              container.removeChild(toast);
           }
-        }, 500); // Coincidir con la transición CSS
-      }, 4000); // 4 segundos visible
+        }, 500); 
+      }, 4000); 
     }
 
 
-    /**
-     * Guarda el estado actual del glosario en localStorage.
-     */
     function saveBackupToLocalStorage() {
       try {
         const backupData = {
@@ -2228,11 +2177,6 @@
       }
     }
 
-    /**
-     * Carga el estado del glosario desde localStorage.
-     * (MODIFICADA para devolver los datos, no para establecerlos)
-     * @returns {object} - Objeto con { success: boolean, data: object, error: string }
-     */
     function loadBackupFromLocalStorage() {
       try {
         const backupString = localStorage.getItem('pandaTermBackup');
@@ -2307,7 +2251,6 @@
             showSection('languageConfigSection');
         };
         
-        // Usar la función de confirmación modificada
         showConfirmationDialog(title, message, restoreAction, discardAction, confirmBtnText, cancelBtnText, 'btn-primary');
 
       } else {
@@ -2329,14 +2272,14 @@
       fileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (!file) {
-          fileInput.value = ''; // Limpiar por si acaso
+          fileInput.value = ''; 
           return;
         }
 
         if (!glossarySourceLanguage || !glossaryTargetLanguage) {
             showMessageBox(translations[currentUILanguage]['lang_config_required']);
             showSection('languageConfigSection');
-            fileInput.value = ''; // Limpiar input
+            fileInput.value = ''; 
             return;
         }
 
@@ -2352,7 +2295,7 @@
           showMessageBox(translations[currentUILanguage]['unsupported_file_error']);
         }
         
-        fileInput.value = ''; // Limpiar siempre el input
+        fileInput.value = ''; 
       });
 
       // Listeners de teclado
