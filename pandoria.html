@@ -91,11 +91,13 @@
         padding: 24px;
         border: 1px solid #888;
         width: 90%;
-        max-width: 500px;
+        max-width: 600px;
         border-radius: 0.5rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         text-align: center;
         animation: fadeInUp 0.5s ease-out forwards;
+        display: flex;
+        flex-direction: column;
     }
     .editable-cell {
         padding: 0.75rem;
@@ -135,8 +137,6 @@
     #alignmentWizardModal .modal-content {
         max-width: 90vw;
         height: 90vh;
-        display: flex;
-        flex-direction: column;
     }
     .wizard-body {
         display: grid;
@@ -182,6 +182,27 @@
     .wizard-action-btn:hover {
         background: #d1d5db;
     }
+    
+    /* Estado de Validación de Código */
+    .validation-status {
+        margin-top: 10px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        min-height: 1.5rem;
+    }
+    .status-valid {
+        color: #16a34a; /* Green 600 */
+    }
+    .status-invalid {
+        color: #dc2626; /* Red 600 */
+    }
+    #codeImportArea {
+        font-family: monospace;
+        font-size: 0.85rem;
+        white-space: pre;
+        overflow-x: auto;
+    }
+
   </style>
 </head>
 <body class="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8">
@@ -205,6 +226,10 @@
         Importar TMX
       </label>
       <input type="file" id="tmxFileInput" accept=".xml,.tmx" class="hidden" />
+      
+      <!-- NUEVO BOTÓN: Importar Código -->
+      <button id="importCodeBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="import_code">Importar código</button>
+
       <button id="downloadTmxBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="download_tmx">Descargar TMX</button>
       <button id="newTmxBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="create_tmx">Crear nuevo TMX</button>
       <button id="alignBtn" class="btn btn-secondary font-medium py-2 px-4 rounded-lg" data-i18n="align_texts">Alinear textos</button>
@@ -349,7 +374,6 @@
         </div>
     </div>
     
-    <!-- NUEVO: Modal de Restauración -->
     <div id="restoreModal" class="modal">
         <div class="modal-content">
             <h3 id="restoreTitle" class="text-xl font-bold mb-2"></h3>
@@ -357,6 +381,21 @@
             <div class="flex justify-center gap-4">
                  <button id="restoreDiscardBtn" class="btn btn-secondary min-w-[120px]" data-i18n="discard">Descartar</button>
                  <button id="restoreProceedBtn" class="btn btn-primary min-w-[120px]" data-i18n="restore">Restaurar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO: Modal de Importación de Código -->
+    <div id="importCodeModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-semibold mb-3" data-i18n="import_code_modal_title">Importar código TMX</h2>
+            <textarea id="codeImportArea" rows="10" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 mb-2" data-i18n-placeholder="paste_code_placeholder"></textarea>
+            
+            <div id="codeValidationStatus" class="validation-status mb-4"></div>
+            
+            <div class="flex justify-center gap-4">
+                <button id="cancelImportCodeBtn" class="btn btn-secondary min-w-[120px]" data-i18n="cancel">Cancelar</button>
+                <button id="processImportCodeBtn" class="btn btn-primary min-w-[120px]" disabled data-i18n="import_button">Importar</button>
             </div>
         </div>
     </div>
@@ -385,12 +424,13 @@
     let tmSourceLanguage = '';
     let tmTargetLanguage = '';
     let currentLanguage = 'es';
-    let historyStack = []; // Pila para el historial de cambios (función deshacer)
+    let historyStack = [];
 
     // Traducciones
     const translations = {
         es: {
             'import_tmx': 'Importar TMX',
+            'import_code': 'Importar código',
             'download_tmx': 'Descargar TMX',
             'create_tmx': 'Crear nuevo TMX',
             'add_new_entry': 'Añadir nueva entrada',
@@ -432,7 +472,7 @@
             'upload_files_info': 'O, si lo prefieres, carga tus archivos de texto (TXT o SRT) para la alineación.',
             'upload_source_file': 'Cargar archivo de origen',
             'upload_target_file': 'Cargar archivo de destino',
-            'or_paste_below': 'O pega el texto manualmente',
+            'or_paste_below': 'Or paste text manually',
             'unsupported_format': 'Formato de archivo no soportado.',
             'file_read_error': 'Error al leer el archivo.',
             'alignment_wizard_title': 'Asistente de alineación',
@@ -442,9 +482,15 @@
             'restore_text': 'Detectamos trabajo no guardado de una sesión anterior. ¿Quieres restaurarlo?',
             'discard': 'Descartar',
             'restore': 'Restaurar',
+            'import_code_modal_title': 'Importar código TMX',
+            'paste_code_placeholder': 'Pega tu código TMX aquí...',
+            'code_valid': 'Código TMX válido',
+            'code_invalid': 'Código TMX inválido o incompleto',
+            'import_button': 'Importar'
         },
         en: {
             'import_tmx': 'Import TMX',
+            'import_code': 'Import Code',
             'download_tmx': 'Download TMX',
             'create_tmx': 'Create new TMX',
             'add_new_entry': 'Add new entry',
@@ -496,11 +542,17 @@
             'restore_text': 'We found unsaved work from a previous session. Would you like to restore it?',
             'discard': 'Discard',
             'restore': 'Restore',
+            'import_code_modal_title': 'Import TMX Code',
+            'paste_code_placeholder': 'Paste your TMX code here...',
+            'code_valid': 'Valid TMX code',
+            'code_invalid': 'Invalid or incomplete TMX code',
+            'import_button': 'Import'
         }
     };
 
     // --- Elementos del DOM ---
     const tmxFileInput = document.getElementById('tmxFileInput');
+    const importCodeBtn = document.getElementById('importCodeBtn'); 
     const downloadTmxBtn = document.getElementById('downloadTmxBtn');
     const newTmxBtn = document.getElementById('newTmxBtn');
     const alignBtn = document.getElementById('alignBtn');
@@ -542,6 +594,13 @@
     const restoreDiscardBtn = document.getElementById('restoreDiscardBtn');
     const restoreProceedBtn = document.getElementById('restoreProceedBtn');
     
+    // Modal de Importación de Código
+    const importCodeModal = document.getElementById('importCodeModal');
+    const codeImportArea = document.getElementById('codeImportArea');
+    const codeValidationStatus = document.getElementById('codeValidationStatus');
+    const cancelImportCodeBtn = document.getElementById('cancelImportCodeBtn');
+    const processImportCodeBtn = document.getElementById('processImportCodeBtn');
+    
     // Asistente de Alineación
     const alignmentWizardModal = document.getElementById('alignmentWizardModal');
     const wizardSourceColumn = document.getElementById('wizardSourceColumn');
@@ -580,6 +639,12 @@
         langEsBtn.addEventListener('click', () => setLanguage('es'));
         confirmCancelBtn.addEventListener('click', () => confirmModal.style.display = 'none');
         
+        // Listeners importación de código
+        importCodeBtn.addEventListener('click', openImportCodeModal);
+        cancelImportCodeBtn.addEventListener('click', () => importCodeModal.style.display = 'none');
+        codeImportArea.addEventListener('input', validateCodeInput);
+        processImportCodeBtn.addEventListener('click', processPastedCode);
+
         // Listeners de alineación
         startAlignmentBtn.addEventListener('click', performAlignment);
         sourceFileInput.addEventListener('change', (e) => handleAlignmentFileUpload(e, 'src'));
@@ -587,10 +652,10 @@
         wizardCancelBtn.addEventListener('click', () => alignmentWizardModal.style.display = 'none');
         wizardConfirmBtn.addEventListener('click', () => {
             alignmentWizardModal.style.display = 'none';
-            performAlignment(); // Re-intenta la alineación con los textos corregidos
+            performAlignment(); 
         });
         
-        // Listeners para backup en alineación
+        // Listeners para backup
         sourceTextArea.addEventListener('input', saveBackup);
         targetTextArea.addEventListener('input', saveBackup);
         alignSrcLang.addEventListener('input', saveBackup);
@@ -604,8 +669,6 @@
         });
         
         updateUndoButton();
-        
-        // Comprobar backup al cargar
         checkBackup();
     });
     
@@ -619,7 +682,7 @@
         if (historyStack.length > 0) {
             translationMemory = historyStack.pop();
             renderTM(translationMemory, false);
-            saveBackup(); // Guardar el estado restaurado
+            saveBackup(); 
         } else {
             showMessage(translations[currentLanguage]['no_more_undo']);
         }
@@ -645,6 +708,11 @@
             const key = el.dataset.i18nPlaceholder;
             if (translations[lang][key]) el.placeholder = translations[lang][key];
         });
+        
+        // Re-validar si el modal de código está abierto para actualizar el texto del estado
+        if(importCodeModal.style.display === 'flex') {
+            validateCodeInput();
+        }
         
         if (!editorSection.classList.contains('hidden')) {
              renderTM(translationMemory, false);
@@ -694,7 +762,7 @@
         languageConfigSection.style.display = 'block';
         editorSection.classList.add('hidden');
         renderTM([], false);
-        clearBackup(); // Limpiar backup al crear nuevo TMX
+        clearBackup();
     }
 
     function confirmLanguages() {
@@ -718,7 +786,89 @@
         languageConfigSection.style.display = 'none';
         editorSection.classList.remove('hidden');
         renderTM([], false);
-        saveBackup(); // Guardar estado inicial
+        saveBackup();
+    }
+    
+    // --- Lógica de Importación de Código ---
+    function openImportCodeModal() {
+        // Limpiar
+        codeImportArea.value = '';
+        codeValidationStatus.textContent = '';
+        codeValidationStatus.className = 'validation-status';
+        processImportCodeBtn.disabled = true;
+        
+        // Advertir si hay datos sin guardar
+         if (translationMemory.length > 0) {
+            confirmTitle.textContent = translations[currentLanguage]['confirm_new_tmx_title'];
+            confirmText.textContent = translations[currentLanguage]['confirm_new_tmx_text'];
+            confirmModal.style.display = 'flex';
+            confirmProceedBtn.onclick = () => {
+                confirmModal.style.display = 'none';
+                importCodeModal.style.display = 'flex';
+                codeImportArea.focus();
+            };
+        } else {
+            importCodeModal.style.display = 'flex';
+            codeImportArea.focus();
+        }
+    }
+
+    function validateCodeInput() {
+        const code = codeImportArea.value.trim();
+        if (!code) {
+            codeValidationStatus.textContent = '';
+            codeValidationStatus.className = 'validation-status';
+            processImportCodeBtn.disabled = true;
+            return;
+        }
+
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(code, "application/xml");
+            const parserError = xmlDoc.querySelector("parsererror");
+            
+            if (parserError) {
+                 throw new Error("Invalid XML");
+            }
+            const header = xmlDoc.querySelector("header");
+            const body = xmlDoc.querySelector("body");
+            
+            if (!header || !body) {
+                throw new Error("Missing TMX structure");
+            }
+
+            // Si llegamos aquí, es válido
+            codeValidationStatus.textContent = translations[currentLanguage]['code_valid'];
+            codeValidationStatus.className = 'validation-status status-valid';
+            processImportCodeBtn.disabled = false;
+
+        } catch (error) {
+            codeValidationStatus.textContent = translations[currentLanguage]['code_invalid'];
+            codeValidationStatus.className = 'validation-status status-invalid';
+            processImportCodeBtn.disabled = true;
+        }
+    }
+
+    function processPastedCode() {
+        const code = codeImportArea.value;
+        try {
+            parseTMX(code);
+            
+            // Si el parseo es exitoso:
+            historyStack = [];
+            updateUndoButton();
+            languageConfigSection.style.display = 'none';
+            alignmentSection.classList.add('hidden');
+            editorSection.classList.remove('hidden');
+            renderTM(translationMemory, false);
+            saveBackup();
+            
+            // Cerrar modal
+            importCodeModal.style.display = 'none';
+            
+        } catch (error) {
+            showMessage(`${translations[currentLanguage]['error_processing_tmx']}${error.message}`);
+        }
     }
 
     // --- Carga y Parseo de Archivo TMX (Editor Principal) ---
@@ -737,7 +887,7 @@
                 alignmentSection.classList.add('hidden');
                 editorSection.classList.remove('hidden');
                 renderTM(translationMemory, false);
-                saveBackup(); // Guardar el TMX cargado
+                saveBackup(); 
             } catch (error) {
                 showMessage(`${translations[currentLanguage]['error_processing_tmx']}${error.message}`);
                 console.error(error);
@@ -801,14 +951,12 @@
         noResultsMessage.classList.toggle('hidden', !(filteredTM.length === 0 && tm.length > 0));
 
         filteredTM.forEach((entry) => {
-            // Encontrar el índice original en la memoria *antes* de filtrar
             const originalIndex = translationMemory.findIndex(origEntry => 
                 origEntry.srcText === entry.srcText && origEntry.tgtText === entry.tgtText
             );
             
             const row = document.createElement('tr');
             row.className = "border-b";
-            // Usar 'originalIndex' que es el índice correcto en 'translationMemory'
             row.innerHTML = `
                 <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="srcText">${escapeHTML(entry.srcText)}</td>
                 <td class="editable-cell" contenteditable="true" data-index="${originalIndex}" data-field="tgtText">${escapeHTML(entry.tgtText)}</td>
@@ -822,18 +970,45 @@
         tmTableBody.querySelectorAll('.editable-cell').forEach(cell => {
             cell.addEventListener('focus', saveStateToHistory);
             cell.addEventListener('input', updateEntry);
+            cell.addEventListener('keydown', handleCellNavigation); // Listener para la navegación
         });
         tmTableBody.querySelectorAll('.btn-danger').forEach(button => {
             button.addEventListener('click', deleteEntry);
         });
     }
 
+    // --- Funciones de Navegación por Teclado ---
+    function handleCellNavigation(event) {
+        if (event.ctrlKey) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                moveFocus(event.target, 1);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                moveFocus(event.target, -1);
+            }
+        }
+    }
+
+    function moveFocus(element, direction) {
+        const row = element.closest('tr');
+        const rows = Array.from(tmTableBody.children);
+        const currentIndex = rows.indexOf(row);
+        const nextIndex = currentIndex + direction;
+        
+        if (nextIndex >= 0 && nextIndex < rows.length) {
+            const field = element.dataset.field; // 'srcText' o 'tgtText'
+            const nextRow = rows[nextIndex];
+            const target = nextRow.querySelector(`[data-field="${field}"]`);
+            if (target) target.focus();
+        }
+    }
 
     function addEntry() {
         saveStateToHistory();
         translationMemory.unshift({ srcText: '', tgtText: '' });
         renderTM(translationMemory, false);
-        saveBackup(); // Guardar cambio
+        saveBackup(); 
         const newCell = tmTableBody.querySelector('tr:first-child .editable-cell');
         if(newCell) newCell.focus();
     }
@@ -844,7 +1019,7 @@
         const value = event.target.textContent;
         if (translationMemory[index]) {
             translationMemory[index][field] = value;
-            saveBackup(); // Guardar cambio
+            saveBackup(); 
         }
     }
 
@@ -853,7 +1028,7 @@
         const index = event.target.dataset.index;
         translationMemory.splice(index, 1);
         renderTM(translationMemory, false);
-        saveBackup(); // Guardar cambio
+        saveBackup(); 
     }
 
     // --- Generación y Descarga de TMX ---
@@ -897,14 +1072,13 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         showMessage(translations[currentLanguage]['tm_saved_success']);
-        clearBackup(); // Limpiar backup al descargar
+        clearBackup(); 
     }
     
     // --- Backup / Restore ---
     const BACKUP_KEY = 'pandoriaBackup';
 
     function saveBackup() {
-        // No guardar si estamos en la pantalla de configuración (no hay datos)
         if (!editorSection.classList.contains('hidden')) {
             const backupState = {
                 view: 'editor',
@@ -942,7 +1116,6 @@
         if (backupData) {
             try {
                 const parsedData = JSON.parse(backupData);
-                // Usar el idioma del backup para el aviso, o 'es' por defecto
                 const promptLang = parsedData.uiLang || 'es';
                 
                 restoreTitle.textContent = translations[promptLang]['restore_title'];
@@ -998,7 +1171,6 @@
                 editorSection.classList.add('hidden');
                 alignmentSection.classList.remove('hidden');
             }
-            // No limpiamos el backup aquí, se limpiará en la próxima acción de "nuevo" o "descargar"
         } catch (error) {
             console.error('Error al restaurar el backup:', error);
             showMessage('Error al restaurar el backup. Empezando de cero.');
@@ -1036,7 +1208,7 @@
         targetFileName.textContent = '';
         sourceFileInput.value = '';
         targetFileInput.value = '';
-        saveBackup(); // Guardar el estado "vacío" de alineación
+        saveBackup(); 
     }
 
     async function handleAlignmentFileUpload(event, type) {
@@ -1065,7 +1237,7 @@
             } else {
                 targetTextArea.value = segments.join('\n');
             }
-            saveBackup(); // Guardar al cargar archivo
+            saveBackup(); 
         } catch (error) {
             showMessage(`${translations[currentLanguage]['file_read_error']}: ${error.message}`);
             console.error(error);
@@ -1099,14 +1271,14 @@
         translationMemory = srcSegments.map((src, index) => ({
             srcText: src.trim(),
             tgtText: (tgtSegments[index] || '').trim()
-        })).filter(entry => entry.srcText || entry.tgtText); // Filtrar entradas completamente vacías
+        })).filter(entry => entry.srcText || entry.tgtText); 
 
         historyStack = [];
         updateUndoButton();
         alignmentSection.classList.add('hidden');
         editorSection.classList.remove('hidden');
         renderTM(translationMemory, false);
-        saveBackup(); // Guardar el resultado de la alineación
+        saveBackup(); 
     }
 
     // --- Asistente de Alineación ---
@@ -1166,7 +1338,7 @@
             lines[index] = newText;
             textarea.value = lines.join('\n');
         }
-        saveBackup(); // Guardar cambio del asistente
+        saveBackup(); 
     }
 
     function mergeLine(type, index) {
@@ -1177,7 +1349,7 @@
             lines.splice(index, 1);
             textarea.value = lines.join('\n');
             renderWizard();
-            saveBackup(); // Guardar cambio del asistente
+            saveBackup(); 
         }
     }
 
@@ -1187,7 +1359,7 @@
         lines.splice(index, 0, '');
         textarea.value = lines.join('\n');
         renderWizard();
-        saveBackup(); // Guardar cambio del asistente
+        saveBackup(); 
     }
 
 
