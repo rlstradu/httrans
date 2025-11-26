@@ -769,7 +769,68 @@
                 </div>
             </div>
 
-            <!-- ACORDEÓN 8: Practiquemos con un proyecto (INTERACTIVO) -->
+            <!-- ACORDEÓN 8: Práctica Extra: El motín de los caracteres (NUEVO) -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-skull"></i> Actividad: El motín de los caracteres</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p><strong>El reto:</strong> El estudio "Seven Seas Mobile" lanza "Teen Pirate: High School Mutiny". Necesitan una notificación push para móviles que convenza a los adolescentes de dejar de estudiar y ponerse a jugar. El español suele ser un 20-30% más largo, ¡pero aquí el espacio es rígido!</p>
+                        
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 1: Configuración del Charpanda</h4>
+                        <ul class="task-list">
+                            <li class="task-item">
+                                <input type="checkbox" id="char-1" class="task-checkbox">
+                                <label for="char-1" class="task-label">Abre <a href="https://httrans.org/charpanda.html" target="_blank">Charpanda</a>.</label>
+                            </li>
+                            <li class="task-item">
+                                <input type="checkbox" id="char-2" class="task-checkbox">
+                                <label for="char-2" class="task-label">En el recuadro izquierdo (Source), pega este texto (142 caracteres):</label>
+                            </li>
+                        </ul>
+                        
+                        <div class="prompt-box" style="padding-bottom: 1rem; margin-bottom: 1rem;">
+                            <span class="prompt-text">Yo, Matey! Homework is for landlubbers. Grab yer phone, plunder the cafeteria, and rule the school! Download 'Teen Pirate' & set sail now! 🏴‍☠️</span>
+                            <button class="copy-btn" onclick="copyPrompt(this)" style="top: 10px; right: 10px; bottom: auto;"><i class="ph-bold ph-copy"></i> Copiar</button>
+                        </div>
+
+                        <ul class="task-list">
+                            <li class="task-item">
+                                <input type="checkbox" id="char-3" class="task-checkbox">
+                                <label for="char-3" class="task-label">En el recuadro derecho, activa <strong>"Percentage limit"</strong> y pon el valor en <strong>10%</strong> (restricción dura).</label>
+                            </li>
+                        </ul>
+
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 2: Lluvia de Ideas con Gemini</h4>
+                        <div class="prompt-box">
+                            <span class="prompt-text">Actúa como un redactor creativo para videojuegos. Necesito localizar un juego para adolescentes que mezcla temática pirata con la vida en el instituto. Dame 5 opciones de traducción para términos como 'Landlubber', 'Matey' y 'Plunder', pero usando jerga adolescente actual de [Tu país] mezclada con tono pirata exagerado. Ejemplo: 'Grumete del recreo'.</span>
+                            <span class="prompt-label">Consulta Tono</span>
+                            <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                        </div>
+
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 3: Transcreación y lucha contra el límite</h4>
+                        <p>Escribe tu borrador en el recuadro derecho de Charpanda. Si te pasas (texto rojo), pídele ayuda a Gemini para recortar:</p>
+                        
+                        <div class="prompt-box">
+                            <span class="prompt-text">Tengo esta frase: '[Tu frase actual]'. Es demasiado larga para una notificación. Necesito acortarla 15 caracteres sin perder el tono divertido y pirata. Dame 3 opciones más cortas.</span>
+                            <span class="prompt-label">Consulta Recorte</span>
+                            <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                        </div>
+
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 4: Pulido Final</h4>
+                        <ul class="task-list">
+                            <li class="task-item">
+                                <input type="checkbox" id="char-4" class="task-checkbox">
+                                <label for="char-4" class="task-label">Asegúrate de que el contador esté en verde/negro (sin errores). ¡Si te pasas aunque sea por uno, el motín fracasa!</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 9: Practiquemos con un proyecto (INTERACTIVO) -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-flask"></i> Practiquemos con un proyecto</span>
@@ -1046,7 +1107,7 @@ Este es el código de la memoria TMX:
                 </div>
             </div>
 
-            <!-- ACORDEÓN 9: Práctica 2 (NUEVO) -->
+            <!-- ACORDEÓN 10: Crea tu propia aplicación (NUEVO) -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-code"></i> Crea tu propia aplicación</span>
@@ -1092,7 +1153,7 @@ Quiero que debajo haya una especie de calculadora que permita hacer un presupues
                 </div>
             </div>
 
-            <!-- ACORDEÓN 10: Truco pro con Autohotkey (NUEVO) -->
+            <!-- ACORDEÓN 11: Truco pro con Autohotkey (VIDEO AÑADIDO) -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-magic-wand"></i> Truco pro con Autohotkey</span>
