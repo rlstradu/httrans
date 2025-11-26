@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taller de traducción aumentada con IA - HTTrans</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
+    <!-- Carga de Google Fonts (Montserrat) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS COMPARTIDOS --- */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            background: linear-gradient(45deg, #fde7ea, #e8eaf6, #e0f2f1, #fce4ec);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #373737;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Contenedor principal */
+        .main-container {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            overflow: hidden;
+            padding-bottom: 2rem;
+        }
+
+        /* Cabecera / Portada - MODIFICADO */
+        .header-image-container {
+            width: 100%;
+            height: auto;
+            overflow: hidden;
+            position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+        
+        .header-image {
+            width: 100%;
+            height: auto; /* Altura automática para mostrarla completa */
+            display: block;
+            transition: transform 0.5s ease;
+        }
+        
+        .header-image:hover {
+            transform: scale(1.02);
+        }
+
+        .content-wrapper {
+            padding: 1.5rem 2.5rem;
+        }
+
+        .workshop-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #E23B5D;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .workshop-subtitle {
+            text-align: center;
+            color: #718096;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+
+        /* --- ESTILOS DE ACORDEÓN --- */
+        .accordion-item {
+            background: rgba(255, 255, 255, 0.5);
+            margin-bottom: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .accordion-header {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            text-align: left;
+            outline: none;
+        }
+
+        .accordion-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .accordion-title i {
+            color: #E23B5D;
+            font-size: 1.3rem;
+        }
+
+        .accordion-icon {
+            color: #718096;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-item.active .accordion-header {
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            padding: 0 1.5rem;
+        }
+
+        .accordion-content-inner {
+            padding: 1.5rem 0;
+            color: #4a5568;
+            line-height: 1.7;
+        }
+
+        /* Contenido específico */
+        p { margin-bottom: 1rem; }
+        p:last-child { margin-bottom: 0; }
+
+        /* Lista con viñetas */
+        ul.learning-list {
+            list-style: none;
+            padding-left: 0.5rem;
+        }
+        ul.learning-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        ul.learning-list li::before {
+            content: "•";
+            color: #E23B5D;
+            font-weight: bold;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -0.4rem;
+        }
+
+        /* Bio */
+        .bio-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            text-align: center;
+        }
+        @media (min-width: 640px) {
+            .bio-container {
+                flex-direction: row;
+                text-align: left;
+                align-items: flex-start;
+            }
+        }
+        
+        .bio-img {
+            width: 180px;
+            height: auto;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            flex-shrink: 0;
+        }
+
+        /* Grid de recursos */
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .resource-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        a.resource-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            border-color: #E23B5D;
+        }
+
+        .resource-card h4 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .resource-card h4 span.emoji { 
+            font-size: 1.4rem; 
+            line-height: 1;
+        }
+
+        .resource-card p { font-size: 0.9rem; margin: 0; color: #718096; }
+
+        /* Botón de descarga */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: #E23B5D;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+        .download-btn:hover { background: #c0392b; }
+
+        /* Navegación - Icono solo */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #E23B5D;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 1.5rem 0 0 2.5rem;
+            font-size: 1.5rem;
+            width: fit-content;
+        }
+        .back-link:hover { transform: scale(1.1); transition: transform 0.2s; }
+
+        /* Cartel dentro de descripción */
+        .poster-img {
+            width: 100%;
+            border-radius: 0.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* --- ESTILOS PARA LA PRÁCTICA --- */
+        .practice-step {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        .practice-step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .step-number {
+            background: #E23B5D;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .step-title {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        /* Cajas de Consulta y Código */
+        .prompt-box {
+            background: #f1f5f9;
+            border-left: 4px solid #E23B5D;
+            padding: 1rem 1rem 3rem 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1rem 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            color: #334155;
+            white-space: pre-wrap;
+            position: relative;
+            overflow-x: auto;
+            text-align: left;
+        }
+        
+        .code-box {
+            background: #eff6ff; 
+            border-left: 4px solid #3b82f6; 
+        }
+
+        .prompt-label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            top: auto;
+            background: #E23B5D;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .code-label {
+            background: #3b82f6;
+        }
+
+        .copy-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            top: auto;
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #64748b;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            z-index: 5;
+        }
+        .copy-btn:hover {
+            background: #e2e8f0;
+            color: #E23B5D;
+            border-color: #E23B5D;
+        }
+        
+        .note-box {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            color: #8d6e63;
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Bloque de comparación */
+        .comparison-box {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .comparison-title {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .comparison-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        @media (min-width: 640px) {
+            .comparison-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .comparison-col {
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .col-good {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+        .col-bad {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        /* Estilos para detalles/ayuda */
+        details.help-details {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        summary.help-summary {
+            cursor: pointer;
+            color: #3b82f6;
+            font-weight: 600;
+            font-size: 0.9rem;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        summary.help-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary.help-summary:hover {
+            text-decoration: underline;
+        }
+        
+        summary.help-summary::before {
+            content: '👉';
+            font-size: 1rem;
+        }
+        
+        details[open] summary.help-summary::before {
+            content: '👇';
+        }
+
+        /* Tareas con Checkbox */
+        .task-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .task-item {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background 0.2s ease;
+        }
+        .task-item:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        .task-checkbox {
+            margin-top: 0.3rem;
+            width: 1.1rem;
+            height: 1.1rem;
+            accent-color: #E23B5D;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .task-label {
+            cursor: pointer;
+            transition: color 0.2s ease;
+            line-height: 1.5;
+        }
+        .task-label a {
+            color: #E23B5D;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .task-label a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Estilos cuando está completada */
+        .task-checkbox:checked + .task-label {
+            text-decoration: line-through;
+            color: #a0aec0;
+            opacity: 0.8;
+        }
+
+        /* Animación */
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container fade-in-up">
+        
+        <!-- Portada -->
+        <div class="header-image-container">
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Portada-Taller.jpg" alt="Portada Taller HTTrans" class="header-image">
+        </div>
+
+        <!-- Botón Volver -->
+        <a href="index.html" class="back-link" aria-label="Volver a HTTrans">
+            <i class="ph-bold ph-arrow-left"></i>
+        </a>
+
+        <!-- Título -->
+        <h1 class="workshop-title">Taller de traducción aumentada con IA:<br>herramientas y trucos para traductores</h1>
+        <p class="workshop-subtitle">Docente: Rafael López Sánchez</p>
+
+        <div class="content-wrapper">
+            
+            <!-- ACORDEÓN 1: Descripción -->
+            <div class="accordion-item active">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-presentation-chart"></i> Descripción del taller</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content" style="max-height: 2000px;">
+                    <div class="accordion-content-inner">
+                        <p>En este taller intensivo de tres horas aprenderás a aprovechar al máximo las herramientas de inteligencia artificial (IA) dentro de la metodología de la traducción aumentada, que promueve el uso de estas tecnologías como apoyo para el traductor. Más allá de la teoría, recibirás consejos prácticos y verás demostraciones claras para integrar la IA como una aliada real en tu flujo de trabajo diario.</p>
+                        <p>Exploraremos cómo la IA puede ayudarte a optimizar tareas tan diversas como la gestión de glosarios, la creación y revisión de memorias de traducción, la elaboración de informes de cambios, la emisión de presupuestos o facturas, siempre con el traductor como eje central del proceso. Además, abordaremos los aspectos éticos esenciales para hacer un uso responsable y seguro de estas tecnologías.</p>
+                        <p>Si buscas trabajar de manera más eficiente y creativa, manteniendo el control y la calidad de tu trabajo, este taller te proporcionará las herramientas, los trucos y las metodologías necesarios para lograrlo.</p>
+                        
+                        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/cartel-taller-ta.png" alt="Cartel Taller Traducción Aumentada" class="poster-img">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 2: Qué aprenderás -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-student"></i> ¿Qué aprenderás?</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <ul class="learning-list">
+                            <li>Diferencias entre los principales tipos de IA que existen.</li>
+                            <li>Cómo implementar la metodología de la traducción aumentada en tu día a día.</li>
+                            <li>Estrategias para integrar la IA en tu rutina sin perder el control del proceso de traducción y para aumentar tu productividad.</li>
+                            <li>Trucos para crear aplicaciones personalizadas con HTML, CSS y JavaScript que faciliten tareas habituales, como consultar documentos, emitir facturas o generar informes de cambios.</li>
+                            <li>Consejos para crear, convertir y gestionar glosarios, memorias y otros recursos asistidos por IA.</li>
+                            <li>Demostraciones de la integración de aplicaciones de IA en herramientas de traducción asistida.</li>
+                            <li>Reflexión crítica y ética sobre el uso profesional de la IA en la traducción.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 3: Sobre el docente -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-chalkboard-teacher"></i> Sobre el docente</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <div class="bio-container">
+                            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Rafa-About-Httrans-v2.png" alt="Rafael López Sánchez" class="bio-img">
+                            <div>
+                                <p>Rafael López Sánchez es traductor audiovisual y especialista en localización con más de trece años de experiencia. Ha traducido películas, series, documentales y otros contenidos para plataformas como Netflix o Prime Video. Ha trabajado en títulos como <em>Line of Duty</em>, <em>This Is Us</em>, <em>RuPaul’s Drag Race</em> o <em>MasterChef</em>, y es traductor del videojuego <em>FIFA</em> (actual <em>EA FC</em>) desde 2015.</p>
+                                <p>También ha sido gestor de proyectos de subtitulación para una agencia de traducción internacional. Durante años, compaginó la traducción con la docencia en traducción audiovisual e informática aplicada en instituciones como el ISTRAD, la Universidad Internacional de Valencia, la Universidad Europea de Valencia, la Universidad Intercontinental de México y la Universidad de Buenos Aires.</p>
+                                <p>Actualmente, concentra su labor académica en Traduversia, la plataforma de formación para traductores que cofundó hace más de una década. En 2025 ha creado httrans, una suite gratuita de herramientas sencillas ideadas para aplicar los principios de la traducción aumentada.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 4: Materiales del taller -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-files"></i> Materiales del taller</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p style="text-align: center; margin-bottom: 1.5rem;">Aquí encontrarás las presentaciones, archivos de ejemplo y documentos de referencia que utilizaremos durante la sesión.</p>
+                        <a href="https://1drv.ms/f/c/28a8463a5625eeab/ElEk9ZAq6stNtjqx4XEOU_UBarXQGEO9TpmnFec3PmazEg?e=7X1oNN" target="_blank" class="download-btn">
+                            <i class="ph-bold ph-download-simple"></i> Descargar materiales
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 5: Recursos que utilizaremos -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-toolbox"></i> Recursos que utilizaremos</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <div class="resources-grid">
+                            
+                            <!-- HTTrans (Enlace) -->
+                            <a href="https://httrans.org" target="_blank" class="resource-card">
+                                <h4><span class="emoji">🐼</span> httrans</h4>
+                                <p>Nuestra suite de "Pandaherramientas". Utilidades web sencillas para aplicar la traducción aumentada.</p>
+                            </a>
+
+                            <!-- Comet (Enlace) -->
+                            <a href="https://www.perplexity.ai/comet" target="_blank" class="resource-card">
+                                <h4><span class="emoji">🚀</span> Comet by Perplexity</h4>
+                                <p>Navegador que incorpora un asistente de IA que permite interactuar con cualquier sitio o aplicación web. Lo usaremos en combinación con otras herramientas.</p>
+                            </a>
+
+                            <!-- Gemini (Enlace) -->
+                            <a href="https://gemini.google.com/" target="_blank" class="resource-card">
+                                <h4><span class="emoji">✨</span> Gemini</h4>
+                                <p>La potente IA multimodal de Google, utilizada aquí como asistente lingüístico y creativo.</p>
+                            </a>
+
+                            <!-- Auxiliares (Sin enlace, div) -->
+                            <div class="resource-card">
+                                <h4><span class="emoji">🧰</span> Herramientas auxiliares</h4>
+                                <p>Software de apoyo esencial como Google Chrome, Autohotkey o el bloc de notas.</p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 6: Un poquito de teoría (NUEVO) -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-book-open-text"></i> Un poquito de teoría</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <h3 style="color: #E23B5D; font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">¿Qué es la Traducción Aumentada?</h3>
+                        <p>La traducción aumentada es una combinación de traducción automática, memorias de traducción mejoradas, herramientas terminológicas de última generación, enriquecimiento de contenido automatizado (ACE), gestión de proyectos automatizada y otras tecnologías.</p>
+                        <p>El objetivo es automatizar las tareas que no requieren intervención humana y proporcionar la información necesaria justo a tiempo para hacer que los lingüistas sean más eficientes, liberándolos así para trabajar en aquellas partes del contenido que requieren su atención.</p>
+                        <p>Hacerlo aumenta su productividad y hace que su trabajo sea más valioso, incluso cuando el coste por palabra de la traducción disminuye.</p>
+                        <p style="font-size: 0.8rem; color: #718096; text-align: right;">(Definición adaptada de Arle Lommel, CSA Research, 2021)</p>
+
+                        <img src="https://i0.wp.com/intelligent-information.blog/wp-content/uploads/2017/05/augmented-translation.jpg" alt="Esquema de Traducción Aumentada" style="width: 100%; border-radius: 0.5rem; margin: 1.5rem 0; border: 1px solid #e2e8f0;">
+
+                        <div class="comparison-box">
+                            <div class="comparison-title"><i class="ph-bold ph-warning-circle" style="color: #E23B5D;"></i> ¡No te confundas!</div>
+                            <div class="comparison-content">
+                                <div class="comparison-col col-good">
+                                    <h4 style="color: #15803d; font-weight: 700; margin-bottom: 0.5rem;">✅ Traducción Aumentada</h4>
+                                    <p style="font-size: 0.9rem; color: #14532d;">El <strong>traductor humano</strong> está en el centro del proceso. Utiliza la tecnología (IA, memorias, bases de datos) como herramientas de apoyo para potenciar sus capacidades, creatividad y eficiencia.</p>
+                                </div>
+                                <div class="comparison-col col-bad">
+                                    <h4 style="color: #b91c1c; font-weight: 700; margin-bottom: 0.5rem;">❌ Posedición (MTPE)</h4>
+                                    <p style="font-size: 0.9rem; color: #7f1d1d;">El proceso se centra en la máquina. El humano se limita a corregir los errores de una traducción generada automáticamente, a menudo con menos margen para la creatividad.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 7: Practiquemos con un proyecto (INTERACTIVO) -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-flask"></i> Practiquemos con un proyecto</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        
+                        <!-- Imagen de receta -->
+                        <img src="https://asset.jamieoliver.com/images/cq7w2e71/production/0fee46822ccca5b07f06ae4cdc9f2399837ebd35-873x1166.jpg/0fee46822ccca5b07f06ae4cdc9f2399837ebd35-873x1166.jpg" alt="Receta de pan" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 0.75rem; margin-bottom: 1.5rem; object-position: center 20%;">
+                        
+                        <p><strong>Objetivo:</strong> Traducir el proyecto "Principle bread dough" obligándote a usar recursos de IA. Usaremos las herramientas de httrans y el asistente de Comet o Gemini.</p>
+                        
+                        <!-- Parte 0: Intro -->
+                        <div class="practice-step" style="margin-top: 2rem;">
+                            <div class="step-header">
+                                <div class="step-number">0</div>
+                                <div class="step-title">Preparación</div>
+                            </div>
+                            <ul class="task-list">
+                                <li class="task-item">
+                                    <input type="checkbox" id="task0-1" class="task-checkbox">
+                                    <label for="task0-1" class="task-label">Abre la carpeta "Actividad 1 - Bread Dough" y abre el archivo <code>Principle bread dough.html</code> para revisarlo.</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task0-2" class="task-checkbox">
+                                    <label for="task0-2" class="task-label">Abre Comet y accede a <a href="https://httrans.org" target="_blank">httrans.org</a>.</label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Parte 1 -->
+                        <div class="practice-step">
+                            <div class="step-header">
+                                <div class="step-number">1</div>
+                                <div class="step-title">Creación del glosario con IA</div>
+                            </div>
+                            <p>Vamos a extraer términos de una memoria antigua para crear un glosario nuevo.</p>
+                            <ul class="task-list">
+                                <li class="task-item">
+                                    <input type="checkbox" id="task1-1" class="task-checkbox">
+                                    <label for="task1-1" class="task-label">Abre <a href="https://httrans.org/pandaterm.html" target="_blank">Pandaterm</a> en Comet.</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task1-2" class="task-checkbox">
+                                    <label for="task1-2" class="task-label">Abre el asistente de IA (Comet).</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task1-3" class="task-checkbox">
+                                    <label for="task1-3" class="task-label">Abre la memoria <code>TM Easy homemade bread.tmx</code> de la carpeta "Reference files" con el bloc de notas y copia todo el código.</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task1-4" class="task-checkbox">
+                                    <label for="task1-4" class="task-label">Envía la siguiente consulta a la IA:</label>
+                                </li>
+                            </ul>
+                            
+                            <div class="prompt-box">
+                                <span class="prompt-text">Haz una extracción terminológica del contenido de la memoria de traducción TMX que te adjunto abajo para crear un glosario con los términos que te parezcan más relevantes para traducir una receta de pan similar a la de la memoria. Crea un glosario de inglés a español con todos los términos que extraigas.
+
+Este es el código de la memoria TMX:
+[PEGA AQUÍ EL CÓDIGO DEL TMX]</span>
+                                <span class="prompt-label">Consulta 1</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+
+                            <p style="margin-top:1rem;">Ahora, pidámosle que formatee esos términos para Pandaterm:</p>
+                            <div class="prompt-box">
+                                <span class="prompt-text">Crea un glosario TBX de inglés a español con todos los términos que has extraído. Genera el código completo de ese TBX tomando de referencia el siguiente código:
+
+[PEGA AQUÍ UN CÓDIGO DE EJEMPLO DE UN TBX DE PANDATERM]</span>
+                                <span class="prompt-label">Consulta 2</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+
+                            <!-- Ayuda para Código TBX -->
+                            <details class="help-details">
+                                <summary class="help-summary">¿Necesitas ayuda para encontrar el código TBX? Aquí lo tienes</summary>
+                                <div class="prompt-box code-box">
+                                    <span class="prompt-text">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;martif type="TBX" xml:lang="en-US"&gt;
+  &lt;text&gt;
+    &lt;body&gt;
+      &lt;termEntry&gt;
+        &lt;LangSet xml:lang="en-US"&gt;
+          &lt;tig&gt;
+            &lt;term&gt;flour&lt;/term&gt;
+          &lt;/tig&gt;
+        &lt;/LangSet&gt;
+        &lt;LangSet xml:lang="es-ES"&gt;
+          &lt;tig&gt;
+            &lt;term&gt;harina&lt;/term&gt;
+          &lt;/tig&gt;
+        &lt;/LangSet&gt;
+      &lt;/termEntry&gt;
+      &lt;termEntry&gt;
+        &lt;LangSet xml:lang="en-US"&gt;
+          &lt;tig&gt;
+            &lt;term&gt;water&lt;/term&gt;
+          &lt;/tig&gt;
+        &lt;/LangSet&gt;
+        &lt;LangSet xml:lang="es-ES"&gt;
+          &lt;tig&gt;
+            &lt;term&gt;agua&lt;/term&gt;
+          &lt;/tig&gt;
+        &lt;/LangSet&gt;
+      &lt;/termEntry&gt;
+    &lt;/body&gt;
+  &lt;/text&gt;
+&lt;/martif&gt;</span>
+                                    <span class="prompt-label code-label">Código TBX</span>
+                                    <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                                </div>
+                            </details>
+
+                            <div class="note-box">
+                                <i class="ph-bold ph-lightbulb"></i>
+                                <span><strong>Alternativa:</strong> Puedes copiar el código que te devuelva la IA en un bloc de notas, guardarlo como .txt y cambiar la extensión a .tbx. Luego impórtalo en Pandaterm.</span>
+                            </div>
+                        </div>
+
+                        <!-- Parte 2 -->
+                        <div class="practice-step">
+                            <div class="step-header">
+                                <div class="step-number">2</div>
+                                <div class="step-title">Creación de una memoria con IA</div>
+                            </div>
+                            <p>Vamos a alinear dos archivos (original y traducción) para crear una memoria TMX nueva.</p>
+                            <ul class="task-list">
+                                <li class="task-item">
+                                    <input type="checkbox" id="task2-1" class="task-checkbox">
+                                    <label for="task2-1" class="task-label">Localiza <code>Receta EN</code> y <code>Receta ES</code> en Reference Files.</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task2-2" class="task-checkbox">
+                                    <label for="task2-2" class="task-label">Abre <a href="https://httrans.org/pandoria.html" target="_blank">Pandoria</a>, crea una memoria vacía, descárgala y ábrela con el bloc de notas para tener el código de referencia.</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task2-3" class="task-checkbox">
+                                    <label for="task2-3" class="task-label">Pide a la IA que cree la memoria:</label>
+                                </li>
+                            </ul>
+
+                            <div class="prompt-box">
+                                <span class="prompt-text">Crea el código completo de una memoria de traducción TMX de inglés a español. Alinea los textos de los archivos Receta EN y Receta ES que te adjunto. El código que generes debe seguir la estructura del siguiente ejemplo:
+
+[PEGA AQUÍ EL CÓDIGO TMX DE EJEMPLO DE PANDORIA]
+[ADJUNTA O PEGA EL TEXTO DE RECETA EN Y RECETA ES]</span>
+                                <span class="prompt-label">Consulta 3</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+
+                            <!-- Ayuda para Código TMX -->
+                            <details class="help-details">
+                                <summary class="help-summary">¿Necesitas ayuda para encontrar el código TMX? Aquí lo tienes</summary>
+                                <div class="prompt-box code-box">
+                                    <span class="prompt-text">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;tmx version="1.4"&gt;
+  &lt;header creationtool="Pandoria" adminlang="en" srclang="en-US" datatype="plaintext"/&gt;
+  &lt;body&gt;
+    &lt;tu&gt;
+      &lt;tuv xml:lang="en-US"&gt;
+        &lt;seg&gt;How are you?&lt;/seg&gt;
+      &lt;/tuv&gt;
+      &lt;tuv xml:lang="es-ES"&gt;
+        &lt;seg&gt;¿Cómo estás?&lt;/seg&gt;
+      &lt;/tuv&gt;
+    &lt;/tu&gt;
+    &lt;tu&gt;
+      &lt;tuv xml:lang="en-US"&gt;
+        &lt;seg&gt;This is a test.&lt;/seg&gt;
+      &lt;/tuv&gt;
+      &lt;tuv xml:lang="es-ES"&gt;
+        &lt;seg&gt;Esto es una prueba.&lt;/seg&gt;
+      &lt;/tuv&gt;
+    &lt;/tu&gt;
+  &lt;/body&gt;
+&lt;/tmx&gt;</span>
+                                    <span class="prompt-label code-label">Código TMX</span>
+                                    <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                                </div>
+                            </details>
+
+                            <p>Copia el código resultante e impórtalo en Pandoria usando "Importar código".</p>
+                        </div>
+
+                        <!-- Parte 3 -->
+                        <div class="practice-step">
+                            <div class="step-header">
+                                <div class="step-number">3</div>
+                                <div class="step-title">Configuración en Poanda</div>
+                            </div>
+                            <ul class="task-list">
+                                <li class="task-item">
+                                    <input type="checkbox" id="task3-1" class="task-checkbox">
+                                    <label for="task3-1" class="task-label">Abre <a href="https://httrans.org/poanda.html" target="_blank">Poanda</a>.</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task3-2" class="task-checkbox">
+                                    <label for="task3-2" class="task-label">Carga el archivo HTML a traducir (<code>Principle bread dough.html</code>).</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task3-3" class="task-checkbox">
+                                    <label for="task3-3" class="task-label">Importa tu glosario TBX en la ventana de Terminología.</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task3-4" class="task-checkbox">
+                                    <label for="task3-4" class="task-label">Importa tu memoria TMX en la ventana de Memoria de Traducción.</label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Parte 4 -->
+                        <div class="practice-step">
+                            <div class="step-header">
+                                <div class="step-number">4</div>
+                                <div class="step-title">Traducción asistida por IA</div>
+                            </div>
+                            <p>Usa el asistente para resolver dudas específicas mientras traduces:</p>
+                            
+                            <div class="prompt-box">
+                                <span class="prompt-text">Busca cualquier palabra o expresión que te ponga en adelante en los diccionarios Merriam Webster, Collins Inglés-Español, WordReference Inglés-Español y Diccionario de la RAE.</span>
+                                <span class="prompt-label">Consulta 1: Diccionarios</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+
+                            <div class="prompt-box">
+                                <span class="prompt-text">Presta atención al segmento que estoy traduciendo en esta aplicación web. El segmento original tiene 62 caracteres. Propón una traducción a español que no exceda esa cifra y añádela al campo de traducción y valídala dandole al botón de Validar.</span>
+                                <span class="prompt-label">Consulta 2: Restricción de caracteres</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+
+                            <div class="prompt-box">
+                                <span class="prompt-text">Haz un glosario de cualquier término que consideres que debo añadir para este proyecto. Asegúrate de que ese término no forma parte ya del glosario para evitar duplicados. Puedes consultar el glosario que estoy usando en la ventana Terminología.</span>
+                                <span class="prompt-label">Consulta 3: Extracción en vivo</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+                            
+                            <div class="note-box" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+                                <i class="ph-bold ph-info"></i>
+                                <span><strong>Tip:</strong> Asegúrate de tener la ventana de Terminología abierta para que Comet la detecte fácilmente.</span>
+                            </div>
+                            
+                            <div class="prompt-box">
+                                <span class="prompt-text">Añade tu propuesta de traducción a español a todos los campos vacíos de "Traducción (msgstr):" sin exceder el número de caracteres del original.</span>
+                                <span class="prompt-label">Consulta 4: Traducción masiva</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+                        </div>
+
+                        <!-- Parte 5 -->
+                        <div class="practice-step">
+                            <div class="step-header">
+                                <div class="step-number">5</div>
+                                <div class="step-title">Finalización</div>
+                            </div>
+                            <ul class="task-list">
+                                <li class="task-item">
+                                    <input type="checkbox" id="task5-1" class="task-checkbox">
+                                    <label for="task5-1" class="task-label">Exporta tu archivo traducido (File > Save html File).</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task5-2" class="task-checkbox">
+                                    <label for="task5-2" class="task-label">Guárdalo en la carpeta "Target".</label>
+                                </li>
+                                <li class="task-item">
+                                    <input type="checkbox" id="task5-3" class="task-checkbox">
+                                    <label for="task5-3" class="task-label">Ábrelo en el navegador y... ¡admira tu obra! 🎉</label>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; font-size: 0.85rem; color: #718096; margin-top: 1rem;">
+            &copy; 2025 Rafael López Sánchez - HTTrans
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Lógica de acordeón
+            const accordions = document.querySelectorAll('.accordion-header');
+
+            accordions.forEach(acc => {
+                acc.addEventListener('click', function() {
+                    const item = this.parentElement;
+                    const content = this.nextElementSibling;
+                    
+                    item.classList.toggle('active');
+
+                    if (item.classList.contains('active')) {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    } else {
+                        content.style.maxHeight = null;
+                    }
+                });
+            });
+
+            // Ajustar altura si la ventana cambia de tamaño
+            window.addEventListener('resize', () => {
+                document.querySelectorAll('.accordion-item.active .accordion-content').forEach(content => {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                });
+            });
+        });
+
+        // Función para copiar prompts
+        function copyPrompt(button) {
+            // Buscar el texto del prompt dentro del mismo contenedor
+            const promptBox = button.parentElement;
+            const promptText = promptBox.querySelector('.prompt-text').innerText;
+
+            // Copiar al portapapeles
+            const tempInput = document.createElement('textarea');
+            tempInput.value = promptText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            // Feedback visual en el botón
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="ph-bold ph-check"></i> ¡Copiado!';
+            button.style.color = '#10b981'; // Verde éxito
+            button.style.borderColor = '#10b981';
+            
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.style.color = '';
+                button.style.borderColor = '';
+            }, 2000);
+        }
+    </script>
+
+</body>
+</html>
