@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taller de traducción aumentada con IA - HTTrans</title>
+    <title>Taller de traducción aumentada con IA - httrans</title>
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Carga de Phosphor Icons -->
@@ -507,6 +507,25 @@
         .task-label a:hover { text-decoration: underline; }
         .task-checkbox:checked + .task-label { text-decoration: line-through; color: #a0aec0; opacity: 0.8; }
 
+        /* Solución Spoiler Lista */
+        .spoiler-list li {
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: 10px;
+        }
+        .error-highlight {
+            color: #e11d48;
+            font-weight: 700;
+            background: #ffe4e6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .correction-highlight {
+            color: #15803d;
+            font-weight: 700;
+        }
+
         /* Animación */
         .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
         @keyframes fadeInUp {
@@ -717,7 +736,7 @@
 
                         <!-- DEFINICIÓN DE TRADUCCIÓN AUMENTADA (MUEVE ABAJO) -->
                         <h3 class="theory-title-main" style="margin-top: 3rem;">5. ¿Qué es la traducción aumentada?</h3>
-                        <p>La traducción aumentada es una combinación de traducción automática, memorias de traducción mejoradas, herramientas terminológicas de última generación, enriquecimiento de contenido automatizado (ACE), gestión de proyectos automatizada y otras tecnologías.</p>
+                        <p>La traducción aumentada es una combinación de recursos tecnológicos, entre los que se incluyen la IA, memorias de traducción, bases terminológicas, aplicaciones web, gestión de proyectos automatizada y otras tecnologías.</p>
                         <p>El objetivo es automatizar las tareas que no requieren intervención humana y proporcionar la información necesaria justo a tiempo para hacer que los lingüistas sean más eficientes, liberándolos así para trabajar en aquellas partes del contenido que requieren su atención.</p>
                         <p>Hacerlo aumenta su productividad y hace que su trabajo sea más valioso, incluso cuando el coste por palabra de la traducción disminuye.</p>
                         <p style="font-size: 0.8rem; color: #718096; text-align: right;">(Definición adaptada de Arle Lommel, CSA Research, 2021)</p>
@@ -733,7 +752,7 @@
                                 </div>
                                 <div class="comparison-col col-bad">
                                     <h4 style="color: #b91c1c; font-weight: 700; margin-bottom: 0.5rem;">❌ Posedición (MTPE)</h4>
-                                    <p style="font-size: 0.9rem; color: #7f1d1d;">El proceso se centra en la máquina. El humano se limita a corregir los errores de una traducción generada automáticamente, a menudo con menos margen para la creatividad.</p>
+                                    <p style="font-size: 0.9rem; color: #7f1d1d;">La máquina está en el centro del proceso. El humano se limita a corregir los errores de una traducción generada automáticamente, a menudo con menos margen para la creatividad y con la consigna de hacer el menor número de cambios posible (posedición ligera).</p>
                                 </div>
                             </div>
                         </div>
@@ -741,7 +760,7 @@
                 </div>
             </div>
 
-            <!-- ACORDEÓN 7: Familiarizándonos con Comet (NUEVO) -->
+            <!-- ACORDEÓN 7: Familiarizándonos con Comet -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-rocket-launch"></i> Familiarizándonos con Comet</span>
@@ -769,10 +788,10 @@
                 </div>
             </div>
 
-            <!-- ACORDEÓN 8: Práctica Extra: El motín de los caracteres (NUEVO) -->
+            <!-- ACORDEÓN 8: Actividad: El motín de los caracteres -->
             <div class="accordion-item">
                 <button class="accordion-header">
-                    <span class="accordion-title"><i class="ph-fill ph-skull"></i> Actividad: El motín de los caracteres</span>
+                    <span class="accordion-title"><i class="ph-fill ph-skull"></i>El motín de los caracteres</span>
                     <i class="ph-bold ph-caret-down accordion-icon"></i>
                 </button>
                 <div class="accordion-content">
@@ -790,7 +809,7 @@
                             </li>
                             <li class="task-item">
                                 <input type="checkbox" id="char-2" class="task-checkbox">
-                                <label for="char-2" class="task-label">En el recuadro izquierdo (Source), pega este texto (142 caracteres):</label>
+                                <label for="char-2" class="task-label">En el recuadro izquierdo (Source), pega este texto:</label>
                             </li>
                         </ul>
                         
@@ -802,11 +821,11 @@
                         <ul class="task-list">
                             <li class="task-item">
                                 <input type="checkbox" id="char-3" class="task-checkbox">
-                                <label for="char-3" class="task-label">En el recuadro derecho, activa <strong>"Percentage limit"</strong> y pon el valor en <strong>10%</strong> (restricción dura).</label>
+                                <label for="char-3" class="task-label">En el recuadro derecho, activa <strong>"Percentage limit"</strong> y pon el valor en <strong>10%</strong> (restricción elevada).</label>
                             </li>
                         </ul>
 
-                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 2: Lluvia de Ideas con Gemini</h4>
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 2: Lluvia de ideas con Gemini</h4>
                         <div class="prompt-box">
                             <span class="prompt-text">Actúa como un redactor creativo para videojuegos. Necesito localizar un juego para adolescentes que mezcla temática pirata con la vida en el instituto. Dame 5 opciones de traducción para términos como 'Landlubber', 'Matey' y 'Plunder', pero usando jerga adolescente actual de [Tu país] mezclada con tono pirata exagerado. Ejemplo: 'Grumete del recreo'.</span>
                             <span class="prompt-label">Consulta Tono</span>
@@ -822,7 +841,7 @@
                             <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
                         </div>
 
-                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 4: Pulido Final</h4>
+                        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2c3e50;">Paso 4: Pulido final</h4>
                         <ul class="task-list">
                             <li class="task-item">
                                 <input type="checkbox" id="char-4" class="task-checkbox">
@@ -833,7 +852,99 @@
                 </div>
             </div>
 
-            <!-- ACORDEÓN 9: Practiquemos con un proyecto (INTERACTIVO) -->
+            <!-- ACORDEÓN 9: Actividad: Revisión olímpica -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-medal"></i>Revisión olímpica</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>Vamos a poner a prueba a la IA como correctora de estilo. Usaremos la guía oficial de la Fundéu para los Juegos Olímpicos de Londres 2012.</p>
+                        
+                        <div style="display:flex; gap:1rem; flex-wrap:wrap; margin: 1.5rem 0;">
+                            <a href="https://www.fundeu.es/wp-content/uploads/2013/02/JuegosOlimpicosGuiaFundeu.pdf" target="_blank" class="download-btn" style="font-size: 0.9rem; padding: 0.6rem 1.2rem;">
+                                <i class="ph-bold ph-file-pdf"></i> Guía Fundéu
+                            </a>
+                            <a href="https://httrans.org/diffpanda.html" target="_blank" class="download-btn" style="font-size: 0.9rem; padding: 0.6rem 1.2rem; background:#334155;">
+                                <i class="ph-bold ph-arrows-left-right"></i> Abrir Diffpanda
+                            </a>
+                        </div>
+
+                        <div style="display:flex; align-items:flex-start; gap:1.5rem; margin-bottom:1.5rem;">
+                            <img src="https://cdn2.mediotiempo.com/uploads/media/2016/05/11/usain-bolt-57.jpg" alt="Usain Bolt" style="width: 100px; height: 100px; object-fit: cover; border-radius: 1rem; flex-shrink: 0;">
+                            <div class="prompt-box" style="margin:0; width:100%;">
+                                <span class="prompt-text">La noche en el Olympic Stadium fue histórica. Una vez más, el Atletismo demostró ser el rey de las Olimpiadas. Usain Bolt, el carismático sprinter jamaicano, voló sobre la pista para colgarse la Medalla de Oro en la prueba reina de los 100m.
+Aunque su compatriota Yohan Blake lideró la tête de la course en los primeros segundos, Bolt reaccionó con una potencia descomunal. No hubo necesidad de photo finish; su sprint final fue devastador, parando el crono en 9,63 segundos, un nuevo récord olímpico.
+Con esta victoria, Bolt se consagra no solo como el mejor corredor del mundo, sino como una leyenda viva. Tras la carrera, el Medallista Olímpico dio su tradicional vuelta de honor saludando a los fans venidos de todo el Reino unido.</span>
+                                <span class="prompt-label">Texto a corregir</span>
+                                <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                            </div>
+                        </div>
+
+                        <p><strong>Instrucciones:</strong></p>
+                        <ul class="learning-list">
+                            <li>Sube el PDF de la guía a Gemini.</li>
+                            <li>Pídele que detecte errores en el texto basándose <strong>únicamente</strong> en esa guía.</li>
+                            <li>Usa <strong> Diffpanda </strong>: pega el original a la izquierda y tu versión corregida a la derecha. Dale a "Comparar".</li>
+                        </ul>
+
+                        <div class="prompt-box">
+                            <span class="prompt-text">Actúa como un corrector de estilo especializado en deportes. Te adjunto la guía de redacción de la Fundéu para los Juegos Olímpicos. Revisa el siguiente texto y detecta cualquier error que contravenga las normas de esta guía. Muestra los resultados en una lista con el error, la corrección y la explicación breve.
+
+[PEGAR TEXTO]</span>
+                            <span class="prompt-label">Consulta Gemini</span>
+                            <button class="copy-btn" onclick="copyPrompt(this)"><i class="ph-bold ph-copy"></i> Copiar</button>
+                        </div>
+
+                        <details class="help-details">
+                            <summary class="help-summary">🕵️ Ver solución (Spoiler)</summary>
+                            <div class="accordion-content-inner">
+                                <ul class="spoiler-list" style="list-style:none; padding-left:0;">
+                                    <li>
+                                        <span class="error-highlight">"Olympic Stadium"</span> → <span class="correction-highlight">Estadio olímpico</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Nombre en inglés. Se deben traducir las instalaciones.</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"Atletismo"</span> → <span class="correction-highlight">atletismo</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Mayúscula innecesaria en disciplinas deportivas.</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"sprinter"</span> → <span class="correction-highlight">esprinter</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Anglicismo crudo. Usar adaptación o "velocista".</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"Medalla de Oro"</span> → <span class="correction-highlight">medalla de oro</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Mayúsculas innecesarias en premios genéricos.</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"100m"</span> → <span class="correction-highlight">100 m</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Falta espacio entre cifra y símbolo.</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"tête de la course"</span> → <span class="correction-highlight">cabeza de carrera</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Galicismo innecesario.</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"sprint"</span> → <span class="correction-highlight">esprín</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Anglicismo. Preferible adaptación gráfica.</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"Medallista Olímpico"</span> → <span class="correction-highlight">medallista olímpico</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Mayúsculas innecesarias en cargos/títulos.</p>
+                                    </li>
+                                    <li>
+                                        <span class="error-highlight">"Reino unido"</span> → <span class="correction-highlight">Reino Unido</span>
+                                        <p style="font-size:0.85rem; margin-top:0.3rem;">Error: Minúscula en nombre propio de país.</p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 10: Practiquemos con un proyecto (INTERACTIVO) -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-flask"></i> Practiquemos con un proyecto</span>
@@ -1110,7 +1221,7 @@ Este es el código de la memoria TMX:
                 </div>
             </div>
 
-            <!-- ACORDEÓN 10: Crea tu propia aplicación (NUEVO) -->
+            <!-- ACORDEÓN 11: Crea tu propia aplicación (NUEVO) -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-code"></i> Crea tu propia aplicación</span>
@@ -1156,7 +1267,7 @@ Quiero que debajo haya una especie de calculadora que permita hacer un presupues
                 </div>
             </div>
 
-            <!-- ACORDEÓN 11: Truco pro con Autohotkey (VIDEO AÑADIDO) -->
+            <!-- ACORDEÓN 12: Truco pro con Autohotkey (VIDEO AÑADIDO) -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-magic-wand"></i> Truco pro con Autohotkey</span>
