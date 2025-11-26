@@ -48,7 +48,7 @@
             padding-bottom: 2rem;
         }
 
-        /* Cabecera / Portada - MODIFICADO */
+        /* Cabecera / Portada */
         .header-image-container {
             width: 100%;
             height: auto;
@@ -59,7 +59,7 @@
         
         .header-image {
             width: 100%;
-            height: auto; /* Altura automática para mostrarla completa */
+            height: auto;
             display: block;
             transition: transform 0.5s ease;
         }
@@ -268,7 +268,7 @@
         }
         .download-btn:hover { background: #c0392b; }
 
-        /* Navegación - Icono solo */
+        /* Navegación */
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -282,7 +282,7 @@
         }
         .back-link:hover { transform: scale(1.1); transition: transform 0.2s; }
 
-        /* Cartel dentro de descripción */
+        /* Cartel */
         .poster-img {
             width: 100%;
             border-radius: 0.5rem;
@@ -341,11 +341,7 @@
             overflow-x: auto;
             text-align: left;
         }
-        
-        .code-box {
-            background: #eff6ff; 
-            border-left: 4px solid #3b82f6; 
-        }
+        .code-box { background: #eff6ff; border-left: 4px solid #3b82f6; }
 
         .prompt-label {
             position: absolute;
@@ -360,10 +356,7 @@
             font-weight: 600;
             text-transform: uppercase;
         }
-        
-        .code-label {
-            background: #3b82f6;
-        }
+        .code-label { background: #3b82f6; }
 
         .copy-btn {
             position: absolute;
@@ -425,29 +418,55 @@
             gap: 1rem;
         }
         @media (min-width: 640px) {
-            .comparison-content {
-                grid-template-columns: 1fr 1fr;
-            }
+            .comparison-content { grid-template-columns: 1fr 1fr; }
         }
-        .comparison-col {
-            padding: 1rem;
-            border-radius: 0.5rem;
+        .comparison-col { padding: 1rem; border-radius: 0.5rem; }
+        .col-good { background-color: #f0fdf4; border: 1px solid #bbf7d0; }
+        .col-bad { background-color: #fef2f2; border: 1px solid #fecaca; }
+
+        /* Estilos para las tarjetas de IA */
+        .ai-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
         }
-        .col-good {
-            background-color: #f0fdf4;
-            border: 1px solid #bbf7d0;
+        .ai-card {
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
         }
-        .col-bad {
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
+        .ai-card h4 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ai-card h5 {
+            color: #E23B5D;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-top: 1rem;
+            margin-bottom: 0.2rem;
+        }
+        .ai-card p { font-size: 0.9rem; color: #4a5568; margin-bottom: 0.5rem; line-height: 1.5; }
+        
+        /* Estilos teoría */
+        .theory-title-main {
+            color: #E23B5D; 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            margin-top: 2.5rem; 
+            margin-bottom: 1rem; 
+            border-bottom: 2px solid rgba(226, 59, 93, 0.1); 
+            padding-bottom: 0.5rem;
         }
 
-        /* Estilos para detalles/ayuda */
-        details.help-details {
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-        }
-        
+        /* Detalles/Ayuda */
+        details.help-details { margin-top: 1rem; margin-bottom: 1rem; }
         summary.help-summary {
             cursor: pointer;
             color: #3b82f6;
@@ -458,29 +477,13 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
-        summary.help-summary::-webkit-details-marker {
-            display: none;
-        }
+        summary.help-summary::-webkit-details-marker { display: none; }
+        summary.help-summary:hover { text-decoration: underline; }
+        summary.help-summary::before { content: '👉'; font-size: 1rem; }
+        details[open] summary.help-summary::before { content: '👇'; }
 
-        summary.help-summary:hover {
-            text-decoration: underline;
-        }
-        
-        summary.help-summary::before {
-            content: '👉';
-            font-size: 1rem;
-        }
-        
-        details[open] summary.help-summary::before {
-            content: '👇';
-        }
-
-        /* Tareas con Checkbox */
-        .task-list {
-            list-style: none;
-            padding-left: 0;
-        }
+        /* Tareas Checkbox */
+        .task-list { list-style: none; padding-left: 0; }
         .task-item {
             margin-bottom: 0.5rem;
             display: flex;
@@ -490,9 +493,7 @@
             border-radius: 0.5rem;
             transition: background 0.2s ease;
         }
-        .task-item:hover {
-            background: rgba(255,255,255,0.5);
-        }
+        .task-item:hover { background: rgba(255,255,255,0.5); }
         .task-checkbox {
             margin-top: 0.3rem;
             width: 1.1rem;
@@ -501,31 +502,13 @@
             cursor: pointer;
             flex-shrink: 0;
         }
-        .task-label {
-            cursor: pointer;
-            transition: color 0.2s ease;
-            line-height: 1.5;
-        }
-        .task-label a {
-            color: #E23B5D;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .task-label a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Estilos cuando está completada */
-        .task-checkbox:checked + .task-label {
-            text-decoration: line-through;
-            color: #a0aec0;
-            opacity: 0.8;
-        }
+        .task-label { cursor: pointer; transition: color 0.2s ease; line-height: 1.5; }
+        .task-label a { color: #E23B5D; font-weight: 600; text-decoration: none; }
+        .task-label a:hover { text-decoration: underline; }
+        .task-checkbox:checked + .task-label { text-decoration: line-through; color: #a0aec0; opacity: 0.8; }
 
         /* Animación */
-        .fade-in-up {
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
+        .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -665,7 +648,7 @@
                 </div>
             </div>
 
-            <!-- ACORDEÓN 6: Un poquito de teoría (NUEVO) -->
+            <!-- ACORDEÓN 6: Un poquito de teoría (CONTENIDO REORDENADO) -->
             <div class="accordion-item">
                 <button class="accordion-header">
                     <span class="accordion-title"><i class="ph-fill ph-book-open-text"></i> Un poquito de teoría</span>
@@ -673,19 +656,79 @@
                 </button>
                 <div class="accordion-content">
                     <div class="accordion-content-inner">
-                        <h3 style="color: #E23B5D; font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">¿Qué es la Traducción Aumentada?</h3>
+                        
+                        <!-- 1. QUÉ ES LA IA -->
+                        <h3 class="theory-title-main" style="margin-top: 0;">1. ¿Qué es realmente la inteligencia artificial?</h3>
+                        <p>A menudo se percibe la IA como algo "mágico", pero es fundamental desmitificarla. La IA no es más que estadística, datos y cálculo. Se trata de sistemas diseñados para identificar patrones, tomar decisiones o generar contenido a partir de los datos con los que han sido entrenados. No "comprenden" el lenguaje como un humano, sino que calculan probabilidades.</p>
+
+                        <!-- 2. EVOLUCIÓN -->
+                        <h3 class="theory-title-main">2. Evolución: de las reglas a las neuronas</h3>
+                        <p>Para entender las herramientas actuales, debemos distinguir dos grandes etapas históricas y tecnológicas:</p>
+                        <div class="ai-types-grid">
+                            <div class="ai-card">
+                                <h4><i class="ph-bold ph-tree-structure" style="color: #8b5cf6;"></i> IA simbólica (el enfoque clásico)</h4>
+                                <p>Se basaba en reglas lingüísticas explícitas y estructuras gramaticales predefinidas por humanos. Es la tecnología detrás de los antiguos correctores gramaticales o motores de traducción clásicos (RBMT) como las primeras versiones de SYSTRAN o Apertium.</p>
+                            </div>
+                            <div class="ai-card">
+                                <h4><i class="ph-bold ph-share-network" style="color: #10b981;"></i> IA conexionista (el enfoque moderno)</h4>
+                                <p>Se basa en redes neuronales y aprendizaje automático (<em>machine learning</em>). No se le dan reglas, sino que aprende por exposición masiva a datos. Aquí es donde encontramos a los grandes protagonistas actuales: desde DeepL hasta ChatGPT.</p>
+                            </div>
+                        </div>
+
+                        <!-- 3. TIPOS DE IA CONEXIONISTA -->
+                        <h3 class="theory-title-main">3. Tipos de IA conexionista en traducción</h3>
+                        <p>Dentro de la IA moderna, es vital diferenciar dos tipos de modelos que conviven en nuestro flujo de trabajo:</p>
+                        <div class="ai-types-grid">
+                            <div class="ai-card">
+                                <h4><i class="ph-bold ph-chart-line-up" style="color: #3b82f6;"></i> A. IA predictiva (motores NMT)</h4>
+                                <p><strong>Función:</strong> Analiza datos previos para predecir el resultado más probable. Predice la mejor secuencia de palabras basándose en millones de pares de frases.</p>
+                                <p><strong>Ejemplos:</strong> DeepL, Google Translate, Microsoft Translator.</p>
+                                <h5>Uso principal:</h5>
+                                <p>Traducción automática neuronal (NMT) pura.</p>
+                            </div>
+                            <div class="ai-card">
+                                <h4><i class="ph-bold ph-sparkle" style="color: #f59e0b;"></i> B. IA generativa (modelos LLM)</h4>
+                                <p><strong>Función:</strong> No solo predice, sino que crea contenido nuevo. Puede redactar, resumir, cambiar el estilo o traducir con instrucciones complejas (<em>prompts</em>).</p>
+                                <p><strong>Ejemplos:</strong> GPT-4 (OpenAI), Claude (Anthropic), Gemini (Google).</p>
+                                <h5>Uso principal:</h5>
+                                <p>Tareas creativas, reformulación, posedición interactiva y traducción con matices estilísticos.</p>
+                            </div>
+                        </div>
+
+                        <!-- 4. CÓMO APRENDEN -->
+                        <h3 class="theory-title-main">4. ¿Cómo aprenden estas máquinas?</h3>
+                        <div class="ai-types-grid">
+                            <div class="ai-card">
+                                <h4><i class="ph-bold ph-chalkboard-teacher" style="color: #ef4444;"></i> Aprendizaje supervisado</h4>
+                                <p>La máquina aprende con ejemplos etiquetados.</p>
+                                <p><em>"Esta frase en inglés equivale a esta en español".</em></p>
+                            </div>
+                            <div class="ai-card">
+                                <h4><i class="ph-bold ph-magnifying-glass" style="color: #8b5cf6;"></i> Aprendizaje no supervisado</h4>
+                                <p>La máquina busca patrones en datos brutos sin etiquetas.</p>
+                                <p><em>(ej. agrupar textos por temática sin que nadie le diga el tema).</em></p>
+                            </div>
+                            <div class="ai-card">
+                                <h4><i class="ph-bold ph-trophy" style="color: #f59e0b;"></i> Aprendizaje por refuerzo (RLHF)</h4>
+                                <p>Aprendizaje por prueba y error.</p>
+                                <p>El sistema recibe "recompensas" cuando da una respuesta útil, a menudo validada por humanos (clave en ChatGPT).</p>
+                            </div>
+                        </div>
+
+                        <!-- DEFINICIÓN DE TRADUCCIÓN AUMENTADA (MUEVE ABAJO) -->
+                        <h3 class="theory-title-main" style="margin-top: 3rem;">¿Qué es la traducción aumentada?</h3>
                         <p>La traducción aumentada es una combinación de traducción automática, memorias de traducción mejoradas, herramientas terminológicas de última generación, enriquecimiento de contenido automatizado (ACE), gestión de proyectos automatizada y otras tecnologías.</p>
                         <p>El objetivo es automatizar las tareas que no requieren intervención humana y proporcionar la información necesaria justo a tiempo para hacer que los lingüistas sean más eficientes, liberándolos así para trabajar en aquellas partes del contenido que requieren su atención.</p>
                         <p>Hacerlo aumenta su productividad y hace que su trabajo sea más valioso, incluso cuando el coste por palabra de la traducción disminuye.</p>
                         <p style="font-size: 0.8rem; color: #718096; text-align: right;">(Definición adaptada de Arle Lommel, CSA Research, 2021)</p>
 
-                        <img src="https://i0.wp.com/intelligent-information.blog/wp-content/uploads/2017/05/augmented-translation.jpg" alt="Esquema de Traducción Aumentada" style="width: 100%; border-radius: 0.5rem; margin: 1.5rem 0; border: 1px solid #e2e8f0;">
+                        <img src="https://i0.wp.com/intelligent-information.blog/wp-content/uploads/2017/05/augmented-translation.jpg" alt="Esquema de traducción aumentada" style="width: 100%; border-radius: 0.5rem; margin: 1.5rem 0; border: 1px solid #e2e8f0;">
 
-                        <div class="comparison-box">
+                        <div class="comparison-box" style="margin-top: 2rem;">
                             <div class="comparison-title"><i class="ph-bold ph-warning-circle" style="color: #E23B5D;"></i> ¡No te confundas!</div>
                             <div class="comparison-content">
                                 <div class="comparison-col col-good">
-                                    <h4 style="color: #15803d; font-weight: 700; margin-bottom: 0.5rem;">✅ Traducción Aumentada</h4>
+                                    <h4 style="color: #15803d; font-weight: 700; margin-bottom: 0.5rem;">✅ Traducción aumentada</h4>
                                     <p style="font-size: 0.9rem; color: #14532d;">El <strong>traductor humano</strong> está en el centro del proceso. Utiliza la tecnología (IA, memorias, bases de datos) como herramientas de apoyo para potenciar sus capacidades, creatividad y eficiencia.</p>
                                 </div>
                                 <div class="comparison-col col-bad">
