@@ -146,7 +146,169 @@
             text-transform: none;
         }
 
-        /* --- ESTILOS ACTUALIZADOS Y NUEVOS --- */
+        /* Clase específica para la descripción adicional en la Hero Card */
+        .tool-hero-desc {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-top: 1rem;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        /* --- ESTILOS "HERO" PARA LA NUEVA HERRAMIENTA --- */
+        @media (min-width: 768px) {
+            /* Hacemos que el primer elemento (la nueva herramienta) ocupe todas las columnas */
+            .tool-grid .tool-item:first-child {
+                grid-column: 1 / -1;
+                display: flex;
+                flex-direction: row; /* Diseño horizontal */
+                align-items: center;
+                justify-content: flex-start;
+                padding: 2.5rem;
+                gap: 2.5rem;
+                background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 245, 247, 0.6));
+                border: 2px solid rgba(226, 59, 93, 0.3); /* Borde sutil destacado */
+                overflow: hidden; /* Para contener el ribbon de "Nuevo" */
+            }
+
+            /* Efecto hover específico para el Hero */
+            .tool-grid .tool-item:first-child:hover {
+                background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 240, 245, 0.9));
+                border-color: #E23B5D;
+                transform: translateY(-5px); /* Movimiento más sutil por ser grande */
+            }
+
+            /* Logo más grande para el Hero (se aplica a las imágenes dentro del wrapper también) */
+            .tool-grid .tool-item:first-child .tool-logo {
+                height: 140px;
+                max-width: 320px;
+                margin: 0;
+                flex-shrink: 0; /* Evita que el logo se aplaste */
+            }
+
+            /* Contenedor de texto alineado a la izquierda */
+            .tool-grid .tool-item:first-child > div {
+                text-align: left;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            /* Título más grande */
+            .tool-grid .tool-item:first-child .tool-text-main {
+                font-size: 2.2rem;
+                margin-bottom: 0.5rem;
+                letter-spacing: 0.05em;
+            }
+
+            /* Subtítulo: Mismo estilo visual que los demás (gris, normal), solo ajustado de tamaño por escala */
+            .tool-grid .tool-item:first-child .tool-text-sub {
+                font-size: 1.1rem; /* Un poco más grande por la escala de la tarjeta, pero discreto */
+                color: #718096;    /* Mismo gris que las demás */
+                font-weight: 400;  /* Peso normal */
+                text-transform: none;
+                background: transparent;
+                padding: 0;
+                border-radius: 0;
+            }
+
+            /* Badge de "NUEVO" */
+            .tool-grid .tool-item:first-child::after {
+                content: "NUEVO / NEW";
+                position: absolute;
+                top: 25px;
+                right: -30px;
+                background: #E23B5D;
+                color: white;
+                padding: 8px 40px;
+                font-weight: 800;
+                font-size: 0.8rem;
+                letter-spacing: 0.1em;
+                transform: rotate(45deg);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+                z-index: 10;
+            }
+
+            /* --- ESTILOS PARA EL REVEAL DEL LOGO (WRAPPER) --- */
+            .logo-wrapper {
+                position: relative;
+                flex-shrink: 0;
+                /* Definimos dimensiones exactas para el wrapper para asegurar la superposición */
+                width: 320px;
+                height: 140px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: transform 0.3s ease;
+            }
+            
+            /* Logo Frontal (Visible por defecto) */
+            .logo-front {
+                position: relative;
+                z-index: 2;
+                /* Aseguramos que el logo frontal también se ajuste bien a su contenedor */
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                transition: opacity 0.3s ease-in-out;
+            }
+            
+            /* Logo Trasero (Oculto por defecto) */
+            .logo-back {
+                position: absolute;
+                top: 0;
+                left: 0;
+                opacity: 0;
+                z-index: 3;
+                width: 100%;
+                height: 100%;
+                /* Usamos 'cover' para que la imagen del panda cubra todo el área, evitando ver el logo de abajo */
+                object-fit: cover;
+                /* Fondo blanco para tapar completamente */
+                background-color: white;
+                /* Bordes redondeados para suavizar el corte */
+                border-radius: 1rem;
+                /* Halo blanco brillante hacia fuera y una sombra sutil hacia dentro para el marco */
+                box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.8), inset 0 0 10px rgba(0,0,0,0.1);
+                transition: opacity 0.3s ease-in-out;
+            }
+            
+            /* Efecto Reveal al hacer hover sobre el wrapper */
+            .logo-wrapper:hover .logo-back {
+                opacity: 1;
+            }
+            
+            /* Escalado del wrapper en hover de la tarjeta */
+            .tool-grid .tool-item:first-child:hover .logo-wrapper {
+                transform: scale(1.05);
+            }
+            /* Evitamos que las imágenes se escalen individualmente para no duplicar el efecto */
+            .tool-grid .tool-item:first-child:hover .logo-wrapper .tool-logo {
+                transform: none;
+            }
+        }
+
+        /* Ajuste para móvil del elemento destacado */
+        @media (max-width: 767px) {
+            .tool-hero-desc {
+                font-size: 0.9rem; /* Un poco más pequeño en móvil */
+                margin-top: 0.75rem;
+            }
+            
+            .tool-grid .tool-item:first-child::after {
+                content: "NEW";
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: #E23B5D;
+                color: white;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-weight: 700;
+                font-size: 0.7rem;
+            }
+        }
 
         /* Footer General */
         .footer-info {
@@ -199,6 +361,16 @@
             max-width: 500px;
             margin: 0 auto 2.5rem auto;
         }
+
+        /* NUEVO GRID DE BOTONES DEL FOOTER (2 columnas para Créditos y Agradecimientos) */
+        .footer-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            max-width: 500px;
+            margin: 0 auto 1rem auto;
+        }
+
         .footer-link {
             background: rgba(255, 255, 255, 0.5);
             border-radius: 0.75rem;
@@ -400,20 +572,41 @@
             background-color: #d02a4c;
         }
         
-        /* Modal "Sobre mí" y "Agradecimientos" */
+        /* Modal "Sobre mí", "Agradecimientos" y "Créditos" */
         #about-modal .modal-content,
-        #thanks-modal .modal-content { /* Aplicado a ambos */
+        #thanks-modal .modal-content,
+        #credits-modal .modal-content { /* Aplicado a los tres */
             text-align: left;
         }
         #about-modal .content-text p,
-        #thanks-modal .content-text p { /* Aplicado a ambos */
+        #thanks-modal .content-text p,
+        #credits-modal .content-text p { /* Aplicado a los tres */
             color: #4a5568;
             margin-bottom: 1.5rem;
             font-size: 1rem;
             line-height: 1.7;
         }
 
-        /* NUEVO: Estilo para enlaces en modal de agradecimientos */
+        /* Estilo para lista de créditos */
+        .credits-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        .credits-list li {
+            margin-bottom: 0.8rem;
+            color: #4a5568;
+            font-size: 1.05rem;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+            padding-bottom: 0.5rem;
+        }
+        .credits-list li strong {
+            color: #2c3e50;
+            margin-right: 0.5rem;
+        }
+
+
+        /* NUEVO: Estilo para enlaces en modal de agradecimientos y créditos */
         .thanks-link {
             color: #E23B5D;
             font-weight: 600;
@@ -534,7 +727,7 @@
 
         /* Responsive */
         @media (max-width: 520px) {
-            .footer-links-grid {
+            .footer-links-grid, .footer-buttons-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -667,10 +860,18 @@
                 <span data-key="projectBy"></span>
             </div>
 
-            <!-- NUEVO: Enlace de Agradecimientos -->
-            <div id="thanks-trigger" class="footer-link-full" style="margin-top: 1rem;">
-                <i class="ph-fill ph-heart"></i>
-                <span data-key="thanksLink"></span>
+            <!-- GRID PARA CRÉDITOS Y AGRADECIMIENTOS -->
+            <div class="footer-buttons-grid" style="margin-top: 1rem;">
+                <!-- Botón de Créditos (Nuevo) -->
+                <div id="credits-trigger" class="footer-link">
+                    <i class="ph-fill ph-translate"></i>
+                    <span data-key="creditsLink"></span>
+                </div>
+                <!-- Botón de Agradecimientos (Existente) -->
+                <div id="thanks-trigger" class="footer-link">
+                    <i class="ph-fill ph-heart"></i>
+                    <span data-key="thanksLink"></span>
+                </div>
             </div>
 
             <div class="panda-hug-section">
@@ -789,6 +990,22 @@
         </div>
     </div>
 
+    <!-- NUEVO MODAL "CRÉDITOS" -->
+    <div id="credits-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="credits-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h1 class="toolkit-title" data-key="creditsTitle" style="text-align: center;"></h1>
+            <div class="content-text">
+                <ul class="credits-list">
+                    <li><strong>Español:</strong> <a href="https://www.linkedin.com/in/rlstradu/" target="_blank" rel="noopener" class="thanks-link">Rafael López Sánchez</a></li>
+                    <li><strong>English:</strong> <a href="https://www.linkedin.com/in/rlstradu/" target="_blank" rel="noopener" class="thanks-link">Rafael López Sánchez</a></li>
+                    <li><strong>Français:</strong> <a href="https://www.linkedin.com/in/carolina-veltri/" target="_blank" rel="noopener" class="thanks-link">Carolina Veltri</a></li>
+                </ul>
+                <p data-key="creditsCta" style="margin-top: 1.5rem; font-weight: 500; font-size: 0.95rem;"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE ABRAZO DE PANDA -->
     <div id="panda-hug-modal" class="modal-overlay">
         <div class="modal-content" style="max-width: 500px; padding: 1.5rem;">
@@ -810,6 +1027,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- DATOS Y TRADUCCIONES ---
             const tools = [
+                // NUEVA HERRAMIENTA SUBPANDAASS (INSERTADA AL PRINCIPIO)
+                { 
+                    id: 'subpandaass', 
+                    icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-ass-logo-v1.png',
+                    // AÑADIDO: Icono para el hover (culo de panda)
+                    hoverIcon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandaass.jpg',
+                    href: 'https://httrans.org/subpandass.html' 
+                },
+                // HERRAMIENTAS EXISTENTES
                 { id: 'poanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/poanda-logo-final.png', href: 'https://rlstradu.github.io/httrans/poanda.html' },
                 { id: 'pandaterm', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png', href: 'https://rlstradu.github.io/httrans/pandaterm.html' },
                 { id: 'pandoria', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png', href: 'https://rlstradu.github.io/httrans/pandoria.html' },
@@ -827,6 +1053,10 @@
                     notificationText: 'Aprende a usar estas herramientas en un curso gratuito en Traduversia',
                     notificationButton: '¡Apúntate ya!',
                     forumLink: 'Foro oficial de httrans',
+                    // Traducciones de herramientas
+                    subpandaassMain: 'Subpanda<span style="color: #065BA2;">ASS</span>', 
+                    subpandaassSub: 'Creador de subtítulos',
+                    subpandaassDesc: 'Ha nacido un pandita nuevo, subpandass, ideado para crear subtítulos desde cero.',
                     poandaMain: 'Poanda', poandaSub: 'Editor de archivos PO',
                     pandatermMain: 'Pandaterm', pandatermSub: 'Editor de glosarios TBX',
                     pandoriaMain: 'Pandoria', pandoriaSub: 'Editor de memorias TMX',
@@ -872,13 +1102,21 @@
                     t2: "Aunque las mejoras técnicas se recogen en los changelogs y ahí suelo mencionar o dar agradecimientos de manera más específica, he querido crear este apartado para dar visibilidad a todas las personas que, de un modo u otro han contribuido a httrans. Estas son:",
                     // LÍNEA MODIFICADA con enlaces
                     t3: "<a href='https://www.linkedin.com/in/pmstrad/' target='_blank' rel='noopener' class='thanks-link'>Pablo Muñoz Sánchez</a>, <a href='https://www.linkedin.com/in/drsantilli/' target='_blank' rel='noopener' class='thanks-link'>Damián Santilli</a>, <a href='https://www.linkedin.com/in/guillermosubtitles/' target='_blank' rel='noopener' class='thanks-link'>Guillermo Parra López</a>, <a href='https://www.linkedin.com/in/carolina-veltri/' target='_blank' rel='noopener' class='thanks-link'>Carolina Veltri</a>, <a href='https://www.linkedin.com/in/garcialledom/' target='_blank' rel='noopener' class='thanks-link'>Merche García Lledó</a>, <a href='https://www.linkedin.com/in/milagroseckardt/' target='_blank' rel='noopener' class='thanks-link'>Milagros Eckardt</a>, <a href='https://www.linkedin.com/in/matiasedesalvo/' target='_blank' rel='noopener' class='thanks-link'>Matías Desalvo</a>, Aída Parra Díaz, la comunidad de Traduversia y nuestro precioso pandita \"madrileño\" Jin Xi.",
-                    t4: "Y por supuesto, este proyecto está dedicado a mi hijo Mateo, que nos cuida desde arriba. Beso enorme al cielo."
+                    t4: "Y por supuesto, este proyecto está dedicado a mi hijo Mateo, que nos cuida desde arriba. Beso enorme al cielo.",
+                    // Textos de Créditos
+                    creditsLink: 'Créditos de traducción',
+                    creditsTitle: 'Créditos de traducción',
+                    creditsCta: '¿Te gustaría contribuir a httrans con la traducción a algún idioma? Ponte en contacto en rlstradu@gmail.com o por el perfil de Instagram de <a href="https://www.instagram.com/httrans_org/" target="_blank" rel="noopener" class="thanks-link">@httrans_org</a>.'
                 },
                 en: {
                     description: 'A handy set of simple, practical tools created by a fellow translator who loves pandas, designed to make your day-to-day work easier. They’re completely free, require no installation, and work right from your browser.',
                     notificationText: 'Learn to master these tools with a free course on Traduversia',
                     notificationButton: 'Join now',
                     forumLink: 'Official httrans Forum',
+                    // Tool translations
+                    subpandaassMain: 'Subpanda<span style="color: #065BA2;">ASS</span>', 
+                    subpandaassSub: 'Subtitle Creator',
+                    subpandaassDesc: 'A new panda is born, subpandass, designed to create subtitles from scratch.',
                     poandaMain: 'Poanda', poandaSub: 'PO File Editor',
                     pandatermMain: 'Pandaterm', pandatermSub: 'TBX Glossary Editor',
                     pandoriaMain: 'Pandoria', pandoriaSub: 'TMX Memory Editor',
@@ -925,7 +1163,11 @@
                     t2: "While technical improvements are noted in the changelogs (where I usually give specific shout-outs), I wanted to create this special section to publicly thank everyone who has helped httrans grow, in one way or another. They are:",
                     // LÍNEA MODIFICADA con enlaces
                     t3: "<a href='https://www.linkedin.com/in/pmstrad/' target='_blank' rel='noopener' class='thanks-link'>Pablo Muñoz Sánchez</a>, <a href='https://www.linkedin.com/in/drsantilli/' target='_blank' rel='noopener' class='thanks-link'>Damián Santilli</a>, <a href='https://www.linkedin.com/in/guillermosubtitles/' target='_blank' rel='noopener' class='thanks-link'>Guillermo Parra López</a>, <a href='https://www.linkedin.com/in/carolina-veltri/' target='_blank' rel='noopener' class='thanks-link'>Carolina Veltri</a>, <a href='https://www.linkedin.com/in/garcialledom/' target='_blank' rel='noopener' class='thanks-link'>Merche García Lledó</a>, <a href='https://www.linkedin.com/in/milagroseckardt/' target='_blank' rel='noopener' class='thanks-link'>Milagros Eckardt</a>, <a href='https://www.linkedin.com/in/matiasedesalvo/' target='_blank' rel='noopener' class='thanks-link'>Matías Desalvo</a>, Aída Parra Díaz, the Traduversia community, and our precious \"Madrilenian\" panda, Jin Xi.",
-                    t4: "And of course, this project is dedicated to my son Mateo, who watches over us from above. A huge kiss to the sky."
+                    t4: "And of course, this project is dedicated to my son Mateo, who watches over us from above. A huge kiss to the sky.",
+                    // Textos de Créditos
+                    creditsLink: 'Translation Credits',
+                    creditsTitle: 'Translation Credits',
+                    creditsCta: 'Would you like to contribute to httrans with the translation into another language? Get in touch at rlstradu@gmail.com or via the Instagram profile <a href="https://www.instagram.com/httrans_org/" target="_blank" rel="noopener" class="thanks-link">@httrans_org</a>.'
                 }
             };
 
@@ -955,6 +1197,11 @@
             const thanksModal = document.getElementById('thanks-modal');
             const thanksTrigger = document.getElementById('thanks-trigger');
             const thanksModalCloseBtn = document.getElementById('thanks-modal-close-btn');
+            
+            // Elementos del Modal de Créditos
+            const creditsModal = document.getElementById('credits-modal');
+            const creditsTrigger = document.getElementById('credits-trigger');
+            const creditsModalCloseBtn = document.getElementById('credits-modal-close-btn');
 
 
             let currentLang = localStorage.getItem('selectedLang') || 'en';
@@ -967,7 +1214,36 @@
                     toolElement.target = '_blank';
                     toolElement.className = 'tool-item fade-in';
                     toolElement.style.animationDelay = `${0.3 + index * 0.05}s`;
-                    toolElement.innerHTML = `<img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo"><div><div class="tool-text-main" data-key="${tool.id}Main"></div><div class="tool-text-sub" data-key="${tool.id}Sub"></div></div>`;
+                    
+                    let logoHTML = '';
+                    
+                    // Si la herramienta tiene un icono para hover (efecto reveal)
+                    if (tool.hoverIcon) {
+                        logoHTML = `
+                        <div class="logo-wrapper">
+                            <img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo logo-front">
+                            <img src="${tool.hoverIcon}" alt="${tool.id} Hover" class="tool-logo logo-back">
+                        </div>`;
+                    } else {
+                        // Logo estándar
+                        logoHTML = `<img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo">`;
+                    }
+
+                    let innerHTML = `
+                        ${logoHTML}
+                        <div>
+                            <div class="tool-text-main" data-key="${tool.id}Main"></div>
+                            <div class="tool-text-sub" data-key="${tool.id}Sub"></div>
+                    `;
+
+                    // Si es la primera herramienta (HERO), añadimos la descripción extra
+                    if (index === 0) {
+                        innerHTML += `<div class="tool-hero-desc" data-key="${tool.id}Desc"></div>`;
+                    }
+
+                    innerHTML += `</div>`;
+                    
+                    toolElement.innerHTML = innerHTML;
                     toolGrid.appendChild(toolElement);
                 });
             }
@@ -1084,6 +1360,16 @@
             thanksModal.addEventListener('click', (e) => {
                 if (e.target === thanksModal) thanksModal.style.display = 'none';
             });
+            
+            // Lógica del Modal "Créditos" (Nuevo)
+            creditsTrigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                creditsModal.style.display = 'flex';
+            });
+            creditsModalCloseBtn.addEventListener('click', () => creditsModal.style.display = 'none');
+            creditsModal.addEventListener('click', (e) => {
+                if (e.target === creditsModal) creditsModal.style.display = 'none';
+            });
 
             // Lógica del Modal de Abrazo de Panda
             pandaHugButton.addEventListener('click', (e) => {
@@ -1118,5 +1404,3 @@
     </script>
 </body>
 </html>
-
-
