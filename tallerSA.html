@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taller avanzado de subtitulación aumentada con “software” libre</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Phosphor Icons (versión CSS/Webfont para mayor estabilidad) -->
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/css/phosphor.css" />
+    <!-- Carga de Google Fonts (Montserrat) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS COMPARTIDOS --- */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            background: linear-gradient(45deg, #fde7ea, #e8eaf6, #e0f2f1, #fce4ec);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #373737;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Contenedor principal */
+        .main-container {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            overflow: hidden;
+            padding-bottom: 2rem;
+        }
+
+        /* Cabecera / Portada */
+        .header-image-container {
+            width: 100%;
+            height: auto;
+            overflow: hidden;
+            position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+        
+        .header-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+        
+        .header-image:hover {
+            transform: scale(1.02);
+        }
+
+        .content-wrapper {
+            padding: 1.5rem 2.5rem;
+        }
+
+        .workshop-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #E23B5D;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0 1rem;
+        }
+
+        .workshop-subtitle {
+            text-align: center;
+            color: #718096;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+
+        /* --- ESTILOS DE ACORDEÓN --- */
+        .accordion-item {
+            background: rgba(255, 255, 255, 0.5);
+            margin-bottom: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .accordion-header {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            text-align: left;
+            outline: none;
+        }
+
+        .accordion-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .accordion-title i {
+            color: #E23B5D;
+            font-size: 1.3rem;
+        }
+
+        .accordion-icon {
+            color: #718096;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-item.active .accordion-header {
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            padding: 0 1.5rem;
+        }
+
+        .accordion-content-inner {
+            padding: 1.5rem 0;
+            color: #4a5568;
+            line-height: 1.7;
+            overflow-x: auto;
+        }
+
+        /* Contenido específico */
+        p { margin-bottom: 1rem; }
+        p:last-child { margin-bottom: 0; }
+        
+        /* Estilo para diagramas */
+        .diagram-img {
+            max-width: 100%;
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 1.5rem auto;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* Lista con viñetas */
+        ul.learning-list {
+            list-style: none;
+            padding-left: 0.5rem;
+        }
+        ul.learning-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        
+        @media (min-width: 640px) {
+            ul.learning-list li {
+                display: block;
+            }
+        }
+
+        ul.learning-list li::before {
+            content: "•";
+            color: #E23B5D;
+            font-weight: bold;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -0.4rem;
+        }
+        
+        /* Estilo para listas anidadas con check (para el nuevo bloque) */
+        .nested-list-check {
+            list-style: none;
+            padding-left: 0;
+        }
+        .nested-list-check li {
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        .nested-list-check li::before {
+            content: "✓";
+            color: #10b981; /* emerald-500 */
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        /* Bio */
+        .bio-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            text-align: center;
+        }
+        @media (min-width: 640px) {
+            .bio-container {
+                flex-direction: row;
+                text-align: left;
+                align-items: flex-start;
+            }
+        }
+        
+        .bio-img {
+            width: 180px;
+            height: auto;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            flex-shrink: 0;
+        }
+
+        /* Navegación */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #E23B5D;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 1.5rem 0 0 2.5rem;
+            font-size: 1.5rem;
+            width: fit-content;
+        }
+        .back-link:hover { transform: scale(1.1); transition: transform 0.2s; }
+
+        /* Animación */
+        .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid de recursos */
+        .resource-card {
+            background: #fff;
+            border: 1px solid #f0f0f0;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .resource-card:hover {
+            border-color: #E23B5D;
+            box-shadow: 0 4px 15px rgba(226, 59, 93, 0.15);
+            transform: translateY(-2px);
+        }
+        .resource-icon {
+            font-size: 2.2rem;
+            color: #E23B5D;
+            margin-bottom: 0.75rem;
+        }
+        .resource-link {
+            color: #E23B5D;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+        }
+        .resource-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Caja de aviso (warning) */
+        .warning-box {
+            background-color: #fffbeb; /* amber-50 */
+            border-left: 4px solid #f59e0b; /* amber-500 */
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .warning-icon {
+            color: #d97706; /* amber-600 */
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+        .warning-text {
+            color: #92400e; /* amber-800 */
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        /* Caja de nota / Info */
+        .info-box {
+            background-color: #eff6ff; /* blue-50 */
+            border-left: 4px solid #3b82f6; /* blue-500 */
+            padding: 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .info-icon {
+            color: #2563eb; /* blue-600 */
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+        .info-text {
+            color: #1e40af; /* blue-800 */
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Caja de Contexto / Limitación (Purple) */
+        .context-box {
+            background-color: #f3e8ff; /* violet-50 */
+            border-left: 4px solid #7c3aed; /* violet-600 */
+            padding: 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .context-icon {
+            color: #6d28d9; /* violet-700 */
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+        .context-text {
+            color: #4c1d95; /* violet-900 */
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+
+        /* Estilos de tabla para el nuevo bloque */
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }
+        .custom-table th, .custom-table td {
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .custom-table th {
+            background-color: #f7fafc; /* gray-50 */
+            font-weight: 700;
+            color: #2d3748; /* gray-800 */
+        }
+        .custom-table td {
+            background-color: #ffffff;
+        }
+
+        /* Estilos para el checklist de actividades */
+        .activity-steps ul {
+            list-style: none;
+            padding: 0;
+        }
+        .activity-steps li {
+            padding: 0.75rem 0;
+            border-bottom: 1px dotted #e5e7eb;
+        }
+        .activity-steps li:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .activity-steps label {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        /* Estilos de Checkbox */
+        .activity-steps input[type="checkbox"] {
+            /* Forzar el tamaño y la forma */
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+            min-width: 1.25rem; /* Para evitar que se achique en pantallas pequeñas */
+            margin-right: 0.75rem; /* mr-3 */
+            
+            /* Colores y borde */
+            border-color: #E23B5D; /* Color del borde por defecto */
+            color: #E23B5D;
+            background-color: #f9fafb; /* gray-50 */
+            border-width: 2px;
+            border-radius: 0.25rem; /* rounded */
+            
+            /* Sombra de foco */
+            --tw-ring-color: #E23B5D;
+            transition: all 0.2s ease;
+        }
+        .activity-steps input[type="checkbox"]:checked {
+            background-color: #E23B5D;
+            border-color: #E23B5D;
+            /* La marca de verificación blanca es el color por defecto de 'color' */
+        }
+
+        /* Efecto de texto sombreado/apagado al completar */
+        .activity-steps .task-done .task-text {
+            color: #9ca3af; /* gray-400 */
+            text-decoration: line-through;
+            transition: all 0.2s ease;
+        }
+
+        /* Estilo para las carpetas y su estructura */
+        .folder-structure {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            margin-top: 1.5rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: #1f2937;
+        }
+        .folder-item {
+            display: flex;
+            align-items: center;
+        }
+        .folder-item i {
+            margin-right: 0.5rem;
+            color: #facc15; /* yellow-400 */
+        }
+        .folder-item.file i {
+            color: #9ca3af; /* gray-400 */
+        }
+        .folder-indent {
+            margin-left: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container fade-in-up">
+        
+        <!-- Portada -->
+        <div class="header-image-container">
+            <img src="https://pbs.twimg.com/media/G6Ou6Y7WoAAgW30.jpg" alt="Portada Taller Subtitulación" class="header-image">
+        </div>
+
+        <!-- Botón Volver -->
+        <a href="#" class="back-link" aria-label="Volver">
+            <i class="ph-bold ph-arrow-left"></i>
+        </a>
+
+        <!-- Título -->
+        <h1 class="workshop-title">Taller avanzado de subtitulación aumentada con “software” libre</h1>
+        <p class="workshop-subtitle">Docente: Rafael López Sánchez</p>
+
+        <div class="content-wrapper">
+            
+            <!-- ACORDEÓN 1: Descripción -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-presentation-chart"></i> Descripción del taller</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>La industria de la traducción audiovisual está cambiando. La irrupción de la inteligencia artificial (IA), las nuevas funciones que incorporan los programas de subtitulación y la evolución constante de los flujos de trabajo están redefiniendo la manera de trabajar de los profesionales. En este nuevo escenario, ya no basta con dominar lo básico: es necesario adoptar enfoques que te ayuden a trabajar con mayor inteligencia y eficacia, sin perder el control creativo ni la calidad.</p>
+                        
+                        <p>Este taller se centra en la subtitulación aumentada, una metodología que combina tecnología, recursos lingüísticos y productividad para trabajar de forma más rápida y precisa. Usaremos glosarios TBX, memorias TMX, atajos de teclado, IA y soluciones creativas que potencian la labor del subtitulador sin comprometer la calidad.</p>
+                        
+                        <p>Trabajaremos con tres programas gratuitos y multiplataforma especialmente útiles en este contexto: <strong>Subtitle Edit, Tero Subtitler y httrans</strong>. Aprenderás a sacar partido a sus funciones avanzadas, combinarlas eficazmente y adaptarlas a distintos encargos y clientes.</p>
+                        
+                        <p>Trabajaremos con tres programas gratuitos y multiplataforma especialmente útiles en este contexto: <strong>Subtitle Edit, Tero Subtitler y httrans</strong>. Aprenderás a sacar partido a sus funciones avanzadas, combinarlas eficazmente y adaptarlas a distintos encargos y clientes.</p>
+                        <p>En definitiva, esta será una sesión práctica y orientada a quienes deseen ampliar su caja de herramientas, adaptarse a los nuevos entornos técnicos y trabajar con mayor autonomía en proyectos exigentes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 2: Qué aprenderás -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-student"></i> ¿Qué aprenderás?</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>Durante el taller veremos cómo hacer lo siguiente:</p>
+                        <ul class="learning-list">
+                            <li>Subtitular con glosarios TBX y memorias de traducción TMX.</li>
+                            <li>Generar transcripciones y hacer prepautado automático con IA.</li>
+                            <li>Determinar cuándo conviene usar tecnologías como la IA, las memorias o los glosarios en el proceso de subtitulación, y cuándo no.</li>
+                            <li>Optimizar tareas frecuentes como el control de calidad y configurar perfiles con convenciones profesionales.</li>
+                            <li>Resolver problemas reales y ganar agilidad a la hora de hacer el <em>spotting</em> o temporizado con atajos de teclado.</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-weight: 500;">En definitiva, esta será una sesión práctica y orientada a quienes deseen ampliar su caja de herramientas, adaptarse a los nuevos entornos técnicos y trabajar con mayor autonomía en proyectos exigentes.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ACORDEÓN 3: Sobre el docente -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-chalkboard-teacher"></i> Sobre el docente</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <div class="bio-container">
+                            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Rafa-About-Httrans-v2.png" alt="Rafael López Sánchez" class="bio-img">
+                            <div>
+                                <p>Rafael López Sánchez es traductor audiovisual y especialista en localización con más de trece años de experiencia. Ha traducido películas, series, documentales y otros contenidos para plataformas como Netflix o Prime Video. Ha trabajado en títulos como <em>Line of Duty</em>, <em>This Is Us</em>, <em>RuPaul’s Drag Race</em> o <em>MasterChef</em>, y es traductor del videojuego <em>FIFA</em> (actual <em>EA FC</em>) desde 2015.</p>
+                                <p>También ha sido gestor de proyectos de subtitulación para una agencia de traducción internacional. Durante años, compaginó la traducción con la docencia en traducción audiovisual e informática aplicada en instituciones como el ISTRAD, la Universidad Internacional de Valencia, la Universidad Europea de Valencia, la Universidad Intercontinental de México y la Universidad de Buenos Aires.</p>
+                                <p>Actualmente, concentra su labor académica en Traduversia, la plataforma de formación para traductores que cofundó hace más de una década. En 2025 ha creado httrans, una suite gratuita de herramientas sencillas ideadas para aplicar los principios de la traducción aumentada.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 4: Recursos y Herramientas (CON AVISO) -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-toolbox"></i> Recursos y herramientas</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        
+                        <!-- Caja de Aviso -->
+                        <div class="warning-box">
+                            <i class="ph-bold ph-warning warning-icon"></i>
+                            <p class="warning-text">
+                                <strong>Nota importante:</strong> En este taller se va a trabajar con herramientas gratuitas. Ten en cuenta que eso a menudo implica tomar caminos más largos para resolver tareas o problemas que con un software de pago se pueden resolver de una manera más directa.
+                            </p>
+                        </div>
+
+                        <p class="font-bold text-gray-700 mb-4">A lo largo del taller haremos uso de las siguientes herramientas principales:</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Tarjeta 1: SubpandaASS -->
+                            <div class="resource-card">
+                                <i class="ph-fill ph-paw resource-icon"></i>
+                                <h3 class="font-extrabold text-lg text-gray-800">SubpandaASS</h3>
+                                <p class="text-sm text-gray-600">Editor de subtítulos, ideal para crear subtítulos desde cero.</p>
+                                <a href="http://httrans.org/subpandass.html" target="_blank" class="resource-link">
+                                    Acceder <i class="ph-bold ph-arrow-square-out text-sm"></i>
+                                </a>
+                            </div>
+
+                            <!-- Tarjeta 2: SubpandaTM -->
+                            <div class="resource-card">
+                                <i class="ph-fill ph-paw resource-icon"></i>
+                                <h3 class="font-extrabold text-lg text-gray-800">SubpandaTM</h3>
+                                <p class="text-sm text-gray-600">Editor para traducir archivos de subtítulos utilizando memorias de traducción y glosarios.</p>
+                                <a href="http://httrans.org/subpandatm.html" target="_blank" class="resource-link">
+                                    Acceder <i class="ph-bold ph-arrow-square-out text-sm"></i>
+                                </a>
+                            </div>
+
+                            <!-- Tarjeta 3: Comet by Perplexity -->
+                            <div class="resource-card">
+                                <i class="ph-fill ph-rocket resource-icon"></i>
+                                <h3 class="font-extrabold text-lg text-gray-800">Comet by Perplexity</h3>
+                                <p class="text-sm text-gray-600">Navegador con IA incorporada capaz de interactuar con <em>webapps</em> como las pandaherramientas. (Requiere cuenta gratuita).</p>
+                                <a href="https://www.perplexity.ai/comet" target="_blank" class="resource-link">
+                                    Acceder <i class="ph-bold ph-arrow-square-out text-sm"></i>
+                                </a>
+                            </div>
+
+                            <!-- Tarjeta 4: Gemini -->
+                            <div class="resource-card">
+                                <i class="ph-fill ph-robot resource-icon"></i>
+                                <h3 class="font-extrabold text-lg text-gray-800">Gemini</h3>
+                                <p class="text-sm text-gray-600">Modelo para labores más complejas y potentes que Comet no pueda desempeñar. (Requiere cuenta gratuita).</p>
+                                <a href="http://gemini.google.com" target="_blank" class="resource-link">
+                                    Acceder <i class="ph-bold ph-arrow-square-out text-sm"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-4 border-t border-gray-300">
+                            <h4 class="font-bold text-[#E23B5D] mb-2 flex items-center gap-2"><i class="ph-fill ph-gear"></i> Herramientas auxiliares:</h4>
+                            <p>También utilizaremos recursos complementarios como <strong>Subtitle Edit, Tero Subtitler, cuadernos de Google Colab, Whisper de OpenAI y el bloc de notas</strong>, entre otros.</p>
+                        </div>
+                        
+                        <!-- Caja de Nota sobre Google Colab -->
+                        <div class="info-box">
+                            <i class="ph-fill ph-info info-icon"></i>
+                            <div class="info-text">
+                                <p class="font-bold mb-1">¿Qué es Google Colab?</p>
+                                <p><strong>Google Colaboratory (Colab)</strong> es un entorno de desarrollo basado en web que permite escribir y ejecutar código Python a través del navegador. Un <strong>cuaderno de Colab</strong> es un documento interactivo que combina código, texto explicativo (Markdown) y salidas de ejecución en un solo lugar. Es ideal para ejecutar modelos de IA, como Whisper, sin necesidad de instalaciones complejas.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN EXTRA: Materiales del taller -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-files"></i> Materiales del taller</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <div class="flex flex-col items-center justify-center py-4">
+                            <p class="text-center text-gray-600 mb-6 max-w-lg">Aquí encontrarás los archivos de ejemplo y documentos de referencia que utilizaremos durante la sesión.</p>
+                            <a href="https://drive.google.com/drive/folders/1uXuMNC7xZJOVR2xVktJYSxgCWWQDfIzZ?usp=sharing" target="_blank" class="inline-flex items-center gap-2 bg-[#E23B5D] hover:bg-[#c02e4c] text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-md no-underline">
+                                <i class="ph-bold ph-download-simple text-xl"></i> Descargar materiales
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 5: Un poquito de teoría -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-book-open"></i> Un poquito de teoría</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>La <strong>subtitulación aumentada</strong> es un concepto que surge a partir del concepto de traducción aumentada, en donde el subtitulador puede apoyarse en distintos recursos tecnológicos. Esto incluye no solamente IA, sino también recursos tradicionales como memorias de traducción, bases terminológicas, reconocimiento de voz, filtros de QA inteligentes y traducción automática neuronal.</p>
+                        
+                        <p>Todos estos elementos se utilizan de manera estratégica para alimentar y dirigir a la IA, permitiendo que resuelva tareas concretas de una manera más eficiente sin sacrificar la calidad final.</p>
+
+                        <h3 class="font-bold text-gray-700 mt-4 mb-2 text-lg">Modelos de trabajo: Human in the Loop vs. Human at the Core</h3>
+                        
+                        <p class="font-semibold mt-4 text-gray-800">1. Human in the Loop (HITL)</p>
+                        <p>En este modelo, el subtitulador pierde el papel central y se convierte en un revisor del trabajo que hace la IA, desempeñando una especie de postedición (MTPE) de subtítulos automáticos. El profesional está en el "bucle" de producción, pero no al mando.</p>
+                        
+                        <p class="text-sm text-gray-500 italic text-center">Diagrama del flujo de trabajo Human in the Loop.</p>
+
+                        <p class="font-semibold mt-4 text-gray-800">2. Human at the Core (HATC)</p>
+                        <p>Con el modelo human at the core, el subtitulador integra la IA y el resto de recursos como un apoyo que le permite potenciar su capacidad de trabajo sin perder el papel central del proceso de subtitulación. El control y las decisiones creativas residen en el humano.</p>
+                        
+                        <p class="text-sm text-gray-500 italic text-center">Diagrama del flujo de trabajo Human at the Core.</p>
+
+                        <h3 class="font-bold text-gray-700 mt-6 mb-2 text-lg">Recursos clave de la subtitulación aumentada</h3>
+                        <p>El siguiente diagrama resume los principales recursos que se integran en esta metodología para optimizar el trabajo del subtitulador:</p>
+                        
+                        <p class="text-sm text-gray-500 italic text-center">Recursos utilizados en la metodología de subtitulación aumentada.</p>
+
+                        <!-- Caja de Contexto / Limitación -->
+                        <div class="context-box">
+                            <i class="ph-fill ph-lightbulb context-icon"></i>
+                            <div class="context-text">
+                                <p class="font-bold mb-1">Contexto del taller: limitaciones de las herramientas gratuitas</p>
+                                <p>Es crucial entender que no siempre será posible usar todos los recursos de este modelo de subtitulación aumentada. A menudo estaremos limitados por las características de las herramientas que usemos. Además, también influirá mucho si podemos acceder a recursos gratuitos o de pago.</p>
+                                <p class="mt-2">En este taller, tratamos de resolver todas las situaciones con herramientas gratuitas, por lo que a menudo el camino que hay que recorrer es más largo y requiere más pasos que si se usaran herramientas de pago (incluidas IAs de pago como Gemini Advanced o Perplexity Pro).</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ACORDEÓN 6: Whisper y ASR -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-microphone-stage"></i> Whisper y el subtitulado automático (ASR)</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        
+                        <h3 class="font-bold text-gray-700 mb-2 text-lg">¿Qué es Whisper?</h3>
+                        <p>Whisper es un modelo de reconocimiento automático del habla (ASR) desarrollado por OpenAI. Su función principal es escuchar audio y generar texto (transcripción), además de detectar el idioma y manejar ruido, acentos y habla poco clara mejor que otros sistemas.</p>
+
+                        <h3 class="font-bold text-gray-700 mt-4 mb-2 text-lg">¿Cómo funciona (explicado en clase)?</h3>
+                        
+                        <p class="font-semibold mt-3 text-gray-800">Entrada</p>
+                        <p>Whisper recibe audio (o un vídeo del que primero se extrae el audio, normalmente con FFmpeg).</p>
+                        
+                        <p class="font-semibold mt-3 text-gray-800">Procesamiento por el modelo</p>
+                        <ul class="learning-list">
+                            <li>El audio se convierte a un espectrograma (una imagen que representa el sonido en el tiempo y las frecuencias).</li>
+                            <li>Ese espectrograma entra en una red neuronal tipo Transformer, que “traduce” sonido → texto.</li>
+                        </ul>
+                        
+                        <p class="font-semibold mt-3 text-gray-800">Salidas que puede generar</p>
+                        <ul class="learning-list">
+                            <li>Transcripción (texto plano).</li>
+                            <li>Segmentos con marcas de tiempo (timestamps) si se activan.</li>
+                            <li>Timestamps por palabra (si se usa la opción `word_timestamps=True`, como en <strong>el Colab de SubpandaASS</strong>).</li>
+                            <li>Detección de idioma.</li>
+                            <li>(Opcionalmente: traducción a inglés si se le solicita, aunque tú ya fuerzas idioma "en").</li>
+                        </ul>
+
+                        <h3 class="font-bold text-gray-700 mt-6 mb-2 text-lg">¿Por qué los subtítulos son deficientes en Subtitle Edit o Tero Subtitler si la transcripción es útil?</h3>
+                        <p><strong>Porque:</strong></p>
+                        <ul class="nested-list-check" style="--tw-list-style-type: none;">
+                            <li><i class="ph-fill ph-x-circle text-red-500 mr-2"></i> Whisper <strong>NO</strong> es un modelo de subtitulado, es un modelo de transcripción.</li>
+                        </ul>
+                        
+                        <p>Los programas como <strong>Subtitle Edit</strong> o <strong>Tero Subtitler</strong> toman la transcripción y la vuelcan en líneas SRT sin aplicar reglas de subtitulado, como:</p>
+                        <ul class="learning-list">
+                            <li>Longitud de caracteres por línea.</li>
+                            <li>Segmentación por sentido (piramidal o equilibrada).</li>
+                            <li>Duraciones mínimas/máximas.</li>
+                            <li>Gaps entre subtítulos para evitar efecto “ráfaga”.</li>
+                            <li>Reparto visual de texto (lectura cómoda).</li>
+                        </ul>
+                        
+                        <p class="mt-4"><strong>Resultado:</strong></p>
+                        <ul class="nested-list-check">
+                            <li style="color: #10b981;">Las transcripciones son aprovechables para posedición.</li>
+                            <li style="color: #ef4444;">Los subtítulos automáticos generados por los editores son literales, mal segmentados y con tiempos poco legibles.</li>
+                        </ul>
+
+
+                        <h3 class="font-bold text-gray-700 mt-6 mb-2 text-lg">¿Qué aporta el Google Colab de este taller?</h3>
+                        <p>El cuaderno de Google Colab que se presenta en el taller es un ejemplo práctico de lo que un subtitulador podría llegar a construir con unos conocimientos básicos de programación, al comprender las capacidades técnicas de Whisper.</p>
+                        <p>Demuestra cómo, en lugar de usar Whisper “como viene”, se le pueden integrar reglas profesionales de subtitulado, entre ellas:</p>
+                        
+                        <div style="overflow-x: auto;">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Regla profesional</th>
+                                        <th>Qué haces en el código</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2 líneas máximo</td>
+                                        <td><code>max_lines=2</code> y unión en <code>\n</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>42 CPL (caracteres por línea)</td>
+                                        <td><code>max_cpl=42</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Equilibrio visual (piramidal o geométrico)</td>
+                                        <td><code>segmentar_texto_equilibrado()</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Duración mínima 1 seg aprox</td>
+                                        <td><code>min_dur=0.833</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Duración máxima 7 seg</td>
+                                        <td><code>max_dur=7.0</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2 frames de gap entre subs</td>
+                                        <td><code>min_gap=0.09</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>No solapamientos</td>
+                                        <td><code>limite_fin = siguiente['start'] - min_gap</code>, etc.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="mt-4">Además, al usar <strong>faster-whisper con el modelo medium</strong>, obtienes transcripciones más rápidas y con <em>word-level timestamps</em>, que es lo que realmente necesita un subtitulador para trabajar: texto + tiempos mínimamente útiles para reorganizar.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ACORDEÓN 7: Actividad 1 -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-paw"></i> Actividad 1: Descubriendo al nuevo pandita 🐼</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p><strong>Objetivo:</strong> Practicar los distintos métodos de sincronización y creación de subtítulos que ofrece SubpandaASS. Crea al menos <strong>10 subtítulos</strong> usando los distintos métodos para familiarizarte con el programa.</p>
+                        
+                        <div class="activity-steps mt-4">
+                            <ul class="space-y-3">
+                                <!-- Paso 1 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Accede a <a href="http://httrans.org" target="_blank" class="text-blue-600 underline hover:text-[#E23B5D] font-medium">httrans.org</a> y abre <strong class="text-gray-800">SubpandaASS</strong>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el archivo de vídeo del proyecto Thundermans: <code class="bg-gray-100 p-1 rounded text-sm font-mono">Thunderman-T1-EP7-EN</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 3 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Importa los cambios de plano desde <code class="bg-gray-100 p-1 rounded text-sm font-mono">Archivo/Importar cambios de plano</code>. El archivo es <code class="bg-gray-100 p-1 rounded text-sm font-mono">shot-changes-thunderman.txt</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 4 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-bold">Ahora, atiende a la demo de Rafa sobre el programa.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 5 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Revisa los ajustes de QA (puedes usar los que vienen por defecto).</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 6 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Activa el modo de trabajo de Sincronización en <code class="bg-gray-100 p-1 rounded text-sm font-mono">Modo de trabajo/Sincronización</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 7 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Reproduce el vídeo completo y trata de imaginar dónde añadirías los subtítulos.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 8: Método Rápido -->
+                                <li class="bg-red-50 p-3 rounded-lg border border-red-200">
+                                    <p class="font-bold text-red-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-hand-tap"></i> Método rápido (Panda Click)</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Vuelve al inicio del vídeo, dale al play y prueba a crear subtítulos presionando y soltando el <strong>botón del panda</strong>. Ajusta la velocidad de reproducción si lo necesitas.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 9: Método Preciso -->
+                                <li class="bg-green-50 p-3 rounded-lg border border-green-200">
+                                    <p class="font-bold text-green-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-keyboard"></i> Método preciso (Teclado)</p>
+                                    <label class="flex items-start flex-col task-label">
+                                        <input type="checkbox" class="hidden"> <!-- El estado se maneja en los pasos internos -->
+                                        <span class="task-text text-gray-700 mb-2">Reproduces o pausas el vídeo con <code class="bg-gray-200 p-1 rounded font-mono text-sm">Alt+P</code>, creas tu subtítulo en un punto de entrada con <code class="bg-gray-200 p-1 rounded font-mono text-sm">Alt+Q</code>. Vuelves a reproducir el vídeo pulsando <code class="bg-gray-200 p-1 rounded font-mono text-sm">Alt+P</code>.</span>
+                                        <span class="task-text text-gray-700 mb-2">Te detienes (<code class="bg-gray-200 p-1 rounded font-mono text-sm">Alt+P</code>) en el punto exacto donde quieras marcar el fin del subtítulo. Aquí puedes usar los atajos <code class="bg-gray-200 p-1 rounded font-mono text-sm">Shift + Right</code> o <code class="bg-gray-200 p-1 rounded font-mono text-sm">Shift + Left</code> para avanzar o retroceder un frame.</span>
+                                        <span class="task-text text-gray-700">Cuando estés en el punto exacto, pulsas <code class="bg-gray-200 p-1 rounded font-mono text-sm">Alt+W</code> para cerrar el subtítulo. Repetirías este proceso hasta tener todos tus subtítulos hechos.</span>
+                                    </label>
+                                    <label class="flex items-start task-label mt-2">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold"> Marca esta casilla cuando hayas entendido y practicado el método preciso.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 10: Método Visual -->
+                                <li class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <p class="font-bold text-blue-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-waveform"></i> Método Visual (Onda de sonido)</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">También es posible crear subtítulos seleccionando una porción de sonido en la onda de sonido haciendo clic y arrastrando (verás una selección en color verde) y pulsando el atajo de teclado <code class="bg-gray-200 p-1 rounded font-mono text-sm">Alt+N</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso FINAL: Guardar -->
+                                <li class="bg-gray-100 p-3 rounded-lg border border-gray-300">
+                                    <p class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-floppy-disk"></i> Guardar el trabajo</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold"> Cuando hayas terminado tus subtítulos, guárdalos desde <code class="bg-gray-200 p-1 rounded font-mono text-sm">Archivo/Guardar .srt</code>.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Aviso Mac -->
+                        <div class="warning-box mt-6">
+                            <i class="ph-bold ph-apple-logo warning-icon"></i>
+                            <p class="warning-text">
+                                <strong>Aviso para usuarios de Mac:</strong> Si usas Mac, recuerda que debes reemplazar la tecla <code class="bg-amber-100 p-0.5 rounded font-mono text-sm">Alt</code> por la tecla <code class="bg-amber-100 p-0.5 rounded font-mono text-sm">Opt</code> para todos los atajos de teclado mencionados.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ACORDEÓN 8: Actividad 2 -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-cpu"></i> Actividad 2: <em>Spotting</em> automático vs <em>Spotting</em> humano</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p><strong>Objetivo:</strong> Generar un <em>spotting</em> inicial asistido por IA (prepautado), revisar su calidad y compararlo con el método manual que practicaste en la actividad anterior.</p>
+                        
+                        <div class="activity-steps mt-4">
+                            <ul class="space-y-3">
+                                <!-- PASO 1: Acceso a SubpandaASS -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Accede a <a href="http://httrans.org" target="_blank" class="text-blue-600 underline hover:text-[#E23B5D] font-medium">httrans.org</a> y abre <strong class="text-gray-800">SubpandaASS</strong>.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 2: Abrir vídeo -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el archivo de vídeo del proyecto Heinz: <code class="bg-gray-100 p-1 rounded text-sm font-mono">Ed's Heinz Ad.mp4</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 3: Prepautado (Spotting vacío) -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Ve a <code class="bg-gray-100 p-1 rounded text-sm font-mono">Herramientas/Prepautado (Spotting vacío)</code>. Lee las instrucciones y haz clic en confirmar.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 4: Explicación Colab -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-bold">Atiende a la explicación de Rafa sobre el cuaderno de Google Colab que estás a punto de usar.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 5: Iniciar Colab -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Dale al <code class="bg-gray-100 p-1 rounded text-sm font-mono">Play</code> para iniciar el código del cuaderno de Colab.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 6: Subir y bajar vídeo -->
+                                <li class="bg-red-50 p-3 rounded-lg border border-red-200">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold">Baja y sube el archivo de vídeo <code class="bg-gray-200 p-1 rounded font-mono text-sm">Ed's Heinz Ad.mp4</code> desde el formulario que se habilita en Colab.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 7: Descarga SRT -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Cuando finalice el proceso, se descargará un archivo <code class="bg-gray-100 p-1 rounded text-sm font-mono">SRT</code> con los subtítulos automáticos.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 8: Alternativa -->
+                                <li class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Si no se descarga automáticamente, usa como alternativa el archivo <code class="bg-gray-200 p-1 rounded font-mono text-sm">Ed's Heinz Ad_spotting.srt</code>. Marca esta casilla cuando tengas el archivo SRT (descargado o alternativo).</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 9: Abrir en SubpandaASS -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el archivo <code class="bg-gray-100 p-1 rounded text-sm font-mono">.srt</code> con los subtítulos automáticos en SubpandaASS desde <code class="bg-gray-100 p-1 rounded text-sm font-mono">Archivo/Abrir .srt</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 10: Explicación de Rafa -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-bold">Presta atención a la explicación de Rafa sobre los subtítulos generados.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 11: Revisión y Corrección (Núcleo) -->
+                                <li class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                                    <p class="font-bold text-yellow-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-pencil-line"></i> Revisión del <em>Spotting</em></p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 mb-2">Revisa los subtítulos automáticos. Deja como están los que consideres correctos y arregla los incorrectos, usando el ratón sobre la onda de sonido o atajos de teclado.</span>
+                                        <span class="task-text text-gray-700 font-semibold mt-2">Resuelve al menos 10 subtítulos completos.</span>
+                                    </label>
+                                </li>
+                                <!-- PASO 12: Reflexión FINAL -->
+                                <li class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <p class="font-bold text-blue-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-chats-circle"></i> Reflexión (Comentarios)</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold">Para finalizar, reflexiona sobre si crees que los subtítulos automáticos te han ayudado a ganar tiempo o si, por el contrario, no hay una gran diferencia con respecto a un método manual.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ACORDEÓN 9: Actividad 3 -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-code"></i> Actividad 3: <em>Spotting</em> con programación vs <em>Spotting</em> sin programación</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p><strong>Objetivo:</strong> Comparar la calidad de los subtítulos automáticos (transcripción + <em>spotting</em>) generados con una herramienta genérica (Subtitle Edit) frente a una solución personalizada con reglas profesionales (SubpandaASS Colab).</p>
+                        
+                        <div class="activity-steps mt-4">
+                            <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2 border-b pb-2"><i class="ph-fill ph-desktop-tower"></i> Parte 1: Subtítulos automáticos sin personalización (Subtitle Edit)</h3>
+                            <ul class="space-y-3">
+                                <!-- Paso 1.1 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre <strong class="text-gray-800">Subtitle Edit</strong>, carga el vídeo <code class="bg-gray-100 p-1 rounded text-sm font-mono">Ed's Heinz Ad.mp4</code> desde <code class="bg-gray-100 p-1 rounded text-sm font-mono">Video/Open video file...</code></span>
+                                    </label>
+                                </li>
+                                <!-- Paso 1.2 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el asistente de Whisper en <code class="bg-gray-100 p-1 rounded text-sm font-mono">Video/Audio to text (Whisper)</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 1.3 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-bold">Atiende a las aclaraciones de Rafa sobre este asistente.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 1.4 -->
+                                <li class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Configura los parámetros: elige el idioma y selecciona el modelo <strong class="text-gray-800">"Tiny"</strong> para mayor rapidez. Dale a <code class="bg-gray-200 p-1 rounded font-mono text-sm">Generate</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 1.5: Reflexión en clase -->
+                                <li class="bg-gray-100 p-3 rounded-lg border border-gray-300">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold">Echa un vistazo al resultado. Reflexionemos sobre la calidad y qué aspectos concretos crees que se deberían mejorar.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                            
+                            <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2"><i class="ph-fill ph-laptop"></i> Parte 2: Subtítulos automáticos con personalización (SubpandaASS Colab)</h3>
+                            <ul class="space-y-3">
+                                <!-- Paso 2.1 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre <a href="http://httrans.org" target="_blank" class="text-blue-600 underline hover:text-[#E23B5D] font-medium">httrans.org</a> y accede a <strong class="text-gray-800">SubpandaASS</strong>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2.2 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el vídeo <code class="bg-gray-100 p-1 rounded text-sm font-mono">Ed's Heinz Ad.mp4</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2.3 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Ve al menú de <code class="bg-gray-100 p-1 rounded text-sm font-mono">Herramientas</code> y haz clic en <code class="bg-gray-100 p-1 rounded text-sm font-mono">Subtítulos automáticos</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2.4 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-bold">Lee las instrucciones, atiende a la explicación de Rafa y haz clic en confirmar para abrir el cuaderno de Colab.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2.5: Generar -->
+                                <li class="bg-green-50 p-3 rounded-lg border border-green-200">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">En el cuaderno, dale al <code class="bg-gray-200 p-1 rounded font-mono text-sm">Play</code>, selecciona el vídeo en el formulario de abajo y espera a que se genere un SRT con los subtítulos automáticos.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2.6: Alternativa -->
+                                <li class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold">Si no se descarga, utiliza el archivo <code class="bg-gray-200 p-1 rounded font-mono text-sm">Ed's Heinz Ad_autospotting_with_text</code> (carpeta "Ketchup").</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2.7: Análisis -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold">Abre el SRT con los subtítulos automáticos en SubpandaASS y analiza el resultado. ¿Crees que es aprovechable? ¿Qué defectos has detectado?</span>
+                                    </label>
+                                </li>
+                            </ul>
+
+                            <div class="info-box mt-6">
+                                <i class="ph-fill ph-lightbulb info-icon"></i>
+                                <div class="info-text">
+                                    <p class="font-bold mb-1">Conclusión clave de las Actividades 2 y 3:</p>
+                                    <p>Con una <strong>programación adecuada</strong>, es posible crear un asistente personalizado para generar tus propios subtítulos automáticos de manera gratuita. La clave reside en la programación, ya que Whisper fue desarrollado únicamente para transcribir audio a texto (ASR).</p>
+                                    <p class="mt-2">Integrando reglas profesionales en el código, es posible generar un <em>spotting</em> vacío o con texto que podrás retocar, aunque el <strong>factor humano</strong> para dejar esos subtítulos a un nivel de calidad elevado seguirá siendo determinante.</p>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ACORDEÓN 10: Actividad 4 -->
+            <div class="accordion-item active">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-translate"></i> Actividad 4: "Aumentamos" nuestra capacidad de subtitulación con glosarios, memorias y un asistente de IA</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content" style="max-height: 2000px;">
+                    <div class="accordion-content-inner">
+                        <p><strong>Objetivo:</strong> Aprender a usar <strong>SubpandaTM</strong> (Translation Memory / Terminology) para la traducción de subtítulos, integrando recursos tradicionales de la traducción asistida por ordenador (TAO) como Glosarios (TBX) y Memorias de Traducción (TMX).</p>
+                        
+                        <div class="warning-box">
+                            <i class="ph-bold ph-tag warning-icon"></i>
+                            <p class="warning-text">
+                                <strong>Recordatorio:</strong> TM significa "Translation Memory" (Memoria de Traducción), y también hace referencia a "Terminology" (Terminología).
+                            </p>
+                        </div>
+
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2"><i class="ph-fill ph-folder-open"></i> Estructura de subcarpetas del proyecto</h3>
+                        <p>La estructura de archivos que vamos a usar es la recomendada para un flujo de trabajo organizado con recursos de traducción.  Quizá te resulte familiar si has trabajado con herramientas TAO (Traducción Asistida por Ordenador).</p>
+                        
+                        <div class="folder-structure">
+                            <div class="folder-item"><i class="ph-fill ph-folder"></i> Proyecto Jamie Oliver /</div>
+                            <div class="folder-indent">
+                                <div class="folder-item"><i class="ph-fill ph-folder"></i> Video file /</div>
+                                <div class="folder-indent folder-item file"><i class="ph-fill ph-file-video"></i> Receta de pan.mp4</div>
+                            </div>
+                            <div class="folder-indent">
+                                <div class="folder-item"><i class="ph-fill ph-folder"></i> 1. Source /</div>
+                                <div class="folder-indent folder-item file"><i class="ph-fill ph-file-text"></i> How To Make Bread - Jamie Oliver.srt</div>
+                            </div>
+                            <div class="folder-indent">
+                                <div class="folder-item"><i class="ph-fill ph-folder"></i> TB (Term Base) /</div>
+                                <div class="folder-indent folder-item file"><i class="ph-fill ph-book-bookmark"></i> glosario_pan.tbx</div>
+                            </div>
+                            <div class="folder-indent">
+                                <div class="folder-item"><i class="ph-fill ph-folder"></i> TM (Translation Memory) /</div>
+                                <div class="folder-indent folder-item file"><i class="ph-fill ph-archive-box"></i> TM Easy homemade bread.tmx</div>
+                            </div>
+                            <div class="folder-indent">
+                                <div class="folder-item"><i class="ph-fill ph-folder"></i> 2. Target /</div>
+                                <div class="folder-indent folder-item file"><i class="ph-fill ph-file-text"></i> (Aquí guardaremos el SRT traducido)</div>
+                            </div>
+                        </div>
+
+
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2"><i class="ph-fill ph-list-checks"></i> Pasos de la actividad</h3>
+                        
+                        <div class="activity-steps mt-4">
+                            <ul class="space-y-3">
+                                <!-- Paso 1: Acceso a SubpandaTM -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Accede a <a href="http://httrans.org" target="_blank" class="text-blue-600 underline hover:text-[#E23B5D] font-medium">httrans.org</a> y abre <strong class="text-gray-800">SubpandaTM</strong>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2: Cargar vídeo -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Carga el vídeo de la receta desde <code class="bg-gray-100 p-1 rounded text-sm font-mono">Video file</code> usando el botón <code class="bg-gray-100 p-1 rounded text-sm font-mono">Cargar vídeo</code> en el reproductor.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 3: Importar subtítulos fuente -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Importa los subtítulos a traducir (<code class="bg-gray-100 p-1 rounded text-sm font-mono">How To Make Bread - Jamie Oliver.srt</code>) desde la carpeta <code class="bg-gray-100 p-1 rounded text-sm font-mono">1. Source</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 4: Cargar Glosario (TB) -->
+                                <li class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <p class="font-bold text-blue-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-book-open-text"></i> Glosario (TBX)</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre la ventana <code class="bg-200 p-1 rounded font-mono text-sm">Terminología</code>, configura la combinación de idiomas e importa el glosario <code class="bg-200 p-1 rounded font-mono text-sm">glosario_pan.tbx</code> de la carpeta <code class="bg-200 p-1 rounded font-mono text-sm">TB</code>.</span>
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">Recuerda: puedes añadir nuevos términos directamente desde esta ventana.</p>
+                                </li>
+                                <!-- Paso 5: Cargar Memoria (TM) -->
+                                <li class="bg-green-50 p-3 rounded-lg border border-green-200">
+                                    <p class="font-bold text-green-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-brain"></i> Memoria de Traducción (TMX)</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre la ventana <code class="bg-200 p-1 rounded font-mono text-sm">Memoria de traducción</code>, configura el idioma e importa el archivo <code class="bg-200 p-1 rounded font-mono text-sm">TM Easy homemade bread.tmx</code> de la carpeta <code class="bg-200 p-1 rounded font-mono text-sm">TM</code>.</span>
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">Recuerda: cuando la memoria esté activa, todas las traducciones que valides se almacenarán automáticamente en ella.</p>
+                                </li>
+                                <!-- Paso 6: Asistente IA (Explicación) -->
+                                <li class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                                    <p class="font-bold text-yellow-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-robot"></i> Asistente de IA</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Localiza el Asistente de IA. Este asistente está diseñado para que puedas importar los resultados de cualquier IA, aunque requiere salir del programa para obtenerlos.</span>
+                                    </label>
+                                    <label class="flex items-start task-label mt-2">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-bold">Presta atención a la explicación de Rafa sobre el funcionamiento de este asistente de IA en vivo.</span>
+                                    </label>
+                                    
+                                    <!-- Nueva nota añadida -->
+                                    <p class="text-sm text-yellow-900 mt-3 bg-yellow-100 p-2 rounded border border-yellow-300">
+                                        <strong>Consejo:</strong> Si no has conseguido generar tus propias sugerencias, no pasa nada. Puedes usar el archivo <strong class="font-mono text-yellow-800">sugerencias-ia.json</strong> que encontrarás en la carpeta <strong class="font-mono text-yellow-800">IA</strong> del proyecto. Podrás cargarlo dándole al botón <strong>Importar desde archivo .json</strong>.
+                                    </p>
+                                </li>
+                                <!-- Paso 7: Traducir y guardar -->
+                                <li class="bg-gray-100 p-3 rounded-lg border border-gray-300">
+                                    <p class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-check-circle"></i> Tarea de traducción</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700 font-semibold">Traduce al menos 10 subtítulos y guárdalos en la carpeta <code class="bg-gray-200 p-1 rounded font-mono text-sm">2. Target</code> para completar la actividad.</span>
+                                    </label>
+                                </li>
+
+                                <!-- Paso 8: Reflexión Final (NUEVO) -->
+                                <li class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <p class="font-bold text-blue-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-chats-circle"></i> Reflexión final</p>
+                                    <p class="text-gray-700 mb-3 text-sm">Reflexionemos sobre hasta qué punto todos estos recursos nos resultan útiles:</p>
+                                    
+                                    <div class="space-y-2 pl-1">
+                                        <label class="flex items-start task-label">
+                                            <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                            <span class="task-text text-gray-700 text-sm">¿Crees que es útil poder usar glosarios?</span>
+                                        </label>
+                                        <label class="flex items-start task-label">
+                                            <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                            <span class="task-text text-gray-700 text-sm">¿Crees que es útil trabajar con memorias de traducción?</span>
+                                        </label>
+                                        <label class="flex items-start task-label">
+                                            <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                            <span class="task-text text-gray-700 text-sm">¿Crees que es útil trabajar con sugerencias de traducción de la IA?</span>
+                                        </label>
+                                    </div>
+                                </li>
+                            </ul>
+
+                            <!-- NUEVA PARTE EXTRA: Tero Subtitler -->
+                            <div class="mt-8 pt-4 border-t border-gray-200">
+                                <h3 class="font-bold text-gray-800 text-lg mb-3 flex items-center gap-2"><i class="ph-fill ph-plus-circle"></i> Parte Extra: Tero Subtitler</h3>
+                                
+                                <p class="text-gray-700 mb-4 text-sm">
+                                    Es posible usar glosarios y memorias de traducción en Tero Subtitler, aunque su desarrollo e implementación no es tan intuitivo como en herramientas TAO de pago como Trados Studio con el plugin "Studio Subtitling".
+                                </p>
+
+                                <div class="activity-steps">
+                                    <ul class="space-y-3">
+                                        <li class="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                            <p class="font-bold text-purple-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-eye"></i> Tero Subtitler</p>
+                                            <label class="flex items-start task-label">
+                                                <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                                <span class="task-text text-gray-700 font-semibold">Repaso rápido a las características de glosario y memoria de traducción en Tero Subtitler.</span>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 11: Actividad 5 -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-rocket-launch"></i> Actividad 5: El triple salto mortal con Comet</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        
+                        <!-- MOTIVACIÓN -->
+                        <div class="flex flex-col items-center mb-8 text-center bg-pink-50 p-6 rounded-xl border border-pink-100">
+                            <p class="font-bold text-[#E23B5D] text-xl mb-2">¡Ánimo!</p>
+                            <p class="text-gray-700 mb-4 text-lg">Sé que está siendo duro. Solo por llegar hasta aquí ya te mereces un fuerte "pandabrazo".</p>
+                            <img src="https://i.pinimg.com/736x/4c/5b/44/4c5b4482b89e5732508a76f30c25ae17.jpg" alt="Panda abrazo" class="rounded-lg shadow-lg max-w-[280px] hover:scale-105 transition-transform duration-300">
+                        </div>
+
+                        <p class="text-lg">Ahora vamos con el <strong>triple salto mortal</strong>. Vamos a usar el navegador <strong>Comet</strong> en combinación con <strong>SubpandaTM</strong>.</p>
+                        
+                        <div class="warning-box mt-4">
+                            <i class="ph-bold ph-user-circle warning-icon"></i>
+                            <p class="warning-text">
+                                <strong>Requisito de cuenta:</strong> Ten presente que debes crearte una cuenta en Comet para poder lograr que el navegador interactúe con autonomía con la web app que tengas abierta.
+                            </p>
+                        </div>
+
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-film-strip"></i> Parte 1: Traducimos "The Thundermans"
+                        </h3>
+
+                        <div class="activity-steps">
+                            <ul class="space-y-3">
+                                <!-- Paso 1 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el navegador <strong>Comet</strong>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 2 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Ve a <a href="http://httrans.org" target="_blank" class="text-blue-600 underline hover:text-[#E23B5D] font-medium">httrans.org</a> y abre <strong>SubpandaTM</strong>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 3 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Carga el archivo de vídeo <code class="bg-gray-100 p-1 rounded text-sm font-mono">Thunderman-T1-EP7-EN</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 4 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Importa los subtítulos <code class="bg-gray-100 p-1 rounded text-sm font-mono">Thunderman-T1-EP7-EN.srt</code>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 5 -->
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Empieza a traducir con normalidad.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 6: El problema -->
+                                <li class="bg-red-50 p-3 rounded-lg border border-red-200">
+                                    <p class="font-bold text-red-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-bug"></i> El problema: Subtítulo 15</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Echa un vistazo al subtítulo 15. Verás que hay un término de difícil traducción: <strong>"Ditch Day"</strong>.</span>
+                                    </label>
+                                </li>
+                                <!-- Paso 7: La solución con Comet -->
+                                <li class="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+                                    <p class="font-bold text-indigo-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-magic-wand"></i> La solución con IA</p>
+                                    <label class="flex items-start task-label mb-3">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el asistente de Comet pulsando el atajo <code class="bg-indigo-100 p-1 rounded text-sm font-mono text-indigo-800">Alt+A</code> para hacerle preguntas e intenta resolver el problema.</span>
+                                    </label>
+                                    
+                                    <div class="mt-2 bg-white p-3 rounded border border-indigo-100">
+                                        <p class="text-sm font-bold text-indigo-900 mb-2">Desafío: Intenta hacer tu propio prompt primero.</p>
+                                        <p class="text-sm text-gray-600 mb-2">Si necesitas ayuda, aquí tienes una sugerencia:</p>
+                                        
+                                        <!-- Caja del Prompt con botón de copiar -->
+                                        <div class="bg-gray-50 p-3 rounded text-sm font-mono text-gray-600 border border-gray-200 italic relative group">
+                                            <span id="prompt-comet">"Estoy traduciendo a español los subtítulos en inglés que he importado a esta aplicación web. En el subtítulo 15 me he encontrado con un problema de traducción. Dime qué significa 'Ditch Day' y de qué manera podría traducirlo a español de España o a español de Argentina. Justifica tus propuestas."</span>
+                                            
+                                            <!-- Botón Copiar -->
+                                            <button onclick="copyToClipboard('prompt-comet', this)" class="absolute top-2 right-2 p-1.5 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100 text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar prompt al portapapeles">
+                                                <i class="ph-bold ph-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- NUEVA PARTE 2: Búsquedas simultáneas -->
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-magnifying-glass"></i> Parte 2: Superbúsquedas simultáneas
+                        </h3>
+
+                        <p class="text-gray-700 mb-4">
+                            Puedes usar el asistente de IA para hacer búsquedas simultáneas en varios recursos o diccionarios al mismo tiempo, lo que da un ahorro de tiempo considerable.
+                        </p>
+
+                        <div class="warning-box">
+                            <i class="ph-bold ph-check-circle warning-icon"></i>
+                            <p class="warning-text">
+                                <strong>Verificación:</strong> Por supuesto, siempre hay que verificar que la información que nos arroja es correcta. Para eso, es recomendable abrir en una pestaña nueva el enlace que aparece en la etiqueta final de cada definición.
+                            </p>
+                        </div>
+
+                        <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 mt-4">
+                            <p class="font-bold text-indigo-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-chat-text"></i> Prompt para configurar el asistente</p>
+                            <p class="text-sm text-gray-600 mb-3">Copia y pega este prompt en Comet para que actúe como tu multibuscador personal:</p>
+                            
+                            <!-- Caja del Prompt 2 con botón de copiar -->
+                            <div class="bg-white p-3 rounded text-sm font-mono text-gray-600 border border-gray-200 italic relative group shadow-sm">
+                                <span id="prompt-diccionarios">"Busca cualquier palabra o expresión que te ponga en adelante en los diccionarios Merriam Webster, Collins Inglés-Español, WordReference Inglés-Español y Diccionario de la RAE. En el caso del diccionario Merriam Webster, dame la definición completa del término en cuestión. En el caso del diccionario de la RAE, dame las definiciones de tus propuestas de traducción en español. Usa otros diccionarios si no encuentras resultados en los anteriores."</span>
+                                
+                                <!-- Botón Copiar -->
+                                <button onclick="copyToClipboard('prompt-diccionarios', this)" class="absolute top-2 right-2 p-1.5 bg-gray-50 border border-gray-300 rounded shadow-sm hover:bg-white text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar prompt al portapapeles">
+                                    <i class="ph-bold ph-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Nueva tarea tachable -->
+                        <div class="activity-steps mt-5">
+                            <ul class="space-y-3">
+                                <li class="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700"><strong>Tarea práctica:</strong> Prueba el prompt buscando la palabra <strong>"Nerd"</strong> y analiza los resultados simultáneos.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 12: Actividad 6 (NUEVA) -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-magic-wand"></i> Actividad 6: Usando IA para crear tus propios recursos</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>En esta actividad final, vamos a llevar a cabo una extracción terminológica de una memoria de traducción para crear un glosario y aprenderemos a crear una memoria de traducción alineando textos con la ayuda de la IA.</p>
+
+                        <!-- Parte 0: Preparación -->
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-6 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-number-circle-zero"></i> Preparación
+                        </h3>
+                        
+                        <div class="activity-steps">
+                            <ul class="space-y-3">
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre la carpeta <strong>"Creación de recursos con IA"</strong>.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre Comet y accede a <a href="http://httrans.org" target="_blank" class="text-blue-600 underline hover:text-[#E23B5D] font-medium">httrans.org</a>.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Parte 1: Creación del glosario -->
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-number-circle-one"></i> Creación del glosario con IA
+                        </h3>
+                        <p class="text-gray-700 mb-4">Vamos a extraer términos de una memoria antigua para crear un glosario nuevo.</p>
+
+                        <div class="activity-steps mb-6">
+                            <ul class="space-y-3">
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre <strong>Pandaterm</strong> en Comet.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el asistente de IA (Comet).</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre la memoria <code class="bg-gray-100 p-1 rounded text-sm font-mono">TM Easy homemade bread.tmx</code> de la carpeta "Reference files" con el bloc de notas y copia todo el código.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- PROMPT 1: Extracción -->
+                        <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 mt-4">
+                            <p class="font-bold text-indigo-700 mb-2 text-sm uppercase tracking-wide">Consulta 1: Extracción</p>
+                            <div class="bg-white p-3 rounded text-sm font-mono text-gray-600 border border-gray-200 italic relative group shadow-sm">
+                                <span id="prompt-act6-1">"Haz una extracción terminológica del contenido de la memoria de traducción TMX que te adjunto abajo para crear un glosario con los términos que te parezcan más relevantes para traducir una receta de pan similar a la de la memoria. Crea un glosario de inglés a español con todos los términos que extraigas.
+
+Este es el código de la memoria TMX:
+[PEGA AQUÍ EL CÓDIGO DEL TMX]"</span>
+                                <button onclick="copyToClipboard('prompt-act6-1', this)" class="absolute top-2 right-2 p-1.5 bg-gray-50 border border-gray-300 rounded shadow-sm hover:bg-white text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar prompt">
+                                    <i class="ph-bold ph-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="text-gray-700 mt-6 mb-2">Ahora, pidámosle que formatee esos términos para Pandaterm:</p>
+
+                        <!-- PROMPT 2: Formato TBX -->
+                        <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                            <p class="font-bold text-indigo-700 mb-2 text-sm uppercase tracking-wide">Consulta 2: Formato TBX</p>
+                            <div class="bg-white p-3 rounded text-sm font-mono text-gray-600 border border-gray-200 italic relative group shadow-sm">
+                                <span id="prompt-act6-2">"Crea un glosario TBX de inglés a español con todos los términos que has extraído. Genera el código completo de ese TBX tomando de referencia el siguiente código:
+
+[PEGA AQUÍ UN CÓDIGO DE EJEMPLO DE UN TBX DE PANDATERM]"</span>
+                                <button onclick="copyToClipboard('prompt-act6-2', this)" class="absolute top-2 right-2 p-1.5 bg-gray-50 border border-gray-300 rounded shadow-sm hover:bg-white text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar prompt">
+                                    <i class="ph-bold ph-copy"></i>
+                                </button>
+                            </div>
+
+                            <!-- Ayuda Código TBX -->
+                            <details class="mt-4 bg-white border border-indigo-100 rounded-lg">
+                                <summary class="p-3 text-indigo-600 font-semibold cursor-pointer hover:bg-indigo-50 flex items-center gap-2 select-none">
+                                    <i class="ph-bold ph-code"></i> ¿Necesitas el código TBX de ejemplo?
+                                </summary>
+                                <div class="p-3 border-t border-indigo-100 bg-gray-50 relative group">
+                                    <pre id="code-tbx-example" class="text-xs font-mono text-gray-600 overflow-x-auto whitespace-pre-wrap">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;martif type="TBX" xml:lang="en-US"&gt;
+  &lt;text&gt;
+    &lt;body&gt;
+      &lt;termEntry&gt;
+        &lt;LangSet xml:lang="en-US"&gt;
+          &lt;tig&gt;&lt;term&gt;flour&lt;/term&gt;&lt;/tig&gt;
+        &lt;/LangSet&gt;
+        &lt;LangSet xml:lang="es-ES"&gt;
+          &lt;tig&gt;&lt;term&gt;harina&lt;/term&gt;&lt;/tig&gt;
+        &lt;/LangSet&gt;
+      &lt;/termEntry&gt;
+      &lt;termEntry&gt;
+        &lt;LangSet xml:lang="en-US"&gt;
+          &lt;tig&gt;&lt;term&gt;water&lt;/term&gt;&lt;/tig&gt;
+        &lt;/LangSet&gt;
+        &lt;LangSet xml:lang="es-ES"&gt;
+          &lt;tig&gt;&lt;term&gt;agua&lt;/term&gt;&lt;/tig&gt;
+        &lt;/LangSet&gt;
+      &lt;/termEntry&gt;
+    &lt;/body&gt;
+  &lt;/text&gt;
+&lt;/martif&gt;</pre>
+                                    <button onclick="copyToClipboard('code-tbx-example', this)" class="absolute top-2 right-2 p-1.5 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100 text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar código">
+                                        <i class="ph-bold ph-copy"></i>
+                                    </button>
+                                </div>
+                            </details>
+                        </div>
+
+                        <div class="info-box mt-4">
+                            <i class="ph-fill ph-lightbulb info-icon"></i>
+                            <div class="info-text">
+                                <p><strong>Alternativa:</strong> Puedes copiar el código que te devuelva la IA en un bloc de notas, guardarlo como <code>.txt</code> y cambiar la extensión a <code>.tbx</code>. Luego impórtalo en Pandaterm.</p>
+                            </div>
+                        </div>
+
+                        <!-- Parte 2: Creación de memoria -->
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-number-circle-two"></i> Creación de una memoria con IA
+                        </h3>
+                        <p class="text-gray-700 mb-4">Vamos a alinear dos archivos (original y traducción) para crear una memoria TMX nueva.</p>
+
+                        <div class="activity-steps mb-6">
+                            <ul class="space-y-3">
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Localiza <code class="bg-gray-100 p-1 rounded text-sm font-mono">Receta EN</code> y <code class="bg-gray-100 p-1 rounded text-sm font-mono">Receta ES</code> en Reference Files.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre <strong>Pandoria</strong>, crea una memoria vacía, descárgala y ábrela con el bloc de notas para tener el código de referencia.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Pide a la IA que cree la memoria con la siguiente consulta:</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- PROMPT 3: Alineación TMX -->
+                        <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                            <p class="font-bold text-indigo-700 mb-2 text-sm uppercase tracking-wide">Consulta 3: Alineación</p>
+                            <div class="bg-white p-3 rounded text-sm font-mono text-gray-600 border border-gray-200 italic relative group shadow-sm">
+                                <span id="prompt-act6-3">"Crea el código completo de una memoria de traducción TMX de inglés a español. Alinea los textos de los archivos Receta EN y Receta ES que te adjunto. El código que generes debe seguir la estructura del siguiente ejemplo:
+
+[PEGA AQUÍ EL CÓDIGO TMX DE EJEMPLO DE PANDORIA]
+[ADJUNTA O PEGA EL TEXTO DE RECETA EN Y RECETA ES]"</span>
+                                <button onclick="copyToClipboard('prompt-act6-3', this)" class="absolute top-2 right-2 p-1.5 bg-gray-50 border border-gray-300 rounded shadow-sm hover:bg-white text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar prompt">
+                                    <i class="ph-bold ph-copy"></i>
+                                </button>
+                            </div>
+
+                            <!-- Ayuda Código TMX -->
+                            <details class="mt-4 bg-white border border-indigo-100 rounded-lg">
+                                <summary class="p-3 text-indigo-600 font-semibold cursor-pointer hover:bg-indigo-50 flex items-center gap-2 select-none">
+                                    <i class="ph-bold ph-code"></i> ¿Necesitas el código TMX de ejemplo?
+                                </summary>
+                                <div class="p-3 border-t border-indigo-100 bg-gray-50 relative group">
+                                    <pre id="code-tmx-example" class="text-xs font-mono text-gray-600 overflow-x-auto whitespace-pre-wrap">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;tmx version="1.4"&gt;
+  &lt;header creationtool="Pandoria" adminlang="en" srclang="en-US" datatype="plaintext"/&gt;
+  &lt;body&gt;
+    &lt;tu&gt;
+      &lt;tuv xml:lang="en-US"&gt;&lt;seg&gt;How are you?&lt;/seg&gt;&lt;/tuv&gt;
+      &lt;tuv xml:lang="es-ES"&gt;&lt;seg&gt;¿Cómo estás?&lt;/seg&gt;&lt;/tuv&gt;
+    &lt;/tu&gt;
+    &lt;tu&gt;
+      &lt;tuv xml:lang="en-US"&gt;&lt;seg&gt;This is a test.&lt;/seg&gt;&lt;/tuv&gt;
+      &lt;tuv xml:lang="es-ES"&gt;&lt;seg&gt;Esto es una prueba.&lt;/seg&gt;&lt;/tuv&gt;
+    &lt;/tu&gt;
+  &lt;/body&gt;
+&lt;/tmx&gt;</pre>
+                                    <button onclick="copyToClipboard('code-tmx-example', this)" class="absolute top-2 right-2 p-1.5 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100 text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar código">
+                                        <i class="ph-bold ph-copy"></i>
+                                    </button>
+                                </div>
+                            </details>
+                        </div>
+
+                        <div class="activity-steps mt-6">
+                            <ul class="space-y-3">
+                                <li class="bg-gray-100 p-3 rounded-lg border border-gray-300">
+                                    <p class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="ph-fill ph-check-circle"></i> Creación de la memoria</p>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Copia el código resultante e impórtalo en <strong>Pandoria</strong> usando "Importar código".</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Parte 3: Puesta en práctica (NUEVO) -->
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-number-circle-three"></i> Puesta en práctica
+                        </h3>
+
+                        <div class="activity-steps">
+                            <ul class="space-y-3">
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre <strong>SubpandaTM</strong> y abre el vídeo y los subtítulos de la receta de pan de Jamie Oliver.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Importa el glosario TBX y la memoria TMX que has generado en los pasos anteriores.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Mensaje Final -->
+                        <div class="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl text-center shadow-sm">
+                            <i class="ph-fill ph-trophy text-4xl text-green-500 mb-2"></i>
+                            <p class="text-green-800 font-bold text-xl mb-1">¡Enhorabuena!</p>
+                            <p class="text-green-700">Aunque ha sido duro, has creado tu propio entorno de subtitulación aumentada.</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACORDEÓN 13: Actividad 7 (NUEVA) -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title"><i class="ph-fill ph-diamond"></i> Actividad 7: Creación de Gems personalizados</span>
+                    <i class="ph-bold ph-caret-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        <p>En esta actividad vamos a explorar los <strong>Gems de Gemini</strong>, una funcionalidad que nos permite crear versiones personalizadas de la IA con instrucciones y conocimientos específicos.</p>
+                        
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-6 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-share-network"></i> Compartir es vivir: Gem de revisión Netflix
+                        </h3>
+
+                        <p>He creado un espacio personalizado (un Gem) preconfigurado con la guía de estilos de Netflix. Este asistente está entrenado específicamente para revisar archivos de subtítulos y comprobar si cumplen con las pautas oficiales, lo que te permitirá ahorrar mucho tiempo en las revisiones.</p>
+                        
+                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200 flex flex-col sm:flex-row gap-4 items-center justify-between mb-6 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-purple-100 p-3 rounded-full text-purple-600">
+                                    <i class="ph-fill ph-check-fat text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-purple-900">Gem de Revisión Netflix</h4>
+                                    <p class="text-sm text-purple-700">Asistente experto en pautas de subtitulación.</p>
+                                </div>
+                            </div>
+                            <a href="https://gemini.google.com/gem/1KwDCOKcmt_WFtvsEB8m57fji_BH03OF4?usp=sharing" target="_blank" class="px-6 py-2 bg-purple-600 text-white rounded-full font-bold hover:bg-purple-700 transition shadow-md text-sm whitespace-nowrap flex items-center justify-center">
+                                Acceder al Gem <i class="ph-bold ph-arrow-square-out ml-2"></i>
+                            </a>
+                        </div>
+
+                        <div class="warning-box">
+                            <i class="ph-bold ph-user-circle warning-icon"></i>
+                            <p class="warning-text">
+                                <strong>Requisito:</strong> Para poder usar este Gem (y crear los tuyos propios), necesitas tener una cuenta de Google Gemini. Puedes crearla en pocos pasos en <a href="https://gemini.google.com" target="_blank" class="underline hover:text-[#E23B5D]">gemini.google.com</a>.
+                            </p>
+                        </div>
+
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-wrench"></i> Cómo crear tu propio Gem
+                        </h3>
+                        
+                        <p>Tú también puedes crear tus propios asistentes personalizados. En mi caso, para crear el Gem anterior, he seguido estos pasos:</p>
+
+                        <div class="activity-steps">
+                            <ul class="space-y-3">
+                                <li>
+                                    <div class="flex items-start gap-3 p-2 rounded hover:bg-gray-50 transition">
+                                        <span class="bg-gray-200 text-gray-700 font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-sm mt-0.5">1</span>
+                                        <span class="text-gray-700">He accedido al <strong>Gestor de Gems</strong> en Gemini.</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex items-start gap-3 p-2 rounded hover:bg-gray-50 transition">
+                                        <span class="bg-gray-200 text-gray-700 font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-sm mt-0.5">2</span>
+                                        <span class="text-gray-700">He subido la <strong>Guía de Netflix en PDF</strong> (disponible en los materiales del taller) como base de conocimiento.</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex items-start gap-3 p-2 rounded hover:bg-gray-50 transition">
+                                        <span class="bg-gray-200 text-gray-700 font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-sm mt-0.5">3</span>
+                                        <span class="text-gray-700">He redactado un <strong>prompt de sistema</strong> (instrucciones) específico para definir su comportamiento:</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 mt-4">
+                            <p class="font-bold text-indigo-700 mb-2 text-sm uppercase tracking-wide">Prompt del sistema</p>
+                            <div class="bg-white p-3 rounded text-sm font-mono text-gray-600 border border-gray-200 italic relative group shadow-sm">
+                                <span id="prompt-gem">"Revisa los archivos de subtítulos SRT que suba y comprueba si reúnen todos los requisitos y pautas que vienen especificados en la guía de pautas de Netflix en PDF que te adjunto."</span>
+                                <button onclick="copyToClipboard('prompt-gem', this)" class="absolute top-2 right-2 p-1.5 bg-gray-50 border border-gray-300 rounded shadow-sm hover:bg-white text-gray-500 hover:text-[#E23B5D] transition-all" title="Copiar prompt">
+                                    <i class="ph-bold ph-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-start gap-3">
+                            <i class="ph-fill ph-lightbulb text-xl mt-0.5"></i> 
+                            <span><strong>Idea:</strong> Puedes crear Gems para guías de estilo de clientes específicos, para comprobar terminología de una franquicia o para adaptar textos a una variedad dialectal concreta.</span>
+                        </div>
+
+                        <!-- NUEVO BLOQUE: Práctica final y QA -->
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 mt-8 flex items-center gap-2 border-b pb-2">
+                            <i class="ph-fill ph-check-square-offset"></i> Práctica final: Revisión con IA vs. QA Tradicional
+                        </h3>
+
+                        <div class="activity-steps">
+                            <ul class="space-y-3">
+                                <li class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700"><strong>Tarea con el Gem:</strong> Haz una revisión de los subtítulos sin revisar del anuncio de kétchup de Ed Sheeran. Para ello, sube al chat del Gem el archivo <code class="bg-gray-200 p-0.5 rounded text-xs font-mono">Ed's Heinz Ad (sin revisar)</code> y fíjate en los errores que ha detectado.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Aprendizaje del proceso -->
+                        <div class="context-box">
+                            <i class="ph-fill ph-student context-icon"></i>
+                            <div class="context-text">
+                                <p class="font-bold mb-1">Aprendizaje de este proceso:</p>
+                                <p>Usar una solución como esta para revisar es comparable a usar el corrector ortográfico. Puedes añadir una capa de revisión más a tu proceso en donde pases tus archivos SRT por este Gem; es posible que en algunas ocasiones te sirva para detectar errores que se te hayan podido escapar.</p>
+                                <p class="mt-2"><strong>No obstante, no olvides que este proceso no es perfecto.</strong> Gemini y otras IAs no van a detectar todos los errores, y tampoco te van a proponer siempre las mejores soluciones para resolverlos. El criterio humano sigue siendo indispensable.</p>
+                            </div>
+                        </div>
+
+                        <h4 class="font-bold text-gray-700 mt-6 mb-3 flex items-center gap-2">
+                            <i class="ph-fill ph-sliders-horizontal"></i> Alternativa tradicional: SubpandaQA
+                        </h4>
+                        
+                        <p class="text-gray-700 mb-3 text-sm">Si prefieres usar filtros de detección de errores de una manera más tradicional (basada en reglas fijas y no en IA), echa un vistazo al <strong>SubpandaQA</strong>.</p>
+
+                        <div class="activity-steps">
+                            <ul class="space-y-3">
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Accede a <a href="http://httrans.org" target="_blank" class="text-blue-600 underline hover:text-[#E23B5D] font-medium">httrans.org</a> y abre <strong>SubpandaQA</strong>.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Abre el archivo SRT del anuncio de kétchup sin revisar.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Configura los filtros según tus criterios.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Echa un vistazo a los resultados en pantalla.</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="flex items-start task-label">
+                                        <input type="checkbox" class="task-checkbox bg-gray-100 border-gray-300 focus:ring-2 focus:ring-[#E23B5D]">
+                                        <span class="task-text text-gray-700">Genera un informe en HTML para ver el reporte detallado.</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- DESPEDIDA FINAL -->
+                        <div class="mt-10 mb-4 flex flex-col items-center text-center pt-8 border-t-2 border-dashed border-gray-200">
+                            <h2 class="text-2xl font-black text-[#E23B5D] mb-4">¡GRACIAS POR HABER LLEGADO HASTA EL FINAL!</h2>
+                            <p class="text-gray-700 text-lg max-w-2xl mb-6">
+                                Con todo lo que has aprendido, espero que te sientas un subtitulador con más recursos a nivel técnico, capaz de integrar la IA no como un sustituto, sino como un superpoder.
+                            </p>
+                            <p class="font-bold text-gray-800 text-xl mb-6">¡Ahí va un pandabrazo bien grande! 🐼❤️</p>
+                            
+                            <img src="https://i.pinimg.com/474x/58/50/db/5850db53fc775aaca83656e8160fcede.jpg" alt="Pandabrazo final" class="rounded-xl shadow-xl border-4 border-white transform hover:scale-105 transition-transform duration-500 max-w-[300px]">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <div style="text-align: center; font-size: 0.85rem; color: #718096; margin-top: 1rem;">
+            &copy; 2025 Rafael López Sánchez - Taller de Subtitulación
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Función para copiar al portapapeles (Global para que funcione el onclick inline)
+        window.copyToClipboard = function(elementId, buttonElement) {
+            const textElement = document.getElementById(elementId);
+            if (!textElement) return;
+            
+            // Obtenemos el texto y quitamos las comillas del principio y final si existen
+            const text = textElement.innerText.trim().replace(/^"|"$/g, ''); 
+
+            // Creamos un elemento textarea temporal para copiar (método robusto para iframes)
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; 
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                
+                // Feedback visual en el botón (cambiar icono a check)
+                const icon = buttonElement.querySelector('i');
+                if (icon) {
+                    const originalClass = icon.className;
+                    // Cambiamos a icono de check verde
+                    icon.className = "ph-bold ph-check text-green-600";
+                    
+                    // Restauramos el icono original después de 2 segundos
+                    setTimeout(() => {
+                        icon.className = originalClass;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Error al copiar: ', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Lógica de acordeón
+            const accordions = document.querySelectorAll('.accordion-header');
+
+            accordions.forEach(acc => {
+                acc.addEventListener('click', function() {
+                    const item = this.parentElement;
+                    const content = this.nextElementSibling;
+                    
+                    // Cierra todos los demás acordeones
+                    document.querySelectorAll('.accordion-item').forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.classList.remove('active');
+                            otherItem.querySelector('.accordion-content').style.maxHeight = null;
+                        }
+                    });
+
+                    item.classList.toggle('active');
+
+                    if (item.classList.contains('active')) {
+                        // Calcula la altura dinámica del contenido
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    } else {
+                        content.style.maxHeight = null;
+                    }
+                });
+            });
+
+            // Función para reajustar la altura en caso de cambio de tamaño de la ventana
+            const adjustAccordionHeights = () => {
+                document.querySelectorAll('.accordion-item.active .accordion-content').forEach(content => {
+                    // Primero resetear la altura para recalcular scrollHeight
+                    content.style.maxHeight = 'none'; 
+                    content.style.maxHeight = content.scrollHeight + "px";
+                });
+            };
+
+            window.addEventListener('resize', adjustAccordionHeights);
+            
+            // Abrir el último acordeón (Actividad 4) por defecto
+            const allAccordionItems = document.querySelectorAll('.accordion-item');
+            const lastAccordion = allAccordionItems[allAccordionItems.length - 1];
+            
+            // Cerrar el acordeón que se abrió por defecto en el HTML (Actividad 1)
+            const defaultOpenAccordion = document.querySelector('.accordion-item.active:not(:last-child)');
+            if (defaultOpenAccordion) {
+                defaultOpenAccordion.classList.remove('active');
+                defaultOpenAccordion.querySelector('.accordion-content').style.maxHeight = null;
+            }
+
+            if (lastAccordion) {
+                lastAccordion.classList.add('active');
+                const lastContent = lastAccordion.querySelector('.accordion-content');
+                if (lastContent) {
+                    setTimeout(() => {
+                        // Asegurar que se calcule la altura correctamente después de la renderización
+                        lastContent.style.maxHeight = lastContent.scrollHeight + "px";
+                    }, 50);
+                }
+            }
+            
+            // Lógica de Checkbox para sombreado/apagado
+            const checkboxes = document.querySelectorAll('.task-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                // Función para aplicar/quitar el estilo
+                const toggleDoneStyle = (input) => {
+                    // Busca el label padre que contiene el texto de la tarea
+                    let label = input.closest('.task-label');
+                    if (label) {
+                        if (input.checked) {
+                            // Añadir la clase 'task-done' al label para aplicar estilos al texto
+                            label.classList.add('task-done');
+                        } else {
+                            label.classList.remove('task-done');
+                        }
+                    }
+                };
+                
+                // Inicializar el estilo al cargar (en caso de que estuviera ya marcado)
+                toggleDoneStyle(checkbox);
+
+                // Agregar el listener para cambios
+                checkbox.addEventListener('change', (event) => {
+                    toggleDoneStyle(event.target);
+                });
+            });
+
+            // Lógica para que el checkbox 'hidden' del método preciso también funcione (Actividad 1)
+            const preciseMethodContainer = document.querySelector('.bg-green-50');
+            if (preciseMethodContainer) {
+                const hiddenCheckbox = preciseMethodContainer.querySelector('input[type="checkbox"].hidden');
+                const visibleCheckbox = preciseMethodContainer.querySelector('input[type="checkbox"]:not(.hidden)');
+                
+                if (hiddenCheckbox && visibleCheckbox) {
+                    // Si el usuario marca el checkbox visible, también marca el hidden (y viceversa)
+                    visibleCheckbox.addEventListener('change', () => {
+                        hiddenCheckbox.checked = visibleCheckbox.checked;
+                        // Forzar el estilo en los span, ya que el hidden checkbox no está atado a un span específico
+                        const taskTextSpans = preciseMethodContainer.querySelectorAll('.task-text');
+                        if (visibleCheckbox.checked) {
+                            taskTextSpans.forEach(span => {
+                                span.closest('.task-label').classList.add('task-done');
+                            });
+                        } else {
+                            taskTextSpans.forEach(span => {
+                                span.closest('.task-label').classList.remove('task-done');
+                            });
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
