@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">subpandaTM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Importante: activa el modo oscuro por clases
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -954,6 +959,173 @@ video::-ms-fullscreen-button {
 
 /* --- FIN: AÑADIR ESTE BLOQUE DE CSS --- */
 
+/* --- ESTILOS MODO OSCURO --- */
+        
+        /* Fondo base y texto */
+        html.dark body {
+            background-color: #111827; /* Gris muy oscuro */
+            color: #e5e7eb; /* Texto claro */
+        }
+
+        /* Paneles, Modales y Tarjetas */
+        html.dark .bg-white, 
+        html.dark .modal-content, 
+        html.dark .floating-panel,
+        html.dark .translation-unit-active,
+        html.dark .subtitle-editor {
+            background-color: #1f2937 !important; /* Gris oscuro panel */
+            color: #e5e7eb !important;
+            border-color: #374151 !important;
+        }
+
+        /* Inputs y Textareas */
+        html.dark input, 
+        html.dark select, 
+        html.dark textarea,
+        html.dark .subtitle-display-code {
+            background-color: #374151 !important;
+            color: #fff !important;
+            border-color: #4b5563 !important;
+        }
+
+        /* Headers y Fondos claros */
+        html.dark .app-header,
+        html.dark .bg-gray-50,
+        html.dark .bg-gray-100 {
+            background-color: #111827 !important;
+            color: #e5e7eb !important;
+            border-color: #374151 !important;
+        }
+
+        /* Textos oscuros forzados a claro */
+        html.dark .text-gray-700,
+        html.dark .text-gray-900,
+        html.dark .text-black {
+            color: #d1d5db !important;
+        }
+
+        /* Hover en menús */
+        html.dark .hover\:bg-gray-100:hover {
+            background-color: #374151 !important;
+        }
+
+        /* Botones secundarios */
+        html.dark .btn-secondary {
+            background-color: #374151;
+            color: #e5e7eb;
+            border-color: #4b5563;
+        }
+        html.dark .btn-secondary:hover:not(:disabled) {
+            background-color: #4b5563;
+        }
+        
+        /* Correcciones específicas */
+        html.dark .translation-unit-bg {
+            background-color: #1f2937; /* Fondo de la tarjeta de subtítulo */
+            border-color: #374151;
+        }
+        html.dark #statusBar {
+            background-color: #1f2937;
+            border-top-color: #374151;
+            color: #9ca3af;
+        }
+        html.dark .accordion-header {
+             background-color: #1f2937;
+             border-bottom-color: #374151;
+        }
+        html.dark .accordion-header:hover {
+             background-color: #374151;
+        }
+
+/* --- CORRECCIONES ADICIONALES MODO OSCURO --- */
+
+        /* Encabezados de los paneles laterales (Terminología, TM, etc.) */
+        html.dark .sidebar-header {
+            background-color: #1f2937 !important; /* Mismo gris que el panel */
+            border-bottom-color: #374151 !important; /* Borde sutil */
+            color: #e5e7eb !important;
+        }
+
+        /* Cajas de información (Info Boxes) de glosarios y TM */
+        html.dark .glossary-info-box, 
+        html.dark .tm-info-box,
+        html.dark .bg-blue-50, /* Cajas de aviso azules */
+        html.dark .bg-gray-100 { /* Cajas de estadísticas */
+            background-color: #374151 !important; /* Un gris un poco más claro para destacar */
+            border-color: #4b5563 !important;
+            color: #d1d5db !important;
+        }
+
+        /* Corrección para textos azules dentro de las cajas oscuras (para que se lean bien) */
+        html.dark .text-blue-700,
+        html.dark .text-blue-800 {
+            color: #93c5fd !important; /* Azul claro legible */
+        }
+        
+        /* Botones de cerrar (X) y restaurar en los paneles */
+        html.dark .sidebar-header button {
+            color: #9ca3af !important;
+        }
+        html.dark .sidebar-header button:hover {
+            color: #fff !important;
+        }
+
+        /* --- AJUSTES FINALES DE COLORES EN MODO OSCURO --- */
+
+        /* 1. Resizer Horizontal (Barra separadora) */
+        html.dark #horizontal-resizer {
+            background-color: #020617 !important; /* Casi negro */
+            border-left-color: #1f2937 !important;
+            border-right-color: #1f2937 !important;
+        }
+        html.dark #horizontal-resizer:hover {
+            background-color: #374151 !important; /* Gris oscuro al pasar el ratón */
+        }
+        
+        /* 2. Memoria de Traducción (TM): Diferencias */
+        /* Inserciones (Verde) */
+        html.dark .diff-insertion {
+            background-color: #064e3b !important; /* Verde botella oscuro */
+            color: #ecfccb !important; /* Texto verde muy claro para contraste */
+            border: 1px solid #065f46; /* Borde sutil */
+        }
+        /* Eliminaciones (Rojo) */
+        html.dark .diff-deletion {
+            background-color: #450a0a !important; /* Rojo sangre oscuro */
+            color: #fecaca !important; /* Texto rojo muy claro */
+            text-decoration-color: #f87171 !important; /* Color de la línea de tachado */
+        }
+        /* Fila de "Mejor coincidencia" (Best Match) */
+        html.dark .tm-best-match-highlight {
+            background-color: rgba(6, 78, 59, 0.3) !important; /* Verde oscuro transparente */
+            border-color: #065f46 !important;
+            box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.3) !important;
+        }
+
+        /* 3. Glosario: Resaltados (Amarillo) */
+        /* Término resaltado dentro del texto original */
+        html.dark .glossary-highlight {
+            background-color: #713f12 !important; /* Ocre/Dorado oscuro */
+            color: #fef08a !important; /* Amarillo pálido para el texto */
+            border: 1px solid #854d0e;
+        }
+        /* Fila resaltada en la tabla lateral */
+        html.dark .glossary-row-highlight {
+            background-color: rgba(113, 63, 18, 0.4) !important; /* Marrón dorado semitransparente */
+        }
+
+/* Fondo principal de la aplicación */
+        /* Lo oscurecemos casi hasta el negro para mejorar el contraste con las tarjetas */
+        html.dark .main-app-content {
+            background-color: #0b121a !important; /* Tono "Slate 950", muy cercano al negro */
+        }
+        /* Etiqueta de coincidencia de glosario (encima del subtítulo) */
+        /* Cambiamos el amarillo brillante por un ocre oscuro legible */
+        html.dark span[id^="glossary-match-"] {
+            background-color: #713f12 !important; /* Marrón/Dorado oscuro */
+            color: #fef08a !important; /* Texto amarillo pálido */
+            border: 1px solid #854d0e !important; /* Borde sutil para definición */
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -1059,7 +1231,12 @@ video::-ms-fullscreen-button {
                 <span data-i18n="tm_btn">Memoria de traducción</span>
             </button>
         </div>
-        <div class="header-lang-switcher">
+        <div class="header-lang-switcher flex items-center gap-2">
+            <button id="themeToggleBtn" class="btn btn-secondary p-2" title="Cambiar tema">
+                <svg id="icon-moon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                <svg id="icon-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </button>
+            <div class="h-6 w-px bg-gray-300 mx-1"></div>
             <button id="lang-es" class="btn btn-lang active">ES</button>
             <button id="lang-en" class="btn btn-lang">EN</button>
         </div>
@@ -7830,7 +8007,7 @@ contextPasteArea.addEventListener('input', validateJsonInTextarea);
                 });
             }
             // ---------------------------------------------------------------------
-            
+
         // Funciones para mostrar los modales de confirmación
         function showConfirmResetGlossary() {
             if (glossary.length === 0) {
@@ -8057,6 +8234,40 @@ document.addEventListener('keydown', (event) => {
 followPlaybackBtn.title = translations[currentLanguage]['follow_playback_on'];
     });
    
+
+// --- Lógica del Modo Oscuro ---
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const iconMoon = document.getElementById('icon-moon');
+            const iconSun = document.getElementById('icon-sun');
+            const htmlElement = document.documentElement;
+
+            // 1. Revisar preferencia guardada
+            if (localStorage.getItem('theme') === 'dark' || 
+               (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                htmlElement.classList.add('dark');
+                iconMoon.classList.add('hidden');
+                iconSun.classList.remove('hidden');
+            } else {
+                htmlElement.classList.remove('dark');
+                iconMoon.classList.remove('hidden');
+                iconSun.classList.add('hidden');
+            }
+
+            // 2. Acción del botón
+            themeToggleBtn.addEventListener('click', () => {
+                if (htmlElement.classList.contains('dark')) {
+                    htmlElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                    iconMoon.classList.remove('hidden');
+                    iconSun.classList.add('hidden');
+                } else {
+                    htmlElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                    iconMoon.classList.add('hidden');
+                    iconSun.classList.remove('hidden');
+                }
+            });
+
 </script>
 <div id="statusBar"></div>
 </body>
