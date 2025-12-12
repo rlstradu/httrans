@@ -1232,7 +1232,7 @@ video::-ms-fullscreen-button {
                     <button onclick="loadTBX()" data-i18n="import_tbx" class="btn btn-secondary flex-1 text-sm">Importar TBX</button>
                     <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
                     <button onclick="downloadTBX()" data-i18n="download_tbx" class="btn btn-secondary flex-1 text-sm">Descargar TBX</button>
-                    <button onclick="showConfirmResetGlossary()" data-i18n="new_glossary" class="btn btn-secondary flex-1 text-sm">Nuevo glosario</button>
+                    <button id="newGlossaryBtn" data-i18n="new_glossary" class="btn btn-secondary flex-1 text-sm">Nuevo glosario</button>
                 </div>
                 <h4 class="text-md font-semibold mb-2" data-i18n="current_lang_title">Idiomas actuales del glosario</h4>
                 <div class="flex space-x-2 mb-4">
@@ -1320,7 +1320,7 @@ video::-ms-fullscreen-button {
 
             <div id="tmEditorSection" style="display:none;">
                 <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                    <button onclick="showConfirmResetTm()" data-i18n="new_tm" class="btn btn-secondary flex-1 text-sm">Nueva TM</button>
+                    <button id="newTmBtn" data-i18n="new_tm" class="btn btn-secondary flex-1 text-sm">Nueva TM</button>
                     <label for="tmFileInput" class="btn btn-secondary flex-1 text-sm text-center">
                         <span data-i18n="import_tmx">Importar TMX</span>
                         <input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
@@ -5107,14 +5107,21 @@ followPlaybackBtn.title = isFollowPlaybackActive ? t['follow_playback_off'] : t[
             glossary = [];
             glossarySourceLanguage = '';
             glossaryTargetLanguage = '';
+            
+            // Resetear valores de inputs
             if (configSrcLang) configSrcLang.value = 'en-US';
             if (configTgtLang) configTgtLang.value = 'es-ES';
             if (srcTermInput) srcTermInput.value = "";
             if (tgtTermInput) tgtTermInput.value = "";
             if (searchTermInput) searchTermInput.value = "";
+
+            // FORZAR el cambio de vista: Mostrar configuración, Ocultar editor
             if (terminologyLanguageConfigSection && terminologyEditorSection) {
                 terminologyLanguageConfigSection.style.display = 'block';
+                terminologyLanguageConfigSection.classList.remove('hidden'); // Asegurar visibilidad
+                
                 terminologyEditorSection.style.display = 'none';
+                terminologyEditorSection.classList.add('hidden'); // Asegurar ocultamiento
             }
             renderGlossary();
         }
@@ -5569,10 +5576,24 @@ function exportTMX() {
 
         function resetTM() {
             translationMemory = [];
-            tmSearchInput.value = '';
+            tmSourceLanguage = ''; // Asegurar que se borra el idioma detectado
+            tmTargetLanguage = '';
+            
+            if (tmSearchInput) tmSearchInput.value = '';
             renderTMSearchResults([]);
-            showTMLanguageConfigSection();
-            hideTMInternalMessage(); // Hide the message on reset
+            
+            // FORZAR el cambio de vista: Mostrar configuración, Ocultar editor
+            if (tmLanguageConfigSection && tmEditorSection) {
+                tmLanguageConfigSection.style.display = 'block';
+                tmLanguageConfigSection.classList.remove('hidden');
+
+                tmEditorSection.style.display = 'none';
+                tmEditorSection.classList.add('hidden');
+                
+                if (tmConfigSrcLang) tmConfigSrcLang.value = 'en-US';
+                if (tmConfigTgtLang) tmConfigTgtLang.value = 'es-ES';
+                hideTMInternalMessage();
+            }
         }
 
         function showTMLanguageConfigSection() {
@@ -7767,25 +7788,49 @@ contextPasteArea.addEventListener('input', validateJsonInTextarea);
                 reselectVideoModal.classList.add('hidden');
             });
 
-            // Lógica para los modales de confirmación de reseteo
-            confirmResetGlossaryBtn.addEventListener('click', () => {
-                resetGlossary();
-                confirmResetGlossaryModal.classList.add('hidden');
-            });
+          // --- CORRECCIÓN: Lógica completa de modales y botones de Nuevo Glosario/TM ---
 
-            cancelResetGlossaryBtn.addEventListener('click', () => {
-                confirmResetGlossaryModal.classList.add('hidden');
-            });
+            // 1. Conectar botones de apertura (Nuevo Glosario / Nueva TM)
+            const newGlossaryBtn = document.getElementById('newGlossaryBtn');
+            if (newGlossaryBtn) {
+                newGlossaryBtn.addEventListener('click', showConfirmResetGlossary);
+            }
 
-            confirmResetTmBtn.addEventListener('click', () => {
-                resetTM();
-                confirmResetTmModal.classList.add('hidden');
-            });
+            const newTmBtn = document.getElementById('newTmBtn');
+            if (newTmBtn) {
+                newTmBtn.addEventListener('click', showConfirmResetTm);
+            }
 
-             cancelResetTmBtn.addEventListener('click', () => {
-                confirmResetTmModal.classList.add('hidden');
-            });
+            // 2. Conectar botones de "Continuar" en los modales (Acción de borrado)
+            // Usamos .onclick para garantizar que la función se ejecute sin duplicar listeners
+            if (confirmResetGlossaryBtn) {
+                confirmResetGlossaryBtn.onclick = function() {
+                    resetGlossary();
+                    confirmResetGlossaryModal.classList.add('hidden');
+                };
+            }
 
+            if (confirmResetTmBtn) {
+                confirmResetTmBtn.onclick = function() {
+                    resetTM();
+                    confirmResetTmModal.classList.add('hidden');
+                };
+            }
+
+            // 3. Conectar botones de "Cancelar"
+            if (cancelResetGlossaryBtn) {
+                cancelResetGlossaryBtn.addEventListener('click', () => {
+                    confirmResetGlossaryModal.classList.add('hidden');
+                });
+            }
+
+            if (cancelResetTmBtn) {
+                cancelResetTmBtn.addEventListener('click', () => {
+                    confirmResetTmModal.classList.add('hidden');
+                });
+            }
+            // ---------------------------------------------------------------------
+            
         // Funciones para mostrar los modales de confirmación
         function showConfirmResetGlossary() {
             if (glossary.length === 0) {
