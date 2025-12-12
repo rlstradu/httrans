@@ -1,6 +1,33 @@
 ========================================= 
+subpandaTM v1.1.6 - Dark Mode & Stability
+========================================= 
+
+Release Date: December 12, 2025 
+This version enhances visual comfort with a comprehensive Dark Mode and addresses critical stability issues within the Terminology and Translation Memory management workflows.
+
+New Features
+
+Native Dark Mode: A complete visual overhaul allowing users to switch between Light and Dark themes via a new toggle (Sun/Moon icon) in the header. The interface has been meticulously tuned for high readability in low-light environments.
+
+High-Contrast Dark Styling: Specific adjustments were made to ensure critical UI elements remain clear without causing glare:
+
+TM Diffs: Insertion and deletion highlights in the Translation Memory now use deeper greens and reds with high-contrast text.
+
+Glossary Matches: In-text glossary highlights and overlay tags now use a darker golden-ochre tone.
+
+UI Depth: The main application background, horizontal resizers, and info boxes have been darkened to "Slate" tones to integrate seamlessly with the editor.
+
+Bug Fixes & Improvements
+
+Glossary & TM Management: Fixed non-responsive "New Glossary" and "New Translation Memory" buttons in sidebar panels.
+
+Reset Logic Overhaul: The internal logic for resetting resources has been rewritten. Creating a new Glossary or TM now correctly clears the active data and forces the interface to return to the Language Configuration view, preventing UI states where users could not redefine languages.
+
+Modal Interaction: Improved the event listeners on confirmation modals (using direct onclick binding) to ensure "Continue" actions execute reliably every time.
+
+========================================= 
 subpandaTM v1.1.5 - Advanced Notes Workbench
-=========================================
+=========================================4
 
 Release Date: November 20, 2025 
 This version transforms the workflow by introducing a dedicated Notes system and refining the interface for a smoother experience.
