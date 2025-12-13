@@ -1,4 +1,4 @@
-// wp-main.js - Lógica principal de WhisperPanda (Con Filtro Anti-Bucle)
+// wp-main.js - Lógica principal de WhisperPanda
 
 const translations = {
     en: {
@@ -88,6 +88,7 @@ const translations = {
 let currentLang = 'en';
 let audioData = null;
 let rawFileName = "subtitulos";
+let audioDuration = 0; // Duración total para calcular %
 let worker = new Worker('wp-worker.js', { type: 'module' });
 
 const els = {
@@ -102,8 +103,10 @@ const els = {
     runBtn: document.getElementById('run-btn'),
     progressCont: document.getElementById('progress-container'),
     progressBar: document.getElementById('progress-bar'),
+    progressPercent: document.getElementById('progress-percentage'),
     statusText: document.getElementById('status-text'),
     detailText: document.getElementById('detail-text'),
+    consoleOutput: document.getElementById('console-output'),
     resultsArea: document.getElementById('results-area'),
     outputText: document.getElementById('output-text'),
     dlSrt: document.getElementById('download-srt-btn'),
@@ -111,6 +114,22 @@ const els = {
     copy: document.getElementById('copy-btn'),
     dontBreakInput: document.getElementById('dont-break-on')
 };
+
+// --- UTILS CONSOLA ---
+function logToConsole(msg) {
+    if (!els.consoleOutput) return;
+    const div = document.createElement('div');
+    div.innerText = `> ${msg}`;
+    div.className = "hover:bg-gray-800 px-1 rounded";
+    els.consoleOutput.appendChild(div);
+    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+}
+
+function updateProgress(percent) {
+    const p = Math.min(100, Math.max(0, percent.toFixed(1)));
+    if(els.progressBar) els.progressBar.style.width = `${p}%`;
+    if(els.progressPercent) els.progressPercent.innerText = `${p}%`;
+}
 
 // --- IDIOMA ---
 function setLanguage(lang) {
@@ -144,11 +163,15 @@ els.langEs.addEventListener('click', () => setLanguage('es'));
 // --- ARCHIVOS ---
 function resetFile() {
     audioData = null;
+    audioDuration = 0;
     els.fileInput.value = '';
     els.fileInfo.classList.add('hidden');
     els.warning.classList.add('hidden');
     els.runBtn.disabled = true;
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+    // Reset consola
+    if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
+    updateProgress(0);
 }
 
 async function handleFile(file) {
@@ -161,17 +184,22 @@ async function handleFile(file) {
     if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden');
 
     els.runBtn.querySelector('span').innerText = t.startBtnProcessing;
+    logToConsole(`File loaded: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
+    logToConsole("Decoding audio...");
     
     try {
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         audioData = audioBuffer.getChannelData(0);
+        audioDuration = audioBuffer.duration;
         
+        logToConsole(`Audio decoded successfully. Duration: ${fmtTime(audioDuration)}`);
         els.runBtn.disabled = false;
         els.runBtn.querySelector('span').innerText = t.startBtn;
     } catch (err) {
         console.error(err);
+        logToConsole(`ERROR: ${err.message}`);
         alert(t.errorMsg);
         resetFile();
     }
@@ -188,23 +216,53 @@ els.dropZone.addEventListener('drop', (e) => {
 els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
 els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
 
-// --- WORKER ---
+// --- WORKER COMMS ---
 worker.onmessage = (e) => {
     const { status, data } = e.data;
     const t = translations[currentLang];
 
     if (status === 'loading') {
-        els.statusText.innerText = t.statusLoading;
+        // Data puede traer progreso de descarga del modelo
+        if (data && data.status === 'progress') {
+            els.statusText.innerText = `${t.statusLoading} (${Math.round(data.progress)}%)`;
+            logToConsole(`Downloading model: ${data.file} - ${Math.round(data.progress)}%`);
+        } else {
+            els.statusText.innerText = t.statusLoading;
+            logToConsole("Loading AI Model...");
+        }
         els.detailText.innerText = t.downloadModel;
+    
     } else if (status === 'initiate') {
         els.statusText.innerText = t.statusInitiating;
-        els.progressBar.style.width = '5%';
+        updateProgress(0);
+        logToConsole("Starting transcription engine...");
+    
+    } else if (status === 'progress') {
+        // PROGRESO EN TIEMPO REAL
+        // data contiene los chunks parciales. Usamos el timestamp del último chunk.
+        if (data && data.timestamp && audioDuration > 0) {
+            const currentSeconds = data.timestamp[1]; // Fin del último chunk
+            if (currentSeconds) {
+                const percent = (currentSeconds / audioDuration) * 100;
+                updateProgress(percent);
+                els.statusText.innerText = `${t.statusListening} (${Math.round(percent)}%)`;
+                
+                // Mostrar texto parcial en consola
+                if (data.text) {
+                    logToConsole(`[${fmtTime(data.timestamp[0])}] ${data.text.substring(0, 40)}...`);
+                }
+            }
+        }
+
     } else if (status === 'complete') {
-        els.progressBar.style.width = '100%';
+        updateProgress(100);
         els.statusText.innerText = t.statusComplete;
+        logToConsole("Transcription finished. Refining subtitles...");
         els.detailText.innerText = t.statusGenerating;
         processResults(data);
+    
     } else if (status === 'error') {
+        logToConsole(`ERROR: ${data}`);
         alert("Error: " + data);
         els.runBtn.disabled = false;
     }
@@ -216,7 +274,9 @@ els.runBtn.addEventListener('click', () => {
     els.resultsArea.classList.add('hidden');
     els.resultsArea.classList.remove('opacity-100');
     els.progressCont.classList.remove('hidden');
-    els.progressBar.style.width = '0%';
+    updateProgress(0);
+    if(els.consoleOutput) els.consoleOutput.innerHTML = ''; // Limpiar consola anterior
+    logToConsole("Initializing...");
 
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
@@ -277,8 +337,7 @@ function refineSubtitles(chunks, opts) {
         let text = chunk.text.trim().replace(/\s+/g, ' ');
         if (!text) return;
 
-        // --- FILTRO ANTI-BUCLE ---
-        // Si el texto es idéntico al anterior, aumentamos el contador
+        // Filtro Anti-Bucle
         if (text.toLowerCase() === lastText.toLowerCase()) {
             loopCount++;
         } else {
@@ -286,12 +345,15 @@ function refineSubtitles(chunks, opts) {
         }
         lastText = text;
 
-        // Si se repite más de 2 veces seguidas, es un bucle: lo ignoramos
-        if (loopCount > 2) return;
+        if (loopCount > 2) {
+            logToConsole(`WARN: Loop detected and removed: "${text}"`);
+            return;
+        }
 
-        // Si el texto contiene la misma frase repetida 3 veces internamente
-        if (isInternalLoop(text)) return;
-        // -------------------------
+        if (isInternalLoop(text)) {
+            logToConsole(`WARN: Internal repetition detected: "${text}"`);
+            return;
+        }
 
         let start = chunk.timestamp[0];
         let end = chunk.timestamp[1] || (start + text.length * 0.05);
@@ -316,15 +378,11 @@ function refineSubtitles(chunks, opts) {
     return refined;
 }
 
-// Función auxiliar para detectar bucles internos
 function isInternalLoop(text) {
     if (text.length < 20) return false;
     const words = text.toLowerCase().split(' ');
     if (words.length < 6) return false;
-    
-    // Detectar si las últimas 4 palabras son iguales a las 4 anteriores (patrón simple)
     const len = words.length;
-    // Comprobamos un patrón de 3 palabras repetidas
     if (len >= 6) {
          if (words[len-1] === words[len-4] && 
              words[len-2] === words[len-5] && 
@@ -336,7 +394,6 @@ function isInternalLoop(text) {
 }
 
 function applyDurationConstraints(segs, opts) {
-    // 1. Mínima
     for (let i = 0; i < segs.length; i++) {
         let cur = segs[i];
         if ((cur.end - cur.start) < opts.minDur) {
@@ -350,7 +407,6 @@ function applyDurationConstraints(segs, opts) {
             if (newEnd > cur.end) cur.end = newEnd;
         }
     }
-    // 2. Gap
     for (let i = 0; i < segs.length - 1; i++) {
         if (segs[i+1].start - segs[i].end < opts.minGap) {
             const newEnd = segs[i+1].start - opts.minGap;
