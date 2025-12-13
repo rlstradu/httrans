@@ -1,4 +1,4 @@
-// wp-main.js - Lógica principal de WhisperPanda
+// wp-main.js - Lógica principal de WhisperPanda (Con Filtro Anti-Bucle)
 
 const translations = {
     en: {
@@ -27,7 +27,7 @@ const translations = {
         fileWarning: "<strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. We recommend extracting audio to MP3 first if you experience issues.",
         startBtn: "Start",
         startBtnProcessing: "Processing audio (Wait)...",
-        statusLoading: "Loading AI model (only first time)...",
+        statusLoading: "Loading AI model (~80MB, only first time)...", 
         statusInitiating: "Initiating transcription...",
         statusListening: "The Panda is listening...",
         statusComplete: "Completed!",
@@ -39,7 +39,7 @@ const translations = {
         saveTxtBtn: "Save TXT",
         resultFooter: "Remember to check subtitles in a professional tool (like Subpanda or EZTitles) for fine-tuning.",
         errorMsg: "Error processing audio. Ensure it's a valid format.",
-        downloadModel: "Downloading Whisper Tiny (~40MB)...",
+        downloadModel: "Downloading Whisper Base (~80MB)...", 
         dontBreakDefaults: "of, to, in, for, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among"
     },
     es: {
@@ -68,7 +68,7 @@ const translations = {
         fileWarning: "<strong>¡Ojo!</strong> Este archivo es grande (>500MB). El navegador podría ir lento. Recomendamos extraer el audio a MP3 antes de subirlo si experimentas problemas.",
         startBtn: "Iniciar",
         startBtnProcessing: "Procesando audio (Espere)...",
-        statusLoading: "Cargando modelo de IA (solo pasa la primera vez)...",
+        statusLoading: "Cargando modelo de IA (~80MB, solo pasa la primera vez)...", 
         statusInitiating: "Iniciando transcripción...",
         statusListening: "El Panda está escuchando...",
         statusComplete: "¡Completado!",
@@ -80,7 +80,7 @@ const translations = {
         saveTxtBtn: "Guardar TXT",
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional (como Subpanda o EZTitles) para el ajuste fino de tiempos.",
         errorMsg: "No se pudo procesar el audio. Asegúrate de que es un formato válido.",
-        downloadModel: "Descargando Whisper Tiny (~40MB)...",
+        downloadModel: "Descargando Whisper Base (~80MB)...", 
         dontBreakDefaults: "a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, el, la, los, las, un, una, unos, unas"
     }
 };
@@ -229,7 +229,7 @@ els.runBtn.addEventListener('click', () => {
     });
 });
 
-// --- LÓGICA DE PROCESAMIENTO ---
+// --- LÓGICA DE PROCESAMIENTO (Con Detector de Bucles) ---
 function processResults(output) {
     const minGapVal = parseFloat(document.getElementById('min-gap-val').value) || 0;
     const minGapUnit = document.getElementById('min-gap-unit').value;
@@ -270,16 +270,35 @@ function processResults(output) {
 
 function refineSubtitles(chunks, opts) {
     const refined = [];
+    let lastText = "";
+    let loopCount = 0;
+
     chunks.forEach(chunk => {
         let text = chunk.text.trim().replace(/\s+/g, ' ');
         if (!text) return;
+
+        // --- FILTRO ANTI-BUCLE ---
+        // Si el texto es idéntico al anterior, aumentamos el contador
+        if (text.toLowerCase() === lastText.toLowerCase()) {
+            loopCount++;
+        } else {
+            loopCount = 0;
+        }
+        lastText = text;
+
+        // Si se repite más de 2 veces seguidas, es un bucle: lo ignoramos
+        if (loopCount > 2) return;
+
+        // Si el texto contiene la misma frase repetida 3 veces internamente
+        if (isInternalLoop(text)) return;
+        // -------------------------
+
         let start = chunk.timestamp[0];
         let end = chunk.timestamp[1] || (start + text.length * 0.05);
 
         const limit = opts.maxCPL * opts.maxLines;
         const duration = end - start;
         
-        // Dividir si excede longitud o duración máxima
         if (text.length > limit || duration > opts.maxDur) {
             const mid = Math.floor(text.length / 2);
             const splitIdx = text.lastIndexOf(' ', mid);
@@ -295,6 +314,25 @@ function refineSubtitles(chunks, opts) {
         refined.push({ text: formatLines(text, opts), start, end });
     });
     return refined;
+}
+
+// Función auxiliar para detectar bucles internos
+function isInternalLoop(text) {
+    if (text.length < 20) return false;
+    const words = text.toLowerCase().split(' ');
+    if (words.length < 6) return false;
+    
+    // Detectar si las últimas 4 palabras son iguales a las 4 anteriores (patrón simple)
+    const len = words.length;
+    // Comprobamos un patrón de 3 palabras repetidas
+    if (len >= 6) {
+         if (words[len-1] === words[len-4] && 
+             words[len-2] === words[len-5] && 
+             words[len-3] === words[len-6]) {
+             return true; 
+         }
+    }
+    return false;
 }
 
 function applyDurationConstraints(segs, opts) {
