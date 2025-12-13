@@ -1,4 +1,4 @@
-// wp-worker.js - Worker de la IA
+// wp-worker.js - Worker de la IA (Versión Anti-Alucinaciones)
 
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.0';
 
@@ -18,8 +18,9 @@ self.addEventListener('message', async (event) => {
         if (!transcriber) {
             try {
                 self.postMessage({ status: 'loading' });
-                // Whisper Tiny Quantized es el mejor para navegador
-                transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {
+                // CAMBIO: Usamos 'whisper-base' en lugar de 'tiny'. 
+                // Es más robusto contra alucinaciones y bucles.
+                transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-base', {
                     quantized: true,
                 });
             } catch (err) {
@@ -33,7 +34,6 @@ self.addEventListener('message', async (event) => {
             self.postMessage({ status: 'initiate' });
 
             const audio = message.audio;
-            // Si es 'spotting', forzamos 'transcribe' para detectar voz. Luego el UI borra el texto.
             const taskToRun = message.task === 'spotting' ? 'transcribe' : (message.task || 'transcribe');
 
             const output = await transcriber(audio, {
@@ -42,6 +42,9 @@ self.addEventListener('message', async (event) => {
                 chunk_length_s: 30,
                 stride_length_s: 5,
                 return_timestamps: true,
+                // PARÁMETROS ANTI-BUCLE
+                no_repeat_ngram_size: 2, // Evita repetir frases cortas
+                temperature: 0, // Fuerza a la IA a ser más determinista
             });
 
             self.postMessage({ status: 'complete', data: output });
