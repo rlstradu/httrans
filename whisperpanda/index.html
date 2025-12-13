@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhisperPanda - AI Subtitling | HTTrans</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
+    <!-- Carga de Google Fonts (Montserrat) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos base */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(45deg, #fde7ea, #e8eaf6, #e0f2f1, #fce4ec);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: #373737;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        .logo-bounce:hover {
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb { background: #E23B5D; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #d02a4c; }
+
+        .lang-btn {
+            color: #6b7280; 
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .lang-btn:hover {
+            color: #374151; 
+        }
+        .lang-btn.active {
+            background-color: #E23B5D;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Navegación -->
+    <nav class="w-full max-w-5xl mx-auto mb-8 flex justify-between items-center">
+        <!-- Nota: Ajusta el href "../index.html" para volver a la raíz si estás en carpeta -->
+        <a href="../index.html" class="flex items-center gap-3 text-gray-600 hover:text-[#E23B5D] transition">
+            <i class="ph-bold ph-arrow-left text-xl"></i>
+            <span class="font-bold" data-key="backLink">Back to HTTrans</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <div class="flex bg-white/50 rounded-lg p-1">
+                <button id="lang-en" class="lang-btn active px-3 py-1 rounded-md text-sm font-bold">EN</button>
+                <button id="lang-es" class="lang-btn px-3 py-1 rounded-md text-sm font-bold">ES</button>
+            </div>
+            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#E23B5D]">BETA v1.0</span>
+        </div>
+    </nav>
+
+    <!-- Contenedor Principal -->
+    <main class="w-full max-w-5xl mx-auto glass-panel rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden">
+        
+        <!-- Cabecera -->
+        <div class="text-center mb-10">
+            <div class="inline-block p-4 bg-white rounded-full shadow-lg mb-4 logo-bounce cursor-pointer">
+                <i class="ph-fill ph-microphone-stage text-5xl text-[#E23B5D]"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-black text-gray-800 mb-2 uppercase tracking-wide">
+                Whisper<span class="text-[#E23B5D]">Panda</span>
+            </h1>
+            <p class="text-gray-500 max-w-2xl mx-auto">
+                <span data-key="heroDesc">AI-powered automatic transcription and subtitling tool.</span>
+                <br>
+                <span class="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200 mt-2 inline-block">
+                    <i class="ph-bold ph-shield-check"></i> <span data-key="privacyBadge">100% Private: Files never leave your device</span>
+                </span>
+            </p>
+        </div>
+
+        <!-- PANEL DE CONFIGURACIÓN -->
+        <div class="bg-white/80 border border-pink-100 rounded-2xl p-6 mb-8 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-700 mb-6 flex items-center border-b border-gray-100 pb-2">
+                <i class="ph-fill ph-sliders-horizontal mr-2 text-[#E23B5D]"></i>
+                <span data-key="settingsTitle">Assistant Preferences</span>
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Columna Izquierda -->
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1.5">
+                            <i class="ph-bold ph-translate text-[#E23B5D]"></i> <span data-key="audioLangLabel">Audio Language</span>
+                        </label>
+                        <select id="language-select" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#E23B5D] focus:border-[#E23B5D] outline-none transition">
+                            <option value="auto" selected data-key="optAuto">✨ Detect automatically</option>
+                            <option value="es">🇪🇸 Español</option>
+                            <option value="en">🇬🇧 English</option>
+                            <option value="fr">🇫🇷 Français</option>
+                            <option value="de">🇩🇪 Deutsch</option>
+                            <option value="it">🇮🇹 Italiano</option>
+                            <option value="pt">🇵🇹 Português</option>
+                            <option value="ca">🏴󠁣󠁡󠁿 Català</option>
+                            <option value="gl">🏴󠁧󠁬󠁿 Galego</option>
+                            <option value="eu">🏴󠁥󠁵󠁿 Euskara</option>
+                            <option value="ja">🇯🇵 日本語</option>
+                            <option value="zh">🇨🇳 中文</option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1 ml-1" data-key="audioLangHelp">Manually selecting the language improves accuracy and speed.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1.5" data-key="actionLabel">Action</label>
+                        <select id="task-select" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#E23B5D] outline-none">
+                            <option value="transcribe" selected data-key="optTranscribe">Transcribe (Keep original language)</option>
+                            <option value="translate" data-key="optTranslate">Translate (Convert audio to English)</option>
+                            <option value="spotting" data-key="optSpotting">Spotting (Empty subtitles)</option>
+                        </select>
+                    </div>
+
+                    <!-- Duración Mín/Max -->
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="minDurLabel">Min Duration (s)</label>
+                            <input type="number" id="min-duration" value="1.0" min="0.1" step="0.1" class="w-full p-2 border border-gray-300 rounded-lg text-sm text-center focus:ring-1 focus:ring-[#E23B5D] outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="maxDurLabel">Max Duration (s)</label>
+                            <input type="number" id="max-duration" value="6.0" min="1" step="0.5" class="w-full p-2 border border-gray-300 rounded-lg text-center text-sm focus:ring-1 focus:ring-[#E23B5D] outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha -->
+                <div class="space-y-4 border-l-0 md:border-l-2 border-gray-100 md:pl-8 pt-4 md:pt-0">
+                    
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold text-gray-600" title="Minimum interval between subtitles" data-key="gapLabel">Min. Gap</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="min-gap-val" value="2" min="0" class="p-1.5 border border-gray-300 rounded w-16 text-center text-sm font-semibold text-gray-700 focus:ring-1 focus:ring-[#E23B5D] outline-none">
+                            <select id="min-gap-unit" class="p-1.5 border border-gray-300 rounded text-sm font-semibold text-gray-700 bg-white">
+                                <option value="frames" data-key="unitFrames">Frames</option>
+                                <option value="ms" data-key="unitMs">ms</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold text-gray-600" title="Maximum number of lines per subtitle" data-key="maxLinesLabel">Max Lines</label>
+                        <select id="max-lines" class="p-1.5 border border-gray-300 rounded w-24 text-center text-sm font-semibold text-gray-700 bg-white">
+                            <option value="1">1</option>
+                            <option value="2" selected>2</option>
+                        </select>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold text-gray-600" title="Characters per line" data-key="cplLabel">Max chars/line (CPL)</label>
+                        <input type="number" id="max-cpl" value="42" min="10" max="100" class="p-1.5 border border-gray-300 rounded w-24 text-center text-sm font-semibold text-gray-700 focus:ring-1 focus:ring-[#E23B5D] outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="punctuationLabel">Force break on punctuation</label>
+                        <input type="text" id="end-punctuation" value=".?!:…" class="w-full p-2 border border-gray-300 rounded-lg text-sm font-mono tracking-wider focus:ring-1 focus:ring-[#E23B5D] outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="dontBreakLabel">Do not end line on (Prepositions)</label>
+                        <input type="text" id="dont-break-on" value="a, ante, con, de, desde, en, para, por, sin, sobre, el, la, los, las, of, to, in, for, with, on, at" class="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-500 focus:text-gray-800 focus:ring-1 focus:ring-[#E23B5D] outline-none truncate" title="Comma separated list">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DROP ZONE & BOTONES -->
+        <div class="grid grid-cols-1 gap-6">
+            <div id="drop-zone" class="border-3 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-gray-50/50 hover:bg-pink-50 hover:border-[#E23B5D] transition-colors cursor-pointer group">
+                <input type="file" id="file-input" class="hidden" accept="audio/*,video/*">
+                
+                <div class="mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="ph-duotone ph-cloud-arrow-up text-6xl text-gray-400 group-hover:text-[#E23B5D]"></i>
+                </div>
+                
+                <h3 class="text-xl font-bold text-gray-700 mb-2" data-key="dropTitle">Click or drag your file here</h3>
+                <p class="text-sm text-gray-500 mb-4" data-key="dropSubtitle">Supports MP3, WAV, MP4, MKV, MOV...</p>
+                
+                <div id="file-warning" class="hidden bg-orange-100 text-orange-800 text-xs p-3 rounded-lg max-w-md mx-auto flex items-start text-left gap-2">
+                    <i class="ph-bold ph-warning text-lg mt-0.5"></i>
+                    <span data-key="fileWarning">
+                        <strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. 
+                        We recommend extracting audio to MP3 first if you experience issues.
+                    </span>
+                </div>
+
+                <div id="file-info" class="hidden mt-4 inline-flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
+                    <i class="ph-fill ph-file-audio text-[#E23B5D] mr-2"></i>
+                    <span id="file-name" class="font-semibold text-gray-700 text-sm truncate max-w-[200px]">filename.mp3</span>
+                    <button id="remove-file" class="ml-3 text-gray-400 hover:text-red-500">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button id="run-btn" disabled class="w-full py-4 rounded-xl font-bold text-lg text-white shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 cursor-not-allowed">
+                <i class="ph-bold ph-play"></i>
+                <span data-key="startBtn">Start</span>
+            </button>
+
+            <div id="progress-container" class="hidden">
+                <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
+                    <span id="status-text" data-key="statusLoading">Loading model...</span>
+                    <span id="progress-percentage"></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-[#E23B5D] h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="detail-text" class="text-xs text-gray-400 mt-2 font-mono text-center"></p>
+            </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div id="results-area" class="hidden mt-10 opacity-0 transition-opacity duration-700">
+            <div class="flex justify-between items-end mb-4">
+                <h3 class="text-xl font-bold text-gray-700" data-key="resultTitle">Result</h3>
+                <div class="flex gap-2">
+                    <button id="copy-btn" class="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                        <i class="ph-bold ph-copy"></i> <span data-key="copyBtn">Copy</span>
+                    </button>
+                    <button id="download-srt-btn" class="text-xs font-bold text-white bg-[#E23B5D] hover:bg-[#c0304d] px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-md">
+                        <i class="ph-bold ph-download-simple"></i> <span data-key="saveSrtBtn">Save SRT</span>
+                    </button>
+                    <button id="download-txt-btn" class="text-xs font-bold text-white bg-gray-700 hover:bg-gray-800 px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-md">
+                        <i class="ph-bold ph-file-text"></i> <span data-key="saveTxtBtn">Save TXT</span>
+                    </button>
+                </div>
+            </div>
+            
+            <textarea id="output-text" readonly class="w-full h-80 p-6 rounded-xl border border-gray-200 bg-gray-50 font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#E23B5D] resize-y"></textarea>
+            
+            <p class="text-center text-xs text-gray-400 mt-4" data-key="resultFooter">
+                Remember to check subtitles in a professional tool (like Subpanda or EZTitles) for fine-tuning.
+            </p>
+        </div>
+
+    </main>
+
+    <footer class="text-center mt-8 mb-4 text-gray-500 text-sm font-medium">
+        Made with ❤️ and 🐼 by HTTrans
+    </footer>
+
+    <!-- Carga del script externo (Ahora es un archivo separado) -->
+    <script type="module" src="wp-main.js"></script>
+</body>
+</html>
