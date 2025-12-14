@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida (Groq + Local) v3.1
+// wp-main.js - Lógica Híbrida (Groq + Local) v3.2
 
 const translations = {
     en: {
@@ -151,9 +151,12 @@ function updateModeUI(mode) {
             }
         });
 
-        // Cargar key guardada
+        // Cargar key guardada o usar la por defecto
         const savedKey = localStorage.getItem('groq_api_key');
-        if(savedKey) document.getElementById('groq-key').value = savedKey;
+        const defaultKey = "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";
+        if(document.getElementById('groq-key')) {
+             document.getElementById('groq-key').value = savedKey || defaultKey;
+        }
     } else {
         els.groqContainer.classList.add('hidden');
         els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
@@ -274,8 +277,15 @@ async function handleFile(file) {
         audioData = audioBuffer; // Guardamos el AudioBuffer completo
         audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
+        
+        // Habilitar botón lógica
         els.runBtn.disabled = false;
+        
+        // FIX VISUAL: Forzar actualización de estilos para que el botón se vea activo
+        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+        els.runBtn.classList.add('bg-[#E23B5D]', 'hover:bg-[#c0304d]', 'hover:scale-[1.02]', 'cursor-pointer');
         els.runBtn.querySelector('span').innerText = t.startBtn;
+        
     } catch (err) {
         logToConsole(`ERROR: ${err.message}`);
         resetFile();
