@@ -1,4 +1,4 @@
-// wp-main.js - Lógica principal de WhisperPanda (V2.3 - Consola Matrix)
+// wp-main.js - Lógica principal de WhisperPanda (V2.5 - Live Console & ETA)
 
 const translations = {
     en: {
@@ -101,6 +101,10 @@ let currentLang = 'en';
 let audioData = null;
 let rawFileName = "subtitulos";
 let audioDuration = 0;
+// Variables para el cálculo de tiempo y UI de consola
+let startTime = 0;
+let lastConsoleLine = null; // Referencia a la última línea para actualizarla en vez de crear nueva
+
 let worker = new Worker('wp-worker.js', { type: 'module' });
 
 const els = {
@@ -125,18 +129,50 @@ const els = {
     dontBreakInput: document.getElementById('dont-break-on')
 };
 
-// --- UTILS CONSOLA ---
-function logToConsole(msg, isProgress = false) {
+// --- CONSOLA INTELIGENTE ---
+function logToConsole(msg) {
     if (!els.consoleOutput) return;
+    lastConsoleLine = null; // Rompemos la referencia de actualización para escribir una línea nueva
     const div = document.createElement('div');
     if (typeof msg === 'object') div.innerText = `> ${JSON.stringify(msg)}`;
     else div.innerText = `> ${msg}`;
-    
     div.className = "hover:bg-gray-800 px-1 rounded";
-    if (isProgress) div.style.color = "#a7f3d0"; // Verde claro para progreso
-    
     els.consoleOutput.appendChild(div);
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+}
+
+// Función para actualizar la última línea (Efecto barra de progreso)
+function updateConsoleLine(msg) {
+    if (!els.consoleOutput) return;
+    
+    // Si tenemos una línea activa y sigue en el DOM, la actualizamos
+    if (lastConsoleLine && lastConsoleLine.isConnected) {
+        lastConsoleLine.innerText = `> ${msg}`;
+    } else {
+        // Si no, creamos una nueva
+        const div = document.createElement('div');
+        div.innerText = `> ${msg}`;
+        div.className = "hover:bg-gray-800 px-1 rounded text-green-300 font-bold";
+        els.consoleOutput.appendChild(div);
+        lastConsoleLine = div;
+    }
+    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+}
+
+// Generador de barra ASCII
+function getAsciiBar(percent) {
+    const width = 20;
+    const filled = Math.round((percent / 100) * width);
+    const empty = width - filled;
+    // Carácter lleno '=' y flecha '>', vacío '.'
+    const bar = "[" + "=".repeat(filled) + ">".repeat(filled < width ? 1 : 0) + " ".repeat(Math.max(0, empty - (filled < width ? 1 : 0))) + "]";
+    return bar;
+}
+
+function fmtDuration(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}m ${s}s`;
 }
 
 // --- IDIOMA ---
@@ -194,7 +230,7 @@ async function handleFile(file) {
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         audioData = audioBuffer.getChannelData(0);
         audioDuration = audioBuffer.duration;
-        logToConsole(`Audio decoded. Duration: ${fmtTime(audioDuration)}`);
+        logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         els.runBtn.disabled = false;
         els.runBtn.querySelector('span').innerText = t.startBtn;
     } catch (err) {
@@ -218,37 +254,48 @@ worker.onmessage = (e) => {
         logToConsole(data);
     } 
     else if (status === 'loading') {
+        // Barras de descarga del modelo
         if (data && data.status === 'progress') {
-            els.statusText.innerText = `${t.statusLoading} (${Math.round(data.progress)}%)`;
-            if(Math.round(data.progress) % 20 === 0) logToConsole(`Downloading model: ${Math.round(data.progress)}%`);
+            const percent = Math.round(data.progress);
+            // Actualizamos la misma línea para la descarga
+            updateConsoleLine(`Downloading ${data.file}: ${getAsciiBar(percent)} ${percent}%`);
+            els.statusText.innerText = `${t.statusLoading} (${percent}%)`;
         } else {
             els.statusText.innerText = t.statusLoading;
         }
     } 
     else if (status === 'initiate') {
         els.statusText.innerText = t.statusInitiating;
-        logToConsole("Running Whisper (WebGPU/WASM)...");
+        logToConsole("Initializing Whisper Engine...");
+        startTime = Date.now(); // Arrancamos el cronómetro
     } 
     else if (status === 'progress') {
         if (data && data.timeRef && audioDuration > 0) {
             const current = data.timeRef;
-            const percent = Math.min(100, Math.round((current / audioDuration) * 100));
+            const percent = Math.min(100, Math.max(0, (current / audioDuration) * 100));
             
-            // Actualizar solo el texto de estado (Ya no hay barra visual)
-            els.statusText.innerText = `${t.statusListening} (${percent}%)`;
+            // CÁLCULO DE ETA (Tiempo Restante)
+            const elapsed = (Date.now() - startTime) / 1000; // segundos pasados
+            let etaText = "Calc...";
             
-            // LOG EN TIEMPO REAL EN CONSOLA (Efecto Matrix)
-            if (data.text) {
-                 const textPreview = data.text.trim();
-                 if (textPreview) {
-                     logToConsole(`[${percent}%] ${textPreview}`, true);
-                 }
+            if (elapsed > 2 && percent > 1) { // Esperamos un poco para tener datos fiables
+                const rate = current / elapsed; // segundos de audio por segundo real
+                const remainingAudio = audioDuration - current;
+                const estimatedSecondsLeft = remainingAudio / rate;
+                etaText = fmtDuration(estimatedSecondsLeft);
             }
+
+            els.statusText.innerText = `${t.statusListening} ${Math.round(percent)}% (ETA: ${etaText})`;
+            
+            // Actualizar línea de consola
+            updateConsoleLine(`${getAsciiBar(percent)} ${Math.round(percent)}% | ETA: ${etaText}`);
         }
     } 
     else if (status === 'complete') {
         els.statusText.innerText = t.statusComplete;
-        logToConsole("Raw transcription done. Processing segments...");
+        // Forzamos 100% visual
+        updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
+        logToConsole("Raw transcription done. Applying Panda Logic V5...");
         processResultsV5(data);
     } 
     else if (status === 'error') {
