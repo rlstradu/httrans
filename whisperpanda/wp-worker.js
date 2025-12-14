@@ -25,9 +25,16 @@ self.addEventListener('message', async (event) => {
                     // Callback para informar del progreso de la descarga del modelo
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
-                            // CORRECCIÓN: Clonamos el objeto data con spread syntax {...data}
-                            // para evitar problemas de clonación de objetos internos.
-                            self.postMessage({ status: 'loading', data: { ...data } });
+                            // CORRECCIÓN ESTRICTA: Solo copiamos los datos primitivos que necesitamos.
+                            // Evitamos copiar el objeto 'data' entero para prevenir errores de clonación.
+                            self.postMessage({ 
+                                status: 'loading', 
+                                data: { 
+                                    file: data.file, 
+                                    progress: data.progress,
+                                    status: data.status
+                                } 
+                            });
                         }
                     }
                 });
@@ -63,11 +70,14 @@ self.addEventListener('message', async (event) => {
                         const last = items[items.length - 1];
                         
                         // CORRECCIÓN CRÍTICA:
-                        // En lugar de enviar 'last' directamente, creamos un objeto nuevo y limpio.
-                        // Esto elimina cualquier referencia interna oculta que cause el error "#<a> could not be cloned".
+                        // Extraemos manualmente SOLO el texto y los números.
+                        // Usamos Number() para asegurar que no enviamos tipos extraños.
+                        const start = last.timestamp && last.timestamp[0] ? Number(last.timestamp[0]) : 0;
+                        const end = last.timestamp && last.timestamp[1] ? Number(last.timestamp[1]) : 0;
+
                         const cleanData = {
-                            text: last.text,
-                            timestamp: [last.timestamp[0], last.timestamp[1]] // Copia explicita del array
+                            text: last.text ? String(last.text) : "",
+                            timestamp: [start, end]
                         };
                         
                         self.postMessage({ status: 'progress', data: cleanData });
@@ -76,13 +86,17 @@ self.addEventListener('message', async (event) => {
             });
 
             // CORRECCIÓN CRÍTICA FINAL:
-            // Limpiamos también el objeto de salida final antes de enviarlo.
+            // Reconstruimos el objeto final desde cero para asegurar pureza.
             const cleanOutput = {
-                text: output.text,
-                chunks: output.chunks.map(chunk => ({
-                    text: chunk.text,
-                    timestamp: [chunk.timestamp[0], chunk.timestamp[1]]
-                }))
+                text: output.text ? String(output.text) : "",
+                chunks: output.chunks.map(chunk => {
+                    const start = chunk.timestamp && chunk.timestamp[0] ? Number(chunk.timestamp[0]) : null;
+                    const end = chunk.timestamp && chunk.timestamp[1] ? Number(chunk.timestamp[1]) : null;
+                    return {
+                        text: chunk.text ? String(chunk.text) : "",
+                        timestamp: [start, end]
+                    };
+                })
             };
 
             self.postMessage({ status: 'complete', data: cleanOutput });
