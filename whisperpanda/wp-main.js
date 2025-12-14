@@ -1,4 +1,4 @@
-// wp-main.js - Lógica principal de WhisperPanda (V3.0 - Matrix Console & ETA)
+// wp-main.js - Lógica principal de WhisperPanda (V3.1 - Fix Progress Display)
 
 const translations = {
     en: {
@@ -134,7 +134,6 @@ function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
     
     // Si no es una actualización de progreso, rompemos la referencia a la última línea
-    // para que la siguiente actualización cree una nueva
     if (!isProgress) lastConsoleLine = null;
 
     const div = document.createElement('div');
@@ -166,16 +165,15 @@ function updateConsoleLine(msg) {
 
 // Generador de barra ASCII
 function getAsciiBar(percent) {
-    const width = 20; // Ancho de la barra en caracteres
+    const width = 20; 
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
-    // Carácter lleno '=' y flecha '>', vacío '.'
     const bar = "[" + "=".repeat(filled) + ">".repeat(filled < width ? 1 : 0) + ".".repeat(Math.max(0, empty - (filled < width ? 1 : 0))) + "]";
     return bar;
 }
 
 function fmtDuration(seconds) {
-    if(!seconds || seconds < 0) return "Calc...";
+    if(!seconds || seconds < 0) return "--m --s";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}m ${s}s`;
@@ -217,7 +215,7 @@ function resetFile() {
     els.warning.classList.add('hidden');
     els.runBtn.disabled = true;
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
-    if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> Panda Terminal v3.0 Ready...</div>';
+    if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> Panda Terminal v3.1 Ready...</div>';
 }
 
 async function handleFile(file) {
@@ -262,8 +260,6 @@ worker.onmessage = (e) => {
     else if (status === 'loading') {
         if (data && data.status === 'progress') {
             const percent = Math.round(data.progress || 0);
-            // Actualizamos la misma línea para la descarga
-            // data.file a veces trae ruta larga, limpiamos
             const fileName = data.file ? data.file.split('/').pop() : "Model";
             updateConsoleLine(`Downloading ${fileName}: ${getAsciiBar(percent)} ${percent}%`);
             els.statusText.innerText = `${t.statusLoading} (${percent}%)`;
@@ -273,23 +269,27 @@ worker.onmessage = (e) => {
     } 
     else if (status === 'initiate') {
         els.statusText.innerText = t.statusInitiating;
-        // Rompemos la línea anterior para empezar logs nuevos
+        // Rompemos la línea anterior
         lastConsoleLine = null;
         logToConsole("Initializing Whisper Engine...");
-        startTime = Date.now(); // Arrancamos el cronómetro
+        
+        // --- INICIALIZAR BARRA ---
+        // Forzamos la primera línea de progreso para que el usuario sepa que empieza
+        startTime = Date.now(); 
+        updateConsoleLine(`${getAsciiBar(0)} 0% | ETA: Calc...`);
     } 
     else if (status === 'progress') {
-        if (data && data.timeRef && audioDuration > 0) {
+        // Aceptamos 0 como valor válido para iniciar la barra
+        if (data && typeof data.timeRef === 'number' && audioDuration > 0) {
             const current = data.timeRef;
             const percent = Math.min(100, Math.max(0, (current / audioDuration) * 100));
             
-            // CÁLCULO DE ETA (Tiempo Restante)
-            const elapsed = (Date.now() - startTime) / 1000; // segundos pasados
+            // CÁLCULO DE ETA
+            const elapsed = (Date.now() - startTime) / 1000;
             let etaText = "Calc...";
             
-            // Esperamos unos segundos para estabilizar el cálculo
-            if (elapsed > 2 && percent > 1) { 
-                const rate = current / elapsed; // segundos de audio procesados por segundo real
+            if (elapsed > 1 && current > 0) { 
+                const rate = current / elapsed;
                 const remainingAudio = audioDuration - current;
                 const estimatedSecondsLeft = remainingAudio / rate;
                 etaText = fmtDuration(estimatedSecondsLeft);
@@ -297,13 +297,13 @@ worker.onmessage = (e) => {
 
             els.statusText.innerText = `${t.statusListening} ${Math.round(percent)}% (ETA: ${etaText})`;
             
-            // Actualizar línea de consola con Barra y ETA
+            // Actualizar consola
             updateConsoleLine(`${getAsciiBar(percent)} ${Math.round(percent)}% | ETA: ${etaText}`);
         }
     } 
     else if (status === 'complete') {
         els.statusText.innerText = t.statusComplete;
-        lastConsoleLine = null; // Romper la línea de progreso
+        lastConsoleLine = null;
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
         logToConsole("Raw transcription done. Applying Panda Logic V5...");
         processResultsV5(data);
@@ -322,9 +322,8 @@ els.runBtn.addEventListener('click', () => {
     els.resultsArea.classList.remove('opacity-100');
     els.progressCont.classList.remove('hidden');
     
-    // Limpiamos consola y ponemos mensaje inicial
     els.consoleOutput.innerHTML = '';
-    logToConsole("Panda Terminal v3.0 Started.");
+    logToConsole("Panda Terminal v3.1 Started.");
     
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
@@ -534,4 +533,3 @@ const obs = new MutationObserver((muts) => {
 obs.observe(els.runBtn, { attributes: true });
 
 setLanguage('en');
-logToConsole("Panda Terminal v3.0 Ready...");
