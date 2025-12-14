@@ -1,8 +1,8 @@
-// wp-worker.js - Worker de la IA (V3.3 - Distil Fix)
+// wp-worker.js - Worker de la IA (V3.4 - Force Timestamp Fix)
 
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
-// Configuración importante para entorno web
+// Configuración para entorno web
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
@@ -16,7 +16,8 @@ self.addEventListener('message', async (event) => {
         let selectedModel = message.model || 'Xenova/whisper-small';
         
         // --- AUTO-CORRECCIÓN DE NOMBRE DE MODELO ---
-        if (selectedModel.includes('distil-whisper') || selectedModel.includes('distil-small')) {
+        // Forzamos el nombre correcto del repositorio de Xenova para web
+        if (selectedModel.includes('distil') && selectedModel.includes('small')) {
             selectedModel = 'Xenova/distil-small.en';
         }
 
@@ -24,12 +25,12 @@ self.addEventListener('message', async (event) => {
         if (!transcriber || currentModelId !== selectedModel) {
             try {
                 if (transcriber) {
-                    await transcriber.dispose();
+                    await transcriber.dispose(); // Liberar memoria
                     transcriber = null;
                 }
                 
                 self.postMessage({ status: 'loading' });
-                self.postMessage({ status: 'debug', data: `Switching to model: ${selectedModel}` });
+                self.postMessage({ status: 'debug', data: `Loading model: ${selectedModel}` });
                 
                 transcriber = await pipeline('automatic-speech-recognition', selectedModel, {
                     quantized: true,
@@ -44,7 +45,7 @@ self.addEventListener('message', async (event) => {
                 });
                 
                 currentModelId = selectedModel;
-                self.postMessage({ status: 'debug', data: `Model loaded successfully.` });
+                self.postMessage({ status: 'debug', data: `Model loaded.` });
 
             } catch (err) {
                 self.postMessage({ status: 'error', data: `Error loading ${selectedModel}: ` + err.message });
@@ -62,14 +63,16 @@ self.addEventListener('message', async (event) => {
             const isDistil = selectedModel.includes('distil');
             const isTiny = selectedModel.includes('tiny');
 
-            // --- CONFIGURACIÓN DINÁMICA ---
-            // Distil: 15s chunk, timestamps por segmento (TRUE) para evitar crash
-            // Normal: 30s chunk, timestamps por palabra ("word") para máxima precisión
-            const chunkLength = isDistil ? 15 : 30;
+            // --- CONFIGURACIÓN CRÍTICA ---
+            // Los modelos Distil NO soportan 'word' timestamps en esta versión.
+            // Si es Distil -> timestamps: true (segmentos)
+            // Si es Normal -> timestamps: 'word' (palabras)
             const timestampMode = isDistil ? true : "word"; 
-            const repetitionPenalty = isTiny ? 1.0 : 1.2;
-
-            self.postMessage({ status: 'debug', data: `Config: Chunk=${chunkLength}s, Stamps=${timestampMode}, RepPen=${repetitionPenalty}` });
+            
+            // Distil prefiere chunks más cortos para ser rápido
+            const chunkLength = isDistil ? 15 : 30;
+            
+            self.postMessage({ status: 'debug', data: `Mode: ${isDistil ? 'Distil (Fast)' : 'Normal (Precise)'} | Stamps: ${timestampMode}` });
 
             const output = await transcriber(audio, {
                 language: message.language,
@@ -77,27 +80,27 @@ self.addEventListener('message', async (event) => {
                 
                 chunk_length_s: chunkLength,
                 stride_length_s: 5,
-                return_timestamps: timestampMode, // AQUÍ ESTABA EL ERROR
+                return_timestamps: timestampMode, // ESTO EVITA EL ERROR 'SLICE'
                 
-                repetition_penalty: repetitionPenalty,
+                // Parámetros de estabilidad
+                repetition_penalty: isTiny ? 1.0 : 1.2,
                 no_repeat_ngram_size: 2, 
                 temperature: 0,
 
+                // Callback de progreso seguro
                 callback_function: (items) => {
                     try {
                         if (items && items.length > 0) {
                             const last = items[items.length - 1];
                             let end = 0;
                             
-                            // Extracción segura del tiempo final para la barra
                             if (last.timestamp) {
                                 if (Array.isArray(last.timestamp)) end = last.timestamp[1];
                                 else if (typeof last.timestamp === 'number') end = last.timestamp;
                             }
 
-                            // Sanitización de datos
                             const cleanData = {
-                                text: last.text ? String(last.text) : "",
+                                text: last.text ? String(last.text).substring(0,60) : "...",
                                 timeRef: typeof end === 'number' ? end : 0
                             };
                             self.postMessage({ status: 'progress', data: cleanData });
@@ -114,12 +117,16 @@ self.addEventListener('message', async (event) => {
                     let start = null;
                     let end = null;
                     
+                    // Normalización de timestamps (Array vs Number)
                     if (Array.isArray(chunk.timestamp)) {
                         start = chunk.timestamp[0];
                         end = chunk.timestamp[1];
+                    } else if (typeof chunk.timestamp === 'number') {
+                        // Si devuelve solo un numero (caso raro), no tenemos start/end claros
+                        // Usamos null para que la lógica V5 lo gestione
+                        end = chunk.timestamp;
                     }
                     
-                    // Aseguramos números
                     cleanChunks.push({
                         text: chunk.text ? String(chunk.text) : "",
                         timestamp: [
@@ -138,7 +145,7 @@ self.addEventListener('message', async (event) => {
             self.postMessage({ status: 'complete', data: cleanOutput });
 
         } catch (err) {
-            self.postMessage({ status: 'error', data: "Transcription error: " + err.message });
+            self.postMessage({ status: 'error', data: "Worker Error: " + err.message });
         }
     }
 });
