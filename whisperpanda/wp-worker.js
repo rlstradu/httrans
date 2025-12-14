@@ -1,4 +1,4 @@
-// wp-worker.js - Worker de la IA (V3.6 - Final Stable Fix)
+// wp-worker.js - Worker de la IA (V3.7 - Model Name Patch)
 
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
@@ -13,10 +13,15 @@ self.addEventListener('message', async (event) => {
     const message = event.data;
 
     if (message.type === 'run') {
-        // Usamos el modelo seleccionado tal cual viene del HTML.
-        // El ID correcto para Turbo es 'distil-whisper/distil-small.en'
         let selectedModel = message.model || 'Xenova/whisper-small';
         
+        // --- AUTO-CORRECCIÓN CRÍTICA DE NOMBRE DE MODELO ---
+        // El nombre correcto del repo web es 'Xenova/distil-whisper-small.en'
+        // Si detectamos que intentan cargar un distil, lo redirigimos al correcto.
+        if (selectedModel.includes('distil') && selectedModel.includes('small')) {
+            selectedModel = 'Xenova/distil-whisper-small.en';
+        }
+
         // 1. CARGA / CAMBIO DE MODELO
         if (!transcriber || currentModelId !== selectedModel) {
             try {
@@ -117,8 +122,7 @@ self.addEventListener('message', async (event) => {
                         start = chunk.timestamp[0];
                         end = chunk.timestamp[1];
                     } else if (typeof chunk.timestamp === 'number') {
-                        // Si es Distil, a veces devuelve solo números
-                        // La lógica V5 del main.js manejará los nulls si faltan
+                        // Si devuelve solo un numero (caso raro), no tenemos start/end claros
                         end = chunk.timestamp;
                     }
                     
