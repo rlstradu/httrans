@@ -8,6 +8,11 @@ const translations = {
         settingsTitle: "Assistant Preferences",
         audioLangLabel: "Audio Language",
         audioLangHelp: "Manually selecting the language improves accuracy and speed.",
+        modelLabel: "AI Model / Quality",
+        modelHelp: "Use 'Small' for best accuracy or 'Tiny' for speed.",
+        optTiny: "Tiny (Fastest - ~40MB)",
+        optBase: "Base (Balanced - ~80MB)",
+        optSmall: "Small (High Quality - ~250MB)",
         optAuto: "✨ Detect automatically",
         actionLabel: "Action",
         optTranscribe: "Transcribe (Keep original language)",
@@ -27,7 +32,7 @@ const translations = {
         fileWarning: "<strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. We recommend extracting audio to MP3 first if you experience issues.",
         startBtn: "Start",
         startBtnProcessing: "Processing audio (Wait)...",
-        statusLoading: "Loading AI model (~250MB)...", 
+        statusLoading: "Loading AI model...", 
         statusInitiating: "Initiating transcription...",
         statusListening: "The Panda is listening...",
         statusComplete: "Completed!",
@@ -39,7 +44,7 @@ const translations = {
         saveTxtBtn: "Save TXT",
         resultFooter: "Remember to check subtitles in a professional tool (like Subpanda or EZTitles) for fine-tuning.",
         errorMsg: "Error processing audio. Ensure it's a valid format.",
-        downloadModel: "Downloading Whisper Small (~250MB)...", 
+        downloadModel: "Downloading AI Model...", 
         dontBreakDefaults: "of, to, in, for, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among"
     },
     es: {
@@ -49,6 +54,11 @@ const translations = {
         settingsTitle: "Ajustes del asistente",
         audioLangLabel: "Idioma del audio",
         audioLangHelp: "Seleccionar el idioma manualmente mejora la precisión y velocidad.",
+        modelLabel: "Modelo IA / Calidad",
+        modelHelp: "Usa 'Small' para mejor precisión o 'Tiny' para velocidad.",
+        optTiny: "Tiny (Ultra Rápido - ~40MB)",
+        optBase: "Base (Equilibrado - ~80MB)",
+        optSmall: "Small (Alta Calidad - ~250MB)",
         optAuto: "✨ Detectar automáticamente",
         actionLabel: "Acción",
         optTranscribe: "Transcribir (Mantener idioma original)",
@@ -68,7 +78,7 @@ const translations = {
         fileWarning: "<strong>¡Ojo!</strong> Este archivo es grande (>500MB). El navegador podría ir lento. Recomendamos extraer el audio a MP3 antes de subirlo si experimentas problemas.",
         startBtn: "Iniciar",
         startBtnProcessing: "Procesando audio (Espere)...",
-        statusLoading: "Cargando modelo de IA (~250MB)...", 
+        statusLoading: "Cargando modelo de IA...", 
         statusInitiating: "Iniciando transcripción...",
         statusListening: "El Panda está escuchando...",
         statusComplete: "¡Completado!",
@@ -80,7 +90,7 @@ const translations = {
         saveTxtBtn: "Guardar TXT",
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional (como Subpanda o EZTitles) para el ajuste fino de tiempos.",
         errorMsg: "No se pudo procesar el audio. Asegúrate de que es un formato válido.",
-        downloadModel: "Descargando Whisper Small (~250MB)...", 
+        downloadModel: "Descargando Modelo IA...", 
         dontBreakDefaults: "a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, el, la, los, las, un, una, unos, unas"
     }
 };
@@ -120,12 +130,8 @@ const els = {
 function logToConsole(msg) {
     if (!els.consoleOutput) return;
     const div = document.createElement('div');
-    // Si es un objeto, lo convertimos a string
-    if (typeof msg === 'object') {
-        div.innerText = `> ${JSON.stringify(msg)}`;
-    } else {
-        div.innerText = `> ${msg}`;
-    }
+    if (typeof msg === 'object') div.innerText = `> ${JSON.stringify(msg)}`;
+    else div.innerText = `> ${msg}`;
     div.className = "hover:bg-gray-800 px-1 rounded";
     els.consoleOutput.appendChild(div);
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
@@ -149,9 +155,16 @@ function setLanguage(lang) {
         if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key];
     });
 
+    // Actualizar opciones del select de modelo si es necesario (el texto visible)
+    const modelSelect = document.getElementById('model-select');
+    if(modelSelect) {
+        modelSelect.options[0].text = t.optTiny;
+        modelSelect.options[1].text = t.optBase;
+        modelSelect.options[2].text = t.optSmall;
+    }
+
     if (els.runBtn.disabled && !audioData) els.runBtn.querySelector('span').innerText = t.startBtn;
     else if (!els.runBtn.disabled) els.runBtn.querySelector('span').innerText = t.startBtn;
-    
     els.dontBreakInput.value = t.dontBreakDefaults;
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
@@ -207,10 +220,8 @@ worker.onmessage = (e) => {
     const t = translations[currentLang];
 
     if (status === 'debug') {
-        // Logs internos del worker (ayuda a ver qué pasa si se queda pillado)
-        logToConsole(`[Worker] ${data}`);
-    }
-    else if (status === 'loading') {
+        logToConsole(data);
+    } else if (status === 'loading') {
         if (data && data.status === 'progress') {
             els.statusText.innerText = `${t.statusLoading} (${Math.round(data.progress)}%)`;
             if(Math.round(data.progress) % 20 === 0) logToConsole(`Downloading model: ${Math.round(data.progress)}%`);
@@ -219,23 +230,19 @@ worker.onmessage = (e) => {
         }
     } else if (status === 'initiate') {
         els.statusText.innerText = t.statusInitiating;
-        logToConsole("Running Whisper Small (WebGPU/WASM)...");
+        logToConsole("Running Whisper (WebGPU/WASM)...");
     } else if (status === 'progress') {
-        // Data sanitizado: { text, timeRef }
         if (data && data.timeRef && audioDuration > 0) {
-            const percent = (data.timeRef / audioDuration) * 100;
+            const current = data.timeRef;
+            const percent = (current / audioDuration) * 100;
             updateProgress(percent);
             els.statusText.innerText = `${t.statusListening} (${Math.round(percent)}%)`;
-            
-            // Logueamos solo si ha avanzado significativamente para no saturar
-            // o si queremos ver actividad
-            // logToConsole(`Processing: ${fmtTime(data.timeRef)}`);
         }
     } else if (status === 'complete') {
         updateProgress(100);
         els.statusText.innerText = t.statusComplete;
         logToConsole("Raw transcription done. Applying Panda Logic V5...");
-        processResultsV5(data); 
+        processResultsV5(data);
     } else if (status === 'error') {
         logToConsole(`ERROR: ${data}`);
         alert("Error: " + data);
@@ -254,12 +261,14 @@ els.runBtn.addEventListener('click', () => {
     
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
+    const modelSelect = document.getElementById('model-select').value;
     
     worker.postMessage({
         type: 'run',
         audio: audioData,
         language: langSelect === 'auto' ? null : langSelect,
-        task: task
+        task: task,
+        model: modelSelect
     });
 });
 
@@ -279,14 +288,11 @@ function processResultsV5(data) {
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
 
     // 1. Extraer palabras con timestamps
-    // Data viene sanitizado: { text, chunks: [{text, timestamp:[s,e]}] }
     let allWords = [];
     if (data.chunks && Array.isArray(data.chunks)) {
         data.chunks.forEach(chunk => {
             let start = chunk.timestamp[0];
             let end = chunk.timestamp[1];
-            
-            // Filtro básico de validez
             if (start !== null && end !== null && typeof start === 'number' && typeof end === 'number') {
                 allWords.push({
                     word: chunk.text,
@@ -297,15 +303,10 @@ function processResultsV5(data) {
         });
     }
 
-    logToConsole(`Extracted ${allWords.length} words with timestamps.`);
-
-    // 2. Segmentación Inteligente (Algoritmo Colab)
+    logToConsole(`Extracted ${allWords.length} words.`);
     let subs = createSrtV5(allWords, maxCPL, maxLines);
-    
-    // 3. Reglas de Tiempo (Algoritmo Colab)
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
-    // 4. Output
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') {
         subs.forEach(s => s.text = "");
@@ -322,95 +323,57 @@ function processResultsV5(data) {
     setupDownloads(srt, subs);
 }
 
-// --- PORT: segmentar_texto_equilibrado ---
 function balancedSplit(text, maxCpl) {
     if (text.length <= maxCpl) return [text];
-
     const words = text.split(' ');
     let bestCut = -1;
     let bestDiff = Infinity;
     const punct = [',', ':', ';', '-', '.'];
-
-    // Zona segura (30% - 70%)
     const safeStart = Math.floor(text.length * 0.3);
     const safeEnd = Math.floor(text.length * 0.7);
-
-    // 1. Intentar cortar por puntuación
     let indices = [];
-    for (let i = 0; i < text.length; i++) {
-        if (punct.includes(text[i])) indices.push(i);
-    }
+    for (let i = 0; i < text.length; i++) { if (punct.includes(text[i])) indices.push(i); }
     const candidates = indices.filter(i => i > safeStart && i < safeEnd);
-
     if (candidates.length > 0) {
         const center = text.length / 2;
-        // Buscar el más cercano al centro
-        const bestPunct = candidates.reduce((prev, curr) => 
-            Math.abs(curr - center) < Math.abs(prev - center) ? curr : prev
-        );
-
+        const bestPunct = candidates.reduce((prev, curr) => Math.abs(curr - center) < Math.abs(prev - center) ? curr : prev);
         const l1 = text.substring(0, bestPunct + 1).trim();
         const l2 = text.substring(bestPunct + 1).trim();
-
-        if (l1.length <= maxCpl && l2.length <= maxCpl) {
-            return [l1, l2];
-        }
+        if (l1.length <= maxCpl && l2.length <= maxCpl) return [l1, l2];
     }
-
-    // 2. Equilibrio geométrico (Pyramid)
     for (let i = 1; i < words.length; i++) {
         const l1 = words.slice(0, i).join(' ');
         const l2 = words.slice(i).join(' ');
-
         if (l1.length > maxCpl || l2.length > maxCpl) continue;
-
         const diff = Math.abs(l1.length - l2.length);
-        if (diff < bestDiff) {
-            bestDiff = diff;
-            bestCut = i;
-        }
+        if (diff < bestDiff) { bestDiff = diff; bestCut = i; }
     }
-
-    if (bestCut !== -1) {
-        return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
-    }
-
-    // 3. Fallback: Corte bruto
+    if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     const mid = Math.floor(words.length / 2);
     return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
 
-// --- PORT: crear_srt_v5 ---
 function createSrtV5(words, maxCpl, maxLines) {
     const subtitles = [];
     let buffer = [];
     let startTime = null;
     const strongPunct = ['.', '?', '!', '♪'];
-
     for (let i = 0; i < words.length; i++) {
         const wObj = words[i];
         const wordText = wObj.word.trim();
         if (!wordText) continue;
-
         if (startTime === null) startTime = wObj.start;
-
         buffer.push(wordText);
         const currentText = buffer.join(' ');
         let forceCut = false;
         let pendingWord = null;
         let endTime = wObj.end;
-
-        // Regla 1: Exceso de caracteres
         if (currentText.length > (maxCpl * maxLines)) {
-            // Sacar la última palabra
             pendingWord = wObj;
             buffer.pop();
             forceCut = true;
-            // El fin es el inicio de la palabra pendiente (aprox)
             endTime = wObj.start; 
-        }
-        // Regla 2: Puntuación fuerte en palabra ANTERIOR
-        else if (buffer.length > 1) {
+        } else if (buffer.length > 1) {
             const prevWord = buffer[buffer.length - 2];
             const lastChar = prevWord.slice(-1);
             if (strongPunct.includes(lastChar)) {
@@ -420,20 +383,12 @@ function createSrtV5(words, maxCpl, maxLines) {
                 endTime = wObj.start;
             }
         }
-
         if (forceCut || i === words.length - 1) {
             const finalBlock = buffer.join(' ');
             const lines = balancedSplit(finalBlock, maxCpl);
-            
-            subtitles.push({
-                start: startTime,
-                end: endTime,
-                text: lines.join('\n')
-            });
-
+            subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
             buffer = [];
             startTime = null;
-
             if (pendingWord) {
                 buffer.push(pendingWord.word.trim());
                 startTime = pendingWord.start;
@@ -443,56 +398,31 @@ function createSrtV5(words, maxCpl, maxLines) {
     return subtitles;
 }
 
-// --- PORT: aplicar_reglas_tiempo_y_gap ---
 function applyTimeRules(subs, minDur, maxDur, minGap) {
-    // 1. Corrección de solapamientos y Max Dur
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
-
-        // A. Duración Máxima
-        if ((current.end - current.start) > maxDur) {
-            current.end = current.start + maxDur;
-        }
-
-        // B. Forzar Gap
+        if ((current.end - current.start) > maxDur) current.end = current.start + maxDur;
         if (i < subs.length - 1) {
             let next = subs[i+1];
             let limit = next.start - minGap;
-
-            if (current.end > limit) {
-                current.end = limit;
-            }
-            // Seguridad
-            if (current.end <= current.start) {
-                current.end = current.start + 0.1;
-            }
+            if (current.end > limit) current.end = limit;
+            if (current.end <= current.start) current.end = current.start + 0.1;
         }
     }
-
-    // 2. Duración mínima (Extender)
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         let duration = current.end - current.start;
-
         if (duration < minDur) {
             let desiredEnd = current.start + minDur;
             let limit = Infinity;
-            
-            if (i < subs.length - 1) {
-                limit = subs[i+1].start - minGap;
-            }
-
-            if (desiredEnd <= limit) {
-                current.end = desiredEnd;
-            } else {
-                current.end = limit;
-            }
+            if (i < subs.length - 1) limit = subs[i+1].start - minGap;
+            if (desiredEnd <= limit) current.end = desiredEnd;
+            else current.end = limit;
         }
     }
     return subs;
 }
 
-// --- UTILIDADES ---
 function generateSRT(segs) {
     return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n');
 }
@@ -504,7 +434,6 @@ function fmtTime(s) {
 }
 
 function setupDownloads(srt, segs) {
-    const t = translations[currentLang];
     els.dlSrt.onclick = () => download(srt, `${rawFileName}_subpanda.srt`);
     const cleanTxt = segs.map(s => s.text.replace(/\n/g, ' ')).join(' ');
     els.dlTxt.onclick = () => download(cleanTxt, `${rawFileName}.txt`);
