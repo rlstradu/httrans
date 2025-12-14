@@ -1,87 +1,134 @@
-// wp-worker.js - Worker V3 con soporte WebGPU
+// wp-worker.js - Worker de la IA (Versión V3 Blindada)
 
-// Importamos la versión V3 (Alpha) que soporta WebGPU
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
-// Configuración
+// Configuración de entorno
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-// Intentar activar WebGPU si está disponible, si no, usar WASM (CPU)
-// Nota: En la v2.17+ esto suele ser automático, pero lo definimos por si acaso.
-
 let transcriber = null;
+
+// Función auxiliar para enviar logs a la consola de la interfaz
+function log(msg) {
+    self.postMessage({ status: 'debug', data: msg });
+}
 
 self.addEventListener('message', async (event) => {
     const message = event.data;
 
     if (message.type === 'run') {
+        
+        // 1. CARGA DEL MODELO
         if (!transcriber) {
             try {
-                self.postMessage({ status: 'loading', data: { status: 'init', file: 'Model' } });
+                self.postMessage({ status: 'loading' });
+                log("Initializing Whisper pipeline...");
                 
-                // CAMBIO CLAVE: Usamos 'distil-whisper/distil-small.en' o 'Xenova/whisper-small'
-                // 'distil-whisper' es 6 veces más rápido y casi tan preciso como el medium.
-                // Si necesitas multilingüe obligatoriamente, usa 'Xenova/whisper-small'.
-                
-                const modelName = 'Xenova/whisper-small'; 
-
-                transcriber = await pipeline('automatic-speech-recognition', modelName, {
+                // Usamos 'Xenova/whisper-small' (aprox 250MB). 
+                // Es el mejor equilibrio calidad/rendimiento para web hoy en día.
+                transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-small', {
                     quantized: true,
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
+                            // Clonamos datos simples para evitar errores de referencia
                             self.postMessage({ 
                                 status: 'loading', 
-                                data: { ...data } 
+                                data: { file: data.file, progress: data.progress, status: data.status } 
                             });
                         }
                     }
                 });
+                log("Model loaded successfully.");
             } catch (err) {
-                self.postMessage({ status: 'error', data: "Error loading model (WebGPU/CPU): " + err.message });
+                log(`CRITICAL ERROR LOADING MODEL: ${err.message}`);
+                self.postMessage({ status: 'error', data: "Error loading model: " + err.message });
                 return;
             }
         }
 
+        // 2. EJECUCIÓN
         try {
             self.postMessage({ status: 'initiate' });
+            log("Starting transcription task...");
 
-            // Configuración para obtener TIMESTAMPS POR PALABRA (Crucial para tu algoritmo)
-            const output = await transcriber(message.audio, {
+            const audio = message.audio;
+            const taskToRun = message.task === 'spotting' ? 'transcribe' : (message.task || 'transcribe');
+
+            // Ejecutamos la IA
+            const output = await transcriber(audio, {
                 language: message.language,
-                task: message.task === 'spotting' ? 'transcribe' : (message.task || 'transcribe'),
+                task: taskToRun,
+                
+                // Parámetros de segmentación (igual que tu Colab)
                 chunk_length_s: 30,
                 stride_length_s: 5,
-                return_timestamps: "word", // ¡Esto nos da el nivel de detalle de tu Colab!
+                return_timestamps: "word", // IMPORTANTE: Timestamps por palabra para tu algoritmo V5
                 
-                // Parámetros de estabilidad
+                // Parámetros de estabilidad (estándar para evitar conflictos en web)
                 no_repeat_ngram_size: 2,
-                temperature: 0,
                 
+                // Callback de progreso MUY simplificado para evitar el error "#<a> could not be cloned"
                 callback_function: (items) => {
-                    // Progreso simple
-                    if (items && items.length > 0) {
-                        const last = items[items.length - 1];
-                        // Estimación de progreso
-                        if (last && last.timestamp) {
-                             const end = Array.isArray(last.timestamp) ? last.timestamp[1] : last.timestamp;
-                             self.postMessage({ status: 'progress', data: { timestamp: [0, end] } });
+                    try {
+                        // Solo enviamos una señal de vida, sin datos complejos
+                        if (items && items.length > 0) {
+                            const last = items[items.length - 1];
+                            
+                            // Intentamos extraer un timestamp seguro
+                            let endSec = 0;
+                            if (last && last.timestamp) {
+                                if (Array.isArray(last.timestamp)) endSec = last.timestamp[1];
+                                else if (typeof last.timestamp === 'number') endSec = last.timestamp;
+                            }
+                            
+                            // Enviamos SOLO números y texto plano. Nada de objetos anidados.
+                            self.postMessage({ 
+                                status: 'progress', 
+                                data: { 
+                                    text: last.text ? String(last.text).substring(0, 50) : "...", 
+                                    timeRef: typeof endSec === 'number' ? endSec : 0
+                                } 
+                            });
                         }
+                    } catch (e) {
+                        // Ignorar errores de progreso para no detener la transcripción
                     }
                 }
             });
 
-            // Enviamos el objeto completo, que ahora incluye 'chunks' con palabras
-            // Limpiamos un poco para evitar el error de clonación
-            const safeOutput = {
-                text: output.text,
-                chunks: output.chunks // Aquí vendrán las palabras con timestamps
+            log("Transcription finished. Processing output data...");
+
+            // 3. SANITIZACIÓN DE DATOS (Crucial para evitar el error de clonación)
+            // Reconstruimos el objeto paso a paso para asegurar que solo enviamos JSON puro.
+            
+            const cleanChunks = [];
+            if (output.chunks && Array.isArray(output.chunks)) {
+                for (const chunk of output.chunks) {
+                    // Extracción segura de timestamps
+                    let start = 0, end = 0;
+                    if (Array.isArray(chunk.timestamp)) {
+                        start = chunk.timestamp[0];
+                        end = chunk.timestamp[1];
+                    }
+                    
+                    cleanChunks.push({
+                        text: chunk.text ? String(chunk.text) : "",
+                        timestamp: [Number(start || 0), Number(end || 0)]
+                    });
+                }
+            }
+
+            const cleanOutput = {
+                text: output.text ? String(output.text) : "",
+                chunks: cleanChunks
             };
 
-            self.postMessage({ status: 'complete', data: safeOutput });
+            log(`Sending ${cleanChunks.length} chunks to main thread.`);
+            self.postMessage({ status: 'complete', data: cleanOutput });
 
         } catch (err) {
-            self.postMessage({ status: 'error', data: err.message });
+            log(`TRANSCRIPTION FAILED: ${err.message}`);
+            self.postMessage({ status: 'error', data: "Transcription error: " + err.message });
         }
     }
 });
