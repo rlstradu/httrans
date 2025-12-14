@@ -1,4 +1,4 @@
-// wp-main.js - Lógica principal de WhisperPanda (V2.0 - Algoritmo Colab Portado)
+// wp-main.js - Lógica principal de WhisperPanda (V2.1 - Algoritmo Colab Portado & Debug)
 
 const translations = {
     en: {
@@ -27,7 +27,7 @@ const translations = {
         fileWarning: "<strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. We recommend extracting audio to MP3 first if you experience issues.",
         startBtn: "Start",
         startBtnProcessing: "Processing audio (Wait)...",
-        statusLoading: "Loading AI model (~200MB)...", 
+        statusLoading: "Loading AI model (~250MB)...", 
         statusInitiating: "Initiating transcription...",
         statusListening: "The Panda is listening...",
         statusComplete: "Completed!",
@@ -39,7 +39,7 @@ const translations = {
         saveTxtBtn: "Save TXT",
         resultFooter: "Remember to check subtitles in a professional tool (like Subpanda or EZTitles) for fine-tuning.",
         errorMsg: "Error processing audio. Ensure it's a valid format.",
-        downloadModel: "Downloading Whisper Small (~200MB)...", 
+        downloadModel: "Downloading Whisper Small (~250MB)...", 
         dontBreakDefaults: "of, to, in, for, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among"
     },
     es: {
@@ -68,7 +68,7 @@ const translations = {
         fileWarning: "<strong>¡Ojo!</strong> Este archivo es grande (>500MB). El navegador podría ir lento. Recomendamos extraer el audio a MP3 antes de subirlo si experimentas problemas.",
         startBtn: "Iniciar",
         startBtnProcessing: "Procesando audio (Espere)...",
-        statusLoading: "Cargando modelo de IA (~200MB)...", 
+        statusLoading: "Cargando modelo de IA (~250MB)...", 
         statusInitiating: "Iniciando transcripción...",
         statusListening: "El Panda está escuchando...",
         statusComplete: "¡Completado!",
@@ -80,7 +80,7 @@ const translations = {
         saveTxtBtn: "Guardar TXT",
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional (como Subpanda o EZTitles) para el ajuste fino de tiempos.",
         errorMsg: "No se pudo procesar el audio. Asegúrate de que es un formato válido.",
-        downloadModel: "Descargando Whisper Small (~200MB)...", 
+        downloadModel: "Descargando Whisper Small (~250MB)...", 
         dontBreakDefaults: "a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, el, la, los, las, un, una, unos, unas"
     }
 };
@@ -120,7 +120,12 @@ const els = {
 function logToConsole(msg) {
     if (!els.consoleOutput) return;
     const div = document.createElement('div');
-    div.innerText = `> ${msg}`;
+    // Si es un objeto, lo convertimos a string
+    if (typeof msg === 'object') {
+        div.innerText = `> ${JSON.stringify(msg)}`;
+    } else {
+        div.innerText = `> ${msg}`;
+    }
     div.className = "hover:bg-gray-800 px-1 rounded";
     els.consoleOutput.appendChild(div);
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
@@ -201,7 +206,11 @@ worker.onmessage = (e) => {
     const { status, data } = e.data;
     const t = translations[currentLang];
 
-    if (status === 'loading') {
+    if (status === 'debug') {
+        // Logs internos del worker (ayuda a ver qué pasa si se queda pillado)
+        logToConsole(`[Worker] ${data}`);
+    }
+    else if (status === 'loading') {
         if (data && data.status === 'progress') {
             els.statusText.innerText = `${t.statusLoading} (${Math.round(data.progress)}%)`;
             if(Math.round(data.progress) % 20 === 0) logToConsole(`Downloading model: ${Math.round(data.progress)}%`);
@@ -210,20 +219,23 @@ worker.onmessage = (e) => {
         }
     } else if (status === 'initiate') {
         els.statusText.innerText = t.statusInitiating;
-        logToConsole("Running Whisper (Small)...");
+        logToConsole("Running Whisper Small (WebGPU/WASM)...");
     } else if (status === 'progress') {
-        // En V3, intentamos estimar el progreso
-        if (data && data.timestamp && audioDuration > 0) {
-            const current = Array.isArray(data.timestamp) ? data.timestamp[1] : data.timestamp;
-            const percent = (current / audioDuration) * 100;
+        // Data sanitizado: { text, timeRef }
+        if (data && data.timeRef && audioDuration > 0) {
+            const percent = (data.timeRef / audioDuration) * 100;
             updateProgress(percent);
             els.statusText.innerText = `${t.statusListening} (${Math.round(percent)}%)`;
+            
+            // Logueamos solo si ha avanzado significativamente para no saturar
+            // o si queremos ver actividad
+            // logToConsole(`Processing: ${fmtTime(data.timeRef)}`);
         }
     } else if (status === 'complete') {
         updateProgress(100);
         els.statusText.innerText = t.statusComplete;
-        logToConsole("Raw transcription done. Applying Panda Logic...");
-        processResultsV5(data); // LLAMADA A LA NUEVA LÓGICA V5
+        logToConsole("Raw transcription done. Applying Panda Logic V5...");
+        processResultsV5(data); 
     } else if (status === 'error') {
         logToConsole(`ERROR: ${data}`);
         alert("Error: " + data);
@@ -266,16 +278,16 @@ function processResultsV5(data) {
     
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
 
-    // 1. Extraer palabras con timestamps (Word-Level Timestamps)
+    // 1. Extraer palabras con timestamps
+    // Data viene sanitizado: { text, chunks: [{text, timestamp:[s,e]}] }
     let allWords = [];
     if (data.chunks && Array.isArray(data.chunks)) {
         data.chunks.forEach(chunk => {
-            // Transformers.js v3 devuelve chunks que son palabras si activamos word_timestamps
-            // A veces la palabra tiene espacios alrededor, la limpiamos al procesar
-            let start = Array.isArray(chunk.timestamp) ? chunk.timestamp[0] : null;
-            let end = Array.isArray(chunk.timestamp) ? chunk.timestamp[1] : null;
+            let start = chunk.timestamp[0];
+            let end = chunk.timestamp[1];
             
-            if (start !== null && end !== null) {
+            // Filtro básico de validez
+            if (start !== null && end !== null && typeof start === 'number' && typeof end === 'number') {
                 allWords.push({
                     word: chunk.text,
                     start: start,
@@ -402,7 +414,6 @@ function createSrtV5(words, maxCpl, maxLines) {
             const prevWord = buffer[buffer.length - 2];
             const lastChar = prevWord.slice(-1);
             if (strongPunct.includes(lastChar)) {
-                // Cortar AQUÍ. La palabra actual pasa al siguiente.
                 pendingWord = wObj;
                 buffer.pop();
                 forceCut = true;
