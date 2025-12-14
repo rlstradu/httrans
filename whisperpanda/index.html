@@ -122,7 +122,7 @@
                 <!-- Columna Izquierda -->
                 <div class="space-y-5">
                     
-                    <!-- NUEVO SELECTOR DE MODELO -->
+                    <!-- SELECTOR DE MODELO -->
                     <div>
                         <label class="block text-sm font-bold text-gray-600 mb-1.5" data-key="modelLabel">AI Model / Quality</label>
                         <select id="model-select" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#E23B5D] focus:border-[#E23B5D] outline-none transition">
@@ -130,7 +130,7 @@
                             <option value="Xenova/whisper-base" data-key="optBase">Base (Balanced - ~80MB)</option>
                             <option value="Xenova/whisper-small" selected data-key="optSmall">Small (High Quality - ~250MB)</option>
                         </select>
-                        <p class="text-xs text-gray-400 mt-1 ml-1" data-key="modelHelp">Use 'Small' for best accuracy or 'Base' for speed.</p>
+                        <p class="text-xs text-gray-400 mt-1 ml-1" data-key="modelHelp">Use 'Small' for best accuracy or 'Tiny' for speed.</p>
                     </div>
 
                     <div>
@@ -148,8 +148,8 @@
                             <option value="ca">🏴󠁣󠁡󠁿 Català</option>
                             <option value="gl">🏴󠁧󠁬󠁿 Galego</option>
                             <option value="eu">🏴󠁥󠁵󠁿 Euskara</option>
-                            <option value="ja">🇯🇵 日本語</option>
-                            <option value="zh">🇨🇳 中文</option>
+                            <option value="ja">🇯🇵 Japonés</option>
+                            <option value="zh">🇨🇳 Chino</option>
                         </select>
                     </div>
 
@@ -249,21 +249,14 @@
                 <span data-key="startBtn">Start</span>
             </button>
 
-            <!-- Barra de Progreso y Consola -->
+            <!-- CONSOLA DE LOGS (Solo consola, sin barra) -->
             <div id="progress-container" class="hidden">
                 <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
                     <span id="status-text" data-key="statusLoading">Loading model...</span>
-                    <!-- Porcentaje visible -->
-                    <span id="progress-percentage" class="text-[#E23B5D] font-bold">0%</span>
-                </div>
-                
-                <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
-                    <div id="progress-bar" class="bg-[#E23B5D] h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
                 
                 <p id="detail-text" class="text-xs text-gray-400 mt-2 font-mono text-center"></p>
 
-                <!-- CONSOLA DE LOGS -->
                 <div class="mt-4 bg-gray-900 rounded-xl p-4 shadow-lg border border-gray-700">
                     <div class="flex items-center gap-2 mb-2 border-b border-gray-700 pb-2">
                         <div class="w-3 h-3 rounded-full bg-red-500"></div>
@@ -271,7 +264,7 @@
                         <div class="w-3 h-3 rounded-full bg-green-500"></div>
                         <span class="text-xs text-gray-400 font-mono ml-2">Panda Terminal v2.0</span>
                     </div>
-                    <div id="console-output" class="console-window h-32 overflow-y-auto text-xs font-mono text-green-400 space-y-1">
+                    <div id="console-output" class="console-window h-48 overflow-y-auto text-xs font-mono text-green-400 space-y-1">
                         <!-- Aquí se inyectarán los logs -->
                         <div class="opacity-50">> System ready...</div>
                     </div>
