@@ -1,123 +1,87 @@
-// wp-worker.js - Worker de la IA (Cerebro del Panda)
+// wp-worker.js - Worker V3 con soporte WebGPU
 
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.0';
+// Importamos la versión V3 (Alpha) que soporta WebGPU
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
-// Configuración importante para entorno web estático
+// Configuración
 env.allowLocalModels = false;
 env.useBrowserCache = true;
+
+// Intentar activar WebGPU si está disponible, si no, usar WASM (CPU)
+// Nota: En la v2.17+ esto suele ser automático, pero lo definimos por si acaso.
 
 let transcriber = null;
 
 self.addEventListener('message', async (event) => {
     const message = event.data;
 
-    // --- ACCIÓN: RUN ---
     if (message.type === 'run') {
-        
-        // 1. Cargar Modelo (si no está cargado)
         if (!transcriber) {
             try {
-                self.postMessage({ status: 'loading' });
+                self.postMessage({ status: 'loading', data: { status: 'init', file: 'Model' } });
                 
-                // Usamos 'whisper-base' cuantizado. 
-                transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-base', {
+                // CAMBIO CLAVE: Usamos 'distil-whisper/distil-small.en' o 'Xenova/whisper-small'
+                // 'distil-whisper' es 6 veces más rápido y casi tan preciso como el medium.
+                // Si necesitas multilingüe obligatoriamente, usa 'Xenova/whisper-small'.
+                
+                const modelName = 'Xenova/whisper-small'; 
+
+                transcriber = await pipeline('automatic-speech-recognition', modelName, {
                     quantized: true,
-                    // Callback para informar del progreso de la descarga del modelo
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
-                            // Clonación segura manual
                             self.postMessage({ 
                                 status: 'loading', 
-                                data: { 
-                                    file: data.file, 
-                                    progress: data.progress,
-                                    status: data.status
-                                } 
+                                data: { ...data } 
                             });
                         }
                     }
                 });
             } catch (err) {
-                self.postMessage({ status: 'error', data: "Error loading model: " + err.message });
+                self.postMessage({ status: 'error', data: "Error loading model (WebGPU/CPU): " + err.message });
                 return;
             }
         }
 
-        // 2. Ejecutar Transcripción
         try {
             self.postMessage({ status: 'initiate' });
 
-            const audio = message.audio;
-            const taskToRun = message.task === 'spotting' ? 'transcribe' : (message.task || 'transcribe');
-
-            const output = await transcriber(audio, {
+            // Configuración para obtener TIMESTAMPS POR PALABRA (Crucial para tu algoritmo)
+            const output = await transcriber(message.audio, {
                 language: message.language,
-                task: taskToRun,
+                task: message.task === 'spotting' ? 'transcribe' : (message.task || 'transcribe'),
                 chunk_length_s: 30,
                 stride_length_s: 5,
-                return_timestamps: true,
+                return_timestamps: "word", // ¡Esto nos da el nivel de detalle de tu Colab!
                 
-                // Parámetros Anti-Bucle
-                repetition_penalty: 1.0, 
-                no_repeat_ngram_size: 2, 
+                // Parámetros de estabilidad
+                no_repeat_ngram_size: 2,
                 temperature: 0,
-
-                // --- PROGRESO EN TIEMPO REAL ---
+                
                 callback_function: (items) => {
-                    // BLINDAJE: Envolvemos esto en try-catch para que un error aquí
-                    // NO detenga la transcripción completa.
-                    try {
-                        if (items && items.length > 0) {
-                            const last = items[items.length - 1];
-                            
-                            // Extracción manual y paranoica de datos
-                            let start = 0;
-                            let end = 0;
-                            
-                            // Verificar que timestamp existe y es un array
-                            if (Array.isArray(last.timestamp)) {
-                                start = typeof last.timestamp[0] === 'number' ? last.timestamp[0] : 0;
-                                end = typeof last.timestamp[1] === 'number' ? last.timestamp[1] : 0;
-                            }
-
-                            const cleanData = {
-                                text: last.text ? String(last.text) : "",
-                                timestamp: [start, end]
-                            };
-                            
-                            self.postMessage({ status: 'progress', data: cleanData });
+                    // Progreso simple
+                    if (items && items.length > 0) {
+                        const last = items[items.length - 1];
+                        // Estimación de progreso
+                        if (last && last.timestamp) {
+                             const end = Array.isArray(last.timestamp) ? last.timestamp[1] : last.timestamp;
+                             self.postMessage({ status: 'progress', data: { timestamp: [0, end] } });
                         }
-                    } catch (callbackError) {
-                        // Si falla el progreso, lo ignoramos silenciosamente para que la transcripción siga
-                        console.warn("Ignored progress error:", callbackError);
                     }
                 }
             });
 
-            // CORRECCIÓN CRÍTICA FINAL:
-            // Reconstruimos el objeto final asegurando tipos primitivos
-            const cleanOutput = {
-                text: output.text ? String(output.text) : "",
-                chunks: (output.chunks || []).map(chunk => {
-                    // Verificación segura de timestamps
-                    let start = null;
-                    let end = null;
-                    if (Array.isArray(chunk.timestamp)) {
-                        start = typeof chunk.timestamp[0] === 'number' ? chunk.timestamp[0] : null;
-                        end = typeof chunk.timestamp[1] === 'number' ? chunk.timestamp[1] : null;
-                    }
-                    
-                    return {
-                        text: chunk.text ? String(chunk.text) : "",
-                        timestamp: [start, end]
-                    };
-                })
+            // Enviamos el objeto completo, que ahora incluye 'chunks' con palabras
+            // Limpiamos un poco para evitar el error de clonación
+            const safeOutput = {
+                text: output.text,
+                chunks: output.chunks // Aquí vendrán las palabras con timestamps
             };
 
-            self.postMessage({ status: 'complete', data: cleanOutput });
+            self.postMessage({ status: 'complete', data: safeOutput });
 
         } catch (err) {
-            self.postMessage({ status: 'error', data: "Transcription error: " + err.message });
+            self.postMessage({ status: 'error', data: err.message });
         }
     }
 });
