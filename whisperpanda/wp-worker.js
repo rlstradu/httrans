@@ -58,7 +58,7 @@ self.addEventListener('message', async (event) => {
                 return_timestamps: true,
                 
                 // Parámetros Anti-Bucle
-                repetition_penalty: 1.2, 
+                repetition_penalty: 1.0, 
                 no_repeat_ngram_size: 2, 
                 temperature: 0,
 
