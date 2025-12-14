@@ -13,6 +13,7 @@ const translations = {
         optTiny: "Tiny (Fastest - ~40MB)",
         optBase: "Base (Balanced - ~80MB)",
         optSmall: "Small (High Quality - ~250MB)",
+        optDistil: "Distil-Small (English Only - ⚡ Ultra Fast)",
         optAuto: "✨ Detect automatically",
         actionLabel: "Action",
         optTranscribe: "Transcribe (Keep original language)",
@@ -59,6 +60,7 @@ const translations = {
         optTiny: "Tiny (Ultra Rápido - ~40MB)",
         optBase: "Base (Equilibrado - ~80MB)",
         optSmall: "Small (Alta Calidad - ~250MB)",
+        optDistil: "Distil-Small (Solo Inglés - ⚡ Ultra Rápido)",
         optAuto: "✨ Detectar automáticamente",
         actionLabel: "Acción",
         optTranscribe: "Transcribir (Mantener idioma original)",
@@ -131,7 +133,7 @@ function logToConsole(msg, isProgress = false) {
     else div.innerText = `> ${msg}`;
     
     div.className = "hover:bg-gray-800 px-1 rounded";
-    if (isProgress) div.style.color = "#a7f3d0"; // Verde clarito para progreso
+    if (isProgress) div.style.color = "#a7f3d0"; // Verde claro para progreso
     
     els.consoleOutput.appendChild(div);
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
@@ -154,6 +156,7 @@ function setLanguage(lang) {
         modelSelect.options[0].text = t.optTiny;
         modelSelect.options[1].text = t.optBase;
         modelSelect.options[2].text = t.optSmall;
+        if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
     }
 
     if (els.runBtn.disabled && !audioData) els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -231,14 +234,13 @@ worker.onmessage = (e) => {
             const current = data.timeRef;
             const percent = Math.min(100, Math.round((current / audioDuration) * 100));
             
-            // Actualizar texto de estado
+            // Actualizar solo el texto de estado (Ya no hay barra visual)
             els.statusText.innerText = `${t.statusListening} (${percent}%)`;
             
             // LOG EN TIEMPO REAL EN CONSOLA (Efecto Matrix)
             if (data.text) {
                  const textPreview = data.text.trim();
                  if (textPreview) {
-                     // Logueamos con formato de porcentaje y texto
                      logToConsole(`[${percent}%] ${textPreview}`, true);
                  }
             }
