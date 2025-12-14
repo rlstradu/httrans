@@ -41,7 +41,7 @@
                 <button id="lang-en" class="lang-btn active px-3 py-1 rounded-md text-sm font-bold">EN</button>
                 <button id="lang-es" class="lang-btn px-3 py-1 rounded-md text-sm font-bold">ES</button>
             </div>
-            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#E23B5D]">BETA v3.0 (Groq)</span>
+            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#E23B5D]">BETA v3.1 (Groq)</span>
         </div>
     </nav>
 
@@ -70,28 +70,33 @@
                 <span data-key="settingsTitle">Assistant Preferences</span>
             </h3>
 
-            <!-- MODO DE PROCESAMIENTO -->
+            <!-- MODO DE PROCESAMIENTO (REORDENADO) -->
             <div class="mb-6 bg-pink-50/50 p-4 rounded-xl border border-pink-100">
                 <label class="block text-sm font-bold text-gray-700 mb-2" data-key="modeLabel">Processing Mode</label>
                 <div class="flex gap-4 flex-wrap">
-                    <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:border-[#E23B5D] transition">
-                        <input type="radio" name="proc_mode" value="local" class="text-[#E23B5D] focus:ring-[#E23B5D]" checked>
-                        <div>
-                            <span class="block font-bold text-gray-700">Local (Panda)</span>
-                            <span class="text-xs text-gray-500" data-key="modeLocalDesc">Free, Private, Slower</span>
-                        </div>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:border-[#E23B5D] transition">
-                        <input type="radio" name="proc_mode" value="groq" class="text-[#E23B5D] focus:ring-[#E23B5D]">
+                    
+                    <!-- Opción 1: GROQ (Cloud) - Default -->
+                    <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-lg border-2 border-[#E23B5D] shadow-sm transition relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-[#E23B5D] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl">RECOMMENDED</div>
+                        <input type="radio" name="proc_mode" value="groq" class="text-[#E23B5D] focus:ring-[#E23B5D]" checked>
                         <div>
                             <span class="block font-bold text-gray-700">Cloud (Groq API)</span>
                             <span class="text-xs text-gray-500" data-key="modeGroqDesc">Ultra Fast, Best Quality, Requires Key</span>
                         </div>
                     </label>
+
+                    <!-- Opción 2: LOCAL (Panda) -->
+                    <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:border-gray-400 transition opacity-80 hover:opacity-100">
+                        <input type="radio" name="proc_mode" value="local" class="text-gray-500 focus:ring-gray-500">
+                        <div>
+                            <span class="block font-bold text-gray-600">Local (Panda)</span>
+                            <span class="text-xs text-gray-500" data-key="modeLocalDesc">Free, Private, Slower (CPU/GPU)</span>
+                        </div>
+                    </label>
                 </div>
 
-                <!-- API Key Input (Oculto por defecto) -->
-                <div id="groq-key-container" class="hidden mt-3">
+                <!-- API Key Input (Visible por defecto ahora) -->
+                <div id="groq-key-container" class="mt-3">
                     <label class="block text-xs font-bold text-gray-500 mb-1">GROQ API KEY</label>
                     <div class="flex gap-2">
                         <input type="password" id="groq-key" placeholder="gsk_..." class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-[#E23B5D] outline-none">
@@ -109,7 +114,8 @@
                 <!-- Columna Izquierda -->
                 <div class="space-y-5">
                     
-                    <div id="local-model-container">
+                    <!-- Contenedor Modelo Local (Oculto por defecto ahora) -->
+                    <div id="local-model-container" class="opacity-50 pointer-events-none">
                         <label class="block text-sm font-bold text-gray-600 mb-1.5" data-key="modelLabel">AI Model / Quality</label>
                         <select id="model-select" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#E23B5D] focus:border-[#E23B5D] outline-none transition">
                             <option value="Xenova/whisper-tiny" data-key="optTiny">Tiny (Fastest - ~40MB)</option>
@@ -134,8 +140,8 @@
                             <option value="ca">🏴󠁣󠁡󠁿 Català</option>
                             <option value="gl">🏴󠁧󠁬󠁿 Galego</option>
                             <option value="eu">🏴󠁥󠁵󠁿 Euskara</option>
-                            <option value="ja">🇯🇵 日本語</option>
-                            <option value="zh">🇨🇳 中文</option>
+                            <option value="ja">🇯🇵 Japonés</option>
+                            <option value="zh">🇨🇳 Chino</option>
                         </select>
                     </div>
 
@@ -148,6 +154,7 @@
                         </select>
                     </div>
 
+                    <!-- Duración Mín/Max -->
                     <div class="grid grid-cols-2 gap-4 pt-2">
                         <div>
                             <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="minDurLabel">Min Duration (s)</label>
@@ -237,7 +244,7 @@
                         <div class="w-3 h-3 rounded-full bg-red-500"></div>
                         <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                         <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span class="text-xs text-gray-400 font-mono ml-2">Panda Terminal v3.0 (Groq)</span>
+                        <span class="text-xs text-gray-400 font-mono ml-2">Panda Terminal v3.1 (Groq)</span>
                     </div>
                     <div id="console-output" class="console-window h-48 overflow-y-auto text-xs font-mono text-green-400 space-y-1">
                         <div class="opacity-50">> System ready...</div>
