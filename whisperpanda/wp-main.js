@@ -1,4 +1,4 @@
-// wp-main.js - Lógica principal de WhisperPanda (V3.1 - Fix Progress Display)
+// wp-main.js - Lógica principal de WhisperPanda (V3.2 - Robust Progress)
 
 const translations = {
     en: {
@@ -129,7 +129,7 @@ const els = {
     dontBreakInput: document.getElementById('dont-break-on')
 };
 
-// --- CONSOLA INTELIGENTE ---
+// --- UTILS CONSOLA ---
 function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
     
@@ -168,12 +168,13 @@ function getAsciiBar(percent) {
     const width = 20; 
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
+    // Carácter lleno '=' y flecha '>', vacío '.'
     const bar = "[" + "=".repeat(filled) + ">".repeat(filled < width ? 1 : 0) + ".".repeat(Math.max(0, empty - (filled < width ? 1 : 0))) + "]";
     return bar;
 }
 
 function fmtDuration(seconds) {
-    if(!seconds || seconds < 0) return "--m --s";
+    if(!seconds || seconds < 0) return "0s";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}m ${s}s`;
@@ -215,7 +216,7 @@ function resetFile() {
     els.warning.classList.add('hidden');
     els.runBtn.disabled = true;
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
-    if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> Panda Terminal v3.1 Ready...</div>';
+    if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> Panda Terminal v3.2 Ready...</div>';
 }
 
 async function handleFile(file) {
@@ -288,17 +289,21 @@ worker.onmessage = (e) => {
             const elapsed = (Date.now() - startTime) / 1000;
             let etaText = "Calc...";
             
-            if (elapsed > 1 && current > 0) { 
+            // Esperamos unos segundos y algo de progreso para calcular
+            if (elapsed > 2 && current > 1) { 
                 const rate = current / elapsed;
                 const remainingAudio = audioDuration - current;
                 const estimatedSecondsLeft = remainingAudio / rate;
-                etaText = fmtDuration(estimatedSecondsLeft);
+                etaText = `ETA: ${fmtDuration(estimatedSecondsLeft)}`;
+            } else {
+                // Si no, mostramos tiempo transcurrido
+                etaText = `Time: ${fmtDuration(elapsed)}`;
             }
 
             els.statusText.innerText = `${t.statusListening} ${Math.round(percent)}% (ETA: ${etaText})`;
             
             // Actualizar consola
-            updateConsoleLine(`${getAsciiBar(percent)} ${Math.round(percent)}% | ETA: ${etaText}`);
+            updateConsoleLine(`${getAsciiBar(percent)} ${Math.round(percent)}% | ${etaText}`);
         }
     } 
     else if (status === 'complete') {
@@ -322,8 +327,9 @@ els.runBtn.addEventListener('click', () => {
     els.resultsArea.classList.remove('opacity-100');
     els.progressCont.classList.remove('hidden');
     
-    els.consoleOutput.innerHTML = '';
-    logToConsole("Panda Terminal v3.1 Started.");
+    // NO BORRAMOS LA CONSOLA para mantener info de carga de archivo
+    logToConsole("--------------------------------");
+    logToConsole("Starting Task...");
     
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
