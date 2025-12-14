@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida (Groq + Local) v3.0
+// wp-main.js - Lógica Híbrida (Groq + Local) v3.1
 
 const translations = {
     en: {
@@ -11,7 +11,7 @@ const translations = {
         modelLabel: "AI Model / Quality",
         modelHelp: "Local uses your PC. Cloud (Groq) uses API for speed.",
         modeLabel: "Processing Mode",
-        modeLocalDesc: "Free, Private, Slower",
+        modeLocalDesc: "Free, Private, Slower (CPU/GPU)",
         modeGroqDesc: "Ultra Fast, Best Quality, Requires Key",
         optTiny: "Tiny (Fastest - ~40MB)",
         optBase: "Base (Balanced - ~80MB)",
@@ -60,7 +60,7 @@ const translations = {
         modelLabel: "Modelo IA / Calidad",
         modelHelp: "Local usa tu PC. Nube (Groq) usa API para velocidad.",
         modeLabel: "Modo de Procesamiento",
-        modeLocalDesc: "Gratis, Privado, Más lento",
+        modeLocalDesc: "Gratis, Privado, Más lento (CPU/GPU)",
         modeGroqDesc: "Ultra Rápido, Mejor Calidad, Requiere Key",
         optTiny: "Tiny (Rápido - ~40MB)",
         optBase: "Base (Equilibrado - ~80MB)",
@@ -134,19 +134,48 @@ const els = {
 };
 
 // --- LOGICA DE MODOS ---
+function updateModeUI(mode) {
+    if (mode === 'groq') {
+        els.groqContainer.classList.remove('hidden');
+        els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
+        
+        // Estilos visuales de selección
+        document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
+            const label = r.closest('label');
+            if (r.checked) {
+                label.classList.add('border-[#E23B5D]', 'shadow-md');
+                label.classList.remove('border-gray-200');
+            } else {
+                label.classList.remove('border-[#E23B5D]', 'shadow-md');
+                label.classList.add('border-gray-200');
+            }
+        });
+
+        // Cargar key guardada
+        const savedKey = localStorage.getItem('groq_api_key');
+        if(savedKey) document.getElementById('groq-key').value = savedKey;
+    } else {
+        els.groqContainer.classList.add('hidden');
+        els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
+        
+        document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
+            const label = r.closest('label');
+            if (r.checked) {
+                label.classList.add('border-gray-400', 'shadow-md');
+                label.classList.remove('border-gray-200');
+            } else {
+                label.classList.remove('border-gray-400', 'shadow-md');
+                label.classList.add('border-gray-200');
+            }
+        });
+    }
+}
+
+// Inicializar estado de modo
+updateModeUI('groq');
+
 els.modeRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        if (e.target.value === 'groq') {
-            els.groqContainer.classList.remove('hidden');
-            els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
-            // Cargar key guardada
-            const savedKey = localStorage.getItem('groq_api_key');
-            if(savedKey) document.getElementById('groq-key').value = savedKey;
-        } else {
-            els.groqContainer.classList.add('hidden');
-            els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
-        }
-    });
+    radio.addEventListener('change', (e) => updateModeUI(e.target.value));
 });
 
 // --- UTILS CONSOLA ---
@@ -267,10 +296,7 @@ function audioBufferToWav(buffer) {
     const out = new ArrayBuffer(length);
     const view = new DataView(out);
     const channels = [];
-    let i;
-    let sample;
-    let offset = 0;
-    let pos = 0;
+    let i, sample, offset = 0, pos = 0;
 
     // write WAVE header
     setUint32(0x46464952);
