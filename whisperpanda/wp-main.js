@@ -225,7 +225,10 @@ worker.onmessage = (e) => {
         // Data puede traer progreso de descarga del modelo
         if (data && data.status === 'progress') {
             els.statusText.innerText = `${t.statusLoading} (${Math.round(data.progress)}%)`;
-            logToConsole(`Downloading model: ${data.file} - ${Math.round(data.progress)}%`);
+            // Log solo cada 10% para no saturar consola
+            if(Math.round(data.progress) % 10 === 0) {
+                logToConsole(`Downloading model: ${data.file} - ${Math.round(data.progress)}%`);
+            }
         } else {
             els.statusText.innerText = t.statusLoading;
             logToConsole("Loading AI Model...");
@@ -249,7 +252,9 @@ worker.onmessage = (e) => {
                 
                 // Mostrar texto parcial en consola
                 if (data.text) {
-                    logToConsole(`[${fmtTime(data.timestamp[0])}] ${data.text.substring(0, 40)}...`);
+                    // Limpiamos texto para log
+                    const clean = data.text.trim();
+                    if(clean.length > 0) logToConsole(`[${fmtTime(data.timestamp[0])}] ${clean.substring(0, 50)}...`);
                 }
             }
         }
@@ -289,7 +294,7 @@ els.runBtn.addEventListener('click', () => {
     });
 });
 
-// --- LÓGICA DE PROCESAMIENTO (Con Detector de Bucles) ---
+// --- LÓGICA DE PROCESAMIENTO (Con Filtros de Alucinación) ---
 function processResults(output) {
     const minGapVal = parseFloat(document.getElementById('min-gap-val').value) || 0;
     const minGapUnit = document.getElementById('min-gap-unit').value;
@@ -331,29 +336,19 @@ function processResults(output) {
 function refineSubtitles(chunks, opts) {
     const refined = [];
     let lastText = "";
-    let loopCount = 0;
-
+    
     chunks.forEach(chunk => {
         let text = chunk.text.trim().replace(/\s+/g, ' ');
         if (!text) return;
 
-        // Filtro Anti-Bucle
-        if (text.toLowerCase() === lastText.toLowerCase()) {
-            loopCount++;
-        } else {
-            loopCount = 0;
-        }
+        // Limpieza de alucinaciones
+        text = removeHallucinations(text);
+        if (text.length === 0) return;
+
+        // Filtro de duplicados consecutivos
+        // Whisper a veces saca dos chunks seguidos con el mismo texto
+        if (text.toLowerCase() === lastText.toLowerCase()) return;
         lastText = text;
-
-        if (loopCount > 2) {
-            logToConsole(`WARN: Loop detected and removed: "${text}"`);
-            return;
-        }
-
-        if (isInternalLoop(text)) {
-            logToConsole(`WARN: Internal repetition detected: "${text}"`);
-            return;
-        }
 
         let start = chunk.timestamp[0];
         let end = chunk.timestamp[1] || (start + text.length * 0.05);
@@ -378,22 +373,41 @@ function refineSubtitles(chunks, opts) {
     return refined;
 }
 
-function isInternalLoop(text) {
-    if (text.length < 20) return false;
-    const words = text.toLowerCase().split(' ');
-    if (words.length < 6) return false;
-    const len = words.length;
-    if (len >= 6) {
-         if (words[len-1] === words[len-4] && 
-             words[len-2] === words[len-5] && 
-             words[len-3] === words[len-6]) {
-             return true; 
-         }
+// NUEVA: Función potente para limpiar alucinaciones típicas de Whisper
+function removeHallucinations(text) {
+    // 1. Detectar repeticiones de palabras sueltas "of of of of"
+    const words = text.split(' ');
+    if (words.length > 4) {
+        const unique = new Set(words.map(w => w.toLowerCase()));
+        // Si hay muchas palabras pero muy poca variedad (ej: "a more of a more"), es basura
+        if (unique.size < 3 && words.length > 6) {
+            logToConsole(`WARN: Removed repetitive garbage: "${text}"`);
+            return "";
+        }
     }
-    return false;
+
+    // 2. Detectar patrones repetitivos internos (n-grams)
+    // Ej: "and then I went and then I went"
+    if (text.length > 20) {
+        const half = Math.floor(text.length / 2);
+        const firstHalf = text.substring(0, half).trim();
+        const secondHalf = text.substring(half).trim();
+        // Si la segunda mitad es casi igual a la primera
+        if (secondHalf.includes(firstHalf) || firstHalf.includes(secondHalf)) {
+             // Devolvemos solo una copia
+             return firstHalf;
+        }
+    }
+
+    // 3. Palabras prohibidas solas (alucinaciones comunes en silencio)
+    const hallucinations = ['Subtitle by', 'Amara.org', 'music', 'Music', 'Silence', 'Y', 'y', '[Music]'];
+    if (hallucinations.includes(text.trim())) return "";
+
+    return text;
 }
 
 function applyDurationConstraints(segs, opts) {
+    // 1. Mínima
     for (let i = 0; i < segs.length; i++) {
         let cur = segs[i];
         if ((cur.end - cur.start) < opts.minDur) {
@@ -407,6 +421,7 @@ function applyDurationConstraints(segs, opts) {
             if (newEnd > cur.end) cur.end = newEnd;
         }
     }
+    // 2. Gap
     for (let i = 0; i < segs.length - 1; i++) {
         if (segs[i+1].start - segs[i].end < opts.minGap) {
             const newEnd = segs[i+1].start - opts.minGap;
