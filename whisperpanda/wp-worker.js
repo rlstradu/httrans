@@ -1,4 +1,4 @@
-// wp-worker.js - Worker de la IA (V3.7 - Model Name Patch)
+// wp-worker.js - Worker de la IA (V3.7 - Model Name Patch & Stable)
 
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
@@ -17,7 +17,7 @@ self.addEventListener('message', async (event) => {
         
         // --- AUTO-CORRECCIÓN CRÍTICA DE NOMBRE DE MODELO ---
         // El nombre correcto del repo web es 'Xenova/distil-whisper-small.en'
-        // Si detectamos que intentan cargar un distil, lo redirigimos al correcto.
+        // Si detectamos que intentan cargar un distil con nombre corto, lo redirigimos al correcto.
         if (selectedModel.includes('distil') && selectedModel.includes('small')) {
             selectedModel = 'Xenova/distil-whisper-small.en';
         }
@@ -26,7 +26,7 @@ self.addEventListener('message', async (event) => {
         if (!transcriber || currentModelId !== selectedModel) {
             try {
                 if (transcriber) {
-                    await transcriber.dispose(); // Liberar memoria
+                    await transcriber.dispose(); // Liberar memoria del modelo anterior
                     transcriber = null;
                 }
                 
@@ -70,7 +70,7 @@ self.addEventListener('message', async (event) => {
             // Distil -> true (segment level)
             const timestampMode = isDistil ? true : "word"; 
             
-            // Distil prefiere chunks más cortos (15s)
+            // Distil prefiere chunks más cortos (15s) para velocidad
             const chunkLength = isDistil ? 15 : 30;
             
             self.postMessage({ status: 'debug', data: `Config: Chunk=${chunkLength}s, Stamps=${timestampMode}` });
@@ -81,13 +81,13 @@ self.addEventListener('message', async (event) => {
                 
                 chunk_length_s: chunkLength,
                 stride_length_s: 5,
-                return_timestamps: timestampMode, // ESTO EVITA EL ERROR 'SLICE'
+                return_timestamps: timestampMode, // ESTO EVITA EL ERROR 'SLICE' EN DISTIL
                 
                 repetition_penalty: isTiny ? 1.0 : 1.2,
                 no_repeat_ngram_size: 2, 
                 temperature: 0,
 
-                // Callback de progreso seguro
+                // Callback de progreso seguro (Sanitizado)
                 callback_function: (items) => {
                     try {
                         if (items && items.length > 0) {
@@ -99,6 +99,7 @@ self.addEventListener('message', async (event) => {
                                 else if (typeof last.timestamp === 'number') end = last.timestamp;
                             }
 
+                            // Enviamos solo datos planos para evitar error de clonación
                             const cleanData = {
                                 text: last.text ? String(last.text).substring(0,60) : "...",
                                 timeRef: typeof end === 'number' ? end : 0
@@ -109,7 +110,8 @@ self.addEventListener('message', async (event) => {
                 }
             });
 
-            // 3. SANITIZACIÓN FINAL
+            // 3. SANITIZACIÓN FINAL DEL OUTPUT
+            // Reconstruimos el objeto chunk a chunk para asegurar que solo enviamos datos puros
             const cleanChunks = [];
             
             if (output.chunks && Array.isArray(output.chunks)) {
@@ -122,7 +124,7 @@ self.addEventListener('message', async (event) => {
                         start = chunk.timestamp[0];
                         end = chunk.timestamp[1];
                     } else if (typeof chunk.timestamp === 'number') {
-                        // Si devuelve solo un numero (caso raro), no tenemos start/end claros
+                        // Si devuelve solo un numero (caso raro), lo tratamos como fin
                         end = chunk.timestamp;
                     }
                     
