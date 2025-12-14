@@ -25,8 +25,7 @@ self.addEventListener('message', async (event) => {
                     // Callback para informar del progreso de la descarga del modelo
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
-                            // CORRECCIÓN ESTRICTA: Solo copiamos los datos primitivos que necesitamos.
-                            // Evitamos copiar el objeto 'data' entero para prevenir errores de clonación.
+                            // Clonación segura manual
                             self.postMessage({ 
                                 status: 'loading', 
                                 data: { 
@@ -65,33 +64,49 @@ self.addEventListener('message', async (event) => {
 
                 // --- PROGRESO EN TIEMPO REAL ---
                 callback_function: (items) => {
-                    // items es un array con todos los chunks.
-                    if (items && items.length > 0) {
-                        const last = items[items.length - 1];
-                        
-                        // CORRECCIÓN CRÍTICA:
-                        // Extraemos manualmente SOLO el texto y los números.
-                        // Usamos Number() para asegurar que no enviamos tipos extraños.
-                        const start = last.timestamp && last.timestamp[0] ? Number(last.timestamp[0]) : 0;
-                        const end = last.timestamp && last.timestamp[1] ? Number(last.timestamp[1]) : 0;
+                    // BLINDAJE: Envolvemos esto en try-catch para que un error aquí
+                    // NO detenga la transcripción completa.
+                    try {
+                        if (items && items.length > 0) {
+                            const last = items[items.length - 1];
+                            
+                            // Extracción manual y paranoica de datos
+                            let start = 0;
+                            let end = 0;
+                            
+                            // Verificar que timestamp existe y es un array
+                            if (Array.isArray(last.timestamp)) {
+                                start = typeof last.timestamp[0] === 'number' ? last.timestamp[0] : 0;
+                                end = typeof last.timestamp[1] === 'number' ? last.timestamp[1] : 0;
+                            }
 
-                        const cleanData = {
-                            text: last.text ? String(last.text) : "",
-                            timestamp: [start, end]
-                        };
-                        
-                        self.postMessage({ status: 'progress', data: cleanData });
+                            const cleanData = {
+                                text: last.text ? String(last.text) : "",
+                                timestamp: [start, end]
+                            };
+                            
+                            self.postMessage({ status: 'progress', data: cleanData });
+                        }
+                    } catch (callbackError) {
+                        // Si falla el progreso, lo ignoramos silenciosamente para que la transcripción siga
+                        console.warn("Ignored progress error:", callbackError);
                     }
                 }
             });
 
             // CORRECCIÓN CRÍTICA FINAL:
-            // Reconstruimos el objeto final desde cero para asegurar pureza.
+            // Reconstruimos el objeto final asegurando tipos primitivos
             const cleanOutput = {
                 text: output.text ? String(output.text) : "",
-                chunks: output.chunks.map(chunk => {
-                    const start = chunk.timestamp && chunk.timestamp[0] ? Number(chunk.timestamp[0]) : null;
-                    const end = chunk.timestamp && chunk.timestamp[1] ? Number(chunk.timestamp[1]) : null;
+                chunks: (output.chunks || []).map(chunk => {
+                    // Verificación segura de timestamps
+                    let start = null;
+                    let end = null;
+                    if (Array.isArray(chunk.timestamp)) {
+                        start = typeof chunk.timestamp[0] === 'number' ? chunk.timestamp[0] : null;
+                        end = typeof chunk.timestamp[1] === 'number' ? chunk.timestamp[1] : null;
+                    }
+                    
                     return {
                         text: chunk.text ? String(chunk.text) : "",
                         timestamp: [start, end]
