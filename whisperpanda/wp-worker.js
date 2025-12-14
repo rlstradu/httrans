@@ -1,4 +1,4 @@
-// wp-worker.js - Worker de la IA (V3.2 - Multi-Modelo & Auto-Fix)
+// wp-worker.js - Worker de la IA (V3.3 - Distil Fix)
 
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
@@ -16,8 +16,6 @@ self.addEventListener('message', async (event) => {
         let selectedModel = message.model || 'Xenova/whisper-small';
         
         // --- AUTO-CORRECCIÓN DE NOMBRE DE MODELO ---
-        // Algunos IDs de HuggingFace cambian en la versión web (Xenova).
-        // Este parche asegura que si seleccionas el Distil, cargue el correcto.
         if (selectedModel.includes('distil-whisper') || selectedModel.includes('distil-small')) {
             selectedModel = 'Xenova/distil-small.en';
         }
@@ -25,7 +23,6 @@ self.addEventListener('message', async (event) => {
         // 1. CARGA / CAMBIO DE MODELO
         if (!transcriber || currentModelId !== selectedModel) {
             try {
-                // Liberar memoria del modelo anterior
                 if (transcriber) {
                     await transcriber.dispose();
                     transcriber = null;
@@ -36,7 +33,6 @@ self.addEventListener('message', async (event) => {
                 
                 transcriber = await pipeline('automatic-speech-recognition', selectedModel, {
                     quantized: true,
-                    // Callback de descarga
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
                             self.postMessage({ 
@@ -63,64 +59,54 @@ self.addEventListener('message', async (event) => {
             const audio = message.audio;
             const taskToRun = message.task === 'spotting' ? 'transcribe' : (message.task || 'transcribe');
 
-            // Ajustes específicos por modelo
             const isDistil = selectedModel.includes('distil');
             const isTiny = selectedModel.includes('tiny');
 
-            // Distil-Whisper funciona mejor con chunks de 15s (vs 30s estándar)
+            // --- CONFIGURACIÓN DINÁMICA ---
+            // Distil: 15s chunk, timestamps por segmento (TRUE) para evitar crash
+            // Normal: 30s chunk, timestamps por palabra ("word") para máxima precisión
             const chunkLength = isDistil ? 15 : 30;
-            
-            // Tiny necesita menos penalización para no quedarse mudo en silencios
+            const timestampMode = isDistil ? true : "word"; 
             const repetitionPenalty = isTiny ? 1.0 : 1.2;
 
-            self.postMessage({ status: 'debug', data: `Config: Chunk=${chunkLength}s, RepPen=${repetitionPenalty}` });
+            self.postMessage({ status: 'debug', data: `Config: Chunk=${chunkLength}s, Stamps=${timestampMode}, RepPen=${repetitionPenalty}` });
 
             const output = await transcriber(audio, {
                 language: message.language,
                 task: taskToRun,
                 
-                // Segmentación
                 chunk_length_s: chunkLength,
                 stride_length_s: 5,
-                // IMPORTANTE: Timestamps por palabra para el algoritmo V5
-                return_timestamps: "word", 
+                return_timestamps: timestampMode, // AQUÍ ESTABA EL ERROR
                 
-                // Estabilidad
                 repetition_penalty: repetitionPenalty,
                 no_repeat_ngram_size: 2, 
                 temperature: 0,
 
-                // Progreso en tiempo real (Sanitizado para evitar error de clonación)
                 callback_function: (items) => {
                     try {
                         if (items && items.length > 0) {
                             const last = items[items.length - 1];
-                            let start = 0;
                             let end = 0;
                             
+                            // Extracción segura del tiempo final para la barra
                             if (last.timestamp) {
-                                if (Array.isArray(last.timestamp)) {
-                                    start = typeof last.timestamp[0] === 'number' ? last.timestamp[0] : 0;
-                                    end = typeof last.timestamp[1] === 'number' ? last.timestamp[1] : 0;
-                                } else if (typeof last.timestamp === 'number') {
-                                    end = last.timestamp;
-                                }
+                                if (Array.isArray(last.timestamp)) end = last.timestamp[1];
+                                else if (typeof last.timestamp === 'number') end = last.timestamp;
                             }
 
+                            // Sanitización de datos
                             const cleanData = {
                                 text: last.text ? String(last.text) : "",
-                                timeRef: end 
+                                timeRef: typeof end === 'number' ? end : 0
                             };
                             self.postMessage({ status: 'progress', data: cleanData });
                         }
-                    } catch (e) { 
-                        // Ignorar errores de progreso
-                    }
+                    } catch (e) { }
                 }
             });
 
-            // 3. SANITIZACIÓN FINAL DEL OUTPUT
-            // Reconstruimos el objeto para asegurar que solo enviamos datos puros
+            // 3. SANITIZACIÓN FINAL
             const cleanChunks = [];
             
             if (output.chunks && Array.isArray(output.chunks)) {
@@ -129,13 +115,17 @@ self.addEventListener('message', async (event) => {
                     let end = null;
                     
                     if (Array.isArray(chunk.timestamp)) {
-                        start = typeof chunk.timestamp[0] === 'number' ? chunk.timestamp[0] : null;
-                        end = typeof chunk.timestamp[1] === 'number' ? chunk.timestamp[1] : null;
+                        start = chunk.timestamp[0];
+                        end = chunk.timestamp[1];
                     }
                     
+                    // Aseguramos números
                     cleanChunks.push({
                         text: chunk.text ? String(chunk.text) : "",
-                        timestamp: [start, end]
+                        timestamp: [
+                            typeof start === 'number' ? start : null, 
+                            typeof end === 'number' ? end : null
+                        ]
                     });
                 });
             }
