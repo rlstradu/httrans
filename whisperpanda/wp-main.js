@@ -1,4 +1,4 @@
-// wp-main.js - Lógica principal de WhisperPanda (V2.1 - Algoritmo Colab Portado & Debug)
+// wp-main.js - Lógica principal de WhisperPanda (V2.3 - Consola Matrix)
 
 const translations = {
     en: {
@@ -34,7 +34,7 @@ const translations = {
         startBtnProcessing: "Processing audio (Wait)...",
         statusLoading: "Loading AI model...", 
         statusInitiating: "Initiating transcription...",
-        statusListening: "The Panda is listening...",
+        statusListening: "Processing audio...", 
         statusComplete: "Completed!",
         statusGenerating: "Generating subtitles...",
         resultTitle: "Result",
@@ -80,7 +80,7 @@ const translations = {
         startBtnProcessing: "Procesando audio (Espere)...",
         statusLoading: "Cargando modelo de IA...", 
         statusInitiating: "Iniciando transcripción...",
-        statusListening: "El Panda está escuchando...",
+        statusListening: "Procesando audio...", 
         statusComplete: "¡Completado!",
         statusGenerating: "Generando subtítulos...",
         resultTitle: "Resultado",
@@ -99,7 +99,6 @@ let currentLang = 'en';
 let audioData = null;
 let rawFileName = "subtitulos";
 let audioDuration = 0;
-// Instanciamos el Worker (asegúrate de que wp-worker.js esté actualizado a la versión V3)
 let worker = new Worker('wp-worker.js', { type: 'module' });
 
 const els = {
@@ -113,8 +112,6 @@ const els = {
     warning: document.getElementById('file-warning'),
     runBtn: document.getElementById('run-btn'),
     progressCont: document.getElementById('progress-container'),
-    progressBar: document.getElementById('progress-bar'),
-    progressPercent: document.getElementById('progress-percentage'),
     statusText: document.getElementById('status-text'),
     detailText: document.getElementById('detail-text'),
     consoleOutput: document.getElementById('console-output'),
@@ -127,20 +124,17 @@ const els = {
 };
 
 // --- UTILS CONSOLA ---
-function logToConsole(msg) {
+function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
     const div = document.createElement('div');
     if (typeof msg === 'object') div.innerText = `> ${JSON.stringify(msg)}`;
     else div.innerText = `> ${msg}`;
+    
     div.className = "hover:bg-gray-800 px-1 rounded";
+    if (isProgress) div.style.color = "#a7f3d0"; // Verde clarito para progreso
+    
     els.consoleOutput.appendChild(div);
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
-}
-
-function updateProgress(percent) {
-    const p = Math.min(100, Math.max(0, percent.toFixed(1)));
-    if(els.progressBar) els.progressBar.style.width = `${p}%`;
-    if(els.progressPercent) els.progressPercent.innerText = `${p}%`;
 }
 
 // --- IDIOMA ---
@@ -155,7 +149,6 @@ function setLanguage(lang) {
         if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key];
     });
 
-    // Actualizar opciones del select de modelo si es necesario (el texto visible)
     const modelSelect = document.getElementById('model-select');
     if(modelSelect) {
         modelSelect.options[0].text = t.optTiny;
@@ -180,7 +173,6 @@ function resetFile() {
     els.runBtn.disabled = true;
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
-    updateProgress(0);
 }
 
 async function handleFile(file) {
@@ -221,29 +213,43 @@ worker.onmessage = (e) => {
 
     if (status === 'debug') {
         logToConsole(data);
-    } else if (status === 'loading') {
+    } 
+    else if (status === 'loading') {
         if (data && data.status === 'progress') {
             els.statusText.innerText = `${t.statusLoading} (${Math.round(data.progress)}%)`;
             if(Math.round(data.progress) % 20 === 0) logToConsole(`Downloading model: ${Math.round(data.progress)}%`);
         } else {
             els.statusText.innerText = t.statusLoading;
         }
-    } else if (status === 'initiate') {
+    } 
+    else if (status === 'initiate') {
         els.statusText.innerText = t.statusInitiating;
         logToConsole("Running Whisper (WebGPU/WASM)...");
-    } else if (status === 'progress') {
+    } 
+    else if (status === 'progress') {
         if (data && data.timeRef && audioDuration > 0) {
             const current = data.timeRef;
-            const percent = (current / audioDuration) * 100;
-            updateProgress(percent);
-            els.statusText.innerText = `${t.statusListening} (${Math.round(percent)}%)`;
+            const percent = Math.min(100, Math.round((current / audioDuration) * 100));
+            
+            // Actualizar texto de estado
+            els.statusText.innerText = `${t.statusListening} (${percent}%)`;
+            
+            // LOG EN TIEMPO REAL EN CONSOLA (Efecto Matrix)
+            if (data.text) {
+                 const textPreview = data.text.trim();
+                 if (textPreview) {
+                     // Logueamos con formato de porcentaje y texto
+                     logToConsole(`[${percent}%] ${textPreview}`, true);
+                 }
+            }
         }
-    } else if (status === 'complete') {
-        updateProgress(100);
+    } 
+    else if (status === 'complete') {
         els.statusText.innerText = t.statusComplete;
-        logToConsole("Raw transcription done. Applying Panda Logic V5...");
+        logToConsole("Raw transcription done. Processing segments...");
         processResultsV5(data);
-    } else if (status === 'error') {
+    } 
+    else if (status === 'error') {
         logToConsole(`ERROR: ${data}`);
         alert("Error: " + data);
         els.runBtn.disabled = false;
@@ -256,7 +262,6 @@ els.runBtn.addEventListener('click', () => {
     els.resultsArea.classList.add('hidden');
     els.resultsArea.classList.remove('opacity-100');
     els.progressCont.classList.remove('hidden');
-    updateProgress(0);
     els.consoleOutput.innerHTML = '';
     
     const langSelect = document.getElementById('language-select').value;
@@ -287,7 +292,6 @@ function processResultsV5(data) {
     
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
 
-    // 1. Extraer palabras con timestamps
     let allWords = [];
     if (data.chunks && Array.isArray(data.chunks)) {
         data.chunks.forEach(chunk => {
