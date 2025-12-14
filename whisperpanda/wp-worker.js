@@ -1,4 +1,4 @@
-// wp-worker.js - Worker de la IA (V3.0 - Multi-Modelo & Word Timestamps)
+// wp-worker.js - Worker de la IA (V3.2 - Multi-Modelo & Auto-Fix)
 
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
@@ -13,21 +13,30 @@ self.addEventListener('message', async (event) => {
     const message = event.data;
 
     if (message.type === 'run') {
-        const selectedModel = message.model || 'Xenova/whisper-small'; // Modelo por defecto
+        let selectedModel = message.model || 'Xenova/whisper-small';
         
+        // --- AUTO-CORRECCIÓN DE NOMBRE DE MODELO ---
+        // Algunos IDs de HuggingFace cambian en la versión web (Xenova).
+        // Este parche asegura que si seleccionas el Distil, cargue el correcto.
+        if (selectedModel.includes('distil-whisper') || selectedModel.includes('distil-small')) {
+            selectedModel = 'Xenova/distil-small.en';
+        }
+
         // 1. CARGA / CAMBIO DE MODELO
         if (!transcriber || currentModelId !== selectedModel) {
             try {
-                // Si cambiamos de modelo, liberamos el anterior
-                transcriber = null; 
+                // Liberar memoria del modelo anterior
+                if (transcriber) {
+                    await transcriber.dispose();
+                    transcriber = null;
+                }
                 
                 self.postMessage({ status: 'loading' });
-                self.postMessage({ status: 'debug', data: `Switching/Loading model: ${selectedModel}` });
+                self.postMessage({ status: 'debug', data: `Switching to model: ${selectedModel}` });
                 
-                // Inicializamos el pipeline
                 transcriber = await pipeline('automatic-speech-recognition', selectedModel, {
                     quantized: true,
-                    // Callback para informar del progreso de la descarga
+                    // Callback de descarga
                     progress_callback: (data) => {
                         if (data.status === 'progress') {
                             self.postMessage({ 
@@ -39,10 +48,10 @@ self.addEventListener('message', async (event) => {
                 });
                 
                 currentModelId = selectedModel;
-                self.postMessage({ status: 'debug', data: `Model ${selectedModel} loaded successfully.` });
+                self.postMessage({ status: 'debug', data: `Model loaded successfully.` });
 
             } catch (err) {
-                self.postMessage({ status: 'error', data: "Error loading model: " + err.message });
+                self.postMessage({ status: 'error', data: `Error loading ${selectedModel}: ` + err.message });
                 return;
             }
         }
@@ -52,21 +61,28 @@ self.addEventListener('message', async (event) => {
             self.postMessage({ status: 'initiate' });
 
             const audio = message.audio;
-            // Si es 'spotting', usamos 'transcribe' internamente
             const taskToRun = message.task === 'spotting' ? 'transcribe' : (message.task || 'transcribe');
 
-            // Ajuste automático de parámetros según modelo
-            // Tiny necesita menos penalización para no quedarse mudo
-            const repetitionPenalty = selectedModel.includes('tiny') ? 1.0 : 1.2;
+            // Ajustes específicos por modelo
+            const isDistil = selectedModel.includes('distil');
+            const isTiny = selectedModel.includes('tiny');
+
+            // Distil-Whisper funciona mejor con chunks de 15s (vs 30s estándar)
+            const chunkLength = isDistil ? 15 : 30;
+            
+            // Tiny necesita menos penalización para no quedarse mudo en silencios
+            const repetitionPenalty = isTiny ? 1.0 : 1.2;
+
+            self.postMessage({ status: 'debug', data: `Config: Chunk=${chunkLength}s, RepPen=${repetitionPenalty}` });
 
             const output = await transcriber(audio, {
                 language: message.language,
                 task: taskToRun,
                 
                 // Segmentación
-                chunk_length_s: 30,
+                chunk_length_s: chunkLength,
                 stride_length_s: 5,
-                // IMPORTANTE: Pedimos timestamps por palabra para el algoritmo V5
+                // IMPORTANTE: Timestamps por palabra para el algoritmo V5
                 return_timestamps: "word", 
                 
                 // Estabilidad
@@ -74,7 +90,7 @@ self.addEventListener('message', async (event) => {
                 no_repeat_ngram_size: 2, 
                 temperature: 0,
 
-                // Progreso en tiempo real (Sanitizado)
+                // Progreso en tiempo real (Sanitizado para evitar error de clonación)
                 callback_function: (items) => {
                     try {
                         if (items && items.length > 0) {
@@ -82,7 +98,6 @@ self.addEventListener('message', async (event) => {
                             let start = 0;
                             let end = 0;
                             
-                            // Extracción segura de timestamps
                             if (last.timestamp) {
                                 if (Array.isArray(last.timestamp)) {
                                     start = typeof last.timestamp[0] === 'number' ? last.timestamp[0] : 0;
@@ -94,18 +109,18 @@ self.addEventListener('message', async (event) => {
 
                             const cleanData = {
                                 text: last.text ? String(last.text) : "",
-                                timeRef: end // Enviamos solo la referencia de fin para la barra
+                                timeRef: end 
                             };
                             self.postMessage({ status: 'progress', data: cleanData });
                         }
                     } catch (e) { 
-                        // Ignoramos errores de progreso para no detener la transcripción
+                        // Ignorar errores de progreso
                     }
                 }
             });
 
-            // 3. SANITIZACIÓN FINAL (Crucial para evitar error de clonación)
-            // Reconstruimos el objeto chunk a chunk asegurando tipos primitivos
+            // 3. SANITIZACIÓN FINAL DEL OUTPUT
+            // Reconstruimos el objeto para asegurar que solo enviamos datos puros
             const cleanChunks = [];
             
             if (output.chunks && Array.isArray(output.chunks)) {
