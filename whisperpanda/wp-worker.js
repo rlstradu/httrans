@@ -1,4 +1,4 @@
-// wp-worker.js - Worker de la IA (V3.5 - Distil Name Fix)
+// wp-worker.js - Worker de la IA (V3.6 - Final Stable Fix)
 
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
 
@@ -13,12 +13,9 @@ self.addEventListener('message', async (event) => {
     const message = event.data;
 
     if (message.type === 'run') {
-        // Usamos el modelo que viene del selector. Si no hay, fallback a small.
+        // Usamos el modelo seleccionado tal cual viene del HTML.
+        // El ID correcto para Turbo es 'distil-whisper/distil-small.en'
         let selectedModel = message.model || 'Xenova/whisper-small';
-        
-        // --- FIX: NO forzar nombres incorrectos ---
-        // El modelo 'distil-whisper/distil-small.en' funciona nativamente en transformers.js v3
-        // si tiene los pesos ONNX (que los tiene).
         
         // 1. CARGA / CAMBIO DE MODELO
         if (!transcriber || currentModelId !== selectedModel) {
@@ -63,10 +60,12 @@ self.addEventListener('message', async (event) => {
             const isTiny = selectedModel.includes('tiny');
 
             // --- CONFIGURACIÓN CRÍTICA ---
-            // Los modelos Distil NO soportan 'word' timestamps.
+            // Los modelos Distil NO soportan 'word' timestamps (causa el error 'slice').
+            // Normales -> 'word'
+            // Distil -> true (segment level)
             const timestampMode = isDistil ? true : "word"; 
             
-            // Distil prefiere chunks más cortos
+            // Distil prefiere chunks más cortos (15s)
             const chunkLength = isDistil ? 15 : 30;
             
             self.postMessage({ status: 'debug', data: `Config: Chunk=${chunkLength}s, Stamps=${timestampMode}` });
@@ -77,12 +76,13 @@ self.addEventListener('message', async (event) => {
                 
                 chunk_length_s: chunkLength,
                 stride_length_s: 5,
-                return_timestamps: timestampMode, 
+                return_timestamps: timestampMode, // ESTO EVITA EL ERROR 'SLICE'
                 
                 repetition_penalty: isTiny ? 1.0 : 1.2,
                 no_repeat_ngram_size: 2, 
                 temperature: 0,
 
+                // Callback de progreso seguro
                 callback_function: (items) => {
                     try {
                         if (items && items.length > 0) {
@@ -112,10 +112,13 @@ self.addEventListener('message', async (event) => {
                     let start = null;
                     let end = null;
                     
+                    // Normalización de timestamps (Array vs Number)
                     if (Array.isArray(chunk.timestamp)) {
                         start = chunk.timestamp[0];
                         end = chunk.timestamp[1];
                     } else if (typeof chunk.timestamp === 'number') {
+                        // Si es Distil, a veces devuelve solo números
+                        // La lógica V5 del main.js manejará los nulls si faltan
                         end = chunk.timestamp;
                     }
                     
