@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida v3.9 - Algoritmo V8 (Typo Fix)
+// wp-main.js - Lógica Híbrida v3.8 - Algoritmo V8 (Anti-Orphan & Semantic Glue)
 
 const translations = {
     en: {
@@ -419,7 +419,7 @@ worker.onmessage = (e) => {
 // =================================================================
 
 function processResultsV8(data) {
-    const maxCpl = parseInt(document.getElementById('max-cpl').value);
+    const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
     const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
@@ -449,7 +449,7 @@ function processResultsV8(data) {
     logToConsole(`Extracted ${allWords.length} words.`);
     
     // Algoritmo V8
-    let subs = createSrtV8(allWords, maxCpl, maxLines, minDurVal, dontBreakList);
+    let subs = createSrtV8(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
     const task = document.getElementById('task-select').value;
@@ -482,13 +482,13 @@ function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
 
         buffer.push(wObj);
         
+        // Construimos texto actual para comprobación
+        const currentText = buffer.map(b => b.word.trim()).join(' ');
         let forceCut = false;
         let pendingWords = [];
         let endTime = wObj.end;
-        let currentDur = endTime - startTime;
         
-        // Calcular longitud actual
-        const currentText = buffer.map(b => b.word.trim()).join(' ');
+        let currentDur = endTime - startTime;
 
         // --- 1. REGLA DE LONGITUD (HARD LIMIT) ---
         if (currentText.length > maxChars) {
@@ -541,6 +541,8 @@ function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
 
         if (forceCut || i === words.length - 1) {
             const finalBlock = buffer.map(b => b.word.trim()).join(' ');
+            
+            // División interna de líneas (Balanced Split V8)
             const lines = balancedSplitV8(finalBlock, maxCpl, dontBreakList);
             
             subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
@@ -548,6 +550,7 @@ function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
             buffer = [];
             startTime = null;
 
+            // Re-inyectar palabras pendientes
             if (pendingWords.length > 0) {
                 buffer = [...pendingWords]; 
                 startTime = buffer[0].start;
