@@ -23,7 +23,7 @@
             --color-neutral-gray: #6b7280;
         }
         
-        /* --- MODO OSCURO FINAL (V3) --- */
+       /* --- MODO OSCURO FINAL (V4) --- */
         body.dark-mode {
             --color-dark: #f3f4f6;
             --color-light-gray: #111827; /* Fondo muy oscuro */
@@ -47,9 +47,9 @@
             border-color: var(--color-medium-gray) !important;
         }
         
-        /* Ajuste de textos dentro del buscador */
-        body.dark-mode #poSearchContainer span,
-        body.dark-mode #poSearchContainer label {
+        /* CORRECCIÓN: Forzar texto claro dentro de estadísticas y buscador */
+        body.dark-mode #statsContainer *,
+        body.dark-mode #poSearchContainer * {
             color: #e5e7eb !important;
         }
 
@@ -164,21 +164,17 @@
             background-color: #4b5563 !important;
         }
 
-        /* 6. ESTADOS ACTIVOS Y DESHABILITADOS (Corrección Clave) */
-        
-        /* Botón Activo (Cuando el panel está abierto) */
+        /* 6. ESTADOS ACTIVOS Y DESHABILITADOS */
         body.dark-mode .utility-btn-active {
-            background-color: #1f2937 !important; /* Fondo oscuro */
-            color: #F48790 !important; /* Texto Rosa Primario */
-            border-color: #F48790 !important; /* Borde Rosa */
+            background-color: #1f2937 !important;
+            color: #F48790 !important;
+            border-color: #F48790 !important;
             box-shadow: inset 0 0 5px rgba(244, 135, 144, 0.2);
         }
-
-        /* Botones Deshabilitados */
         body.dark-mode button:disabled,
         body.dark-mode .disabled-link {
             background-color: #1f2937 !important;
-            color: #6b7280 !important; /* Gris apagado */
+            color: #6b7280 !important;
             border-color: #374151 !important;
             cursor: not-allowed;
             opacity: 0.6;
@@ -203,20 +199,17 @@
         body.dark-mode .sidebar-header h3 {
             color: #f3f4f6 !important;
         }
-        
-        /* Barra de acciones rápidas de IA */
         body.dark-mode .ai-quick-actions {
-            background-color: #1f2937 !important; /* Fondo igual que sidebar */
+            background-color: #1f2937 !important;
             border-bottom-color: #374151 !important;
         }
-        /* Botones de acciones rápidas */
         body.dark-mode .ai-quick-btn {
             background-color: #374151 !important;
             color: #e5e7eb !important;
             border-color: #4b5563 !important;
         }
         body.dark-mode .ai-quick-btn:hover {
-            background-color: #b45309 !important; /* Ocre al pasar ratón */
+            background-color: #b45309 !important;
             color: white !important;
             border-color: #b45309 !important;
         }
@@ -5737,3 +5730,4 @@ function makeModalDraggable(modalElement) {
     </script>
 </body>
 </html>
+
