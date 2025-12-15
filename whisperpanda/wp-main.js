@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida (Groq + Local) v3.6 - Algoritmo V6 Refined (Soft Scoring)
+// wp-main.js - Lógica Híbrida v3.6 - Algoritmo V7 (Smart Flow & Orphan Protection)
 
 const translations = {
     en: {
@@ -30,7 +30,7 @@ const translations = {
         maxLinesLabel: "Max Lines",
         cplLabel: "Max chars/line (CPL)",
         punctuationLabel: "Force break on punctuation",
-        dontBreakLabel: "Do not end line on (Prepositions)",
+        dontBreakLabel: "Do not end line on (Prepositions/Articles)",
         dropTitle: "Click or drag your file here",
         dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
@@ -48,7 +48,8 @@ const translations = {
         resultFooter: "Remember to check subtitles in a professional tool.",
         errorMsg: "Error processing audio.",
         downloadModel: "Downloading Model...",
-        dontBreakDefaults: "of, to, in, for, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among"
+        // LISTA AMPLIADA (Artículos + Conjunciones + Preposiciones)
+        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among"
     },
     es: {
         backLink: "Volver a HTTrans",
@@ -79,7 +80,7 @@ const translations = {
         maxLinesLabel: "Máx. Líneas",
         cplLabel: "Máx. caracteres/línea (CPL)",
         punctuationLabel: "Forzar corte en puntuación",
-        dontBreakLabel: "No terminar línea en (Preposiciones)",
+        dontBreakLabel: "No terminar línea en (Preposiciones/Artículos)",
         dropTitle: "Haz clic o arrastra tu archivo aquí",
         dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
@@ -97,7 +98,8 @@ const translations = {
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
         errorMsg: "No se pudo procesar el audio.",
         downloadModel: "Descargando Modelo...",
-        dontBreakDefaults: "a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, el, la, los, las, un, una, unos, unas"
+        // LISTA AMPLIADA (Artículos + Conjunciones + Preposiciones)
+        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras"
     }
 };
 
@@ -138,7 +140,6 @@ function updateModeUI(mode) {
     if (mode === 'groq') {
         els.groqContainer.classList.remove('hidden');
         els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
-        
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) {
@@ -149,7 +150,6 @@ function updateModeUI(mode) {
                 label.classList.add('border-gray-200');
             }
         });
-
         const savedKey = localStorage.getItem('groq_api_key');
         const defaultKey = "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";
         if(document.getElementById('groq-key')) {
@@ -158,7 +158,6 @@ function updateModeUI(mode) {
     } else {
         els.groqContainer.classList.add('hidden');
         els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
-        
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) {
@@ -171,12 +170,8 @@ function updateModeUI(mode) {
         });
     }
 }
-
 updateModeUI('groq');
-
-els.modeRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => updateModeUI(e.target.value));
-});
+els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => updateModeUI(e.target.value)); });
 
 // --- UTILS CONSOLA ---
 function logToConsole(msg, isProgress = false) {
@@ -189,7 +184,6 @@ function logToConsole(msg, isProgress = false) {
     els.consoleOutput.appendChild(div);
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
 }
-
 function updateConsoleLine(msg) {
     if (!els.consoleOutput) return;
     if (lastConsoleLine && lastConsoleLine.isConnected) {
@@ -203,14 +197,12 @@ function updateConsoleLine(msg) {
     }
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
 }
-
 function getAsciiBar(percent) {
     const width = 20;
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
     return "[" + "=".repeat(filled) + ">".repeat(filled < width ? 1 : 0) + ".".repeat(Math.max(0, empty - (filled < width ? 1 : 0))) + "]";
 }
-
 function fmtDuration(seconds) {
     if(!seconds || seconds < 0) return "0s";
     const m = Math.floor(seconds / 60);
@@ -265,7 +257,6 @@ async function handleFile(file) {
     if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
     els.runBtn.querySelector('span').innerText = t.startBtnProcessing;
     logToConsole(`File loaded: ${file.name}`);
-    
     try {
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
@@ -273,12 +264,10 @@ async function handleFile(file) {
         audioData = audioBuffer; 
         audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
-        
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'transform-none', 'shadow-none');
         els.runBtn.classList.add('bg-[#E23B5D]', 'hover:bg-[#c0304d]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
         els.runBtn.querySelector('span').innerText = t.startBtn;
-        
     } catch (err) {
         logToConsole(`ERROR: ${err.message}`);
         resetFile();
@@ -299,23 +288,8 @@ function audioBufferToWav(buffer) {
     const view = new DataView(out);
     const channels = [];
     let i, sample, offset = 0, pos = 0;
-
-    setUint32(0x46464952);
-    setUint32(length - 8);
-    setUint32(0x45564157);
-    setUint32(0x20746d66);
-    setUint32(16);
-    setUint16(1);
-    setUint16(numOfChan);
-    setUint32(buffer.sampleRate);
-    setUint32(buffer.sampleRate * 2 * numOfChan);
-    setUint16(numOfChan * 2);
-    setUint16(16);
-    setUint32(0x61746164);
-    setUint32(length - pos - 4);
-
+    setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan); setUint32(buffer.sampleRate); setUint32(buffer.sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
     for (i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
-
     while (pos < length) {
         for (i = 0; i < numOfChan; i++) {
             sample = Math.max(-1, Math.min(1, channels[i][offset]));
@@ -325,21 +299,17 @@ function audioBufferToWav(buffer) {
         }
         offset++;
     }
-
     function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
     function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
-
     return new Blob([out], { type: 'audio/wav' });
 }
 
 // --- EJECUCIÓN ---
 els.runBtn.addEventListener('click', async () => {
     if (!audioData) return;
-    
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
-    
     els.runBtn.disabled = true;
     els.resultsArea.classList.add('hidden');
     els.resultsArea.classList.remove('opacity-100');
@@ -348,90 +318,49 @@ els.runBtn.addEventListener('click', async () => {
     
     if (mode === 'groq') {
         const apiKey = document.getElementById('groq-key').value.trim();
-        if (!apiKey) {
-            alert("Please enter a Groq API Key.");
-            els.runBtn.disabled = false;
-            return;
-        }
+        if (!apiKey) { alert("Please enter a Groq API Key."); els.runBtn.disabled = false; return; }
         localStorage.setItem('groq_api_key', apiKey); 
         await runGroq(apiKey, audioData, langSelect, task);
     } else {
         logToConsole("Panda Local Mode Started.");
         const modelSelect = document.getElementById('model-select').value;
         const channelData = audioData.getChannelData(0); 
-        
-        worker.postMessage({
-            type: 'run',
-            audio: channelData,
-            language: langSelect === 'auto' ? null : langSelect,
-            task: task,
-            model: modelSelect
-        });
+        worker.postMessage({ type: 'run', audio: channelData, language: langSelect === 'auto' ? null : langSelect, task: task, model: modelSelect });
     }
 });
 
-// --- LÓGICA GROQ ---
 async function runGroq(apiKey, audioBuffer, language, task) {
     logToConsole("Panda Cloud Mode (Groq) Started.");
     logToConsole("Encoding audio to WAV for upload...");
-    
     try {
         const wavBlob = audioBufferToWav(audioBuffer);
         logToConsole(`Audio prepared (${(wavBlob.size/1024/1024).toFixed(2)} MB). Sending to Groq...`);
-        
         const formData = new FormData();
         formData.append('file', wavBlob, 'audio.wav');
         formData.append('model', 'whisper-large-v3'); 
         if (language !== 'auto') formData.append('language', language);
-        if (task === 'translate') formData.append('response_format', 'verbose_json'); 
-        else formData.append('response_format', 'verbose_json'); 
-        
+        formData.append('response_format', 'verbose_json'); 
         formData.append('timestamp_granularities[]', 'word');
 
         const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`
-            },
+            headers: { 'Authorization': `Bearer ${apiKey}` },
             body: formData
         });
 
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || "API Error");
-        }
-
+        if (!response.ok) { const err = await response.json(); throw new Error(err.error?.message || "API Error"); }
         logToConsole("Groq API Response received! Processing...");
         const result = await response.json();
-        
         let chunks = [];
+        if (result.words) { chunks = result.words.map(w => ({ text: w.word, timestamp: [w.start, w.end] })); } 
+        else if (result.segments) { result.segments.forEach(s => { chunks.push({ text: s.text, timestamp: [s.start, s.end] }); }); }
         
-        if (result.words) {
-            chunks = result.words.map(w => ({
-                text: w.word,
-                timestamp: [w.start, w.end]
-            }));
-        } else if (result.segments) {
-            result.segments.forEach(s => {
-                chunks.push({
-                    text: s.text,
-                    timestamp: [s.start, s.end]
-                });
-            });
-        }
-
-        const data = {
-            text: result.text,
-            chunks: chunks
-        };
-
-        logToConsole("Applying V6 Segmentation (Rules: CPL, Gap, Prepositions)...");
-        processResultsV5(data);
-        
+        const data = { text: result.text, chunks: chunks };
+        logToConsole("Applying V7 Segmentation (Smart Flow)...");
+        processResultsV7(data);
         els.statusText.innerText = "Completed!";
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE (GROQ)`);
         els.runBtn.disabled = false;
-
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         alert(`Groq API Error: ${error.message}`);
@@ -439,11 +368,9 @@ async function runGroq(apiKey, audioBuffer, language, task) {
     }
 }
 
-// --- WORKER LISTENER (LOCAL) ---
 worker.onmessage = (e) => {
     const { status, data } = e.data;
     const t = translations[currentLang];
-
     if (status === 'debug') { logToConsole(data); } 
     else if (status === 'loading') {
         if (data && data.status === 'progress') {
@@ -479,7 +406,7 @@ worker.onmessage = (e) => {
         lastConsoleLine = null;
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
         logToConsole("Transcription done. Processing...");
-        processResultsV5(data);
+        processResultsV7(data); // V7
         els.runBtn.disabled = false;
     } 
     else if (status === 'error') {
@@ -490,10 +417,10 @@ worker.onmessage = (e) => {
 };
 
 // =================================================================
-// 🚀 MOTOR LÓGICO V6 (SEGMENTACIÓN AVANZADA)
+// 🚀 MOTOR LÓGICO V7 (SMART FLOW + ORPHAN PROTECTION)
 // =================================================================
 
-function processResultsV5(data) {
+function processResultsV7(data) {
     const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
@@ -502,7 +429,7 @@ function processResultsV5(data) {
     const minGapUnit = document.getElementById('min-gap-unit').value;
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
 
-    // Recoger preposiciones del DOM
+    // Recoger preposiciones/palabras pegajosas del DOM
     const dontBreakStr = document.getElementById('dont-break-on').value;
     const dontBreakList = dontBreakStr.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
 
@@ -519,8 +446,8 @@ function processResultsV5(data) {
 
     logToConsole(`Extracted ${allWords.length} words.`);
     
-    // Pasamos MinDuration y DontBreak a la función de creación
-    let subs = createSrtV6(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
+    // Algoritmo V7
+    let subs = createSrtV7(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
     const task = document.getElementById('task-select').value;
@@ -537,8 +464,8 @@ function processResultsV5(data) {
     setupDownloads(srt, subs);
 }
 
-// --- ALGORTIMO V6: Segmentación con Reglas de Estilo ---
-function createSrtV6(words, maxCpl, maxLines, minDur, dontBreakList) {
+// --- ALGORTIMO V7: Segmentación Inteligente ---
+function createSrtV7(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = [];
     let buffer = [];
     let startTime = null;
@@ -553,52 +480,65 @@ function createSrtV6(words, maxCpl, maxLines, minDur, dontBreakList) {
 
         buffer.push(wObj);
         
-        // Construimos texto actual para comprobación
         const currentText = buffer.map(b => b.word.trim()).join(' ');
         let forceCut = false;
         let pendingWords = [];
         let endTime = wObj.end;
-        
         let currentDur = endTime - startTime;
-
-        // Regla 1: Exceso de caracteres (HARD LIMIT)
-        // Esto tiene prioridad sobre la duración mínima
+        
+        // --- 1. REGLA DE LONGITUD (HARD LIMIT) ---
         if (currentText.length > (maxCpl * maxLines)) {
             // Sacamos la última palabra que desbordó
-            pendingWords.push(buffer.pop());
+            const overflow = buffer.pop();
+            pendingWords.push(overflow);
             
-            // --- BACKTRACK SI TERMINA EN PREPOSICIÓN ---
+            // BACKTRACKING RECURSIVO: Si la nueva última palabra es "pegajosa", sácala también
             while (buffer.length > 0) {
-                const lastInBuffer = buffer[buffer.length - 1].word.trim().toLowerCase().replace(/[.,?!]/g, '');
-                if (dontBreakList.includes(lastInBuffer)) {
-                    // Mover al principio de pendientes (manteniendo orden: prep + word)
-                    pendingWords.unshift(buffer.pop()); 
+                const last = buffer[buffer.length - 1].word.trim().toLowerCase().replace(/[.,?!]/g, '');
+                // También si es un nombre propio partido (Heurística: Mayúscula suelta)
+                // Pero simple: si es preposición o artículo
+                if (dontBreakList.includes(last)) {
+                    pendingWords.unshift(buffer.pop()); // Mover al inicio de pendientes
                 } else {
                     break;
                 }
             }
-            
+
             forceCut = true;
             if(buffer.length > 0) endTime = buffer[buffer.length-1].end;
-            else endTime = wObj.start; 
+            else { 
+                // Fallback: Si el buffer se vació (palabra gigante), devolvemos algo
+                buffer.push(pendingWords.shift());
+                endTime = buffer[0].end;
+            }
         }
         
-        // Regla 2: Puntuación fuerte (SOLO si cumplimos Min Duration)
-        else if (buffer.length > 1 && currentDur >= minDur) {
-            const prevWord = buffer[buffer.length - 2];
-            const lastChar = prevWord.word.trim().slice(-1);
+        // --- 2. REGLA DE PUNTUACIÓN (SOFT LIMIT) ---
+        // Cortamos si hay punto Y cumplimos duración mínima
+        else if (buffer.length > 0 && currentDur >= minDur) {
+            const lastChar = wordText.slice(-1);
+            
+            // CASO ESPECIAL: "water."
+            // Si la palabra actual cierra frase, comprobamos si la SIGUIENTE frase sería "huérfana"
             if (strongPunct.includes(lastChar)) {
-                pendingWords.push(buffer.pop());
+                // Mirar futuro (Next Lookahead)
+                // Si la siguiente palabra es el final del array o también tiene punto, cortamos tranquilos.
+                // Pero si la siguiente palabra es parte de una frase larga, cortamos aquí.
+                
+                // PROTECCIÓN DE ORPHAN PREVIO:
+                // Si este bloque es MUY CORTO (< 15 chars) y termina en punto,
+                // quizás debió pegarse al anterior. Pero aquí ya es tarde (estamos en loop).
+                // Lo que hacemos es: Cortar AQUI sin duda.
                 forceCut = true;
-                endTime = prevWord.end;
+                endTime = wObj.end;
             }
         }
 
         if (forceCut || i === words.length - 1) {
             const finalBlock = buffer.map(b => b.word.trim()).join(' ');
             
-            // Aplicar división equilibrada con reglas de preposiciones
-            const lines = balancedSplitV6(finalBlock, maxCpl, dontBreakList);
+            // División interna de líneas (Balanced Split V7)
+            const lines = balancedSplitV7(finalBlock, maxCpl, dontBreakList);
             
             subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
 
@@ -615,8 +555,8 @@ function createSrtV6(words, maxCpl, maxLines, minDur, dontBreakList) {
     return subtitles;
 }
 
-// --- BALANCEO CON PREPOSICIONES ---
-function balancedSplitV6(text, maxCpl, dontBreakList) {
+// --- BALANCEO V7 (Con Penalización de "Pegajosas") ---
+function balancedSplitV7(text, maxCpl, dontBreakList) {
     if (text.length <= maxCpl) return [text];
 
     const words = text.split(' ');
@@ -631,25 +571,30 @@ function balancedSplitV6(text, maxCpl, dontBreakList) {
         const l1Str = words.slice(0, i).join(' ');
         const l2Str = words.slice(i).join(' ');
         
-        // Penalización por CPL (pero no descarte total)
+        // 1. Penalización base por desequilibrio
         let score = Math.abs(l1Str.length - l2Str.length);
-        if (l1Str.length > maxCpl || l2Str.length > maxCpl) score += 2000;
 
-        // Regla 1: Preposiciones (Widow control)
+        // 2. Penalización por longitud excesiva (Mortal)
+        if (l1Str.length > maxCpl || l2Str.length > maxCpl) score += 5000;
+
+        // 3. REGLA DE ORO: No terminar L1 en "pegajosa"
         const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
         if (dontBreakList.includes(lastWordL1)) {
-            score += 1000; 
+            score += 2000; // Penalización masiva
         }
 
-        // Regla 2: Puntuación (Bonus)
+        // 4. Heurística de Nombres Propios:
+        // Si L1 termina en Mayúscula y L2 empieza por Mayúscula (y no hay punto), penalizar corte
+        const w1 = words[i-1];
+        const w2 = words[i];
+        if (/^[A-Z]/.test(w1) && /^[A-Z]/.test(w2) && !/[.,?!]/.test(w1)) {
+            score += 500; // Penalización media por romper nombre propio
+        }
+
+        // 5. Bonus por cortar en puntuación leve
         const lastCharL1 = words[i-1].slice(-1);
         if (punct.includes(lastCharL1)) {
-            score -= 20; 
-        }
-
-        // Regla 3: Zona central (Bonus ligero)
-        if (i > safeStart && i < safeEnd) {
-            score -= 5;
+            score -= 50; 
         }
 
         if (score < bestScore) {
@@ -662,12 +607,13 @@ function balancedSplitV6(text, maxCpl, dontBreakList) {
         return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     }
 
-    // Fallback: Corte bruto al medio
+    // Fallback
     const mid = Math.floor(words.length / 2);
     return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
 
 function applyTimeRules(subs, minDur, maxDur, minGap) {
+    // 1. Corrección Gap y Max
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         if ((current.end - current.start) > maxDur) current.end = current.start + maxDur;
@@ -678,6 +624,7 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
             if (current.end <= current.start) current.end = current.start + 0.1;
         }
     }
+    // 2. Extensión Min Dur
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         let duration = current.end - current.start;
@@ -695,13 +642,6 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
 function generateSRT(segs) {
     return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n');
 }
-
-function fmtTime(s) {
-    if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000";
-    const d = new Date(s * 1000);
-    return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`;
-}
-
 function setupDownloads(srt, segs) {
     els.dlSrt.onclick = () => download(srt, `${rawFileName}_subpanda.srt`);
     const cleanTxt = segs.map(s => s.text.replace(/\n/g, ' ')).join(' ');
@@ -713,12 +653,10 @@ function setupDownloads(srt, segs) {
         setTimeout(() => els.copy.querySelector('span').innerHTML = orig, 2000);
     };
 }
-
 function download(content, name) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'}));
     a.download = name;
     a.click();
 }
-
 setLanguage('en');
