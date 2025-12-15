@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida (Groq + Local) v3.5 - Algoritmo V6 (Full Style Rules)
+// wp-main.js - Lógica Híbrida (Groq + Local) v3.6 - Algoritmo V6 Refined (Soft Scoring)
 
 const translations = {
     en: {
@@ -262,7 +262,7 @@ async function handleFile(file) {
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
     els.fileInfo.classList.remove('hidden');
-    if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden');
+    if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
     els.runBtn.querySelector('span').innerText = t.startBtnProcessing;
     logToConsole(`File loaded: ${file.name}`);
     
@@ -270,7 +270,7 @@ async function handleFile(file) {
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        audioData = audioBuffer;
+        audioData = audioBuffer; 
         audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         
@@ -559,17 +559,28 @@ function createSrtV6(words, maxCpl, maxLines, minDur, dontBreakList) {
         let pendingWords = [];
         let endTime = wObj.end;
         
-        // Calcular duración actual
         let currentDur = endTime - startTime;
 
         // Regla 1: Exceso de caracteres (HARD LIMIT)
-        // Esto tiene prioridad sobre la duración mínima para evitar subtítulos de 3 líneas
+        // Esto tiene prioridad sobre la duración mínima
         if (currentText.length > (maxCpl * maxLines)) {
             // Sacamos la última palabra que desbordó
             pendingWords.push(buffer.pop());
+            
+            // --- BACKTRACK SI TERMINA EN PREPOSICIÓN ---
+            while (buffer.length > 0) {
+                const lastInBuffer = buffer[buffer.length - 1].word.trim().toLowerCase().replace(/[.,?!]/g, '');
+                if (dontBreakList.includes(lastInBuffer)) {
+                    // Mover al principio de pendientes (manteniendo orden: prep + word)
+                    pendingWords.unshift(buffer.pop()); 
+                } else {
+                    break;
+                }
+            }
+            
             forceCut = true;
             if(buffer.length > 0) endTime = buffer[buffer.length-1].end;
-            else endTime = wObj.start; // Fallback raro
+            else endTime = wObj.start; 
         }
         
         // Regla 2: Puntuación fuerte (SOLO si cumplimos Min Duration)
@@ -577,7 +588,6 @@ function createSrtV6(words, maxCpl, maxLines, minDur, dontBreakList) {
             const prevWord = buffer[buffer.length - 2];
             const lastChar = prevWord.word.trim().slice(-1);
             if (strongPunct.includes(lastChar)) {
-                // Cortar AQUI. La palabra actual pasa al siguiente.
                 pendingWords.push(buffer.pop());
                 forceCut = true;
                 endTime = prevWord.end;
@@ -595,11 +605,8 @@ function createSrtV6(words, maxCpl, maxLines, minDur, dontBreakList) {
             buffer = [];
             startTime = null;
 
-            // Re-inyectar palabras pendientes para el siguiente
+            // Re-inyectar palabras pendientes
             if (pendingWords.length > 0) {
-                // pendingWords tiene [ultima] o [ultima, penultima...] en orden inverso si popping
-                // En este caso solo popeamos 1, así que es simple.
-                // Si hubiera lógica compleja de retroceso, habría que ajustar.
                 buffer = [...pendingWords]; 
                 startTime = buffer[0].start;
             }
@@ -614,32 +621,30 @@ function balancedSplitV6(text, maxCpl, dontBreakList) {
 
     const words = text.split(' ');
     let bestCut = -1;
-    let bestScore = Infinity; // Menor es mejor (diferencia de longitud + penalizaciones)
+    let bestScore = Infinity; // Menor es mejor
     
     const punct = [',', ':', ';', '-', '.'];
     const safeStart = Math.floor(words.length * 0.3);
-    const safeEnd = Math.floor(words.length * 0.8); // Permitimos un poco más al final
+    const safeEnd = Math.floor(words.length * 0.8); 
 
     for (let i = 1; i < words.length; i++) {
         const l1Str = words.slice(0, i).join(' ');
         const l2Str = words.slice(i).join(' ');
         
-        // Regla 0: Hard Limit CPL
-        if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue;
-
+        // Penalización por CPL (pero no descarte total)
         let score = Math.abs(l1Str.length - l2Str.length);
+        if (l1Str.length > maxCpl || l2Str.length > maxCpl) score += 2000;
 
         // Regla 1: Preposiciones (Widow control)
-        // Si la línea 1 termina en preposición, penalizamos MUCHO este corte
         const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
         if (dontBreakList.includes(lastWordL1)) {
-            score += 1000; // Penalización masiva
+            score += 1000; 
         }
 
         // Regla 2: Puntuación (Bonus)
         const lastCharL1 = words[i-1].slice(-1);
         if (punct.includes(lastCharL1)) {
-            score -= 20; // Bonus por cortar en coma/punto
+            score -= 20; 
         }
 
         // Regla 3: Zona central (Bonus ligero)
