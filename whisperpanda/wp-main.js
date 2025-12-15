@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida (Groq + Local) v3.2
+// wp-main.js - Lógica Híbrida (Groq + Local) v3.4
 
 const translations = {
     en: {
@@ -151,7 +151,7 @@ function updateModeUI(mode) {
             }
         });
 
-        // Cargar key guardada o usar la por defecto
+        // Cargar key guardada o por defecto
         const savedKey = localStorage.getItem('groq_api_key');
         const defaultKey = "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";
         if(document.getElementById('groq-key')) {
@@ -278,12 +278,10 @@ async function handleFile(file) {
         audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         
-        // Habilitar botón lógica
+        // HABILITAR BOTÓN VISUALMENTE (Parche CSS)
         els.runBtn.disabled = false;
-        
-        // FIX VISUAL: Forzar actualización de estilos para que el botón se vea activo
-        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#E23B5D]', 'hover:bg-[#c0304d]', 'hover:scale-[1.02]', 'cursor-pointer');
+        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'transform-none', 'shadow-none');
+        els.runBtn.classList.add('bg-[#E23B5D]', 'hover:bg-[#c0304d]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
         els.runBtn.querySelector('span').innerText = t.startBtn;
         
     } catch (err) {
@@ -299,7 +297,6 @@ els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) han
 els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
 
 // --- UTILS AUDIO ---
-// Convierte AudioBuffer a WAV Blob para enviar a Groq
 function audioBufferToWav(buffer) {
     const numOfChan = buffer.numberOfChannels;
     const length = buffer.length * numOfChan * 2 + 44;
@@ -308,7 +305,6 @@ function audioBufferToWav(buffer) {
     const channels = [];
     let i, sample, offset = 0, pos = 0;
 
-    // write WAVE header
     setUint32(0x46464952);
     setUint32(length - 8);
     setUint32(0x45564157);
@@ -349,7 +345,6 @@ els.runBtn.addEventListener('click', async () => {
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
     
-    // UI Setup
     els.runBtn.disabled = true;
     els.resultsArea.classList.add('hidden');
     els.resultsArea.classList.remove('opacity-100');
@@ -363,13 +358,12 @@ els.runBtn.addEventListener('click', async () => {
             els.runBtn.disabled = false;
             return;
         }
-        localStorage.setItem('groq_api_key', apiKey); // Guardar para futuro
+        localStorage.setItem('groq_api_key', apiKey); 
         await runGroq(apiKey, audioData, langSelect, task);
     } else {
-        // MODO LOCAL
         logToConsole("Panda Local Mode Started.");
         const modelSelect = document.getElementById('model-select').value;
-        const channelData = audioData.getChannelData(0); // Worker espera Float32Array
+        const channelData = audioData.getChannelData(0); 
         
         worker.postMessage({
             type: 'run',
@@ -392,12 +386,11 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         
         const formData = new FormData();
         formData.append('file', wavBlob, 'audio.wav');
-        formData.append('model', 'whisper-large-v3'); // Modelo Top de Groq
+        formData.append('model', 'whisper-large-v3'); 
         if (language !== 'auto') formData.append('language', language);
-        if (task === 'translate') formData.append('response_format', 'verbose_json'); // Groq translate
-        else formData.append('response_format', 'verbose_json'); // Siempre verbose para timestamps
+        if (task === 'translate') formData.append('response_format', 'verbose_json'); 
+        else formData.append('response_format', 'verbose_json'); 
         
-        // Groq soporta timestamp_granularities=word para obtener palabras
         formData.append('timestamp_granularities[]', 'word');
 
         const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
@@ -416,8 +409,6 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         logToConsole("Groq API Response received! Processing...");
         const result = await response.json();
         
-        // Adaptar respuesta de Groq al formato que espera processResultsV5
-        // Groq verbose_json tiene .words o .segments
         let chunks = [];
         
         if (result.words) {
@@ -426,7 +417,6 @@ async function runGroq(apiKey, audioBuffer, language, task) {
                 timestamp: [w.start, w.end]
             }));
         } else if (result.segments) {
-            // Fallback si no hay palabras
             result.segments.forEach(s => {
                 chunks.push({
                     text: s.text,
