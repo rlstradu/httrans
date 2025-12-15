@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhisperPanda - AI Subtitling | HTTrans</title>
+    <title>SubPandaAUTO - HTTrans</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,16 +47,17 @@
                 <button id="lang-en" class="lang-btn active px-3 py-1 rounded-md text-sm font-bold">EN</button>
                 <button id="lang-es" class="lang-btn px-3 py-1 rounded-md text-sm font-bold">ES</button>
             </div>
-            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200">BETA v3.5</span>
+            <!-- VERSIÓN ACTUALIZADA -->
+            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200">BETA v0.1</span>
         </div>
     </nav>
 
     <main class="w-full max-w-5xl mx-auto glass-panel rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden">
         
         <div class="text-center mb-8">
-            <!-- LOGO MÁS GRANDE (w-96) Y SIN SOMBRAS -->
+            <!-- LOGO -->
             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/subpandaAUTO.png" 
-                 alt="WhisperPanda Logo" 
+                 alt="SubPandaAUTO Logo" 
                  class="w-96 h-auto mx-auto mb-4 logo-bounce">
             
             <p class="text-gray-500 max-w-2xl mx-auto font-medium">
@@ -90,7 +91,6 @@
                     <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:border-gray-400 transition opacity-80 hover:opacity-100">
                         <input type="radio" name="proc_mode" value="local" class="text-gray-500 focus:ring-gray-500">
                         <div>
-                            <!-- Texto actualizado -->
                             <span class="block font-bold text-gray-600">Local (Whisper)</span>
                             <span class="text-xs text-gray-500" data-key="modeLocalDesc">Free, Private, Very Slow (CPU/GPU)</span>
                         </div>
@@ -200,7 +200,7 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="dontBreakLabel">Do not end line on (Prepositions)</label>
-                        <input type="text" id="dont-break-on" value="" class="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-500 focus:text-gray-800 focus:ring-1 focus:ring-[#ffb81f] outline-none truncate" title="Comma separated list">
+                        <input type="text" id="dont-break-on" value="a, ante, con, de, desde, en, para, por, sin, sobre, el, la, los, las, of, to, in, for, with, on, at" class="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-500 focus:text-gray-800 focus:ring-1 focus:ring-[#ffb81f] outline-none truncate" title="Comma separated list">
                     </div>
                 </div>
             </div>
@@ -236,9 +236,10 @@
                     <i class="ph-bold ph-play"></i>
                     <span data-key="startBtn">Start</span>
                 </button>
-                <!-- Botón RESET -->
-                <button id="reset-btn" class="hidden w-16 py-4 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 transition flex justify-center items-center" title="Reset / New File">
+                <!-- BOTÓN RESET MEJORADO -->
+                <button id="reset-btn" class="hidden px-6 py-4 rounded-xl font-bold text-gray-600 bg-white border-2 border-gray-200 hover:border-red-400 hover:text-red-500 transition flex justify-center items-center gap-2" title="Reset / New File">
                     <i class="ph-bold ph-arrow-counter-clockwise text-xl"></i>
+                    <span>Reset</span>
                 </button>
             </div>
 
