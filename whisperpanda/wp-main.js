@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida v3.9 - Algoritmo V9 (Linguistic Flow & Deep Anti-Orphan)
+// wp-main.js - Lógica Híbrida v3.9 - Algoritmo V9 (Typo Fix)
 
 const translations = {
     en: {
@@ -355,7 +355,7 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         
         const data = { text: result.text, chunks: chunks };
         logToConsole("Applying V9 Segmentation (Linguistic Flow)...");
-        processResultsV8(data); // Llamamos a la lógica V9 (renombrada internamente)
+        processResultsV8(data);
         els.statusText.innerText = "Completed!";
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE (GROQ)`);
         els.runBtn.disabled = false;
@@ -419,7 +419,7 @@ worker.onmessage = (e) => {
 // =================================================================
 
 function processResultsV8(data) {
-    const maxCPL = parseInt(document.getElementById('max-cpl').value);
+    const maxCpl = parseInt(document.getElementById('max-cpl').value); // Corregido: maxCPL -> maxCpl
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
     const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
@@ -427,8 +427,8 @@ function processResultsV8(data) {
     const minGapUnit = document.getElementById('min-gap-unit').value;
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
 
+    // Recoger preposiciones/palabras pegajosas del DOM
     const dontBreakStr = document.getElementById('dont-break-on').value;
-    // V9: Incluimos números como palabras que no deben quedar sueltas al final
     const dontBreakList = [
         ...dontBreakStr.split(','),
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"
@@ -448,7 +448,8 @@ function processResultsV8(data) {
     logToConsole(`Extracted ${allWords.length} words.`);
     
     // Algoritmo V9 (Smart Flow)
-    let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
+    // Se corrige maxCPL a maxCpl para coincidir con la definición de la variable
+    let subs = createSrtV9(allWords, maxCpl, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
     const task = document.getElementById('task-select').value;
@@ -465,7 +466,7 @@ function processResultsV8(data) {
     setupDownloads(srt, subs);
 }
 
-// --- ALGORITMO V9: Segmentación con Lookahead Anti-Huérfanas ---
+// --- ALGORTIMO V9: Segmentación con Lookahead Anti-Huérfanas ---
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = [];
     let buffer = [];
@@ -524,7 +525,7 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
                 // Condición de huérfana: lo que sobra + lo que viene hasta el punto es poco (< 25 chars)
                 const isNextTooShort = (pendingTextLen + (distToNextDot * 5)) < 30; 
                 // Solo robamos si el buffer actual es generoso (> 40% lleno)
-                const canSteal = buffer.length > 1 && currentText.length > (maxCPL * 0.4);
+                const canSteal = buffer.length > 1 && currentText.length > (maxCpl * 0.4);
 
                 if (isNextTooShort && canSteal) {
                      pendingWords.unshift(buffer.pop());
@@ -619,6 +620,7 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
 }
 
 function applyTimeRules(subs, minDur, maxDur, minGap) {
+    // 1. Corrección Gap y Max
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         if ((current.end - current.start) > maxDur) current.end = current.start + maxDur;
@@ -629,6 +631,7 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
             if (current.end <= current.start) current.end = current.start + 0.1;
         }
     }
+    // 2. Extensión Min Dur
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         let duration = current.end - current.start;
