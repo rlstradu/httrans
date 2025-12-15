@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida v3.6 - Algoritmo V7 (Smart Flow & Orphan Protection)
+// wp-main.js - Lógica Híbrida v3.7 - Algoritmo V7 + fmtTime Fix
 
 const translations = {
     en: {
@@ -48,7 +48,6 @@ const translations = {
         resultFooter: "Remember to check subtitles in a professional tool.",
         errorMsg: "Error processing audio.",
         downloadModel: "Downloading Model...",
-        // LISTA AMPLIADA (Artículos + Conjunciones + Preposiciones)
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among"
     },
     es: {
@@ -98,7 +97,6 @@ const translations = {
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
         errorMsg: "No se pudo procesar el audio.",
         downloadModel: "Descargando Modelo...",
-        // LISTA AMPLIADA (Artículos + Conjunciones + Preposiciones)
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras"
     }
 };
@@ -642,6 +640,14 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
 function generateSRT(segs) {
     return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n');
 }
+
+// Función auxiliar para formatear tiempo (HH:MM:SS,mmm)
+function fmtTime(s) {
+    if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000";
+    const d = new Date(s * 1000);
+    return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`;
+}
+
 function setupDownloads(srt, segs) {
     els.dlSrt.onclick = () => download(srt, `${rawFileName}_subpanda.srt`);
     const cleanTxt = segs.map(s => s.text.replace(/\n/g, ' ')).join(' ');
