@@ -1,4 +1,35 @@
 ======================================= 
+Poanda v1.0.4 - AI Assistant & Dark Mode
+======================================= 
+
+Release Date: December 15, 2025
+
+This milestone update introduces PandaBot, a brand-new AI assistant built directly into Poanda to help you translate faster and better. Alongside this major addition, we have implemented a native Dark Mode to reduce eye strain and reorganized the interface to keep your workspace clean and efficient.
+
+New Features & Improvements 
+New AI Assistant (PandaBot): You can now access a smart sidekick powered by Google Gemini directly within the editor. PandaBot allows you to chat, ask for translations, or use quick actions (Translate, Improve, Explain, Fix) without leaving your project.
+
+Context-Aware Intelligence: Unlike a generic chatbot, PandaBot is aware of your work. When you ask for help, it automatically considers the previous and next segments for context, strictly adheres to your active Glossary terms, and references Translation Memory matches, ensuring consistent and accurate suggestions.
+
+Native Dark Mode: Save your eyes during late-night sessions with the new Dark Mode. Toggle it via the moon icon (🌙) next to the language selector. We’ve carefully tuned the color palette with deep grays and optimized contrast for buttons, tables, and text inputs to ensure perfect readability.
+
+Streamlined Toolbar: The top menu has been reorganized. Less frequently used utilities (Find & Replace, Shortcuts, Statistics) are now grouped under a new "Tools" dropdown menu, decluttering the main workspace.
+
+Enhanced Search Bar: The "Auto-propagate translations" option has been integrated directly into the Search container to save vertical space, separating it from search filters with a clean visual divider.
+
+New Shortcuts:
+
+Ctrl + Shift + A: Toggles the AI sidebar and smartly manages focus (auto-focusing the chat when opening, and returning focus to your active translation segment when closing).
+
+Ctrl + Alt + I: Instantly inserts the last AI response into your current translation segment.
+
+Refinements & Fixes AI Localization: The entire AI interface (buttons, welcome messages, placeholders, and configuration settings) is fully localized and switches dynamically between English and Spanish based on your interface language preference.
+
+Smart Link Formatting: When the AI provides reference links, they now appear as small, unobtrusive "Source" buttons that open in a new tab, rather than cluttering the chat with long URLs.
+
+Markdown Rendering: AI responses are now properly formatted with lists, bold text, and paragraphs for better readability.
+
+======================================= 
 Poanda v1.0.3 - Glossary Visuals & Stability
 ======================================= 
 
