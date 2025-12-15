@@ -3,7 +3,7 @@
 const translations = {
     en: {
         backLink: "Back to HTTrans",
-        heroDesc: "AI-powered automatic transcription and subtitling tool.",
+        heroDesc: "AI-powered automatic transcription and subtitling tool for audiovisual translators.",
         settingsTitle: "Assistant Preferences",
         audioLangLabel: "Audio Language",
         audioLangHelp: "Manually selecting the language improves accuracy.",
@@ -52,7 +52,7 @@ const translations = {
     },
     es: {
         backLink: "Volver a HTTrans",
-        heroDesc: "Herramienta de transcripción y subtitulado automático impulsada por IA.",
+        heroDesc: "Asistente de transcripción y subtitulado automático para traductores audiovisuales.",
         settingsTitle: "Ajustes del asistente",
         audioLangLabel: "Idioma del audio",
         audioLangHelp: "Seleccionar el idioma manualmente mejora la precisión.",
