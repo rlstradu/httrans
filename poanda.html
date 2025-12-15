@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,6 +21,208 @@
             --color-white: #ffffff;
             --color-medium-gray: #e5e7eb;
             --color-neutral-gray: #6b7280;
+        }
+        
+        /* --- MODO OSCURO FINAL (V3) --- */
+        body.dark-mode {
+            --color-dark: #f3f4f6;
+            --color-light-gray: #111827; /* Fondo muy oscuro */
+            --color-white: #1f2937;      /* Gris oscuro para contenedores */
+            --color-medium-gray: #374151;
+            --color-neutral-gray: #9ca3af;
+            background-color: var(--color-light-gray) !important;
+            color: #e5e7eb;
+        }
+
+        /* 1. Contenedores principales */
+        body.dark-mode #dropArea,
+        body.dark-mode .modal-content,
+        body.dark-mode #statsContainer,
+        body.dark-mode #poSearchContainer,
+        body.dark-mode .terminology-sidebar,
+        body.dark-mode .translation-memory-sidebar,
+        body.dark-mode .ai-sidebar {
+            background-color: var(--color-white) !important;
+            color: #e5e7eb !important;
+            border-color: var(--color-medium-gray) !important;
+        }
+        
+        /* Ajuste de textos dentro del buscador */
+        body.dark-mode #poSearchContainer span,
+        body.dark-mode #poSearchContainer label {
+            color: #e5e7eb !important;
+        }
+
+        /* 2. Unidades de Traducción y Editor */
+        body.dark-mode .translation-unit-bg {
+            background-color: #1f2937 !important;
+            border-color: #4b5563 !important;
+        }
+        body.dark-mode .po-display-code {
+            background-color: #111827 !important;
+            color: #d1d5db !important;
+            border-color: #374151 !important;
+        }
+        body.dark-mode input, 
+        body.dark-mode select, 
+        body.dark-mode textarea,
+        body.dark-mode .ai-textarea {
+            background-color: #374151 !important;
+            color: #f3f4f6 !important;
+            border-color: #4b5563 !important;
+        }
+
+        /* 3. COLORES DE BOTONES (Estándar) */
+        body.dark-mode .btn-load,
+        body.dark-mode .btn-edit,
+        body.dark-mode .btn-modal-primary,
+        body.dark-mode .glossary-btn-primary,
+        body.dark-mode .tm-btn-primary {
+            background-color: #be123c !important; /* Rose-700 */
+            color: #ffffff !important;
+        }
+        body.dark-mode .btn-load:hover,
+        body.dark-mode .btn-edit:hover,
+        body.dark-mode .btn-modal-primary:hover {
+            background-color: #9f1239 !important; /* Rose-800 */
+        }
+
+        body.dark-mode .btn-validate,
+        body.dark-mode .btn-save,
+        body.dark-mode .btn-modal-secondary {
+            background-color: #b45309 !important; /* Amber-700 */
+            color: #ffffff !important;
+        }
+        body.dark-mode .btn-validate:hover,
+        body.dark-mode .btn-save:hover {
+            background-color: #92400e !important;
+        }
+
+        /* Avisos Info */
+        body.dark-mode .glossary-info-box,
+        body.dark-mode .tm-info-box {
+            background-color: #451a03 !important;
+            color: #fbbf24 !important;
+            border-color: #b45309 !important;
+        }
+        body.dark-mode .glossary-highlight {
+            background-color: #b45309 !important;
+            color: white !important;
+            padding: 2px 4px;
+        }
+
+        /* Botones Neutros/Secundarios */
+        body.dark-mode .glossary-btn-secondary,
+        body.dark-mode .tm-btn-secondary,
+        body.dark-mode .btn-modal-neutral,
+        body.dark-mode .btn-modal-dark {
+            background-color: #374151 !important;
+            color: #e5e7eb !important;
+            border: 1px solid #4b5563 !important;
+        }
+        body.dark-mode .glossary-btn-secondary:hover,
+        body.dark-mode .tm-btn-secondary:hover {
+            background-color: #4b5563 !important;
+        }
+
+        /* 4. TABLAS */
+        body.dark-mode .glossary-table th,
+        body.dark-mode .glossary-table td,
+        body.dark-mode .tm-table th,
+        body.dark-mode .tm-table td {
+            background-color: #1f2937 !important;
+            border-color: #374151 !important;
+            color: #d1d5db !important;
+        }
+        body.dark-mode .glossary-table th,
+        body.dark-mode .tm-table th {
+            background-color: #111827 !important;
+        }
+        body.dark-mode .glossary-row-highlight {
+            background-color: #3f2c22 !important;
+        }
+
+        /* 5. MENÚS SUPERIORES Y DROPDOWNS */
+        body.dark-mode .top-utility-buttons-container button,
+        body.dark-mode .top-utility-buttons-container .dropdown-btn {
+            background-color: #374151 !important;
+            color: #e5e7eb !important;
+            border-color: #4b5563 !important;
+        }
+        body.dark-mode .top-utility-buttons-container button:hover,
+        body.dark-mode .top-utility-buttons-container .dropdown-btn:hover {
+            background-color: #4b5563 !important;
+        }
+        body.dark-mode .dropdown-content {
+            background-color: #374151 !important;
+            border: 1px solid #4b5563;
+        }
+        body.dark-mode .dropdown-content a {
+            color: #e5e7eb !important;
+        }
+        body.dark-mode .dropdown-content a:hover {
+            background-color: #4b5563 !important;
+        }
+
+        /* 6. ESTADOS ACTIVOS Y DESHABILITADOS (Corrección Clave) */
+        
+        /* Botón Activo (Cuando el panel está abierto) */
+        body.dark-mode .utility-btn-active {
+            background-color: #1f2937 !important; /* Fondo oscuro */
+            color: #F48790 !important; /* Texto Rosa Primario */
+            border-color: #F48790 !important; /* Borde Rosa */
+            box-shadow: inset 0 0 5px rgba(244, 135, 144, 0.2);
+        }
+
+        /* Botones Deshabilitados */
+        body.dark-mode button:disabled,
+        body.dark-mode .disabled-link {
+            background-color: #1f2937 !important;
+            color: #6b7280 !important; /* Gris apagado */
+            border-color: #374151 !important;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        body.dark-mode .dropdown-content a.disabled-link:hover {
+            background-color: #1f2937 !important;
+        }
+
+        /* 7. CHAT Y AI QUICK ACTIONS */
+        body.dark-mode #aiChatContainer {
+            background-color: #111827 !important;
+        }
+        body.dark-mode .ai-message-bot {
+            background-color: #374151 !important;
+            border-color: #4b5563 !important;
+            color: #e5e7eb !important;
+        }
+        body.dark-mode .sidebar-header {
+            background-color: #374151 !important;
+            border-bottom-color: #4b5563 !important;
+        }
+        body.dark-mode .sidebar-header h3 {
+            color: #f3f4f6 !important;
+        }
+        
+        /* Barra de acciones rápidas de IA */
+        body.dark-mode .ai-quick-actions {
+            background-color: #1f2937 !important; /* Fondo igual que sidebar */
+            border-bottom-color: #374151 !important;
+        }
+        /* Botones de acciones rápidas */
+        body.dark-mode .ai-quick-btn {
+            background-color: #374151 !important;
+            color: #e5e7eb !important;
+            border-color: #4b5563 !important;
+        }
+        body.dark-mode .ai-quick-btn:hover {
+            background-color: #b45309 !important; /* Ocre al pasar ratón */
+            color: white !important;
+            border-color: #b45309 !important;
+        }
+        
+        body.dark-mode .text-on-light-contrast {
+            color: #e5e7eb !important;
         }
 
         body {
@@ -198,6 +401,59 @@
         .resizer-tr { top: -5px; right: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
         .resizer-bl { bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
         .resizer-br { bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
+
+        /* --- AI ASSISTANT STYLES --- */
+        .ai-sidebar {
+            position: fixed; top: 60px; right: 1rem; width: 350px; bottom: 20px;
+            z-index: 500; background-color: var(--color-white); border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.3s ease-in-out; opacity: 0; pointer-events: none; overflow: hidden;
+            display: flex; flex-direction: column;
+            transform: translateX(110%); /* Start hidden off-screen */
+        }
+        .ai-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
+        
+        .ai-chat-container { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background-color: #f9fafb; }
+        /* Estilos para el contenido Markdown de la IA */
+        .ai-message p { margin-bottom: 0.5rem; }
+        .ai-message ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .ai-message ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .ai-message strong { font-weight: 700; }
+        .ai-message li { margin-bottom: 0.25rem; }
+        .ai-message-user { align-self: flex-end; background-color: var(--color-primary); color: var(--color-dark); border-bottom-right-radius: 0; }
+        .ai-message-bot { align-self: flex-start; background-color: var(--color-white); border: 1px solid #e5e7eb; border-bottom-left-radius: 0; color: #374151; }
+        
+        .ai-input-area { padding: 0.75rem; border-top: 1px solid #e5e7eb; background-color: var(--color-white); }
+        .ai-textarea { width: 100%; resize: none; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.5rem; font-size: 0.9rem; height: 50px; }
+        .ai-textarea:focus { outline: none; border-color: var(--color-primary); ring: 1px solid var(--color-primary); }
+        
+        .ai-quick-actions { display: flex; gap: 0.5rem; padding: 0.5rem 1rem; overflow-x: auto; background-color: #fff; border-bottom: 1px solid #eee; }
+        .ai-quick-btn { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 1rem; background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; white-space: nowrap; transition: all 0.2s; }
+        .ai-quick-btn:hover { background-color: var(--color-secondary); color: var(--color-dark); border-color: var(--color-secondary); }
+        
+        .ai-config-panel { background-color: #fffbeb; padding: 0.75rem; border-bottom: 1px solid #fcd34d; font-size: 0.85rem; }
+        .ai-insert-btn { display: block; margin-top: 5px; font-size: 0.75rem; color: var(--color-primary); font-weight: 600; cursor: pointer; text-decoration: underline; }
+        
+        /* Estilo para enlaces de fuente */
+        .ai-source-link {
+            display: inline-block;
+            background-color: #e5e7eb;
+            color: #374151;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-decoration: none;
+            border: 1px solid #d1d5db;
+            margin: 0 2px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .ai-source-link:hover {
+            background-color: var(--color-secondary);
+            color: var(--color-dark);
+            border-color: #d97706;
+        }
     
         .shortcut-input {
             background-color: #f9fafb;
@@ -239,9 +495,10 @@
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
     
     <!-- Language Switcher -->
-    <div class="absolute top-4 right-4 space-x-2 z-10">
+    <div class="absolute top-4 right-4 space-x-2 z-10 flex items-center">
         <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
         <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
+        <button id="darkModeToggle" class="ml-2 p-1 rounded-full hover:bg-gray-200 transition duration-300" title="Dark Mode">🌙</button>
     </div>
 
     <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
@@ -267,20 +524,25 @@
                 <span data-i18n="backup_btn">Backup</span>
                 <span id="backupIndicator"></span>
             </button>
-            <button id="shortcutsBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="shortcuts_btn"></span>
-            </button>
-            <button id="findReplaceBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="find_replace_btn"></span>
-            </button>
+            <div class="dropdown">
+                <button id="toolsBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                    <span data-i18n="tools_menu_btn">Tools</span>
+                </button>
+                <div class="dropdown-content">
+                    <a id="findReplaceBtn" data-i18n="find_replace_btn">Find & Replace</a>
+                    <a id="shortcutsBtn" data-i18n="shortcuts_btn">Shortcuts</a>
+                    <a id="statsBtn" data-i18n="statistics_btn">Statistics</a>
+                </div>
+            </div>
+
             <button id="terminologyBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="terminology_btn"></span>
             </button>
             <button id="tmBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="tm_btn"></span>
             </button>
-            <button id="statsBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="statistics_btn"></span>
+            <button id="aiBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center gap-1">
+                <span>🐼</span> <span data-i18n="ai_btn">AI Assistant</span>
             </button>
         </div>
 
@@ -322,22 +584,24 @@
                         </button>
                         <span id="searchResultCounter" class="text-sm text-gray-600 whitespace-nowrap">0 / 0</span>
                     </div>
-                    <div class="flex items-center space-x-4 text-sm text-gray-600 mt-2">
+                    
+                    <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-2">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" id="searchInOriginalCheckbox" checked class="mr-2">
-                            <span data-i18n="search_in_original"></span>
+                            <span data-i18n="search_in_original">Search in original</span>
                         </label>
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" id="searchInTranslationCheckbox" checked class="mr-2">
-                            <span data-i18n="search_in_translation"></span>
+                            <span data-i18n="search_in_translation">Search in translation</span>
+                        </label>
+                        
+                        <div class="hidden sm:block w-px h-4 bg-gray-300 mx-2"></div>
+                        
+                        <label class="flex items-center cursor-pointer select-none" title="Automatically translate identical segments">
+                            <input type="checkbox" id="autoPropagateCheckbox" class="mr-2">
+                            <span data-i18n="auto_propagate_label">Auto-propagate translations</span>
                         </label>
                     </div>
-                </div>
-                <div class="mb-4 p-2 bg-blue-50 rounded-lg border border-blue-200 flex items-center">
-                    <label class="flex items-center cursor-pointer text-sm font-medium text-blue-800 select-none">
-                        <input type="checkbox" id="autoPropagateCheckbox" class="mr-2 w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                        <span>Auto-propagate translations</span>
-                    </label>
                 </div>
                 <!-- Scrolling Content Area -->
                 <div class="translations-container-scrolling pr-2">
@@ -451,6 +715,45 @@
                     </div>
                 </div>
             </div>
+            <div id="aiSidebar" class="ai-sidebar shadow-xl">
+                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
+                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
+                
+                <div class="sidebar-header p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center cursor-move">
+                    <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">🤖 PandaBot AI</h3>
+                    <div class="flex items-center gap-2">
+                        <button id="aiConfigToggleBtn" class="text-gray-500 hover:text-gray-700" data-i18n-title="ai_config_title" title="Configurar API">⚙️</button>
+                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">↺</button>
+                        <button id="closeAiSidebarBtn" class="text-gray-500 hover:text-gray-700">✕</button>
+                    </div>
+                </div>
+
+                <div id="aiConfigPanel" class="ai-config-panel hidden">
+                    <label class="block mb-1 font-bold" data-i18n="ai_api_key_label">Google Gemini API Key:</label>
+                    <input type="password" id="geminiApiKeyInput" class="w-full border rounded p-1 mb-2" data-i18n-placeholder="ai_api_key_placeholder" placeholder="Pegar API Key aquí...">
+                    <div class="flex justify-end gap-2">
+                        <button id="saveApiKeyBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600" data-i18n="save_button">Guardar</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="ai_api_key_info">La clave se guarda localmente en tu navegador.</p>
+                </div>
+
+                <div class="ai-quick-actions">
+                    <button class="ai-quick-btn" onclick="triggerQuickAI('translate')" data-i18n="ai_quick_translate">Traducir</button>
+                    <button class="ai-quick-btn" onclick="triggerQuickAI('improve')" data-i18n="ai_quick_improve">Mejorar</button>
+                    <button class="ai-quick-btn" onclick="triggerQuickAI('explain')" data-i18n="ai_quick_explain">Explicar</button>
+                    <button class="ai-quick-btn" onclick="triggerQuickAI('fix')" data-i18n="ai_quick_fix">Corregir</button>
+                </div>
+
+                <div id="aiChatContainer" class="ai-chat-container">
+                    </div>
+
+                <div class="ai-input-area">
+                    <div class="flex gap-2">
+                        <textarea id="aiUserInput" class="ai-textarea" data-i18n-placeholder="ai_input_placeholder" placeholder="Escribe tu consulta... (Enter para enviar)"></textarea>
+                        <button id="aiSendBtn" class="bg-red-400 text-white px-3 rounded hover:bg-red-500">➤</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="messageBox" class="modal hidden"><div class="modal-content"><p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><button id="messageClose" class="py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok" id="okBtnText"></span></button></div></div>
@@ -549,6 +852,13 @@
         let tmTargetLanguage = ''; // Will typically be the target language of the PO file
         let tmBestMatchForActiveSegment = null; // Stores the best TM match for the currently focused segment
         let currentTMLatestSearchResults = []; // Stores the last set of results rendered in TM search table
+        let lastFocusedSegment = null; // Stores the last active segment for AI context
+
+        // Global variables for AI Assistant
+        let aiApiKey = localStorage.getItem('poanda_gemini_key') || '';
+        const aiSidebar = document.getElementById('aiSidebar');
+        const aiChatContainer = document.getElementById('aiChatContainer');
+        let lastAiResponseText = ""; // Almacena la última respuesta para el atajo
 
         // DOM elements for Poanda editor
         const poFile = document.getElementById('poFile');
@@ -728,6 +1038,7 @@
                 'shortcut_glossary_insert_3': 'Insert Glossary Term 3',
                 'shortcut_glossary_insert_4': 'Insert Glossary Term 4',
                 'shortcut_glossary_insert_5': 'Insert Glossary Term 5',
+                'shortcut_toggleAI': 'Toggle AI Assistant',
                 'save_shortcuts_btn': 'Save Shortcuts',
                 'import_shortcuts_btn': 'Import',
                 'export_shortcuts_btn': 'Export',
@@ -853,7 +1164,9 @@
                 'po_search_placeholder': 'Search in file...',
                 'search_in_original': 'Search in original',
                 'search_in_translation': 'Search in translation',
+                'auto_propagate_label': 'Auto-propagate translations',
                 'file_menu_btn': 'File',
+                'tools_menu_btn': 'Tools',
                 'load_po_menu': 'Load .po file',
                 'save_po_menu': 'Save .po file',
                 'load_json_menu': 'Load .json file',
@@ -872,6 +1185,43 @@
                 'copy_original_btn': 'Copy original text to translation field',
                 'copy_error': 'Failed to copy text.', 
                 'edit_first_message': 'Please click Edit before copying.',
+                'ai_btn': 'AI Assistant',
+                'ai_no_api_key': 'Please configure your Gemini API Key in the settings (⚙️) icon above.',
+                'ai_no_segment': 'Please select/edit a segment first to give me context.',
+                'ai_thinking': 'PandaBot is thinking... 🐼',
+                'ai_error': 'Error connecting to AI: ',
+                'ai_inserted': 'Translation inserted!',
+                'ai_prompt_translate': 'Translate this text accurately considering the context.',
+                'ai_prompt_improve': 'Improve the style and flow of the current translation.',
+                'ai_prompt_explain': 'Explain the meaning and nuances of the source text.',
+                'ai_prompt_fix': 'Fix grammar, spelling, or consistency errors in the translation.',
+                'ai_quick_translate': 'Translate',
+                'ai_quick_improve': 'Improve',
+                'ai_quick_explain': 'Explain',
+                'ai_quick_fix': 'Fix',
+                'ai_initial_message': 'Hi, I\'m PandaBot 🐼. Configure your Gemini API Key and select a segment to start.',
+                'ai_link_source': 'Source',
+                'shortcut_insertLastAI': 'Insert Last AI Response',
+                'no_ai_response_yet': 'No AI response to insert yet.',
+                'ai_input_placeholder': 'Type your query... (Enter to send)',
+                'ai_api_key_label': 'Google Gemini API Key:',
+                'ai_api_key_placeholder': 'Paste API Key here...',
+                'ai_api_key_info': 'The key is saved locally in your browser.',
+                'ai_config_title': 'Configure API',
+                'ai_input_placeholder': 'Type your query... (Enter to send)',
+                'ai_api_key_label': 'Google Gemini API Key:',
+                'ai_api_key_placeholder': 'Paste API Key here...',
+                'ai_api_key_info': 'The key is saved locally in your browser.',
+                'ai_config_title': 'Configure API',
+                'ai_quick_translate': 'Translate',
+                'ai_quick_improve': 'Improve',
+                'ai_quick_explain': 'Explain',
+                'ai_quick_fix': 'Fix',
+                'ai_initial_message': 'Hi, I\'m PandaBot 🐼. Configure your Gemini API Key and select a segment to start.',
+                'ai_link_source': 'Source',
+                'shortcut_insertLastAI': 'Insert Last AI Response',
+                'no_ai_response_yet': 'No AI response to insert yet.',
+                
             },
             'es': {
                 'title': 'Poanda',
@@ -913,6 +1263,7 @@
                 'shortcut_glossary_insert_3': 'Insertar término del glosario 3',
                 'shortcut_glossary_insert_4': 'Insertar término del glosario 4',
                 'shortcut_glossary_insert_5': 'Insertar término del glosario 5',
+                'shortcut_toggleAI': 'Alternar Asistente de IA',
                 'save_shortcuts_btn': 'Guardar atajos',
                 'import_shortcuts_btn': 'Importar',
                 'export_shortcuts_btn': 'Exportar',
@@ -1038,7 +1389,9 @@
                 'po_search_placeholder': 'Buscar en el archivo...',
                 'search_in_original': 'Buscar en original',
                 'search_in_translation': 'Buscar en traducción',
+                'auto_propagate_label': 'Autopropagar traducciones',
                 'file_menu_btn': 'Archivo',
+                'tools_menu_btn': 'Herramientas',
                 'load_po_menu': 'Cargar archivo .po',
                 'save_po_menu': 'Guardar archivo .po',
                 'load_json_menu': 'Cargar archivo .json',
@@ -1057,6 +1410,44 @@
                 'copy_original_btn': 'Copiar texto original al campo de traducción',
                 'copy_error': 'Error al copiar el texto.',
                 'edit_first_message': 'Haz clic en Editar antes de copiar.',
+                'ai_btn': 'Asistente IA',
+                'ai_no_api_key': 'Por favor, configura tu API Key de Gemini en el icono de engranaje (⚙️).',
+                'ai_no_segment': 'Por favor, selecciona o edita un segmento primero para darme contexto.',
+                'ai_thinking': 'PandaBot está pensando... 🐼',
+                'ai_error': 'Error al conectar con la IA: ',
+                'ai_inserted': '¡Traducción insertada!',
+                'ai_prompt_translate': 'Traduce este texto con precisión considerando el contexto.',
+                'ai_prompt_improve': 'Mejora el estilo y la fluidez de la traducción actual.',
+                'ai_prompt_explain': 'Explica el significado y los matices del texto original.',
+                'ai_prompt_fix': 'Corrige errores gramaticales, ortográficos o de consistencia.',
+                'ai_quick_translate': 'Traducir',
+                'ai_quick_improve': 'Mejorar',
+                'ai_quick_explain': 'Explicar',
+                'ai_quick_fix': 'Corregir',
+                'ai_initial_message': 'Hola, soy PandaBot 🐼. Configura tu API Key de Gemini y selecciona un segmento para empezar.',
+                'ai_link_source': 'Fuente',
+                'shortcut_insertLastAI': 'Insertar última respuesta de IA',
+                'no_ai_response_yet': 'Aún no hay respuesta de la IA para insertar.',
+                'ai_input_placeholder': 'Escribe tu consulta... (Enter para enviar)',
+                'ai_api_key_label': 'Google Gemini API Key:',
+                'ai_api_key_placeholder': 'Pegar API Key aquí...',
+                'ai_api_key_info': 'La clave se guarda localmente en tu navegador.',
+                'ai_config_title': 'Configurar API',
+                'ai_input_placeholder': 'Escribe tu consulta... (Enter para enviar)',
+                'ai_api_key_label': 'Google Gemini API Key:',
+                'ai_api_key_placeholder': 'Pegar API Key aquí...',
+                'ai_api_key_info': 'La clave se guarda localmente en tu navegador.',
+                'ai_config_title': 'Configurar API',
+                'ai_quick_translate': 'Traducir',
+                'ai_quick_improve': 'Mejorar',
+                'ai_quick_explain': 'Explicar',
+                'ai_quick_fix': 'Corregir',
+                'ai_initial_message': 'Hola, soy PandaBot 🐼. Configura tu API Key de Gemini y selecciona un segmento para empezar.',
+                'ai_link_source': 'Fuente',
+                'shortcut_insertLastAI': 'Insertar última respuesta de IA',
+                'no_ai_response_yet': 'Aún no hay respuesta de la IA para insertar.',
+
+
             }
         };
 
@@ -1074,7 +1465,9 @@
             insertGlossaryTerm2: { ctrlKey: true, altKey: false, shiftKey: false, key: '2' },
             insertGlossaryTerm3: { ctrlKey: true, altKey: false, shiftKey: false, key: '3' },
             insertGlossaryTerm4: { ctrlKey: true, altKey: false, shiftKey: false, key: '4' },
-            insertGlossaryTerm5: { ctrlKey: true, altKey: false, shiftKey: false, key: '5' }
+            insertGlossaryTerm5: { ctrlKey: true, altKey: false, shiftKey: false, key: '5' },
+            toggleAI: { ctrlKey: true, altKey: false, shiftKey: true, key: 'A' },
+            insertLastAI: { ctrlKey: false, altKey: true, shiftKey: true, key: 'I' }
         };
 
         let shortcutConfig = {};
@@ -1940,6 +2333,7 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
         function renderTranslations(entries) {
             translationsContainer.innerHTML = '';
             termsFoundInActiveSegment.clear(); // Clear terms when re-rendering all translations
+            lastFocusedSegment = null; // Reset AI context memory
 
             if (entries.length === 0) {
                 translationsContainer.innerHTML = `
@@ -2176,6 +2570,7 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                         document.querySelectorAll('.translation-unit-active').forEach(unit => {
                             unit.classList.remove('translation-unit-active');
                         });
+                        lastFocusedSegment = { entryIndex, segmentIndex }; // Remember this segment for AI
                         translationUnit.classList.add('translation-unit-active');
 
                         termsFoundInActiveSegment.clear();
@@ -2680,8 +3075,8 @@ setTimeout(() => {
         function handleShortcutAction(action, pressedKey) {
             const currentFocused = getCurrentFocusedIndex();
 
-            // La mayoría de las acciones requieren un segmento activo
-            if (!currentFocused && !action.startsWith('open')) return;
+            // La mayoría de las acciones requieren un segmento activo (excepto abrir proyecto o la IA)
+            if (!currentFocused && !action.startsWith('open') && action !== 'toggleAI') return;
 
             // Manejo dinámico para acciones numeradas
             if (action.startsWith('insertTMMatch') || action.startsWith('insertGlossaryTerm')) {
@@ -2708,21 +3103,42 @@ setTimeout(() => {
                 }
                 return; // Acción manejada
             }
+// Manejo para el resto de acciones
+        switch (action) {
+            case 'toggleAI':
+                const aiButton = document.getElementById('aiBtn');
+                if (aiButton) aiButton.click();
+                break;
+            
+            case 'insertLastAI':
+                if (lastAiResponseText) {
+                    insertAiResponse(lastAiResponseText);
+                } else {
+                    showMessage(translations[currentLanguage]['no_ai_response_yet']);
+                }
+                break;
 
-            // Manejo para el resto de acciones
-            switch (action) {
-                case 'validateAndNext':
+            case 'validateAndNext':
+                // Es importante verificar que currentFocused existe antes de usarlo
+                if (currentFocused) {
                     setTranslationEditableState(currentFocused.entryIndex, currentFocused.segmentIndex, false);
                     goToNextTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
-                    break;
-                case 'nextSegment':
+                }
+                break;
+
+            case 'nextSegment':
+                if (currentFocused) {
                     goToNextTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
-                    break;
-                case 'prevSegment':
+                }
+                break;
+
+            case 'prevSegment':
+                if (currentFocused) {
                     goToPreviousTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
-                    break;
-            }
+                }
+                break;
         }
+    } // Cierre de la función handleShortcutAction
 
 
         function showMessage(msg) {
@@ -3055,11 +3471,16 @@ setTimeout(() => {
         function updateTextContent() {
             const lang = translations[currentLanguage];
 
-            document.querySelectorAll('[data-i18n]').forEach(element => {
-                const key = element.getAttribute('data-i18n');
+            // Selector mejorado: busca elementos por texto, placeholder o título
+            document.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title]').forEach(element => {
+                // Obtenemos la clave del atributo que esté presente
+                const key = element.getAttribute('data-i18n') || element.getAttribute('data-i18n-placeholder') || element.getAttribute('data-i18n-title');
+                
                 if (lang[key]) {
                     if (element.hasAttribute('data-i18n-placeholder')) {
                         element.placeholder = lang[key];
+                    } else if (element.hasAttribute('data-i18n-title')) {
+                        element.title = lang[key];
                     } else {
                         element.textContent = lang[key];
                     }
@@ -3093,9 +3514,11 @@ setTimeout(() => {
                     centralColumn.classList.add('left-sidebar-active');
                     document.documentElement.style.setProperty('--terminology-sidebar-width', terminologySidebar.offsetWidth + 'px');
                 }
-                if (isTranslationMemoryOpen) {
+                if (isTranslationMemoryOpen || (aiSidebar && aiSidebar.classList.contains('show-sidebar'))) {
                     centralColumn.classList.add('right-sidebar-active');
-                    document.documentElement.style.setProperty('--translation-memory-sidebar-width', translationMemorySidebar.offsetWidth + 'px');
+                    // Prefer TM width if open, otherwise AI width
+                    const width = isTranslationMemoryOpen ? translationMemorySidebar.offsetWidth : aiSidebar.offsetWidth;
+                    document.documentElement.style.setProperty('--translation-memory-sidebar-width', width + 'px');
                 }
             } else {
                 console.warn("central-column element not found for offset update.");
@@ -3119,6 +3542,11 @@ setTimeout(() => {
                 statsBtn.classList.add('utility-btn-active');
             } else {
                 statsBtn.classList.remove('utility-btn-active');
+            }
+            if (aiSidebar && aiSidebar.classList.contains('show-sidebar')) {
+                document.getElementById('aiBtn').classList.add('utility-btn-active');
+            } else {
+                document.getElementById('aiBtn')?.classList.remove('utility-btn-active');
             }
         }
 
@@ -4897,6 +5325,7 @@ function makeModalDraggable(modalElement) {
 
             makeDraggableAndResizable(document.getElementById('terminologySidebar'));
             makeDraggableAndResizable(document.getElementById('translationMemorySidebar'));
+            makeDraggableAndResizable(document.getElementById('aiSidebar'));
 
             // Add event listeners for the new PO search bar
             poSearchInput.addEventListener('input', filterPOEntries);
@@ -4944,8 +5373,367 @@ function makeModalDraggable(modalElement) {
 
  makeModalDraggable(document.getElementById('findReplaceModal'));
 
+            // --- LÓGICA MODO OSCURO ---
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            // Cargar preferencia guardada
+            const isDarkMode = localStorage.getItem('poandaDarkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                if(darkModeToggle) darkModeToggle.textContent = '☀️';
+            }
+            
+            if(darkModeToggle) {
+                darkModeToggle.addEventListener('click', () => {
+                    document.body.classList.toggle('dark-mode');
+                    const enabled = document.body.classList.contains('dark-mode');
+                    localStorage.setItem('poandaDarkMode', enabled);
+                    darkModeToggle.textContent = enabled ? '☀️' : '🌙';
+                });
+            }
+
+            // Inicializar mensaje de bienvenida del chat en el idioma correcto
+            const chatContainer = document.getElementById('aiChatContainer');
+            if (chatContainer && chatContainer.children.length === 0) {
+                const welcomeDiv = document.createElement('div');
+                welcomeDiv.className = 'ai-message ai-message-bot';
+                welcomeDiv.textContent = translations[currentLanguage]['ai_initial_message'];
+                chatContainer.appendChild(welcomeDiv);
+            }
+
             setInterval(saveBackup, 10000);
         });
+
+        /* --- AI ASSISTANT LOGIC --- */
+        const aiBtn = document.getElementById('aiBtn');
+        const closeAiSidebarBtn = document.getElementById('closeAiSidebarBtn');
+        const aiConfigToggleBtn = document.getElementById('aiConfigToggleBtn');
+        const aiConfigPanel = document.getElementById('aiConfigPanel');
+        const geminiApiKeyInput = document.getElementById('geminiApiKeyInput');
+        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+        const aiUserInput = document.getElementById('aiUserInput');
+        const aiSendBtn = document.getElementById('aiSendBtn');
+
+        // Toggle Sidebar
+        // Toggle Sidebar con gestión inteligente de foco
+        if(aiBtn) {
+            aiBtn.addEventListener('click', () => {
+                const isOpening = !aiSidebar.classList.contains('show-sidebar');
+                
+                if (isOpening) {
+                    aiSidebar.classList.add('show-sidebar');
+                    // Cerrar TM si está abierta
+                    if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar');
+                    
+                    // FOCO AL CHAT (Pequeño retardo para dar tiempo a la animación CSS)
+                    setTimeout(() => {
+                        if (aiUserInput) aiUserInput.focus();
+                    }, 50);
+                } else {
+                    aiSidebar.classList.remove('show-sidebar');
+                    
+                    // FOCO DE VUELTA AL SEGMENTO
+                    if (lastFocusedSegment) {
+                        navigateToTranslation(lastFocusedSegment.entryIndex, lastFocusedSegment.segmentIndex);
+                    }
+                }
+                updateMainContentOffset();
+                updateUtilityButtonStates();
+            });
+        }
+
+        if(closeAiSidebarBtn) {
+            closeAiSidebarBtn.addEventListener('click', () => {
+                aiSidebar.classList.remove('show-sidebar');
+                updateMainContentOffset();
+                updateUtilityButtonStates();
+            });
+        }
+
+        // Config Panel
+        if(aiConfigToggleBtn) {
+            aiConfigToggleBtn.addEventListener('click', () => {
+                aiConfigPanel.classList.toggle('hidden');
+                geminiApiKeyInput.value = aiApiKey;
+            });
+        }
+
+        if(saveApiKeyBtn) {
+            saveApiKeyBtn.addEventListener('click', () => {
+                aiApiKey = geminiApiKeyInput.value.trim();
+                localStorage.setItem('poanda_gemini_key', aiApiKey);
+                aiConfigPanel.classList.add('hidden');
+                appendAiMessage('bot', 'API Key guardada correctamente. ✅');
+            });
+        }
+
+       // Lógica del Chat (Versión REST API manual - Sin librerías externas)
+        async function callGeminiAI(prompt) {
+            // Limpiamos la clave de posibles espacios en blanco al principio/final
+            const cleanApiKey = aiApiKey ? aiApiKey.trim() : '';
+
+            if (!cleanApiKey) {
+                appendAiMessage('bot', translations[currentLanguage]['ai_no_api_key']);
+                aiConfigPanel.classList.remove('hidden');
+                return;
+            }
+
+            const loadingId = appendAiMessage('bot', translations[currentLanguage]['ai_thinking']);
+            
+            // Función auxiliar para intentar conectar con un modelo específico
+            const tryFetch = async (modelName) => {
+                const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${cleanApiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+                return await response.json();
+            };
+
+            try {
+    // INTENTO 1: Gemini 2.5 Flash (Rápido, eficiente y soporta "thinking")
+    // NOTA: Usamos solo el nombre final, sin 'models/' delante
+    let data = await tryFetch('gemini-2.5-flash');
+
+    // Si falla, probamos el Plan B
+    if (data.error) {
+        console.warn("Intento 1 fallido con 2.5 Flash, probando 2.5 Pro...", data.error);
+        
+        // INTENTO 2: Gemini 2.5 Pro (Más potente)
+        data = await tryFetch('gemini-2.5-pro');
+    }
+
+                // Eliminamos mensaje de "pensando"
+                const loadingMsg = document.getElementById(loadingId);
+                if(loadingMsg) loadingMsg.remove();
+
+                // Procesamos la respuesta final
+                if (data.error) {
+                    // Si fallan los dos, mostramos el error
+                    let errorMsg = data.error.message;
+                    if (errorMsg.includes('API key not valid')) errorMsg = 'La API Key es incorrecta. Revisa espacios en blanco.';
+                    appendAiMessage('bot', `❌ Error: ${errorMsg}`);
+                } else if (data.candidates && data.candidates.length > 0) {
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    appendAiMessage('bot', aiResponse, true);
+                } else {
+                    appendAiMessage('bot', 'La IA no devolvió respuesta.');
+                }
+
+            } catch (error) {
+                const loadingMsg = document.getElementById(loadingId);
+                if(loadingMsg) loadingMsg.remove();
+                console.error("Error de red:", error);
+                appendAiMessage('bot', `❌ Error de conexión: ${error.message}`);
+            }
+        }
+        function appendAiMessage(sender, text, allowInsert = false) {
+            // 1. Guardar última respuesta para el atajo
+            if (sender === 'bot') lastAiResponseText = text;
+
+            const msgDiv = document.createElement('div');
+            const msgId = 'msg-' + Date.now();
+            msgDiv.id = msgId;
+            msgDiv.className = `ai-message ai-message-${sender}`;
+            
+            // 2. Renderizado con enlaces personalizados
+            if (sender === 'bot' && typeof marked !== 'undefined') {
+                // Configurar renderer para que los links sean botones
+                const renderer = new marked.Renderer();
+                renderer.link = ({href}) => {
+                     // Obtenemos el texto "Source" o "Fuente" según idioma actual
+                     const label = translations[currentLanguage]['ai_link_source'] || 'Source';
+                     // Devolvemos el HTML del botón, forzando nueva pestaña y title con la URL
+                     return `<a href="${href}" target="_blank" title="${href}" class="ai-source-link">${label}</a>`;
+                };
+                
+                // Parsear usando nuestro renderer
+                msgDiv.innerHTML = marked.parse(text, { renderer: renderer });
+            } else {
+                msgDiv.textContent = text; 
+            }
+
+            // Add Insert Button if it's a bot translation/suggestion
+            if (allowInsert && sender === 'bot') {
+                const insertBtn = document.createElement('span');
+                insertBtn.className = 'ai-insert-btn';
+                insertBtn.textContent = '📋 Insertar / Copiar';
+                insertBtn.onclick = () => insertAiResponse(text);
+                msgDiv.appendChild(insertBtn);
+            }
+
+            aiChatContainer.appendChild(msgDiv);
+            aiChatContainer.scrollTop = aiChatContainer.scrollHeight;
+            return msgId;
+        }
+
+        function insertAiResponse(text) {
+            const focused = getCurrentFocusedIndex() || lastFocusedSegment;
+            if (focused) {
+                const textarea = document.getElementById(`msgstr-${focused.entryIndex}-${focused.segmentIndex}`);
+                if (textarea && !textarea.readOnly) {
+                    // Limpiar texto de markdown simple si la IA lo devolvió
+                    const cleanText = text.replace(/\*\*/g, '').replace(/```/g, '').trim();
+                    textarea.value = cleanText;
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    textarea.focus();
+                    
+                    // Visual feedback on button
+                    showMessage(translations[currentLanguage]['ai_inserted']);
+                }
+            } else {
+                showMessage(translations[currentLanguage]['ai_no_segment']);
+            }
+        }
+
+       function getContextPrompt(userQuery) {
+            // 1. Obtener segmento activo
+            const focused = getCurrentFocusedIndex() || lastFocusedSegment;
+            if (!focused) return null;
+
+            const entryIndex = focused.entryIndex;
+            const segmentIndex = focused.segmentIndex;
+            const entry = poEntries[entryIndex];
+            const segment = entry.sentenceSegments[segmentIndex];
+            
+            // 2. Configuración de idiomas
+            const srcLang = (glossarySourceLanguage || configSrcLang?.value || 'Unknown');
+            const tgtLang = (glossaryTargetLanguage || configTgtLang?.value || 'Unknown');
+
+            // 3. RECUPERAR GLOSARIO (Contexto Terminológico)
+            let glossaryContext = "No relevant glossary terms found.";
+            if (termsFoundInActiveSegment && termsFoundInActiveSegment.size > 0) {
+                const foundTermsList = [];
+                termsFoundInActiveSegment.forEach(srcTerm => {
+                    // Buscamos la traducción en el array global 'glossary'
+                    const match = glossary.find(g => g.srcTerm === srcTerm);
+                    if (match) {
+                        foundTermsList.push(`"${match.srcTerm}" -> "${match.tgtTerm}"`);
+                    }
+                });
+                if (foundTermsList.length > 0) {
+                    glossaryContext = "STRICTLY USE these glossary terms:\n- " + foundTermsList.join("\n- ");
+                }
+            }
+
+            // 4. RECUPERAR MEMORIA DE TRADUCCIÓN (Contexto Histórico)
+            let tmContext = "No TM match available.";
+            // Usamos la variable global tmBestMatchForActiveSegment que ya calcula Poanda
+            if (tmBestMatchForActiveSegment) {
+                tmContext = `Found a similar translation in TM (${tmBestMatchForActiveSegment.score}% match):\n` +
+                            `- Original: "${tmBestMatchForActiveSegment.srcText}"\n` +
+                            `- Translation: "${tmBestMatchForActiveSegment.tgtText}"\n` +
+                            `Use this as a reference style or base.`;
+            }
+
+            // 5. RECUPERAR CONTEXTO VECINO (Flujo del texto)
+            // Intentamos coger el segmento anterior y el posterior para dar contexto
+            let prevSegmentText = "N/A (Start of file)";
+            let nextSegmentText = "N/A (End of file)";
+
+            // Lógica simple para previo
+            if (segmentIndex > 0) {
+                prevSegmentText = entry.sentenceSegments[segmentIndex - 1].translation || "(Not translated yet)";
+            } else if (entryIndex > 0) {
+                // Si es el primer segmento de una entrada, miramos la entrada anterior (simplificado)
+                const prevEntry = poEntries[entryIndex - 1];
+                if (prevEntry && prevEntry.sentenceSegments.length > 0) {
+                    const lastSeg = prevEntry.sentenceSegments[prevEntry.sentenceSegments.length - 1];
+                    prevSegmentText = lastSeg.translation || "(Not translated yet)";
+                }
+            }
+
+            // Lógica simple para siguiente
+            if (segmentIndex < entry.sentenceSegments.length - 1) {
+                nextSegmentText = entry.sentenceSegments[segmentIndex + 1].original;
+            } else if (entryIndex < poEntries.length - 1) {
+                const nextEntry = poEntries[entryIndex + 1];
+                if (nextEntry && !nextEntry.isHeader && nextEntry.sentenceSegments.length > 0) {
+                    nextSegmentText = nextEntry.sentenceSegments[0].original;
+                }
+            }
+
+            // 6. CONSTRUCCIÓN DEL PROMPT MAESTRO
+            return `
+                ACT AS: Professional Translator & Localization Expert (PandaBot).
+                
+                --- PROJECT CONTEXT ---
+                Source Language: ${srcLang}
+                Target Language: ${tgtLang}
+                
+                --- TERMINOLOGY & MEMORY (PRIORITY HIGH) ---
+                ${glossaryContext}
+                
+                ${tmContext}
+                
+                --- TEXT FLOW CONTEXT ---
+                Previous Sentence (Context): "...${prevSegmentText}"
+                Current Sentence (TARGET): "${segment.original}"
+                Next Sentence (Context): "${nextSegmentText}..."
+                
+                --- CURRENT STATUS ---
+                Current Draft Translation: "${document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`)?.value || ''}"
+                Context ID (msgctxt): ${entry.msgctxt || 'N/A'}
+                
+                --- USER REQUEST ---
+                ${userQuery}
+                
+                OUTPUT GUIDELINES:
+                1. Be concise.
+                2. If the user asks to translate, prioritize Glossary terms and TM style.
+                3. Provide the result directly.
+            `;
+        }
+
+        // Send Logic
+        function handleAiSend() {
+            const text = aiUserInput.value.trim();
+            if (!text) return;
+            
+            const prompt = getContextPrompt(text);
+            if (!prompt) {
+                appendAiMessage('bot', translations[currentLanguage]['ai_no_segment']);
+                return;
+            }
+
+            appendAiMessage('user', text);
+            aiUserInput.value = '';
+            callGeminiAI(prompt);
+        }
+
+        if(aiSendBtn) aiSendBtn.addEventListener('click', handleAiSend);
+        if(aiUserInput) aiUserInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAiSend();
+            }
+        });
+
+        // Quick Actions Trigger
+        window.triggerQuickAI = function(actionType) {
+            let query = '';
+            switch(actionType) {
+                case 'translate': query = translations[currentLanguage]['ai_prompt_translate']; break;
+                case 'improve': query = translations[currentLanguage]['ai_prompt_improve']; break;
+                case 'explain': query = translations[currentLanguage]['ai_prompt_explain']; break;
+                case 'fix': query = translations[currentLanguage]['ai_prompt_fix']; break;
+            }
+            
+            if (query) {
+                const prompt = getContextPrompt(query);
+                if (!prompt) {
+                    appendAiMessage('bot', translations[currentLanguage]['ai_no_segment']);
+                    // Open sidebar if closed so user sees the error
+                    if(!aiSidebar.classList.contains('show-sidebar')) aiSidebar.classList.add('show-sidebar');
+                    return;
+                }
+                appendAiMessage('user', `⚡ ${query}`);
+                callGeminiAI(prompt);
+            }
+        };
+
     </script>
 </body>
 </html>
