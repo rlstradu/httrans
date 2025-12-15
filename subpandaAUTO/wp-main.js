@@ -1,10 +1,9 @@
-// wp-main.js - Lógica Híbrida v3.9 - Algoritmo V9 (Typo Fix)
+// wp-main.js - Lógica Híbrida (Groq + Local) v3.6 - Algoritmo V9 (Linguistic Flow & Deep Anti-Orphan)
 
 const translations = {
     en: {
         backLink: "Back to HTTrans",
         heroDesc: "AI-powered automatic transcription and subtitling tool.",
-        privacyBadge: "100% Private: Files never leave your device",
         settingsTitle: "Assistant Preferences",
         audioLangLabel: "Audio Language",
         audioLangHelp: "Manually selecting the language improves accuracy.",
@@ -35,6 +34,7 @@ const translations = {
         dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
         startBtn: "Start",
+        updateBtn: "Update Subtitles",
         startBtnProcessing: "Processing...",
         statusLoading: "Loading...",
         statusInitiating: "Initializing...",
@@ -53,7 +53,6 @@ const translations = {
     es: {
         backLink: "Volver a HTTrans",
         heroDesc: "Herramienta de transcripción y subtitulado automático impulsada por IA.",
-        privacyBadge: "100% Privado: Tus archivos nunca salen de tu dispositivo",
         settingsTitle: "Ajustes del asistente",
         audioLangLabel: "Idioma del audio",
         audioLangHelp: "Seleccionar el idioma manualmente mejora la precisión.",
@@ -84,6 +83,7 @@ const translations = {
         dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
         startBtn: "Iniciar",
+        updateBtn: "Actualizar Subtítulos",
         startBtnProcessing: "Procesando...",
         statusLoading: "Cargando...",
         statusInitiating: "Iniciando...",
@@ -108,6 +108,7 @@ let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
 let startTime = 0;
 let lastConsoleLine = null;
+let cachedData = null; // Caché para re-segmentación rápida
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -119,6 +120,7 @@ const els = {
     removeFile: document.getElementById('remove-file'),
     warning: document.getElementById('file-warning'),
     runBtn: document.getElementById('run-btn'),
+    resetBtn: document.getElementById('reset-btn'),
     progressCont: document.getElementById('progress-container'),
     statusText: document.getElementById('status-text'),
     consoleOutput: document.getElementById('console-output'),
@@ -141,10 +143,10 @@ function updateModeUI(mode) {
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) {
-                label.classList.add('border-[#E23B5D]', 'shadow-md');
+                label.classList.add('border-[#ffb81f]', 'shadow-md');
                 label.classList.remove('border-gray-200');
             } else {
-                label.classList.remove('border-[#E23B5D]', 'shadow-md');
+                label.classList.remove('border-[#ffb81f]', 'shadow-md');
                 label.classList.add('border-gray-200');
             }
         });
@@ -227,8 +229,10 @@ function setLanguage(lang) {
         if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
     }
 
-    if (els.runBtn.disabled && !audioData) els.runBtn.querySelector('span').innerText = t.startBtn;
-    else if (!els.runBtn.disabled) els.runBtn.querySelector('span').innerText = t.startBtn;
+    const btnText = cachedData ? t.updateBtn : t.startBtn;
+    if (els.runBtn.disabled && !audioData) els.runBtn.querySelector('span').innerText = btnText;
+    else if (!els.runBtn.disabled) els.runBtn.querySelector('span').innerText = btnText;
+    
     els.dontBreakInput.value = t.dontBreakDefaults;
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
@@ -238,12 +242,18 @@ els.langEs.addEventListener('click', () => setLanguage('es'));
 function resetFile() {
     audioData = null;
     audioDuration = 0;
+    cachedData = null; 
     els.fileInput.value = '';
     els.fileInfo.classList.add('hidden');
     els.warning.classList.add('hidden');
     els.runBtn.disabled = true;
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+    els.resetBtn.classList.add('hidden'); 
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
+    
+    els.resultsArea.classList.add('hidden');
+    els.resultsArea.classList.remove('opacity-100');
+    els.progressCont.classList.add('hidden');
 }
 
 async function handleFile(file) {
@@ -252,6 +262,7 @@ async function handleFile(file) {
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
     els.fileInfo.classList.remove('hidden');
+    els.resetBtn.classList.remove('hidden'); // Mostrar botón reset
     if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
     els.runBtn.querySelector('span').innerText = t.startBtnProcessing;
     logToConsole(`File loaded: ${file.name}`);
@@ -262,21 +273,26 @@ async function handleFile(file) {
         audioData = audioBuffer; 
         audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
+        
+        // ACTIVACIÓN VISUAL DEL BOTÓN
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'transform-none', 'shadow-none');
-        els.runBtn.classList.add('bg-[#E23B5D]', 'hover:bg-[#c0304d]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
+        // Usamos el amarillo corporativo #ffb81f
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
         els.runBtn.querySelector('span').innerText = t.startBtn;
+        
     } catch (err) {
         logToConsole(`ERROR: ${err.message}`);
         resetFile();
     }
 }
 els.dropZone.addEventListener('click', () => els.fileInput.click());
-els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#E23B5D]', 'bg-pink-50'); });
-els.dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#E23B5D]', 'bg-pink-50'); });
-els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#E23B5D]', 'bg-pink-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
+els.dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); });
+els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
 els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
 els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
+els.resetBtn.addEventListener('click', () => resetFile()); 
 
 // --- UTILS AUDIO ---
 function audioBufferToWav(buffer) {
@@ -305,9 +321,17 @@ function audioBufferToWav(buffer) {
 // --- EJECUCIÓN ---
 els.runBtn.addEventListener('click', async () => {
     if (!audioData) return;
+
+    if (cachedData) {
+        logToConsole("Updating subtitles with new parameters...");
+        processResultsV9(cachedData);
+        return; 
+    }
+    
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
+    
     els.runBtn.disabled = true;
     els.resultsArea.classList.add('hidden');
     els.resultsArea.classList.remove('opacity-100');
@@ -354,8 +378,11 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         else if (result.segments) { result.segments.forEach(s => { chunks.push({ text: s.text, timestamp: [s.start, s.end] }); }); }
         
         const data = { text: result.text, chunks: chunks };
+        cachedData = data;
+        els.runBtn.querySelector('span').innerText = translations[currentLang].updateBtn;
+        
         logToConsole("Applying V9 Segmentation (Linguistic Flow)...");
-        processResultsV8(data);
+        processResultsV9(data);
         els.statusText.innerText = "Completed!";
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE (GROQ)`);
         els.runBtn.disabled = false;
@@ -404,7 +431,9 @@ worker.onmessage = (e) => {
         lastConsoleLine = null;
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
         logToConsole("Transcription done. Processing...");
-        processResultsV8(data); // V9
+        cachedData = data;
+        els.runBtn.querySelector('span').innerText = translations[currentLang].updateBtn;
+        processResultsV9(data); // V9
         els.runBtn.disabled = false;
     } 
     else if (status === 'error') {
@@ -418,8 +447,8 @@ worker.onmessage = (e) => {
 // 🚀 MOTOR LÓGICO V9 (LINGUISTIC FLOW + DEEP ANTI-ORPHAN)
 // =================================================================
 
-function processResultsV8(data) {
-    const maxCpl = parseInt(document.getElementById('max-cpl').value); // Corregido: maxCPL -> maxCpl
+function processResultsV9(data) {
+    const maxCpl = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
     const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
@@ -427,7 +456,6 @@ function processResultsV8(data) {
     const minGapUnit = document.getElementById('min-gap-unit').value;
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
 
-    // Recoger preposiciones/palabras pegajosas del DOM
     const dontBreakStr = document.getElementById('dont-break-on').value;
     const dontBreakList = [
         ...dontBreakStr.split(','),
@@ -447,8 +475,6 @@ function processResultsV8(data) {
 
     logToConsole(`Extracted ${allWords.length} words.`);
     
-    // Algoritmo V9 (Smart Flow)
-    // Se corrige maxCPL a maxCpl para coincidir con la definición de la variable
     let subs = createSrtV9(allWords, maxCpl, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
@@ -466,7 +492,7 @@ function processResultsV8(data) {
     setupDownloads(srt, subs);
 }
 
-// --- ALGORTIMO V9: Segmentación con Lookahead Anti-Huérfanas ---
+// --- ALGORITMO V9: Segmentación con Lookahead Anti-Huérfanas ---
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = [];
     let buffer = [];
@@ -474,7 +500,6 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const strongPunct = ['.', '?', '!', '♪'];
     const maxChars = maxCpl * maxLines;
 
-    // Helper para saber si una palabra cierra frase
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
 
     for (let i = 0; i < words.length; i++) {
@@ -492,16 +517,14 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
 
         // 1. REGLA HARD LIMIT (Longitud)
         if (currentText.length > maxChars) {
-            // Sacamos la palabra que desbordó
             const overflow = buffer.pop();
             pendingWords.push(overflow);
             
-            // --- BUCLE DE SEGURIDAD (Revisión Continua) ---
-            // Mientras la última palabra del buffer sea pegajosa o el siguiente bloque quede huérfano...
+            // BUCLE DE SEGURIDAD (Revisión Continua)
             let safeCutFound = false;
             
             while (!safeCutFound && buffer.length > 0) {
-                // A. Check Sticky Ending
+                // A. Check Sticky Ending (Preposiciones / Números)
                 const lastObj = buffer[buffer.length - 1];
                 const last = lastObj.word.trim().toLowerCase().replace(/[.,?!]/g, '');
                 const isSticky = dontBreakList.includes(last) || /^\d+$/.test(last);
@@ -514,6 +537,8 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
                 // B. DEEP ANTI-ORPHAN (El "Water." fix)
                 let pendingTextLen = pendingWords.map(w => w.word).join(' ').length;
                 
+                // Miramos qué viene DESPUÉS de lo que ya hemos "popeado"
+                // i + 1 es la siguiente palabra en el loop principal
                 let lookaheadIdx = i + 1;
                 let distToNextDot = 0;
                 while(lookaheadIdx < words.length && distToNextDot < 5) {
@@ -524,12 +549,11 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
 
                 // Condición de huérfana: lo que sobra + lo que viene hasta el punto es poco (< 25 chars)
                 const isNextTooShort = (pendingTextLen + (distToNextDot * 5)) < 30; 
-                // Solo robamos si el buffer actual es generoso (> 40% lleno)
                 const canSteal = buffer.length > 1 && currentText.length > (maxCpl * 0.4);
 
                 if (isNextTooShort && canSteal) {
                      pendingWords.unshift(buffer.pop());
-                     continue; // Seguir robando
+                     continue; // Seguir robando del buffer
                 }
                 
                 safeCutFound = true; // El corte es seguro
@@ -538,7 +562,7 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
             forceCut = true;
             if(buffer.length > 0) endTime = buffer[buffer.length-1].end;
             else { 
-                buffer.push(pendingWords.shift()); // Fallback si vaciamos todo
+                buffer.push(pendingWords.shift()); 
                 endTime = buffer[0].end;
             }
         }
@@ -620,7 +644,6 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
 }
 
 function applyTimeRules(subs, minDur, maxDur, minGap) {
-    // 1. Corrección Gap y Max
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         if ((current.end - current.start) > maxDur) current.end = current.start + maxDur;
@@ -631,7 +654,6 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
             if (current.end <= current.start) current.end = current.start + 0.1;
         }
     }
-    // 2. Extensión Min Dur
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         let duration = current.end - current.start;
@@ -664,7 +686,11 @@ function setupDownloads(srt, segs) {
         navigator.clipboard.writeText(srt);
         const orig = els.copy.querySelector('span').innerHTML;
         els.copy.querySelector('span').innerHTML = t.copiedBtn;
-        setTimeout(() => els.copy.querySelector('span').innerHTML = orig, 2000);
+        els.copy.classList.add('copy-success');
+        setTimeout(() => {
+            els.copy.querySelector('span').innerHTML = orig;
+            els.copy.classList.remove('copy-success');
+        }, 2000);
     };
 }
 function download(content, name) {
