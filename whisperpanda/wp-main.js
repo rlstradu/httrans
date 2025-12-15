@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida (Groq + Local) v3.4
+// wp-main.js - Lógica Híbrida (Groq + Local) v3.5 - Algoritmo V6 (Full Style Rules)
 
 const translations = {
     en: {
@@ -139,7 +139,6 @@ function updateModeUI(mode) {
         els.groqContainer.classList.remove('hidden');
         els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
         
-        // Estilos visuales de selección
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) {
@@ -151,7 +150,6 @@ function updateModeUI(mode) {
             }
         });
 
-        // Cargar key guardada o por defecto
         const savedKey = localStorage.getItem('groq_api_key');
         const defaultKey = "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";
         if(document.getElementById('groq-key')) {
@@ -174,7 +172,6 @@ function updateModeUI(mode) {
     }
 }
 
-// Inicializar estado de modo
 updateModeUI('groq');
 
 els.modeRadios.forEach(radio => {
@@ -232,7 +229,6 @@ function setLanguage(lang) {
         if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key];
     });
     
-    // Actualizar opciones del select
     const modelSelect = document.getElementById('model-select');
     if(modelSelect) {
         modelSelect.options[0].text = t.optTiny;
@@ -266,7 +262,7 @@ async function handleFile(file) {
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
     els.fileInfo.classList.remove('hidden');
-    if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); // Warning para 500MB
+    if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden');
     els.runBtn.querySelector('span').innerText = t.startBtnProcessing;
     logToConsole(`File loaded: ${file.name}`);
     
@@ -274,11 +270,10 @@ async function handleFile(file) {
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        audioData = audioBuffer; // Guardamos el AudioBuffer completo
+        audioData = audioBuffer;
         audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         
-        // HABILITAR BOTÓN VISUALMENTE (Parche CSS)
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'transform-none', 'shadow-none');
         els.runBtn.classList.add('bg-[#E23B5D]', 'hover:bg-[#c0304d]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
@@ -430,7 +425,7 @@ async function runGroq(apiKey, audioBuffer, language, task) {
             chunks: chunks
         };
 
-        logToConsole("Applying V5 Segmentation...");
+        logToConsole("Applying V6 Segmentation (Rules: CPL, Gap, Prepositions)...");
         processResultsV5(data);
         
         els.statusText.innerText = "Completed!";
@@ -495,7 +490,7 @@ worker.onmessage = (e) => {
 };
 
 // =================================================================
-// 🚀 MOTOR LÓGICO V5 (COMPARTIDO LOCAL Y GROQ)
+// 🚀 MOTOR LÓGICO V6 (SEGMENTACIÓN AVANZADA)
 // =================================================================
 
 function processResultsV5(data) {
@@ -506,6 +501,10 @@ function processResultsV5(data) {
     const minGapVal = parseFloat(document.getElementById('min-gap-val').value) || 0;
     const minGapUnit = document.getElementById('min-gap-unit').value;
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
+
+    // Recoger preposiciones del DOM
+    const dontBreakStr = document.getElementById('dont-break-on').value;
+    const dontBreakList = dontBreakStr.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
 
     let allWords = [];
     if (data.chunks && Array.isArray(data.chunks)) {
@@ -519,7 +518,9 @@ function processResultsV5(data) {
     }
 
     logToConsole(`Extracted ${allWords.length} words.`);
-    let subs = createSrtV5(allWords, maxCPL, maxLines);
+    
+    // Pasamos MinDuration y DontBreak a la función de creación
+    let subs = createSrtV6(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
     const task = document.getElementById('task-select').value;
@@ -536,83 +537,129 @@ function processResultsV5(data) {
     setupDownloads(srt, subs);
 }
 
-// ... (Resto de funciones: balancedSplit, createSrtV5, applyTimeRules, generateSRT, setupDownloads, download - SON IGUALES QUE ANTES) ...
-// Para ahorrar espacio, asumo que las copias del archivo anterior, ya que son idénticas.
-// Si las necesitas de nuevo, dímelo.
-
-function balancedSplit(text, maxCpl) {
-    if (text.length <= maxCpl) return [text];
-    const words = text.split(' ');
-    let bestCut = -1;
-    let bestDiff = Infinity;
-    const punct = [',', ':', ';', '-', '.'];
-    const safeStart = Math.floor(text.length * 0.3);
-    const safeEnd = Math.floor(text.length * 0.7);
-    let indices = [];
-    for (let i = 0; i < text.length; i++) { if (punct.includes(text[i])) indices.push(i); }
-    const candidates = indices.filter(i => i > safeStart && i < safeEnd);
-    if (candidates.length > 0) {
-        const center = text.length / 2;
-        const bestPunct = candidates.reduce((prev, curr) => Math.abs(curr - center) < Math.abs(prev - center) ? curr : prev);
-        const l1 = text.substring(0, bestPunct + 1).trim();
-        const l2 = text.substring(bestPunct + 1).trim();
-        if (l1.length <= maxCpl && l2.length <= maxCpl) return [l1, l2];
-    }
-    for (let i = 1; i < words.length; i++) {
-        const l1 = words.slice(0, i).join(' ');
-        const l2 = words.slice(i).join(' ');
-        if (l1.length > maxCpl || l2.length > maxCpl) continue;
-        const diff = Math.abs(l1.length - l2.length);
-        if (diff < bestDiff) { bestDiff = diff; bestCut = i; }
-    }
-    if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
-    const mid = Math.floor(words.length / 2);
-    return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
-}
-
-function createSrtV5(words, maxCpl, maxLines) {
+// --- ALGORTIMO V6: Segmentación con Reglas de Estilo ---
+function createSrtV6(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = [];
     let buffer = [];
     let startTime = null;
     const strongPunct = ['.', '?', '!', '♪'];
+
     for (let i = 0; i < words.length; i++) {
         const wObj = words[i];
         const wordText = wObj.word.trim();
         if (!wordText) continue;
+
         if (startTime === null) startTime = wObj.start;
-        buffer.push(wordText);
-        const currentText = buffer.join(' ');
+
+        buffer.push(wObj);
+        
+        // Construimos texto actual para comprobación
+        const currentText = buffer.map(b => b.word.trim()).join(' ');
         let forceCut = false;
-        let pendingWord = null;
+        let pendingWords = [];
         let endTime = wObj.end;
+        
+        // Calcular duración actual
+        let currentDur = endTime - startTime;
+
+        // Regla 1: Exceso de caracteres (HARD LIMIT)
+        // Esto tiene prioridad sobre la duración mínima para evitar subtítulos de 3 líneas
         if (currentText.length > (maxCpl * maxLines)) {
-            pendingWord = wObj;
-            buffer.pop();
+            // Sacamos la última palabra que desbordó
+            pendingWords.push(buffer.pop());
             forceCut = true;
-            endTime = wObj.start; 
-        } else if (buffer.length > 1) {
+            if(buffer.length > 0) endTime = buffer[buffer.length-1].end;
+            else endTime = wObj.start; // Fallback raro
+        }
+        
+        // Regla 2: Puntuación fuerte (SOLO si cumplimos Min Duration)
+        else if (buffer.length > 1 && currentDur >= minDur) {
             const prevWord = buffer[buffer.length - 2];
-            const lastChar = prevWord.slice(-1);
+            const lastChar = prevWord.word.trim().slice(-1);
             if (strongPunct.includes(lastChar)) {
-                pendingWord = wObj;
-                buffer.pop();
+                // Cortar AQUI. La palabra actual pasa al siguiente.
+                pendingWords.push(buffer.pop());
                 forceCut = true;
-                endTime = wObj.start;
+                endTime = prevWord.end;
             }
         }
+
         if (forceCut || i === words.length - 1) {
-            const finalBlock = buffer.join(' ');
-            const lines = balancedSplit(finalBlock, maxCpl);
+            const finalBlock = buffer.map(b => b.word.trim()).join(' ');
+            
+            // Aplicar división equilibrada con reglas de preposiciones
+            const lines = balancedSplitV6(finalBlock, maxCpl, dontBreakList);
+            
             subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
+
             buffer = [];
             startTime = null;
-            if (pendingWord) {
-                buffer.push(pendingWord.word.trim());
-                startTime = pendingWord.start;
+
+            // Re-inyectar palabras pendientes para el siguiente
+            if (pendingWords.length > 0) {
+                // pendingWords tiene [ultima] o [ultima, penultima...] en orden inverso si popping
+                // En este caso solo popeamos 1, así que es simple.
+                // Si hubiera lógica compleja de retroceso, habría que ajustar.
+                buffer = [...pendingWords]; 
+                startTime = buffer[0].start;
             }
         }
     }
     return subtitles;
+}
+
+// --- BALANCEO CON PREPOSICIONES ---
+function balancedSplitV6(text, maxCpl, dontBreakList) {
+    if (text.length <= maxCpl) return [text];
+
+    const words = text.split(' ');
+    let bestCut = -1;
+    let bestScore = Infinity; // Menor es mejor (diferencia de longitud + penalizaciones)
+    
+    const punct = [',', ':', ';', '-', '.'];
+    const safeStart = Math.floor(words.length * 0.3);
+    const safeEnd = Math.floor(words.length * 0.8); // Permitimos un poco más al final
+
+    for (let i = 1; i < words.length; i++) {
+        const l1Str = words.slice(0, i).join(' ');
+        const l2Str = words.slice(i).join(' ');
+        
+        // Regla 0: Hard Limit CPL
+        if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue;
+
+        let score = Math.abs(l1Str.length - l2Str.length);
+
+        // Regla 1: Preposiciones (Widow control)
+        // Si la línea 1 termina en preposición, penalizamos MUCHO este corte
+        const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
+        if (dontBreakList.includes(lastWordL1)) {
+            score += 1000; // Penalización masiva
+        }
+
+        // Regla 2: Puntuación (Bonus)
+        const lastCharL1 = words[i-1].slice(-1);
+        if (punct.includes(lastCharL1)) {
+            score -= 20; // Bonus por cortar en coma/punto
+        }
+
+        // Regla 3: Zona central (Bonus ligero)
+        if (i > safeStart && i < safeEnd) {
+            score -= 5;
+        }
+
+        if (score < bestScore) {
+            bestScore = score;
+            bestCut = i;
+        }
+    }
+
+    if (bestCut !== -1) {
+        return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
+    }
+
+    // Fallback: Corte bruto al medio
+    const mid = Math.floor(words.length / 2);
+    return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
 
 function applyTimeRules(subs, minDur, maxDur, minGap) {
