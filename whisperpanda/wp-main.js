@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida v3.7 - Algoritmo V7 + fmtTime Fix
+// wp-main.js - Lógica Híbrida v3.8 - Algoritmo V8 (Anti-Orphan & Semantic Glue)
 
 const translations = {
     en: {
@@ -48,7 +48,7 @@ const translations = {
         resultFooter: "Remember to check subtitles in a professional tool.",
         errorMsg: "Error processing audio.",
         downloadModel: "Downloading Model...",
-        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among"
+        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that"
     },
     es: {
         backLink: "Volver a HTTrans",
@@ -97,7 +97,7 @@ const translations = {
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
         errorMsg: "No se pudo procesar el audio.",
         downloadModel: "Descargando Modelo...",
-        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras"
+        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus"
     }
 };
 
@@ -354,8 +354,8 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         else if (result.segments) { result.segments.forEach(s => { chunks.push({ text: s.text, timestamp: [s.start, s.end] }); }); }
         
         const data = { text: result.text, chunks: chunks };
-        logToConsole("Applying V7 Segmentation (Smart Flow)...");
-        processResultsV7(data);
+        logToConsole("Applying V8 Segmentation (Anti-Orphan & Glue)...");
+        processResultsV8(data);
         els.statusText.innerText = "Completed!";
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE (GROQ)`);
         els.runBtn.disabled = false;
@@ -404,7 +404,7 @@ worker.onmessage = (e) => {
         lastConsoleLine = null;
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
         logToConsole("Transcription done. Processing...");
-        processResultsV7(data); // V7
+        processResultsV8(data); // V8
         els.runBtn.disabled = false;
     } 
     else if (status === 'error') {
@@ -415,10 +415,10 @@ worker.onmessage = (e) => {
 };
 
 // =================================================================
-// 🚀 MOTOR LÓGICO V7 (SMART FLOW + ORPHAN PROTECTION)
+// 🚀 MOTOR LÓGICO V8 (ANTI-ORPHAN + SEMANTIC GLUE)
 // =================================================================
 
-function processResultsV7(data) {
+function processResultsV8(data) {
     const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
@@ -429,7 +429,11 @@ function processResultsV7(data) {
 
     // Recoger preposiciones/palabras pegajosas del DOM
     const dontBreakStr = document.getElementById('dont-break-on').value;
-    const dontBreakList = dontBreakStr.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+    // Añadimos números (palabras) y preposiciones extra a la lista "pegajosa"
+    const dontBreakList = [
+        ...dontBreakStr.split(','),
+        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"
+    ].map(s => s.trim().toLowerCase()).filter(s => s);
 
     let allWords = [];
     if (data.chunks && Array.isArray(data.chunks)) {
@@ -444,8 +448,8 @@ function processResultsV7(data) {
 
     logToConsole(`Extracted ${allWords.length} words.`);
     
-    // Algoritmo V7
-    let subs = createSrtV7(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
+    // Algoritmo V8
+    let subs = createSrtV8(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
     const task = document.getElementById('task-select').value;
@@ -462,71 +466,78 @@ function processResultsV7(data) {
     setupDownloads(srt, subs);
 }
 
-// --- ALGORTIMO V7: Segmentación Inteligente ---
-function createSrtV7(words, maxCpl, maxLines, minDur, dontBreakList) {
+// --- ALGORTIMO V8: Anti-Orphan & Smart Cut ---
+function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = [];
     let buffer = [];
     let startTime = null;
     const strongPunct = ['.', '?', '!', '♪'];
+    const maxChars = maxCPL * maxLines;
 
     for (let i = 0; i < words.length; i++) {
         const wObj = words[i];
-        const wordText = wObj.word.trim();
-        if (!wordText) continue;
+        if (!wObj.word.trim()) continue;
 
         if (startTime === null) startTime = wObj.start;
 
         buffer.push(wObj);
         
-        const currentText = buffer.map(b => b.word.trim()).join(' ');
         let forceCut = false;
         let pendingWords = [];
         let endTime = wObj.end;
         let currentDur = endTime - startTime;
         
+        // Calcular longitud actual
+        const currentText = buffer.map(b => b.word.trim()).join(' ');
+
         // --- 1. REGLA DE LONGITUD (HARD LIMIT) ---
-        if (currentText.length > (maxCpl * maxLines)) {
-            // Sacamos la última palabra que desbordó
-            const overflow = buffer.pop();
-            pendingWords.push(overflow);
+        if (currentText.length > maxChars) {
+            // Empezamos sacando la palabra que desbordó
+            pendingWords.push(buffer.pop());
             
-            // BACKTRACKING RECURSIVO: Si la nueva última palabra es "pegajosa", sácala también
+            // --- BACKTRACKING INTELIGENTE (Anti-Sticky & Numbers) ---
             while (buffer.length > 0) {
-                const last = buffer[buffer.length - 1].word.trim().toLowerCase().replace(/[.,?!]/g, '');
-                // También si es un nombre propio partido (Heurística: Mayúscula suelta)
-                // Pero simple: si es preposición o artículo
-                if (dontBreakList.includes(last)) {
-                    pendingWords.unshift(buffer.pop()); // Mover al inicio de pendientes
+                const lastObj = buffer[buffer.length - 1];
+                const last = lastObj.word.trim().toLowerCase().replace(/[.,?!]/g, '');
+                
+                // Si es "sticky" (preposición/número) O si es un número (dígito)
+                if (dontBreakList.includes(last) || /^\d+$/.test(last)) {
+                    pendingWords.unshift(buffer.pop()); // Mover a pendientes
                 } else {
-                    break;
+                    break; 
                 }
+            }
+
+            // --- PROTECCIÓN ANTI-HUÉRFANAS (Anti-Orphan Overflow) ---
+            // Si lo que nos queda en pendientes ("overflow") es muy corto (ej: "water."),
+            // robamos más palabras del buffer actual para que el siguiente subtítulo no sea ridículo.
+            let pendingTextLen = pendingWords.map(w => w.word).join(' ').length;
+            
+            // Si el overflow es menor a 15 caracteres y el buffer actual es generoso...
+            while (buffer.length > 1 && pendingTextLen < 15 && currentText.length > (maxCPL * 0.5)) {
+                 // Robamos una más del buffer para dársela al siguiente
+                 const stolen = buffer.pop();
+                 pendingWords.unshift(stolen);
+                 pendingTextLen += stolen.word.length + 1;
+                 // Reevaluamos condiciones de sticky words sobre la NUEVA última palabra del buffer? 
+                 // (No, para no entrar en bucle infinito, aceptamos el robo simple)
             }
 
             forceCut = true;
             if(buffer.length > 0) endTime = buffer[buffer.length-1].end;
             else { 
-                // Fallback: Si el buffer se vació (palabra gigante), devolvemos algo
+                // Fallback extremo
                 buffer.push(pendingWords.shift());
                 endTime = buffer[0].end;
             }
         }
         
         // --- 2. REGLA DE PUNTUACIÓN (SOFT LIMIT) ---
-        // Cortamos si hay punto Y cumplimos duración mínima
         else if (buffer.length > 0 && currentDur >= minDur) {
-            const lastChar = wordText.slice(-1);
-            
-            // CASO ESPECIAL: "water."
-            // Si la palabra actual cierra frase, comprobamos si la SIGUIENTE frase sería "huérfana"
+            const lastChar = wObj.word.trim().slice(-1);
             if (strongPunct.includes(lastChar)) {
-                // Mirar futuro (Next Lookahead)
-                // Si la siguiente palabra es el final del array o también tiene punto, cortamos tranquilos.
-                // Pero si la siguiente palabra es parte de una frase larga, cortamos aquí.
-                
-                // PROTECCIÓN DE ORPHAN PREVIO:
-                // Si este bloque es MUY CORTO (< 15 chars) y termina en punto,
-                // quizás debió pegarse al anterior. Pero aquí ya es tarde (estamos en loop).
-                // Lo que hacemos es: Cortar AQUI sin duda.
+                // Aquí aplicamos también protección de huérfanas futuras.
+                // Pero como es un corte por punto, suele ser seguro.
                 forceCut = true;
                 endTime = wObj.end;
             }
@@ -534,16 +545,13 @@ function createSrtV7(words, maxCpl, maxLines, minDur, dontBreakList) {
 
         if (forceCut || i === words.length - 1) {
             const finalBlock = buffer.map(b => b.word.trim()).join(' ');
-            
-            // División interna de líneas (Balanced Split V7)
-            const lines = balancedSplitV7(finalBlock, maxCpl, dontBreakList);
+            const lines = balancedSplitV8(finalBlock, maxCpl, dontBreakList);
             
             subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
 
             buffer = [];
             startTime = null;
 
-            // Re-inyectar palabras pendientes
             if (pendingWords.length > 0) {
                 buffer = [...pendingWords]; 
                 startTime = buffer[0].start;
@@ -553,13 +561,13 @@ function createSrtV7(words, maxCpl, maxLines, minDur, dontBreakList) {
     return subtitles;
 }
 
-// --- BALANCEO V7 (Con Penalización de "Pegajosas") ---
-function balancedSplitV7(text, maxCpl, dontBreakList) {
+// --- BALANCEO V8 (Con Protección de Números) ---
+function balancedSplitV8(text, maxCpl, dontBreakList) {
     if (text.length <= maxCpl) return [text];
 
     const words = text.split(' ');
     let bestCut = -1;
-    let bestScore = Infinity; // Menor es mejor
+    let bestScore = Infinity; 
     
     const punct = [',', ':', ';', '-', '.'];
     const safeStart = Math.floor(words.length * 0.3);
@@ -569,30 +577,25 @@ function balancedSplitV7(text, maxCpl, dontBreakList) {
         const l1Str = words.slice(0, i).join(' ');
         const l2Str = words.slice(i).join(' ');
         
-        // 1. Penalización base por desequilibrio
+        if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue; // Hard check CPL for split
+
         let score = Math.abs(l1Str.length - l2Str.length);
 
-        // 2. Penalización por longitud excesiva (Mortal)
-        if (l1Str.length > maxCpl || l2Str.length > maxCpl) score += 5000;
-
-        // 3. REGLA DE ORO: No terminar L1 en "pegajosa"
+        // Regla 1: Preposiciones / Números al final de L1
         const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
-        if (dontBreakList.includes(lastWordL1)) {
-            score += 2000; // Penalización masiva
+        if (dontBreakList.includes(lastWordL1) || /^\d+$/.test(lastWordL1)) {
+            score += 2000; 
         }
 
-        // 4. Heurística de Nombres Propios:
-        // Si L1 termina en Mayúscula y L2 empieza por Mayúscula (y no hay punto), penalizar corte
-        const w1 = words[i-1];
-        const w2 = words[i];
-        if (/^[A-Z]/.test(w1) && /^[A-Z]/.test(w2) && !/[.,?!]/.test(w1)) {
-            score += 500; // Penalización media por romper nombre propio
-        }
-
-        // 5. Bonus por cortar en puntuación leve
+        // Regla 2: Puntuación (Bonus)
         const lastCharL1 = words[i-1].slice(-1);
         if (punct.includes(lastCharL1)) {
-            score -= 50; 
+            score -= 30; 
+        }
+
+        // Regla 3: Zona central
+        if (i > safeStart && i < safeEnd) {
+            score -= 10;
         }
 
         if (score < bestScore) {
@@ -605,7 +608,7 @@ function balancedSplitV7(text, maxCpl, dontBreakList) {
         return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     }
 
-    // Fallback
+    // Fallback: Corte inteligente que evita romper palabras
     const mid = Math.floor(words.length / 2);
     return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
@@ -641,7 +644,6 @@ function generateSRT(segs) {
     return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n');
 }
 
-// Función auxiliar para formatear tiempo (HH:MM:SS,mmm)
 function fmtTime(s) {
     if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000";
     const d = new Date(s * 1000);
