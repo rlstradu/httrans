@@ -1,4 +1,4 @@
-// wp-main.js - Lógica Híbrida v3.8 - Algoritmo V8 (Anti-Orphan & Semantic Glue)
+// wp-main.js - Lógica Híbrida v3.9 - Algoritmo V8 (Typo Fix)
 
 const translations = {
     en: {
@@ -419,7 +419,7 @@ worker.onmessage = (e) => {
 // =================================================================
 
 function processResultsV8(data) {
-    const maxCPL = parseInt(document.getElementById('max-cpl').value);
+    const maxCpl = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
     const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
@@ -449,7 +449,7 @@ function processResultsV8(data) {
     logToConsole(`Extracted ${allWords.length} words.`);
     
     // Algoritmo V8
-    let subs = createSrtV8(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
+    let subs = createSrtV8(allWords, maxCpl, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
     const task = document.getElementById('task-select').value;
@@ -472,7 +472,7 @@ function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
     let buffer = [];
     let startTime = null;
     const strongPunct = ['.', '?', '!', '♪'];
-    const maxChars = maxCPL * maxLines;
+    const maxChars = maxCpl * maxLines;
 
     for (let i = 0; i < words.length; i++) {
         const wObj = words[i];
@@ -514,13 +514,11 @@ function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
             let pendingTextLen = pendingWords.map(w => w.word).join(' ').length;
             
             // Si el overflow es menor a 15 caracteres y el buffer actual es generoso...
-            while (buffer.length > 1 && pendingTextLen < 15 && currentText.length > (maxCPL * 0.5)) {
+            while (buffer.length > 1 && pendingTextLen < 15 && currentText.length > (maxCpl * 0.5)) {
                  // Robamos una más del buffer para dársela al siguiente
                  const stolen = buffer.pop();
                  pendingWords.unshift(stolen);
                  pendingTextLen += stolen.word.length + 1;
-                 // Reevaluamos condiciones de sticky words sobre la NUEVA última palabra del buffer? 
-                 // (No, para no entrar en bucle infinito, aceptamos el robo simple)
             }
 
             forceCut = true;
@@ -536,8 +534,6 @@ function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
         else if (buffer.length > 0 && currentDur >= minDur) {
             const lastChar = wObj.word.trim().slice(-1);
             if (strongPunct.includes(lastChar)) {
-                // Aquí aplicamos también protección de huérfanas futuras.
-                // Pero como es un corte por punto, suele ser seguro.
                 forceCut = true;
                 endTime = wObj.end;
             }
@@ -577,23 +573,20 @@ function balancedSplitV8(text, maxCpl, dontBreakList) {
         const l1Str = words.slice(0, i).join(' ');
         const l2Str = words.slice(i).join(' ');
         
-        if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue; // Hard check CPL for split
+        if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue; 
 
         let score = Math.abs(l1Str.length - l2Str.length);
 
-        // Regla 1: Preposiciones / Números al final de L1
         const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
         if (dontBreakList.includes(lastWordL1) || /^\d+$/.test(lastWordL1)) {
             score += 2000; 
         }
 
-        // Regla 2: Puntuación (Bonus)
         const lastCharL1 = words[i-1].slice(-1);
         if (punct.includes(lastCharL1)) {
             score -= 30; 
         }
 
-        // Regla 3: Zona central
         if (i > safeStart && i < safeEnd) {
             score -= 10;
         }
@@ -608,13 +601,11 @@ function balancedSplitV8(text, maxCpl, dontBreakList) {
         return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     }
 
-    // Fallback: Corte inteligente que evita romper palabras
     const mid = Math.floor(words.length / 2);
     return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
 
 function applyTimeRules(subs, minDur, maxDur, minGap) {
-    // 1. Corrección Gap y Max
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         if ((current.end - current.start) > maxDur) current.end = current.start + maxDur;
@@ -625,7 +616,6 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
             if (current.end <= current.start) current.end = current.start + 0.1;
         }
     }
-    // 2. Extensión Min Dur
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
         let duration = current.end - current.start;
