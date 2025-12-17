@@ -1,4 +1,4 @@
-// wp-main.js - V4.1 (Editor Visual Profesional + Métricas + Navegación)
+// wp-main.js - V5.0 (Editor Visual Profesional + Métricas + Navegación + Zoom)
 
 const translations = {
     en: {
@@ -34,7 +34,7 @@ const translations = {
         dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
         startBtn: "Start",
-        updateBtn: "Readjust Parameters", 
+        updateBtn: "Readjust", // Shortened
         startBtnProcessing: "Processing...",
         statusLoading: "Loading...",
         statusInitiating: "Initializing...",
@@ -48,6 +48,21 @@ const translations = {
         resultFooter: "Remember to check subtitles in a professional tool.",
         errorMsg: "Error processing audio.",
         downloadModel: "Downloading Model...",
+        btnReadjust: "Readjust Parameters",
+        zoomLabel: "Zoom",
+        // Tooltips Editor
+        ttNudgeStartM: "-1 Frame Start",
+        ttNudgeStartP: "+1 Frame Start",
+        ttNudgeEndM: "-1 Frame End",
+        ttNudgeEndP: "+1 Frame End",
+        ttPlay: "Play Segment",
+        ttPrev: "Previous Subtitle",
+        ttNext: "Next Subtitle",
+        ttClear: "Clear Text (Spotting)",
+        ttShiftPrev: "Move first word to previous",
+        ttShiftNext: "Move last word to next",
+        ttClearAll: "Clear ALL Text",
+        confirmClearAll: "Are you sure? This will remove text from ALL subtitles.",
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
@@ -83,7 +98,7 @@ const translations = {
         dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
         startBtn: "Iniciar",
-        updateBtn: "Reajustar / Actualizar", 
+        updateBtn: "Reajustar", // Shortened
         startBtnProcessing: "Procesando...",
         statusLoading: "Cargando...",
         statusInitiating: "Iniciando...",
@@ -97,24 +112,39 @@ const translations = {
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
         errorMsg: "No se pudo procesar el audio.",
         downloadModel: "Descargando Modelo...",
+        btnReadjust: "Reajustar Parámetros",
+        zoomLabel: "Zoom",
+        // Tooltips Editor
+        ttNudgeStartM: "-1 Frame Inicio",
+        ttNudgeStartP: "+1 Frame Inicio",
+        ttNudgeEndM: "-1 Frame Fin",
+        ttNudgeEndP: "+1 Frame Fin",
+        ttPlay: "Reproducir Subtítulo",
+        ttPrev: "Subtítulo Anterior",
+        ttNext: "Siguiente Subtítulo",
+        ttClear: "Borrar Texto",
+        ttShiftPrev: "Mover palabra al anterior",
+        ttShiftNext: "Mover palabra al siguiente",
+        ttClearAll: "Borrar TODO el texto",
+        confirmClearAll: "¿Seguro? Esto borrará el texto de TODOS los subtítulos.",
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
     }
 };
 
 let currentLang = 'en';
 let audioData = null; // AudioBuffer
-let audioBlobUrl = null; // URL para el video/onda
+let audioBlobUrl = null;
 let rawFileName = "subtitulos";
 let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
 let startTime = 0;
 let lastConsoleLine = null;
-let cachedData = null; // Datos crudos de la IA para re-segmentar
+let cachedData = null; 
 
 // Variables del Editor Visual
 let wavesurfer = null;
 let wsRegions = null;
-let currentSubtitles = []; // Array principal de subtítulos
+let currentSubtitles = []; 
 const ONE_FRAME = 0.04; // 1 frame @ 25fps
 
 const els = {
@@ -210,8 +240,6 @@ function fmtDuration(seconds) {
     const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60);
     return `${m}m ${s}s`;
 }
-
-// --- IDIOMA ---
 function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
@@ -256,7 +284,6 @@ async function handleFile(file) {
     els.resetBtn.classList.remove('hidden');
     if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
     
-    // URL para video
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
 
@@ -271,7 +298,6 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         
         els.runBtn.disabled = false;
-        // Reset styles via CSS classes logic handled by HTML/Tailwind mostly, but ensuring active state:
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'transform-none', 'shadow-none');
         els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -409,14 +435,16 @@ function showEditor() {
     
     if (!wavesurfer) initWaveSurfer();
     else { renderRegions(); renderSubtitleList(); }
-    
-    // Auto-scroll al botón Start/Readjust si se vuelve atrás
 }
 
 els.backToConfigBtn.addEventListener('click', () => {
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden');
     els.runBtn.scrollIntoView({ behavior: 'smooth' });
+    
+    // Cambiar texto a "Readjust"
+    const t = translations[currentLang];
+    els.runBtn.querySelector('span').innerText = t.updateBtn;
 });
 
 function initWaveSurfer() {
@@ -430,7 +458,7 @@ function initWaveSurfer() {
         normalize: true,
         minimap: true,
         autoCenter: true, 
-        minPxPerSec: 50, 
+        minPxPerSec: 100, // Zoom por defecto más alto (antes 50)
         plugins: [ WaveSurfer.Regions.create() ]
     });
     wsRegions = wavesurfer.plugins[0];
@@ -449,18 +477,16 @@ function initWaveSurfer() {
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
     wavesurfer.on('ready', () => {
-        wavesurfer.zoom(50);
+        wavesurfer.zoom(100); // Zoom inicial alto
         renderRegions();
         renderSubtitleList();
     });
 
-    // Actualización de tiempos al mover cajas
     wsRegions.on('region-updated', (region) => {
         const index = parseInt(region.id.replace('sub-', ''));
         if (currentSubtitles[index]) {
             currentSubtitles[index].start = region.start;
             currentSubtitles[index].end = region.end;
-            // Actualizamos solo los textos de tiempo en la lista sin redibujarla entera (performance)
             const timeSpan = document.getElementById(`time-display-${index}`);
             if(timeSpan) timeSpan.innerText = `${fmtTimeShort(region.start)} - ${fmtTimeShort(region.end)}`;
             updateMetrics(index);
@@ -477,13 +503,11 @@ function initWaveSurfer() {
 function renderRegions() {
     wsRegions.clearRegions();
     currentSubtitles.forEach((sub, index) => {
-        // Mostramos solo los primeros 20-30 para no saturar si hay miles
-        // (Opcional: implementar paginación virtual en futuro)
         wsRegions.addRegion({
             id: `sub-${index}`,
             start: sub.start,
             end: sub.end,
-            content: `<span style="color:#202020; font-size:10px; padding:2px; font-weight:bold;">${index+1}</span>`,
+            content: `<span style="color:black; font-size:10px; padding:2px; font-weight:bold;">${index+1}</span>`,
             color: 'rgba(255, 184, 31, 0.4)',
             drag: true,
             resize: true
@@ -493,6 +517,8 @@ function renderRegions() {
 
 function renderSubtitleList() {
     els.subtitleList.innerHTML = '';
+    const t = translations[currentLang];
+    
     currentSubtitles.forEach((sub, index) => {
         const div = document.createElement('div');
         div.id = `card-sub-${index}`;
@@ -507,31 +533,31 @@ function renderSubtitleList() {
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             
             <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2">
-                <!-- Metrics inserted via JS -->
+                <!-- Metrics -->
             </div>
 
-            <div class="flex justify-between items-center opacity-50 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
                 <!-- Nudge -->
-                <div class="flex gap-1">
-                    <button class="hover:text-[#ffb81f] text-gray-500" onclick="window.nudge(${index}, -0.04, 'start')" title="-1fr Start"><i class="ph-bold ph-caret-left"></i>[</button>
-                    <button class="hover:text-[#ffb81f] text-gray-500" onclick="window.nudge(${index}, 0.04, 'start')" title="+1fr Start">]<i class="ph-bold ph-caret-right"></i></button>
-                    <div class="w-px bg-gray-200 mx-1"></div>
-                    <button class="hover:text-[#ffb81f] text-gray-500" onclick="window.nudge(${index}, -0.04, 'end')" title="-1fr End"><i class="ph-bold ph-caret-left"></i>]</button>
-                    <button class="hover:text-[#ffb81f] text-gray-500" onclick="window.nudge(${index}, 0.04, 'end')" title="+1fr End">[<i class="ph-bold ph-caret-right"></i></button>
+                <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}"><i class="ph-bold ph-caret-left"></i>[</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">]<i class="ph-bold ph-caret-right"></i></button>
+                    <div class="w-px bg-gray-200"></div>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}"><i class="ph-bold ph-caret-left"></i>]</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">[<i class="ph-bold ph-caret-right"></i></button>
                 </div>
                 
                 <!-- Actions -->
-                <div class="flex gap-2 text-gray-500">
-                    <button class="hover:text-[#ffb81f]" onclick="window.playSub(${index})" title="Play"><i class="ph-fill ph-play-circle text-lg"></i></button>
-                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, -1)" title="Prev"><i class="ph-bold ph-arrow-up"></i></button>
-                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, 1)" title="Next"><i class="ph-bold ph-arrow-down"></i></button>
-                    <button class="hover:text-purple-500" onclick="window.shiftWord(${index}, -1)" title="Move word Up"><i class="ph-bold ph-arrow-fat-line-up"></i></button>
-                    <button class="hover:text-purple-500" onclick="window.shiftWord(${index}, 1)" title="Move word Down"><i class="ph-bold ph-arrow-fat-line-down"></i></button>
+                <div class="flex gap-2 text-gray-500 ml-auto">
+                    <button class="hover:text-[#ffb81f]" onclick="window.playSub(${index})" title="${t.ttPlay}"><i class="ph-fill ph-play-circle text-xl"></i></button>
+                    <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}"><i class="ph-bold ph-eraser"></i></button>
+                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}"><i class="ph-bold ph-arrow-up"></i></button>
+                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, 1)" title="${t.ttNext}"><i class="ph-bold ph-arrow-down"></i></button>
+                    <button class="hover:text-purple-500" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}"><i class="ph-bold ph-arrow-fat-line-up"></i></button>
+                    <button class="hover:text-purple-500" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}"><i class="ph-bold ph-arrow-fat-line-down"></i></button>
                 </div>
             </div>
         `;
         
-        // Listeners manuales
         const ta = div.querySelector('textarea');
         ta.addEventListener('input', () => {
             sub.text = ta.value;
@@ -539,7 +565,6 @@ function renderSubtitleList() {
             updateMetrics(index);
         });
         
-        // Click en la tarjeta salta al vídeo (excepto botones)
         div.addEventListener('click', (e) => {
             if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'TEXTAREA') {
                 els.videoPreview.currentTime = sub.start;
@@ -547,19 +572,19 @@ function renderSubtitleList() {
         });
 
         els.subtitleList.appendChild(div);
-        updateMetrics(index); // Calc inicial
+        updateMetrics(index);
     });
 }
 
 function updateMetrics(index) {
     const sub = currentSubtitles[index];
     const duration = sub.end - sub.start;
-    const lines = sub.text.split('\n');
-    const textLen = sub.text.replace(/\n/g, '').length;
+    const cleanText = sub.text.replace(/\n/g, '').trim();
+    const textLen = cleanText.length;
     const cps = duration > 0 ? (textLen / duration).toFixed(1) : "0";
     
-    // CPL por línea
-    const cplText = lines.map((l, i) => `L${i+1}: ${l.length}`).join(' | ');
+    const lines = sub.text.split('\n');
+    const cplText = lines.map((l, i) => `<span class="${l.length > 42 ? 'text-red-500 font-bold' : ''}">L${i+1}: ${l.length}</span>`).join(' | ');
     
     const container = document.getElementById(`metrics-${index}`);
     if(container) {
@@ -578,8 +603,6 @@ function highlightActiveSub(time) {
         const card = document.getElementById(`card-sub-${activeIndex}`);
         if(card) {
             card.classList.add('sub-card-active');
-            // Auto-scroll suave (opcional, puede molestar si editas)
-            // card.scrollIntoView({behavior: "smooth", block: "nearest"});
         }
     }
 }
@@ -590,14 +613,12 @@ window.nudge = (index, amount, side) => {
     if(side === 'start') currentSubtitles[index].start = Math.max(0, currentSubtitles[index].start + amount);
     else currentSubtitles[index].end += amount;
     
-    // Sync region
     if(wsRegions && wsRegions.regions[`sub-${index}`]) {
         wsRegions.regions[`sub-${index}`].setOptions({
             start: currentSubtitles[index].start,
             end: currentSubtitles[index].end
         });
     }
-    // Sync text
     const timeSpan = document.getElementById(`time-display-${index}`);
     if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
     updateMetrics(index);
@@ -617,24 +638,32 @@ window.navSub = (index, dir) => {
     }
 };
 
+window.clearSubText = (index) => {
+    if(currentSubtitles[index]) {
+        currentSubtitles[index].text = "";
+        document.getElementById(`ta-${index}`).value = "";
+        updateMetrics(index);
+        updateSubtitleOverlay(els.videoPreview.currentTime);
+    }
+};
+
 window.shiftWord = (index, dir) => {
-    if(dir === -1 && index > 0) { // Move first word up to prev
-        const words = currentSubtitles[index].text.split(' ');
-        if(words.length > 0) {
+    if(dir === -1 && index > 0) { 
+        const words = currentSubtitles[index].text.trim().split(/\s+/);
+        if(words.length > 0 && words[0] !== "") {
             const word = words.shift();
             currentSubtitles[index].text = words.join(' ');
-            currentSubtitles[index-1].text += (currentSubtitles[index-1].text ? ' ' : '') + word;
-            // Update Textareas
+            currentSubtitles[index-1].text = (currentSubtitles[index-1].text.trim() + " " + word).trim();
             document.getElementById(`ta-${index}`).value = currentSubtitles[index].text;
             document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
             updateMetrics(index); updateMetrics(index-1);
         }
-    } else if (dir === 1 && index < currentSubtitles.length - 1) { // Move last word down to next
-        const words = currentSubtitles[index].text.split(' ');
-        if(words.length > 0) {
+    } else if (dir === 1 && index < currentSubtitles.length - 1) { 
+        const words = currentSubtitles[index].text.trim().split(/\s+/);
+        if(words.length > 0 && words[0] !== "") {
             const word = words.pop();
             currentSubtitles[index].text = words.join(' ');
-            currentSubtitles[index+1].text = word + (currentSubtitles[index+1].text ? ' ' : '') + currentSubtitles[index+1].text;
+            currentSubtitles[index+1].text = (word + " " + currentSubtitles[index+1].text.trim()).trim();
             document.getElementById(`ta-${index}`).value = currentSubtitles[index].text;
             document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
             updateMetrics(index); updateMetrics(index+1);
@@ -646,7 +675,7 @@ window.shiftWord = (index, dir) => {
 // Global Clear
 if(els.clearTextBtn) {
     els.clearTextBtn.addEventListener('click', () => {
-        if(confirm("Are you sure? This will remove all text.")) {
+        if(confirm(translations[currentLang].confirmClearAll)) {
             currentSubtitles.forEach(s => s.text = "");
             renderSubtitleList();
         }
@@ -662,6 +691,9 @@ function updateSubtitleOverlay(time) {
     } else {
         els.subtitleOverlay.style.opacity = "0";
     }
+    
+    // Sync active highlight
+    highlightActiveSub(time);
 }
 
 // Botón descarga del editor
@@ -674,7 +706,7 @@ if(els.downloadEditorSrt){
 
 
 // =================================================================
-// 🚀 LOGICA V9 (Mantenida del paso anterior)
+// 🚀 LOGICA V9 (Mantenida igual, solo re-pegada para integridad)
 // =================================================================
 
 function processResultsV9(data) {
@@ -706,8 +738,7 @@ function processResultsV9(data) {
     currentSubtitles = subs; // GLOBAL
 }
 
-// --- ALGORTIMO V9, BALANCED, TIMERRULES, GENERATESRT, DOWNLOAD ---
-// (Copiamos las funciones del V3.9 anterior tal cual para asegurar consistencia)
+// ... (Funciones de segmentación V9 createSrtV9, balancedSplitV9, applyTimeRules, generateSRT, fmtTimeShort, download IGUAL QUE ANTES) ...
 
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
