@@ -1,4 +1,4 @@
-// wp-main.js - V5.1 (Fix Start Button & UI Logic)
+// wp-main.js - V5.2 (Fix Crash & Restore Visual Editor)
 
 const translations = {
     en: {
@@ -159,11 +159,17 @@ const els = {
     statusText: document.getElementById('status-text'),
     consoleOutput: document.getElementById('console-output'),
     
+    // UI Sections
     uploadSection: document.getElementById('upload-section'),
     configPanel: document.getElementById('config-panel'),
     headerSection: document.getElementById('header-section'),
     editorContainer: document.getElementById('editor-container'),
     
+    // Fallback/Legacy UI (Necesario para evitar crash si el HTML lo tiene)
+    resultsArea: document.getElementById('results-area'),
+    outputText: document.getElementById('output-text'),
+
+    // Editor Elements
     videoPreview: document.getElementById('video-preview'),
     subtitleOverlay: document.getElementById('subtitle-overlay'),
     subtitleList: document.getElementById('subtitle-list'),
@@ -247,7 +253,6 @@ function setLanguage(lang) {
         modelSelect.options[2].text = t.optSmall; if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
     }
     const btnText = cachedData ? t.updateBtn : t.startBtn;
-    // Fix visual disabled state if needed
     if (audioData) {
          els.runBtn.querySelector('span').innerText = btnText;
     }
@@ -265,14 +270,15 @@ function resetFile() {
     // Disable Button
     els.runBtn.disabled = true; 
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
-    // Restaurar estilo disabled de Tailwind
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
 
     els.resetBtn.classList.add('hidden'); 
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
-    
+    // Hide old results if visible
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
+
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
 }
@@ -289,7 +295,7 @@ async function handleFile(file) {
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
 
-    // Mostrar consola inmediatamente para feedback
+    // Mostrar consola para feedback inmediato
     els.progressCont.classList.remove('hidden');
     logToConsole(`File loaded: ${file.name}`);
     logToConsole("Decoding audio... please wait.");
@@ -302,7 +308,7 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
-        // Habilitar botón y ponerlo AMARILLO
+        // Habilitar botón visualmente
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -347,9 +353,9 @@ els.runBtn.addEventListener('click', async () => {
     
     // UI Update on Click
     els.runBtn.disabled = true;
-    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); // Gray out visually
+    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
-    els.resultsArea.classList.add('hidden'); els.resultsArea.classList.remove('opacity-100');
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
     // No borramos la consola, solo añadimos
     logToConsole("--- STARTED ---");
@@ -395,7 +401,7 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         processResultsV9(data);
         showEditor();
         els.runBtn.disabled = false;
-        // Restaurar color botón
+        // Restaurar botón
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
         els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
     } catch (error) {
@@ -438,16 +444,18 @@ worker.onmessage = (e) => {
     else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
 };
 
-// ... (RESTO DE FUNCIONES DE EDITOR Y ALGORITMO V9 IGUAL QUE ANTERIOR) ...
-// (Pego aquí para asegurar que el archivo esté completo)
+// --- EDITOR LOGIC ---
 
 function showEditor() {
     els.uploadSection.classList.add('hidden');
     els.configPanel.classList.add('hidden');
     els.headerSection.classList.add('hidden');
     els.progressCont.classList.add('hidden');
+    if(els.resultsArea) els.resultsArea.classList.add('hidden'); // Ocultar area antigua
     els.editorContainer.classList.remove('hidden');
-    if (!wavesurfer) initWaveSurfer(); else { renderRegions(); renderSubtitleList(); }
+    
+    if (!wavesurfer) initWaveSurfer();
+    else { renderRegions(); renderSubtitleList(); }
 }
 
 els.backToConfigBtn.addEventListener('click', () => {
