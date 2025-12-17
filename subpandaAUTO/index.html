@@ -6,6 +6,7 @@
     <title>SubPandaAUTO - HTTrans</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
+    <!-- WaveSurfer y Plugin de Regiones -->
     <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
     
@@ -34,6 +35,8 @@
         .console-window::-webkit-scrollbar-track { background: #1f2937; }
         .console-window::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
         
+        .copy-success { background-color: #10B981 !important; color: white !important; border-color: #10B981 !important; transform: scale(1.05); }
+
         /* Video Container & Overlay */
         .video-container { position: relative; background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #subtitle-overlay {
@@ -62,7 +65,7 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <nav class="w-full max-w-[95%] mx-auto mb-6 flex justify-between items-center">
+    <nav class="w-full max-w-6xl mx-auto mb-8 flex justify-between items-center">
         <a href="../index.html" class="flex items-center gap-3 text-gray-600 hover:text-[#ffb81f] transition">
             <i class="ph-bold ph-arrow-left text-xl"></i>
             <span class="font-bold" data-key="backLink">Back to HTTrans</span>
@@ -76,8 +79,7 @@
         </div>
     </nav>
 
-    <!-- Usamos max-w-full para el editor -->
-    <main class="w-full max-w-[95%] mx-auto glass-panel rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[85vh] flex flex-col">
+    <main class="w-full max-w-6xl mx-auto glass-panel rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden min-h-[85vh] flex flex-col">
         
         <!-- CABECERA (Se oculta al iniciar el editor) -->
         <div id="header-section" class="text-center mb-8 transition-all duration-500">
@@ -96,7 +98,7 @@
                 <span data-key="settingsTitle">Assistant Preferences</span>
             </h3>
             
-            <!-- MODO (Local/Groq) -->
+            <!-- MODO DE PROCESAMIENTO -->
             <div class="mb-6 bg-yellow-50/50 p-4 rounded-xl border border-yellow-100">
                 <label class="block text-sm font-bold text-gray-700 mb-2" data-key="modeLabel">Processing Mode</label>
                 <div class="flex gap-4 flex-wrap">
@@ -127,8 +129,8 @@
                 </div>
             </div>
 
-            <!-- Resto de Configuración -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Columna Izquierda -->
                 <div class="space-y-5">
                     <div id="local-model-container" class="opacity-50 pointer-events-none">
                         <label class="block text-sm font-bold text-gray-600 mb-1.5" data-key="modelLabel">AI Model / Quality</label>
@@ -139,8 +141,11 @@
                             <option value="distil-whisper/distil-small.en" data-key="optDistil">Distil-Small (English - Ultra Fast)</option>
                         </select>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-bold text-gray-600 mb-1.5"><i class="ph-bold ph-translate text-[#ffb81f]"></i> <span data-key="audioLangLabel">Audio Language</span></label>
+                        <label class="block text-sm font-bold text-gray-600 mb-1.5">
+                            <i class="ph-bold ph-translate text-[#ffb81f]"></i> <span data-key="audioLangLabel">Audio Language</span>
+                        </label>
                         <select id="language-select" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#ffb81f] focus:border-[#ffb81f] outline-none transition">
                             <option value="auto" selected data-key="optAuto">✨ Detect automatically</option>
                             <option value="es">🇪🇸 Español</option>
@@ -149,8 +154,14 @@
                             <option value="de">🇩🇪 Deutsch</option>
                             <option value="it">🇮🇹 Italiano</option>
                             <option value="pt">🇵🇹 Português</option>
+                            <option value="ca">🏴󠁣󠁡󠁿 Català</option>
+                            <option value="gl">🏴󠁧󠁬󠁿 Galego</option>
+                            <option value="eu">🏴󠁥󠁵󠁿 Euskara</option>
+                            <option value="ja">🇯🇵 Japonés</option>
+                            <option value="zh">🇨🇳 Chino</option>
                         </select>
                     </div>
+
                     <div>
                         <label class="block text-sm font-bold text-gray-600 mb-1.5" data-key="actionLabel">Action</label>
                         <select id="task-select" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#ffb81f] outline-none">
@@ -159,6 +170,7 @@
                             <option value="spotting" data-key="optSpotting">Spotting (Empty subtitles)</option>
                         </select>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4 pt-2">
                         <div>
                             <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="minDurLabel">Min Duration (s)</label>
@@ -171,6 +183,7 @@
                     </div>
                 </div>
 
+                <!-- Columna Derecha -->
                 <div class="space-y-4 border-l-0 md:border-l-2 border-gray-100 md:pl-8 pt-4 md:pt-0">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-semibold text-gray-600" title="Minimum interval between subtitles" data-key="gapLabel">Min. Gap</label>
@@ -182,6 +195,7 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-semibold text-gray-600" title="Maximum number of lines per subtitle" data-key="maxLinesLabel">Max Lines</label>
                         <select id="max-lines" class="p-1.5 border border-gray-300 rounded w-24 text-center text-sm font-semibold text-gray-700 bg-white">
@@ -189,14 +203,17 @@
                             <option value="2" selected>2</option>
                         </select>
                     </div>
+
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-semibold text-gray-600" title="Characters per line" data-key="cplLabel">Max chars/line (CPL)</label>
                         <input type="number" id="max-cpl" value="42" min="10" max="100" class="p-1.5 border border-gray-300 rounded w-24 text-center text-sm font-semibold text-gray-700 focus:ring-1 focus:ring-[#ffb81f] outline-none">
                     </div>
+
                     <div>
                         <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="punctuationLabel">Force break on punctuation</label>
                         <input type="text" id="end-punctuation" value=".?!:…" class="w-full p-2 border border-gray-300 rounded-lg text-sm font-mono tracking-wider focus:ring-1 focus:ring-[#ffb81f] outline-none">
                     </div>
+
                     <div>
                         <label class="block text-sm font-semibold text-gray-600 mb-1" data-key="dontBreakLabel">Do not end line on (Prepositions)</label>
                         <input type="text" id="dont-break-on" value="" class="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-500 focus:text-gray-800 focus:ring-1 focus:ring-[#ffb81f] outline-none truncate" title="Comma separated list">
@@ -216,7 +233,10 @@
                 <p class="text-sm text-gray-500 mb-4" data-key="dropSubtitle">Supports MP3, WAV, MP4, MKV, MOV...</p>
                 <div id="file-warning" class="hidden bg-orange-100 text-orange-800 text-xs p-3 rounded-lg max-w-md mx-auto flex items-start text-left gap-2">
                     <i class="ph-bold ph-warning text-lg mt-0.5"></i>
-                    <span data-key="fileWarning">Heads up! Large file.</span>
+                    <span data-key="fileWarning">
+                        <strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. 
+                        We recommend extracting audio to MP3 first if you experience issues.
+                    </span>
                 </div>
                 <div id="file-info" class="hidden mt-4 inline-flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
                     <i class="ph-fill ph-file-audio text-[#ffb81f] mr-2"></i>
@@ -233,12 +253,12 @@
                     <span data-key="startBtn">Start</span>
                 </button>
                 <button id="reset-btn" class="hidden px-6 py-4 rounded-xl font-bold text-gray-600 bg-white border-2 border-gray-200 hover:border-red-400 hover:text-red-500 transition flex justify-center items-center gap-2" title="Reset / New File">
-                    <i class="ph-bold ph-trash text-xl"></i>
+                    <i class="ph-bold ph-arrow-counter-clockwise text-xl"></i>
                     <span>Reset</span>
                 </button>
             </div>
 
-            <!-- CONSOLA -->
+            <!-- CONSOLA DE LOGS -->
             <div id="progress-container" class="hidden mb-8">
                 <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
                     <span id="status-text" data-key="statusLoading">Loading...</span>
@@ -258,7 +278,7 @@
         </div>
 
         <!-- ============================================== -->
-        <!--  EDITOR VISUAL PROFESIONAL                     -->
+        <!--  NUEVO: EDITOR VISUAL (VIDEO + ONDA + SUBS)   -->
         <!-- ============================================== -->
         <div id="editor-container" class="hidden flex flex-col gap-6 animate-fade-in-up h-[85vh]">
             
@@ -279,7 +299,7 @@
                         <div class="flex justify-between items-center mb-2 text-xs text-gray-400">
                             <div class="flex items-center gap-2">
                                 <span data-key="zoomLabel">Zoom:</span>
-                                <input type="range" id="zoom-slider" min="10" max="300" value="50" class="w-32">
+                                <input type="range" id="zoom-slider" min="10" max="300" value="100" class="w-32 accent-[#ffb81f]">
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] uppercase font-bold tracking-wider">Visual Editor</span>
@@ -316,7 +336,7 @@
 
                     <!-- Lista editable -->
                     <div id="subtitle-list" class="flex-1 overflow-y-auto p-2 space-y-3 bg-gray-50">
-                        <!-- Items se inyectan aquí -->
+                        <!-- Items inyectados por JS -->
                     </div>
 
                     <!-- Footer Editor -->
