@@ -1,9 +1,9 @@
-// wp-main.js - Lógica Híbrida (Groq + Local) v3.6 - Algoritmo V9 (Linguistic Flow & Deep Anti-Orphan)
+// wp-main.js - V4.0 (Visual Editor Integration + Hybrid Logic)
 
 const translations = {
     en: {
         backLink: "Back to HTTrans",
-        heroDesc: "AI-powered automatic transcription and subtitling tool for audiovisual translators.",
+        heroDesc: "AI-powered automatic transcription and subtitling tool.",
         settingsTitle: "Assistant Preferences",
         audioLangLabel: "Audio Language",
         audioLangHelp: "Manually selecting the language improves accuracy.",
@@ -29,7 +29,7 @@ const translations = {
         maxLinesLabel: "Max Lines",
         cplLabel: "Max chars/line (CPL)",
         punctuationLabel: "Force break on punctuation",
-        dontBreakLabel: "Do not end line on:",
+        dontBreakLabel: "Do not end line on (Prepositions/Articles)",
         dropTitle: "Click or drag your file here",
         dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
@@ -45,21 +45,21 @@ const translations = {
         copiedBtn: "Copied!",
         saveSrtBtn: "Save SRT",
         saveTxtBtn: "Save TXT",
-        resultFooter: "Please note that these subtitles are not perfect. Rely on a human professional to achieve the highest possible quality.",
+        resultFooter: "Remember to check subtitles in a professional tool.",
         errorMsg: "Error processing audio.",
-        downloadModel: "Downloading model...",
+        downloadModel: "Downloading Model...",
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
         backLink: "Volver a HTTrans",
-        heroDesc: "Asistente de transcripción y subtitulado automático para traductores audiovisuales.",
+        heroDesc: "Herramienta de transcripción y subtitulado automático impulsada por IA.",
         settingsTitle: "Ajustes del asistente",
         audioLangLabel: "Idioma del audio",
         audioLangHelp: "Seleccionar el idioma manualmente mejora la precisión.",
         modelLabel: "Modelo IA / Calidad",
         modelHelp: "Local usa tu PC. Nube (Groq) usa API para velocidad.",
         modeLabel: "Modo de Procesamiento",
-        modeLocalDesc: "Gratis, Privado, Más lento (CPU/GPU)",
+        modeLocalDesc: "Gratis, Privado, Muy Lento (CPU/GPU)",
         modeGroqDesc: "Ultra Rápido, Mejor Calidad, Requiere Key",
         optTiny: "Tiny (Rápido - ~40MB)",
         optBase: "Base (Equilibrado - ~80MB)",
@@ -68,22 +68,22 @@ const translations = {
         optAuto: "✨ Detectar automáticamente",
         actionLabel: "Acción",
         optTranscribe: "Transcribir (Mantener idioma original)",
-        optTranslate: "Traducir (Convertir audio a inglés)",
+        optTranslate: "Traducir (Convertir audio al Inglés)",
         optSpotting: "Spotting (Subtítulos vacíos)",
         gapLabel: "Intervalo Mín.",
         unitFrames: "Frames",
         unitMs: "ms",
-        minDurLabel: "Duración mín. (s)",
-        maxDurLabel: "Duración máx. (s)",
+        minDurLabel: "Duración Mín. (s)",
+        maxDurLabel: "Duración Máx. (s)",
         maxLinesLabel: "Máx. Líneas",
         cplLabel: "Máx. caracteres/línea (CPL)",
-        punctuationLabel: "Forzar salto de línea en los siguientes caracteres:",
-        dontBreakLabel: "No terminar línea en:",
+        punctuationLabel: "Forzar corte en puntuación",
+        dontBreakLabel: "No terminar línea en (Preposiciones/Artículos)",
         dropTitle: "Haz clic o arrastra tu archivo aquí",
         dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
-        fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ralentizarse.",
+        fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
         startBtn: "Iniciar",
-        updateBtn: "Actualizar subtítulos",
+        updateBtn: "Actualizar Subtítulos",
         startBtnProcessing: "Procesando...",
         statusLoading: "Cargando...",
         statusInitiating: "Iniciando...",
@@ -94,21 +94,27 @@ const translations = {
         copiedBtn: "¡Copiado!",
         saveSrtBtn: "Guardar SRT",
         saveTxtBtn: "Guardar TXT",
-        resultFooter: "Ten en cuenta que el resultado no es perfecto. Es imprescindible una revisión humana (idealmente de un profesional) para conseguir la mejor calidad posible.",
-        errorMsg: "No se ha podido procesar el audio.",
-        downloadModel: "Descargando modelo...",
+        resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
+        errorMsg: "No se pudo procesar el audio.",
+        downloadModel: "Descargando Modelo...",
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
     }
 };
 
 let currentLang = 'en';
 let audioData = null; // AudioBuffer
+let audioBlobUrl = null; // URL del archivo para el video tag
 let rawFileName = "subtitulos";
 let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
 let startTime = 0;
 let lastConsoleLine = null;
-let cachedData = null; // Caché para re-segmentación rápida
+let cachedData = null; 
+
+// Variables del Editor
+let wavesurfer = null;
+let wsRegions = null;
+let currentSubtitles = []; // Array de objetos {start, end, text}
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -124,11 +130,21 @@ const els = {
     progressCont: document.getElementById('progress-container'),
     statusText: document.getElementById('status-text'),
     consoleOutput: document.getElementById('console-output'),
-    resultsArea: document.getElementById('results-area'),
-    outputText: document.getElementById('output-text'),
-    dlSrt: document.getElementById('download-srt-btn'),
-    dlTxt: document.getElementById('download-txt-btn'),
-    copy: document.getElementById('copy-btn'),
+    
+    // Areas de UI
+    uploadSection: document.getElementById('upload-section'),
+    configPanel: document.getElementById('config-panel'),
+    headerSection: document.getElementById('header-section'),
+    editorContainer: document.getElementById('editor-container'),
+    
+    // Editor Elements
+    videoPreview: document.getElementById('video-preview'),
+    subtitleOverlay: document.getElementById('subtitle-overlay'),
+    subtitleList: document.getElementById('subtitle-list'),
+    downloadEditorSrt: document.getElementById('download-editor-srt'),
+    backToConfigBtn: document.getElementById('back-to-config-btn'),
+    
+    // Config Inputs
     dontBreakInput: document.getElementById('dont-break-on'),
     modeRadios: document.getElementsByName('proc_mode'),
     groqContainer: document.getElementById('groq-key-container'),
@@ -142,38 +158,25 @@ function updateModeUI(mode) {
         els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
-            if (r.checked) {
-                label.classList.add('border-[#ffb81f]', 'shadow-md');
-                label.classList.remove('border-gray-200');
-            } else {
-                label.classList.remove('border-[#ffb81f]', 'shadow-md');
-                label.classList.add('border-gray-200');
-            }
+            if (r.checked) { label.classList.add('border-[#ffb81f]', 'shadow-md'); label.classList.remove('border-gray-200'); } 
+            else { label.classList.remove('border-[#ffb81f]', 'shadow-md'); label.classList.add('border-gray-200'); }
         });
         const savedKey = localStorage.getItem('groq_api_key');
         const defaultKey = "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";
-        if(document.getElementById('groq-key')) {
-             document.getElementById('groq-key').value = savedKey || defaultKey;
-        }
+        if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || defaultKey;
     } else {
         els.groqContainer.classList.add('hidden');
         els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
-            if (r.checked) {
-                label.classList.add('border-gray-400', 'shadow-md');
-                label.classList.remove('border-gray-200');
-            } else {
-                label.classList.remove('border-gray-400', 'shadow-md');
-                label.classList.add('border-gray-200');
-            }
+            if (r.checked) { label.classList.add('border-gray-400', 'shadow-md'); label.classList.remove('border-gray-200'); } 
+            else { label.classList.remove('border-gray-400', 'shadow-md'); label.classList.add('border-gray-200'); }
         });
     }
 }
 updateModeUI('groq');
 els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => updateModeUI(e.target.value)); });
 
-// --- UTILS CONSOLA ---
 function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
     if (!isProgress) lastConsoleLine = null;
@@ -186,9 +189,8 @@ function logToConsole(msg, isProgress = false) {
 }
 function updateConsoleLine(msg) {
     if (!els.consoleOutput) return;
-    if (lastConsoleLine && lastConsoleLine.isConnected) {
-        lastConsoleLine.innerText = `> ${msg}`;
-    } else {
+    if (lastConsoleLine && lastConsoleLine.isConnected) { lastConsoleLine.innerText = `> ${msg}`; } 
+    else {
         const div = document.createElement('div');
         div.innerText = `> ${msg}`;
         div.className = "hover:bg-gray-800 px-1 rounded text-green-300 font-bold font-mono text-xs";
@@ -198,62 +200,53 @@ function updateConsoleLine(msg) {
     els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
 }
 function getAsciiBar(percent) {
-    const width = 20;
-    const filled = Math.round((percent / 100) * width);
-    const empty = width - filled;
+    const width = 20; const filled = Math.round((percent / 100) * width); const empty = width - filled;
     return "[" + "=".repeat(filled) + ">".repeat(filled < width ? 1 : 0) + ".".repeat(Math.max(0, empty - (filled < width ? 1 : 0))) + "]";
 }
 function fmtDuration(seconds) {
     if(!seconds || seconds < 0) return "0s";
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
+    const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60);
     return `${m}m ${s}s`;
 }
-
-// --- IDIOMA ---
 function setLanguage(lang) {
-    currentLang = lang;
-    const t = translations[lang];
+    currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
     else { els.langEs.classList.add('active'); els.langEn.classList.remove('active'); }
-    
-    document.querySelectorAll('[data-key]').forEach(el => {
-        if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key];
-    });
-    
+    document.querySelectorAll('[data-key]').forEach(el => { if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key]; });
     const modelSelect = document.getElementById('model-select');
     if(modelSelect) {
-        modelSelect.options[0].text = t.optTiny;
-        modelSelect.options[1].text = t.optBase;
-        modelSelect.options[2].text = t.optSmall;
-        if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
+        modelSelect.options[0].text = t.optTiny; modelSelect.options[1].text = t.optBase;
+        modelSelect.options[2].text = t.optSmall; if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
     }
-
     const btnText = cachedData ? t.updateBtn : t.startBtn;
     if (els.runBtn.disabled && !audioData) els.runBtn.querySelector('span').innerText = btnText;
     else if (!els.runBtn.disabled) els.runBtn.querySelector('span').innerText = btnText;
-    
     els.dontBreakInput.value = t.dontBreakDefaults;
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
 els.langEs.addEventListener('click', () => setLanguage('es'));
 
-// --- ARCHIVOS ---
+// --- MANEJO DE ARCHIVOS ---
 function resetFile() {
-    audioData = null;
-    audioDuration = 0;
-    cachedData = null; 
+    audioData = null; audioDuration = 0; cachedData = null; 
+    if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
+    
     els.fileInput.value = '';
     els.fileInfo.classList.add('hidden');
     els.warning.classList.add('hidden');
     els.runBtn.disabled = true;
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     els.resetBtn.classList.add('hidden'); 
-    if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
     
-    els.resultsArea.classList.add('hidden');
-    els.resultsArea.classList.remove('opacity-100');
+    // Restore UI
+    els.editorContainer.classList.add('hidden');
+    els.configPanel.classList.remove('hidden');
+    els.uploadSection.classList.remove('hidden');
+    els.headerSection.classList.remove('hidden');
     els.progressCont.classList.add('hidden');
+    
+    if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
+    if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
 }
 
 async function handleFile(file) {
@@ -262,10 +255,16 @@ async function handleFile(file) {
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
     els.fileInfo.classList.remove('hidden');
-    els.resetBtn.classList.remove('hidden'); // Mostrar botón reset
+    els.resetBtn.classList.remove('hidden');
     if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
+    
+    // URL para video
+    audioBlobUrl = URL.createObjectURL(file);
+    els.videoPreview.src = audioBlobUrl;
+
     els.runBtn.querySelector('span').innerText = t.startBtnProcessing;
     logToConsole(`File loaded: ${file.name}`);
+    
     try {
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
@@ -274,22 +273,18 @@ async function handleFile(file) {
         audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         
-        // ACTIVACIÓN VISUAL DEL BOTÓN
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'transform-none', 'shadow-none');
-        // Usamos el amarillo corporativo #ffb81f
         els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
         els.runBtn.querySelector('span').innerText = t.startBtn;
-        
     } catch (err) {
         logToConsole(`ERROR: ${err.message}`);
-        resetFile();
     }
 }
 els.dropZone.addEventListener('click', () => els.fileInput.click());
 els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
 els.dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); });
-els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-pink-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
 els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
 els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
 els.resetBtn.addEventListener('click', () => resetFile()); 
@@ -323,9 +318,10 @@ els.runBtn.addEventListener('click', async () => {
     if (!audioData) return;
 
     if (cachedData) {
-        logToConsole("Updating subtitles with new parameters...");
-        processResultsV9(cachedData);
-        return; 
+        logToConsole("Updating subtitles...");
+        processResultsV8(cachedData);
+        showEditor();
+        return;
     }
     
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
@@ -333,8 +329,6 @@ els.runBtn.addEventListener('click', async () => {
     const task = document.getElementById('task-select').value;
     
     els.runBtn.disabled = true;
-    els.resultsArea.classList.add('hidden');
-    els.resultsArea.classList.remove('opacity-100');
     els.progressCont.classList.remove('hidden');
     els.consoleOutput.innerHTML = '';
     
@@ -353,10 +347,10 @@ els.runBtn.addEventListener('click', async () => {
 
 async function runGroq(apiKey, audioBuffer, language, task) {
     logToConsole("Panda Cloud Mode (Groq) Started.");
-    logToConsole("Encoding audio to WAV for upload...");
+    logToConsole("Encoding audio to WAV...");
     try {
         const wavBlob = audioBufferToWav(audioBuffer);
-        logToConsole(`Audio prepared (${(wavBlob.size/1024/1024).toFixed(2)} MB). Sending to Groq...`);
+        logToConsole(`Sending to Groq...`);
         const formData = new FormData();
         formData.append('file', wavBlob, 'audio.wav');
         formData.append('model', 'whisper-large-v3'); 
@@ -371,7 +365,6 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         });
 
         if (!response.ok) { const err = await response.json(); throw new Error(err.error?.message || "API Error"); }
-        logToConsole("Groq API Response received! Processing...");
         const result = await response.json();
         let chunks = [];
         if (result.words) { chunks = result.words.map(w => ({ text: w.word, timestamp: [w.start, w.end] })); } 
@@ -381,10 +374,9 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         cachedData = data;
         els.runBtn.querySelector('span').innerText = translations[currentLang].updateBtn;
         
-        logToConsole("Applying V9 Segmentation (Linguistic Flow)...");
-        processResultsV9(data);
-        els.statusText.innerText = "Completed!";
-        updateConsoleLine(`${getAsciiBar(100)} 100% | DONE (GROQ)`);
+        logToConsole("Processing...");
+        processResultsV8(data);
+        showEditor(); // MOSTRAR EDITOR
         els.runBtn.disabled = false;
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
@@ -430,10 +422,10 @@ worker.onmessage = (e) => {
         els.statusText.innerText = t.statusComplete;
         lastConsoleLine = null;
         updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
-        logToConsole("Transcription done. Processing...");
         cachedData = data;
         els.runBtn.querySelector('span').innerText = translations[currentLang].updateBtn;
-        processResultsV9(data); // V9
+        processResultsV8(data);
+        showEditor(); // MOSTRAR EDITOR
         els.runBtn.disabled = false;
     } 
     else if (status === 'error') {
@@ -443,12 +435,164 @@ worker.onmessage = (e) => {
     }
 };
 
+
 // =================================================================
-// 🚀 MOTOR LÓGICO V9 (LINGUISTIC FLOW + DEEP ANTI-ORPHAN)
+// 🚀 GESTIÓN DEL EDITOR VISUAL (WAVESURFER)
 // =================================================================
 
-function processResultsV9(data) {
-    const maxCpl = parseInt(document.getElementById('max-cpl').value);
+function showEditor() {
+    // Ocultar paneles
+    els.uploadSection.classList.add('hidden');
+    els.configPanel.classList.add('hidden');
+    els.headerSection.classList.add('hidden');
+    els.progressCont.classList.add('hidden');
+    
+    // Mostrar editor
+    els.editorContainer.classList.remove('hidden');
+    
+    if (!wavesurfer) {
+        initWaveSurfer();
+    } else {
+        renderRegions();
+        renderSubtitleList();
+    }
+}
+
+els.backToConfigBtn.addEventListener('click', () => {
+    els.editorContainer.classList.add('hidden');
+    els.configPanel.classList.remove('hidden');
+});
+
+function initWaveSurfer() {
+    if (!document.getElementById('waveform')) return;
+
+    wavesurfer = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#4b5563',
+        progressColor: '#ffb81f',
+        url: audioBlobUrl, 
+        height: 100,
+        normalize: true,
+        minimap: true,
+        plugins: [
+            WaveSurfer.Regions.create()
+        ]
+    });
+
+    wsRegions = wavesurfer.plugins[0];
+
+    const video = els.videoPreview;
+    
+    // Sync: Onda -> Video
+    wavesurfer.on('interaction', () => {
+        video.currentTime = wavesurfer.getCurrentTime();
+    });
+    // Sync: Video -> Onda
+    video.addEventListener('timeupdate', () => {
+        if (!wavesurfer.isPlaying()) {
+            wavesurfer.setTime(video.currentTime);
+        }
+        updateSubtitleOverlay(video.currentTime);
+    });
+    
+    video.addEventListener('play', () => wavesurfer.play());
+    video.addEventListener('pause', () => wavesurfer.pause());
+    
+    wavesurfer.on('ready', () => {
+        renderRegions();
+        renderSubtitleList();
+    });
+
+    // Region Events
+    wsRegions.on('region-updated', (region) => {
+        // Al redimensionar caja, actualizar array
+        const index = parseInt(region.id.replace('sub-', ''));
+        if (currentSubtitles[index]) {
+            currentSubtitles[index].start = region.start;
+            currentSubtitles[index].end = region.end;
+            renderSubtitleList(); // Refrescar lista tiempos
+        }
+    });
+    
+    wsRegions.on('region-clicked', (region, e) => {
+        e.stopPropagation();
+        video.currentTime = region.start;
+        video.play();
+    });
+}
+
+function renderRegions() {
+    wsRegions.clearRegions();
+    currentSubtitles.forEach((sub, index) => {
+        wsRegions.addRegion({
+            id: `sub-${index}`,
+            start: sub.start,
+            end: sub.end,
+            content: `<span style="color:black; font-size:10px; padding:2px;">${index+1}</span>`,
+            color: 'rgba(255, 184, 31, 0.4)', 
+            drag: true,
+            resize: true
+        });
+    });
+}
+
+function renderSubtitleList() {
+    els.subtitleList.innerHTML = '';
+    currentSubtitles.forEach((sub, index) => {
+        const div = document.createElement('div');
+        div.className = "bg-white p-3 rounded border border-gray-200 hover:border-[#ffb81f] cursor-pointer transition text-sm group";
+        div.innerHTML = `
+            <div class="flex justify-between text-xs text-gray-400 mb-1 font-mono">
+                <span>#${index+1}</span>
+                <span>${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}</span>
+            </div>
+            <textarea class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium" rows="2">${sub.text}</textarea>
+        `;
+        
+        div.addEventListener('click', (e) => {
+            if(e.target.tagName !== 'TEXTAREA') {
+                els.videoPreview.currentTime = sub.start;
+            }
+        });
+        
+        const textarea = div.querySelector('textarea');
+        textarea.addEventListener('input', () => {
+            sub.text = textarea.value;
+            updateSubtitleOverlay(els.videoPreview.currentTime);
+        });
+
+        els.subtitleList.appendChild(div);
+    });
+}
+
+function updateSubtitleOverlay(time) {
+    const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
+    if(activeSub) {
+        els.subtitleOverlay.innerText = activeSub.text;
+        els.subtitleOverlay.style.background = "rgba(0,0,0,0.5)";
+        els.subtitleOverlay.style.padding = "5px 10px";
+        els.subtitleOverlay.style.borderRadius = "5px";
+    } else {
+        els.subtitleOverlay.innerText = "";
+        els.subtitleOverlay.style.background = "transparent";
+    }
+}
+
+// Botón descarga del editor
+if(document.getElementById('download-editor-srt')){
+    document.getElementById('download-editor-srt').addEventListener('click', () => {
+        const srt = generateSRT(currentSubtitles);
+        download(srt, `${rawFileName}_edited.srt`);
+    });
+}
+
+
+// =================================================================
+// 🚀 MOTOR LÓGICO V8 (ALGORITMO SEGMENTACIÓN)
+// =================================================================
+
+function processResultsV8(data) {
+    const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
     const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
@@ -457,188 +601,82 @@ function processResultsV9(data) {
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
 
     const dontBreakStr = document.getElementById('dont-break-on').value;
-    const dontBreakList = [
-        ...dontBreakStr.split(','),
-        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"
-    ].map(s => s.trim().toLowerCase()).filter(s => s);
+    const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
 
     let allWords = [];
-    if (data.chunks && Array.isArray(data.chunks)) {
+    if (data.chunks) {
         data.chunks.forEach(chunk => {
-            let start = chunk.timestamp[0];
-            let end = chunk.timestamp[1];
-            if (start !== null && end !== null) {
-                allWords.push({ word: chunk.text, start: start, end: end });
-            }
+            let start = chunk.timestamp[0]; let end = chunk.timestamp[1];
+            if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end });
         });
     }
 
-    logToConsole(`Extracted ${allWords.length} words.`);
-    
-    let subs = createSrtV9(allWords, maxCpl, maxLines, minDurVal, dontBreakList);
+    let subs = createSrtV8(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
 
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
 
-    const srt = generateSRT(subs);
-    els.outputText.value = srt;
-    els.resultsArea.classList.remove('hidden');
-    setTimeout(() => {
-        els.resultsArea.classList.add('opacity-100');
-        els.resultsArea.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-
-    setupDownloads(srt, subs);
+    // Guardar para el editor
+    currentSubtitles = subs;
 }
 
-// --- ALGORITMO V9: Segmentación con Lookahead Anti-Huérfanas ---
-function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
-    const subtitles = [];
-    let buffer = [];
-    let startTime = null;
-    const strongPunct = ['.', '?', '!', '♪'];
-    const maxChars = maxCpl * maxLines;
-
+function createSrtV8(words, maxCpl, maxLines, minDur, dontBreakList) {
+    const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
-
     for (let i = 0; i < words.length; i++) {
-        const wObj = words[i];
-        if (!wObj.word.trim()) continue;
-
+        const wObj = words[i]; if (!wObj.word.trim()) continue;
         if (startTime === null) startTime = wObj.start;
         buffer.push(wObj);
-        
         const currentText = buffer.map(b => b.word.trim()).join(' ');
-        let forceCut = false;
-        let pendingWords = [];
-        let endTime = wObj.end;
-        let currentDur = endTime - startTime;
-
-        // 1. REGLA HARD LIMIT (Longitud)
+        let forceCut = false; let pendingWords = []; let endTime = wObj.end; let currentDur = endTime - startTime;
+        
         if (currentText.length > maxChars) {
-            const overflow = buffer.pop();
-            pendingWords.push(overflow);
-            
-            // BUCLE DE SEGURIDAD (Revisión Continua)
-            let safeCutFound = false;
-            
-            while (!safeCutFound && buffer.length > 0) {
-                // A. Check Sticky Ending (Preposiciones / Números)
-                const lastObj = buffer[buffer.length - 1];
-                const last = lastObj.word.trim().toLowerCase().replace(/[.,?!]/g, '');
-                const isSticky = dontBreakList.includes(last) || /^\d+$/.test(last);
-                
-                if (isSticky) {
-                    pendingWords.unshift(buffer.pop()); // Mover a pendientes
-                    continue; // Re-evaluar
-                }
-
-                // B. DEEP ANTI-ORPHAN (El "Water." fix)
-                let pendingTextLen = pendingWords.map(w => w.word).join(' ').length;
-                
-                // Miramos qué viene DESPUÉS de lo que ya hemos "popeado"
-                // i + 1 es la siguiente palabra en el loop principal
-                let lookaheadIdx = i + 1;
-                let distToNextDot = 0;
-                while(lookaheadIdx < words.length && distToNextDot < 5) {
-                    if(endsSentence(words[lookaheadIdx])) break;
-                    distToNextDot++;
-                    lookaheadIdx++;
-                }
-
-                // Condición de huérfana: lo que sobra + lo que viene hasta el punto es poco (< 25 chars)
-                const isNextTooShort = (pendingTextLen + (distToNextDot * 5)) < 30; 
-                const canSteal = buffer.length > 1 && currentText.length > (maxCpl * 0.4);
-
-                if (isNextTooShort && canSteal) {
-                     pendingWords.unshift(buffer.pop());
-                     continue; // Seguir robando del buffer
-                }
-                
-                safeCutFound = true; // El corte es seguro
+            const overflow = buffer.pop(); pendingWords.push(overflow);
+            while (buffer.length > 0) {
+                const last = buffer[buffer.length - 1].word.trim().toLowerCase().replace(/[.,?!]/g, '');
+                if (dontBreakList.includes(last) || /^\d+$/.test(last)) pendingWords.unshift(buffer.pop()); else break;
             }
-
+            let pendingTextLen = pendingWords.map(w => w.word).join(' ').length;
+            let lookaheadIdx = i + 1; let distToNextDot = 0;
+            while(lookaheadIdx < words.length && distToNextDot < 5) { if(endsSentence(words[lookaheadIdx])) break; distToNextDot++; lookaheadIdx++; }
+            const isNextTooShort = (pendingTextLen + (distToNextDot * 5)) < 30; 
+            const canSteal = buffer.length > 1 && currentText.length > (maxCpl * 0.4);
+            if (isNextTooShort && canSteal) { pendingWords.unshift(buffer.pop()); continue; }
             forceCut = true;
-            if(buffer.length > 0) endTime = buffer[buffer.length-1].end;
-            else { 
-                buffer.push(pendingWords.shift()); 
-                endTime = buffer[0].end;
-            }
+            if(buffer.length > 0) endTime = buffer[buffer.length-1].end; else { buffer.push(pendingWords.shift()); endTime = buffer[0].end; }
+        } else if (buffer.length > 0 && currentDur >= minDur) {
+            if (endsSentence(wObj)) { forceCut = true; endTime = wObj.end; }
         }
         
-        // 2. REGLA PUNTUACIÓN (Soft Limit)
-        else if (buffer.length > 0 && currentDur >= minDur) {
-            if (endsSentence(wObj)) {
-                forceCut = true;
-                endTime = wObj.end;
-            }
-        }
-
         if (forceCut || i === words.length - 1) {
             const finalBlock = buffer.map(b => b.word.trim()).join(' ');
-            const lines = balancedSplitV9(finalBlock, maxCpl, dontBreakList);
+            const lines = balancedSplitV8(finalBlock, maxCpl, dontBreakList);
             subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
-
-            buffer = [];
-            startTime = null;
-
-            if (pendingWords.length > 0) {
-                buffer = [...pendingWords]; 
-                startTime = buffer[0].start;
-            }
+            buffer = []; startTime = null;
+            if (pendingWords.length > 0) { buffer = [...pendingWords]; startTime = buffer[0].start; }
         }
     }
     return subtitles;
 }
 
-// --- BALANCEO V9: Alta Penalización para Sticky Words ---
-function balancedSplitV9(text, maxCpl, dontBreakList) {
+function balancedSplitV8(text, maxCpl, dontBreakList) {
     if (text.length <= maxCpl) return [text];
-
     const words = text.split(' ');
-    let bestCut = -1;
-    let bestScore = Infinity; 
-    
+    let bestCut = -1; let bestScore = Infinity; 
     const punct = [',', ':', ';', '-', '.'];
-    const safeStart = Math.floor(words.length * 0.2); 
-    const safeEnd = Math.floor(words.length * 0.9); 
-
+    const safeStart = Math.floor(words.length * 0.2); const safeEnd = Math.floor(words.length * 0.9); 
     for (let i = 1; i < words.length; i++) {
-        const l1Str = words.slice(0, i).join(' ');
-        const l2Str = words.slice(i).join(' ');
-        
+        const l1Str = words.slice(0, i).join(' '); const l2Str = words.slice(i).join(' ');
         if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue; 
-
         let score = Math.abs(l1Str.length - l2Str.length);
-
-        // 1. Penalización Sticky (Masiva)
         const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
-        if (dontBreakList.includes(lastWordL1) || /^\d+$/.test(lastWordL1)) {
-            score += 5000; 
-        }
-
-        // 2. Penalización Puntuación
-        const lastCharL1 = words[i-1].slice(-1);
-        if (punct.includes(lastCharL1)) {
-            score -= 50; 
-        }
-
-        // 3. Preferencia central
-        if (i > safeStart && i < safeEnd) {
-            score -= 10;
-        }
-
-        if (score < bestScore) {
-            bestScore = score;
-            bestCut = i;
-        }
+        if (dontBreakList.includes(lastWordL1) || /^\d+$/.test(lastWordL1)) score += 5000; 
+        const lastCharL1 = words[i-1].slice(-1); if (punct.includes(lastCharL1)) score -= 50; 
+        if (i > safeStart && i < safeEnd) score -= 10;
+        if (score < bestScore) { bestScore = score; bestCut = i; }
     }
-
-    if (bestCut !== -1) {
-        return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
-    }
-
+    if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     const mid = Math.floor(words.length / 2);
     return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
@@ -672,31 +710,22 @@ function generateSRT(segs) {
     return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n');
 }
 
+// Helpers
 function fmtTime(s) {
     if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000";
     const d = new Date(s * 1000);
     return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`;
 }
-
-function setupDownloads(srt, segs) {
-    els.dlSrt.onclick = () => download(srt, `${rawFileName}_subpanda.srt`);
-    const cleanTxt = segs.map(s => s.text.replace(/\n/g, ' ')).join(' ');
-    els.dlTxt.onclick = () => download(cleanTxt, `${rawFileName}.txt`);
-    els.copy.onclick = () => {
-        navigator.clipboard.writeText(srt);
-        const orig = els.copy.querySelector('span').innerHTML;
-        els.copy.querySelector('span').innerHTML = t.copiedBtn;
-        els.copy.classList.add('copy-success');
-        setTimeout(() => {
-            els.copy.querySelector('span').innerHTML = orig;
-            els.copy.classList.remove('copy-success');
-        }, 2000);
-    };
+function fmtTimeShort(s) {
+    const d = new Date(s * 1000);
+    return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,1)}`;
 }
+
 function download(content, name) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'}));
     a.download = name;
     a.click();
 }
+
 setLanguage('en');
