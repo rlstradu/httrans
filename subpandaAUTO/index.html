@@ -40,11 +40,14 @@
         /* Video Container & Overlay */
         .video-container { position: relative; background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #subtitle-overlay {
-            position: absolute; bottom: 8%; left: 5%; right: 5%;
+            position: absolute; 
+            bottom: 15%; /* Subido para no tapar controles */
+            left: 5%; right: 5%;
             text-align: center; color: white; text-shadow: 2px 2px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
             font-size: 1.3rem; font-weight: 600; pointer-events: none; padding: 5px;
             white-space: pre-wrap; line-height: 1.4;
             background: rgba(0,0,0,0.4); border-radius: 8px;
+            transition: all 0.2s ease;
         }
 
         /* Center Line for Waveform */
@@ -54,13 +57,12 @@
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
 
-        /* Active Subtitle Card Highlight */
         .sub-card-active { border-left: 4px solid #ffb81f !important; background-color: #fffbeb !important; }
         
         /* Range Slider Styling */
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffb81f; cursor: pointer; margin-top: -6px; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #ddd; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffb81f; cursor: pointer; margin-top: -6px; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #4b5563; border-radius: 2px; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -75,13 +77,13 @@
                 <button id="lang-en" class="lang-btn active px-3 py-1 rounded-md text-sm font-bold">EN</button>
                 <button id="lang-es" class="lang-btn px-3 py-1 rounded-md text-sm font-bold">ES</button>
             </div>
-            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200">BETA v0.3</span>
+            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200">BETA v0.4</span>
         </div>
     </nav>
 
     <main class="w-full max-w-6xl mx-auto glass-panel rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden min-h-[85vh] flex flex-col">
         
-        <!-- CABECERA (Se oculta al iniciar el editor) -->
+        <!-- CABECERA -->
         <div id="header-section" class="text-center mb-8 transition-all duration-500">
             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/subpandaAUTO.png" 
                  alt="SubPandaAUTO Logo" 
@@ -91,7 +93,7 @@
             </p>
         </div>
 
-        <!-- PANEL DE CONFIGURACIÓN (Se oculta al terminar) -->
+        <!-- PANEL DE CONFIGURACIÓN -->
         <div id="config-panel" class="max-w-4xl mx-auto w-full bg-white/80 border border-yellow-100 rounded-2xl p-6 mb-8 shadow-sm transition-all duration-500">
             <h3 class="text-lg font-bold text-[#202020] mb-6 flex items-center border-b border-gray-100 pb-2">
                 <i class="ph-fill ph-sliders-horizontal mr-2 text-[#ffb81f]"></i>
@@ -129,8 +131,8 @@
                 </div>
             </div>
 
+            <!-- Resto de Configuración (Grid) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Columna Izquierda -->
                 <div class="space-y-5">
                     <div id="local-model-container" class="opacity-50 pointer-events-none">
                         <label class="block text-sm font-bold text-gray-600 mb-1.5" data-key="modelLabel">AI Model / Quality</label>
@@ -233,10 +235,7 @@
                 <p class="text-sm text-gray-500 mb-4" data-key="dropSubtitle">Supports MP3, WAV, MP4, MKV, MOV...</p>
                 <div id="file-warning" class="hidden bg-orange-100 text-orange-800 text-xs p-3 rounded-lg max-w-md mx-auto flex items-start text-left gap-2">
                     <i class="ph-bold ph-warning text-lg mt-0.5"></i>
-                    <span data-key="fileWarning">
-                        <strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. 
-                        We recommend extracting audio to MP3 first if you experience issues.
-                    </span>
+                    <span data-key="fileWarning">Heads up! Large file.</span>
                 </div>
                 <div id="file-info" class="hidden mt-4 inline-flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
                     <i class="ph-fill ph-file-audio text-[#ffb81f] mr-2"></i>
@@ -253,12 +252,12 @@
                     <span data-key="startBtn">Start</span>
                 </button>
                 <button id="reset-btn" class="hidden px-6 py-4 rounded-xl font-bold text-gray-600 bg-white border-2 border-gray-200 hover:border-red-400 hover:text-red-500 transition flex justify-center items-center gap-2" title="Reset / New File">
-                    <i class="ph-bold ph-arrow-counter-clockwise text-xl"></i>
+                    <i class="ph-bold ph-trash text-xl"></i>
                     <span>Reset</span>
                 </button>
             </div>
 
-            <!-- CONSOLA DE LOGS -->
+            <!-- CONSOLA -->
             <div id="progress-container" class="hidden mb-8">
                 <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
                     <span id="status-text" data-key="statusLoading">Loading...</span>
@@ -268,7 +267,7 @@
                         <div class="w-3 h-3 rounded-full bg-red-500"></div>
                         <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                         <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span class="text-xs text-gray-400 font-mono ml-2">Panda Terminal v4.1</span>
+                        <span class="text-xs text-gray-400 font-mono ml-2">Panda Terminal v5.0</span>
                     </div>
                     <div id="console-output" class="console-window h-48 overflow-y-auto text-xs font-mono text-green-400 space-y-1">
                         <div class="opacity-50">> System ready...</div>
@@ -277,69 +276,61 @@
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!--  NUEVO: EDITOR VISUAL (VIDEO + ONDA + SUBS)   -->
-        <!-- ============================================== -->
+        <!-- EDITOR VISUAL -->
         <div id="editor-container" class="hidden flex flex-col gap-6 animate-fade-in-up h-[85vh]">
             
             <div class="flex flex-col md:flex-row gap-6 h-full">
                 
                 <!-- Columna Izquierda: Video + Onda -->
                 <div class="flex-1 flex flex-col gap-4 min-w-0">
-                    <!-- Video (70% altura) -->
+                    <!-- Video -->
                     <div class="video-container flex-grow bg-black rounded-2xl shadow-lg border border-gray-800 flex items-center justify-center overflow-hidden">
                         <video id="video-preview" class="w-full h-full object-contain" controls playsinline></video>
                         <div id="subtitle-overlay"></div>
                     </div>
                     
-                    <!-- Onda y Controles (30% altura) -->
+                    <!-- Onda -->
                     <div class="bg-gray-900 rounded-xl p-4 shadow-md border border-gray-700 shrink-0">
-                        
-                        <!-- Toolbar de Onda -->
-                        <div class="flex justify-between items-center mb-2 text-xs text-gray-400">
+                        <div class="flex justify-between items-center mb-2 text-xs text-gray-400 font-mono">
                             <div class="flex items-center gap-2">
                                 <span data-key="zoomLabel">Zoom:</span>
-                                <input type="range" id="zoom-slider" min="10" max="300" value="100" class="w-32 accent-[#ffb81f]">
+                                <input type="range" id="zoom-slider" min="50" max="400" value="100" class="w-32 accent-[#ffb81f]">
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] uppercase font-bold tracking-wider">Visual Editor</span>
+                            <div class="flex items-center gap-3">
+                                <!-- Timecode Switcher -->
+                                <button id="tc-format-btn" class="bg-gray-700 px-2 py-0.5 rounded text-[10px] hover:bg-gray-600 hover:text-white transition">HH:MM:SS:MSS</button>
+                                <span class="text-[10px] uppercase font-bold tracking-wider text-[#ffb81f]">Waveform Editor</span>
                             </div>
                         </div>
 
-                        <!-- Onda -->
-                        <div class="relative w-full h-[120px]">
+                        <div class="relative w-full h-[120px] bg-black/20 rounded-lg overflow-hidden">
                             <div id="waveform" class="w-full h-full"></div>
-                            <!-- Línea central fija -->
                             <div id="wave-center-line"></div>
                         </div>
-                        
                     </div>
                 </div>
 
-                <!-- Columna Derecha: Lista de Subtítulos -->
-                <div class="w-full md:w-[400px] bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col overflow-hidden shrink-0">
+                <!-- Columna Derecha: Lista -->
+                <div class="w-full md:w-[420px] bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col overflow-hidden shrink-0">
                     
-                    <!-- Header Lista -->
                     <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">
                         <h3 class="font-bold text-gray-700 text-sm flex items-center gap-2">
                             <i class="ph-bold ph-list-dashes text-[#ffb81f]"></i> Subtitles
                         </h3>
                         <div class="flex gap-2">
-                            <button id="clear-text-btn" class="text-xs text-red-500 bg-red-50 border border-red-100 px-2 py-1 rounded hover:bg-red-100 transition" title="Clear All Text (Spotting)">
-                                <i class="ph-bold ph-eraser"></i>
+                            <button id="clear-text-btn" class="text-xs text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition font-bold" title="Clear All Text">
+                                <i class="ph-bold ph-eraser"></i> Clear Text
                             </button>
                             <button id="download-editor-srt" class="text-xs bg-[#ffb81f] text-[#202020] px-3 py-1.5 rounded-lg font-bold hover:bg-[#e0a01a] transition shadow-sm">
-                                <i class="ph-bold ph-download-simple"></i> SRT
+                                <i class="ph-bold ph-download-simple"></i> Export SRT
                             </button>
                         </div>
                     </div>
 
-                    <!-- Lista editable -->
-                    <div id="subtitle-list" class="flex-1 overflow-y-auto p-2 space-y-3 bg-gray-50">
-                        <!-- Items inyectados por JS -->
+                    <div id="subtitle-list" class="flex-1 overflow-y-auto p-2 space-y-3 bg-gray-100">
+                        <!-- Items inyectados -->
                     </div>
 
-                    <!-- Footer Editor -->
                     <div class="p-3 border-t border-gray-200 bg-white shrink-0 text-center">
                         <button id="back-to-config-btn" class="text-gray-500 hover:text-[#ffb81f] font-bold text-xs flex items-center justify-center gap-2 mx-auto transition">
                             <i class="ph-bold ph-sliders-horizontal"></i> <span data-key="btnReadjust">Readjust Parameters</span>
