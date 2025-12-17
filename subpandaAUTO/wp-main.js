@@ -1,4 +1,4 @@
-// wp-main.js - V5.0 (Editor Visual Profesional + Métricas + Navegación + Zoom)
+// wp-main.js - V5.1 (Fix Start Button & UI Logic)
 
 const translations = {
     en: {
@@ -34,7 +34,7 @@ const translations = {
         dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
         startBtn: "Start",
-        updateBtn: "Readjust", // Shortened
+        updateBtn: "Readjust", 
         startBtnProcessing: "Processing...",
         statusLoading: "Loading...",
         statusInitiating: "Initializing...",
@@ -50,7 +50,6 @@ const translations = {
         downloadModel: "Downloading Model...",
         btnReadjust: "Readjust Parameters",
         zoomLabel: "Zoom",
-        // Tooltips Editor
         ttNudgeStartM: "-1 Frame Start",
         ttNudgeStartP: "+1 Frame Start",
         ttNudgeEndM: "-1 Frame End",
@@ -98,7 +97,7 @@ const translations = {
         dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
         startBtn: "Iniciar",
-        updateBtn: "Reajustar", // Shortened
+        updateBtn: "Reajustar",
         startBtnProcessing: "Procesando...",
         statusLoading: "Cargando...",
         statusInitiating: "Iniciando...",
@@ -114,7 +113,6 @@ const translations = {
         downloadModel: "Descargando Modelo...",
         btnReadjust: "Reajustar Parámetros",
         zoomLabel: "Zoom",
-        // Tooltips Editor
         ttNudgeStartM: "-1 Frame Inicio",
         ttNudgeStartP: "+1 Frame Inicio",
         ttNudgeEndM: "-1 Frame Fin",
@@ -141,11 +139,10 @@ let startTime = 0;
 let lastConsoleLine = null;
 let cachedData = null; 
 
-// Variables del Editor Visual
 let wavesurfer = null;
 let wsRegions = null;
 let currentSubtitles = []; 
-const ONE_FRAME = 0.04; // 1 frame @ 25fps
+const ONE_FRAME = 0.04; 
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -162,13 +159,11 @@ const els = {
     statusText: document.getElementById('status-text'),
     consoleOutput: document.getElementById('console-output'),
     
-    // UI Sections
     uploadSection: document.getElementById('upload-section'),
     configPanel: document.getElementById('config-panel'),
     headerSection: document.getElementById('header-section'),
     editorContainer: document.getElementById('editor-container'),
     
-    // Editor Elements
     videoPreview: document.getElementById('video-preview'),
     subtitleOverlay: document.getElementById('subtitle-overlay'),
     subtitleList: document.getElementById('subtitle-list'),
@@ -177,14 +172,13 @@ const els = {
     zoomSlider: document.getElementById('zoom-slider'),
     clearTextBtn: document.getElementById('clear-text-btn'),
     
-    // Config Inputs
     dontBreakInput: document.getElementById('dont-break-on'),
     modeRadios: document.getElementsByName('proc_mode'),
     groqContainer: document.getElementById('groq-key-container'),
     localModelContainer: document.getElementById('local-model-container')
 };
 
-// --- INIT & MODES ---
+// --- MODOS ---
 function updateModeUI(mode) {
     if (mode === 'groq') {
         els.groqContainer.classList.remove('hidden');
@@ -210,7 +204,7 @@ function updateModeUI(mode) {
 updateModeUI('groq');
 els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => updateModeUI(e.target.value)); });
 
-// --- UTILS CONSOLA ---
+// --- CONSOLA ---
 function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
     if (!isProgress) lastConsoleLine = null;
@@ -240,6 +234,8 @@ function fmtDuration(seconds) {
     const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60);
     return `${m}m ${s}s`;
 }
+
+// --- IDIOMA ---
 function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
@@ -251,22 +247,28 @@ function setLanguage(lang) {
         modelSelect.options[2].text = t.optSmall; if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
     }
     const btnText = cachedData ? t.updateBtn : t.startBtn;
-    if (els.runBtn.disabled && !audioData) els.runBtn.querySelector('span').innerText = btnText;
-    else if (!els.runBtn.disabled) els.runBtn.querySelector('span').innerText = btnText;
+    // Fix visual disabled state if needed
+    if (audioData) {
+         els.runBtn.querySelector('span').innerText = btnText;
+    }
     els.dontBreakInput.value = t.dontBreakDefaults;
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
 els.langEs.addEventListener('click', () => setLanguage('es'));
 
-// --- MANEJO DE ARCHIVOS ---
+// --- ARCHIVOS ---
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
     els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
-    els.runBtn.disabled = true; els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
-    els.resetBtn.classList.add('hidden'); 
     
-    // Restore UI
+    // Disable Button
+    els.runBtn.disabled = true; 
+    els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+    // Restaurar estilo disabled de Tailwind
+    els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
+
+    els.resetBtn.classList.add('hidden'); 
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
@@ -287,8 +289,10 @@ async function handleFile(file) {
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
 
-    els.runBtn.querySelector('span').innerText = t.startBtnProcessing;
+    // Mostrar consola inmediatamente para feedback
+    els.progressCont.classList.remove('hidden');
     logToConsole(`File loaded: ${file.name}`);
+    logToConsole("Decoding audio... please wait.");
     
     try {
         const arrayBuffer = await file.arrayBuffer();
@@ -296,10 +300,11 @@ async function handleFile(file) {
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         audioData = audioBuffer; audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
+        logToConsole(`Ready to start.`);
         
+        // Habilitar botón y ponerlo AMARILLO
         els.runBtn.disabled = false;
-        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'transform-none', 'shadow-none');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer', 'shadow-lg', 'transform');
+        els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
     } catch (err) {
         logToConsole(`ERROR: ${err.message}`);
@@ -339,9 +344,15 @@ els.runBtn.addEventListener('click', async () => {
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
+    
+    // UI Update on Click
     els.runBtn.disabled = true;
+    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); // Gray out visually
+    
     els.resultsArea.classList.add('hidden'); els.resultsArea.classList.remove('opacity-100');
-    els.progressCont.classList.remove('hidden'); els.consoleOutput.innerHTML = '';
+    els.progressCont.classList.remove('hidden'); 
+    // No borramos la consola, solo añadimos
+    logToConsole("--- STARTED ---");
     
     if (mode === 'groq') {
         const apiKey = document.getElementById('groq-key').value.trim();
@@ -384,6 +395,9 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         processResultsV9(data);
         showEditor();
         els.runBtn.disabled = false;
+        // Restaurar color botón
+        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         els.runBtn.disabled = false;
@@ -418,13 +432,14 @@ worker.onmessage = (e) => {
         processResultsV9(data);
         showEditor();
         els.runBtn.disabled = false;
+        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
     } 
     else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
 };
 
-// =================================================================
-// 🚀 GESTIÓN DEL EDITOR VISUAL (WAVESURFER + INTERACCIÓN)
-// =================================================================
+// ... (RESTO DE FUNCIONES DE EDITOR Y ALGORITMO V9 IGUAL QUE ANTERIOR) ...
+// (Pego aquí para asegurar que el archivo esté completo)
 
 function showEditor() {
     els.uploadSection.classList.add('hidden');
@@ -432,17 +447,13 @@ function showEditor() {
     els.headerSection.classList.add('hidden');
     els.progressCont.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
-    
-    if (!wavesurfer) initWaveSurfer();
-    else { renderRegions(); renderSubtitleList(); }
+    if (!wavesurfer) initWaveSurfer(); else { renderRegions(); renderSubtitleList(); }
 }
 
 els.backToConfigBtn.addEventListener('click', () => {
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden');
     els.runBtn.scrollIntoView({ behavior: 'smooth' });
-    
-    // Cambiar texto a "Readjust"
     const t = translations[currentLang];
     els.runBtn.querySelector('span').innerText = t.updateBtn;
 });
@@ -458,7 +469,7 @@ function initWaveSurfer() {
         normalize: true,
         minimap: true,
         autoCenter: true, 
-        minPxPerSec: 100, // Zoom por defecto más alto (antes 50)
+        minPxPerSec: 100, 
         plugins: [ WaveSurfer.Regions.create() ]
     });
     wsRegions = wavesurfer.plugins[0];
@@ -477,7 +488,7 @@ function initWaveSurfer() {
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
     wavesurfer.on('ready', () => {
-        wavesurfer.zoom(100); // Zoom inicial alto
+        wavesurfer.zoom(100);
         renderRegions();
         renderSubtitleList();
     });
@@ -492,12 +503,7 @@ function initWaveSurfer() {
             updateMetrics(index);
         }
     });
-    
-    wsRegions.on('region-clicked', (region, e) => {
-        e.stopPropagation();
-        video.currentTime = region.start;
-        video.play();
-    });
+    wsRegions.on('region-clicked', (region, e) => { e.stopPropagation(); video.currentTime = region.start; video.play(); });
 }
 
 function renderRegions() {
@@ -509,8 +515,7 @@ function renderRegions() {
             end: sub.end,
             content: `<span style="color:black; font-size:10px; padding:2px; font-weight:bold;">${index+1}</span>`,
             color: 'rgba(255, 184, 31, 0.4)',
-            drag: true,
-            resize: true
+            drag: true, resize: true
         });
     });
 }
@@ -523,21 +528,14 @@ function renderSubtitleList() {
         const div = document.createElement('div');
         div.id = `card-sub-${index}`;
         div.className = "bg-white p-3 rounded border border-gray-200 hover:border-[#ffb81f] transition text-sm group";
-        
         div.innerHTML = `
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
                 <span id="time-display-${index}" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500 font-mono">${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}</span>
             </div>
-            
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
-            
-            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2">
-                <!-- Metrics -->
-            </div>
-
+            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
-                <!-- Nudge -->
                 <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}"><i class="ph-bold ph-caret-left"></i>[</button>
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">]<i class="ph-bold ph-caret-right"></i></button>
@@ -545,8 +543,6 @@ function renderSubtitleList() {
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}"><i class="ph-bold ph-caret-left"></i>]</button>
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">[<i class="ph-bold ph-caret-right"></i></button>
                 </div>
-                
-                <!-- Actions -->
                 <div class="flex gap-2 text-gray-500 ml-auto">
                     <button class="hover:text-[#ffb81f]" onclick="window.playSub(${index})" title="${t.ttPlay}"><i class="ph-fill ph-play-circle text-xl"></i></button>
                     <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}"><i class="ph-bold ph-eraser"></i></button>
@@ -557,20 +553,9 @@ function renderSubtitleList() {
                 </div>
             </div>
         `;
-        
         const ta = div.querySelector('textarea');
-        ta.addEventListener('input', () => {
-            sub.text = ta.value;
-            updateSubtitleOverlay(els.videoPreview.currentTime);
-            updateMetrics(index);
-        });
-        
-        div.addEventListener('click', (e) => {
-            if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'TEXTAREA') {
-                els.videoPreview.currentTime = sub.start;
-            }
-        });
-
+        ta.addEventListener('input', () => { sub.text = ta.value; updateSubtitleOverlay(els.videoPreview.currentTime); updateMetrics(index); });
+        div.addEventListener('click', (e) => { if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'TEXTAREA') els.videoPreview.currentTime = sub.start; });
         els.subtitleList.appendChild(div);
         updateMetrics(index);
     });
@@ -582,71 +567,36 @@ function updateMetrics(index) {
     const cleanText = sub.text.replace(/\n/g, '').trim();
     const textLen = cleanText.length;
     const cps = duration > 0 ? (textLen / duration).toFixed(1) : "0";
-    
     const lines = sub.text.split('\n');
     const cplText = lines.map((l, i) => `<span class="${l.length > 42 ? 'text-red-500 font-bold' : ''}">L${i+1}: ${l.length}</span>`).join(' | ');
-    
     const container = document.getElementById(`metrics-${index}`);
-    if(container) {
-        container.innerHTML = `
-            <span>${cplText}</span>
-            <span class="${cps > 25 ? 'text-red-500 font-bold' : ''}">${cps} CPS</span>
-        `;
-    }
+    if(container) container.innerHTML = `<span>${cplText}</span><span class="${cps > 25 ? 'text-red-500 font-bold' : ''}">${cps} CPS</span>`;
 }
 
 function highlightActiveSub(time) {
     const activeIndex = currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
     document.querySelectorAll('.sub-card-active').forEach(el => el.classList.remove('sub-card-active'));
-    
     if(activeIndex !== -1) {
         const card = document.getElementById(`card-sub-${activeIndex}`);
-        if(card) {
-            card.classList.add('sub-card-active');
-        }
+        if(card) card.classList.add('sub-card-active');
     }
 }
 
-// Global functions for HTML onclick
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') currentSubtitles[index].start = Math.max(0, currentSubtitles[index].start + amount);
     else currentSubtitles[index].end += amount;
-    
-    if(wsRegions && wsRegions.regions[`sub-${index}`]) {
-        wsRegions.regions[`sub-${index}`].setOptions({
-            start: currentSubtitles[index].start,
-            end: currentSubtitles[index].end
-        });
-    }
+    if(wsRegions && wsRegions.regions[`sub-${index}`]) wsRegions.regions[`sub-${index}`].setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
     const timeSpan = document.getElementById(`time-display-${index}`);
     if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
     updateMetrics(index);
 };
-
-window.playSub = (index) => {
-    if(!currentSubtitles[index]) return;
-    els.videoPreview.currentTime = currentSubtitles[index].start;
-    els.videoPreview.play();
-};
-
+window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
 window.navSub = (index, dir) => {
     const newIndex = index + dir;
-    if(newIndex >= 0 && newIndex < currentSubtitles.length) {
-        els.videoPreview.currentTime = currentSubtitles[newIndex].start;
-        document.getElementById(`card-sub-${newIndex}`).scrollIntoView({behavior: "smooth", block: "center"});
-    }
+    if(newIndex >= 0 && newIndex < currentSubtitles.length) { els.videoPreview.currentTime = currentSubtitles[newIndex].start; document.getElementById(`card-sub-${newIndex}`).scrollIntoView({behavior: "smooth", block: "center"}); }
 };
-
-window.clearSubText = (index) => {
-    if(currentSubtitles[index]) {
-        currentSubtitles[index].text = "";
-        document.getElementById(`ta-${index}`).value = "";
-        updateMetrics(index);
-        updateSubtitleOverlay(els.videoPreview.currentTime);
-    }
-};
-
+window.clearSubText = (index) => { if(currentSubtitles[index]) { currentSubtitles[index].text = ""; document.getElementById(`ta-${index}`).value = ""; updateMetrics(index); updateSubtitleOverlay(els.videoPreview.currentTime); } };
 window.shiftWord = (index, dir) => {
     if(dir === -1 && index > 0) { 
         const words = currentSubtitles[index].text.trim().split(/\s+/);
@@ -654,8 +604,7 @@ window.shiftWord = (index, dir) => {
             const word = words.shift();
             currentSubtitles[index].text = words.join(' ');
             currentSubtitles[index-1].text = (currentSubtitles[index-1].text.trim() + " " + word).trim();
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text;
-            document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
+            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
             updateMetrics(index); updateMetrics(index-1);
         }
     } else if (dir === 1 && index < currentSubtitles.length - 1) { 
@@ -664,53 +613,30 @@ window.shiftWord = (index, dir) => {
             const word = words.pop();
             currentSubtitles[index].text = words.join(' ');
             currentSubtitles[index+1].text = (word + " " + currentSubtitles[index+1].text.trim()).trim();
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text;
-            document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
+            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
             updateMetrics(index); updateMetrics(index+1);
         }
     }
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
 
-// Global Clear
 if(els.clearTextBtn) {
     els.clearTextBtn.addEventListener('click', () => {
-        if(confirm(translations[currentLang].confirmClearAll)) {
-            currentSubtitles.forEach(s => s.text = "");
-            renderSubtitleList();
-        }
+        if(confirm(translations[currentLang].confirmClearAll)) { currentSubtitles.forEach(s => s.text = ""); renderSubtitleList(); }
     });
 }
-
 function updateSubtitleOverlay(time) {
     const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
     if(activeSub && activeSub.text.trim() !== "") {
-        els.subtitleOverlay.innerText = activeSub.text;
-        els.subtitleOverlay.style.opacity = "1";
-        els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
-    } else {
-        els.subtitleOverlay.style.opacity = "0";
-    }
-    
-    // Sync active highlight
+        els.subtitleOverlay.innerText = activeSub.text; els.subtitleOverlay.style.opacity = "1"; els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
+    } else { els.subtitleOverlay.style.opacity = "0"; }
     highlightActiveSub(time);
 }
-
-// Botón descarga del editor
 if(els.downloadEditorSrt){
-    els.downloadEditorSrt.addEventListener('click', () => {
-        const srt = generateSRT(currentSubtitles);
-        download(srt, `${rawFileName}_edited.srt`);
-    });
+    els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
 }
 
-
-// =================================================================
-// 🚀 LOGICA V9 (Mantenida igual, solo re-pegada para integridad)
-// =================================================================
-
 function processResultsV9(data) {
-    // ... Parámetros del DOM ...
     const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
@@ -720,26 +646,17 @@ function processResultsV9(data) {
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
     const dontBreakStr = document.getElementById('dont-break-on').value;
     const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
-
     let allWords = [];
-    if (data.chunks) {
-        data.chunks.forEach(chunk => {
-            let start = chunk.timestamp[0]; let end = chunk.timestamp[1];
-            if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end });
-        });
-    }
-
+    if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
+    
     let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
-
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
-
-    currentSubtitles = subs; // GLOBAL
+    
+    currentSubtitles = subs;
 }
-
-// ... (Funciones de segmentación V9 createSrtV9, balancedSplitV9, applyTimeRules, generateSRT, fmtTimeShort, download IGUAL QUE ANTES) ...
-
+// Algoritmo V9 (Smart Flow)
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
@@ -779,7 +696,6 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     }
     return subtitles;
 }
-
 function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (text.length <= maxCpl) return [text];
     const words = text.split(' '); let bestCut = -1; let bestScore = Infinity; 
@@ -797,7 +713,6 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
-
 function applyTimeRules(subs, minDur, maxDur, minGap) {
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
@@ -818,10 +733,8 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
     }
     return subs;
 }
-
-function fmtTimeShort(s) {
-    const d = new Date(s * 1000);
-    return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,2)}`;
-}
-
+function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
+function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
+function fmtTimeShort(s) { const d = new Date(s * 1000); return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,2)}`; }
+function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
