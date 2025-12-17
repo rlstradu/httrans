@@ -1,4 +1,4 @@
-// wp-main.js - V5.2 (Fix Crash & Restore Visual Editor)
+// wp-main.js - V5.3 (Safety Checks & Yellow Theme Fix)
 
 const translations = {
     en: {
@@ -165,7 +165,7 @@ const els = {
     headerSection: document.getElementById('header-section'),
     editorContainer: document.getElementById('editor-container'),
     
-    // Fallback/Legacy UI (Necesario para evitar crash si el HTML lo tiene)
+    // Fallback/Legacy UI (Evitar error si no existen)
     resultsArea: document.getElementById('results-area'),
     outputText: document.getElementById('output-text'),
 
@@ -187,8 +187,8 @@ const els = {
 // --- MODOS ---
 function updateModeUI(mode) {
     if (mode === 'groq') {
-        els.groqContainer.classList.remove('hidden');
-        els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
+        if(els.groqContainer) els.groqContainer.classList.remove('hidden');
+        if(els.localModelContainer) els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) { label.classList.add('border-[#ffb81f]', 'shadow-md'); label.classList.remove('border-gray-200'); } 
@@ -198,8 +198,8 @@ function updateModeUI(mode) {
         const defaultKey = "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";
         if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || defaultKey;
     } else {
-        els.groqContainer.classList.add('hidden');
-        els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
+        if(els.groqContainer) els.groqContainer.classList.add('hidden');
+        if(els.localModelContainer) els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) { label.classList.add('border-gray-400', 'shadow-md'); label.classList.remove('border-gray-200'); } 
@@ -310,6 +310,7 @@ async function handleFile(file) {
         
         // Habilitar botón visualmente
         els.runBtn.disabled = false;
+        // AMARILLO CORPORATIVO (FIX)
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
     } catch (err) {
@@ -353,11 +354,11 @@ els.runBtn.addEventListener('click', async () => {
     
     // UI Update on Click
     els.runBtn.disabled = true;
+    els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
-    // No borramos la consola, solo añadimos
     logToConsole("--- STARTED ---");
     
     if (mode === 'groq') {
@@ -400,10 +401,12 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         logToConsole("Processing...");
         processResultsV9(data);
         showEditor();
+        
+        // Restore Button
         els.runBtn.disabled = false;
-        // Restaurar botón
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
+
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         els.runBtn.disabled = false;
@@ -439,7 +442,7 @@ worker.onmessage = (e) => {
         showEditor();
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     } 
     else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
 };
@@ -451,7 +454,7 @@ function showEditor() {
     els.configPanel.classList.add('hidden');
     els.headerSection.classList.add('hidden');
     els.progressCont.classList.add('hidden');
-    if(els.resultsArea) els.resultsArea.classList.add('hidden'); // Ocultar area antigua
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
     
     if (!wavesurfer) initWaveSurfer();
