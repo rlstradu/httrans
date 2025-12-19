@@ -1,4 +1,4 @@
-// wp-main.js - V5.3 (Editor Visual: Fix Botonera y Nudge)
+// wp-main.js - V5.5 (Final Stable: Visual Editor + Correct Buttons + Hybrid Logic)
 
 const translations = {
     en: {
@@ -50,14 +50,17 @@ const translations = {
         downloadModel: "Downloading Model...",
         btnReadjust: "Readjust Parameters",
         zoomLabel: "Zoom",
-        ttNudgeStartM: "-1 Frame Start",
-        ttNudgeStartP: "+1 Frame Start",
-        ttNudgeEndM: "-1 Frame End",
-        ttNudgeEndP: "+1 Frame End",
-        ttPlay: "Play Segment (Ctrl+O)",
+        
+        // Tooltips Editor
+        ttNudgeStartM: "-1 Frame Start (-[)",
+        ttNudgeStartP: "+1 Frame Start (+[)",
+        ttNudgeEndM: "-1 Frame End (-])",
+        ttNudgeEndP: "+1 Frame End (+])",
+        ttPlaySegment: "Play subtitle (Ctrl+O)",
+        ttPlay: "Play Segment",
         ttPrev: "Previous Subtitle",
         ttNext: "Next Subtitle",
-        ttClear: "Clear Text (Spotting)",
+        ttClear: "Clear Text",
         ttShiftPrev: "Move first word to previous",
         ttShiftNext: "Move last word to next",
         ttClearAll: "Clear ALL Text",
@@ -65,6 +68,7 @@ const translations = {
         btnClear: "Clear Text",
         btnRecover: "Recover Text",
         confirmRecover: "Restore original text?",
+        
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
@@ -116,11 +120,14 @@ const translations = {
         downloadModel: "Descargando Modelo...",
         btnReadjust: "Reajustar Parámetros",
         zoomLabel: "Zoom",
-        ttNudgeStartM: "-1 Frame Inicio",
-        ttNudgeStartP: "+1 Frame Inicio",
-        ttNudgeEndM: "-1 Frame Fin",
-        ttNudgeEndP: "+1 Frame Fin",
-        ttPlay: "Reproducir Subtítulo (Ctrl+O)",
+        
+        // Tooltips Editor
+        ttNudgeStartM: "-1 Frame Inicio (-[)",
+        ttNudgeStartP: "+1 Frame Inicio (+[)",
+        ttNudgeEndM: "-1 Frame Fin (-])",
+        ttNudgeEndP: "+1 Frame Fin (+])",
+        ttPlaySegment: "Reproducir subtítulo (Ctrl+O)",
+        ttPlay: "Reproducir Segmento",
         ttPrev: "Subtítulo Anterior",
         ttNext: "Siguiente Subtítulo",
         ttClear: "Borrar Texto",
@@ -131,12 +138,13 @@ const translations = {
         btnClear: "Borrar Texto",
         btnRecover: "Recuperar Texto",
         confirmRecover: "¿Restaurar texto original?",
+        
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
     }
 };
 
 let currentLang = 'en';
-let audioData = null; 
+let audioData = null; // AudioBuffer
 let audioBlobUrl = null; 
 let rawFileName = "subtitulos";
 let audioDuration = 0;
@@ -145,13 +153,14 @@ let startTime = 0;
 let lastConsoleLine = null;
 let cachedData = null; 
 
+// Variables Editor
 let wavesurfer = null;
 let wsRegions = null;
 let currentSubtitles = []; 
 const ONE_FRAME = 0.04; 
 let useFrames = false; 
 
-// Estado para Playback Controlado y Undo
+// Estados Editor
 let stopAtTime = null; 
 let focusedSubtitleIndex = -1;
 let isTextCleared = false;
@@ -223,7 +232,7 @@ els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => update
 
 // --- SHORTCUTS ---
 document.addEventListener('keydown', (e) => {
-    // Ctrl + O: Reproducir Subtítulo
+    // Ctrl + O: Reproducir Subtítulo Actual
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
         e.preventDefault();
         if (focusedSubtitleIndex !== -1) {
@@ -289,7 +298,6 @@ function setLanguage(lang) {
     }
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
     
-    // Texto botón clear
     updateClearButtonUI();
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
@@ -301,10 +309,11 @@ function resetFile() {
     isTextCleared = false; textBackup = [];
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
     
-    // Reset UI
+    // UI Reset
     els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
     els.runBtn.disabled = true; 
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+    // Restaurar estilo disabled de Tailwind
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
 
     els.resetBtn.classList.add('hidden'); 
@@ -342,7 +351,7 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
-        // Habilitar botón visualmente
+        // Habilitar botón visualmente (Estilo Amarillo)
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -491,6 +500,10 @@ function showEditor() {
     
     if (!wavesurfer) initWaveSurfer();
     else { renderRegions(); renderSubtitleList(); }
+    
+    // Reset estado de borrado
+    isTextCleared = false;
+    updateClearButtonUI();
 }
 
 els.backToConfigBtn.addEventListener('click', () => {
@@ -505,7 +518,7 @@ if (els.tcFormatBtn) {
     els.tcFormatBtn.addEventListener('click', () => {
         useFrames = !useFrames;
         els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-        renderSubtitleList(); // Force re-render to update timestamps
+        renderSubtitleList(); 
     });
 }
 
@@ -594,26 +607,29 @@ function renderSubtitleList() {
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
                 <div class="flex items-center gap-2">
-                    <span id="time-display-${index}" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500 font-mono">${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}</span>
+                    <button class="text-[#ffb81f] hover:text-[#e0a01a] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
+                        <i class="ph-fill ph-play-circle text-2xl"></i>
+                    </button>
+                    <span id="time-display-${index}" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500 font-mono">
+                        ${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}
+                    </span>
                 </div>
             </div>
             
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
-            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
+            
+            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2">
+                <!-- Metrics -->
+            </div>
+
+            <!-- Toolbar Corrected with Text Labels -->
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
-                <div class="flex items-center gap-2">
-                    <!-- Play Subtitle -->
-                    <button class="text-[#ffb81f] hover:text-[#e0a01a] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
-                        <i class="ph-fill ph-play-circle text-2xl"></i>
-                    </button>
-                    <!-- Nudge -->
-                    <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
-                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
-                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
-                        <div class="w-px bg-gray-200"></div>
-                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
-                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
-                    </div>
+                <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
+                    <div class="w-px bg-gray-200"></div>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
                 </div>
                 <div class="flex gap-2 text-gray-500 ml-auto">
                     <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}"><i class="ph-bold ph-eraser text-lg"></i></button>
@@ -624,6 +640,7 @@ function renderSubtitleList() {
                 </div>
             </div>
         `;
+        
         const ta = div.querySelector('textarea');
         ta.addEventListener('input', () => { sub.text = ta.value; updateSubtitleOverlay(els.videoPreview.currentTime); updateMetrics(index); });
         ta.addEventListener('focus', () => { focusedSubtitleIndex = index; });
@@ -655,7 +672,6 @@ function highlightActiveSub(time) {
     }
 }
 
-// Global functions for inline HTML calls
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -664,10 +680,14 @@ window.nudge = (index, amount, side) => {
     } else {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
-    // Sync Region visual
+    
+    // FIX: Sincronización visual de la región
     if(wsRegions) {
+        // En V7 se accede via getRegions()
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
-        if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
+        if(region) {
+            region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
+        }
     }
     const timeSpan = document.getElementById(`time-display-${index}`);
     if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
@@ -712,8 +732,31 @@ window.shiftWord = (index, dir) => {
 
 if(els.clearTextBtn) {
     els.clearTextBtn.addEventListener('click', () => {
-        if(confirm(translations[currentLang].confirmClearAll)) { currentSubtitles.forEach(s => s.text = ""); renderSubtitleList(); }
+        const t = translations[currentLang];
+        if (isTextCleared) {
+            if(confirm(t.confirmRecover)) {
+                currentSubtitles.forEach((sub, i) => { if (textBackup[i] !== undefined) sub.text = textBackup[i]; });
+                isTextCleared = false; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
+            }
+        } else {
+            if(confirm(t.confirmClearAll)) {
+                textBackup = currentSubtitles.map(s => s.text);
+                currentSubtitles.forEach(s => s.text = "");
+                isTextCleared = true; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
+            }
+        }
     });
+}
+function updateClearButtonUI() {
+    if(!els.clearTextBtn) return;
+    const t = translations[currentLang];
+    if (isTextCleared) {
+        els.clearTextBtn.className = "text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition flex items-center gap-2";
+        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-arrow-u-up-left"></i> ${t.btnRecover}`;
+    } else {
+        els.clearTextBtn.className = "text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition flex items-center gap-2";
+        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-eraser"></i> ${t.btnClear}`;
+    }
 }
 function updateSubtitleOverlay(time) {
     const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
@@ -743,7 +786,9 @@ function processResultsV9(data) {
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
     currentSubtitles = subs;
+    isTextCleared = false; textBackup = []; updateClearButtonUI();
 }
+
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
@@ -783,6 +828,7 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     }
     return subtitles;
 }
+
 function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (text.length <= maxCpl) return [text];
     const words = text.split(' '); let bestCut = -1; let bestScore = Infinity; 
@@ -800,6 +846,7 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
+
 function applyTimeRules(subs, minDur, maxDur, minGap) {
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
@@ -820,7 +867,7 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
     }
     return subs;
 }
-function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
+
 function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
 function fmtTimeShort(s) {
     const d = new Date(s * 1000);
@@ -835,5 +882,6 @@ function fmtTimeShort(s) {
         return `${hours}:${minutes}:${seconds}.${ms}`;
     }
 }
+function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
