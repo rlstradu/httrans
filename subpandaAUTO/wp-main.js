@@ -1,4 +1,4 @@
-// wp-main.js - V5.8 (Undo/Redo Clear Text Feature)
+// wp-main.js - V5.2 (Full Feature Set: Hybrid Logic + Visual Editor + Play Segment + Shortcuts)
 
 const translations = {
     en: {
@@ -54,7 +54,7 @@ const translations = {
         ttNudgeStartP: "+1 Frame Start",
         ttNudgeEndM: "-1 Frame End",
         ttNudgeEndP: "+1 Frame End",
-        ttPlay: "Play Segment",
+        ttPlay: "Play Segment (Ctrl+O)",
         ttPrev: "Previous Subtitle",
         ttNext: "Next Subtitle",
         ttClear: "Clear Text (Spotting)",
@@ -62,7 +62,6 @@ const translations = {
         ttShiftNext: "Move last word to next",
         ttClearAll: "Clear ALL Text",
         confirmClearAll: "Are you sure? This will remove text from ALL subtitles.",
-        // NUEVAS TRADUCCIONES PARA EL BOTÓN
         btnClear: "Clear Text",
         btnRecover: "Recover Text",
         confirmRecover: "Restore original text?",
@@ -117,11 +116,11 @@ const translations = {
         downloadModel: "Descargando Modelo...",
         btnReadjust: "Reajustar Parámetros",
         zoomLabel: "Zoom",
-        ttNudgeStartM: "-1 Frame Inicio",
-        ttNudgeStartP: "+1 Frame Inicio",
-        ttNudgeEndM: "-1 Frame Fin",
-        ttNudgeEndP: "+1 Frame Fin",
-        ttPlay: "Reproducir Subtítulo",
+        ttNudgeStartM: "-[",
+        ttNudgeStartP: "+[",
+        ttNudgeEndM: "-]",
+        ttNudgeEndP: "+]",
+        ttPlay: "Reproducir Subtítulo (Ctrl+O)",
         ttPrev: "Subtítulo Anterior",
         ttNext: "Siguiente Subtítulo",
         ttClear: "Borrar Texto",
@@ -129,7 +128,6 @@ const translations = {
         ttShiftNext: "Mover palabra al siguiente",
         ttClearAll: "Borrar TODO el texto",
         confirmClearAll: "¿Seguro? Esto borrará el texto de TODOS los subtítulos.",
-        // NUEVAS TRADUCCIONES
         btnClear: "Borrar Texto",
         btnRecover: "Recuperar Texto",
         confirmRecover: "¿Restaurar texto original?",
@@ -138,8 +136,8 @@ const translations = {
 };
 
 let currentLang = 'en';
-let audioData = null; 
-let audioBlobUrl = null; 
+let audioData = null; // AudioBuffer
+let audioBlobUrl = null; // URL del archivo para el video tag
 let rawFileName = "subtitulos";
 let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
@@ -154,7 +152,9 @@ let currentSubtitles = [];
 const ONE_FRAME = 0.04; 
 let useFrames = false; 
 
-// ESTADO PARA UNDO/REDO
+// Estado para Playback Controlado y Undo
+let stopAtTime = null; 
+let focusedSubtitleIndex = -1;
 let isTextCleared = false;
 let textBackup = [];
 
@@ -222,6 +222,21 @@ function updateModeUI(mode) {
 updateModeUI('groq');
 els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => updateModeUI(e.target.value)); });
 
+// --- SHORTCUTS ---
+document.addEventListener('keydown', (e) => {
+    // Ctrl + O: Reproducir Subtítulo
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        if (focusedSubtitleIndex !== -1) {
+            window.playSingleSub(focusedSubtitleIndex);
+        } else {
+            const currentTime = els.videoPreview.currentTime;
+            const activeIdx = currentSubtitles.findIndex(s => currentTime >= s.start && currentTime <= s.end);
+            if (activeIdx !== -1) window.playSingleSub(activeIdx);
+        }
+    }
+});
+
 // --- UTILS CONSOLA ---
 function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
@@ -258,19 +273,22 @@ function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
     else { els.langEs.classList.add('active'); els.langEn.classList.remove('active'); }
+    
     document.querySelectorAll('[data-key]').forEach(el => { if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key]; });
+    
     const modelSelect = document.getElementById('model-select');
     if(modelSelect) {
         modelSelect.options[0].text = t.optTiny; modelSelect.options[1].text = t.optBase;
         modelSelect.options[2].text = t.optSmall; if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
     }
+
     const btnText = cachedData ? t.updateBtn : t.startBtn;
-    if (audioData && els.runBtn) {
+    if (audioData) {
          els.runBtn.querySelector('span').innerText = btnText;
     }
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
     
-    // Actualizar texto botón borrar si existe
+    // Texto botón clear
     updateClearButtonUI();
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
@@ -279,11 +297,11 @@ els.langEs.addEventListener('click', () => setLanguage('es'));
 // --- MANEJO DE ARCHIVOS ---
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
-    isTextCleared = false; textBackup = []; // Reset estados
+    isTextCleared = false; textBackup = [];
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
-    els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
     
-    // Disable Button
+    // Reset UI
+    els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
     els.runBtn.disabled = true; 
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
@@ -323,6 +341,7 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
+        // Habilitar botón visualmente
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -372,7 +391,6 @@ els.runBtn.addEventListener('click', async () => {
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
-    // No borramos la consola, solo añadimos
     logToConsole("--- STARTED ---");
     
     if (mode === 'groq') {
@@ -415,9 +433,10 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         logToConsole("Processing...");
         processResultsV9(data);
         showEditor();
+        // Restore Button
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         els.runBtn.disabled = false;
@@ -453,13 +472,13 @@ worker.onmessage = (e) => {
         showEditor();
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     } 
     else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
 };
 
 // =================================================================
-// 🚀 GESTIÓN DEL EDITOR VISUAL (WAVESURFER + INTERACCIÓN)
+// 🚀 GESTIÓN DEL EDITOR VISUAL
 // =================================================================
 
 function showEditor() {
@@ -472,10 +491,6 @@ function showEditor() {
     
     if (!wavesurfer) initWaveSurfer();
     else { renderRegions(); renderSubtitleList(); }
-    
-    // Reset estado de borrado
-    isTextCleared = false;
-    updateClearButtonUI();
 }
 
 els.backToConfigBtn.addEventListener('click', () => {
@@ -490,7 +505,7 @@ if (els.tcFormatBtn) {
     els.tcFormatBtn.addEventListener('click', () => {
         useFrames = !useFrames;
         els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-        renderSubtitleList(); // Force re-render to update timestamps
+        renderSubtitleList(); // Re-render to update format
     });
 }
 
@@ -517,6 +532,10 @@ function initWaveSurfer() {
     const video = els.videoPreview;
     wavesurfer.on('interaction', () => video.currentTime = wavesurfer.getCurrentTime());
     video.addEventListener('timeupdate', () => {
+        if (stopAtTime !== null && video.currentTime >= stopAtTime) {
+            video.pause();
+            stopAtTime = null;
+        }
         if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
         updateSubtitleOverlay(video.currentTime);
         highlightActiveSub(video.currentTime);
@@ -574,20 +593,25 @@ function renderSubtitleList() {
         div.innerHTML = `
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
-                <span id="time-display-${index}" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500 font-mono">${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}</span>
+                <div class="flex items-center gap-2">
+                    <button class="text-gray-400 hover:text-[#ffb81f] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
+                        <i class="ph-fill ph-play-circle text-lg"></i>
+                    </button>
+                    <span id="time-display-${index}" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500 font-mono">${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}</span>
+                </div>
             </div>
+            
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
                 <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">${t.ttNudgeStartM}</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">${t.ttNudgeStartP}</button>
                     <div class="w-px bg-gray-200"></div>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">${t.ttNudgeEndM}</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">${t.ttNudgeEndP}</button>
                 </div>
                 <div class="flex gap-2 text-gray-500 ml-auto">
-                    <button class="hover:text-[#ffb81f]" onclick="window.playSub(${index})" title="${t.ttPlay}"><i class="ph-fill ph-play-circle text-xl"></i></button>
                     <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}"><i class="ph-bold ph-eraser text-lg"></i></button>
                     <button class="hover:text-blue-500" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}"><i class="ph-bold ph-arrow-up"></i></button>
                     <button class="hover:text-blue-500" onclick="window.navSub(${index}, 1)" title="${t.ttNext}"><i class="ph-bold ph-arrow-down"></i></button>
@@ -598,6 +622,8 @@ function renderSubtitleList() {
         `;
         const ta = div.querySelector('textarea');
         ta.addEventListener('input', () => { sub.text = ta.value; updateSubtitleOverlay(els.videoPreview.currentTime); updateMetrics(index); });
+        ta.addEventListener('focus', () => { focusedSubtitleIndex = index; });
+        ta.addEventListener('blur', () => { focusedSubtitleIndex = -1; });
         div.addEventListener('click', (e) => { if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'TEXTAREA') els.videoPreview.currentTime = sub.start; });
         els.subtitleList.appendChild(div);
         updateMetrics(index);
@@ -625,7 +651,7 @@ function highlightActiveSub(time) {
     }
 }
 
-// Global functions for inline HTML calls
+// Global functions
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -634,16 +660,22 @@ window.nudge = (index, amount, side) => {
     } else {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
-    
+    // Update Region Visual
     if(wsRegions) {
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
-        if(region) {
-            region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
-        }
+        if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
     }
     const timeSpan = document.getElementById(`time-display-${index}`);
     if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
     updateMetrics(index);
+};
+
+window.playSingleSub = (index) => {
+    if(!currentSubtitles[index]) return;
+    const sub = currentSubtitles[index];
+    stopAtTime = sub.end;
+    els.videoPreview.currentTime = sub.start;
+    els.videoPreview.play();
 };
 window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
 window.navSub = (index, dir) => {
@@ -674,54 +706,34 @@ window.shiftWord = (index, dir) => {
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
 
-// --- LOGICA BOTON CLEAR/RECOVER ---
 if(els.clearTextBtn) {
     els.clearTextBtn.addEventListener('click', () => {
         const t = translations[currentLang];
-        
         if (isTextCleared) {
-            // RECOVER ACTION
             if(confirm(t.confirmRecover)) {
-                // Restaurar
-                currentSubtitles.forEach((sub, i) => {
-                    if (textBackup[i] !== undefined) sub.text = textBackup[i];
-                });
-                isTextCleared = false;
-                renderSubtitleList();
-                updateSubtitleOverlay(els.videoPreview.currentTime);
-                updateClearButtonUI();
+                currentSubtitles.forEach((sub, i) => { if (textBackup[i] !== undefined) sub.text = textBackup[i]; });
+                isTextCleared = false; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
             }
         } else {
-            // CLEAR ACTION
             if(confirm(t.confirmClearAll)) {
-                // Backup
                 textBackup = currentSubtitles.map(s => s.text);
-                // Clear
                 currentSubtitles.forEach(s => s.text = "");
-                isTextCleared = true;
-                renderSubtitleList();
-                updateSubtitleOverlay(els.videoPreview.currentTime);
-                updateClearButtonUI();
+                isTextCleared = true; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
             }
         }
     });
 }
-
 function updateClearButtonUI() {
     if(!els.clearTextBtn) return;
     const t = translations[currentLang];
-    
     if (isTextCleared) {
-        // Estado VERDE (Recuperar)
         els.clearTextBtn.className = "text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition flex items-center gap-2";
         els.clearTextBtn.innerHTML = `<i class="ph-bold ph-arrow-u-up-left"></i> ${t.btnRecover}`;
     } else {
-        // Estado ROJO (Borrar)
         els.clearTextBtn.className = "text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition flex items-center gap-2";
         els.clearTextBtn.innerHTML = `<i class="ph-bold ph-eraser"></i> ${t.btnClear}`;
     }
 }
-
 function updateSubtitleOverlay(time) {
     const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
     if(activeSub && activeSub.text.trim() !== "") {
@@ -733,6 +745,7 @@ if(els.downloadEditorSrt){
     els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
 }
 
+// LOGICA V9 IGUAL...
 function processResultsV9(data) {
     const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
@@ -745,20 +758,16 @@ function processResultsV9(data) {
     const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
     let allWords = [];
     if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
-    
     let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
-    
     currentSubtitles = subs;
-    
-    // Reset estados al procesar nuevos datos
-    isTextCleared = false;
-    textBackup = [];
-    updateClearButtonUI();
+    // Reset estados
+    isTextCleared = false; textBackup = []; updateClearButtonUI();
 }
-// Algoritmo V9 (Smart Flow)
+
+// (Copiar createSrtV9, balancedSplitV9, applyTimeRules, generateSRT, fmtTime, fmtTimeShort, download)
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
