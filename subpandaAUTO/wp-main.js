@@ -1,4 +1,4 @@
-// wp-main.js - V5.2 (Full Feature Set: Hybrid Logic + Visual Editor + Play Segment + Shortcuts)
+// wp-main.js - V5.3 (Editor Visual: Fix Botonera y Nudge)
 
 const translations = {
     en: {
@@ -116,10 +116,10 @@ const translations = {
         downloadModel: "Descargando Modelo...",
         btnReadjust: "Reajustar Parámetros",
         zoomLabel: "Zoom",
-        ttNudgeStartM: "-[",
-        ttNudgeStartP: "+[",
-        ttNudgeEndM: "-]",
-        ttNudgeEndP: "+]",
+        ttNudgeStartM: "-1 Frame Inicio",
+        ttNudgeStartP: "+1 Frame Inicio",
+        ttNudgeEndM: "-1 Frame Fin",
+        ttNudgeEndP: "+1 Frame Fin",
         ttPlay: "Reproducir Subtítulo (Ctrl+O)",
         ttPrev: "Subtítulo Anterior",
         ttNext: "Siguiente Subtítulo",
@@ -136,8 +136,8 @@ const translations = {
 };
 
 let currentLang = 'en';
-let audioData = null; // AudioBuffer
-let audioBlobUrl = null; // URL del archivo para el video tag
+let audioData = null; 
+let audioBlobUrl = null; 
 let rawFileName = "subtitulos";
 let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
@@ -145,7 +145,6 @@ let startTime = 0;
 let lastConsoleLine = null;
 let cachedData = null; 
 
-// Variables del Editor Visual
 let wavesurfer = null;
 let wsRegions = null;
 let currentSubtitles = []; 
@@ -274,7 +273,9 @@ function setLanguage(lang) {
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
     else { els.langEs.classList.add('active'); els.langEn.classList.remove('active'); }
     
-    document.querySelectorAll('[data-key]').forEach(el => { if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key]; });
+    document.querySelectorAll('[data-key]').forEach(el => {
+        if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key];
+    });
     
     const modelSelect = document.getElementById('model-select');
     if(modelSelect) {
@@ -283,7 +284,7 @@ function setLanguage(lang) {
     }
 
     const btnText = cachedData ? t.updateBtn : t.startBtn;
-    if (audioData) {
+    if (audioData && els.runBtn) {
          els.runBtn.querySelector('span').innerText = btnText;
     }
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
@@ -433,7 +434,6 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         logToConsole("Processing...");
         processResultsV9(data);
         showEditor();
-        // Restore Button
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
         els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
@@ -505,7 +505,7 @@ if (els.tcFormatBtn) {
     els.tcFormatBtn.addEventListener('click', () => {
         useFrames = !useFrames;
         els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-        renderSubtitleList(); // Re-render to update format
+        renderSubtitleList(); // Force re-render to update timestamps
     });
 }
 
@@ -594,9 +594,6 @@ function renderSubtitleList() {
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
                 <div class="flex items-center gap-2">
-                    <button class="text-gray-400 hover:text-[#ffb81f] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
-                        <i class="ph-fill ph-play-circle text-lg"></i>
-                    </button>
                     <span id="time-display-${index}" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500 font-mono">${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}</span>
                 </div>
             </div>
@@ -604,12 +601,19 @@ function renderSubtitleList() {
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
-                <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">${t.ttNudgeStartM}</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">${t.ttNudgeStartP}</button>
-                    <div class="w-px bg-gray-200"></div>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">${t.ttNudgeEndM}</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">${t.ttNudgeEndP}</button>
+                <div class="flex items-center gap-2">
+                    <!-- Play Subtitle -->
+                    <button class="text-[#ffb81f] hover:text-[#e0a01a] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
+                        <i class="ph-fill ph-play-circle text-2xl"></i>
+                    </button>
+                    <!-- Nudge -->
+                    <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
+                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
+                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
+                        <div class="w-px bg-gray-200"></div>
+                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
+                        <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
+                    </div>
                 </div>
                 <div class="flex gap-2 text-gray-500 ml-auto">
                     <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}"><i class="ph-bold ph-eraser text-lg"></i></button>
@@ -651,7 +655,7 @@ function highlightActiveSub(time) {
     }
 }
 
-// Global functions
+// Global functions for inline HTML calls
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -660,7 +664,7 @@ window.nudge = (index, amount, side) => {
     } else {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
-    // Update Region Visual
+    // Sync Region visual
     if(wsRegions) {
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
         if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
@@ -708,31 +712,8 @@ window.shiftWord = (index, dir) => {
 
 if(els.clearTextBtn) {
     els.clearTextBtn.addEventListener('click', () => {
-        const t = translations[currentLang];
-        if (isTextCleared) {
-            if(confirm(t.confirmRecover)) {
-                currentSubtitles.forEach((sub, i) => { if (textBackup[i] !== undefined) sub.text = textBackup[i]; });
-                isTextCleared = false; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
-            }
-        } else {
-            if(confirm(t.confirmClearAll)) {
-                textBackup = currentSubtitles.map(s => s.text);
-                currentSubtitles.forEach(s => s.text = "");
-                isTextCleared = true; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
-            }
-        }
+        if(confirm(translations[currentLang].confirmClearAll)) { currentSubtitles.forEach(s => s.text = ""); renderSubtitleList(); }
     });
-}
-function updateClearButtonUI() {
-    if(!els.clearTextBtn) return;
-    const t = translations[currentLang];
-    if (isTextCleared) {
-        els.clearTextBtn.className = "text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition flex items-center gap-2";
-        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-arrow-u-up-left"></i> ${t.btnRecover}`;
-    } else {
-        els.clearTextBtn.className = "text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition flex items-center gap-2";
-        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-eraser"></i> ${t.btnClear}`;
-    }
 }
 function updateSubtitleOverlay(time) {
     const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
@@ -745,7 +726,6 @@ if(els.downloadEditorSrt){
     els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
 }
 
-// LOGICA V9 IGUAL...
 function processResultsV9(data) {
     const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
@@ -763,11 +743,7 @@ function processResultsV9(data) {
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
     currentSubtitles = subs;
-    // Reset estados
-    isTextCleared = false; textBackup = []; updateClearButtonUI();
 }
-
-// (Copiar createSrtV9, balancedSplitV9, applyTimeRules, generateSRT, fmtTime, fmtTimeShort, download)
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
