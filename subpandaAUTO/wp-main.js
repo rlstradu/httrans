@@ -1,4 +1,4 @@
-// wp-main.js - V5.0 (Editor Visual Profesional + Métricas + Navegación + Zoom)
+// wp-main.js - V5.4 (Fix Nudge Sync & Region HTML)
 
 const translations = {
     en: {
@@ -131,7 +131,7 @@ const translations = {
 
 let currentLang = 'en';
 let audioData = null; // AudioBuffer
-let audioBlobUrl = null; // URL del archivo para el video tag
+let audioBlobUrl = null;
 let rawFileName = "subtitulos";
 let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
@@ -139,11 +139,10 @@ let startTime = 0;
 let lastConsoleLine = null;
 let cachedData = null; 
 
-// Variables del Editor Visual
 let wavesurfer = null;
 let wsRegions = null;
-let currentSubtitles = []; // Array de objetos {start, end, text}
-const ONE_FRAME = 0.04; // 1 frame @ 25fps
+let currentSubtitles = []; 
+const ONE_FRAME = 0.04; 
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -160,13 +159,11 @@ const els = {
     statusText: document.getElementById('status-text'),
     consoleOutput: document.getElementById('console-output'),
     
-    // UI Sections
     uploadSection: document.getElementById('upload-section'),
     configPanel: document.getElementById('config-panel'),
     headerSection: document.getElementById('header-section'),
     editorContainer: document.getElementById('editor-container'),
     
-    // Editor Elements
     videoPreview: document.getElementById('video-preview'),
     subtitleOverlay: document.getElementById('subtitle-overlay'),
     subtitleList: document.getElementById('subtitle-list'),
@@ -175,14 +172,13 @@ const els = {
     zoomSlider: document.getElementById('zoom-slider'),
     clearTextBtn: document.getElementById('clear-text-btn'),
     
-    // Config Inputs
     dontBreakInput: document.getElementById('dont-break-on'),
     modeRadios: document.getElementsByName('proc_mode'),
     groqContainer: document.getElementById('groq-key-container'),
     localModelContainer: document.getElementById('local-model-container')
 };
 
-// --- LOGICA DE MODOS ---
+// --- INIT & MODES ---
 function updateModeUI(mode) {
     if (mode === 'groq') {
         if(els.groqContainer) els.groqContainer.classList.remove('hidden');
@@ -194,9 +190,7 @@ function updateModeUI(mode) {
         });
         const savedKey = localStorage.getItem('groq_api_key');
         const defaultKey = "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";
-        if(document.getElementById('groq-key')) {
-             document.getElementById('groq-key').value = savedKey || defaultKey;
-        }
+        if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || defaultKey;
     } else {
         if(els.groqContainer) els.groqContainer.classList.add('hidden');
         if(els.localModelContainer) els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
@@ -240,8 +234,6 @@ function fmtDuration(seconds) {
     const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60);
     return `${m}m ${s}s`;
 }
-
-// --- IDIOMA ---
 function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
@@ -265,11 +257,13 @@ els.langEs.addEventListener('click', () => setLanguage('es'));
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
-    
-    // UI Reset
     els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
-    els.runBtn.disabled = true; els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+    
+    // Disable Button
+    els.runBtn.disabled = true; 
+    els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
+
     els.resetBtn.classList.add('hidden'); 
     
     els.editorContainer.classList.add('hidden');
@@ -292,7 +286,6 @@ async function handleFile(file) {
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
 
-    // Feedback inmediato
     els.progressCont.classList.remove('hidden');
     logToConsole(`File loaded: ${file.name}`);
     logToConsole("Decoding audio... please wait.");
@@ -303,6 +296,7 @@ async function handleFile(file) {
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         audioData = audioBuffer; audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
+        logToConsole(`Ready to start.`);
         
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
@@ -351,8 +345,8 @@ els.runBtn.addEventListener('click', async () => {
     els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
-    // Solo limpiar la consola si no estamos recargando
-    // els.consoleOutput.innerHTML = '';
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
+    els.progressCont.classList.remove('hidden'); 
     logToConsole("--- STARTED ---");
     
     if (mode === 'groq') {
@@ -439,7 +433,7 @@ worker.onmessage = (e) => {
 };
 
 // =================================================================
-// 🚀 GESTIÓN DEL EDITOR VISUAL (WAVESURFER + INTERACCIÓN)
+// 🚀 GESTIÓN DEL EDITOR VISUAL (WAVESURFER)
 // =================================================================
 
 function showEditor() {
@@ -447,6 +441,7 @@ function showEditor() {
     els.configPanel.classList.add('hidden');
     els.headerSection.classList.add('hidden');
     els.progressCont.classList.add('hidden');
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
     
     if (!wavesurfer) initWaveSurfer();
@@ -472,17 +467,14 @@ function initWaveSurfer() {
         normalize: true,
         minimap: true,
         autoCenter: true, 
-        minPxPerSec: 100, // Zoom por defecto
+        minPxPerSec: 100, 
         plugins: [ WaveSurfer.Regions.create() ]
     });
     wsRegions = wavesurfer.plugins[0];
     
-    // Slider Zoom
-    if(els.zoomSlider) {
-        els.zoomSlider.addEventListener('input', (e) => {
-            wavesurfer.zoom(Number(e.target.value));
-        });
-    }
+    els.zoomSlider.addEventListener('input', (e) => {
+        wavesurfer.zoom(Number(e.target.value));
+    });
 
     const video = els.videoPreview;
     wavesurfer.on('interaction', () => video.currentTime = wavesurfer.getCurrentTime());
@@ -493,13 +485,13 @@ function initWaveSurfer() {
     });
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
-    
     wavesurfer.on('ready', () => {
         wavesurfer.zoom(100);
         renderRegions();
         renderSubtitleList();
     });
 
+    // Actualización de tiempos al mover cajas
     wsRegions.on('region-updated', (region) => {
         const index = parseInt(region.id.replace('sub-', ''));
         if (currentSubtitles[index]) {
@@ -510,24 +502,30 @@ function initWaveSurfer() {
             updateMetrics(index);
         }
     });
-    wsRegions.on('region-clicked', (region, e) => { e.stopPropagation(); video.currentTime = region.start; video.play(); });
+    
+    wsRegions.on('region-clicked', (region, e) => {
+        e.stopPropagation();
+        video.currentTime = region.start;
+        video.play();
+    });
 }
 
 function renderRegions() {
     wsRegions.clearRegions();
     currentSubtitles.forEach((sub, index) => {
-        const contentDiv = document.createElement('div');
-        contentDiv.textContent = (index + 1).toString();
-        contentDiv.style.color = "black";
-        contentDiv.style.fontSize = "10px";
-        contentDiv.style.padding = "2px";
-        contentDiv.style.fontWeight = "bold";
+        // FIX: USAR DOM ELEMENT PARA EVITAR HTML TAGS VISIBLES
+        const regionLabel = document.createElement('span');
+        regionLabel.innerText = (index + 1).toString();
+        regionLabel.style.color = "black";
+        regionLabel.style.fontSize = "10px";
+        regionLabel.style.padding = "2px";
+        regionLabel.style.fontWeight = "bold";
 
         wsRegions.addRegion({
             id: `sub-${index}`,
             start: sub.start,
             end: sub.end,
-            content: contentDiv, // DOM Element en lugar de string
+            content: regionLabel, // <-- AQUÍ
             color: 'rgba(255, 184, 31, 0.4)',
             drag: true, resize: true
         });
@@ -596,7 +594,7 @@ function highlightActiveSub(time) {
     }
 }
 
-// Global functions for inline HTML calls
+// Global functions exposed to window
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -606,14 +604,22 @@ window.nudge = (index, amount, side) => {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
     
-    // Sync region visual
-    if(wsRegions && wsRegions.regions[`sub-${index}`]) {
-        wsRegions.regions[`sub-${index}`].setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
+    // FIX: ACTUALIZAR VISUALMENTE LA REGIÓN
+    if(wsRegions) {
+        // En v7, buscamos la región en el array getRegions()
+        const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
+        if(region) {
+            region.setOptions({
+                start: currentSubtitles[index].start,
+                end: currentSubtitles[index].end
+            });
+        }
     }
     const timeSpan = document.getElementById(`time-display-${index}`);
     if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
     updateMetrics(index);
 };
+
 window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
 window.navSub = (index, dir) => {
     const newIndex = index + dir;
@@ -659,13 +665,9 @@ if(els.downloadEditorSrt){
     els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
 }
 
-// LOGICA V9 IGUAL (Omitida para no repetir código innecesario, usar la del bloque anterior V3.9)
-// Asegúrate de copiar las funciones createSrtV9, balancedSplitV9 y applyTimeRules del archivo anterior.
-// El cambio crítico aquí era la integración con el Editor Visual (función showEditor y initWaveSurfer).
-
 function processResultsV9(data) {
-    // ... Parámetros del DOM ...
-    const maxCPL = parseInt(document.getElementById('max-cpl').value);
+    // ... (Parámetros y Lógica V9 igual que antes) ...
+    const maxCpl = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
     const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
@@ -674,26 +676,18 @@ function processResultsV9(data) {
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
     const dontBreakStr = document.getElementById('dont-break-on').value;
     const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
-
     let allWords = [];
-    if (data.chunks) {
-        data.chunks.forEach(chunk => {
-            let start = chunk.timestamp[0]; let end = chunk.timestamp[1];
-            if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end });
-        });
-    }
-
-    let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
+    if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
+    
+    let subs = createSrtV9(allWords, maxCpl, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
-
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
-
-    currentSubtitles = subs; // GLOBAL
+    
+    currentSubtitles = subs;
 }
 
 // (Copiar funciones createSrtV9, balancedSplitV9, applyTimeRules, generateSRT, fmtTimeShort, download)
-// Para completar, pego las funciones V9 de nuevo:
 
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
@@ -774,9 +768,8 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
     return subs;
 }
 
-function fmtTimeShort(s) {
-    const d = new Date(s * 1000);
-    return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,2)}`;
-}
-
+function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
+function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
+function fmtTimeShort(s) { const d = new Date(s * 1000); return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,2)}`; }
+function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
