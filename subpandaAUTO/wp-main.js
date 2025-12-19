@@ -1,4 +1,4 @@
-// wp-main.js - V5.6 (Fix Timecode Switcher)
+// wp-main.js - V5.7 (Fix Timecode Precision HH:MM:SS.mmm)
 
 const translations = {
     en: {
@@ -144,7 +144,7 @@ let wavesurfer = null;
 let wsRegions = null;
 let currentSubtitles = []; 
 const ONE_FRAME = 0.04; 
-let useFrames = false; // ESTADO PARA FORMATO DE TIEMPO
+let useFrames = false; 
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -175,7 +175,7 @@ const els = {
     backToConfigBtn: document.getElementById('back-to-config-btn'),
     zoomSlider: document.getElementById('zoom-slider'),
     clearTextBtn: document.getElementById('clear-text-btn'),
-    tcFormatBtn: document.getElementById('tc-format-btn'), // REFERENCIA AL BOTÓN TC
+    tcFormatBtn: document.getElementById('tc-format-btn'), 
     
     // Config Inputs
     dontBreakInput: document.getElementById('dont-break-on'),
@@ -467,12 +467,11 @@ els.backToConfigBtn.addEventListener('click', () => {
     els.runBtn.querySelector('span').innerText = t.updateBtn;
 });
 
-// Listener para toggle de formato
 if (els.tcFormatBtn) {
     els.tcFormatBtn.addEventListener('click', () => {
         useFrames = !useFrames;
         els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-        renderSubtitleList(); // Forzar re-render de la lista
+        renderSubtitleList(); // Force re-render to update timestamps
     });
 }
 
@@ -695,6 +694,8 @@ function processResultsV9(data) {
     
     currentSubtitles = subs;
 }
+
+// ... (CreateSRT V9 y Helpers permanecen iguales que la versión V5.6) ...
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
@@ -771,21 +772,22 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
     }
     return subs;
 }
-
-// Helpers
-function fmtTimeShort(s) {
-    if(useFrames) {
-        // Formato HH:MM:SS:FF (asumiendo 25fps)
-        const d = new Date(s * 1000);
-        const frames = Math.floor((s % 1) * 25);
-        return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}:${String(frames).padStart(2,'0')}`;
-    } else {
-        // Formato HH:MM:SS.ms
-        const d = new Date(s * 1000);
-        return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,2)}`;
-    }
-}
 function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
 function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
+function fmtTimeShort(s) {
+    // FIX: Formato completo HH:MM:SS.mmm (3 dígitos) y soporte Frames
+    const d = new Date(s * 1000);
+    const hours = String(Math.floor(s / 3600)).padStart(2, '0');
+    const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(d.getUTCSeconds()).padStart(2, '0');
+
+    if (useFrames) {
+        const frames = Math.floor((s % 1) * 25);
+        return `${hours}:${minutes}:${seconds}:${String(frames).padStart(2, '0')}`;
+    } else {
+        const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
+        return `${hours}:${minutes}:${seconds}.${ms}`;
+    }
+}
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
