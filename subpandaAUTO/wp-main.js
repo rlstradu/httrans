@@ -1,4 +1,4 @@
-// wp-main.js - V5.7 (SVG Icons Fix for Dynamic Content)
+// wp-main.js - V5.8 (UI Refinements: Bigger Inputs, Text Buttons, Nav Icons)
 
 const translations = {
     en: {
@@ -59,15 +59,14 @@ const translations = {
         ttPrev: "Previous Subtitle",
         ttNext: "Next Subtitle",
         ttClear: "Clear Text",
-        ttShiftPrev: "Move first word to previous",
-        ttShiftNext: "Move last word to next",
+        ttShiftPrev: "Move first word to previous subtitle",
+        ttShiftNext: "Move last word to next subtitle",
         ttClearAll: "Clear ALL Text",
         confirmClearAll: "Are you sure? This will remove text from ALL subtitles.",
         btnClear: "Clear Text",
         btnRecover: "Recover Text",
         confirmRecover: "Restore original text?",
         ttEditTime: "Click to edit timestamps",
-        
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
@@ -136,7 +135,6 @@ const translations = {
         btnRecover: "Recuperar Texto",
         confirmRecover: "¿Restaurar texto original?",
         ttEditTime: "Clic para editar tiempos manualmente",
-        
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
     }
 };
@@ -162,16 +160,13 @@ let focusedSubtitleIndex = -1;
 let isTextCleared = false;
 let textBackup = [];
 
-// Icons SVGs
+// Icons SVGs Updated
 const ICON_PLAY = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
-const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
-const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
+const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
+const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
 const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M222.14,136.69,141.49,36.56a23.93,23.93,0,0,0-36.87-.21l-79.16,95A24,24,0,0,0,24,146.6V192a24,24,0,0,0,24,24H216a8,8,0,0,0,0-16H168V166.42l53.94-24.16A8,8,0,0,0,222.14,136.69ZM152,189.65V200H48a8,8,0,0,1-8-8V146.6a8,8,0,0,1,.53-2.85L127,151.78ZM116.35,51.81a8,8,0,0,1,12.3-.07L194.75,134,141.27,158Z"></path></svg>`;
-const ICON_PREV = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z" transform="rotate(270, 128, 128)"></path></svg>`;
-const ICON_NEXT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z" transform="rotate(90, 128, 128)"></path></svg>`;
-const ICON_SHIFT_PREV = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,117.66l-72-72a8,8,0,0,0-11.32,0l-72,72a8,8,0,0,0,11.32,11.32L120,67.31V216a8,8,0,0,0,16,0V67.31l58.34,58.35a8,8,0,0,0,11.32-11.32Z"></path></svg>`;
-const ICON_SHIFT_NEXT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,138.34l-72,72a8,8,0,0,1-11.32,0l-72-72a8,8,0,0,1,11.32-11.32L120,188.69V40a8,8,0,0,1,16,0V188.69l58.34-58.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
-
+const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
+const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -312,7 +307,7 @@ function resetFile() {
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
-    // if(els.resultsArea) els.resultsArea.classList.add('hidden');
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
 
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
@@ -384,10 +379,11 @@ els.runBtn.addEventListener('click', async () => {
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
     
-    // UI Update on Click
     els.runBtn.disabled = true;
-    els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
+    els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
+    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
     logToConsole("--- STARTED ---");
     
@@ -432,7 +428,8 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         processResultsV9(data);
         showEditor();
         els.runBtn.disabled = false;
-        els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
+        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         els.runBtn.disabled = false;
@@ -467,7 +464,8 @@ worker.onmessage = (e) => {
         processResultsV9(data);
         showEditor();
         els.runBtn.disabled = false;
-        els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
+        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     } 
     else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
 };
@@ -590,13 +588,13 @@ function renderSubtitleList() {
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
                 <div class="flex items-center gap-2" id="tc-container-${index}">
-                    <!-- BOTÓN PLAY: SVG INLINE PARA ASEGURAR VISIBILIDAD -->
+                    <!-- BOTÓN PLAY VISIBLE -->
                     <button class="text-[#ffb81f] hover:text-[#e0a01a] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
                         ${ICON_PLAY}
                     </button>
-                    <!-- TIME SPAN CLICABLE -->
+                    <!-- TIME SPAN CLICABLE MÁS GRANDE -->
                     <span id="time-display-${index}" onclick="window.editTimecode(${index})" 
-                          class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" 
+                          class="text-xs bg-gray-100 px-3 py-1.5 rounded text-gray-700 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" 
                           title="${t.ttEditTime}">
                         ${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}
                     </span>
@@ -605,24 +603,26 @@ function renderSubtitleList() {
             
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             
-            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
+            <div id="metrics-${index}" class="flex justify-between text-xs text-gray-500 font-mono border-t border-gray-100 pt-2 mb-2 font-bold"></div>
             
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
                 <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
+                    <button class="px-2 py-1 hover:bg-gray-100 text-gray-600 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
+                    <button class="px-2 py-1 hover:bg-gray-100 text-gray-600 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
                     <div class="w-px bg-gray-200"></div>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
+                    <button class="px-2 py-1 hover:bg-gray-100 text-gray-600 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
+                    <button class="px-2 py-1 hover:bg-gray-100 text-gray-600 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
                 </div>
                 <div class="flex gap-2 text-gray-500 ml-auto items-center">
                     <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
                     <div class="w-px bg-gray-200 h-4 mx-1"></div>
-                    <button class="hover:text-purple-500" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">${ICON_SHIFT_PREV}</button>
-                    <button class="hover:text-purple-500" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}">${ICON_SHIFT_NEXT}</button>
+                    <!-- Nuevos Botones Texto -->
+                    <button class="px-2 py-0.5 bg-gray-100 hover:bg-purple-100 text-purple-600 rounded text-[10px] font-bold border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">Word ↑</button>
+                    <button class="px-2 py-0.5 bg-gray-100 hover:bg-purple-100 text-purple-600 rounded text-[10px] font-bold border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}">Word ↓</button>
                     <div class="w-px bg-gray-200 h-4 mx-1"></div>
-                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}">${ICON_PREV}</button>
-                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, 1)" title="${t.ttNext}">${ICON_NEXT}</button>
+                    <!-- Iconos Flecha -->
+                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}">${ICON_UP}</button>
+                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, 1)" title="${t.ttNext}">${ICON_DOWN}</button>
                 </div>
             </div>
         `;
@@ -640,7 +640,7 @@ function renderSubtitleList() {
     });
 }
 
-// --- EDICIÓN MANUAL DE TIEMPOS ---
+// --- EDICIÓN MANUAL DE TIEMPOS (Con campos más grandes) ---
 window.editTimecode = (index) => {
     const container = document.getElementById(`tc-container-${index}`);
     const sub = currentSubtitles[index];
@@ -650,11 +650,11 @@ window.editTimecode = (index) => {
 
     container.innerHTML = `
         <div class="flex items-center gap-1 bg-white p-1 rounded border border-[#ffb81f] shadow-sm">
-            <input type="text" id="start-in-${index}" value="${fmtTimeShort(sub.start)}" class="w-16 text-[10px] font-mono border border-gray-300 rounded px-1 py-0.5 focus:border-[#ffb81f] outline-none text-center">
-            <span class="text-[10px] text-gray-400">-</span>
-            <input type="text" id="end-in-${index}" value="${fmtTimeShort(sub.end)}" class="w-16 text-[10px] font-mono border border-gray-300 rounded px-1 py-0.5 focus:border-[#ffb81f] outline-none text-center">
-            <button onclick="window.saveTimecode(${index})" class="text-green-500 hover:text-green-700 ml-1">${ICON_CHECK}</button>
-            <button onclick="window.cancelEditTimecode(${index})" class="text-red-500 hover:text-red-700">${ICON_X}</button>
+            <input type="text" id="start-in-${index}" value="${fmtTimeShort(sub.start)}" class="w-24 text-xs font-mono border border-gray-300 rounded px-1 py-1 focus:border-[#ffb81f] outline-none text-center">
+            <span class="text-xs text-gray-400">-</span>
+            <input type="text" id="end-in-${index}" value="${fmtTimeShort(sub.end)}" class="w-24 text-xs font-mono border border-gray-300 rounded px-1 py-1 focus:border-[#ffb81f] outline-none text-center">
+            <button onclick="window.saveTimecode(${index})" class="text-green-500 hover:text-green-700 ml-1 p-1 bg-green-50 rounded border border-green-200">${ICON_CHECK}</button>
+            <button onclick="window.cancelEditTimecode(${index})" class="text-red-500 hover:text-red-700 p-1 bg-red-50 rounded border border-red-200">${ICON_X}</button>
         </div>
     `;
     
@@ -715,7 +715,6 @@ function parseTimeStr(timeStr) {
             seconds += parseInt(parts[3]) * 0.04; 
             return seconds;
         }
-        // HH:MM:SS.mmm
         if (parts.length === 3) {
             seconds += parseInt(parts[0]) * 3600;
             seconds += parseInt(parts[1]) * 60;
