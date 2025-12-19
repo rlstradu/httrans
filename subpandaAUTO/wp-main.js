@@ -1,4 +1,4 @@
-// wp-main.js - V5.5 (Final Stable: Visual Editor + Correct Buttons + Hybrid Logic)
+// wp-main.js - V5.6 (Final Stable: Visual Editor + Manual Time Edit + Play Button Fix)
 
 const translations = {
     en: {
@@ -68,6 +68,7 @@ const translations = {
         btnClear: "Clear Text",
         btnRecover: "Recover Text",
         confirmRecover: "Restore original text?",
+        ttEditTime: "Click to edit timestamps",
         
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
@@ -138,6 +139,7 @@ const translations = {
         btnClear: "Borrar Texto",
         btnRecover: "Recuperar Texto",
         confirmRecover: "¿Restaurar texto original?",
+        ttEditTime: "Clic para editar tiempos manualmente",
         
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
     }
@@ -232,7 +234,6 @@ els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => update
 
 // --- SHORTCUTS ---
 document.addEventListener('keydown', (e) => {
-    // Ctrl + O: Reproducir Subtítulo Actual
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
         e.preventDefault();
         if (focusedSubtitleIndex !== -1) {
@@ -281,23 +282,15 @@ function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
     else { els.langEs.classList.add('active'); els.langEn.classList.remove('active'); }
-    
-    document.querySelectorAll('[data-key]').forEach(el => {
-        if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key];
-    });
-    
+    document.querySelectorAll('[data-key]').forEach(el => { if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key]; });
     const modelSelect = document.getElementById('model-select');
     if(modelSelect) {
         modelSelect.options[0].text = t.optTiny; modelSelect.options[1].text = t.optBase;
         modelSelect.options[2].text = t.optSmall; if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
     }
-
     const btnText = cachedData ? t.updateBtn : t.startBtn;
-    if (audioData && els.runBtn) {
-         els.runBtn.querySelector('span').innerText = btnText;
-    }
+    if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
-    
     updateClearButtonUI();
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
@@ -313,16 +306,13 @@ function resetFile() {
     els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
     els.runBtn.disabled = true; 
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
-    // Restaurar estilo disabled de Tailwind
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
 
     els.resetBtn.classList.add('hidden'); 
-    
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
-
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
 }
@@ -351,7 +341,6 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
-        // Habilitar botón visualmente (Estilo Amarillo)
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -394,7 +383,7 @@ els.runBtn.addEventListener('click', async () => {
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
     
-    // UI Update on Click
+    // UI Update
     els.runBtn.disabled = true;
     els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
@@ -603,14 +592,21 @@ function renderSubtitleList() {
         const div = document.createElement('div');
         div.id = `card-sub-${index}`;
         div.className = "bg-white p-3 rounded border border-gray-200 hover:border-[#ffb81f] transition text-sm group mb-2";
+        
+        // CONTENEDOR TIEMPO (ID tc-container-{index} es vital para el reemplazo)
         div.innerHTML = `
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
-                <div class="flex items-center gap-2">
+                
+                <div class="flex items-center gap-2" id="tc-container-${index}">
+                    <!-- BOTÓN PLAY AHORA VISIBLE Y GRANDE -->
                     <button class="text-[#ffb81f] hover:text-[#e0a01a] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
                         <i class="ph-fill ph-play-circle text-2xl"></i>
                     </button>
-                    <span id="time-display-${index}" class="text-[10px] bg-gray-100 px-1 rounded text-gray-500 font-mono">
+                    <!-- SPAN CLICABLE -->
+                    <span id="time-display-${index}" onclick="window.editTimecode(${index})" 
+                          class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" 
+                          title="${t.ttEditTime}">
                         ${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}
                     </span>
                 </div>
@@ -618,11 +614,8 @@ function renderSubtitleList() {
             
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             
-            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2">
-                <!-- Metrics -->
-            </div>
-
-            <!-- Toolbar Corrected with Text Labels -->
+            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
+            
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
                 <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
@@ -645,12 +638,123 @@ function renderSubtitleList() {
         ta.addEventListener('input', () => { sub.text = ta.value; updateSubtitleOverlay(els.videoPreview.currentTime); updateMetrics(index); });
         ta.addEventListener('focus', () => { focusedSubtitleIndex = index; });
         ta.addEventListener('blur', () => { focusedSubtitleIndex = -1; });
-        div.addEventListener('click', (e) => { if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'TEXTAREA') els.videoPreview.currentTime = sub.start; });
+        div.addEventListener('click', (e) => { 
+             // Ignorar clics dentro de la zona de edición de tiempo para no saltar video
+             if(e.target.closest('input') || e.target.closest('button') || e.target.tagName === 'TEXTAREA') return;
+             els.videoPreview.currentTime = sub.start; 
+        });
         els.subtitleList.appendChild(div);
         updateMetrics(index);
     });
 }
 
+// --- EDICIÓN MANUAL DE TIEMPOS ---
+
+window.editTimecode = (index) => {
+    const container = document.getElementById(`tc-container-${index}`);
+    const sub = currentSubtitles[index];
+    if (!container) return;
+
+    // Guardar estado original
+    container.dataset.original = container.innerHTML;
+
+    // Inyectar formulario de edición
+    container.innerHTML = `
+        <div class="flex items-center gap-1 bg-white p-1 rounded border border-[#ffb81f] shadow-sm">
+            <input type="text" id="start-in-${index}" value="${fmtTimeShort(sub.start)}" class="w-16 text-[10px] font-mono border border-gray-300 rounded px-1 py-0.5 focus:border-[#ffb81f] outline-none text-center">
+            <span class="text-[10px] text-gray-400">-</span>
+            <input type="text" id="end-in-${index}" value="${fmtTimeShort(sub.end)}" class="w-16 text-[10px] font-mono border border-gray-300 rounded px-1 py-0.5 focus:border-[#ffb81f] outline-none text-center">
+            <button onclick="window.saveTimecode(${index})" class="text-green-500 hover:text-green-700 ml-1"><i class="ph-bold ph-check text-sm"></i></button>
+            <button onclick="window.cancelEditTimecode(${index})" class="text-red-500 hover:text-red-700"><i class="ph-bold ph-x text-sm"></i></button>
+        </div>
+    `;
+    
+    // Evitar que el clic se propague al div padre y salte el video
+    container.querySelector('input').focus();
+    container.onclick = (e) => e.stopPropagation();
+};
+
+window.cancelEditTimecode = (index) => {
+    const container = document.getElementById(`tc-container-${index}`);
+    if (container && container.dataset.original) {
+        container.innerHTML = container.dataset.original;
+    } else {
+        renderSubtitleList(); // Fallback
+    }
+};
+
+window.saveTimecode = (index) => {
+    const startVal = document.getElementById(`start-in-${index}`).value;
+    const endVal = document.getElementById(`end-in-${index}`).value;
+    
+    const newStart = parseTimeStr(startVal);
+    const newEnd = parseTimeStr(endVal);
+
+    if (newStart !== null && newEnd !== null && newStart < newEnd) {
+        currentSubtitles[index].start = newStart;
+        currentSubtitles[index].end = newEnd;
+        
+        // Actualizar visualmente la región
+        if(wsRegions) {
+            const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
+            if(region) region.setOptions({ start: newStart, end: newEnd });
+        }
+        
+        // Restaurar la vista normal con los nuevos valores
+        const container = document.getElementById(`tc-container-${index}`);
+        // Lo más fácil es restaurar el HTML original pero con los valores nuevos inyectados,
+        // pero como playSingleSub depende del HTML original, mejor re-renderizamos la fila.
+        // O reconstruimos el HTML manual:
+        const t = translations[currentLang];
+        container.innerHTML = `
+            <button class="text-[#ffb81f] hover:text-[#e0a01a] transition" onclick="window.playSingleSub(${index})" title="${t.ttPlaySegment}">
+                <i class="ph-fill ph-play-circle text-2xl"></i>
+            </button>
+            <span id="time-display-${index}" onclick="window.editTimecode(${index})" 
+                  class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" 
+                  title="${t.ttEditTime}">
+                ${fmtTimeShort(newStart)} - ${fmtTimeShort(newEnd)}
+            </span>
+        `;
+        updateMetrics(index);
+    } else {
+        alert("Invalid time format. Use HH:MM:SS.mmm or MM:SS.mmm");
+    }
+};
+
+// Parser inteligente para inputs manuales
+function parseTimeStr(timeStr) {
+    try {
+        const parts = timeStr.trim().split(':');
+        let seconds = 0;
+        
+        // Caso Frames (HH:MM:SS:FF) - 4 partes
+        if (useFrames && parts.length === 4) {
+            seconds += parseInt(parts[0]) * 3600;
+            seconds += parseInt(parts[1]) * 60;
+            seconds += parseInt(parts[2]);
+            seconds += parseInt(parts[3]) * 0.04; // 25fps frame to sec
+            return seconds;
+        }
+
+        // Caso Timecode (HH:MM:SS.mmm)
+        if (parts.length === 3) {
+            seconds += parseInt(parts[0]) * 3600;
+            seconds += parseInt(parts[1]) * 60;
+            seconds += parseFloat(parts[2]);
+        } else if (parts.length === 2) {
+            seconds += parseInt(parts[0]) * 60;
+            seconds += parseFloat(parts[1]);
+        } else if (parts.length === 1) {
+            seconds += parseFloat(parts[0]);
+        }
+        return isNaN(seconds) ? null : seconds;
+    } catch (e) {
+        return null;
+    }
+}
+
+// ... (Resto de funciones: updateMetrics, highlightActiveSub, nudge, playSingleSub, etc. se mantienen) ...
 function updateMetrics(index) {
     const sub = currentSubtitles[index];
     const duration = sub.end - sub.start;
@@ -681,13 +785,9 @@ window.nudge = (index, amount, side) => {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
     
-    // FIX: Sincronización visual de la región
     if(wsRegions) {
-        // En V7 se accede via getRegions()
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
-        if(region) {
-            region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
-        }
+        if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
     }
     const timeSpan = document.getElementById(`time-display-${index}`);
     if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
@@ -828,7 +928,6 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     }
     return subtitles;
 }
-
 function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (text.length <= maxCpl) return [text];
     const words = text.split(' '); let bestCut = -1; let bestScore = Infinity; 
@@ -846,7 +945,6 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
-
 function applyTimeRules(subs, minDur, maxDur, minGap) {
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
@@ -867,7 +965,7 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
     }
     return subs;
 }
-
+function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
 function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
 function fmtTimeShort(s) {
     const d = new Date(s * 1000);
@@ -882,6 +980,5 @@ function fmtTimeShort(s) {
         return `${hours}:${minutes}:${seconds}.${ms}`;
     }
 }
-function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
