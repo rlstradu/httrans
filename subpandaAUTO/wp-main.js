@@ -1,4 +1,4 @@
-// wp-main.js - V5.7 (Fix Timecode Precision HH:MM:SS.mmm)
+// wp-main.js - V5.8 (Undo/Redo Clear Text Feature)
 
 const translations = {
     en: {
@@ -62,6 +62,10 @@ const translations = {
         ttShiftNext: "Move last word to next",
         ttClearAll: "Clear ALL Text",
         confirmClearAll: "Are you sure? This will remove text from ALL subtitles.",
+        // NUEVAS TRADUCCIONES PARA EL BOTÓN
+        btnClear: "Clear Text",
+        btnRecover: "Recover Text",
+        confirmRecover: "Restore original text?",
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
@@ -125,13 +129,17 @@ const translations = {
         ttShiftNext: "Mover palabra al siguiente",
         ttClearAll: "Borrar TODO el texto",
         confirmClearAll: "¿Seguro? Esto borrará el texto de TODOS los subtítulos.",
+        // NUEVAS TRADUCCIONES
+        btnClear: "Borrar Texto",
+        btnRecover: "Recuperar Texto",
+        confirmRecover: "¿Restaurar texto original?",
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
     }
 };
 
 let currentLang = 'en';
-let audioData = null; // AudioBuffer
-let audioBlobUrl = null; // URL del archivo para el video tag
+let audioData = null; 
+let audioBlobUrl = null; 
 let rawFileName = "subtitulos";
 let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
@@ -145,6 +153,10 @@ let wsRegions = null;
 let currentSubtitles = []; 
 const ONE_FRAME = 0.04; 
 let useFrames = false; 
+
+// ESTADO PARA UNDO/REDO
+let isTextCleared = false;
+let textBackup = [];
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -240,6 +252,8 @@ function fmtDuration(seconds) {
     const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60);
     return `${m}m ${s}s`;
 }
+
+// --- IDIOMA ---
 function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
@@ -255,6 +269,9 @@ function setLanguage(lang) {
          els.runBtn.querySelector('span').innerText = btnText;
     }
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
+    
+    // Actualizar texto botón borrar si existe
+    updateClearButtonUI();
 }
 els.langEn.addEventListener('click', () => setLanguage('en'));
 els.langEs.addEventListener('click', () => setLanguage('es'));
@@ -262,6 +279,7 @@ els.langEs.addEventListener('click', () => setLanguage('es'));
 // --- MANEJO DE ARCHIVOS ---
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
+    isTextCleared = false; textBackup = []; // Reset estados
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
     els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
     
@@ -275,7 +293,6 @@ function resetFile() {
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
-    // Hide old results if visible
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
 
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
@@ -294,7 +311,6 @@ async function handleFile(file) {
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
 
-    // Mostrar consola para feedback inmediato
     els.progressCont.classList.remove('hidden');
     logToConsole(`File loaded: ${file.name}`);
     logToConsole("Decoding audio... please wait.");
@@ -307,7 +323,6 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
-        // Habilitar botón visualmente
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -457,6 +472,10 @@ function showEditor() {
     
     if (!wavesurfer) initWaveSurfer();
     else { renderRegions(); renderSubtitleList(); }
+    
+    // Reset estado de borrado
+    isTextCleared = false;
+    updateClearButtonUI();
 }
 
 els.backToConfigBtn.addEventListener('click', () => {
@@ -606,6 +625,7 @@ function highlightActiveSub(time) {
     }
 }
 
+// Global functions for inline HTML calls
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -615,14 +635,10 @@ window.nudge = (index, amount, side) => {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
     
-    // FIX: ACTUALIZAR VISUALMENTE LA REGIÓN
     if(wsRegions) {
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
         if(region) {
-            region.setOptions({
-                start: currentSubtitles[index].start,
-                end: currentSubtitles[index].end
-            });
+            region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
         }
     }
     const timeSpan = document.getElementById(`time-display-${index}`);
@@ -658,11 +674,54 @@ window.shiftWord = (index, dir) => {
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
 
+// --- LOGICA BOTON CLEAR/RECOVER ---
 if(els.clearTextBtn) {
     els.clearTextBtn.addEventListener('click', () => {
-        if(confirm(translations[currentLang].confirmClearAll)) { currentSubtitles.forEach(s => s.text = ""); renderSubtitleList(); }
+        const t = translations[currentLang];
+        
+        if (isTextCleared) {
+            // RECOVER ACTION
+            if(confirm(t.confirmRecover)) {
+                // Restaurar
+                currentSubtitles.forEach((sub, i) => {
+                    if (textBackup[i] !== undefined) sub.text = textBackup[i];
+                });
+                isTextCleared = false;
+                renderSubtitleList();
+                updateSubtitleOverlay(els.videoPreview.currentTime);
+                updateClearButtonUI();
+            }
+        } else {
+            // CLEAR ACTION
+            if(confirm(t.confirmClearAll)) {
+                // Backup
+                textBackup = currentSubtitles.map(s => s.text);
+                // Clear
+                currentSubtitles.forEach(s => s.text = "");
+                isTextCleared = true;
+                renderSubtitleList();
+                updateSubtitleOverlay(els.videoPreview.currentTime);
+                updateClearButtonUI();
+            }
+        }
     });
 }
+
+function updateClearButtonUI() {
+    if(!els.clearTextBtn) return;
+    const t = translations[currentLang];
+    
+    if (isTextCleared) {
+        // Estado VERDE (Recuperar)
+        els.clearTextBtn.className = "text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition flex items-center gap-2";
+        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-arrow-u-up-left"></i> ${t.btnRecover}`;
+    } else {
+        // Estado ROJO (Borrar)
+        els.clearTextBtn.className = "text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition flex items-center gap-2";
+        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-eraser"></i> ${t.btnClear}`;
+    }
+}
+
 function updateSubtitleOverlay(time) {
     const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
     if(activeSub && activeSub.text.trim() !== "") {
@@ -693,9 +752,13 @@ function processResultsV9(data) {
     if (task === 'spotting') subs.forEach(s => s.text = "");
     
     currentSubtitles = subs;
+    
+    // Reset estados al procesar nuevos datos
+    isTextCleared = false;
+    textBackup = [];
+    updateClearButtonUI();
 }
-
-// ... (CreateSRT V9 y Helpers permanecen iguales que la versión V5.6) ...
+// Algoritmo V9 (Smart Flow)
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
@@ -775,12 +838,10 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
 function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
 function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
 function fmtTimeShort(s) {
-    // FIX: Formato completo HH:MM:SS.mmm (3 dígitos) y soporte Frames
     const d = new Date(s * 1000);
     const hours = String(Math.floor(s / 3600)).padStart(2, '0');
     const minutes = String(d.getUTCMinutes()).padStart(2, '0');
     const seconds = String(d.getUTCSeconds()).padStart(2, '0');
-
     if (useFrames) {
         const frames = Math.floor((s % 1) * 25);
         return `${hours}:${minutes}:${seconds}:${String(frames).padStart(2, '0')}`;
