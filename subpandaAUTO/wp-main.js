@@ -1,4 +1,4 @@
-// wp-main.js - V5.4 (Fix Nudge Sync & Region HTML)
+// wp-main.js - V5.5 (Button Labels Update)
 
 const translations = {
     en: {
@@ -131,7 +131,7 @@ const translations = {
 
 let currentLang = 'en';
 let audioData = null; // AudioBuffer
-let audioBlobUrl = null;
+let audioBlobUrl = null; // URL del archivo para el video tag
 let rawFileName = "subtitulos";
 let audioDuration = 0;
 let worker = new Worker('wp-worker.js', { type: 'module' });
@@ -139,6 +139,7 @@ let startTime = 0;
 let lastConsoleLine = null;
 let cachedData = null; 
 
+// Variables del Editor Visual
 let wavesurfer = null;
 let wsRegions = null;
 let currentSubtitles = []; 
@@ -159,11 +160,13 @@ const els = {
     statusText: document.getElementById('status-text'),
     consoleOutput: document.getElementById('console-output'),
     
+    // UI Sections
     uploadSection: document.getElementById('upload-section'),
     configPanel: document.getElementById('config-panel'),
     headerSection: document.getElementById('header-section'),
     editorContainer: document.getElementById('editor-container'),
     
+    // Editor Elements
     videoPreview: document.getElementById('video-preview'),
     subtitleOverlay: document.getElementById('subtitle-overlay'),
     subtitleList: document.getElementById('subtitle-list'),
@@ -172,6 +175,7 @@ const els = {
     zoomSlider: document.getElementById('zoom-slider'),
     clearTextBtn: document.getElementById('clear-text-btn'),
     
+    // Config Inputs
     dontBreakInput: document.getElementById('dont-break-on'),
     modeRadios: document.getElementsByName('proc_mode'),
     groqContainer: document.getElementById('groq-key-container'),
@@ -269,7 +273,9 @@ function resetFile() {
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
-    
+    // Hide old results if visible
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
+
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
 }
@@ -286,6 +292,7 @@ async function handleFile(file) {
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
 
+    // Mostrar consola para feedback inmediato
     els.progressCont.classList.remove('hidden');
     logToConsole(`File loaded: ${file.name}`);
     logToConsole("Decoding audio... please wait.");
@@ -298,6 +305,7 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
+        // Habilitar botón visualmente
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -347,6 +355,7 @@ els.runBtn.addEventListener('click', async () => {
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
+    // No borramos la consola, solo añadimos
     logToConsole("--- STARTED ---");
     
     if (mode === 'groq') {
@@ -433,7 +442,7 @@ worker.onmessage = (e) => {
 };
 
 // =================================================================
-// 🚀 GESTIÓN DEL EDITOR VISUAL (WAVESURFER)
+// 🚀 GESTIÓN DEL EDITOR VISUAL (WAVESURFER + INTERACCIÓN)
 // =================================================================
 
 function showEditor() {
@@ -491,7 +500,6 @@ function initWaveSurfer() {
         renderSubtitleList();
     });
 
-    // Actualización de tiempos al mover cajas
     wsRegions.on('region-updated', (region) => {
         const index = parseInt(region.id.replace('sub-', ''));
         if (currentSubtitles[index]) {
@@ -502,30 +510,24 @@ function initWaveSurfer() {
             updateMetrics(index);
         }
     });
-    
-    wsRegions.on('region-clicked', (region, e) => {
-        e.stopPropagation();
-        video.currentTime = region.start;
-        video.play();
-    });
+    wsRegions.on('region-clicked', (region, e) => { e.stopPropagation(); video.currentTime = region.start; video.play(); });
 }
 
 function renderRegions() {
     wsRegions.clearRegions();
     currentSubtitles.forEach((sub, index) => {
-        // FIX: USAR DOM ELEMENT PARA EVITAR HTML TAGS VISIBLES
-        const regionLabel = document.createElement('span');
-        regionLabel.innerText = (index + 1).toString();
-        regionLabel.style.color = "black";
-        regionLabel.style.fontSize = "10px";
-        regionLabel.style.padding = "2px";
-        regionLabel.style.fontWeight = "bold";
+        const contentDiv = document.createElement('div');
+        contentDiv.textContent = (index + 1).toString();
+        contentDiv.style.color = "black";
+        contentDiv.style.fontSize = "10px";
+        contentDiv.style.padding = "2px";
+        contentDiv.style.fontWeight = "bold";
 
         wsRegions.addRegion({
             id: `sub-${index}`,
             start: sub.start,
             end: sub.end,
-            content: regionLabel, // <-- AQUÍ
+            content: contentDiv, 
             color: 'rgba(255, 184, 31, 0.4)',
             drag: true, resize: true
         });
@@ -549,11 +551,11 @@ function renderSubtitleList() {
             <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
                 <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}"><i class="ph-bold ph-caret-left"></i>[</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">]<i class="ph-bold ph-caret-right"></i></button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
                     <div class="w-px bg-gray-200"></div>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}"><i class="ph-bold ph-caret-left"></i>]</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f]" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">[<i class="ph-bold ph-caret-right"></i></button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
+                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
                 </div>
                 <div class="flex gap-2 text-gray-500 ml-auto">
                     <button class="hover:text-[#ffb81f]" onclick="window.playSub(${index})" title="${t.ttPlay}"><i class="ph-fill ph-play-circle text-xl"></i></button>
@@ -594,7 +596,6 @@ function highlightActiveSub(time) {
     }
 }
 
-// Global functions exposed to window
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -606,7 +607,6 @@ window.nudge = (index, amount, side) => {
     
     // FIX: ACTUALIZAR VISUALMENTE LA REGIÓN
     if(wsRegions) {
-        // En v7, buscamos la región en el array getRegions()
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
         if(region) {
             region.setOptions({
@@ -619,7 +619,6 @@ window.nudge = (index, amount, side) => {
     if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
     updateMetrics(index);
 };
-
 window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
 window.navSub = (index, dir) => {
     const newIndex = index + dir;
@@ -667,7 +666,7 @@ if(els.downloadEditorSrt){
 
 function processResultsV9(data) {
     // ... (Parámetros y Lógica V9 igual que antes) ...
-    const maxCpl = parseInt(document.getElementById('max-cpl').value);
+    const maxCPL = parseInt(document.getElementById('max-cpl').value);
     const maxLines = parseInt(document.getElementById('max-lines').value);
     const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
     const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
@@ -679,7 +678,7 @@ function processResultsV9(data) {
     let allWords = [];
     if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
     
-    let subs = createSrtV9(allWords, maxCpl, maxLines, minDurVal, dontBreakList);
+    let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
@@ -768,8 +767,9 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
     return subs;
 }
 
-function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
-function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
-function fmtTimeShort(s) { const d = new Date(s * 1000); return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,2)}`; }
-function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
+function fmtTimeShort(s) {
+    const d = new Date(s * 1000);
+    return `${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')}.${String(d.getUTCMilliseconds()).padStart(3,'0').slice(0,2)}`;
+}
+
 setLanguage('en');
