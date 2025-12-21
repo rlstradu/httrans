@@ -1,4 +1,4 @@
-// wp-main.js - V6.7 (FIXED: Restart Logic, Start Button Re-enable)
+// wp-main.js - V6.8 (FIXED: Restart UI, Start Button Visibility, Console Display)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -273,13 +273,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // BOTÓN "READJUST PARAMETERS" (SOFT RESET)
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
-            // Detener video
             if(els.videoPreview) els.videoPreview.pause();
             
-            // Usamos resetFile(true) para mantener el archivo pero reiniciar la interfaz y el botón Start
+            // RESET CON PARÁMETRO TRUE (MANTENER ARCHIVO)
             resetFile(true); 
             
-            // Scroll arriba
             els.configPanel.scrollIntoView({ behavior: 'smooth' });
         });
     }
@@ -350,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- 4. FUNCIONES GLOBALES ---
 
-// Encuentra el subtítulo activo o el más cercano anterior
 function findCurrentSubIndex(time) {
     const idx = currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
     if (idx !== -1) return idx;
@@ -402,37 +399,63 @@ function setLanguage(lang) {
     updateClearButtonUI();
 }
 
+// FIX: RESET ROBUSTO PARA UI
 function resetFile(keepFile = false) {
+    // 1. Limpieza de estado interno
+    cachedData = null;
+    isTextCleared = false;
+    textBackup = [];
+    historyStack = [];
+    
     if (!keepFile) {
-        audioData = null; 
-        audioDuration = 0; 
+        // RESET TOTAL (Nuevo Archivo)
+        audioData = null;
+        audioDuration = 0;
         if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
         if(els.fileInput) els.fileInput.value = '';
-        els.fileInfo.classList.add('hidden'); 
-        els.warning.classList.add('hidden');
-        els.resetBtn.classList.add('hidden'); 
+        
+        // Restaurar DropZone a su estado original (visible y con iconos)
+        if(els.dropZone) {
+            els.dropZone.classList.remove('hidden', 'border-0');
+            // Mostrar todos los hijos (iconos, textos, file-info)
+            Array.from(els.dropZone.children).forEach(child => child.classList.remove('hidden'));
+            // Ocultar específicamente file-info porque no hay archivo
+            els.fileInfo.classList.add('hidden');
+        }
+        els.resetBtn.classList.add('hidden');
+    } else {
+        // SOFT RESET (Reiniciar con mismo archivo)
+        // Ocultar iconos de carga para dejar la UI limpia
+        if(els.dropZone) {
+            Array.from(els.dropZone.children).forEach(child => {
+                // Ocultar todo lo que NO sea file-info
+                if(child.id !== 'file-info' && child.tagName !== 'INPUT') {
+                    child.classList.add('hidden');
+                }
+            });
+            // Quitar borde para que se integre visualmente
+            els.dropZone.classList.add('border-0'); 
+            els.dropZone.classList.remove('hidden');
+        }
+        els.fileInfo.classList.remove('hidden');
+        els.resetBtn.classList.remove('hidden');
     }
-    
-    cachedData = null; // Borrar caché para obligar a reprocesar
-    isTextCleared = false; 
-    textBackup = [];
-    historyStack = []; 
-    
-    els.runBtn.disabled = !audioData; 
-    
-    // RESTAURAR ESTADO DEL BOTÓN START
+
+    // 2. Estado del Botón Start
+    els.runBtn.disabled = !audioData;
     if (audioData) {
          els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
     } else {
          els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
     }
-
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
 
-    // Resetear UI
+    // 3. Visibilidad de Secciones (CRÍTICO)
     els.editorContainer.classList.add('hidden');
-    els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
-    els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
+    els.configPanel.classList.remove('hidden');
+    els.uploadSection.classList.remove('hidden'); // Asegura que el contenedor de botones se vea
+    els.headerSection.classList.remove('hidden');
+    els.progressCont.classList.add('hidden'); // Ocultar consola hasta que se pulse Start
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
@@ -440,7 +463,7 @@ function resetFile(keepFile = false) {
 }
 
 async function handleFile(file) {
-    resetFile(false); // Reset total para archivo nuevo
+    resetFile(false); // Reset total
     const t = translations[currentLang];
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
@@ -485,7 +508,10 @@ async function runProcess() {
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
+    
+    // FIX: Mostrar consola al iniciar proceso
     els.progressCont.classList.remove('hidden'); 
+    
     logToConsole("--- STARTED ---");
     
     if (mode === 'groq') {
@@ -982,19 +1008,12 @@ window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPrev
 window.navSub = (index, dir) => {
     const newIndex = index + dir;
     if(newIndex >= 0 && newIndex < currentSubtitles.length) { 
-        // 1. Desplazamiento
         const card = document.getElementById(`card-sub-${newIndex}`);
         card.scrollIntoView({behavior: "smooth", block: "center"});
-        
-        // 2. Reproducción
         window.playSingleSub(newIndex);
-        
-        // 3. Auto-foco
         setTimeout(() => {
             const textarea = document.getElementById(`ta-${newIndex}`);
-            if(textarea) {
-                textarea.focus();
-            }
+            if(textarea) textarea.focus();
         }, 100);
     }
 };
@@ -1002,10 +1021,8 @@ window.navSub = (index, dir) => {
 window.deleteSub = (index) => {
     pushHistory();
     currentSubtitles.splice(index, 1);
-    
     renderSubtitleList();
     renderRegions(); 
-    
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
 
@@ -1056,13 +1073,10 @@ function updateSubtitleOverlay(time) {
     
     if(activeSub && activeSub.text.trim() !== "") {
         els.subtitleOverlay.innerText = activeSub.text;
-        
-        // Forzar visibilidad y estilo
         els.subtitleOverlay.style.display = "block";
         els.subtitleOverlay.style.opacity = "1";
         els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
         els.subtitleOverlay.style.textShadow = "2px 2px 3px black";
-        
     } else {
         els.subtitleOverlay.style.opacity = "0";
     }
