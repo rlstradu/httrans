@@ -55,7 +55,6 @@
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
 
-        /* Active Subtitle Card Highlight */
         .sub-card-active { border-left: 4px solid #ffb81f !important; background-color: #fffbeb !important; }
         
         /* Range Slider Styling */
@@ -76,13 +75,13 @@
                 <button id="lang-en" class="lang-btn active px-3 py-1 rounded-md text-sm font-bold">EN</button>
                 <button id="lang-es" class="lang-btn px-3 py-1 rounded-md text-sm font-bold">ES</button>
             </div>
-            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200">BETA v0.4</span>
+            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200">BETA v0.5</span>
         </div>
     </nav>
 
     <main class="w-full max-w-6xl mx-auto glass-panel rounded-3xl p-6 md:p-10 shadow-xl relative overflow-hidden min-h-[85vh] flex flex-col">
         
-        <!-- CABECERA (Se oculta al iniciar el editor) -->
+        <!-- CABECERA -->
         <div id="header-section" class="text-center mb-8 transition-all duration-500">
             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/subpandaAUTO.png" 
                  alt="SubPandaAUTO Logo" 
@@ -92,7 +91,7 @@
             </p>
         </div>
 
-        <!-- PANEL DE CONFIGURACIÓN (Se oculta al terminar) -->
+        <!-- PANEL DE CONFIGURACIÓN -->
         <div id="config-panel" class="max-w-4xl mx-auto w-full bg-white/80 border border-yellow-100 rounded-2xl p-6 mb-8 shadow-sm transition-all duration-500">
             <h3 class="text-lg font-bold text-[#202020] mb-6 flex items-center border-b border-gray-100 pb-2">
                 <i class="ph-fill ph-sliders-horizontal mr-2 text-[#ffb81f]"></i>
@@ -223,7 +222,7 @@
             </div>
         </div>
 
-        <!-- UPLOAD SECTION -->
+        <!-- DROP ZONE & BOTONES -->
         <div id="upload-section" class="max-w-4xl mx-auto w-full grid grid-cols-1 gap-6 transition-all duration-500">
             <div id="drop-zone" class="border-3 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-white/50 hover:bg-yellow-50 hover:border-[#ffb81f] transition-colors cursor-pointer group">
                 <input type="file" id="file-input" class="hidden" accept="audio/*,video/*">
@@ -253,7 +252,6 @@
                     <i class="ph-bold ph-play"></i>
                     <span data-key="startBtn">Start</span>
                 </button>
-                <!-- Botón RESET MEJORADO -->
                 <button id="reset-btn" class="hidden px-6 py-4 rounded-xl font-bold text-gray-600 bg-white border-2 border-gray-200 hover:border-red-400 hover:text-red-500 transition flex justify-center items-center gap-2" title="Reset / New File">
                     <i class="ph-bold ph-arrow-counter-clockwise text-xl"></i>
                     <span>Reset</span>
@@ -305,8 +303,11 @@
                             </div>
                             <div class="flex items-center gap-3">
                                 <!-- Timecode Switcher -->
-                                <button id="tc-format-btn" class="bg-gray-700 px-2 py-0.5 rounded text-[10px] hover:bg-gray-600 hover:text-white transition">HH:MM:SS:MSS</button>
-                                <span class="text-[10px] uppercase font-bold tracking-wider text-[#ffb81f]">Waveform Editor</span>
+                                <button id="tc-format-btn" class="bg-gray-700 px-2 py-0.5 rounded text-[10px] hover:bg-gray-600 hover:text-white transition cursor-pointer">
+                                    HH:MM:SS:MSS
+                                </button>
+                                <!-- INDICADOR DE TIEMPO ACTUAL REEMPLAZANDO EL TEXTO "WAVEFORM EDITOR" -->
+                                <span id="current-time-display" class="text-xs font-mono font-bold text-[#ffb81f]">00:00:00.000</span>
                             </div>
                         </div>
 
