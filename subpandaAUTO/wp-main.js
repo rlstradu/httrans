@@ -1,4 +1,4 @@
-// wp-main.js - V6.3 (FIXED: ShiftWord newline bug, Nav Auto-play, Undo System)
+// wp-main.js - V6.4 (FIXED: Timecode, Auto-focus, Alt+Arrows, Delete Sub Button)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -60,12 +60,13 @@ const translations = {
         ttNudgeEndP: "+1 Frame End (+])",
         ttPlaySegment: "Play subtitle (Ctrl+O)",
         ttPlay: "Play Segment",
-        ttPrev: "Previous Subtitle",
-        ttNext: "Next Subtitle",
+        ttPrev: "Previous Subtitle (Alt+Up)",
+        ttNext: "Next Subtitle (Alt+Down)",
         ttClear: "Clear Text",
         ttShiftPrev: "Move first word to previous",
         ttShiftNext: "Move last word to next",
         ttClearAll: "Clear ALL Text",
+        ttDeleteSub: "Delete Subtitle Block",
         confirmClearAll: "Are you sure? This will remove text from ALL subtitles.",
         btnClear: "Clear Text",
         btnRecover: "Recover Text",
@@ -130,12 +131,13 @@ const translations = {
         ttNudgeEndP: "+1 Frame Fin (+])",
         ttPlaySegment: "Reproducir subtítulo (Ctrl+O)",
         ttPlay: "Reproducir Segmento",
-        ttPrev: "Subtítulo Anterior",
-        ttNext: "Siguiente Subtítulo",
+        ttPrev: "Subtítulo Anterior (Alt+Arr)",
+        ttNext: "Siguiente Subtítulo (Alt+Abj)",
         ttClear: "Borrar Texto",
         ttShiftPrev: "Mover palabra al anterior",
         ttShiftNext: "Mover palabra al siguiente",
         ttClearAll: "Borrar TODO el texto",
+        ttDeleteSub: "Eliminar bloque de subtítulo",
         confirmClearAll: "¿Seguro? Esto borrará el texto de TODOS los subtítulos.",
         btnClear: "Borrar Texto",
         btnRecover: "Recuperar Texto",
@@ -184,6 +186,7 @@ const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="
 const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 const ICON_UNDO = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M237.66,106.34a8,8,0,0,1-11.32,11.32L188,79.31V80a88,88,0,1,1-88-88,87.6,87.6,0,0,1,47.6,13.92,8,8,0,1,1-9.2,13.2A71.64,71.64,0,0,0,100,8,72,72,0,1,0,172,80v-.69l-38.34,38.35a8,8,0,0,1-11.32-11.32l52-52a8,8,0,0,1,11.32,0Z"></path></svg>`;
+const ICON_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>`;
 
 let els = {}; 
 
@@ -261,6 +264,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
+            // DETENER REPRODUCCIÓN AL VOLVER
+            if(els.videoPreview) els.videoPreview.pause();
+            
             els.editorContainer.classList.add('hidden');
             els.configPanel.classList.remove('hidden');
             els.runBtn.scrollIntoView({ behavior: 'smooth' });
@@ -279,13 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if(els.clearTextBtn) {
-        // INYECTAR BOTÓN DE UNDO DINÁMICAMENTE AQUÍ
         injectUndoButton();
 
         els.clearTextBtn.addEventListener('click', () => {
-            // Guardar estado antes de borrar
             pushHistory();
-
             const t = translations[currentLang];
             if (isTextCleared) {
                 if(confirm(t.confirmRecover)) {
@@ -310,11 +313,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // LISTENER GLOBAL PARA CTRL+Z
+    // LISTENER GLOBAL DE ATAJOS
     document.addEventListener('keydown', (e) => {
+        // Undo
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
             window.undoAction();
+        }
+        
+        // Navigation Alt+Up / Alt+Down
+        if (e.altKey && e.key === 'ArrowUp') {
+            e.preventDefault();
+            let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
+            window.navSub(targetIdx, -1);
+        }
+        if (e.altKey && e.key === 'ArrowDown') {
+            e.preventDefault();
+            let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
+            // Si no hay foco ni subtítulo activo, empezar desde el principio
+            if(targetIdx === -1 && currentSubtitles.length > 0) targetIdx = -1; 
+            window.navSub(targetIdx, 1);
         }
     });
 
@@ -325,6 +343,10 @@ document.addEventListener('DOMContentLoaded', () => {
 }); 
 
 // --- 4. FUNCIONES GLOBALES ---
+
+function findCurrentSubIndex(time) {
+    return currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
+}
 
 function updateModeUI(mode) {
     if(!els.groqContainer) return;
@@ -362,7 +384,6 @@ function setLanguage(lang) {
     if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
     
-    // Actualizar botón Undo si existe
     const undoBtn = document.getElementById('undo-btn');
     if(undoBtn) undoBtn.innerHTML = `${ICON_UNDO} ${t.btnUndo}`;
     
@@ -372,7 +393,7 @@ function setLanguage(lang) {
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
     isTextCleared = false; textBackup = [];
-    historyStack = []; // Resetear historial
+    historyStack = []; 
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
     
     if(els.fileInput) els.fileInput.value = '';
@@ -578,7 +599,6 @@ function audioBufferToWav(buffer) {
 // --- UNDO SYSTEM ---
 function pushHistory() {
     if (historyStack.length > MAX_HISTORY) historyStack.shift();
-    // Guardamos una copia profunda del array de subtítulos
     historyStack.push(JSON.parse(JSON.stringify(currentSubtitles)));
 }
 
@@ -586,18 +606,12 @@ window.undoAction = () => {
     if (historyStack.length === 0) return;
     const previousState = historyStack.pop();
     currentSubtitles = previousState;
-    
-    // Re-renderizamos todo
     renderSubtitleList();
-    renderRegions(); // También las regiones de la onda
+    renderRegions(); 
     updateSubtitleOverlay(els.videoPreview.currentTime);
-    
-    // Notificar al usuario (opcional)
-    console.log("Undo performed. Stack size:", historyStack.length);
 };
 
 function injectUndoButton() {
-    // Inyectar el botón Undo justo antes del botón Clear Text
     const clearBtn = document.getElementById('clear-text-btn');
     if(clearBtn && clearBtn.parentNode) {
         const undoBtn = document.createElement('button');
@@ -628,7 +642,6 @@ function showEditor() {
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
     
-    // Reset History on new editor session
     historyStack = [];
     
     if (!wavesurfer) initWaveSurfer();
@@ -681,23 +694,23 @@ function initWaveSurfer() {
     });
 
     video.addEventListener('timeupdate', () => {
+        // FIX: MOVER LA ACTUALIZACIÓN DEL TIEMPO AL PRINCIPIO
+        // Así nos aseguramos de que el reloj corra aunque 'highlightActiveSub' falle.
+        updateCurrentTimeDisplay(video.currentTime);
+
         if (stopAtTime !== null && video.currentTime >= stopAtTime) {
             video.pause(); video.currentTime = stopAtTime; stopAtTime = null;
         }
         if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
+        
         updateSubtitleOverlay(video.currentTime);
         highlightActiveSub(video.currentTime);
-        updateCurrentTimeDisplay(video.currentTime);
     });
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
     
     wavesurfer.on('ready', () => { wavesurfer.zoom(100); renderRegions(); renderSubtitleList(); });
     wsRegions.on('region-updated', (region) => {
-        // Solo guardar en historial al FINALIZAR la edición, aquí sería demasiado frecuente
-        // Podríamos usar 'region-update-end' si existiera en esta versión, pero para simplicidad
-        // dejaremos el historial solo en ediciones de texto o botones explícitos para no saturar la pila.
-        
         const index = parseInt(region.id.replace('sub-', ''));
         if (currentSubtitles[index]) {
             currentSubtitles[index].start = region.start;
@@ -761,6 +774,9 @@ function renderSubtitleList() {
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
                 </div>
+                
+                <button class="mx-auto text-gray-300 hover:text-red-500 transition" onclick="window.deleteSub(${index})" title="${t.ttDeleteSub}">${ICON_TRASH}</button>
+                
                 <div class="flex gap-2 text-gray-500 ml-auto items-center">
                     <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
                     <div class="w-px bg-gray-200 h-4 mx-1"></div>
@@ -774,28 +790,19 @@ function renderSubtitleList() {
         `;
         const ta = div.querySelector('textarea');
         
-        // Historial al enfocar (guarda estado inicial antes de editar)
         let initialText = "";
         ta.addEventListener('focus', () => { 
             focusedSubtitleIndex = index;
             initialText = sub.text;
         });
         
-        // Historial al salir (si cambió el texto)
         ta.addEventListener('blur', () => { 
             focusedSubtitleIndex = -1; 
             if(sub.text !== initialText) {
-                // Truco: Guardamos el estado ANTERIOR en la pila, no el actual
-                // Para eso, necesitamos haber guardado 'initialText'.
-                // Sin embargo, para simplificar: nuestro sistema 'undo' reemplaza todo el estado.
-                // Lo ideal es guardar el estado COMPLETO antes de que el usuario empezara a escribir.
-                // Como ya modificamos 'sub.text' en tiempo real, lo haremos así:
-                
-                // 1. Restaurar temporalmente el texto viejo en el objeto
                 const newText = sub.text;
                 sub.text = initialText;
-                pushHistory(); // Guardar estado viejo
-                sub.text = newText; // Volver a poner el nuevo
+                pushHistory(); 
+                sub.text = newText; 
             }
         });
 
@@ -857,9 +864,7 @@ function highlightActiveSub(time) {
 
 // GLOBAL HELPERS
 window.editTimecode = (index) => {
-    // Guardar historial antes de editar tiempo
     pushHistory();
-    
     const container = document.getElementById(`tc-container-${index}`);
     const sub = currentSubtitles[index];
     if (!container) return;
@@ -907,8 +912,7 @@ window.saveTimecode = (index) => {
 };
 
 window.nudge = (index, amount, side) => {
-    pushHistory(); // Guardar historial
-    
+    pushHistory(); 
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
         currentSubtitles[index].start = Math.max(0, currentSubtitles[index].start + amount);
@@ -953,66 +957,73 @@ window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPrev
 window.navSub = (index, dir) => {
     const newIndex = index + dir;
     if(newIndex >= 0 && newIndex < currentSubtitles.length) { 
-        // Desplazamiento y reproducción automática
-        document.getElementById(`card-sub-${newIndex}`).scrollIntoView({behavior: "smooth", block: "center"});
+        // 1. Desplazamiento
+        const card = document.getElementById(`card-sub-${newIndex}`);
+        card.scrollIntoView({behavior: "smooth", block: "center"});
+        
+        // 2. Reproducción
         window.playSingleSub(newIndex);
+        
+        // 3. AUTO-FOCO EN EL EDITOR (NUEVO)
+        // Damos un pequeño delay para asegurar que el scroll no interrumpa el foco
+        setTimeout(() => {
+            const textarea = document.getElementById(`ta-${newIndex}`);
+            if(textarea) {
+                textarea.focus();
+                // Opcional: poner cursor al final
+                // const val = textarea.value; textarea.value = ''; textarea.value = val;
+            }
+        }, 100);
     }
 };
 
+// NUEVA FUNCIÓN: Eliminar subtítulo
+window.deleteSub = (index) => {
+    pushHistory();
+    currentSubtitles.splice(index, 1);
+    
+    // Re-render completo
+    renderSubtitleList();
+    renderRegions(); 
+    
+    // Validar visualización
+    updateSubtitleOverlay(els.videoPreview.currentTime);
+};
+
 window.clearSubText = (index) => { 
-    pushHistory(); // Guardar historial
+    pushHistory(); 
     if(currentSubtitles[index]) { currentSubtitles[index].text = ""; document.getElementById(`ta-${index}`).value = ""; updateMetrics(index); updateSubtitleOverlay(els.videoPreview.currentTime); } 
 };
 
-// --- FIX: SHIFT WORD CONSERVANDO SALTOS DE LÍNEA ---
 window.shiftWord = (index, dir) => {
-    pushHistory(); // Guardar historial
+    pushHistory();
 
     if(dir === -1 && index > 0) { 
-        // Mover primera palabra de ACTUAL al final de ANTERIOR
         const currentText = currentSubtitles[index].text;
         const prevText = currentSubtitles[index-1].text;
-        
-        // Regex: Busca la primera palabra (y el espacio que le siga opcionalmente)
         const match = currentText.match(/^(\S+)(\s*)/); 
         
         if(match) {
             const word = match[1];
-            const separator = match[2]; // Espacio original, si lo hay
-            
-            // Quitamos la palabra del actual
             currentSubtitles[index].text = currentText.substring(match[0].length);
-            
-            // Añadimos la palabra al anterior (con espacio si no está vacío)
             const spacer = prevText.trim().length > 0 ? " " : "";
             currentSubtitles[index-1].text = prevText.trimEnd() + spacer + word;
-
-            // Actualizar UI
             document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
             document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
             updateMetrics(index); updateMetrics(index-1);
         }
 
     } else if (dir === 1 && index < currentSubtitles.length - 1) { 
-        // Mover última palabra de ACTUAL al principio de SIGUIENTE
         const currentText = currentSubtitles[index].text;
         const nextText = currentSubtitles[index+1].text;
-
-        // Regex: Busca la última palabra (ignorando espacios finales)
         const match = currentText.match(/(\S+)\s*$/);
 
         if(match) {
             const word = match[1];
             const wordIndex = match.index;
-
-            // Quitamos la palabra del actual (manteniendo el resto del texto intacto, saltos incluidos)
             currentSubtitles[index].text = currentText.substring(0, wordIndex).trimEnd();
-            
-            // Añadimos la palabra al principio del siguiente
             const spacer = nextText.trim().length > 0 ? " " : "";
             currentSubtitles[index+1].text = word + spacer + nextText.trimStart();
-
-            // Actualizar UI
             document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
             document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
             updateMetrics(index); updateMetrics(index+1);
@@ -1048,7 +1059,6 @@ function processResultsV9(data) {
     currentSubtitles = subs;
     isTextCleared = false; textBackup = []; 
     
-    // Inyectar el botón Undo si no existe aún
     if(!document.getElementById('undo-btn')) injectUndoButton();
     updateClearButtonUI();
 }
