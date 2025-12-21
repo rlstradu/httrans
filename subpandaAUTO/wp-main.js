@@ -1,4 +1,4 @@
-// wp-main.js - V5.9 (Final: Editor Visual Full + Play Segment + Manual Time Edit)
+// wp-main.js - V5.10 (Final Stable: Visual Editor + Manual Time Edit + Play Segment Fix)
 
 const translations = {
     en: {
@@ -156,16 +156,16 @@ let currentSubtitles = [];
 const ONE_FRAME = 0.04; 
 let useFrames = false; 
 
-// Estados Editor
 let stopAtTime = null; 
+let playbackMonitorId = null;
 let focusedSubtitleIndex = -1;
 let isTextCleared = false;
 let textBackup = [];
 
 // Icons SVGs
 const ICON_PLAY = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
-const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
-const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
+const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
+const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
 const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M222.14,136.69,141.49,36.56a23.93,23.93,0,0,0-36.87-.21l-79.16,95A24,24,0,0,0,24,146.6V192a24,24,0,0,0,24,24H216a8,8,0,0,0,0-16H168V166.42l53.94-24.16A8,8,0,0,0,222.14,136.69ZM152,189.65V200H48a8,8,0,0,1-8-8V146.6a8,8,0,0,1,.53-2.85L127,151.78ZM116.35,51.81a8,8,0,0,1,12.3-.07L194.75,134,141.27,158Z"></path></svg>`;
 const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
@@ -198,6 +198,7 @@ const els = {
     zoomSlider: document.getElementById('zoom-slider'),
     clearTextBtn: document.getElementById('clear-text-btn'),
     tcFormatBtn: document.getElementById('tc-format-btn'), 
+    currentTimeDisplay: document.getElementById('current-time-display'),
     
     dontBreakInput: document.getElementById('dont-break-on'),
     modeRadios: document.getElementsByName('proc_mode'),
@@ -205,7 +206,6 @@ const els = {
     localModelContainer: document.getElementById('local-model-container')
 };
 
-// --- INIT & MODES ---
 function updateModeUI(mode) {
     if (mode === 'groq') {
         if(els.groqContainer) els.groqContainer.classList.remove('hidden');
@@ -231,7 +231,6 @@ function updateModeUI(mode) {
 updateModeUI('groq');
 els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => updateModeUI(e.target.value)); });
 
-// --- SHORTCUTS ---
 document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
         e.preventDefault();
@@ -245,7 +244,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// --- UTILS CONSOLA ---
 function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
     if (!isProgress) lastConsoleLine = null;
@@ -293,25 +291,18 @@ function setLanguage(lang) {
 els.langEn.addEventListener('click', () => setLanguage('en'));
 els.langEs.addEventListener('click', () => setLanguage('es'));
 
-// --- MANEJO DE ARCHIVOS ---
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
     isTextCleared = false; textBackup = [];
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
-    
     els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
-    els.runBtn.disabled = true; 
-    els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+    els.runBtn.disabled = true; els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
-
     els.resetBtn.classList.add('hidden'); 
-    
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
-    // FIX: Check if element exists before accessing classList
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
-
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
 }
@@ -324,14 +315,11 @@ async function handleFile(file) {
     els.fileInfo.classList.remove('hidden');
     els.resetBtn.classList.remove('hidden');
     if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
-    
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
-
     els.progressCont.classList.remove('hidden');
     logToConsole(`File loaded: ${file.name}`);
     logToConsole("Decoding audio... please wait.");
-    
     try {
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
@@ -339,7 +327,6 @@ async function handleFile(file) {
         audioData = audioBuffer; audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
-        
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -372,7 +359,6 @@ function audioBufferToWav(buffer) {
     return new Blob([out], { type: 'audio/wav' });
 }
 
-// --- EJECUCIÓN ---
 els.runBtn.addEventListener('click', async () => {
     if (!audioData) return;
     if (cachedData) {
@@ -381,13 +367,11 @@ els.runBtn.addEventListener('click', async () => {
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
-    
-    // UI Update on Click
     els.runBtn.disabled = true;
     els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
-    // FIX: Check if resultsArea exists before accessing classList
+    // FIX: Verificar existencia antes de ocultar
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
     logToConsole("--- STARTED ---");
@@ -475,22 +459,14 @@ worker.onmessage = (e) => {
     else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
 };
 
-// =================================================================
-// 🚀 GESTIÓN DEL EDITOR VISUAL
-// =================================================================
-
 function showEditor() {
     els.uploadSection.classList.add('hidden');
     els.configPanel.classList.add('hidden');
     els.headerSection.classList.add('hidden');
     els.progressCont.classList.add('hidden');
-    // FIX: Check if resultsArea exists
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
-    
-    if (!wavesurfer) initWaveSurfer();
-    else { renderRegions(); renderSubtitleList(); }
-    
+    if (!wavesurfer) initWaveSurfer(); else { renderRegions(); renderSubtitleList(); }
     isTextCleared = false;
     updateClearButtonUI();
 }
@@ -508,7 +484,14 @@ if (els.tcFormatBtn) {
         useFrames = !useFrames;
         els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
         renderSubtitleList(); 
+        updateCurrentTimeDisplay(els.videoPreview.currentTime);
     });
+}
+
+function updateCurrentTimeDisplay(time) {
+    if(els.currentTimeDisplay) {
+        els.currentTimeDisplay.innerText = fmtTimeShort(time);
+    }
 }
 
 function initWaveSurfer() {
@@ -527,7 +510,7 @@ function initWaveSurfer() {
     });
     wsRegions = wavesurfer.plugins[0];
     
-    // FIX: Silenciar onda para evitar reverb
+    // FIX: REVERB: Silenciar wavesurfer
     wavesurfer.setVolume(0);
     
     els.zoomSlider.addEventListener('input', (e) => {
@@ -535,18 +518,30 @@ function initWaveSurfer() {
     });
 
     const video = els.videoPreview;
-    wavesurfer.on('interaction', () => video.currentTime = wavesurfer.getCurrentTime());
+    
+    wavesurfer.on('interaction', () => {
+        video.currentTime = wavesurfer.getCurrentTime();
+    });
+
     video.addEventListener('timeupdate', () => {
+        // MONITOREO DE PARADA DE SEGMENTO
         if (stopAtTime !== null && video.currentTime >= stopAtTime) {
             video.pause();
+            video.currentTime = stopAtTime; 
             stopAtTime = null;
         }
-        if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
+
+        if (!wavesurfer.isPlaying()) {
+            wavesurfer.setTime(video.currentTime);
+        }
         updateSubtitleOverlay(video.currentTime);
         highlightActiveSub(video.currentTime);
+        updateCurrentTimeDisplay(video.currentTime);
     });
+    
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
+    
     wavesurfer.on('ready', () => {
         wavesurfer.zoom(100);
         renderRegions();
@@ -600,13 +595,11 @@ function renderSubtitleList() {
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
                 <div class="flex items-center gap-2" id="tc-container-${index}">
-                    <!-- BOTÓN PLAY: SVG INLINE Y onmousedown PREVENTDEFAULT para no perder foco -->
                     <button class="text-[#ffb81f] hover:text-[#e0a01a] transition outline-none" 
                             onmousedown="event.preventDefault(); window.playSingleSub(${index})" 
                             title="${t.ttPlaySegment}">
                         ${ICON_PLAY}
                     </button>
-                    <!-- SPAN CLICABLE -->
                     <span id="time-display-${index}" onclick="window.editTimecode(${index})" 
                           class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" 
                           title="${t.ttEditTime}">
@@ -652,7 +645,6 @@ function renderSubtitleList() {
     });
 }
 
-// --- EDICIÓN MANUAL DE TIEMPOS ---
 window.editTimecode = (index) => {
     const container = document.getElementById(`tc-container-${index}`);
     const sub = currentSubtitles[index];
@@ -767,7 +759,6 @@ function highlightActiveSub(time) {
     }
 }
 
-// Global functions for inline HTML calls
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -777,7 +768,6 @@ window.nudge = (index, amount, side) => {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
     
-    // FIX: SYNC WAVEFORM REGION
     if(wsRegions) {
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
         if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
@@ -799,7 +789,7 @@ window.playSingleSub = (index) => {
     
     stopAtTime = sub.end;
     
-    // Sincronizar onda
+    // Sincronizar onda (Mover cabezal explícitamente antes de reproducir)
     if (wavesurfer) {
         wavesurfer.setTime(sub.start);
     } else {
