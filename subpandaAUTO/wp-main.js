@@ -1,4 +1,4 @@
-// wp-main.js - V5.9 (Fix Audio Reverb/Duplication)
+// wp-main.js - V5.10 (Fix Play Subtitle Waveform Sync)
 
 const translations = {
     en: {
@@ -168,9 +168,6 @@ const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" f
 const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M222.14,136.69,141.49,36.56a23.93,23.93,0,0,0-36.87-.21l-79.16,95A24,24,0,0,0,24,146.6V192a24,24,0,0,0,24,24H216a8,8,0,0,0,0-16H168V166.42l53.94-24.16A8,8,0,0,0,222.14,136.69ZM152,189.65V200H48a8,8,0,0,1-8-8V146.6a8,8,0,0,1,.53-2.85L127,151.78ZM116.35,51.81a8,8,0,0,1,12.3-.07L194.75,134,141.27,158Z"></path></svg>`;
 const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
-const ICON_SHIFT_PREV = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,117.66l-72-72a8,8,0,0,0-11.32,0l-72,72a8,8,0,0,0,11.32,11.32L120,67.31V216a8,8,0,0,0,16,0V67.31l58.34,58.35a8,8,0,0,0,11.32-11.32Z"></path></svg>`;
-const ICON_SHIFT_NEXT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,138.34l-72,72a8,8,0,0,1-11.32,0l-72,72a8,8,0,0,1,11.32-11.32L120,188.69V40a8,8,0,0,1,16,0V188.69l58.34-58.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
-
 
 const els = {
     langEn: document.getElementById('lang-en'),
@@ -207,7 +204,6 @@ const els = {
     localModelContainer: document.getElementById('local-model-container')
 };
 
-// --- INIT & MODES ---
 function updateModeUI(mode) {
     if (mode === 'groq') {
         if(els.groqContainer) els.groqContainer.classList.remove('hidden');
@@ -233,7 +229,6 @@ function updateModeUI(mode) {
 updateModeUI('groq');
 els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => updateModeUI(e.target.value)); });
 
-// --- SHORTCUTS ---
 document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
         e.preventDefault();
@@ -247,7 +242,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// --- UTILS CONSOLA ---
 function logToConsole(msg, isProgress = false) {
     if (!els.consoleOutput) return;
     if (!isProgress) lastConsoleLine = null;
@@ -295,25 +289,17 @@ function setLanguage(lang) {
 els.langEn.addEventListener('click', () => setLanguage('en'));
 els.langEs.addEventListener('click', () => setLanguage('es'));
 
-// --- MANEJO DE ARCHIVOS ---
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
-    isTextCleared = false; textBackup = [];
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
-    
-    // UI Reset
     els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
-    els.runBtn.disabled = true; 
-    els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+    els.runBtn.disabled = true; els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
-
     els.resetBtn.classList.add('hidden'); 
-    
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
-
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
 }
@@ -342,7 +328,6 @@ async function handleFile(file) {
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
-        // Habilitar botón visualmente
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -375,7 +360,6 @@ function audioBufferToWav(buffer) {
     return new Blob([out], { type: 'audio/wav' });
 }
 
-// --- EJECUCIÓN ---
 els.runBtn.addEventListener('click', async () => {
     if (!audioData) return;
     if (cachedData) {
@@ -384,15 +368,9 @@ els.runBtn.addEventListener('click', async () => {
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
-    
-    // UI Update on Click
     els.runBtn.disabled = true;
-    els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
-    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
-    
-    if(els.resultsArea) els.resultsArea.classList.add('hidden');
-    els.progressCont.classList.remove('hidden'); 
-    logToConsole("--- STARTED ---");
+    els.resultsArea.classList.add('hidden'); els.resultsArea.classList.remove('opacity-100');
+    els.progressCont.classList.remove('hidden'); els.consoleOutput.innerHTML = '';
     
     if (mode === 'groq') {
         const apiKey = document.getElementById('groq-key').value.trim();
@@ -436,7 +414,7 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         showEditor();
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         els.runBtn.disabled = false;
@@ -472,14 +450,10 @@ worker.onmessage = (e) => {
         showEditor();
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
     } 
     else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
 };
-
-// =================================================================
-// 🚀 GESTIÓN DEL EDITOR VISUAL
-// =================================================================
 
 function showEditor() {
     els.uploadSection.classList.add('hidden');
@@ -491,6 +465,9 @@ function showEditor() {
     
     if (!wavesurfer) initWaveSurfer();
     else { renderRegions(); renderSubtitleList(); }
+    
+    isTextCleared = false;
+    updateClearButtonUI();
 }
 
 els.backToConfigBtn.addEventListener('click', () => {
@@ -505,7 +482,7 @@ if (els.tcFormatBtn) {
     els.tcFormatBtn.addEventListener('click', () => {
         useFrames = !useFrames;
         els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-        renderSubtitleList(); // Force re-render to update timestamps
+        renderSubtitleList(); 
     });
 }
 
@@ -525,7 +502,7 @@ function initWaveSurfer() {
     });
     wsRegions = wavesurfer.plugins[0];
     
-    // FIX REVERB: Silenciar wavesurfer para que solo suene el video
+    // FIX: REVERB
     wavesurfer.setVolume(0);
     
     els.zoomSlider.addEventListener('input', (e) => {
@@ -611,8 +588,10 @@ function renderSubtitleList() {
             
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             
-            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
-            
+            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2">
+                <!-- Metrics -->
+            </div>
+
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
                 <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
@@ -687,6 +666,7 @@ window.saveTimecode = (index) => {
         currentSubtitles[index].start = newStart;
         currentSubtitles[index].end = newEnd;
         
+        // FIX: SYNC WAVEFORM REGION ON MANUAL EDIT
         if(wsRegions) {
             const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
             if(region) region.setOptions({ start: newStart, end: newEnd });
@@ -722,14 +702,16 @@ function parseTimeStr(timeStr) {
             return seconds;
         }
         if (parts.length === 3) {
+            const secParts = parts[2].split('.');
             seconds += parseInt(parts[0]) * 3600;
             seconds += parseInt(parts[1]) * 60;
-            seconds += parseFloat(parts[2]);
+            seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
         } else if (parts.length === 2) {
+            const secParts = parts[1].split('.');
             seconds += parseInt(parts[0]) * 60;
-            seconds += parseFloat(parts[1]);
-        } else if (parts.length === 1) {
-            seconds += parseFloat(parts[0]);
+            seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
         }
         return isNaN(seconds) ? null : seconds;
     } catch (e) { return null; }
@@ -756,6 +738,7 @@ function highlightActiveSub(time) {
     }
 }
 
+// Global functions for inline HTML calls
 window.nudge = (index, amount, side) => {
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
@@ -764,6 +747,8 @@ window.nudge = (index, amount, side) => {
     } else {
         currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
     }
+    
+    // FIX: SYNC WAVEFORM REGION
     if(wsRegions) {
         const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
         if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
@@ -778,6 +763,12 @@ window.playSingleSub = (index) => {
     const sub = currentSubtitles[index];
     stopAtTime = sub.end;
     els.videoPreview.currentTime = sub.start;
+    
+    // FIX: Sync Waveform Playhead
+    if (wavesurfer) {
+        wavesurfer.setTime(sub.start);
+    }
+    
     els.videoPreview.play();
 };
 window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
@@ -860,12 +851,10 @@ function processResultsV9(data) {
     const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
     let allWords = [];
     if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
-    
     let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
-    
     currentSubtitles = subs;
     isTextCleared = false; textBackup = []; updateClearButtonUI();
 }
