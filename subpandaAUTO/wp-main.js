@@ -1,4 +1,4 @@
-// wp-main.js - V6.8 (FIXED: Restart UI, Start Button Visibility, Console Display)
+// wp-main.js - V6.9 (FIXED: Strict Min Duration Logic, Silence Padding, Smart Segmentation)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -240,13 +240,11 @@ document.addEventListener('DOMContentLoaded', () => {
         endPunctuationInput: document.getElementById('end-punctuation')
     };
 
-    // Asegurar z-index del overlay vía JS para evitar problemas de CSS
     if(els.subtitleOverlay) {
         els.subtitleOverlay.style.zIndex = "50";
         els.subtitleOverlay.style.pointerEvents = "none";
     }
 
-    // Inicializar Worker
     try {
         worker = new Worker('wp-worker.js', { type: 'module' });
         if(worker) setupWorkerListeners();
@@ -254,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Worker Init Failed:", e);
     }
 
-    // Listeners básicos
     if(els.dropZone) {
         els.dropZone.addEventListener('click', () => els.fileInput.click());
         els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
@@ -270,14 +267,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
     if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
     
-    // BOTÓN "READJUST PARAMETERS" (SOFT RESET)
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
             if(els.videoPreview) els.videoPreview.pause();
-            
-            // RESET CON PARÁMETRO TRUE (MANTENER ARCHIVO)
             resetFile(true); 
-            
             els.configPanel.scrollIntoView({ behavior: 'smooth' });
         });
     }
@@ -293,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if(els.clearTextBtn) {
         injectUndoButton();
-
         els.clearTextBtn.addEventListener('click', () => {
             pushHistory();
             const t = translations[currentLang];
@@ -320,20 +312,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // LISTENER GLOBAL DE ATAJOS
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
             window.undoAction();
         }
-        
-        // Navigation Alt+Up / Alt+Down
         if (e.altKey && e.key === 'ArrowUp') {
             e.preventDefault();
             let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
             window.navSub(targetIdx, -1);
         }
-        
         if (e.altKey && e.key === 'ArrowDown') {
             e.preventDefault();
             let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
@@ -392,48 +380,35 @@ function setLanguage(lang) {
     const btnText = cachedData ? t.updateBtn : t.startBtn;
     if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
-    
     const undoBtn = document.getElementById('undo-btn');
     if(undoBtn) undoBtn.innerHTML = `${ICON_UNDO} ${t.btnUndo}`;
-    
     updateClearButtonUI();
 }
 
-// FIX: RESET ROBUSTO PARA UI
 function resetFile(keepFile = false) {
-    // 1. Limpieza de estado interno
     cachedData = null;
     isTextCleared = false;
     textBackup = [];
     historyStack = [];
     
     if (!keepFile) {
-        // RESET TOTAL (Nuevo Archivo)
         audioData = null;
         audioDuration = 0;
         if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
         if(els.fileInput) els.fileInput.value = '';
-        
-        // Restaurar DropZone a su estado original (visible y con iconos)
         if(els.dropZone) {
             els.dropZone.classList.remove('hidden', 'border-0');
-            // Mostrar todos los hijos (iconos, textos, file-info)
             Array.from(els.dropZone.children).forEach(child => child.classList.remove('hidden'));
-            // Ocultar específicamente file-info porque no hay archivo
             els.fileInfo.classList.add('hidden');
         }
         els.resetBtn.classList.add('hidden');
     } else {
-        // SOFT RESET (Reiniciar con mismo archivo)
-        // Ocultar iconos de carga para dejar la UI limpia
         if(els.dropZone) {
             Array.from(els.dropZone.children).forEach(child => {
-                // Ocultar todo lo que NO sea file-info
                 if(child.id !== 'file-info' && child.tagName !== 'INPUT') {
                     child.classList.add('hidden');
                 }
             });
-            // Quitar borde para que se integre visualmente
             els.dropZone.classList.add('border-0'); 
             els.dropZone.classList.remove('hidden');
         }
@@ -441,7 +416,6 @@ function resetFile(keepFile = false) {
         els.resetBtn.classList.remove('hidden');
     }
 
-    // 2. Estado del Botón Start
     els.runBtn.disabled = !audioData;
     if (audioData) {
          els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
@@ -450,12 +424,11 @@ function resetFile(keepFile = false) {
     }
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
 
-    // 3. Visibilidad de Secciones (CRÍTICO)
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden');
-    els.uploadSection.classList.remove('hidden'); // Asegura que el contenedor de botones se vea
+    els.uploadSection.classList.remove('hidden'); 
     els.headerSection.classList.remove('hidden');
-    els.progressCont.classList.add('hidden'); // Ocultar consola hasta que se pulse Start
+    els.progressCont.classList.add('hidden'); 
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
@@ -463,7 +436,7 @@ function resetFile(keepFile = false) {
 }
 
 async function handleFile(file) {
-    resetFile(false); // Reset total
+    resetFile(false); 
     const t = translations[currentLang];
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
@@ -508,10 +481,7 @@ async function runProcess() {
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
-    
-    // FIX: Mostrar consola al iniciar proceso
     els.progressCont.classList.remove('hidden'); 
-    
     logToConsole("--- STARTED ---");
     
     if (mode === 'groq') {
@@ -691,12 +661,9 @@ function showEditor() {
     els.progressCont.classList.add('hidden');
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
-    
     historyStack = [];
-    
     if (!wavesurfer) initWaveSurfer();
     else { renderRegions(); renderSubtitleList(); }
-    
     isTextCleared = false;
     updateClearButtonUI();
 }
@@ -736,28 +703,22 @@ function initWaveSurfer() {
     });
     wsRegions = wavesurfer.plugins[0];
     wavesurfer.setVolume(0);
-    
     const video = els.videoPreview;
-    
     wavesurfer.on('interaction', () => {
         video.currentTime = wavesurfer.getCurrentTime();
         updateCurrentTimeDisplay(video.currentTime);
     });
-
     video.addEventListener('timeupdate', () => {
         updateCurrentTimeDisplay(video.currentTime);
-
         if (stopAtTime !== null && video.currentTime >= stopAtTime) {
             video.pause(); video.currentTime = stopAtTime; stopAtTime = null;
         }
         if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
-        
         updateSubtitleOverlay(video.currentTime);
         highlightActiveSub(video.currentTime);
     });
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
-    
     wavesurfer.on('ready', () => { wavesurfer.zoom(100); renderRegions(); renderSubtitleList(); });
     wsRegions.on('region-updated', (region) => {
         const index = parseInt(region.id.replace('sub-', ''));
@@ -824,11 +785,8 @@ function renderSubtitleList() {
                     <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
                     <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
                 </div>
-                
                 <button class="p-1 text-gray-300 hover:text-red-500 transition shrink-0" onclick="window.deleteSub(${index})" title="${t.ttDeleteSub}">${ICON_TRASH}</button>
-                
                 <div class="w-px bg-gray-200 h-4 mx-0.5 shrink-0"></div>
-
                 <div class="flex items-center gap-1 ml-auto shrink-0">
                     <button class="p-1 hover:text-red-500 text-gray-400" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
                     <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">${ICON_WORD_LEFT}</button>
@@ -840,13 +798,11 @@ function renderSubtitleList() {
             </div>
         `;
         const ta = div.querySelector('textarea');
-        
         let initialText = "";
         ta.addEventListener('focus', () => { 
             focusedSubtitleIndex = index;
             initialText = sub.text;
         });
-        
         ta.addEventListener('blur', () => { 
             focusedSubtitleIndex = -1; 
             if(sub.text !== initialText) {
@@ -856,13 +812,11 @@ function renderSubtitleList() {
                 sub.text = newText; 
             }
         });
-
         ta.addEventListener('input', () => { 
             sub.text = ta.value; 
             updateSubtitleOverlay(els.videoPreview.currentTime); 
             updateMetrics(index); 
         });
-
         div.addEventListener('click', (e) => { 
              if(e.target.closest('input') || e.target.closest('button') || e.target.tagName === 'TEXTAREA') return;
              els.videoPreview.currentTime = sub.start; 
@@ -877,18 +831,14 @@ function updateMetrics(index) {
     if (!sub) return;
     const div = document.getElementById(`metrics-${index}`);
     if(!div) return;
-    
     const lines = sub.text.split('\n');
     const maxLineLen = Math.max(...lines.map(l => l.length), 0);
-    
     const duration = sub.end - sub.start;
     const charCount = sub.text.replace(/\n/g, '').length;
     const cps = duration > 0 ? (charCount / duration).toFixed(1) : 0;
-    
     let cpsColor = "text-gray-400";
     if(cps > 20) cpsColor = "text-red-500 font-bold";
     else if(cps > 15) cpsColor = "text-orange-400";
-    
     div.innerHTML = `
         <span class="${maxLineLen > 42 ? 'text-red-500 font-bold' : ''}">CPL: ${maxLineLen}</span>
         <span class="${cpsColor}">CPS: ${cps}</span>
@@ -897,11 +847,9 @@ function updateMetrics(index) {
 
 function highlightActiveSub(time) {
     if(focusedSubtitleIndex !== -1 && els.videoPreview.paused) return;
-
     currentSubtitles.forEach((sub, i) => {
         const card = document.getElementById(`card-sub-${i}`);
         if (!card) return;
-        
         if (time >= sub.start && time <= sub.end) {
             if (!card.classList.contains('sub-card-active')) {
                 card.classList.add('sub-card-active');
@@ -944,7 +892,6 @@ window.saveTimecode = (index) => {
     const endVal = document.getElementById(`end-in-${index}`).value;
     const newStart = parseTimeStr(startVal);
     const newEnd = parseTimeStr(endVal);
-
     if (newStart !== null && newEnd !== null && newStart < newEnd) {
         currentSubtitles[index].start = newStart;
         currentSubtitles[index].end = newEnd;
@@ -985,11 +932,9 @@ window.playSingleSub = (index) => {
     const sub = currentSubtitles[index];
     if(playbackMonitorId) cancelAnimationFrame(playbackMonitorId);
     stopAtTime = sub.end;
-    
     if (wavesurfer) wavesurfer.setTime(sub.start);
     els.videoPreview.currentTime = sub.start;
     els.videoPreview.play();
-    
     const checkTime = () => {
         if (els.videoPreview.paused) return;
         if (els.videoPreview.currentTime >= stopAtTime) {
@@ -1033,12 +978,10 @@ window.clearSubText = (index) => {
 
 window.shiftWord = (index, dir) => {
     pushHistory();
-
     if(dir === -1 && index > 0) { 
         const currentText = currentSubtitles[index].text;
         const prevText = currentSubtitles[index-1].text;
         const match = currentText.match(/^(\S+)(\s*)/); 
-        
         if(match) {
             const word = match[1];
             currentSubtitles[index].text = currentText.substring(match[0].length);
@@ -1048,12 +991,10 @@ window.shiftWord = (index, dir) => {
             document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
             updateMetrics(index); updateMetrics(index-1);
         }
-
     } else if (dir === 1 && index < currentSubtitles.length - 1) { 
         const currentText = currentSubtitles[index].text;
         const nextText = currentSubtitles[index+1].text;
         const match = currentText.match(/(\S+)\s*$/);
-
         if(match) {
             const word = match[1];
             const wordIndex = match.index;
@@ -1070,7 +1011,6 @@ window.shiftWord = (index, dir) => {
 
 function updateSubtitleOverlay(time) {
     const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
-    
     if(activeSub && activeSub.text.trim() !== "") {
         els.subtitleOverlay.innerText = activeSub.text;
         els.subtitleOverlay.style.display = "block";
@@ -1080,31 +1020,7 @@ function updateSubtitleOverlay(time) {
     } else {
         els.subtitleOverlay.style.opacity = "0";
     }
-    
     highlightActiveSub(time);
-}
-
-function updateCurrentTimeDisplay(time) {
-    if(els.currentTimeDisplay) els.currentTimeDisplay.innerText = fmtTimeShort(time);
-}
-function parseTimeStr(timeStr) {
-    try {
-        const parts = timeStr.trim().split(':');
-        let seconds = 0;
-        if (useFrames && parts.length === 4) {
-            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(parts[2]); seconds += parseInt(parts[3]) * 0.04; return seconds;
-        }
-        if (parts.length === 3) {
-            const secParts = parts[2].split('.');
-            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(secParts[0]);
-            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
-        } else if (parts.length === 2) {
-            const secParts = parts[1].split('.');
-            seconds += parseInt(parts[0]) * 60; seconds += parseInt(secParts[0]);
-            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
-        }
-        return isNaN(seconds) ? null : seconds;
-    } catch (e) { return null; }
 }
 
 function processResultsV9(data) {
@@ -1127,7 +1043,8 @@ function processResultsV9(data) {
     let allWords = [];
     if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
     
-    let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList, strongPunct);
+    // USAMOS LA NUEVA LÓGICA DE SEGMENTACIÓN INTELIGENTE
+    let subs = createSmartSrt(allWords, maxCPL, maxLines, minDurVal, maxDurVal, dontBreakList, strongPunct);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
@@ -1138,46 +1055,71 @@ function processResultsV9(data) {
     updateClearButtonUI();
 }
 
-function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList, strongPunct) {
-    const subtitles = []; let buffer = []; let startTime = null; 
+// NUEVA LÓGICA DE SEGMENTACIÓN "GREEDY" (AVARICIOSA)
+function createSmartSrt(words, maxCpl, maxLines, minDur, maxDur, dontBreakList, strongPunct) {
+    const subtitles = [];
+    let buffer = [];
+    let startTime = null;
     const maxChars = maxCpl * maxLines;
-    const endsSentence = (w) => {
-        const lastChar = w.word.trim().slice(-1);
-        return strongPunct.includes(lastChar);
-    };
+
+    const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
 
     for (let i = 0; i < words.length; i++) {
-        const wObj = words[i]; if (!wObj.word.trim()) continue;
+        const wObj = words[i];
+        if (!wObj.word.trim()) continue;
+
         if (startTime === null) startTime = wObj.start;
         buffer.push(wObj);
+
+        // Calcular estado actual
         const currentText = buffer.map(b => b.word.trim()).join(' ');
-        let forceCut = false; let pendingWords = []; let endTime = wObj.end; let currentDur = endTime - startTime;
+        const currentDur = wObj.end - startTime;
+        
+        let forceCut = false;
+        let reason = "";
+
+        // 1. REGLA DE ORO: Si supera caracteres, CORTAR SÍ O SÍ (backtracking)
         if (currentText.length > maxChars) {
-            const overflow = buffer.pop(); pendingWords.push(overflow);
-            let safeCutFound = false;
-            while (!safeCutFound && buffer.length > 0) {
-                const last = buffer[buffer.length - 1].word.trim().toLowerCase().replace(/[.,?!]/g, '');
-                const isSticky = dontBreakList.includes(last) || /^\d+$/.test(last);
-                if (isSticky) { pendingWords.unshift(buffer.pop()); continue; }
-                let pendingTextLen = pendingWords.map(w => w.word).join(' ').length;
-                let lookaheadIdx = i + 1; let distToNextDot = 0;
-                while(lookaheadIdx < words.length && distToNextDot < 5) { if(endsSentence(words[lookaheadIdx])) break; distToNextDot++; lookaheadIdx++; }
-                const isNextTooShort = (pendingTextLen + (distToNextDot * 5)) < 30; 
-                const canSteal = buffer.length > 1 && currentText.length > (maxCpl * 0.4);
-                if (isNextTooShort && canSteal) { pendingWords.unshift(buffer.pop()); continue; }
-                safeCutFound = true; 
-            }
-            forceCut = true;
-            if(buffer.length > 0) endTime = buffer[buffer.length-1].end; else { buffer.push(pendingWords.shift()); endTime = buffer[0].end; }
-        } else if (buffer.length > 0 && currentDur >= minDur) {
-            if (endsSentence(wObj)) { forceCut = true; endTime = wObj.end; }
+            // Quitamos la palabra que se pasó
+            const overflow = buffer.pop(); 
+            // Cortamos el bloque anterior
+            forceCut = true; 
+            reason = "max_chars";
+            // Retrocedemos el índice para procesar esta palabra en el siguiente bloque
+            i--; 
+        } 
+        // 2. REGLA DE PLATA: Si hay puntuación...
+        else if (endsSentence(wObj)) {
+            // ...SOLO CORTAR SI SE CUMPLE LA DURACIÓN MÍNIMA
+            if (currentDur >= minDur) {
+                forceCut = true;
+                reason = "punctuation";
+            } 
+            // SI NO SE CUMPLE (ej. 0.2s), IGNORAMOS LA PUNTUACIÓN Y SEGUIMOS PEGANDO
         }
+        // 3. REGLA DE BRONCE: Si supera duración máxima, CORTAR
+        else if (currentDur >= maxDur) {
+            forceCut = true;
+            reason = "max_dur";
+        }
+
         if (forceCut || i === words.length - 1) {
-            const finalBlock = buffer.map(b => b.word.trim()).join(' ');
-            const lines = balancedSplitV9(finalBlock, maxCpl, dontBreakList);
-            subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
-            buffer = []; startTime = null;
-            if (pendingWords.length > 0) { buffer = [...pendingWords]; startTime = buffer[0].start; }
+            if (buffer.length === 0) continue; // Evitar vacíos por backtracking
+
+            const finalBlockText = buffer.map(b => b.word.trim()).join(' ');
+            const endTime = buffer[buffer.length - 1].end;
+            
+            // Dividir líneas equilibradamente
+            const lines = balancedSplitV9(finalBlockText, maxCpl, dontBreakList);
+            
+            subtitles.push({
+                start: startTime,
+                end: endTime,
+                text: lines.join('\n')
+            });
+
+            buffer = [];
+            startTime = null;
         }
     }
     return subtitles;
@@ -1201,22 +1143,31 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
     const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
 
+// FIX: Padding de silencios para cumplir Min Dur
 function applyTimeRules(subs, minDur, maxDur, minGap) {
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
-        if ((current.end - current.start) > maxDur) current.end = current.start + maxDur;
-        if (i < subs.length - 1) {
-            let next = subs[i+1]; let limit = next.start - minGap;
-            if (current.end > limit) current.end = limit;
-            if (current.end <= current.start) current.end = current.start + 0.1;
-        }
-    }
-    for (let i = 0; i < subs.length; i++) {
-        let current = subs[i]; let duration = current.end - current.start;
+        let duration = current.end - current.start;
+
+        // Si es muy corto, intentamos extenderlo hacia el silencio siguiente
         if (duration < minDur) {
-            let desiredEnd = current.start + minDur; let limit = Infinity;
-            if (i < subs.length - 1) limit = subs[i+1].start - minGap;
-            if (desiredEnd <= limit) current.end = desiredEnd; else current.end = limit;
+            let limit = Infinity;
+            
+            if (i < subs.length - 1) {
+                // El límite es el inicio del siguiente menos el gap
+                limit = subs[i+1].start - minGap;
+            }
+            
+            // Calculamos nuevo final deseado (inicio + minDur)
+            let desiredEnd = current.start + minDur;
+            
+            // Si el espacio libre lo permite, extendemos
+            if (desiredEnd <= limit) {
+                current.end = desiredEnd;
+            } else {
+                // Si no cabe todo, extendemos hasta donde podamos
+                current.end = limit; 
+            }
         }
     }
     return subs;
