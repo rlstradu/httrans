@@ -1,4 +1,4 @@
-// wp-main.js - V5.13 (FULL COMPLETE VERSION - NO TRUNCATION)
+// wp-main.js - V6.0 FINAL (Full Integrity & Fixed Upload)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -6,37 +6,6 @@
 
 const translations = {
     en: {
-        backLink: "Back to HTTrans",
-        heroDesc: "AI-powered automatic transcription and subtitling tool.",
-        settingsTitle: "Assistant Preferences",
-        audioLangLabel: "Audio Language",
-        audioLangHelp: "Manually selecting the language improves accuracy.",
-        modelLabel: "AI Model / Quality",
-        modelHelp: "Local uses your PC. Cloud (Groq) uses API for speed.",
-        modeLabel: "Processing Mode",
-        modeLocalDesc: "Free, Private, Slower (CPU/GPU)",
-        modeGroqDesc: "Ultra Fast, Best Quality, Requires Key",
-        optTiny: "Tiny (Fastest - ~40MB)",
-        optBase: "Base (Balanced - ~80MB)",
-        optSmall: "Small (High Quality - ~250MB)",
-        optDistil: "Distil-Small (English Only)",
-        optAuto: "✨ Detect automatically",
-        actionLabel: "Action",
-        optTranscribe: "Transcribe (Keep original language)",
-        optTranslate: "Translate (Convert audio to English)",
-        optSpotting: "Spotting (Empty subtitles)",
-        gapLabel: "Min. Gap",
-        unitFrames: "Frames",
-        unitMs: "ms",
-        minDurLabel: "Min Duration (s)",
-        maxDurLabel: "Max Duration (s)",
-        maxLinesLabel: "Max Lines",
-        cplLabel: "Max chars/line (CPL)",
-        punctuationLabel: "Force break on punctuation",
-        dontBreakLabel: "Do not end line on (Prepositions/Articles)",
-        dropTitle: "Click or drag your file here",
-        dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
-        fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
         startBtn: "Start",
         updateBtn: "Readjust", 
         startBtnProcessing: "Processing...",
@@ -44,16 +13,8 @@ const translations = {
         statusInitiating: "Initializing...",
         statusListening: "Processing...",
         statusComplete: "Completed!",
-        resultTitle: "Result",
         copyBtn: "Copy",
         copiedBtn: "Copied!",
-        saveSrtBtn: "Save SRT",
-        saveTxtBtn: "Save TXT",
-        resultFooter: "Remember to check subtitles in a professional tool.",
-        errorMsg: "Error processing audio.",
-        downloadModel: "Downloading Model...",
-        btnReadjust: "Readjust Parameters",
-        zoomLabel: "Zoom",
         ttNudgeStartM: "-1 Frame Start (-[)",
         ttNudgeStartP: "+1 Frame Start (+[)",
         ttNudgeEndM: "-1 Frame End (-])",
@@ -74,37 +35,6 @@ const translations = {
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
-        backLink: "Volver a HTTrans",
-        heroDesc: "Herramienta de transcripción y subtitulado automático impulsada por IA.",
-        settingsTitle: "Ajustes del asistente",
-        audioLangLabel: "Idioma del audio",
-        audioLangHelp: "Seleccionar el idioma manualmente mejora la precisión.",
-        modelLabel: "Modelo IA / Calidad",
-        modelHelp: "Local usa tu PC. Nube (Groq) usa API para velocidad.",
-        modeLabel: "Modo de Procesamiento",
-        modeLocalDesc: "Gratis, Privado, Muy Lento (CPU/GPU)",
-        modeGroqDesc: "Ultra Rápido, Mejor Calidad, Requiere Key",
-        optTiny: "Tiny (Rápido - ~40MB)",
-        optBase: "Base (Equilibrado - ~80MB)",
-        optSmall: "Small (Mejor Calidad - ~250MB)",
-        optDistil: "Distil-Small (Solo Inglés)",
-        optAuto: "✨ Detectar automáticamente",
-        actionLabel: "Acción",
-        optTranscribe: "Transcribir (Mantener idioma original)",
-        optTranslate: "Traducir (Convertir audio al Inglés)",
-        optSpotting: "Spotting (Subtítulos vacíos)",
-        gapLabel: "Intervalo Mín.",
-        unitFrames: "Frames",
-        unitMs: "ms",
-        minDurLabel: "Duración Mín. (s)",
-        maxDurLabel: "Duración Máx. (s)",
-        maxLinesLabel: "Máx. Líneas",
-        cplLabel: "Máx. caracteres/línea (CPL)",
-        punctuationLabel: "Forzar corte en puntuación",
-        dontBreakLabel: "No terminar línea en (Preposiciones/Artículos)",
-        dropTitle: "Haz clic o arrastra tu archivo aquí",
-        dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
-        fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
         startBtn: "Iniciar",
         updateBtn: "Reajustar",
         startBtnProcessing: "Procesando...",
@@ -112,16 +42,8 @@ const translations = {
         statusInitiating: "Iniciando...",
         statusListening: "Procesando...",
         statusComplete: "¡Completado!",
-        resultTitle: "Resultado",
         copyBtn: "Copiar",
         copiedBtn: "¡Copiado!",
-        saveSrtBtn: "Guardar SRT",
-        saveTxtBtn: "Guardar TXT",
-        resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
-        errorMsg: "No se pudo procesar el audio.",
-        downloadModel: "Descargando Modelo...",
-        btnReadjust: "Reajustar Parámetros",
-        zoomLabel: "Zoom",
         ttNudgeStartM: "-1 Frame Inicio (-[)",
         ttNudgeStartP: "+1 Frame Inicio (+[)",
         ttNudgeEndM: "-1 Frame Fin (-])",
@@ -143,32 +65,38 @@ const translations = {
     }
 };
 
-// 2. VARIABLES GLOBALES
+// ==========================================
+// 2. VARIABLES DE ESTADO GLOBAL
+// ==========================================
+
 let currentLang = 'en';
-let audioData = null; 
-let audioBlobUrl = null; 
+let audioData = null; // AudioBuffer
+let audioBlobUrl = null; // URL blob para video/onda
 let rawFileName = "subtitulos";
 let audioDuration = 0;
-let worker = null;
+let worker = null; // Se inicializa en DOMContentLoaded
 let startTime = 0;
 let lastConsoleLine = null;
-let cachedData = null; 
+let cachedData = null; // Cache para re-segmentación sin re-transcribir
 
-// Variables Editor
+// Variables Editor Visual
 let wavesurfer = null;
 let wsRegions = null;
 let currentSubtitles = []; 
-const ONE_FRAME = 0.04; 
+const ONE_FRAME = 0.04; // 1 frame @ 25fps
 let useFrames = false; 
 
-// Estados Editor
+// Variables de Control
 let stopAtTime = null; 
 let playbackMonitorId = null;
 let focusedSubtitleIndex = -1;
 let isTextCleared = false;
 let textBackup = [];
 
-// ICONOS SVG
+// Elementos DOM (Se poblará en init)
+let els = {};
+
+// ICONOS SVG (Incrustados para asegurar carga)
 const ICON_PLAY = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
 const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
@@ -176,12 +104,12 @@ const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="
 const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 
-let els = {}; 
-
-// 3. INICIALIZACIÓN SEGURA (DOMContentLoaded)
+// ==========================================
+// 3. INICIALIZACIÓN (DOM READY)
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Capturar elementos
+    // Captura segura de elementos
     els = {
         langEn: document.getElementById('lang-en'),
         langEs: document.getElementById('lang-es'),
@@ -197,12 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText: document.getElementById('status-text'),
         consoleOutput: document.getElementById('console-output'),
         
+        // Secciones
         uploadSection: document.getElementById('upload-section'),
         configPanel: document.getElementById('config-panel'),
         headerSection: document.getElementById('header-section'),
         editorContainer: document.getElementById('editor-container'),
         
-        // Elementos que pueden no existir inicialmente
+        // Editor
         videoPreview: document.getElementById('video-preview'),
         subtitleOverlay: document.getElementById('subtitle-overlay'),
         subtitleList: document.getElementById('subtitle-list'),
@@ -213,12 +142,14 @@ document.addEventListener('DOMContentLoaded', () => {
         tcFormatBtn: document.getElementById('tc-format-btn'), 
         currentTimeDisplay: document.getElementById('current-time-display'),
         
+        // Inputs Config
         dontBreakInput: document.getElementById('dont-break-on'),
         modeRadios: document.getElementsByName('proc_mode'),
         groqContainer: document.getElementById('groq-key-container'),
         localModelContainer: document.getElementById('local-model-container'),
+        
+        // Fallback UI
         resultsArea: document.getElementById('results-area'),
-        outputText: document.getElementById('output-text'),
         copyBtn: document.getElementById('copy-btn'),
         dlSrt: document.getElementById('download-srt-btn'),
         dlTxt: document.getElementById('download-txt-btn')
@@ -231,22 +162,53 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Worker Init Failed:", e);
     }
 
-    // Listeners
-    if(els.dropZone) {
+    // --- LISTENERS DE INTERFAZ ---
+
+    // DRAG & DROP / FILE UPLOAD (CRÍTICO)
+    if(els.dropZone && els.fileInput) {
+        // Clic en la zona -> abre input
         els.dropZone.addEventListener('click', () => els.fileInput.click());
-        els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
-        els.dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); });
-        els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-pink-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+        
+        // Drag Over
+        els.dropZone.addEventListener('dragover', (e) => { 
+            e.preventDefault(); 
+            els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); 
+        });
+        
+        // Drag Leave
+        els.dropZone.addEventListener('dragleave', (e) => { 
+            e.preventDefault(); 
+            els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); 
+        });
+        
+        // Drop
+        els.dropZone.addEventListener('drop', (e) => { 
+            e.preventDefault(); 
+            els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); 
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); 
+        });
+
+        // Input Change
+        els.fileInput.addEventListener('change', (e) => { 
+            if (e.target.files.length) handleFile(e.target.files[0]); 
+        });
     }
-    if(els.fileInput) els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+    // Botones de Control
     if(els.removeFile) els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
     if(els.resetBtn) els.resetBtn.addEventListener('click', () => resetFile()); 
     if(els.runBtn) els.runBtn.addEventListener('click', runProcess);
 
+    // Idioma
     if(els.langEn) els.langEn.addEventListener('click', () => setLanguage('en'));
     if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
-    if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
     
+    // Modos de Procesamiento
+    if(els.modeRadios) {
+        els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
+    }
+    
+    // Botones del Editor
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
             els.editorContainer.classList.add('hidden');
@@ -284,7 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if(els.downloadEditorSrt) els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
+    if(els.downloadEditorSrt) {
+        els.downloadEditorSrt.addEventListener('click', () => { 
+            const srt = generateSRT(currentSubtitles); 
+            download(srt, `${rawFileName}_edited.srt`); 
+        });
+    }
 
     if (els.zoomSlider) {
         els.zoomSlider.addEventListener('input', (e) => {
@@ -292,13 +259,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Inicializar UI
+    // Keydown Global para atajos
+    document.addEventListener('keydown', (e) => {
+        // Ctrl + O: Reproducir Subtítulo
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+            e.preventDefault();
+            if (focusedSubtitleIndex !== -1) {
+                window.playSingleSub(focusedSubtitleIndex);
+            } else if (els.videoPreview) {
+                const currentTime = els.videoPreview.currentTime;
+                const activeIdx = currentSubtitles.findIndex(s => currentTime >= s.start && currentTime <= s.end);
+                if (activeIdx !== -1) window.playSingleSub(activeIdx);
+            }
+        }
+    });
+
+    // Iniciar
     updateModeUI('groq');
     setLanguage('en');
 
-}); 
+}); // END DOMContentLoaded
 
-// --- 4. FUNCIONES GLOBALES ---
+
+// ==========================================
+// 4. FUNCIONES GLOBALES
+// ==========================================
 
 function updateModeUI(mode) {
     if(!els.groqContainer) return;
@@ -328,13 +313,16 @@ function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
     else { els.langEs.classList.add('active'); els.langEn.classList.remove('active'); }
+    
     document.querySelectorAll('[data-key]').forEach(el => {
         if(el.tagName === 'OPTION') { el.text = translations[currentLang][el.dataset.key] || el.text; } 
         else if(translations[currentLang][el.dataset.key]) el.innerHTML = translations[currentLang][el.dataset.key];
     });
+
     const btnText = cachedData ? t.updateBtn : t.startBtn;
     if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
+    
     updateClearButtonUI();
 }
 
@@ -343,7 +331,10 @@ function resetFile() {
     isTextCleared = false; textBackup = [];
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
     
-    els.fileInput.value = ''; els.fileInfo.classList.add('hidden'); els.warning.classList.add('hidden');
+    if(els.fileInput) els.fileInput.value = '';
+    els.fileInfo.classList.add('hidden'); 
+    els.warning.classList.add('hidden');
+    
     els.runBtn.disabled = true; 
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
@@ -352,25 +343,29 @@ function resetFile() {
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
+    
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
-
     if(wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
     if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="opacity-50">> System ready...</div>';
 }
 
 async function handleFile(file) {
-    resetFile();
+    // Resetear UI previa
+    els.fileInfo.classList.remove('hidden');
+    els.resetBtn.classList.remove('hidden');
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
+    els.editorContainer.classList.add('hidden');
+    els.progressCont.classList.remove('hidden');
+
     const t = translations[currentLang];
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
-    els.fileInfo.classList.remove('hidden');
-    els.resetBtn.classList.remove('hidden');
+    
     if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
     
     audioBlobUrl = URL.createObjectURL(file);
     els.videoPreview.src = audioBlobUrl;
 
-    els.progressCont.classList.remove('hidden');
     logToConsole(`File loaded: ${file.name}`);
     logToConsole("Decoding audio... please wait.");
     
@@ -378,10 +373,12 @@ async function handleFile(file) {
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        audioData = audioBuffer; audioDuration = audioBuffer.duration;
+        audioData = audioBuffer; 
+        audioDuration = audioBuffer.duration;
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
+        // Habilitar botón visualmente
         els.runBtn.disabled = false;
         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
         els.runBtn.querySelector('span').innerText = t.startBtn;
@@ -392,16 +389,19 @@ async function handleFile(file) {
 
 async function runProcess() {
     if (!audioData) return;
+    
     if (cachedData) {
         logToConsole("Updating segmentation..."); processResultsV9(cachedData); showEditor(); return;
     }
+    
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
     
+    // Disable Button UI
     els.runBtn.disabled = true;
     els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
-    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
     
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
@@ -409,8 +409,14 @@ async function runProcess() {
     
     if (mode === 'groq') {
         const apiKey = document.getElementById('groq-key').value.trim();
-        if (!apiKey) { alert("Please enter a Groq API Key."); els.runBtn.disabled = false; return; }
-        localStorage.setItem('groq_api_key', apiKey); await runGroq(apiKey, audioData, langSelect, task);
+        if (!apiKey) { 
+            alert("Please enter a Groq API Key."); 
+            els.runBtn.disabled = false; 
+            els.runBtn.classList.add('bg-[#ffb81f]'); els.runBtn.classList.remove('bg-gray-300');
+            return; 
+        }
+        localStorage.setItem('groq_api_key', apiKey); 
+        await runGroq(apiKey, audioData, langSelect, task);
     } else {
         logToConsole("Panda Local Mode Started.");
         const modelSelect = document.getElementById('model-select').value;
@@ -441,15 +447,18 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         let chunks = [];
         if (result.words) { chunks = result.words.map(w => ({ text: w.word, timestamp: [w.start, w.end] })); } 
         else if (result.segments) { result.segments.forEach(s => { chunks.push({ text: s.text, timestamp: [s.start, s.end] }); }); }
+        
         const data = { text: result.text, chunks: chunks };
         cachedData = data;
         els.runBtn.querySelector('span').innerText = translations[currentLang].updateBtn;
         logToConsole("Processing...");
         processResultsV9(data);
         showEditor();
+        
+        // Restore Button
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         els.runBtn.disabled = false;
@@ -487,7 +496,7 @@ if(worker) {
             showEditor();
             els.runBtn.disabled = false;
             els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-            els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+            els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
         } 
         else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
     };
@@ -526,7 +535,7 @@ function initWaveSurfer() {
     });
     wsRegions = wavesurfer.plugins[0];
     
-    // FIX: REVERB
+    // FIX: REVERB: Silenciar wavesurfer
     wavesurfer.setVolume(0);
     
     els.zoomSlider.addEventListener('input', (e) => {
@@ -540,13 +549,11 @@ function initWaveSurfer() {
     });
 
     video.addEventListener('timeupdate', () => {
-        // MONITOREO DE PARADA DE SEGMENTO
         if (stopAtTime !== null && video.currentTime >= stopAtTime) {
             video.pause();
             video.currentTime = stopAtTime; 
             stopAtTime = null;
         }
-
         if (!wavesurfer.isPlaying()) {
             wavesurfer.setTime(video.currentTime);
         }
@@ -556,7 +563,6 @@ function initWaveSurfer() {
     });
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
-    
     wavesurfer.on('ready', () => {
         wavesurfer.zoom(100);
         renderRegions();
@@ -610,7 +616,7 @@ function renderSubtitleList() {
             <div class="flex justify-between items-center mb-2">
                 <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
                 <div class="flex items-center gap-2" id="tc-container-${index}">
-                    <!-- BOTÓN PLAY: SVG INLINE Y onmousedown PREVENTDEFAULT -->
+                    <!-- BOTÓN PLAY -->
                     <button class="text-[#ffb81f] hover:text-[#e0a01a] transition outline-none" 
                             onmousedown="event.preventDefault(); window.playSingleSub(${index})" 
                             title="${t.ttPlaySegment}">
@@ -627,8 +633,10 @@ function renderSubtitleList() {
             
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             
-            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
-            
+            <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2">
+                <!-- Metrics -->
+            </div>
+
             <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
                 <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
                     <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
@@ -898,11 +906,6 @@ function updateSubtitleOverlay(time) {
     } else { els.subtitleOverlay.style.opacity = "0"; }
     highlightActiveSub(time);
 }
-function updateCurrentTimeDisplay(time) {
-    if(els.currentTimeDisplay) {
-        els.currentTimeDisplay.innerText = fmtTimeShort(time);
-    }
-}
 if(els.downloadEditorSrt){
     els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
 }
@@ -926,6 +929,7 @@ function processResultsV9(data) {
     currentSubtitles = subs;
     isTextCleared = false; textBackup = []; updateClearButtonUI();
 }
+
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
     const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
@@ -965,6 +969,7 @@ function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
     }
     return subtitles;
 }
+
 function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (text.length <= maxCpl) return [text];
     const words = text.split(' '); let bestCut = -1; let bestScore = Infinity; 
@@ -982,6 +987,7 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
     if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
     const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
+
 function applyTimeRules(subs, minDur, maxDur, minGap) {
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
@@ -1002,8 +1008,12 @@ function applyTimeRules(subs, minDur, maxDur, minGap) {
     }
     return subs;
 }
+
 function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
+
+// Helpers de tiempo
 function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
+
 function fmtTimeShort(s) {
     const d = new Date(s * 1000);
     const hours = String(Math.floor(s / 3600)).padStart(2, '0');
@@ -1017,5 +1027,48 @@ function fmtTimeShort(s) {
         return `${hours}:${minutes}:${seconds}.${ms}`;
     }
 }
+function updateCurrentTimeDisplay(time) {
+    if(els.currentTimeDisplay) {
+        els.currentTimeDisplay.innerText = fmtTimeShort(time);
+    }
+}
+function parseTimeStr(timeStr) {
+    try {
+        const parts = timeStr.trim().split(':');
+        let seconds = 0;
+        if (useFrames && parts.length === 4) {
+            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(parts[2]); seconds += parseInt(parts[3]) * 0.04; return seconds;
+        }
+        if (parts.length === 3) {
+            const secParts = parts[2].split('.');
+            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
+        } else if (parts.length === 2) {
+            const secParts = parts[1].split('.');
+            seconds += parseInt(parts[0]) * 60; seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
+        } else if (parts.length === 1) {
+            seconds += parseFloat(parts[0]);
+        }
+        return isNaN(seconds) ? null : seconds;
+    } catch (e) { return null; }
+}
+
+function audioBufferToWav(buffer) {
+    const numOfChan = buffer.numberOfChannels; const length = buffer.length * numOfChan * 2 + 44; const out = new ArrayBuffer(length); const view = new DataView(out);
+    const channels = []; let i, sample, offset = 0, pos = 0;
+    setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan); setUint32(buffer.sampleRate); setUint32(buffer.sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
+    for (i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
+    while (pos < length) {
+        for (i = 0; i < numOfChan; i++) {
+            sample = Math.max(-1, Math.min(1, channels[i][offset])); sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+            view.setInt16(pos, sample, true); pos += 2;
+        }
+        offset++;
+    }
+    function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+    function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+    return new Blob([out], { type: 'audio/wav' });
+}
+
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
-setLanguage('en');
