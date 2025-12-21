@@ -1,4 +1,4 @@
-// wp-main.js - V6.5 (FIXED: Timecode, Overlay Z-Index, Button Layout, Soft Reset)
+// wp-main.js - V6.6 (FIXED: Performance Loop, Nav Logic, Overlay Visibility)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -52,7 +52,7 @@ const translations = {
         resultFooter: "Remember to check subtitles in a professional tool.",
         errorMsg: "Error processing audio.",
         downloadModel: "Downloading Model...",
-        btnReadjust: "Restart with same file", // Cambio de texto para reflejar la nueva función
+        btnReadjust: "Restart with same file", 
         zoomLabel: "Zoom",
         ttNudgeStartM: "-1 Frame Start (-[)",
         ttNudgeStartP: "+1 Frame Start (+[)",
@@ -123,7 +123,7 @@ const translations = {
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
         errorMsg: "No se pudo procesar el audio.",
         downloadModel: "Descargando Modelo...",
-        btnReadjust: "Reiniciar con mismo archivo", // Cambio de texto
+        btnReadjust: "Reiniciar con mismo archivo", 
         zoomLabel: "Zoom",
         ttNudgeStartM: "-1 Frame Inicio (-[)",
         ttNudgeStartP: "+1 Frame Inicio (+[)",
@@ -282,14 +282,12 @@ document.addEventListener('DOMContentLoaded', () => {
             els.runBtn.scrollIntoView({ behavior: 'smooth' });
             
             // Soft Reset: Limpiar subtítulos y caché para forzar regeneración
-            // pero manteniendo el archivo de audio.
-            cachedData = null; // Borramos la caché de la IA si el usuario quiere
+            cachedData = null; 
             currentSubtitles = [];
             
             const t = translations[currentLang];
-            els.runBtn.querySelector('span').innerText = t.startBtn; // Volvemos a poner "Start"
+            els.runBtn.querySelector('span').innerText = t.startBtn; 
             
-            // Limpiar visualmente ondas anteriores para evitar glitches
             if(wavesurfer) {
                 wavesurfer.destroy();
                 wavesurfer = null;
@@ -341,15 +339,25 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             window.undoAction();
         }
+        
+        // Navigation Alt+Up / Alt+Down
         if (e.altKey && e.key === 'ArrowUp') {
             e.preventDefault();
-            let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
+            // Buscar índice actual si no hay foco
+            let targetIdx = focusedSubtitleIndex;
+            if (targetIdx === -1) {
+                targetIdx = findCurrentSubIndex(els.videoPreview.currentTime);
+            }
             window.navSub(targetIdx, -1);
         }
+        
         if (e.altKey && e.key === 'ArrowDown') {
             e.preventDefault();
-            let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
-            if(targetIdx === -1 && currentSubtitles.length > 0) targetIdx = -1; 
+            // Buscar índice actual si no hay foco
+            let targetIdx = focusedSubtitleIndex;
+            if (targetIdx === -1) {
+                targetIdx = findCurrentSubIndex(els.videoPreview.currentTime);
+            }
             window.navSub(targetIdx, 1);
         }
     });
@@ -360,8 +368,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- 4. FUNCIONES GLOBALES ---
 
+// Encuentra el subtítulo activo o el más cercano anterior
 function findCurrentSubIndex(time) {
-    return currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
+    const idx = currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
+    if (idx !== -1) return idx;
+    
+    // Si no estamos sobre uno, buscamos el último que pasó
+    // Para navegación "siguiente", queremos empezar desde el último visto.
+    for (let i = currentSubtitles.length - 1; i >= 0; i--) {
+        if (time >= currentSubtitles[i].end) return i;
+    }
+    return -1; // Antes del primero
 }
 
 function updateModeUI(mode) {
@@ -406,7 +423,6 @@ function setLanguage(lang) {
     updateClearButtonUI();
 }
 
-// FIX: resetFile acepta parámetro para mantener archivo
 function resetFile(keepFile = false) {
     if (!keepFile) {
         audioData = null; 
@@ -423,7 +439,7 @@ function resetFile(keepFile = false) {
     textBackup = [];
     historyStack = []; 
     
-    els.runBtn.disabled = !audioData; // Si mantenemos audioData, el botón sigue activo
+    els.runBtn.disabled = !audioData; 
     
     if (audioData) {
          els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
@@ -477,7 +493,6 @@ async function handleFile(file) {
 async function runProcess() {
     if (!audioData) return;
     if (cachedData) {
-        // Solo llegamos aquí si ya hay datos cacheados y NO hemos reseteado
         logToConsole("Updating segmentation..."); processResultsV9(cachedData); showEditor(); return;
     }
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
@@ -717,15 +732,12 @@ function initWaveSurfer() {
     
     const video = els.videoPreview;
     
-    // FIX: Actualizar tiempo también al interactuar con la onda (clic/arrastre)
+    // CORRECCIÓN: Eliminar listeners duplicados de timeupdate en WaveSurfer
+    // Dejar que el video sea el maestro
     wavesurfer.on('interaction', () => {
         video.currentTime = wavesurfer.getCurrentTime();
-        updateCurrentTimeDisplay(video.currentTime); // <--- AÑADIDO
-    });
-    
-    // Sincronización continua
-    wavesurfer.on('timeupdate', (t) => {
-        updateCurrentTimeDisplay(t); // <--- AÑADIDO (Respaldo)
+        // Solo actualizamos el display, no todo el bucle
+        updateCurrentTimeDisplay(video.currentTime);
     });
 
     video.addEventListener('timeupdate', () => {
@@ -801,7 +813,6 @@ function renderSubtitleList() {
             <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
             
             <div class="flex items-center gap-1 mt-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                
                 <div class="flex gap-px border border-gray-200 rounded overflow-hidden shrink-0">
                     <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
                     <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
@@ -816,12 +827,9 @@ function renderSubtitleList() {
 
                 <div class="flex items-center gap-1 ml-auto shrink-0">
                     <button class="p-1 hover:text-red-500 text-gray-400" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
-                    
                     <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">${ICON_WORD_LEFT}</button>
                     <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}">${ICON_WORD_RIGHT}</button>
-                    
                     <div class="w-px bg-gray-200 h-4 mx-0.5"></div>
-                    
                     <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}">${ICON_UP}</button>
                     <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, 1)" title="${t.ttNext}">${ICON_DOWN}</button>
                 </div>
@@ -1064,6 +1072,51 @@ window.shiftWord = (index, dir) => {
     }
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
+
+// FIX: Overlay Visibility logic
+function updateSubtitleOverlay(time) {
+    const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
+    
+    if(activeSub && activeSub.text.trim() !== "") {
+        els.subtitleOverlay.innerText = activeSub.text;
+        
+        // Forzar visibilidad y estilo
+        els.subtitleOverlay.style.display = "block";
+        els.subtitleOverlay.style.opacity = "1";
+        els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
+        els.subtitleOverlay.style.textShadow = "2px 2px 3px black";
+        
+    } else {
+        els.subtitleOverlay.style.opacity = "0";
+        // Opcional: ocultarlo completamente si no hay texto
+        // els.subtitleOverlay.style.display = "none";
+    }
+    
+    highlightActiveSub(time);
+}
+
+function updateCurrentTimeDisplay(time) {
+    if(els.currentTimeDisplay) els.currentTimeDisplay.innerText = fmtTimeShort(time);
+}
+function parseTimeStr(timeStr) {
+    try {
+        const parts = timeStr.trim().split(':');
+        let seconds = 0;
+        if (useFrames && parts.length === 4) {
+            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(parts[2]); seconds += parseInt(parts[3]) * 0.04; return seconds;
+        }
+        if (parts.length === 3) {
+            const secParts = parts[2].split('.');
+            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
+        } else if (parts.length === 2) {
+            const secParts = parts[1].split('.');
+            seconds += parseInt(parts[0]) * 60; seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
+        }
+        return isNaN(seconds) ? null : seconds;
+    } catch (e) { return null; }
+}
 
 function processResultsV9(data) {
     const maxCPL = parseInt(document.getElementById('max-cpl').value);
