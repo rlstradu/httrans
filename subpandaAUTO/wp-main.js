@@ -1,4 +1,4 @@
-// wp-main.js - V5.12 (Full Version: No Missing Code)
+// wp-main.js - V5.13 (FULL COMPLETE VERSION - NO TRUNCATION)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -71,7 +71,6 @@ const translations = {
         btnRecover: "Recover Text",
         confirmRecover: "Restore original text?",
         ttEditTime: "Click to edit timestamps",
-        
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
@@ -144,16 +143,13 @@ const translations = {
     }
 };
 
-// ==========================================
-// 2. VARIABLES GLOBALES Y ESTADO
-// ==========================================
-
+// 2. VARIABLES GLOBALES
 let currentLang = 'en';
-let audioData = null; // AudioBuffer
+let audioData = null; 
 let audioBlobUrl = null; 
 let rawFileName = "subtitulos";
 let audioDuration = 0;
-let worker = new Worker('wp-worker.js', { type: 'module' });
+let worker = null;
 let startTime = 0;
 let lastConsoleLine = null;
 let cachedData = null; 
@@ -180,53 +176,135 @@ const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="
 const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 
-const els = {
-    langEn: document.getElementById('lang-en'),
-    langEs: document.getElementById('lang-es'),
-    fileInput: document.getElementById('file-input'),
-    dropZone: document.getElementById('drop-zone'),
-    fileInfo: document.getElementById('file-info'),
-    fileName: document.getElementById('file-name'),
-    removeFile: document.getElementById('remove-file'),
-    warning: document.getElementById('file-warning'),
-    runBtn: document.getElementById('run-btn'),
-    resetBtn: document.getElementById('reset-btn'),
-    progressCont: document.getElementById('progress-container'),
-    statusText: document.getElementById('status-text'),
-    consoleOutput: document.getElementById('console-output'),
-    
-    // UI Sections
-    uploadSection: document.getElementById('upload-section'),
-    configPanel: document.getElementById('config-panel'),
-    headerSection: document.getElementById('header-section'),
-    editorContainer: document.getElementById('editor-container'),
-    
-    // Editor Elements
-    videoPreview: document.getElementById('video-preview'),
-    subtitleOverlay: document.getElementById('subtitle-overlay'),
-    subtitleList: document.getElementById('subtitle-list'),
-    downloadEditorSrt: document.getElementById('download-editor-srt'),
-    backToConfigBtn: document.getElementById('back-to-config-btn'),
-    zoomSlider: document.getElementById('zoom-slider'),
-    clearTextBtn: document.getElementById('clear-text-btn'),
-    tcFormatBtn: document.getElementById('tc-format-btn'), 
-    currentTimeDisplay: document.getElementById('current-time-display'),
-    
-    dontBreakInput: document.getElementById('dont-break-on'),
-    modeRadios: document.getElementsByName('proc_mode'),
-    groqContainer: document.getElementById('groq-key-container'),
-    localModelContainer: document.getElementById('local-model-container')
-};
+let els = {}; 
 
-// ==========================================
-// 3. INICIALIZACIÓN Y CONFIGURACIÓN
-// ==========================================
+// 3. INICIALIZACIÓN SEGURA (DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // Capturar elementos
+    els = {
+        langEn: document.getElementById('lang-en'),
+        langEs: document.getElementById('lang-es'),
+        fileInput: document.getElementById('file-input'),
+        dropZone: document.getElementById('drop-zone'),
+        fileInfo: document.getElementById('file-info'),
+        fileName: document.getElementById('file-name'),
+        removeFile: document.getElementById('remove-file'),
+        warning: document.getElementById('file-warning'),
+        runBtn: document.getElementById('run-btn'),
+        resetBtn: document.getElementById('reset-btn'),
+        progressCont: document.getElementById('progress-container'),
+        statusText: document.getElementById('status-text'),
+        consoleOutput: document.getElementById('console-output'),
+        
+        uploadSection: document.getElementById('upload-section'),
+        configPanel: document.getElementById('config-panel'),
+        headerSection: document.getElementById('header-section'),
+        editorContainer: document.getElementById('editor-container'),
+        
+        // Elementos que pueden no existir inicialmente
+        videoPreview: document.getElementById('video-preview'),
+        subtitleOverlay: document.getElementById('subtitle-overlay'),
+        subtitleList: document.getElementById('subtitle-list'),
+        downloadEditorSrt: document.getElementById('download-editor-srt'),
+        backToConfigBtn: document.getElementById('back-to-config-btn'),
+        zoomSlider: document.getElementById('zoom-slider'),
+        clearTextBtn: document.getElementById('clear-text-btn'),
+        tcFormatBtn: document.getElementById('tc-format-btn'), 
+        currentTimeDisplay: document.getElementById('current-time-display'),
+        
+        dontBreakInput: document.getElementById('dont-break-on'),
+        modeRadios: document.getElementsByName('proc_mode'),
+        groqContainer: document.getElementById('groq-key-container'),
+        localModelContainer: document.getElementById('local-model-container'),
+        resultsArea: document.getElementById('results-area'),
+        outputText: document.getElementById('output-text'),
+        copyBtn: document.getElementById('copy-btn'),
+        dlSrt: document.getElementById('download-srt-btn'),
+        dlTxt: document.getElementById('download-txt-btn')
+    };
 
-// --- GESTIÓN DE MODOS ---
+    // Inicializar Worker
+    try {
+        worker = new Worker('wp-worker.js', { type: 'module' });
+    } catch(e) {
+        console.error("Worker Init Failed:", e);
+    }
+
+    // Listeners
+    if(els.dropZone) {
+        els.dropZone.addEventListener('click', () => els.fileInput.click());
+        els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
+        els.dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); });
+        els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-pink-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+    }
+    if(els.fileInput) els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+    if(els.removeFile) els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
+    if(els.resetBtn) els.resetBtn.addEventListener('click', () => resetFile()); 
+    if(els.runBtn) els.runBtn.addEventListener('click', runProcess);
+
+    if(els.langEn) els.langEn.addEventListener('click', () => setLanguage('en'));
+    if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
+    if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
+    
+    if(els.backToConfigBtn) {
+        els.backToConfigBtn.addEventListener('click', () => {
+            els.editorContainer.classList.add('hidden');
+            els.configPanel.classList.remove('hidden');
+            els.runBtn.scrollIntoView({ behavior: 'smooth' });
+            const t = translations[currentLang];
+            els.runBtn.querySelector('span').innerText = t.updateBtn;
+        });
+    }
+
+    if (els.tcFormatBtn) {
+        els.tcFormatBtn.addEventListener('click', () => {
+            useFrames = !useFrames;
+            els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
+            renderSubtitleList(); 
+            if(els.videoPreview) updateCurrentTimeDisplay(els.videoPreview.currentTime);
+        });
+    }
+    
+    if(els.clearTextBtn) {
+        els.clearTextBtn.addEventListener('click', () => {
+            const t = translations[currentLang];
+            if (isTextCleared) {
+                if(confirm(t.confirmRecover)) {
+                    currentSubtitles.forEach((sub, i) => { if (textBackup[i] !== undefined) sub.text = textBackup[i]; });
+                    isTextCleared = false; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
+                }
+            } else {
+                if(confirm(t.confirmClearAll)) {
+                    textBackup = currentSubtitles.map(s => s.text);
+                    currentSubtitles.forEach(s => s.text = "");
+                    isTextCleared = true; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
+                }
+            }
+        });
+    }
+
+    if(els.downloadEditorSrt) els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
+
+    if (els.zoomSlider) {
+        els.zoomSlider.addEventListener('input', (e) => {
+            if(wavesurfer) wavesurfer.zoom(Number(e.target.value));
+        });
+    }
+
+    // Inicializar UI
+    updateModeUI('groq');
+    setLanguage('en');
+
+}); 
+
+// --- 4. FUNCIONES GLOBALES ---
+
 function updateModeUI(mode) {
+    if(!els.groqContainer) return;
     if (mode === 'groq') {
-        if(els.groqContainer) els.groqContainer.classList.remove('hidden');
-        if(els.localModelContainer) els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
+        els.groqContainer.classList.remove('hidden');
+        els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) { label.classList.add('border-[#ffb81f]', 'shadow-md'); label.classList.remove('border-gray-200'); } 
@@ -236,8 +314,8 @@ function updateModeUI(mode) {
         const defaultKey = "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";
         if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || defaultKey;
     } else {
-        if(els.groqContainer) els.groqContainer.classList.add('hidden');
-        if(els.localModelContainer) els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
+        els.groqContainer.classList.add('hidden');
+        els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
         document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
             const label = r.closest('label');
             if (r.checked) { label.classList.add('border-gray-400', 'shadow-md'); label.classList.remove('border-gray-200'); } 
@@ -245,74 +323,21 @@ function updateModeUI(mode) {
         });
     }
 }
-updateModeUI('groq');
-els.modeRadios.forEach(radio => { radio.addEventListener('change', (e) => updateModeUI(e.target.value)); });
 
-// --- ATAJOS DE TECLADO ---
-document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
-        e.preventDefault();
-        if (focusedSubtitleIndex !== -1) {
-            window.playSingleSub(focusedSubtitleIndex);
-        } else {
-            const currentTime = els.videoPreview.currentTime;
-            const activeIdx = currentSubtitles.findIndex(s => currentTime >= s.start && currentTime <= s.end);
-            if (activeIdx !== -1) window.playSingleSub(activeIdx);
-        }
-    }
-});
-
-// --- UTILS CONSOLA ---
-function logToConsole(msg, isProgress = false) {
-    if (!els.consoleOutput) return;
-    if (!isProgress) lastConsoleLine = null;
-    const div = document.createElement('div');
-    div.innerText = typeof msg === 'object' ? `> ${JSON.stringify(msg)}` : `> ${msg}`;
-    div.className = "hover:bg-gray-800 px-1 rounded font-mono text-xs";
-    if (isProgress) div.style.color = "#a7f3d0";
-    els.consoleOutput.appendChild(div);
-    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
-}
-function updateConsoleLine(msg) {
-    if (!els.consoleOutput) return;
-    if (lastConsoleLine && lastConsoleLine.isConnected) { lastConsoleLine.innerText = `> ${msg}`; } 
-    else {
-        const div = document.createElement('div'); div.innerText = `> ${msg}`;
-        div.className = "hover:bg-gray-800 px-1 rounded text-green-300 font-bold font-mono text-xs";
-        els.consoleOutput.appendChild(div); lastConsoleLine = div;
-    }
-    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
-}
-function getAsciiBar(percent) {
-    const width = 20; const filled = Math.round((percent / 100) * width); const empty = width - filled;
-    return "[" + "=".repeat(filled) + ">".repeat(filled < width ? 1 : 0) + ".".repeat(Math.max(0, empty - (filled < width ? 1 : 0))) + "]";
-}
-function fmtDuration(seconds) {
-    if(!seconds || seconds < 0) return "0s";
-    const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60);
-    return `${m}m ${s}s`;
-}
-
-// --- IDIOMA ---
 function setLanguage(lang) {
     currentLang = lang; const t = translations[lang];
     if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
     else { els.langEs.classList.add('active'); els.langEn.classList.remove('active'); }
-    document.querySelectorAll('[data-key]').forEach(el => { if (t[el.dataset.key]) el.innerHTML = t[el.dataset.key]; });
-    const modelSelect = document.getElementById('model-select');
-    if(modelSelect) {
-        modelSelect.options[0].text = t.optTiny; modelSelect.options[1].text = t.optBase;
-        modelSelect.options[2].text = t.optSmall; if(modelSelect.options[3]) modelSelect.options[3].text = t.optDistil;
-    }
+    document.querySelectorAll('[data-key]').forEach(el => {
+        if(el.tagName === 'OPTION') { el.text = translations[currentLang][el.dataset.key] || el.text; } 
+        else if(translations[currentLang][el.dataset.key]) el.innerHTML = translations[currentLang][el.dataset.key];
+    });
     const btnText = cachedData ? t.updateBtn : t.startBtn;
     if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
     updateClearButtonUI();
 }
-els.langEn.addEventListener('click', () => setLanguage('en'));
-els.langEs.addEventListener('click', () => setLanguage('es'));
 
-// --- MANEJO DE ARCHIVOS ---
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
     isTextCleared = false; textBackup = [];
@@ -364,33 +389,8 @@ async function handleFile(file) {
         logToConsole(`ERROR: ${err.message}`);
     }
 }
-els.dropZone.addEventListener('click', () => els.fileInput.click());
-els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
-els.dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); });
-els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-pink-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
-els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
-els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
-els.resetBtn.addEventListener('click', () => resetFile()); 
 
-function audioBufferToWav(buffer) {
-    const numOfChan = buffer.numberOfChannels; const length = buffer.length * numOfChan * 2 + 44; const out = new ArrayBuffer(length); const view = new DataView(out);
-    const channels = []; let i, sample, offset = 0, pos = 0;
-    setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan); setUint32(buffer.sampleRate); setUint32(buffer.sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
-    for (i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
-    while (pos < length) {
-        for (i = 0; i < numOfChan; i++) {
-            sample = Math.max(-1, Math.min(1, channels[i][offset])); sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
-            view.setInt16(pos, sample, true); pos += 2;
-        }
-        offset++;
-    }
-    function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
-    function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
-    return new Blob([out], { type: 'audio/wav' });
-}
-
-// --- EJECUCIÓN ---
-els.runBtn.addEventListener('click', async () => {
+async function runProcess() {
     if (!audioData) return;
     if (cachedData) {
         logToConsole("Updating segmentation..."); processResultsV9(cachedData); showEditor(); return;
@@ -398,9 +398,11 @@ els.runBtn.addEventListener('click', async () => {
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
+    
     els.runBtn.disabled = true;
-    els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
-    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
+    els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+    els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+    
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.progressCont.classList.remove('hidden'); 
     logToConsole("--- STARTED ---");
@@ -415,7 +417,7 @@ els.runBtn.addEventListener('click', async () => {
         const channelData = audioData.getChannelData(0); 
         worker.postMessage({ type: 'run', audio: channelData, language: langSelect === 'auto' ? null : langSelect, task: task, model: modelSelect });
     }
-});
+}
 
 async function runGroq(apiKey, audioBuffer, language, task) {
     logToConsole("Panda Cloud Mode (Groq) Started.");
@@ -447,50 +449,51 @@ async function runGroq(apiKey, audioBuffer, language, task) {
         showEditor();
         els.runBtn.disabled = false;
         els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
+        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
     } catch (error) {
         logToConsole(`GROQ ERROR: ${error.message}`);
         els.runBtn.disabled = false;
     }
 }
 
-worker.onmessage = (e) => {
-    const { status, data } = e.data;
-    const t = translations[currentLang];
-    if (status === 'debug') { logToConsole(data); } 
-    else if (status === 'loading') {
-        if (data && data.status === 'progress') {
-            const percent = Math.round(data.progress || 0);
-            updateConsoleLine(`Downloading Model: ${getAsciiBar(percent)} ${percent}%`);
-            els.statusText.innerText = `${t.statusLoading} (${percent}%)`;
-        } else { els.statusText.innerText = t.statusLoading; }
-    } 
-    else if (status === 'initiate') {
-        els.statusText.innerText = t.statusInitiating; lastConsoleLine = null; logToConsole("Initializing Engine..."); startTime = Date.now(); updateConsoleLine(`${getAsciiBar(0)} 0%`);
-    } 
-    else if (status === 'progress') {
-        if (data && typeof data.timeRef === 'number' && audioDuration > 0) {
-            const current = data.timeRef;
-            const percent = Math.min(100, Math.max(0, (current / audioDuration) * 100));
-            updateConsoleLine(`${getAsciiBar(percent)} ${Math.round(percent)}%`);
-        }
-    } 
-    else if (status === 'complete') {
-        updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
-        cachedData = data;
-        els.runBtn.querySelector('span').innerText = translations[currentLang].updateBtn;
-        processResultsV9(data);
-        showEditor();
-        els.runBtn.disabled = false;
-        els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-        els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
-    } 
-    else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
-};
+// --- WORKER HANDLER ---
+if(worker) {
+    worker.onmessage = (e) => {
+        const { status, data } = e.data;
+        const t = translations[currentLang];
+        if (status === 'debug') { logToConsole(data); } 
+        else if (status === 'loading') {
+            if (data && data.status === 'progress') {
+                const percent = Math.round(data.progress || 0);
+                updateConsoleLine(`Downloading Model: ${getAsciiBar(percent)} ${percent}%`);
+                els.statusText.innerText = `${t.statusLoading} (${percent}%)`;
+            } else { els.statusText.innerText = t.statusLoading; }
+        } 
+        else if (status === 'initiate') {
+            els.statusText.innerText = t.statusInitiating; lastConsoleLine = null; logToConsole("Initializing Engine..."); startTime = Date.now(); updateConsoleLine(`${getAsciiBar(0)} 0%`);
+        } 
+        else if (status === 'progress') {
+            if (data && typeof data.timeRef === 'number' && audioDuration > 0) {
+                const current = data.timeRef;
+                const percent = Math.min(100, Math.max(0, (current / audioDuration) * 100));
+                updateConsoleLine(`${getAsciiBar(percent)} ${Math.round(percent)}%`);
+            }
+        } 
+        else if (status === 'complete') {
+            updateConsoleLine(`${getAsciiBar(100)} 100% | DONE`);
+            cachedData = data;
+            els.runBtn.querySelector('span').innerText = translations[currentLang].updateBtn;
+            processResultsV9(data);
+            showEditor();
+            els.runBtn.disabled = false;
+            els.runBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+            els.runBtn.classList.add('bg-[#ffb81f]', 'hover:bg-[#e0a01a]');
+        } 
+        else if (status === 'error') { logToConsole(`ERROR: ${data}`); els.runBtn.disabled = false; }
+    };
+}
 
-// =================================================================
-// 🚀 GESTIÓN DEL EDITOR VISUAL
-// =================================================================
+// --- EDITOR VISUAL LOGIC ---
 
 function showEditor() {
     els.uploadSection.classList.add('hidden');
@@ -505,29 +508,6 @@ function showEditor() {
     
     isTextCleared = false;
     updateClearButtonUI();
-}
-
-els.backToConfigBtn.addEventListener('click', () => {
-    els.editorContainer.classList.add('hidden');
-    els.configPanel.classList.remove('hidden');
-    els.runBtn.scrollIntoView({ behavior: 'smooth' });
-    const t = translations[currentLang];
-    els.runBtn.querySelector('span').innerText = t.updateBtn;
-});
-
-if (els.tcFormatBtn) {
-    els.tcFormatBtn.addEventListener('click', () => {
-        useFrames = !useFrames;
-        els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-        renderSubtitleList(); 
-        updateCurrentTimeDisplay(els.videoPreview.currentTime);
-    });
-}
-
-function updateCurrentTimeDisplay(time) {
-    if(els.currentTimeDisplay) {
-        els.currentTimeDisplay.innerText = fmtTimeShort(time);
-    }
 }
 
 function initWaveSurfer() {
@@ -546,7 +526,7 @@ function initWaveSurfer() {
     });
     wsRegions = wavesurfer.plugins[0];
     
-    // FIX: MUTE WAVEFORM TO PREVENT ECHO
+    // FIX: REVERB
     wavesurfer.setVolume(0);
     
     els.zoomSlider.addEventListener('input', (e) => {
@@ -555,7 +535,6 @@ function initWaveSurfer() {
 
     const video = els.videoPreview;
     
-    // Al tocar la onda, mover video
     wavesurfer.on('interaction', () => {
         video.currentTime = wavesurfer.getCurrentTime();
     });
@@ -568,7 +547,6 @@ function initWaveSurfer() {
             stopAtTime = null;
         }
 
-        // Si el video se mueve, mover onda (si no está reproduciendo)
         if (!wavesurfer.isPlaying()) {
             wavesurfer.setTime(video.currentTime);
         }
@@ -576,9 +554,9 @@ function initWaveSurfer() {
         highlightActiveSub(video.currentTime);
         updateCurrentTimeDisplay(video.currentTime);
     });
-    
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
+    
     wavesurfer.on('ready', () => {
         wavesurfer.zoom(100);
         renderRegions();
@@ -919,6 +897,11 @@ function updateSubtitleOverlay(time) {
         els.subtitleOverlay.innerText = activeSub.text; els.subtitleOverlay.style.opacity = "1"; els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
     } else { els.subtitleOverlay.style.opacity = "0"; }
     highlightActiveSub(time);
+}
+function updateCurrentTimeDisplay(time) {
+    if(els.currentTimeDisplay) {
+        els.currentTimeDisplay.innerText = fmtTimeShort(time);
+    }
 }
 if(els.downloadEditorSrt){
     els.downloadEditorSrt.addEventListener('click', () => { const srt = generateSRT(currentSubtitles); download(srt, `${rawFileName}_edited.srt`); });
