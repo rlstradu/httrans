@@ -1,4 +1,4 @@
-// wp-main.js - V6.4 (FIXED: Timecode, Auto-focus, Alt+Arrows, Delete Sub Button)
+// wp-main.js - V6.5 (FIXED: Timecode, Overlay Z-Index, Button Layout, Soft Reset)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -38,7 +38,7 @@ const translations = {
         dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
         startBtn: "Start",
-        updateBtn: "Readjust", 
+        updateBtn: "Update Segmentation", 
         startBtnProcessing: "Processing...",
         statusLoading: "Loading...",
         statusInitiating: "Initializing...",
@@ -52,7 +52,7 @@ const translations = {
         resultFooter: "Remember to check subtitles in a professional tool.",
         errorMsg: "Error processing audio.",
         downloadModel: "Downloading Model...",
-        btnReadjust: "Readjust Parameters",
+        btnReadjust: "Restart with same file", // Cambio de texto para reflejar la nueva función
         zoomLabel: "Zoom",
         ttNudgeStartM: "-1 Frame Start (-[)",
         ttNudgeStartP: "+1 Frame Start (+[)",
@@ -109,7 +109,7 @@ const translations = {
         dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
         fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
         startBtn: "Iniciar",
-        updateBtn: "Reajustar",
+        updateBtn: "Actualizar Segmentación",
         startBtnProcessing: "Procesando...",
         statusLoading: "Cargando...",
         statusInitiating: "Iniciando...",
@@ -123,7 +123,7 @@ const translations = {
         resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
         errorMsg: "No se pudo procesar el audio.",
         downloadModel: "Descargando Modelo...",
-        btnReadjust: "Reajustar Parámetros",
+        btnReadjust: "Reiniciar con mismo archivo", // Cambio de texto
         zoomLabel: "Zoom",
         ttNudgeStartM: "-1 Frame Inicio (-[)",
         ttNudgeStartP: "+1 Frame Inicio (+[)",
@@ -187,6 +187,8 @@ const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 const ICON_UNDO = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M237.66,106.34a8,8,0,0,1-11.32,11.32L188,79.31V80a88,88,0,1,1-88-88,87.6,87.6,0,0,1,47.6,13.92,8,8,0,1,1-9.2,13.2A71.64,71.64,0,0,0,100,8,72,72,0,1,0,172,80v-.69l-38.34,38.35a8,8,0,0,1-11.32-11.32l52-52a8,8,0,0,1,11.32,0Z"></path></svg>`;
 const ICON_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>`;
+const ICON_WORD_LEFT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg>`;
+const ICON_WORD_RIGHT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>`;
 
 let els = {}; 
 
@@ -238,6 +240,12 @@ document.addEventListener('DOMContentLoaded', () => {
         endPunctuationInput: document.getElementById('end-punctuation')
     };
 
+    // Asegurar z-index del overlay vía JS para evitar problemas de CSS
+    if(els.subtitleOverlay) {
+        els.subtitleOverlay.style.zIndex = "50";
+        els.subtitleOverlay.style.pointerEvents = "none";
+    }
+
     // Inicializar Worker
     try {
         worker = new Worker('wp-worker.js', { type: 'module' });
@@ -254,24 +262,38 @@ document.addEventListener('DOMContentLoaded', () => {
         els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-pink-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
     }
     if(els.fileInput) els.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
-    if(els.removeFile) els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(); });
-    if(els.resetBtn) els.resetBtn.addEventListener('click', () => resetFile()); 
+    if(els.removeFile) els.removeFile.addEventListener('click', (e) => { e.stopPropagation(); resetFile(false); });
+    if(els.resetBtn) els.resetBtn.addEventListener('click', () => resetFile(false)); 
     if(els.runBtn) els.runBtn.addEventListener('click', runProcess);
 
     if(els.langEn) els.langEn.addEventListener('click', () => setLanguage('en'));
     if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
     if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
     
+    // BOTÓN "READJUST PARAMETERS" (SOFT RESET)
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
-            // DETENER REPRODUCCIÓN AL VOLVER
+            // Detener video
             if(els.videoPreview) els.videoPreview.pause();
             
+            // Ocultar editor
             els.editorContainer.classList.add('hidden');
             els.configPanel.classList.remove('hidden');
             els.runBtn.scrollIntoView({ behavior: 'smooth' });
+            
+            // Soft Reset: Limpiar subtítulos y caché para forzar regeneración
+            // pero manteniendo el archivo de audio.
+            cachedData = null; // Borramos la caché de la IA si el usuario quiere
+            currentSubtitles = [];
+            
             const t = translations[currentLang];
-            els.runBtn.querySelector('span').innerText = t.updateBtn;
+            els.runBtn.querySelector('span').innerText = t.startBtn; // Volvemos a poner "Start"
+            
+            // Limpiar visualmente ondas anteriores para evitar glitches
+            if(wavesurfer) {
+                wavesurfer.destroy();
+                wavesurfer = null;
+            }
         });
     }
 
@@ -315,13 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // LISTENER GLOBAL DE ATAJOS
     document.addEventListener('keydown', (e) => {
-        // Undo
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
             window.undoAction();
         }
-        
-        // Navigation Alt+Up / Alt+Down
         if (e.altKey && e.key === 'ArrowUp') {
             e.preventDefault();
             let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
@@ -330,16 +349,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.altKey && e.key === 'ArrowDown') {
             e.preventDefault();
             let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
-            // Si no hay foco ni subtítulo activo, empezar desde el principio
             if(targetIdx === -1 && currentSubtitles.length > 0) targetIdx = -1; 
             window.navSub(targetIdx, 1);
         }
     });
 
-    // Inicializar UI
     updateModeUI('groq');
     setLanguage('en');
-
 }); 
 
 // --- 4. FUNCIONES GLOBALES ---
@@ -390,21 +406,33 @@ function setLanguage(lang) {
     updateClearButtonUI();
 }
 
-function resetFile() {
-    audioData = null; audioDuration = 0; cachedData = null; 
-    isTextCleared = false; textBackup = [];
+// FIX: resetFile acepta parámetro para mantener archivo
+function resetFile(keepFile = false) {
+    if (!keepFile) {
+        audioData = null; 
+        audioDuration = 0; 
+        if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
+        if(els.fileInput) els.fileInput.value = '';
+        els.fileInfo.classList.add('hidden'); 
+        els.warning.classList.add('hidden');
+        els.resetBtn.classList.add('hidden'); 
+    }
+    
+    cachedData = null; 
+    isTextCleared = false; 
+    textBackup = [];
     historyStack = []; 
-    if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
     
-    if(els.fileInput) els.fileInput.value = '';
-    els.fileInfo.classList.add('hidden'); 
-    els.warning.classList.add('hidden');
+    els.runBtn.disabled = !audioData; // Si mantenemos audioData, el botón sigue activo
     
-    els.runBtn.disabled = true; 
-    els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
-    els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
+    if (audioData) {
+         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
+    } else {
+         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
+    }
 
-    els.resetBtn.classList.add('hidden'); 
+    els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
+
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
@@ -415,7 +443,7 @@ function resetFile() {
 }
 
 async function handleFile(file) {
-    resetFile();
+    resetFile(false); // Reset total para archivo nuevo
     const t = translations[currentLang];
     rawFileName = file.name.split('.').slice(0, -1).join('.');
     els.fileName.innerText = file.name;
@@ -449,13 +477,13 @@ async function handleFile(file) {
 async function runProcess() {
     if (!audioData) return;
     if (cachedData) {
+        // Solo llegamos aquí si ya hay datos cacheados y NO hemos reseteado
         logToConsole("Updating segmentation..."); processResultsV9(cachedData); showEditor(); return;
     }
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
     
-    // UI Update on Click
     els.runBtn.disabled = true;
     els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
@@ -689,13 +717,18 @@ function initWaveSurfer() {
     
     const video = els.videoPreview;
     
+    // FIX: Actualizar tiempo también al interactuar con la onda (clic/arrastre)
     wavesurfer.on('interaction', () => {
         video.currentTime = wavesurfer.getCurrentTime();
+        updateCurrentTimeDisplay(video.currentTime); // <--- AÑADIDO
+    });
+    
+    // Sincronización continua
+    wavesurfer.on('timeupdate', (t) => {
+        updateCurrentTimeDisplay(t); // <--- AÑADIDO (Respaldo)
     });
 
     video.addEventListener('timeupdate', () => {
-        // FIX: MOVER LA ACTUALIZACIÓN DEL TIEMPO AL PRINCIPIO
-        // Así nos aseguramos de que el reloj corra aunque 'highlightActiveSub' falle.
         updateCurrentTimeDisplay(video.currentTime);
 
         if (stopAtTime !== null && video.currentTime >= stopAtTime) {
@@ -766,25 +799,31 @@ function renderSubtitleList() {
             </div>
             <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
             <div id="metrics-${index}" class="flex justify-between text-[10px] text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2"></div>
-            <div class="flex justify-between items-center opacity-70 group-hover:opacity-100 transition-opacity gap-1 flex-wrap">
-                <div class="flex gap-0.5 border border-gray-200 rounded overflow-hidden">
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
+            
+            <div class="flex items-center gap-1 mt-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                
+                <div class="flex gap-px border border-gray-200 rounded overflow-hidden shrink-0">
+                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
+                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
                     <div class="w-px bg-gray-200"></div>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
-                    <button class="px-1.5 py-0.5 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-xs font-bold" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
+                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
+                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
                 </div>
                 
-                <button class="mx-auto text-gray-300 hover:text-red-500 transition" onclick="window.deleteSub(${index})" title="${t.ttDeleteSub}">${ICON_TRASH}</button>
+                <button class="p-1 text-gray-300 hover:text-red-500 transition shrink-0" onclick="window.deleteSub(${index})" title="${t.ttDeleteSub}">${ICON_TRASH}</button>
                 
-                <div class="flex gap-2 text-gray-500 ml-auto items-center">
-                    <button class="hover:text-red-500" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
-                    <div class="w-px bg-gray-200 h-4 mx-1"></div>
-                    <button class="px-2 py-0.5 bg-gray-100 hover:bg-purple-100 text-purple-600 rounded text-[10px] font-bold border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">Word ↑</button>
-                    <button class="px-2 py-0.5 bg-gray-100 hover:bg-purple-100 text-purple-600 rounded text-[10px] font-bold border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}">Word ↓</button>
-                    <div class="w-px bg-gray-200 h-4 mx-1"></div>
-                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}">${ICON_UP}</button>
-                    <button class="hover:text-blue-500" onclick="window.navSub(${index}, 1)" title="${t.ttNext}">${ICON_DOWN}</button>
+                <div class="w-px bg-gray-200 h-4 mx-0.5 shrink-0"></div>
+
+                <div class="flex items-center gap-1 ml-auto shrink-0">
+                    <button class="p-1 hover:text-red-500 text-gray-400" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
+                    
+                    <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">${ICON_WORD_LEFT}</button>
+                    <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}">${ICON_WORD_RIGHT}</button>
+                    
+                    <div class="w-px bg-gray-200 h-4 mx-0.5"></div>
+                    
+                    <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}">${ICON_UP}</button>
+                    <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, 1)" title="${t.ttNext}">${ICON_DOWN}</button>
                 </div>
             </div>
         `;
@@ -964,29 +1003,23 @@ window.navSub = (index, dir) => {
         // 2. Reproducción
         window.playSingleSub(newIndex);
         
-        // 3. AUTO-FOCO EN EL EDITOR (NUEVO)
-        // Damos un pequeño delay para asegurar que el scroll no interrumpa el foco
+        // 3. Auto-foco
         setTimeout(() => {
             const textarea = document.getElementById(`ta-${newIndex}`);
             if(textarea) {
                 textarea.focus();
-                // Opcional: poner cursor al final
-                // const val = textarea.value; textarea.value = ''; textarea.value = val;
             }
         }, 100);
     }
 };
 
-// NUEVA FUNCIÓN: Eliminar subtítulo
 window.deleteSub = (index) => {
     pushHistory();
     currentSubtitles.splice(index, 1);
     
-    // Re-render completo
     renderSubtitleList();
     renderRegions(); 
     
-    // Validar visualización
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
 
