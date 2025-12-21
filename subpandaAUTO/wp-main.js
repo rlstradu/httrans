@@ -1,4 +1,4 @@
-// wp-main.js - V6.2 (FIXED: Added missing metrics, highlight and punctuation logic)
+// wp-main.js - V6.3 (FIXED: ShiftWord newline bug, Nav Auto-play, Undo System)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -71,6 +71,8 @@ const translations = {
         btnRecover: "Recover Text",
         confirmRecover: "Restore original text?",
         ttEditTime: "Click to edit timestamps",
+        btnUndo: "Undo",
+        ttUndo: "Undo last action (Ctrl+Z)",
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
     },
     es: {
@@ -139,6 +141,8 @@ const translations = {
         btnRecover: "Recuperar Texto",
         confirmRecover: "¿Restaurar texto original?",
         ttEditTime: "Clic para editar tiempos manualmente",
+        btnUndo: "Deshacer",
+        ttUndo: "Deshacer última acción (Ctrl+Z)",
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
     }
 };
@@ -168,6 +172,10 @@ let focusedSubtitleIndex = -1;
 let isTextCleared = false;
 let textBackup = [];
 
+// Historial (Undo)
+let historyStack = [];
+const MAX_HISTORY = 50;
+
 // ICONOS SVG
 const ICON_PLAY = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
 const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
@@ -175,6 +183,7 @@ const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" f
 const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M222.14,136.69,141.49,36.56a23.93,23.93,0,0,0-36.87-.21l-79.16,95A24,24,0,0,0,24,146.6V192a24,24,0,0,0,24,24H216a8,8,0,0,0,0-16H168V166.42l53.94-24.16A8,8,0,0,0,222.14,136.69ZM152,189.65V200H48a8,8,0,0,1-8-8V146.6a8,8,0,0,1,.53-2.85L127,151.78ZM116.35,51.81a8,8,0,0,1,12.3-.07L194.75,134,141.27,158Z"></path></svg>`;
 const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
+const ICON_UNDO = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M237.66,106.34a8,8,0,0,1-11.32,11.32L188,79.31V80a88,88,0,1,1-88-88,87.6,87.6,0,0,1,47.6,13.92,8,8,0,1,1-9.2,13.2A71.64,71.64,0,0,0,100,8,72,72,0,1,0,172,80v-.69l-38.34,38.35a8,8,0,0,1-11.32-11.32l52-52a8,8,0,0,1,11.32,0Z"></path></svg>`;
 
 let els = {}; 
 
@@ -223,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dlSrt: document.getElementById('download-srt-btn'),
         dlTxt: document.getElementById('download-txt-btn'),
         
-        // NUEVO: Captura del input de puntuación
         endPunctuationInput: document.getElementById('end-punctuation')
     };
 
@@ -235,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Worker Init Failed:", e);
     }
 
-    // Listeners
+    // Listeners básicos
     if(els.dropZone) {
         els.dropZone.addEventListener('click', () => els.fileInput.click());
         els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
@@ -271,7 +279,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if(els.clearTextBtn) {
+        // INYECTAR BOTÓN DE UNDO DINÁMICAMENTE AQUÍ
+        injectUndoButton();
+
         els.clearTextBtn.addEventListener('click', () => {
+            // Guardar estado antes de borrar
+            pushHistory();
+
             const t = translations[currentLang];
             if (isTextCleared) {
                 if(confirm(t.confirmRecover)) {
@@ -295,6 +309,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if(wavesurfer) wavesurfer.zoom(Number(e.target.value));
         });
     }
+
+    // LISTENER GLOBAL PARA CTRL+Z
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            window.undoAction();
+        }
+    });
 
     // Inicializar UI
     updateModeUI('groq');
@@ -339,12 +361,18 @@ function setLanguage(lang) {
     const btnText = cachedData ? t.updateBtn : t.startBtn;
     if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
+    
+    // Actualizar botón Undo si existe
+    const undoBtn = document.getElementById('undo-btn');
+    if(undoBtn) undoBtn.innerHTML = `${ICON_UNDO} ${t.btnUndo}`;
+    
     updateClearButtonUI();
 }
 
 function resetFile() {
     audioData = null; audioDuration = 0; cachedData = null; 
     isTextCleared = false; textBackup = [];
+    historyStack = []; // Resetear historial
     if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
     
     if(els.fileInput) els.fileInput.value = '';
@@ -547,6 +575,41 @@ function audioBufferToWav(buffer) {
     return new Blob([out], { type: 'audio/wav' });
 }
 
+// --- UNDO SYSTEM ---
+function pushHistory() {
+    if (historyStack.length > MAX_HISTORY) historyStack.shift();
+    // Guardamos una copia profunda del array de subtítulos
+    historyStack.push(JSON.parse(JSON.stringify(currentSubtitles)));
+}
+
+window.undoAction = () => {
+    if (historyStack.length === 0) return;
+    const previousState = historyStack.pop();
+    currentSubtitles = previousState;
+    
+    // Re-renderizamos todo
+    renderSubtitleList();
+    renderRegions(); // También las regiones de la onda
+    updateSubtitleOverlay(els.videoPreview.currentTime);
+    
+    // Notificar al usuario (opcional)
+    console.log("Undo performed. Stack size:", historyStack.length);
+};
+
+function injectUndoButton() {
+    // Inyectar el botón Undo justo antes del botón Clear Text
+    const clearBtn = document.getElementById('clear-text-btn');
+    if(clearBtn && clearBtn.parentNode) {
+        const undoBtn = document.createElement('button');
+        undoBtn.id = 'undo-btn';
+        undoBtn.className = "text-xs bg-white text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition font-bold flex items-center gap-1 mr-2";
+        undoBtn.innerHTML = `${ICON_UNDO} ${translations[currentLang].btnUndo}`;
+        undoBtn.title = translations[currentLang].ttUndo;
+        undoBtn.onclick = window.undoAction;
+        clearBtn.parentNode.insertBefore(undoBtn, clearBtn);
+    }
+}
+
 // --- EDITOR LOGIC ---
 
 function showConfigPanel() {
@@ -565,6 +628,9 @@ function showEditor() {
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
     
+    // Reset History on new editor session
+    historyStack = [];
+    
     if (!wavesurfer) initWaveSurfer();
     else { renderRegions(); renderSubtitleList(); }
     
@@ -577,22 +643,6 @@ function toggleTimecodeFormat() {
     els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
     renderSubtitleList(); 
     if(els.videoPreview) updateCurrentTimeDisplay(els.videoPreview.currentTime);
-}
-
-function toggleClearText() {
-    const t = translations[currentLang];
-    if (isTextCleared) {
-        if(confirm(t.confirmRecover)) {
-            currentSubtitles.forEach((sub, i) => { if (textBackup[i] !== undefined) sub.text = textBackup[i]; });
-            isTextCleared = false; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
-        }
-    } else {
-        if(confirm(t.confirmClearAll)) {
-            textBackup = currentSubtitles.map(s => s.text);
-            currentSubtitles.forEach(s => s.text = "");
-            isTextCleared = true; renderSubtitleList(); updateSubtitleOverlay(els.videoPreview.currentTime); updateClearButtonUI();
-        }
-    }
 }
 
 function updateClearButtonUI() {
@@ -636,7 +686,7 @@ function initWaveSurfer() {
         }
         if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
         updateSubtitleOverlay(video.currentTime);
-        highlightActiveSub(video.currentTime); // <--- FUNCIONABA MAL (NO EXISTÍA)
+        highlightActiveSub(video.currentTime);
         updateCurrentTimeDisplay(video.currentTime);
     });
     video.addEventListener('play', () => wavesurfer.play());
@@ -644,6 +694,10 @@ function initWaveSurfer() {
     
     wavesurfer.on('ready', () => { wavesurfer.zoom(100); renderRegions(); renderSubtitleList(); });
     wsRegions.on('region-updated', (region) => {
+        // Solo guardar en historial al FINALIZAR la edición, aquí sería demasiado frecuente
+        // Podríamos usar 'region-update-end' si existiera en esta versión, pero para simplicidad
+        // dejaremos el historial solo en ediciones de texto o botones explícitos para no saturar la pila.
+        
         const index = parseInt(region.id.replace('sub-', ''));
         if (currentSubtitles[index]) {
             currentSubtitles[index].start = region.start;
@@ -719,32 +773,56 @@ function renderSubtitleList() {
             </div>
         `;
         const ta = div.querySelector('textarea');
-        ta.addEventListener('input', () => { sub.text = ta.value; updateSubtitleOverlay(els.videoPreview.currentTime); updateMetrics(index); });
-        ta.addEventListener('focus', () => { focusedSubtitleIndex = index; });
-        ta.addEventListener('blur', () => { focusedSubtitleIndex = -1; });
+        
+        // Historial al enfocar (guarda estado inicial antes de editar)
+        let initialText = "";
+        ta.addEventListener('focus', () => { 
+            focusedSubtitleIndex = index;
+            initialText = sub.text;
+        });
+        
+        // Historial al salir (si cambió el texto)
+        ta.addEventListener('blur', () => { 
+            focusedSubtitleIndex = -1; 
+            if(sub.text !== initialText) {
+                // Truco: Guardamos el estado ANTERIOR en la pila, no el actual
+                // Para eso, necesitamos haber guardado 'initialText'.
+                // Sin embargo, para simplificar: nuestro sistema 'undo' reemplaza todo el estado.
+                // Lo ideal es guardar el estado COMPLETO antes de que el usuario empezara a escribir.
+                // Como ya modificamos 'sub.text' en tiempo real, lo haremos así:
+                
+                // 1. Restaurar temporalmente el texto viejo en el objeto
+                const newText = sub.text;
+                sub.text = initialText;
+                pushHistory(); // Guardar estado viejo
+                sub.text = newText; // Volver a poner el nuevo
+            }
+        });
+
+        ta.addEventListener('input', () => { 
+            sub.text = ta.value; 
+            updateSubtitleOverlay(els.videoPreview.currentTime); 
+            updateMetrics(index); 
+        });
+
         div.addEventListener('click', (e) => { 
              if(e.target.closest('input') || e.target.closest('button') || e.target.tagName === 'TEXTAREA') return;
              els.videoPreview.currentTime = sub.start; 
         });
         els.subtitleList.appendChild(div);
-        updateMetrics(index); // <--- ESTO PROVOCABA EL ERROR ANTES
+        updateMetrics(index);
     });
 }
 
-// --- MISSING FUNCTIONS ADDED HERE ---
-
-// 1. UPDATE METRICS (Soluciona el bug de la lista)
 function updateMetrics(index) {
     const sub = currentSubtitles[index];
     if (!sub) return;
     const div = document.getElementById(`metrics-${index}`);
     if(!div) return;
     
-    // CPL (Caracteres por línea)
     const lines = sub.text.split('\n');
     const maxLineLen = Math.max(...lines.map(l => l.length), 0);
     
-    // CPS (Caracteres por segundo)
     const duration = sub.end - sub.start;
     const charCount = sub.text.replace(/\n/g, '').length;
     const cps = duration > 0 ? (charCount / duration).toFixed(1) : 0;
@@ -759,10 +837,7 @@ function updateMetrics(index) {
     `;
 }
 
-// 2. HIGHLIGHT ACTIVE SUB (Soluciona el bug del timecode)
 function highlightActiveSub(time) {
-    // Solo actualizamos si no estamos editando texto activamente para evitar saltos molestos, 
-    // a menos que el video se esté reproduciendo.
     if(focusedSubtitleIndex !== -1 && els.videoPreview.paused) return;
 
     currentSubtitles.forEach((sub, i) => {
@@ -772,7 +847,6 @@ function highlightActiveSub(time) {
         if (time >= sub.start && time <= sub.end) {
             if (!card.classList.contains('sub-card-active')) {
                 card.classList.add('sub-card-active');
-                // Auto-scroll suave
                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         } else {
@@ -780,10 +854,12 @@ function highlightActiveSub(time) {
         }
     });
 }
-// ------------------------------------
 
 // GLOBAL HELPERS
 window.editTimecode = (index) => {
+    // Guardar historial antes de editar tiempo
+    pushHistory();
+    
     const container = document.getElementById(`tc-container-${index}`);
     const sub = currentSubtitles[index];
     if (!container) return;
@@ -831,6 +907,8 @@ window.saveTimecode = (index) => {
 };
 
 window.nudge = (index, amount, side) => {
+    pushHistory(); // Guardar historial
+    
     if(!currentSubtitles[index]) return;
     if(side === 'start') {
         currentSubtitles[index].start = Math.max(0, currentSubtitles[index].start + amount);
@@ -871,63 +949,77 @@ window.playSingleSub = (index) => {
 };
 
 window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
+
 window.navSub = (index, dir) => {
     const newIndex = index + dir;
-    if(newIndex >= 0 && newIndex < currentSubtitles.length) { els.videoPreview.currentTime = currentSubtitles[newIndex].start; document.getElementById(`card-sub-${newIndex}`).scrollIntoView({behavior: "smooth", block: "center"}); }
+    if(newIndex >= 0 && newIndex < currentSubtitles.length) { 
+        // Desplazamiento y reproducción automática
+        document.getElementById(`card-sub-${newIndex}`).scrollIntoView({behavior: "smooth", block: "center"});
+        window.playSingleSub(newIndex);
+    }
 };
-window.clearSubText = (index) => { if(currentSubtitles[index]) { currentSubtitles[index].text = ""; document.getElementById(`ta-${index}`).value = ""; updateMetrics(index); updateSubtitleOverlay(els.videoPreview.currentTime); } };
+
+window.clearSubText = (index) => { 
+    pushHistory(); // Guardar historial
+    if(currentSubtitles[index]) { currentSubtitles[index].text = ""; document.getElementById(`ta-${index}`).value = ""; updateMetrics(index); updateSubtitleOverlay(els.videoPreview.currentTime); } 
+};
+
+// --- FIX: SHIFT WORD CONSERVANDO SALTOS DE LÍNEA ---
 window.shiftWord = (index, dir) => {
+    pushHistory(); // Guardar historial
+
     if(dir === -1 && index > 0) { 
-        const words = currentSubtitles[index].text.trim().split(/\s+/);
-        if(words.length > 0 && words[0] !== "") {
-            const word = words.shift();
-            currentSubtitles[index].text = words.join(' ');
-            currentSubtitles[index-1].text = (currentSubtitles[index-1].text.trim() + " " + word).trim();
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
+        // Mover primera palabra de ACTUAL al final de ANTERIOR
+        const currentText = currentSubtitles[index].text;
+        const prevText = currentSubtitles[index-1].text;
+        
+        // Regex: Busca la primera palabra (y el espacio que le siga opcionalmente)
+        const match = currentText.match(/^(\S+)(\s*)/); 
+        
+        if(match) {
+            const word = match[1];
+            const separator = match[2]; // Espacio original, si lo hay
+            
+            // Quitamos la palabra del actual
+            currentSubtitles[index].text = currentText.substring(match[0].length);
+            
+            // Añadimos la palabra al anterior (con espacio si no está vacío)
+            const spacer = prevText.trim().length > 0 ? " " : "";
+            currentSubtitles[index-1].text = prevText.trimEnd() + spacer + word;
+
+            // Actualizar UI
+            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
+            document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
             updateMetrics(index); updateMetrics(index-1);
         }
+
     } else if (dir === 1 && index < currentSubtitles.length - 1) { 
-        const words = currentSubtitles[index].text.trim().split(/\s+/);
-        if(words.length > 0 && words[0] !== "") {
-            const word = words.pop();
-            currentSubtitles[index].text = words.join(' ');
-            currentSubtitles[index+1].text = (word + " " + currentSubtitles[index+1].text.trim()).trim();
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
+        // Mover última palabra de ACTUAL al principio de SIGUIENTE
+        const currentText = currentSubtitles[index].text;
+        const nextText = currentSubtitles[index+1].text;
+
+        // Regex: Busca la última palabra (ignorando espacios finales)
+        const match = currentText.match(/(\S+)\s*$/);
+
+        if(match) {
+            const word = match[1];
+            const wordIndex = match.index;
+
+            // Quitamos la palabra del actual (manteniendo el resto del texto intacto, saltos incluidos)
+            currentSubtitles[index].text = currentText.substring(0, wordIndex).trimEnd();
+            
+            // Añadimos la palabra al principio del siguiente
+            const spacer = nextText.trim().length > 0 ? " " : "";
+            currentSubtitles[index+1].text = word + spacer + nextText.trimStart();
+
+            // Actualizar UI
+            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
+            document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
             updateMetrics(index); updateMetrics(index+1);
         }
     }
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
-
-function updateSubtitleOverlay(time) {
-    const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
-    if(activeSub && activeSub.text.trim() !== "") {
-        els.subtitleOverlay.innerText = activeSub.text; els.subtitleOverlay.style.opacity = "1"; els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
-    } else { els.subtitleOverlay.style.opacity = "0"; }
-    highlightActiveSub(time);
-}
-function updateCurrentTimeDisplay(time) {
-    if(els.currentTimeDisplay) els.currentTimeDisplay.innerText = fmtTimeShort(time);
-}
-function parseTimeStr(timeStr) {
-    try {
-        const parts = timeStr.trim().split(':');
-        let seconds = 0;
-        if (useFrames && parts.length === 4) {
-            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(parts[2]); seconds += parseInt(parts[3]) * 0.04; return seconds;
-        }
-        if (parts.length === 3) {
-            const secParts = parts[2].split('.');
-            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(secParts[0]);
-            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
-        } else if (parts.length === 2) {
-            const secParts = parts[1].split('.');
-            seconds += parseInt(parts[0]) * 60; seconds += parseInt(secParts[0]);
-            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
-        }
-        return isNaN(seconds) ? null : seconds;
-    } catch (e) { return null; }
-}
 
 function processResultsV9(data) {
     const maxCPL = parseInt(document.getElementById('max-cpl').value);
@@ -940,30 +1032,30 @@ function processResultsV9(data) {
     const dontBreakStr = document.getElementById('dont-break-on').value;
     const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
     
-    // --- FIX: LEER INPUT DE PUNTUACIÓN ---
     let punctuationStr = ".?!:…";
     if (els.endPunctuationInput && els.endPunctuationInput.value) {
         punctuationStr = els.endPunctuationInput.value;
     }
     const strongPunct = punctuationStr.split('');
-    // -------------------------------------
 
     let allWords = [];
     if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
     
-    // Pasamos strongPunct a la función
     let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList, strongPunct);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
     currentSubtitles = subs;
-    isTextCleared = false; textBackup = []; updateClearButtonUI();
+    isTextCleared = false; textBackup = []; 
+    
+    // Inyectar el botón Undo si no existe aún
+    if(!document.getElementById('undo-btn')) injectUndoButton();
+    updateClearButtonUI();
 }
 
 function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList, strongPunct) {
     const subtitles = []; let buffer = []; let startTime = null; 
     const maxChars = maxCpl * maxLines;
-    // Usamos la lista de puntuación dinámica
     const endsSentence = (w) => {
         const lastChar = w.word.trim().slice(-1);
         return strongPunct.includes(lastChar);
