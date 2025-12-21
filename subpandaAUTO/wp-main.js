@@ -1,4 +1,4 @@
-// wp-main.js - V6.1 (FULL COMPLETE VERSION - FIXED MISSING FUNCTIONS)
+// wp-main.js - V6.2 (FIXED: Added missing metrics, highlight and punctuation logic)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -221,7 +221,10 @@ document.addEventListener('DOMContentLoaded', () => {
         outputText: document.getElementById('output-text'),
         copyBtn: document.getElementById('copy-btn'),
         dlSrt: document.getElementById('download-srt-btn'),
-        dlTxt: document.getElementById('download-txt-btn')
+        dlTxt: document.getElementById('download-txt-btn'),
+        
+        // NUEVO: Captura del input de puntuación
+        endPunctuationInput: document.getElementById('end-punctuation')
     };
 
     // Inicializar Worker
@@ -633,7 +636,7 @@ function initWaveSurfer() {
         }
         if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
         updateSubtitleOverlay(video.currentTime);
-        highlightActiveSub(video.currentTime);
+        highlightActiveSub(video.currentTime); // <--- FUNCIONABA MAL (NO EXISTÍA)
         updateCurrentTimeDisplay(video.currentTime);
     });
     video.addEventListener('play', () => wavesurfer.play());
@@ -724,9 +727,60 @@ function renderSubtitleList() {
              els.videoPreview.currentTime = sub.start; 
         });
         els.subtitleList.appendChild(div);
-        updateMetrics(index);
+        updateMetrics(index); // <--- ESTO PROVOCABA EL ERROR ANTES
     });
 }
+
+// --- MISSING FUNCTIONS ADDED HERE ---
+
+// 1. UPDATE METRICS (Soluciona el bug de la lista)
+function updateMetrics(index) {
+    const sub = currentSubtitles[index];
+    if (!sub) return;
+    const div = document.getElementById(`metrics-${index}`);
+    if(!div) return;
+    
+    // CPL (Caracteres por línea)
+    const lines = sub.text.split('\n');
+    const maxLineLen = Math.max(...lines.map(l => l.length), 0);
+    
+    // CPS (Caracteres por segundo)
+    const duration = sub.end - sub.start;
+    const charCount = sub.text.replace(/\n/g, '').length;
+    const cps = duration > 0 ? (charCount / duration).toFixed(1) : 0;
+    
+    let cpsColor = "text-gray-400";
+    if(cps > 20) cpsColor = "text-red-500 font-bold";
+    else if(cps > 15) cpsColor = "text-orange-400";
+    
+    div.innerHTML = `
+        <span class="${maxLineLen > 42 ? 'text-red-500 font-bold' : ''}">CPL: ${maxLineLen}</span>
+        <span class="${cpsColor}">CPS: ${cps}</span>
+    `;
+}
+
+// 2. HIGHLIGHT ACTIVE SUB (Soluciona el bug del timecode)
+function highlightActiveSub(time) {
+    // Solo actualizamos si no estamos editando texto activamente para evitar saltos molestos, 
+    // a menos que el video se esté reproduciendo.
+    if(focusedSubtitleIndex !== -1 && els.videoPreview.paused) return;
+
+    currentSubtitles.forEach((sub, i) => {
+        const card = document.getElementById(`card-sub-${i}`);
+        if (!card) return;
+        
+        if (time >= sub.start && time <= sub.end) {
+            if (!card.classList.contains('sub-card-active')) {
+                card.classList.add('sub-card-active');
+                // Auto-scroll suave
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            card.classList.remove('sub-card-active');
+        }
+    });
+}
+// ------------------------------------
 
 // GLOBAL HELPERS
 window.editTimecode = (index) => {
@@ -885,9 +939,20 @@ function processResultsV9(data) {
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
     const dontBreakStr = document.getElementById('dont-break-on').value;
     const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
+    
+    // --- FIX: LEER INPUT DE PUNTUACIÓN ---
+    let punctuationStr = ".?!:…";
+    if (els.endPunctuationInput && els.endPunctuationInput.value) {
+        punctuationStr = els.endPunctuationInput.value;
+    }
+    const strongPunct = punctuationStr.split('');
+    // -------------------------------------
+
     let allWords = [];
     if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
-    let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList);
+    
+    // Pasamos strongPunct a la función
+    let subs = createSrtV9(allWords, maxCPL, maxLines, minDurVal, dontBreakList, strongPunct);
     subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
     const task = document.getElementById('task-select').value;
     if (task === 'spotting') subs.forEach(s => s.text = "");
@@ -895,9 +960,15 @@ function processResultsV9(data) {
     isTextCleared = false; textBackup = []; updateClearButtonUI();
 }
 
-function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList) {
-    const subtitles = []; let buffer = []; let startTime = null; const strongPunct = ['.', '?', '!', '♪']; const maxChars = maxCpl * maxLines;
-    const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
+function createSrtV9(words, maxCpl, maxLines, minDur, dontBreakList, strongPunct) {
+    const subtitles = []; let buffer = []; let startTime = null; 
+    const maxChars = maxCpl * maxLines;
+    // Usamos la lista de puntuación dinámica
+    const endsSentence = (w) => {
+        const lastChar = w.word.trim().slice(-1);
+        return strongPunct.includes(lastChar);
+    };
+
     for (let i = 0; i < words.length; i++) {
         const wObj = words[i]; if (!wObj.word.trim()) continue;
         if (startTime === null) startTime = wObj.start;
