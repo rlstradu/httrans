@@ -1,4 +1,4 @@
-// wp-main.js - V6.6 (FIXED: Performance Loop, Nav Logic, Overlay Visibility)
+// wp-main.js - V6.7 (FIXED: Restart Logic, Start Button Re-enable)
 
 // ==========================================
 // 1. CONFIGURACIÓN Y TRADUCCIONES
@@ -276,22 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Detener video
             if(els.videoPreview) els.videoPreview.pause();
             
-            // Ocultar editor
-            els.editorContainer.classList.add('hidden');
-            els.configPanel.classList.remove('hidden');
-            els.runBtn.scrollIntoView({ behavior: 'smooth' });
+            // Usamos resetFile(true) para mantener el archivo pero reiniciar la interfaz y el botón Start
+            resetFile(true); 
             
-            // Soft Reset: Limpiar subtítulos y caché para forzar regeneración
-            cachedData = null; 
-            currentSubtitles = [];
-            
-            const t = translations[currentLang];
-            els.runBtn.querySelector('span').innerText = t.startBtn; 
-            
-            if(wavesurfer) {
-                wavesurfer.destroy();
-                wavesurfer = null;
-            }
+            // Scroll arriba
+            els.configPanel.scrollIntoView({ behavior: 'smooth' });
         });
     }
 
@@ -343,21 +332,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Navigation Alt+Up / Alt+Down
         if (e.altKey && e.key === 'ArrowUp') {
             e.preventDefault();
-            // Buscar índice actual si no hay foco
-            let targetIdx = focusedSubtitleIndex;
-            if (targetIdx === -1) {
-                targetIdx = findCurrentSubIndex(els.videoPreview.currentTime);
-            }
+            let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
             window.navSub(targetIdx, -1);
         }
         
         if (e.altKey && e.key === 'ArrowDown') {
             e.preventDefault();
-            // Buscar índice actual si no hay foco
-            let targetIdx = focusedSubtitleIndex;
-            if (targetIdx === -1) {
-                targetIdx = findCurrentSubIndex(els.videoPreview.currentTime);
-            }
+            let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
+            if(targetIdx === -1 && currentSubtitles.length > 0) targetIdx = -1; 
             window.navSub(targetIdx, 1);
         }
     });
@@ -372,13 +354,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function findCurrentSubIndex(time) {
     const idx = currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
     if (idx !== -1) return idx;
-    
-    // Si no estamos sobre uno, buscamos el último que pasó
-    // Para navegación "siguiente", queremos empezar desde el último visto.
     for (let i = currentSubtitles.length - 1; i >= 0; i--) {
         if (time >= currentSubtitles[i].end) return i;
     }
-    return -1; // Antes del primero
+    return -1; 
 }
 
 function updateModeUI(mode) {
@@ -434,13 +413,14 @@ function resetFile(keepFile = false) {
         els.resetBtn.classList.add('hidden'); 
     }
     
-    cachedData = null; 
+    cachedData = null; // Borrar caché para obligar a reprocesar
     isTextCleared = false; 
     textBackup = [];
     historyStack = []; 
     
     els.runBtn.disabled = !audioData; 
     
+    // RESTAURAR ESTADO DEL BOTÓN START
     if (audioData) {
          els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
     } else {
@@ -449,6 +429,7 @@ function resetFile(keepFile = false) {
 
     els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
 
+    // Resetear UI
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden'); els.uploadSection.classList.remove('hidden');
     els.headerSection.classList.remove('hidden'); els.progressCont.classList.add('hidden');
@@ -732,11 +713,8 @@ function initWaveSurfer() {
     
     const video = els.videoPreview;
     
-    // CORRECCIÓN: Eliminar listeners duplicados de timeupdate en WaveSurfer
-    // Dejar que el video sea el maestro
     wavesurfer.on('interaction', () => {
         video.currentTime = wavesurfer.getCurrentTime();
-        // Solo actualizamos el display, no todo el bucle
         updateCurrentTimeDisplay(video.currentTime);
     });
 
@@ -1073,7 +1051,6 @@ window.shiftWord = (index, dir) => {
     updateSubtitleOverlay(els.videoPreview.currentTime);
 };
 
-// FIX: Overlay Visibility logic
 function updateSubtitleOverlay(time) {
     const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
     
@@ -1088,8 +1065,6 @@ function updateSubtitleOverlay(time) {
         
     } else {
         els.subtitleOverlay.style.opacity = "0";
-        // Opcional: ocultarlo completamente si no hay texto
-        // els.subtitleOverlay.style.display = "none";
     }
     
     highlightActiveSub(time);
