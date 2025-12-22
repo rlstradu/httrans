@@ -336,6 +336,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- 4. FUNCIONES GLOBALES ---
 
+// *** MISSING FUNCTION FIXED HERE ***
+function updateCurrentTimeDisplay(time) {
+    if (els.currentTimeDisplay) {
+        els.currentTimeDisplay.innerText = fmtTimeShort(time);
+    }
+}
+
 function findCurrentSubIndex(time) {
     const idx = currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
     if (idx !== -1) return idx;
@@ -826,21 +833,35 @@ function renderSubtitleList() {
     });
 }
 
+// *** CPL LOGIC UPDATED HERE ***
 function updateMetrics(index) {
     const sub = currentSubtitles[index];
     if (!sub) return;
     const div = document.getElementById(`metrics-${index}`);
     if(!div) return;
+    
     const lines = sub.text.split('\n');
-    const maxLineLen = Math.max(...lines.map(l => l.length), 0);
+    
+    // Create L1: XX L2: XX HTML
+    const cplHTML = lines.map((line, i) => {
+        const len = line.length;
+        // Highlight in red if > 42 chars
+        const colorClass = len > 42 ? 'text-red-500 font-bold' : '';
+        return `<span class="${colorClass}">L${i+1}: ${len}</span>`;
+    }).join('<span class="mx-1 text-gray-300">|</span>');
+
     const duration = sub.end - sub.start;
     const charCount = sub.text.replace(/\n/g, '').length;
     const cps = duration > 0 ? (charCount / duration).toFixed(1) : 0;
+    
     let cpsColor = "text-gray-400";
     if(cps > 20) cpsColor = "text-red-500 font-bold";
     else if(cps > 15) cpsColor = "text-orange-400";
+    
     div.innerHTML = `
-        <span class="${maxLineLen > 42 ? 'text-red-500 font-bold' : ''}">CPL: ${maxLineLen}</span>
+        <div class="flex items-center">
+            ${cplHTML}
+        </div>
         <span class="${cpsColor}">CPS: ${cps}</span>
     `;
 }
@@ -1188,5 +1209,30 @@ function fmtTimeShort(s) {
         return `${hours}:${minutes}:${seconds}.${ms}`;
     }
 }
+function parseTimeStr(str) {
+    // Basic parser for HH:MM:SS:MSS or HH:MM:SS.MSS
+    try {
+        const parts = str.split(/[:.]/);
+        if (parts.length < 3) return null;
+        let h = 0, m = 0, s = 0, ms = 0;
+        
+        if (parts.length === 4) {
+            h = parseInt(parts[0]);
+            m = parseInt(parts[1]);
+            s = parseInt(parts[2]);
+            ms = parseInt(parts[3]);
+        } else if (parts.length === 3) {
+            m = parseInt(parts[0]);
+            s = parseInt(parts[1]);
+            ms = parseInt(parts[2]);
+        }
+        
+        // Handle frames if mode active? Logic assumes time input is MSS for now based on default fmtTimeShort
+        // For frames we'd need to know if useFrames is active globally here.
+        // Assuming MSS for simplicity in this hotfix unless specified.
+        return h * 3600 + m * 60 + s + ms / 1000;
+    } catch (e) { return null; }
+}
+
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
