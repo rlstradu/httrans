@@ -1,4 +1,4 @@
-// wp-main.js - V8.0 (FINAL STABLE: Smart Segmentation Fix, Infinite Loop Proof)
+// wp-main.js - V8.0 (FINAL STABLE: Decoupled Rendering, Smart Loop Fix, Full UI)
 
 // ==========================================
 // 1. VARIABLES GLOBALES
@@ -249,7 +249,6 @@ const ICON_KEYBOARD = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height
 // 2. INICIALIZACIÓN
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 2.1 Capturar Referencias
     els = {
         langEn: document.getElementById('lang-en'),
         langEs: document.getElementById('lang-es'),
@@ -293,23 +292,19 @@ document.addEventListener('DOMContentLoaded', () => {
         endPunctuationInput: document.getElementById('end-punctuation')
     };
 
-    // 2.2 Fix Overlay Z-Index
     if(els.subtitleOverlay) {
         els.subtitleOverlay.style.zIndex = "50";
         els.subtitleOverlay.style.pointerEvents = "none";
     }
 
-    // 2.3 Worker Init
     try {
         worker = new Worker('wp-worker.js', { type: 'module' });
         if(worker) setupWorkerListeners();
     } catch(e) { console.error("Worker Init Failed:", e); }
 
-    // 2.4 Inject Dynamic UI
     injectHeaderButtons();
     injectModals();
 
-    // 2.5 Event Listeners
     if(els.dropZone) {
         els.dropZone.addEventListener('click', () => els.fileInput.click());
         els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
@@ -325,11 +320,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
     if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
     
-    // BOTÓN RESTART WITH SAME FILE
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
             if(els.videoPreview) els.videoPreview.pause();
-            resetFile(true); // Soft Reset
+            resetFile(true); 
             els.configPanel.scrollIntoView({ behavior: 'smooth' });
         });
     }
@@ -373,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', handleGlobalKeydown);
 
-    // Initial Setup
     updateModeUI('groq');
     setLanguage('en');
     resetFile(false);
@@ -451,7 +444,6 @@ function injectModals() {
     document.body.appendChild(scModal);
 }
 
-// Logic for Modals & Injections
 window.closeQAModal = () => document.getElementById('modal-qa').classList.add('hidden');
 window.saveQASettings = () => {
     qaSettings.maxCPL = parseInt(document.getElementById('qa-cpl').value) || 42;
@@ -502,28 +494,20 @@ function renderShortcutsTable() {
 window.remapShortcut = (action) => {
     const btn = event.currentTarget;
     btn.innerHTML = `<span class="text-xs font-bold animate-pulse text-red-600">${translations[currentLang].pressKey}</span>`;
-    
     const handler = (e) => {
         e.preventDefault(); e.stopPropagation();
-        
         const newSc = { code: e.code, keys: [] };
         if(e.ctrlKey) newSc.keys.push('Ctrl');
         if(e.altKey) newSc.keys.push('Alt');
         if(e.shiftKey) newSc.keys.push('Shift');
-        
         let keyLabel = e.key.toUpperCase();
         if(e.code.startsWith('Numpad')) keyLabel = e.code;
         else if(e.code.startsWith('Arrow')) keyLabel = e.code;
         else if(e.key === ' ') keyLabel = 'Space';
-        
         if(!['Control','Alt','Shift'].includes(e.key)) {
             newSc.keys.push(keyLabel);
             userShortcuts[action] = { 
-                code: e.code, 
-                keys: newSc.keys,
-                ctrl: e.ctrlKey,
-                alt: e.altKey,
-                shift: e.shiftKey
+                code: e.code, keys: newSc.keys, ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey
             };
             localStorage.setItem('panda_shortcuts', JSON.stringify(userShortcuts));
             renderShortcutsTable();
@@ -544,7 +528,6 @@ window.resetShortcuts = () => {
 function handleGlobalKeydown(e) {
     const tag = e.target.tagName;
     const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
-    
     for (const [action, sc] of Object.entries(userShortcuts)) {
         if (e.code === sc.code && !!e.ctrlKey === !!sc.ctrl && !!e.altKey === !!sc.alt && !!e.shiftKey === !!sc.shift) {
             if(isInput && !['navPrev', 'navNext', 'playSegment', 'playPause', 'undo'].includes(action)) continue; 
@@ -557,7 +540,6 @@ function handleGlobalKeydown(e) {
 
 function executeAction(action) {
     let index = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
-    
     switch(action) {
         case 'playSegment': if(index !== -1) window.playSingleSub(index); break;
         case 'playPause': if(els.videoPreview.paused) els.videoPreview.play(); else els.videoPreview.pause(); break;
@@ -594,13 +576,10 @@ function resetFile(keepFile = false) {
     historyStack = [];
     
     if (!keepFile) {
-        // RESET TOTAL
         audioData = null;
         audioDuration = 0;
         if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
         if(els.fileInput) els.fileInput.value = '';
-        
-        // Restaurar zona de drop
         if(els.dropZone) {
             els.dropZone.classList.remove('hidden', 'border-0');
             Array.from(els.dropZone.children).forEach(child => child.classList.remove('hidden'));
@@ -608,7 +587,6 @@ function resetFile(keepFile = false) {
         }
         if(els.resetBtn) els.resetBtn.classList.add('hidden');
     } else {
-        // SOFT RESET
         if(els.dropZone) {
             Array.from(els.dropZone.children).forEach(child => {
                 if(child.id !== 'file-info' && child.tagName !== 'INPUT') {
@@ -622,7 +600,6 @@ function resetFile(keepFile = false) {
         if(els.resetBtn) els.resetBtn.classList.remove('hidden');
     }
 
-    // Gestionar Botón Start
     if(els.runBtn) {
         els.runBtn.disabled = !audioData;
         if (audioData) {
@@ -633,7 +610,6 @@ function resetFile(keepFile = false) {
         els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     }
 
-    // Visibilidad de Secciones
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden');
     els.uploadSection.classList.remove('hidden'); 
@@ -646,9 +622,7 @@ function resetFile(keepFile = false) {
 }
 
 async function handleFile(file) {
-    // Esconder warning inicial
     if(els.warning) els.warning.classList.add('hidden');
-    
     resetFile(false); 
     const t = translations[currentLang];
     rawFileName = file.name.split('.').slice(0, -1).join('.');
@@ -656,7 +630,6 @@ async function handleFile(file) {
     if(els.fileInfo) els.fileInfo.classList.remove('hidden');
     if(els.resetBtn) els.resetBtn.classList.remove('hidden');
     
-    // Warning de tamaño
     if (file.size > 500 * 1024 * 1024) {
         if(els.warning) els.warning.classList.remove('hidden');
     }
@@ -668,17 +641,14 @@ async function handleFile(file) {
     try {
         logToConsole(`File loaded: ${file.name}`);
         logToConsole("Decoding audio... please wait.");
-        
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         audioData = audioBuffer; 
         audioDuration = audioBuffer.duration;
-        
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
-        // Habilitar botón Start
         if(els.runBtn) {
             els.runBtn.disabled = false;
             els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
@@ -697,7 +667,6 @@ async function runProcess() {
     const mode = document.querySelector('input[name="proc_mode"]:checked').value;
     const langSelect = document.getElementById('language-select').value;
     const task = document.getElementById('task-select').value;
-    
     els.runBtn.disabled = true;
     els.runBtn.classList.remove('bg-[#ffb81f]', 'hover:bg-[#e0a01a]', 'hover:scale-[1.02]', 'cursor-pointer');
     els.runBtn.classList.add('bg-gray-300', 'cursor-not-allowed'); 
@@ -772,7 +741,6 @@ function setLanguage(lang) {
     const btnText = cachedData ? t.updateBtn : t.startBtn;
     if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
     
-    // SAFE ACCESS
     if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
     
     const undoBtn = document.getElementById('undo-btn');
@@ -840,8 +808,14 @@ function showEditor() {
     if(els.resultsArea) els.resultsArea.classList.add('hidden');
     els.editorContainer.classList.remove('hidden');
     historyStack = [];
+    
+    // IMPORTANT: Render subtitles FIRST so user sees data even if waveform lags
+    renderSubtitleList();
+    
+    // Initialize Waveform afterwards
     if (!wavesurfer) initWaveSurfer();
-    else { renderRegions(); renderSubtitleList(); }
+    else renderRegions(); // Only if already exists
+    
     isTextCleared = false;
     updateClearButtonUI();
 }
@@ -855,7 +829,6 @@ function processResultsV9(data) {
     const minGapUnit = document.getElementById('min-gap-unit').value;
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
     
-    // SAFE ACCESS
     let dontBreakList = [];
     if(els.dontBreakInput && els.dontBreakInput.value) {
         dontBreakList = [...els.dontBreakInput.value.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
@@ -877,7 +850,6 @@ function processResultsV9(data) {
     currentSubtitles = subs;
     isTextCleared = false; textBackup = []; 
     
-    // Check and inject undo button safely
     if(!document.getElementById('undo-btn') && typeof injectUndoButton === 'function') injectUndoButton();
     updateClearButtonUI();
 }
@@ -893,14 +865,12 @@ function createSmartSrt(words, maxCpl, maxLines, minDur, maxDur, dontBreakList, 
         const currentDur = wObj.end - startTime;
         let forceCut = false;
         
-        // FIX: Only force cut if overflow AND we have previous words to fallback to
         if (currentText.length > maxChars) { 
             if (buffer.length > 1) {
                 const overflow = buffer.pop(); 
                 forceCut = true; 
-                i--; // Backtrack
+                i--; 
             } else {
-                // Single word exceeds limit, accept it to avoid infinite loop
                 forceCut = true; 
             }
         } 
@@ -1029,6 +999,44 @@ function toggleTimecodeFormat() {
     els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
     renderSubtitleList(); 
     if(els.videoPreview) updateCurrentTimeDisplay(els.videoPreview.currentTime);
+}
+
+function updateSubtitleOverlay(time) {
+    const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
+    if(activeSub && activeSub.text.trim() !== "") {
+        els.subtitleOverlay.innerText = activeSub.text;
+        els.subtitleOverlay.style.display = "block";
+        els.subtitleOverlay.style.opacity = "1";
+        els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
+        els.subtitleOverlay.style.textShadow = "2px 2px 3px black";
+    } else {
+        els.subtitleOverlay.style.opacity = "0";
+    }
+    highlightActiveSub(time);
+}
+
+function updateCurrentTimeDisplay(time) {
+    if(els.currentTimeDisplay) els.currentTimeDisplay.innerText = fmtTimeShort(time);
+}
+
+function parseTimeStr(timeStr) {
+    try {
+        const parts = timeStr.trim().split(':');
+        let seconds = 0;
+        if (useFrames && parts.length === 4) {
+            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(parts[2]); seconds += parseInt(parts[3]) * 0.04; return seconds;
+        }
+        if (parts.length === 3) {
+            const secParts = parts[2].split('.');
+            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
+        } else if (parts.length === 2) {
+            const secParts = parts[1].split('.');
+            seconds += parseInt(parts[0]) * 60; seconds += parseInt(secParts[0]);
+            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
+        }
+        return isNaN(seconds) ? null : seconds;
+    } catch (e) { return null; }
 }
 
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
