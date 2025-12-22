@@ -1,84 +1,39 @@
-// wp-main.js - V7.0 (Shortcuts System, QA Module, Numpad Support, UI Injection)
+// wp-main.js - V7.3 (FULL COMPLETE: No missing lines, All features included)
 
 // ==========================================
-// 1. CONFIGURACIÓN, TRADUCCIONES Y ESTADO
+// 1. VARIABLES GLOBALES & CONFIGURACIÓN
 // ==========================================
 
-const translations = {
-    en: {
-        backLink: "Back to HTTrans",
-        heroDesc: "AI-powered automatic transcription and subtitling tool.",
-        settingsTitle: "Assistant Preferences",
-        // ... (resto de textos existentes) ...
-        startBtn: "Start",
-        updateBtn: "Update Segmentation",
-        btnReadjust: "Restart with same file",
-        // Nuevos textos
-        btnShortcuts: "Shortcuts",
-        btnQA: "QA Settings",
-        qaTitle: "Quality Assurance Settings",
-        shortcutsTitle: "Keyboard Shortcuts",
-        lblMaxCpl: "Max CPL (Warning limit)",
-        lblMaxCps: "Max CPS (Warning limit)",
-        save: "Save",
-        reset: "Reset Defaults",
-        pressKey: "Press new key combination...",
-        
-        // Actions
-        act_playSegment: "Play Current Subtitle",
-        act_playPause: "Play / Pause Video",
-        act_editStart: "Edit Start Time",
-        act_editEnd: "Edit End Time",
-        act_navPrev: "Previous Subtitle",
-        act_navNext: "Next Subtitle",
-        act_nudgeStartM: "-1 Frame Start",
-        act_nudgeStartP: "+1 Frame Start",
-        act_nudgeEndM: "-1 Frame End",
-        act_nudgeEndP: "+1 Frame End",
-        act_undo: "Undo Action",
-        
-        // Tooltips updated
-        ttPlaySegment: "Play subtitle",
-        ttUndo: "Undo last action"
-    },
-    es: {
-        backLink: "Volver a HTTrans",
-        heroDesc: "Herramienta de transcripción y subtitulado automático impulsada por IA.",
-        settingsTitle: "Ajustes del asistente",
-        // ... (resto de textos existentes) ...
-        startBtn: "Iniciar",
-        updateBtn: "Actualizar Segmentación",
-        btnReadjust: "Reiniciar con mismo archivo",
-        // Nuevos textos
-        btnShortcuts: "Atajos",
-        btnQA: "Configuración QA",
-        qaTitle: "Ajustes de Control de Calidad",
-        shortcutsTitle: "Atajos de Teclado",
-        lblMaxCpl: "Máx CPL (Límite de aviso)",
-        lblMaxCps: "Máx CPS (Límite de aviso)",
-        save: "Guardar",
-        reset: "Restaurar",
-        pressKey: "Pulsa la nueva combinación...",
+// Elementos del DOM
+let els = {}; 
 
-        // Actions
-        act_playSegment: "Reproducir Subtítulo Actual",
-        act_playPause: "Play / Pause General",
-        act_editStart: "Modificar Tiempo Entrada",
-        act_editEnd: "Modificar Tiempo Salida",
-        act_navPrev: "Subtítulo Anterior",
-        act_navNext: "Siguiente Subtítulo",
-        act_nudgeStartM: "-1 Frame Inicio",
-        act_nudgeStartP: "+1 Frame Inicio",
-        act_nudgeEndM: "-1 Frame Fin",
-        act_nudgeEndP: "+1 Frame Fin",
-        act_undo: "Deshacer acción",
-        
-        ttPlaySegment: "Reproducir subtítulo",
-        ttUndo: "Deshacer última acción"
-    }
-};
+// Estado de la Aplicación
+let currentLang = 'en';
+let audioData = null; 
+let audioBlobUrl = null; 
+let rawFileName = "subtitulos";
+let audioDuration = 0;
+let worker = null;
+let cachedData = null; 
 
-// --- DEFAULT CONFIG ---
+// Estado del Editor
+let wavesurfer = null;
+let wsRegions = null;
+let currentSubtitles = []; 
+const ONE_FRAME = 0.04; 
+let useFrames = false; 
+let stopAtTime = null; 
+let playbackMonitorId = null;
+let focusedSubtitleIndex = -1;
+let isTextCleared = false;
+let textBackup = [];
+
+// Historial y Consola
+let historyStack = [];
+const MAX_HISTORY = 50;
+let lastConsoleLine = null; 
+
+// Configuración por defecto (Atajos y QA)
 const DEFAULT_SHORTCUTS = {
     playSegment: { keys: ['Alt', 'o'], code: 'KeyO', alt: true },
     playPause:   { keys: ['Alt', 'p'], code: 'KeyP', alt: true },
@@ -92,37 +47,203 @@ const DEFAULT_SHORTCUTS = {
     nudgeStartP: { keys: ['Numpad7'], code: 'Numpad7' },
     nudgeEndP:   { keys: ['Numpad8'], code: 'Numpad8' }
 };
-
 let userShortcuts = JSON.parse(localStorage.getItem('panda_shortcuts')) || JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
 let qaSettings = { maxCPL: 42, maxCPS: 20 };
 
-// Variables Globales (existentes)
-let currentLang = 'en';
-let audioData = null; 
-let audioBlobUrl = null; 
-let rawFileName = "subtitulos";
-let audioDuration = 0;
-let worker = null;
-let cachedData = null; 
-let wavesurfer = null;
-let wsRegions = null;
-let currentSubtitles = []; 
-const ONE_FRAME = 0.04; 
-let useFrames = false; 
-let stopAtTime = null; 
-let playbackMonitorId = null;
-let focusedSubtitleIndex = -1;
-let isTextCleared = false;
-let textBackup = [];
-let historyStack = [];
-const MAX_HISTORY = 50;
-let els = {}; 
+// Traducciones
+const translations = {
+    en: {
+        backLink: "Back to HTTrans",
+        heroDesc: "AI-powered automatic transcription and subtitling tool.",
+        settingsTitle: "Assistant Preferences",
+        audioLangLabel: "Audio Language",
+        audioLangHelp: "Manually selecting the language improves accuracy.",
+        modelLabel: "AI Model / Quality",
+        modelHelp: "Local uses your PC. Cloud (Groq) uses API for speed.",
+        modeLabel: "Processing Mode",
+        modeLocalDesc: "Free, Private, Slower (CPU/GPU)",
+        modeGroqDesc: "Ultra Fast, Best Quality, Requires Key",
+        optTiny: "Tiny (Fastest - ~40MB)",
+        optBase: "Base (Balanced - ~80MB)",
+        optSmall: "Small (High Quality - ~250MB)",
+        optDistil: "Distil-Small (English Only)",
+        optAuto: "✨ Detect automatically",
+        actionLabel: "Action",
+        optTranscribe: "Transcribe (Keep original language)",
+        optTranslate: "Translate (Convert audio to English)",
+        optSpotting: "Spotting (Empty subtitles)",
+        gapLabel: "Min. Gap",
+        unitFrames: "Frames",
+        unitMs: "ms",
+        minDurLabel: "Min Duration (s)",
+        maxDurLabel: "Max Duration (s)",
+        maxLinesLabel: "Max Lines",
+        cplLabel: "Max chars/line (CPL)",
+        punctuationLabel: "Force break on punctuation",
+        dontBreakLabel: "Do not end line on (Prepositions/Articles)",
+        dropTitle: "Click or drag your file here",
+        dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
+        fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
+        startBtn: "Start",
+        updateBtn: "Update Segmentation", 
+        startBtnProcessing: "Processing...",
+        statusLoading: "Loading...",
+        statusInitiating: "Initializing...",
+        statusListening: "Processing...",
+        statusComplete: "Completed!",
+        resultTitle: "Result",
+        copyBtn: "Copy",
+        copiedBtn: "Copied!",
+        saveSrtBtn: "Save SRT",
+        saveTxtBtn: "Save TXT",
+        resultFooter: "Remember to check subtitles in a professional tool.",
+        errorMsg: "Error processing audio.",
+        downloadModel: "Downloading Model...",
+        btnReadjust: "Restart with same file", 
+        zoomLabel: "Zoom",
+        ttNudgeStartM: "-1 Frame Start (-[)",
+        ttNudgeStartP: "+1 Frame Start (+[)",
+        ttNudgeEndM: "-1 Frame End (-])",
+        ttNudgeEndP: "+1 Frame End (+])",
+        ttPlaySegment: "Play subtitle (Alt+O)",
+        ttPlay: "Play Segment",
+        ttPrev: "Previous Subtitle (Alt+Up)",
+        ttNext: "Next Subtitle (Alt+Down)",
+        ttClear: "Clear Text",
+        ttShiftPrev: "Move first word to previous",
+        ttShiftNext: "Move last word to next",
+        ttClearAll: "Clear ALL Text",
+        ttDeleteSub: "Delete Subtitle Block",
+        confirmClearAll: "Are you sure? This will remove text from ALL subtitles.",
+        btnClear: "Clear Text",
+        btnRecover: "Recover Text",
+        confirmRecover: "Restore original text?",
+        ttEditTime: "Click to edit timestamps",
+        btnUndo: "Undo",
+        ttUndo: "Undo last action (Ctrl+Z)",
+        btnShortcuts: "Shortcuts",
+        btnQA: "QA Settings",
+        qaTitle: "Quality Assurance Settings",
+        shortcutsTitle: "Keyboard Shortcuts",
+        lblMaxCpl: "Max CPL (Warning limit)",
+        lblMaxCps: "Max CPS (Warning limit)",
+        save: "Save",
+        reset: "Reset Defaults",
+        pressKey: "Press new key combination...",
+        
+        act_playSegment: "Play Current Subtitle",
+        act_playPause: "Play / Pause Video",
+        act_editStart: "Edit Start Time",
+        act_editEnd: "Edit End Time",
+        act_navPrev: "Previous Subtitle",
+        act_navNext: "Next Subtitle",
+        act_nudgeStartM: "-1 Frame Start",
+        act_nudgeStartP: "+1 Frame Start",
+        act_nudgeEndM: "-1 Frame End",
+        act_nudgeEndP: "+1 Frame End",
+        act_undo: "Undo Action",
 
-// ICONOS SVG (Actualizados)
+        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
+    },
+    es: {
+        backLink: "Volver a HTTrans",
+        heroDesc: "Herramienta de transcripción y subtitulado automático impulsada por IA.",
+        settingsTitle: "Ajustes del asistente",
+        audioLangLabel: "Idioma del audio",
+        audioLangHelp: "Seleccionar el idioma manualmente mejora la precisión.",
+        modelLabel: "Modelo IA / Calidad",
+        modelHelp: "Local usa tu PC. Nube (Groq) usa API para velocidad.",
+        modeLabel: "Modo de Procesamiento",
+        modeLocalDesc: "Gratis, Privado, Muy Lento (CPU/GPU)",
+        modeGroqDesc: "Ultra Rápido, Mejor Calidad, Requiere Key",
+        optTiny: "Tiny (Rápido - ~40MB)",
+        optBase: "Base (Equilibrado - ~80MB)",
+        optSmall: "Small (Mejor Calidad - ~250MB)",
+        optDistil: "Distil-Small (Solo Inglés)",
+        optAuto: "✨ Detectar automáticamente",
+        actionLabel: "Acción",
+        optTranscribe: "Transcribir (Mantener idioma original)",
+        optTranslate: "Traducir (Convertir audio al Inglés)",
+        optSpotting: "Spotting (Subtítulos vacíos)",
+        gapLabel: "Intervalo Mín.",
+        unitFrames: "Frames",
+        unitMs: "ms",
+        minDurLabel: "Duración Mín. (s)",
+        maxDurLabel: "Duración Máx. (s)",
+        maxLinesLabel: "Máx. Líneas",
+        cplLabel: "Máx. caracteres/línea (CPL)",
+        punctuationLabel: "Forzar corte en puntuación",
+        dontBreakLabel: "No terminar línea en (Preposiciones/Artículos)",
+        dropTitle: "Haz clic o arrastra tu archivo aquí",
+        dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
+        fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
+        startBtn: "Iniciar",
+        updateBtn: "Actualizar Segmentación",
+        startBtnProcessing: "Procesando...",
+        statusLoading: "Cargando...",
+        statusInitiating: "Iniciando...",
+        statusListening: "Procesando...",
+        statusComplete: "¡Completado!",
+        resultTitle: "Resultado",
+        copyBtn: "Copiar",
+        copiedBtn: "¡Copiado!",
+        saveSrtBtn: "Guardar SRT",
+        saveTxtBtn: "Guardar TXT",
+        resultFooter: "Recuerda revisar los subtítulos en una herramienta profesional.",
+        errorMsg: "No se pudo procesar el audio.",
+        downloadModel: "Descargando Modelo...",
+        btnReadjust: "Reiniciar con mismo archivo", 
+        zoomLabel: "Zoom",
+        ttNudgeStartM: "-1 Frame Inicio (-[)",
+        ttNudgeStartP: "+1 Frame Inicio (+[)",
+        ttNudgeEndM: "-1 Frame Fin (-])",
+        ttNudgeEndP: "+1 Frame Fin (+])",
+        ttPlaySegment: "Reproducir subtítulo (Alt+O)",
+        ttPlay: "Reproducir Segmento",
+        ttPrev: "Subtítulo Anterior (Alt+Arr)",
+        ttNext: "Siguiente Subtítulo (Alt+Abj)",
+        ttClear: "Borrar Texto",
+        ttShiftPrev: "Mover palabra al anterior",
+        ttShiftNext: "Mover palabra al siguiente",
+        ttClearAll: "Borrar TODO el texto",
+        ttDeleteSub: "Eliminar bloque de subtítulo",
+        confirmClearAll: "¿Seguro? Esto borrará el texto de TODOS los subtítulos.",
+        btnClear: "Borrar Texto",
+        btnRecover: "Recuperar Texto",
+        confirmRecover: "¿Restaurar texto original?",
+        ttEditTime: "Clic para editar tiempos manualmente",
+        btnUndo: "Deshacer",
+        ttUndo: "Deshacer última acción (Ctrl+Z)",
+        btnShortcuts: "Atajos",
+        btnQA: "Configuración QA",
+        qaTitle: "Ajustes de Control de Calidad",
+        shortcutsTitle: "Atajos de Teclado",
+        lblMaxCpl: "Máx CPL (Límite de aviso)",
+        lblMaxCps: "Máx CPS (Límite de aviso)",
+        save: "Guardar",
+        reset: "Restaurar",
+        pressKey: "Pulsa la nueva combinación...",
+        
+        act_playSegment: "Reproducir Subtítulo Actual",
+        act_playPause: "Play / Pause General",
+        act_editStart: "Modificar Tiempo Entrada",
+        act_editEnd: "Modificar Tiempo Salida",
+        act_navPrev: "Subtítulo Anterior",
+        act_navNext: "Siguiente Subtítulo",
+        act_nudgeStartM: "-1 Frame Inicio",
+        act_nudgeStartP: "+1 Frame Inicio",
+        act_nudgeEndM: "-1 Frame Fin",
+        act_nudgeEndP: "+1 Frame Fin",
+        act_undo: "Deshacer acción",
+
+        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
+    }
+};
+
+// ICONOS
 const ICON_PLAY = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
 const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
-// NUEVO ICONO GOMA
 const ICON_ERASER = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M227.32,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152.06A16,16,0,0,0,32,163.31V208a16,16,0,0,0,16,16H216a8,8,0,0,0,0-16H115.31L227.31,96A16,16,0,0,0,227.32,73.37ZM99.31,208H48V163.31l88-88L187.31,126.63Z"></path></svg>`;
 const ICON_UP = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path></svg>`;
 const ICON_DOWN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
@@ -130,11 +251,14 @@ const ICON_UNDO = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20
 const ICON_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>`;
 const ICON_WORD_LEFT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg>`;
 const ICON_WORD_RIGHT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>`;
-const ICON_GEAR = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M225.6,71.55l-22.37-3.76a77.89,77.89,0,0,0-10.86-18.72l12.44-18.73a8,8,0,0,0-2-10.74l-21.72-14.59a8,8,0,0,0-10.82,2L156.9,23.51a78.1,78.1,0,0,0-21.66,0L121.89,7a8,8,0,0,0-10.82-2L89.35,19.58a8,8,0,0,0-2,10.74L99.79,49.07A77.89,77.89,0,0,0,88.93,67.79L66.56,71.55a8,8,0,0,0-6.66,7.88V105.7a8,8,0,0,0,6.66,7.89l22.37,3.76a78.29,78.29,0,0,0,0,43.32l-22.37,3.76a8,8,0,0,0-6.66,7.89v26.27a8,8,0,0,0,6.66,7.88l22.37,3.76a77.89,77.89,0,0,0,10.86,18.72l-12.44,18.73a8,8,0,0,0,2,10.74l21.72,14.59a8,8,0,0,0,10.82-2l13.37-16.5a78.1,78.1,0,0,0,21.66,0l13.35,16.5a8,8,0,0,0,10.82,2l21.72-14.59a8,8,0,0,0,2-10.74l-12.44-18.73a77.89,77.89,0,0,0,10.86-18.72l22.37-3.76a8,8,0,0,0,6.66-7.88V125.18A8,8,0,0,0,225.6,71.55ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path></svg>`;
+const ICON_GEAR = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M225.6,71.55l-22.37-3.76a77.89,77.89,0,0,0-10.86-18.72l12.44-18.73a8,8,0,0,0-2-10.74l-21.72-14.59a8,8,0,0,0-10.82,2L156.9,23.51a78.1,78.1,0,0,0-21.66,0L121.89,7a8,8,0,0,0-10.82-2L89.35,19.58a8,8,0,0,0-2,10.74L99.79,49.07A77.89,77.89,0,0,0,88.93,67.79L66.56,71.55a8,8,0,0,0-6.66,7.88V105.7a8,8,0,0,0,6.66,7.89l22.37,3.76a78.29,78.29,0,0,0,0,43.32l-22.37,3.76a8,8,0,0,0-6.66,7.89v26.27a8,8,0,0,0,6.66,7.88l22.37,3.76a77.89,77.89,0,0,0,10.86,18.72l-12.44,18.73a8,8,0,0,0,2,10.74l21.72,14.59a8,8,0,0,0,10.82-2l13.37-16.5a78.1,78.1,0,0,0,21.66,0l13.35,16.5a8,8,0,0,0,10.82-2l21.72-14.59a8,8,0,0,0,2-10.74l-12.44-18.73a77.89,77.89,0,0,0,10.86-18.72l22.37-3.76a8,8,0,0,0,6.66-7.88V125.18A8,8,0,0,0,225.6,71.55ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path></svg>`;
 const ICON_KEYBOARD = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM64,120a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,64,120Zm0,48a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,64,168Zm40,0a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,104,168Zm0-48a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,104,120Zm48,48a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,152,168Zm0-48a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,152,120Zm48,48a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,200,168Zm0-48a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,200,120Z"></path></svg>`;
 
-// 3. INICIALIZACIÓN
+// ==========================================
+// 2. INICIALIZACIÓN
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // 2.1 Capturar Referencias
     els = {
         langEn: document.getElementById('lang-en'),
         langEs: document.getElementById('lang-es'),
@@ -170,25 +294,31 @@ document.addEventListener('DOMContentLoaded', () => {
         groqContainer: document.getElementById('groq-key-container'),
         localModelContainer: document.getElementById('local-model-container'),
         resultsArea: document.getElementById('results-area'),
+        outputText: document.getElementById('output-text'),
+        copyBtn: document.getElementById('copy-btn'),
+        dlSrt: document.getElementById('download-srt-btn'),
+        dlTxt: document.getElementById('download-txt-btn'),
         
         endPunctuationInput: document.getElementById('end-punctuation')
     };
 
+    // 2.2 Fix Overlay Z-Index
     if(els.subtitleOverlay) {
         els.subtitleOverlay.style.zIndex = "50";
         els.subtitleOverlay.style.pointerEvents = "none";
     }
 
+    // 2.3 Worker Init
     try {
         worker = new Worker('wp-worker.js', { type: 'module' });
         if(worker) setupWorkerListeners();
     } catch(e) { console.error("Worker Init Failed:", e); }
 
-    // Inject New UI Elements
+    // 2.4 Inject Dynamic UI
     injectHeaderButtons();
     injectModals();
 
-    // Event Listeners
+    // 2.5 Event Listeners
     if(els.dropZone) {
         els.dropZone.addEventListener('click', () => els.fileInput.click());
         els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
@@ -204,10 +334,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
     if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
     
+    // BOTÓN RESTART WITH SAME FILE
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
             if(els.videoPreview) els.videoPreview.pause();
-            resetFile(true); 
+            resetFile(true); // Soft Reset
             els.configPanel.scrollIntoView({ behavior: 'smooth' });
         });
     }
@@ -249,33 +380,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // GLOBAL KEY LISTENER
     document.addEventListener('keydown', handleGlobalKeydown);
 
+    // Initial Setup
     updateModeUI('groq');
     setLanguage('en');
 }); 
 
 // ==========================================
-// 4. NUEVAS FUNCIONES UI & LOGICA
+// 3. UI INJECTION & MODALS
 // ==========================================
 
 function injectHeaderButtons() {
     const nav = document.querySelector('nav .flex.items-center.gap-4 .flex.bg-white\\/50');
     if (!nav) return;
-    
-    // Create container for new buttons to left of Lang toggle
     const container = document.createElement('div');
     container.className = "flex gap-2 mr-2";
     
-    // QA Button
     const btnQA = document.createElement('button');
     btnQA.id = "btn-qa";
     btnQA.className = "lang-btn px-3 py-1 rounded-md text-sm font-bold flex items-center gap-1 bg-white/50 hover:bg-white";
     btnQA.innerHTML = `${ICON_GEAR} <span class="hidden sm:inline" data-key="btnQA">QA</span>`;
     btnQA.onclick = () => document.getElementById('modal-qa').classList.remove('hidden');
     
-    // Shortcuts Button
     const btnSC = document.createElement('button');
     btnSC.id = "btn-shortcuts";
     btnSC.className = "lang-btn px-3 py-1 rounded-md text-sm font-bold flex items-center gap-1 bg-white/50 hover:bg-white";
@@ -334,16 +461,15 @@ function injectModals() {
     document.body.appendChild(scModal);
 }
 
-// QA Logic
+// Logic for Modals
 window.closeQAModal = () => document.getElementById('modal-qa').classList.add('hidden');
 window.saveQASettings = () => {
     qaSettings.maxCPL = parseInt(document.getElementById('qa-cpl').value) || 42;
     qaSettings.maxCPS = parseInt(document.getElementById('qa-cps').value) || 20;
     closeQAModal();
-    renderSubtitleList(); // Re-render to show new warnings
+    renderSubtitleList(); 
 };
 
-// Shortcuts Logic
 function renderShortcutsTable() {
     const list = document.getElementById('sc-list');
     list.innerHTML = '';
@@ -356,7 +482,7 @@ function renderShortcutsTable() {
         
         const label = t[`act_${action}`] || action;
         let keysDisplay = sc.keys.join(' + ');
-        if(action.startsWith('nudge')) keysDisplay = sc.code; // Better display for Numpad
+        if(action.startsWith('nudge')) keysDisplay = sc.code; 
 
         row.innerHTML = `
             <span class="text-sm font-medium text-gray-700">${label}</span>
@@ -371,12 +497,10 @@ function renderShortcutsTable() {
 
 window.remapShortcut = (action) => {
     const btn = event.currentTarget;
-    const originalText = btn.innerHTML;
     btn.innerHTML = `<span class="text-xs font-bold animate-pulse text-red-600">${translations[currentLang].pressKey}</span>`;
     
     const handler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         
         const newSc = { code: e.code, keys: [] };
         if(e.ctrlKey) newSc.keys.push('Ctrl');
@@ -414,20 +538,12 @@ window.resetShortcuts = () => {
 };
 
 function handleGlobalKeydown(e) {
-    // Ignorar si estamos escribiendo en un input o textarea (salvo atajos con modificadores o flechas especiales)
     const tag = e.target.tagName;
     const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
     
-    // Check shortcuts
     for (const [action, sc] of Object.entries(userShortcuts)) {
-        if (e.code === sc.code && 
-            !!e.ctrlKey === !!sc.ctrl && 
-            !!e.altKey === !!sc.alt && 
-            !!e.shiftKey === !!sc.shift) {
-            
-            // Allow navigation and play even in textarea
+        if (e.code === sc.code && !!e.ctrlKey === !!sc.ctrl && !!e.altKey === !!sc.alt && !!e.shiftKey === !!sc.shift) {
             if(isInput && !['navPrev', 'navNext', 'playSegment', 'playPause', 'undo'].includes(action)) continue; 
-            
             e.preventDefault();
             executeAction(action);
             return;
@@ -439,24 +555,13 @@ function executeAction(action) {
     let index = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
     
     switch(action) {
-        case 'playSegment': 
-            if(index !== -1) window.playSingleSub(index); 
-            break;
-        case 'playPause':
-            if(els.videoPreview.paused) els.videoPreview.play(); else els.videoPreview.pause();
-            break;
-        case 'navPrev':
-            window.navSub(index !== -1 ? index : 0, -1);
-            break;
-        case 'navNext':
-            window.navSub(index !== -1 ? index : -1, 1);
-            break;
-        case 'undo':
-            window.undoAction();
-            break;
+        case 'playSegment': if(index !== -1) window.playSingleSub(index); break;
+        case 'playPause': if(els.videoPreview.paused) els.videoPreview.play(); else els.videoPreview.pause(); break;
+        case 'navPrev': window.navSub(index !== -1 ? index : 0, -1); break;
+        case 'navNext': window.navSub(index !== -1 ? index : -1, 1); break;
+        case 'undo': window.undoAction(); break;
         case 'editStart':
             if(index !== -1) {
-                // Trigger edit mode and focus start
                 if(!document.getElementById(`start-in-${index}`)) window.editTimecode(index);
                 setTimeout(() => document.getElementById(`start-in-${index}`)?.focus(), 50);
             }
@@ -475,66 +580,8 @@ function executeAction(action) {
 }
 
 // ==========================================
-// FIN NUEVAS FUNCIONES
+// 4. FUNCIONES DE PROCESO
 // ==========================================
-
-// --- UTILS ---
-function findCurrentSubIndex(time) {
-    const idx = currentSubtitles.findIndex(s => time >= s.start && time <= s.end);
-    if (idx !== -1) return idx;
-    for (let i = currentSubtitles.length - 1; i >= 0; i--) {
-        if (time >= currentSubtitles[i].end) return i;
-    }
-    return -1; 
-}
-
-function updateModeUI(mode) {
-    if(!els.groqContainer) return;
-    if (mode === 'groq') {
-        els.groqContainer.classList.remove('hidden');
-        els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
-        document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
-            const label = r.closest('label');
-            if (r.checked) { label.classList.add('border-[#ffb81f]', 'shadow-md'); label.classList.remove('border-gray-200'); } 
-            else { label.classList.remove('border-[#ffb81f]', 'shadow-md'); label.classList.add('border-gray-200'); }
-        });
-        const savedKey = localStorage.getItem('groq_api_key');
-        const defaultKey = "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";
-        if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || defaultKey;
-    } else {
-        els.groqContainer.classList.add('hidden');
-        els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
-        document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
-            const label = r.closest('label');
-            if (r.checked) { label.classList.add('border-gray-400', 'shadow-md'); label.classList.remove('border-gray-200'); } 
-            else { label.classList.remove('border-gray-400', 'shadow-md'); label.classList.add('border-gray-200'); }
-        });
-    }
-}
-
-function setLanguage(lang) {
-    currentLang = lang; const t = translations[lang];
-    if (lang === 'en') { els.langEn.classList.add('active'); els.langEs.classList.remove('active'); } 
-    else { els.langEs.classList.add('active'); els.langEn.classList.remove('active'); }
-    document.querySelectorAll('[data-key]').forEach(el => {
-        if(el.tagName === 'OPTION') { el.text = translations[currentLang][el.dataset.key] || el.text; } 
-        else if(translations[currentLang][el.dataset.key]) el.innerHTML = translations[currentLang][el.dataset.key];
-    });
-    const btnText = cachedData ? t.updateBtn : t.startBtn;
-    if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
-    if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
-    
-    const undoBtn = document.getElementById('undo-btn');
-    if(undoBtn) undoBtn.innerHTML = `${ICON_UNDO} ${t.btnUndo}`;
-    
-    // Update Header Buttons
-    const btnQA = document.getElementById('btn-qa');
-    if(btnQA) btnQA.innerHTML = `${ICON_GEAR} <span class="hidden sm:inline">${t.btnQA}</span>`;
-    const btnSC = document.getElementById('btn-shortcuts');
-    if(btnSC) btnSC.innerHTML = `${ICON_KEYBOARD} <span class="hidden sm:inline">${t.btnShortcuts}</span>`;
-
-    updateClearButtonUI();
-}
 
 function resetFile(keepFile = false) {
     cachedData = null;
@@ -543,17 +590,21 @@ function resetFile(keepFile = false) {
     historyStack = [];
     
     if (!keepFile) {
+        // RESET TOTAL
         audioData = null;
         audioDuration = 0;
         if(audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
         if(els.fileInput) els.fileInput.value = '';
+        
+        // Restaurar zona de drop
         if(els.dropZone) {
             els.dropZone.classList.remove('hidden', 'border-0');
             Array.from(els.dropZone.children).forEach(child => child.classList.remove('hidden'));
-            els.fileInfo.classList.add('hidden');
+            if(els.fileInfo) els.fileInfo.classList.add('hidden');
         }
-        els.resetBtn.classList.add('hidden');
+        if(els.resetBtn) els.resetBtn.classList.add('hidden');
     } else {
+        // SOFT RESET
         if(els.dropZone) {
             Array.from(els.dropZone.children).forEach(child => {
                 if(child.id !== 'file-info' && child.tagName !== 'INPUT') {
@@ -563,18 +614,22 @@ function resetFile(keepFile = false) {
             els.dropZone.classList.add('border-0'); 
             els.dropZone.classList.remove('hidden');
         }
-        els.fileInfo.classList.remove('hidden');
-        els.resetBtn.classList.remove('hidden');
+        if(els.fileInfo) els.fileInfo.classList.remove('hidden');
+        if(els.resetBtn) els.resetBtn.classList.remove('hidden');
     }
 
-    els.runBtn.disabled = !audioData;
-    if (audioData) {
-         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
-    } else {
-         els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
+    // Gestionar Botón Start
+    if(els.runBtn) {
+        els.runBtn.disabled = !audioData;
+        if (audioData) {
+             els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
+        } else {
+             els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed";
+        }
+        els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
     }
-    els.runBtn.querySelector('span').innerText = translations[currentLang].startBtn;
 
+    // Visibilidad de Secciones
     els.editorContainer.classList.add('hidden');
     els.configPanel.classList.remove('hidden');
     els.uploadSection.classList.remove('hidden'); 
@@ -587,32 +642,44 @@ function resetFile(keepFile = false) {
 }
 
 async function handleFile(file) {
+    // Esconder warning inicial
+    if(els.warning) els.warning.classList.add('hidden');
+    
     resetFile(false); 
     const t = translations[currentLang];
     rawFileName = file.name.split('.').slice(0, -1).join('.');
-    els.fileName.innerText = file.name;
-    els.fileInfo.classList.remove('hidden');
-    els.resetBtn.classList.remove('hidden');
-    if (file.size > 500 * 1024 * 1024) els.warning.classList.remove('hidden'); 
+    if(els.fileName) els.fileName.innerText = file.name;
+    if(els.fileInfo) els.fileInfo.classList.remove('hidden');
+    if(els.resetBtn) els.resetBtn.classList.remove('hidden');
+    
+    // Warning de tamaño
+    if (file.size > 500 * 1024 * 1024) {
+        if(els.warning) els.warning.classList.remove('hidden');
+    }
     
     audioBlobUrl = URL.createObjectURL(file);
-    els.videoPreview.src = audioBlobUrl;
+    if(els.videoPreview) els.videoPreview.src = audioBlobUrl;
 
-    els.progressCont.classList.remove('hidden');
-    logToConsole(`File loaded: ${file.name}`);
-    logToConsole("Decoding audio... please wait.");
-    
+    if(els.progressCont) els.progressCont.classList.remove('hidden');
     try {
+        logToConsole(`File loaded: ${file.name}`);
+        logToConsole("Decoding audio... please wait.");
+        
         const arrayBuffer = await file.arrayBuffer();
         const audioContext = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        audioData = audioBuffer; audioDuration = audioBuffer.duration;
+        audioData = audioBuffer; 
+        audioDuration = audioBuffer.duration;
+        
         logToConsole(`Audio decoded. Duration: ${fmtDuration(audioDuration)}`);
         logToConsole(`Ready to start.`);
         
-        els.runBtn.disabled = false;
-        els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
-        els.runBtn.querySelector('span').innerText = t.startBtn;
+        // Habilitar botón Start
+        if(els.runBtn) {
+            els.runBtn.disabled = false;
+            els.runBtn.className = "flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer";
+            els.runBtn.querySelector('span').innerText = t.startBtn;
+        }
     } catch (err) {
         logToConsole(`ERROR: ${err.message}`);
     }
@@ -684,6 +751,187 @@ async function runGroq(apiKey, audioBuffer, language, task) {
     }
 }
 
+// ==========================================
+// 5. FUNCIONES AUXILIARES Y UI
+// ==========================================
+
+function setLanguage(lang) {
+    currentLang = lang; const t = translations[lang];
+    if (els.langEn) els.langEn.classList.toggle('active', lang === 'en');
+    if (els.langEs) els.langEs.classList.toggle('active', lang === 'es');
+    
+    document.querySelectorAll('[data-key]').forEach(el => {
+        if(el.tagName === 'OPTION') { el.text = t[el.dataset.key] || el.text; } 
+        else if(t[el.dataset.key]) el.innerHTML = t[el.dataset.key];
+    });
+    
+    const btnText = cachedData ? t.updateBtn : t.startBtn;
+    if (audioData && els.runBtn) els.runBtn.querySelector('span').innerText = btnText;
+    
+    // SAFE ACCESS
+    if(els.dontBreakInput) els.dontBreakInput.value = t.dontBreakDefaults;
+    
+    const undoBtn = document.getElementById('undo-btn');
+    if(undoBtn) undoBtn.innerHTML = `${ICON_UNDO} ${t.btnUndo}`;
+    
+    const btnQA = document.getElementById('btn-qa');
+    if(btnQA) btnQA.innerHTML = `${ICON_GEAR} <span class="hidden sm:inline">${t.btnQA}</span>`;
+    const btnSC = document.getElementById('btn-shortcuts');
+    if(btnSC) btnSC.innerHTML = `${ICON_KEYBOARD} <span class="hidden sm:inline">${t.btnShortcuts}</span>`;
+
+    updateClearButtonUI();
+}
+
+function updateModeUI(mode) {
+    if(!els.groqContainer) return;
+    if (mode === 'groq') {
+        els.groqContainer.classList.remove('hidden');
+        els.localModelContainer.classList.add('opacity-50', 'pointer-events-none');
+        document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
+            const label = r.closest('label');
+            if (r.checked) { label.classList.add('border-[#ffb81f]', 'shadow-md'); label.classList.remove('border-gray-200'); } 
+            else { label.classList.remove('border-[#ffb81f]', 'shadow-md'); label.classList.add('border-gray-200'); }
+        });
+        const savedKey = localStorage.getItem('groq_api_key');
+        const defaultKey = "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";
+        if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || defaultKey;
+    } else {
+        els.groqContainer.classList.add('hidden');
+        els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
+        document.querySelectorAll('input[name="proc_mode"]').forEach(r => {
+            const label = r.closest('label');
+            if (r.checked) { label.classList.add('border-gray-400', 'shadow-md'); label.classList.remove('border-gray-200'); } 
+            else { label.classList.remove('border-gray-400', 'shadow-md'); label.classList.add('border-gray-200'); }
+        });
+    }
+}
+
+function logToConsole(msg, isProgress = false) {
+    if (!els.consoleOutput) return;
+    if (!isProgress) lastConsoleLine = null;
+    const div = document.createElement('div');
+    div.innerText = typeof msg === 'object' ? `> ${JSON.stringify(msg)}` : `> ${msg}`;
+    div.className = "hover:bg-gray-800 px-1 rounded font-mono text-xs";
+    if (isProgress) div.style.color = "#a7f3d0";
+    els.consoleOutput.appendChild(div);
+    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+}
+
+function updateConsoleLine(msg) {
+    if (!els.consoleOutput) return;
+    if (lastConsoleLine && lastConsoleLine.isConnected) { lastConsoleLine.innerText = `> ${msg}`; } 
+    else {
+        const div = document.createElement('div'); div.innerText = `> ${msg}`;
+        div.className = "hover:bg-gray-800 px-1 rounded text-green-300 font-bold font-mono text-xs";
+        els.consoleOutput.appendChild(div); lastConsoleLine = div;
+    }
+    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+}
+
+function showEditor() {
+    els.uploadSection.classList.add('hidden');
+    els.configPanel.classList.add('hidden');
+    els.headerSection.classList.add('hidden');
+    els.progressCont.classList.add('hidden');
+    if(els.resultsArea) els.resultsArea.classList.add('hidden');
+    els.editorContainer.classList.remove('hidden');
+    historyStack = [];
+    if (!wavesurfer) initWaveSurfer();
+    else { renderRegions(); renderSubtitleList(); }
+    isTextCleared = false;
+    updateClearButtonUI();
+}
+
+function processResultsV9(data) {
+    const maxCPL = parseInt(document.getElementById('max-cpl').value);
+    const maxLines = parseInt(document.getElementById('max-lines').value);
+    const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
+    const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
+    const minGapVal = parseFloat(document.getElementById('min-gap-val').value) || 0;
+    const minGapUnit = document.getElementById('min-gap-unit').value;
+    let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
+    
+    // SAFE ACCESS
+    let dontBreakList = [];
+    if(els.dontBreakInput && els.dontBreakInput.value) {
+        dontBreakList = [...els.dontBreakInput.value.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
+    }
+    
+    let punctuationStr = ".?!:…";
+    if (els.endPunctuationInput && els.endPunctuationInput.value) {
+        punctuationStr = els.endPunctuationInput.value;
+    }
+    const strongPunct = punctuationStr.split('');
+
+    let allWords = [];
+    if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
+    
+    let subs = createSmartSrt(allWords, maxCPL, maxLines, minDurVal, maxDurVal, dontBreakList, strongPunct);
+    subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
+    const task = document.getElementById('task-select').value;
+    if (task === 'spotting') subs.forEach(s => s.text = "");
+    currentSubtitles = subs;
+    isTextCleared = false; textBackup = []; 
+    
+    if(!document.getElementById('undo-btn')) injectUndoButton();
+    updateClearButtonUI();
+}
+
+function createSmartSrt(words, maxCpl, maxLines, minDur, maxDur, dontBreakList, strongPunct) {
+    const subtitles = []; let buffer = []; let startTime = null; const maxChars = maxCpl * maxLines;
+    const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
+    for (let i = 0; i < words.length; i++) {
+        const wObj = words[i]; if (!wObj.word.trim()) continue;
+        if (startTime === null) startTime = wObj.start;
+        buffer.push(wObj);
+        const currentText = buffer.map(b => b.word.trim()).join(' ');
+        const currentDur = wObj.end - startTime;
+        let forceCut = false;
+        if (currentText.length > maxChars) { const overflow = buffer.pop(); forceCut = true; i--; } 
+        else if (endsSentence(wObj)) { if (currentDur >= minDur) forceCut = true; }
+        else if (currentDur >= maxDur) { forceCut = true; }
+        if (forceCut || i === words.length - 1) {
+            if (buffer.length === 0) continue;
+            const finalBlockText = buffer.map(b => b.word.trim()).join(' ');
+            const endTime = buffer[buffer.length - 1].end;
+            const lines = balancedSplitV9(finalBlockText, maxCpl, dontBreakList);
+            subtitles.push({ start: startTime, end: endTime, text: lines.join('\n') });
+            buffer = []; startTime = null;
+        }
+    }
+    return subtitles;
+}
+
+function balancedSplitV9(text, maxCpl, dontBreakList) {
+    if (text.length <= maxCpl) return [text];
+    const words = text.split(' '); let bestCut = -1; let bestScore = Infinity; 
+    const punct = [',', ':', ';', '-', '.']; const safeStart = Math.floor(words.length * 0.2); const safeEnd = Math.floor(words.length * 0.9); 
+    for (let i = 1; i < words.length; i++) {
+        const l1Str = words.slice(0, i).join(' '); const l2Str = words.slice(i).join(' ');
+        if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue; 
+        let score = Math.abs(l1Str.length - l2Str.length);
+        const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
+        if (dontBreakList.includes(lastWordL1) || /^\d+$/.test(lastWordL1)) score += 5000; 
+        const lastCharL1 = words[i-1].slice(-1); if (punct.includes(lastCharL1)) score -= 50; 
+        if (i > safeStart && i < safeEnd) score -= 10;
+        if (score < bestScore) { bestScore = score; bestCut = i; }
+    }
+    if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
+    const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+}
+
+function applyTimeRules(subs, minDur, maxDur, minGap) {
+    for (let i = 0; i < subs.length; i++) {
+        let current = subs[i]; let duration = current.end - current.start;
+        if (duration < minDur) {
+            let limit = Infinity; if (i < subs.length - 1) limit = subs[i+1].start - minGap;
+            let desiredEnd = current.start + minDur;
+            if (desiredEnd <= limit) current.end = desiredEnd; else current.end = limit;
+        }
+    }
+    return subs;
+}
+
 function setupWorkerListeners() {
     worker.onmessage = (e) => {
         const { status, data } = e.data;
@@ -720,27 +968,6 @@ function setupWorkerListeners() {
     };
 }
 
-// --- UTILS ---
-function logToConsole(msg, isProgress = false) {
-    if (!els.consoleOutput) return;
-    if (!isProgress) lastConsoleLine = null;
-    const div = document.createElement('div');
-    div.innerText = typeof msg === 'object' ? `> ${JSON.stringify(msg)}` : `> ${msg}`;
-    div.className = "hover:bg-gray-800 px-1 rounded font-mono text-xs";
-    if (isProgress) div.style.color = "#a7f3d0";
-    els.consoleOutput.appendChild(div);
-    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
-}
-function updateConsoleLine(msg) {
-    if (!els.consoleOutput) return;
-    if (lastConsoleLine && lastConsoleLine.isConnected) { lastConsoleLine.innerText = `> ${msg}`; } 
-    else {
-        const div = document.createElement('div'); div.innerText = `> ${msg}`;
-        div.className = "hover:bg-gray-800 px-1 rounded text-green-300 font-bold font-mono text-xs";
-        els.consoleOutput.appendChild(div); lastConsoleLine = div;
-    }
-    els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
-}
 function getAsciiBar(percent) {
     const width = 20; const filled = Math.round((percent / 100) * width); const empty = width - filled;
     return "[" + "=".repeat(filled) + ">".repeat(filled < width ? 1 : 0) + ".".repeat(Math.max(0, empty - (filled < width ? 1 : 0))) + "]";
@@ -765,564 +992,6 @@ function audioBufferToWav(buffer) {
     function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
     function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
     return new Blob([out], { type: 'audio/wav' });
-}
-
-// --- UNDO SYSTEM ---
-function pushHistory() {
-    if (historyStack.length > MAX_HISTORY) historyStack.shift();
-    historyStack.push(JSON.parse(JSON.stringify(currentSubtitles)));
-}
-
-window.undoAction = () => {
-    if (historyStack.length === 0) return;
-    const previousState = historyStack.pop();
-    currentSubtitles = previousState;
-    renderSubtitleList();
-    renderRegions(); 
-    updateSubtitleOverlay(els.videoPreview.currentTime);
-};
-
-function injectUndoButton() {
-    const clearBtn = document.getElementById('clear-text-btn');
-    if(clearBtn && clearBtn.parentNode) {
-        const undoBtn = document.createElement('button');
-        undoBtn.id = 'undo-btn';
-        undoBtn.className = "text-xs bg-white text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition font-bold flex items-center gap-1 mr-2";
-        undoBtn.innerHTML = `${ICON_UNDO} ${translations[currentLang].btnUndo}`;
-        undoBtn.title = translations[currentLang].ttUndo;
-        undoBtn.onclick = window.undoAction;
-        clearBtn.parentNode.insertBefore(undoBtn, clearBtn);
-    }
-}
-
-// --- EDITOR LOGIC ---
-
-function showConfigPanel() {
-    els.editorContainer.classList.add('hidden');
-    els.configPanel.classList.remove('hidden');
-    els.runBtn.scrollIntoView({ behavior: 'smooth' });
-    const t = translations[currentLang];
-    els.runBtn.querySelector('span').innerText = t.updateBtn;
-}
-
-function showEditor() {
-    els.uploadSection.classList.add('hidden');
-    els.configPanel.classList.add('hidden');
-    els.headerSection.classList.add('hidden');
-    els.progressCont.classList.add('hidden');
-    if(els.resultsArea) els.resultsArea.classList.add('hidden');
-    els.editorContainer.classList.remove('hidden');
-    historyStack = [];
-    if (!wavesurfer) initWaveSurfer();
-    else { renderRegions(); renderSubtitleList(); }
-    isTextCleared = false;
-    updateClearButtonUI();
-}
-
-function toggleTimecodeFormat() {
-    useFrames = !useFrames;
-    els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-    renderSubtitleList(); 
-    if(els.videoPreview) updateCurrentTimeDisplay(els.videoPreview.currentTime);
-}
-
-function updateClearButtonUI() {
-    if(!els.clearTextBtn) return;
-    const t = translations[currentLang];
-    if (isTextCleared) {
-        els.clearTextBtn.className = "text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition flex items-center gap-2";
-        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-arrow-u-up-left"></i> ${t.btnRecover}`;
-    } else {
-        els.clearTextBtn.className = "text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition flex items-center gap-2";
-        els.clearTextBtn.innerHTML = `${ICON_ERASER} ${t.btnClear}`;
-    }
-}
-
-function initWaveSurfer() {
-    if (!document.getElementById('waveform')) return;
-    wavesurfer = WaveSurfer.create({
-        container: '#waveform',
-        waveColor: '#4b5563',
-        progressColor: '#ffb81f',
-        url: audioBlobUrl,
-        height: 120,
-        normalize: true,
-        minimap: true,
-        autoCenter: true, 
-        minPxPerSec: 100, 
-        plugins: [ WaveSurfer.Regions.create() ]
-    });
-    wsRegions = wavesurfer.plugins[0];
-    wavesurfer.setVolume(0);
-    const video = els.videoPreview;
-    wavesurfer.on('interaction', () => {
-        video.currentTime = wavesurfer.getCurrentTime();
-        updateCurrentTimeDisplay(video.currentTime);
-    });
-    video.addEventListener('timeupdate', () => {
-        updateCurrentTimeDisplay(video.currentTime);
-        if (stopAtTime !== null && video.currentTime >= stopAtTime) {
-            video.pause(); video.currentTime = stopAtTime; stopAtTime = null;
-        }
-        if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
-        updateSubtitleOverlay(video.currentTime);
-        highlightActiveSub(video.currentTime);
-    });
-    video.addEventListener('play', () => wavesurfer.play());
-    video.addEventListener('pause', () => wavesurfer.pause());
-    wavesurfer.on('ready', () => { wavesurfer.zoom(100); renderRegions(); renderSubtitleList(); });
-    wsRegions.on('region-updated', (region) => {
-        const index = parseInt(region.id.replace('sub-', ''));
-        if (currentSubtitles[index]) {
-            currentSubtitles[index].start = region.start;
-            currentSubtitles[index].end = region.end;
-            const timeSpan = document.getElementById(`time-display-${index}`);
-            if(timeSpan) timeSpan.innerText = `${fmtTimeShort(region.start)} - ${fmtTimeShort(region.end)}`;
-            updateMetrics(index);
-        }
-    });
-    wsRegions.on('region-clicked', (region, e) => { e.stopPropagation(); video.currentTime = region.start; video.play(); });
-}
-
-function renderRegions() {
-    wsRegions.clearRegions();
-    currentSubtitles.forEach((sub, index) => {
-        const contentDiv = document.createElement('div');
-        contentDiv.textContent = (index + 1).toString();
-        contentDiv.style.color = "black";
-        contentDiv.style.fontSize = "10px";
-        contentDiv.style.padding = "2px";
-        contentDiv.style.fontWeight = "bold";
-        wsRegions.addRegion({
-            id: `sub-${index}`, start: sub.start, end: sub.end,
-            content: contentDiv, color: 'rgba(255, 184, 31, 0.4)', drag: true, resize: true
-        });
-    });
-}
-
-function renderSubtitleList() {
-    els.subtitleList.innerHTML = '';
-    const t = translations[currentLang];
-    
-    currentSubtitles.forEach((sub, index) => {
-        const div = document.createElement('div');
-        div.id = `card-sub-${index}`;
-        div.className = "bg-white p-3 rounded border border-gray-200 hover:border-[#ffb81f] transition text-sm group mb-2";
-        
-        div.innerHTML = `
-            <div class="flex justify-between items-center mb-2">
-                <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
-                <div class="flex items-center gap-2" id="tc-container-${index}">
-                    <button class="text-[#ffb81f] hover:text-[#e0a01a] transition outline-none" 
-                            onmousedown="event.preventDefault(); window.playSingleSub(${index})" 
-                            title="${t.ttPlaySegment}">
-                        ${ICON_PLAY}
-                    </button>
-                    <span id="time-display-${index}" onclick="window.editTimecode(${index})" 
-                          class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" 
-                          title="${t.ttEditTime}">
-                        ${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}
-                    </span>
-                </div>
-            </div>
-            <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
-            <div id="metrics-${index}" class="flex justify-between text-xs text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2 font-semibold"></div>
-            
-            <div class="flex items-center gap-1 mt-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                <div class="flex gap-px border border-gray-200 rounded overflow-hidden shrink-0">
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
-                    <div class="w-px bg-gray-200"></div>
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
-                </div>
-                <button class="p-1 text-gray-300 hover:text-red-500 transition shrink-0" onclick="window.deleteSub(${index})" title="${t.ttDeleteSub}">${ICON_TRASH}</button>
-                <div class="w-px bg-gray-200 h-4 mx-0.5 shrink-0"></div>
-                <div class="flex items-center gap-1 ml-auto shrink-0">
-                    <button class="p-1 hover:text-red-500 text-gray-400" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
-                    <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">${ICON_WORD_LEFT}</button>
-                    <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}">${ICON_WORD_RIGHT}</button>
-                    <div class="w-px bg-gray-200 h-4 mx-0.5"></div>
-                    <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}">${ICON_UP}</button>
-                    <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, 1)" title="${t.ttNext}">${ICON_DOWN}</button>
-                </div>
-            </div>
-        `;
-        const ta = div.querySelector('textarea');
-        let initialText = "";
-        ta.addEventListener('focus', () => { 
-            focusedSubtitleIndex = index;
-            initialText = sub.text;
-        });
-        ta.addEventListener('blur', () => { 
-            focusedSubtitleIndex = -1; 
-            if(sub.text !== initialText) {
-                const newText = sub.text;
-                sub.text = initialText;
-                pushHistory(); 
-                sub.text = newText; 
-            }
-        });
-        ta.addEventListener('input', () => { 
-            sub.text = ta.value; 
-            updateSubtitleOverlay(els.videoPreview.currentTime); 
-            updateMetrics(index); 
-        });
-        div.addEventListener('click', (e) => { 
-             if(e.target.closest('input') || e.target.closest('button') || e.target.tagName === 'TEXTAREA') return;
-             els.videoPreview.currentTime = sub.start; 
-        });
-        els.subtitleList.appendChild(div);
-        updateMetrics(index);
-    });
-}
-
-function updateMetrics(index) {
-    const sub = currentSubtitles[index];
-    if (!sub) return;
-    const div = document.getElementById(`metrics-${index}`);
-    if(!div) return;
-    const lines = sub.text.split('\n');
-    
-    // CPL Detallado
-    const l1 = lines[0] ? lines[0].length : 0;
-    const l2 = lines[1] ? lines[1].length : 0;
-    const maxLineLen = Math.max(l1, l2);
-    
-    const duration = sub.end - sub.start;
-    const charCount = sub.text.replace(/\n/g, '').length;
-    const cps = duration > 0 ? (charCount / duration).toFixed(1) : 0;
-    
-    // QA Checks
-    let cplColor = maxLineLen > qaSettings.maxCPL ? "text-red-600 font-black" : "text-gray-500";
-    let cpsColor = cps > qaSettings.maxCPS ? "text-red-600 font-black" : "text-gray-500";
-    
-    div.innerHTML = `
-        <span class="${cplColor}">L1: ${l1} | L2: ${l2}</span>
-        <span class="${cpsColor}">CPS: ${cps}</span>
-    `;
-}
-
-function highlightActiveSub(time) {
-    if(focusedSubtitleIndex !== -1 && els.videoPreview.paused) return;
-    currentSubtitles.forEach((sub, i) => {
-        const card = document.getElementById(`card-sub-${i}`);
-        if (!card) return;
-        if (time >= sub.start && time <= sub.end) {
-            if (!card.classList.contains('sub-card-active')) {
-                card.classList.add('sub-card-active');
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } else {
-            card.classList.remove('sub-card-active');
-        }
-    });
-}
-
-// GLOBAL HELPERS
-window.editTimecode = (index) => {
-    pushHistory();
-    const container = document.getElementById(`tc-container-${index}`);
-    const sub = currentSubtitles[index];
-    if (!container) return;
-    container.dataset.original = container.innerHTML;
-    container.innerHTML = `
-        <div class="flex items-center gap-1 bg-white p-1 rounded border border-[#ffb81f] shadow-sm">
-            <input type="text" id="start-in-${index}" value="${fmtTimeShort(sub.start)}" class="w-24 text-xs font-mono border border-gray-300 rounded px-1 py-1 focus:border-[#ffb81f] outline-none text-center">
-            <span class="text-xs text-gray-400">-</span>
-            <input type="text" id="end-in-${index}" value="${fmtTimeShort(sub.end)}" class="w-24 text-xs font-mono border border-gray-300 rounded px-1 py-1 focus:border-[#ffb81f] outline-none text-center">
-            <button onclick="window.saveTimecode(${index})" class="text-green-500 hover:text-green-700 ml-1 p-1 bg-green-50 rounded border border-green-200">${ICON_CHECK}</button>
-            <button onclick="window.cancelEditTimecode(${index})" class="text-red-500 hover:text-red-700 p-1 bg-red-50 rounded border border-red-200">${ICON_X}</button>
-        </div>
-    `;
-    const input = container.querySelector('input');
-    if(input) input.focus();
-    container.onclick = (e) => e.stopPropagation();
-};
-
-window.cancelEditTimecode = (index) => {
-    const container = document.getElementById(`tc-container-${index}`);
-    if (container && container.dataset.original) container.innerHTML = container.dataset.original;
-};
-
-window.saveTimecode = (index) => {
-    const startVal = document.getElementById(`start-in-${index}`).value;
-    const endVal = document.getElementById(`end-in-${index}`).value;
-    const newStart = parseTimeStr(startVal);
-    const newEnd = parseTimeStr(endVal);
-    if (newStart !== null && newEnd !== null && newStart < newEnd) {
-        currentSubtitles[index].start = newStart;
-        currentSubtitles[index].end = newEnd;
-        if(wsRegions) {
-            const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
-            if(region) region.setOptions({ start: newStart, end: newEnd });
-        }
-        const container = document.getElementById(`tc-container-${index}`);
-        const t = translations[currentLang];
-        container.innerHTML = `
-            <button class="text-[#ffb81f] hover:text-[#e0a01a] transition outline-none" onmousedown="event.preventDefault(); window.playSingleSub(${index})" title="${t.ttPlaySegment}">${ICON_PLAY}</button>
-            <span id="time-display-${index}" onclick="window.editTimecode(${index})" class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" title="${t.ttEditTime}">${fmtTimeShort(newStart)} - ${fmtTimeShort(newEnd)}</span>
-        `;
-        updateMetrics(index);
-    } else { alert("Invalid time format."); }
-};
-
-window.nudge = (index, amount, side) => {
-    pushHistory(); 
-    if(!currentSubtitles[index]) return;
-    if(side === 'start') {
-        currentSubtitles[index].start = Math.max(0, currentSubtitles[index].start + amount);
-        if(currentSubtitles[index].start >= currentSubtitles[index].end) currentSubtitles[index].start = currentSubtitles[index].end - 0.1; 
-    } else {
-        currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
-    }
-    if(wsRegions) {
-        const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
-        if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
-    }
-    const timeSpan = document.getElementById(`time-display-${index}`);
-    if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
-    updateMetrics(index);
-};
-
-window.playSingleSub = (index) => {
-    if(!currentSubtitles[index]) return;
-    const sub = currentSubtitles[index];
-    if(playbackMonitorId) cancelAnimationFrame(playbackMonitorId);
-    stopAtTime = sub.end;
-    if (wavesurfer) wavesurfer.setTime(sub.start);
-    els.videoPreview.currentTime = sub.start;
-    els.videoPreview.play();
-    const checkTime = () => {
-        if (els.videoPreview.paused) return;
-        if (els.videoPreview.currentTime >= stopAtTime) {
-            els.videoPreview.pause();
-            els.videoPreview.currentTime = stopAtTime;
-            stopAtTime = null;
-        } else {
-            playbackMonitorId = requestAnimationFrame(checkTime);
-        }
-    };
-    playbackMonitorId = requestAnimationFrame(checkTime);
-};
-
-window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
-
-window.navSub = (index, dir) => {
-    const newIndex = index + dir;
-    if(newIndex >= 0 && newIndex < currentSubtitles.length) { 
-        const card = document.getElementById(`card-sub-${newIndex}`);
-        card.scrollIntoView({behavior: "smooth", block: "center"});
-        window.playSingleSub(newIndex);
-        setTimeout(() => {
-            const textarea = document.getElementById(`ta-${newIndex}`);
-            if(textarea) textarea.focus();
-        }, 100);
-    }
-};
-
-window.deleteSub = (index) => {
-    pushHistory();
-    currentSubtitles.splice(index, 1);
-    renderSubtitleList();
-    renderRegions(); 
-    updateSubtitleOverlay(els.videoPreview.currentTime);
-};
-
-window.clearSubText = (index) => { 
-    pushHistory(); 
-    if(currentSubtitles[index]) { currentSubtitles[index].text = ""; document.getElementById(`ta-${index}`).value = ""; updateMetrics(index); updateSubtitleOverlay(els.videoPreview.currentTime); } 
-};
-
-window.shiftWord = (index, dir) => {
-    pushHistory();
-    if(dir === -1 && index > 0) { 
-        const currentText = currentSubtitles[index].text;
-        const prevText = currentSubtitles[index-1].text;
-        const match = currentText.match(/^(\S+)(\s*)/); 
-        if(match) {
-            const word = match[1];
-            currentSubtitles[index].text = currentText.substring(match[0].length);
-            const spacer = prevText.trim().length > 0 ? " " : "";
-            currentSubtitles[index-1].text = prevText.trimEnd() + spacer + word;
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
-            document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
-            updateMetrics(index); updateMetrics(index-1);
-        }
-    } else if (dir === 1 && index < currentSubtitles.length - 1) { 
-        const currentText = currentSubtitles[index].text;
-        const nextText = currentSubtitles[index+1].text;
-        const match = currentText.match(/(\S+)\s*$/);
-        if(match) {
-            const word = match[1];
-            const wordIndex = match.index;
-            currentSubtitles[index].text = currentText.substring(0, wordIndex).trimEnd();
-            const spacer = nextText.trim().length > 0 ? " " : "";
-            currentSubtitles[index+1].text = word + spacer + nextText.trimStart();
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
-            document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
-            updateMetrics(index); updateMetrics(index+1);
-        }
-    }
-    updateSubtitleOverlay(els.videoPreview.currentTime);
-};
-
-function updateSubtitleOverlay(time) {
-    const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
-    if(activeSub && activeSub.text.trim() !== "") {
-        els.subtitleOverlay.innerText = activeSub.text;
-        els.subtitleOverlay.style.display = "block";
-        els.subtitleOverlay.style.opacity = "1";
-        els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
-        els.subtitleOverlay.style.textShadow = "2px 2px 3px black";
-    } else {
-        els.subtitleOverlay.style.opacity = "0";
-    }
-    highlightActiveSub(time);
-}
-
-function processResultsV9(data) {
-    const maxCPL = parseInt(document.getElementById('max-cpl').value);
-    const maxLines = parseInt(document.getElementById('max-lines').value);
-    const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
-    const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
-    const minGapVal = parseFloat(document.getElementById('min-gap-val').value) || 0;
-    const minGapUnit = document.getElementById('min-gap-unit').value;
-    let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
-    const dontBreakStr = document.getElementById('dont-break-on').value;
-    const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
-    
-    let punctuationStr = ".?!:…";
-    if (els.endPunctuationInput && els.endPunctuationInput.value) {
-        punctuationStr = els.endPunctuationInput.value;
-    }
-    const strongPunct = punctuationStr.split('');
-
-    let allWords = [];
-    if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
-    
-    let subs = createSmartSrt(allWords, maxCPL, maxLines, minDurVal, maxDurVal, dontBreakList, strongPunct);
-    subs = applyTimeRules(subs, minDurVal, maxDurVal, minGapSeconds);
-    const task = document.getElementById('task-select').value;
-    if (task === 'spotting') subs.forEach(s => s.text = "");
-    currentSubtitles = subs;
-    isTextCleared = false; textBackup = []; 
-    
-    if(!document.getElementById('undo-btn')) injectUndoButton();
-    updateClearButtonUI();
-}
-
-function createSmartSrt(words, maxCpl, maxLines, minDur, maxDur, dontBreakList, strongPunct) {
-    const subtitles = [];
-    let buffer = [];
-    let startTime = null;
-    const maxChars = maxCpl * maxLines;
-
-    const endsSentence = (w) => strongPunct.includes(w.word.trim().slice(-1));
-
-    for (let i = 0; i < words.length; i++) {
-        const wObj = words[i];
-        if (!wObj.word.trim()) continue;
-
-        if (startTime === null) startTime = wObj.start;
-        buffer.push(wObj);
-
-        const currentText = buffer.map(b => b.word.trim()).join(' ');
-        const currentDur = wObj.end - startTime;
-        
-        let forceCut = false;
-        let reason = "";
-
-        if (currentText.length > maxChars) {
-            const overflow = buffer.pop(); 
-            forceCut = true; 
-            reason = "max_chars";
-            i--; 
-        } 
-        else if (endsSentence(wObj)) {
-            if (currentDur >= minDur) {
-                forceCut = true;
-                reason = "punctuation";
-            } 
-        }
-        else if (currentDur >= maxDur) {
-            forceCut = true;
-            reason = "max_dur";
-        }
-
-        if (forceCut || i === words.length - 1) {
-            if (buffer.length === 0) continue;
-
-            const finalBlockText = buffer.map(b => b.word.trim()).join(' ');
-            const endTime = buffer[buffer.length - 1].end;
-            
-            const lines = balancedSplitV9(finalBlockText, maxCpl, dontBreakList);
-            
-            subtitles.push({
-                start: startTime,
-                end: endTime,
-                text: lines.join('\n')
-            });
-
-            buffer = [];
-            startTime = null;
-        }
-    }
-    return subtitles;
-}
-
-function balancedSplitV9(text, maxCpl, dontBreakList) {
-    if (text.length <= maxCpl) return [text];
-    const words = text.split(' '); let bestCut = -1; let bestScore = Infinity; 
-    const punct = [',', ':', ';', '-', '.']; const safeStart = Math.floor(words.length * 0.2); const safeEnd = Math.floor(words.length * 0.9); 
-    for (let i = 1; i < words.length; i++) {
-        const l1Str = words.slice(0, i).join(' '); const l2Str = words.slice(i).join(' ');
-        if (l1Str.length > maxCpl || l2Str.length > maxCpl) continue; 
-        let score = Math.abs(l1Str.length - l2Str.length);
-        const lastWordL1 = words[i-1].toLowerCase().replace(/[.,?!]/g, '');
-        if (dontBreakList.includes(lastWordL1) || /^\d+$/.test(lastWordL1)) score += 5000; 
-        const lastCharL1 = words[i-1].slice(-1); if (punct.includes(lastCharL1)) score -= 50; 
-        if (i > safeStart && i < safeEnd) score -= 10;
-        if (score < bestScore) { bestScore = score; bestCut = i; }
-    }
-    if (bestCut !== -1) return [words.slice(0, bestCut).join(' '), words.slice(bestCut).join(' ')];
-    const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
-}
-
-function applyTimeRules(subs, minDur, maxDur, minGap) {
-    for (let i = 0; i < subs.length; i++) {
-        let current = subs[i];
-        let duration = current.end - current.start;
-        if (duration < minDur) {
-            let limit = Infinity;
-            if (i < subs.length - 1) {
-                limit = subs[i+1].start - minGap;
-            }
-            let desiredEnd = current.start + minDur;
-            if (desiredEnd <= limit) {
-                current.end = desiredEnd;
-            } else {
-                current.end = limit; 
-            }
-        }
-    }
-    return subs;
-}
-
-function generateSRT(segs) { return segs.map((s, i) => `${i+1}\n${fmtTime(s.start)} --> ${fmtTime(s.end)}\n${s.text}\n`).join('\n'); }
-function fmtTime(s) { if (typeof s !== 'number' || isNaN(s)) return "00:00:00,000"; const d = new Date(s * 1000); return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')},${String(d.getUTCMilliseconds()).padStart(3,'0')}`; }
-function fmtTimeShort(s) {
-    const d = new Date(s * 1000);
-    const hours = String(Math.floor(s / 3600)).padStart(2, '0');
-    const minutes = String(d.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(d.getUTCSeconds()).padStart(2, '0');
-    if (useFrames) {
-        const frames = Math.floor((s % 1) * 25);
-        return `${hours}:${minutes}:${seconds}:${String(frames).padStart(2, '0')}`;
-    } else {
-        const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
-        return `${hours}:${minutes}:${seconds}.${ms}`;
-    }
 }
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
