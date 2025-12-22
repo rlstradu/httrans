@@ -1,8 +1,9 @@
-// wp-main.js - V8.0 (FINAL STABLE: Decoupled Rendering, Smart Loop Fix, Full UI)
+// wp-main.js - V8.1 (FINAL MONOLITH: Complete Logic, Fixed Segmentation, No Missing Functions)
 
 // ==========================================
-// 1. VARIABLES GLOBALES
+// 1. VARIABLES GLOBALES & ESTADO
 // ==========================================
+
 let els = {}; 
 let currentLang = 'en';
 let audioData = null; 
@@ -12,6 +13,7 @@ let audioDuration = 0;
 let worker = null;
 let cachedData = null; 
 
+// Estado del Editor
 let wavesurfer = null;
 let wsRegions = null;
 let currentSubtitles = []; 
@@ -23,10 +25,12 @@ let focusedSubtitleIndex = -1;
 let isTextCleared = false;
 let textBackup = [];
 
+// Historial y Consola
 let historyStack = [];
 const MAX_HISTORY = 50;
 let lastConsoleLine = null; 
 
+// Configuración por defecto
 const DEFAULT_SHORTCUTS = {
     playSegment: { keys: ['Alt', 'o'], code: 'KeyO', alt: true },
     playPause:   { keys: ['Alt', 'p'], code: 'KeyP', alt: true },
@@ -40,9 +44,16 @@ const DEFAULT_SHORTCUTS = {
     nudgeStartP: { keys: ['Numpad7'], code: 'Numpad7' },
     nudgeEndP:   { keys: ['Numpad8'], code: 'Numpad8' }
 };
-let userShortcuts = JSON.parse(localStorage.getItem('panda_shortcuts')) || JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+
+let userShortcuts = JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+try {
+    const saved = localStorage.getItem('panda_shortcuts');
+    if (saved) userShortcuts = JSON.parse(saved);
+} catch(e) { console.warn("Error loading shortcuts:", e); }
+
 let qaSettings = { maxCPL: 42, maxCPS: 20 };
 
+// Traducciones
 const translations = {
     en: {
         backLink: "Back to HTTrans",
@@ -232,6 +243,7 @@ const translations = {
     }
 };
 
+// ICONOS
 const ICON_PLAY = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
 const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
 const ICON_X = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
@@ -242,13 +254,14 @@ const ICON_UNDO = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20
 const ICON_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>`;
 const ICON_WORD_LEFT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg>`;
 const ICON_WORD_RIGHT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>`;
-const ICON_GEAR = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M225.6,71.55l-22.37-3.76a77.89,77.89,0,0,0-10.86-18.72l12.44-18.73a8,8,0,0,0-2-10.74l-21.72-14.59a8,8,0,0,0-10.82,2L156.9,23.51a78.1,78.1,0,0,0-21.66,0L121.89,7a8,8,0,0,0-10.82-2L89.35,19.58a8,8,0,0,0-2,10.74L99.79,49.07A77.89,77.89,0,0,0,88.93,67.79L66.56,71.55a8,8,0,0,0-6.66,7.88V105.7a8,8,0,0,0,6.66,7.89l22.37,3.76a78.29,78.29,0,0,0,0,43.32l-22.37,3.76a8,8,0,0,0-6.66,7.89v26.27a8,8,0,0,0,6.66,7.88l22.37,3.76a77.89,77.89,0,0,0,10.86,18.72l-12.44,18.73a8,8,0,0,0,2,10.74l21.72,14.59a8,8,0,0,0,10.82-2l13.37-16.5a78.1,78.1,0,0,0,21.66,0l13.35,16.5a8,8,0,0,0,10.82-2l21.72-14.59a8,8,0,0,0,2-10.74l-12.44-18.73a77.89,77.89,0,0,0,10.86-18.72l22.37-3.76a8,8,0,0,0,6.66-7.88V125.18A8,8,0,0,0,225.6,71.55ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path></svg>`;
 const ICON_KEYBOARD = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM64,120a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,64,120Zm0,48a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,64,168Zm40,0a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,104,168Zm0-48a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,104,120Zm48,48a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,152,168Zm0-48a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,152,120Zm48,48a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v16A8,8,0,0,1,200,168Zm0-48a8,8,0,0,1-8-8V96a8,8,0,0,1,16,0v16A8,8,0,0,1,200,120Z"></path></svg>`;
+const ICON_GEAR = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M225.6,71.55l-22.37-3.76a77.89,77.89,0,0,0-10.86-18.72l12.44-18.73a8,8,0,0,0-2-10.74l-21.72-14.59a8,8,0,0,0-10.82,2L156.9,23.51a78.1,78.1,0,0,0-21.66,0L121.89,7a8,8,0,0,0-10.82-2L89.35,19.58a8,8,0,0,0-2,10.74L99.79,49.07A77.89,77.89,0,0,0,88.93,67.79L66.56,71.55a8,8,0,0,0-6.66,7.88V105.7a8,8,0,0,0,6.66,7.89l22.37,3.76a78.29,78.29,0,0,0,0,43.32l-22.37,3.76a8,8,0,0,0-6.66,7.89v26.27a8,8,0,0,0,6.66,7.88l22.37,3.76a77.89,77.89,0,0,0,10.86,18.72l-12.44,18.73a8,8,0,0,0,2,10.74l21.72,14.59a8,8,0,0,0,10.82-2l13.37-16.5a78.1,78.1,0,0,0,21.66,0l13.35,16.5a8,8,0,0,0,10.82-2l21.72-14.59a8,8,0,0,0,2-10.74l-12.44-18.73a77.89,77.89,0,0,0,10.86-18.72l22.37-3.76a8,8,0,0,0,6.66-7.88V125.18A8,8,0,0,0,225.6,71.55ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path></svg>`;
 
 // ==========================================
 // 2. INICIALIZACIÓN
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // 2.1 Capturar Referencias
     els = {
         langEn: document.getElementById('lang-en'),
         langEs: document.getElementById('lang-es'),
@@ -292,19 +305,23 @@ document.addEventListener('DOMContentLoaded', () => {
         endPunctuationInput: document.getElementById('end-punctuation')
     };
 
+    // 2.2 Fix Overlay Z-Index
     if(els.subtitleOverlay) {
         els.subtitleOverlay.style.zIndex = "50";
         els.subtitleOverlay.style.pointerEvents = "none";
     }
 
+    // 2.3 Worker Init
     try {
         worker = new Worker('wp-worker.js', { type: 'module' });
         if(worker) setupWorkerListeners();
     } catch(e) { console.error("Worker Init Failed:", e); }
 
+    // 2.4 Inject Dynamic UI
     injectHeaderButtons();
     injectModals();
 
+    // 2.5 Event Listeners
     if(els.dropZone) {
         els.dropZone.addEventListener('click', () => els.fileInput.click());
         els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
@@ -320,10 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
     if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
     
+    // BOTÓN RESTART WITH SAME FILE
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
             if(els.videoPreview) els.videoPreview.pause();
-            resetFile(true); 
+            resetFile(true); // Soft Reset
             els.configPanel.scrollIntoView({ behavior: 'smooth' });
         });
     }
@@ -367,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', handleGlobalKeydown);
 
+    // Initial Setup
     updateModeUI('groq');
     setLanguage('en');
     resetFile(false);
@@ -444,6 +463,7 @@ function injectModals() {
     document.body.appendChild(scModal);
 }
 
+// Logic for Modals & Injections
 window.closeQAModal = () => document.getElementById('modal-qa').classList.add('hidden');
 window.saveQASettings = () => {
     qaSettings.maxCPL = parseInt(document.getElementById('qa-cpl').value) || 42;
@@ -494,20 +514,28 @@ function renderShortcutsTable() {
 window.remapShortcut = (action) => {
     const btn = event.currentTarget;
     btn.innerHTML = `<span class="text-xs font-bold animate-pulse text-red-600">${translations[currentLang].pressKey}</span>`;
+    
     const handler = (e) => {
         e.preventDefault(); e.stopPropagation();
+        
         const newSc = { code: e.code, keys: [] };
         if(e.ctrlKey) newSc.keys.push('Ctrl');
         if(e.altKey) newSc.keys.push('Alt');
         if(e.shiftKey) newSc.keys.push('Shift');
+        
         let keyLabel = e.key.toUpperCase();
         if(e.code.startsWith('Numpad')) keyLabel = e.code;
         else if(e.code.startsWith('Arrow')) keyLabel = e.code;
         else if(e.key === ' ') keyLabel = 'Space';
+        
         if(!['Control','Alt','Shift'].includes(e.key)) {
             newSc.keys.push(keyLabel);
             userShortcuts[action] = { 
-                code: e.code, keys: newSc.keys, ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey
+                code: e.code, 
+                keys: newSc.keys,
+                ctrl: e.ctrlKey,
+                alt: e.altKey,
+                shift: e.shiftKey
             };
             localStorage.setItem('panda_shortcuts', JSON.stringify(userShortcuts));
             renderShortcutsTable();
@@ -528,6 +556,7 @@ window.resetShortcuts = () => {
 function handleGlobalKeydown(e) {
     const tag = e.target.tagName;
     const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
+    
     for (const [action, sc] of Object.entries(userShortcuts)) {
         if (e.code === sc.code && !!e.ctrlKey === !!sc.ctrl && !!e.altKey === !!sc.alt && !!e.shiftKey === !!sc.shift) {
             if(isInput && !['navPrev', 'navNext', 'playSegment', 'playPause', 'undo'].includes(action)) continue; 
@@ -540,6 +569,7 @@ function handleGlobalKeydown(e) {
 
 function executeAction(action) {
     let index = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
+    
     switch(action) {
         case 'playSegment': if(index !== -1) window.playSingleSub(index); break;
         case 'playPause': if(els.videoPreview.paused) els.videoPreview.play(); else els.videoPreview.pause(); break;
@@ -829,6 +859,7 @@ function processResultsV9(data) {
     const minGapUnit = document.getElementById('min-gap-unit').value;
     let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
     
+    // SAFE ACCESS
     let dontBreakList = [];
     if(els.dontBreakInput && els.dontBreakInput.value) {
         dontBreakList = [...els.dontBreakInput.value.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
@@ -850,6 +881,7 @@ function processResultsV9(data) {
     currentSubtitles = subs;
     isTextCleared = false; textBackup = []; 
     
+    // Check and inject undo button safely
     if(!document.getElementById('undo-btn') && typeof injectUndoButton === 'function') injectUndoButton();
     updateClearButtonUI();
 }
@@ -865,12 +897,14 @@ function createSmartSrt(words, maxCpl, maxLines, minDur, maxDur, dontBreakList, 
         const currentDur = wObj.end - startTime;
         let forceCut = false;
         
+        // FIX: Only force cut if overflow AND we have previous words to fallback to
         if (currentText.length > maxChars) { 
             if (buffer.length > 1) {
                 const overflow = buffer.pop(); 
                 forceCut = true; 
-                i--; 
+                i--; // Backtrack
             } else {
+                // Single word exceeds limit, accept it to avoid infinite loop
                 forceCut = true; 
             }
         } 
