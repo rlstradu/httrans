@@ -58,7 +58,7 @@ const translations = {
         ttNudgeStartP: "+1 Frame Start (+[)",
         ttNudgeEndM: "-1 Frame End (-])",
         ttNudgeEndP: "+1 Frame End (+])",
-        ttPlaySegment: "Play subtitle (Ctrl+O)",
+        ttPlaySegment: "Play subtitle (Alt+O)",
         ttPlay: "Play Segment",
         ttPrev: "Previous Subtitle (Alt+Up)",
         ttNext: "Next Subtitle (Alt+Down)",
@@ -129,7 +129,7 @@ const translations = {
         ttNudgeStartP: "+1 Frame Inicio (+[)",
         ttNudgeEndM: "-1 Frame Fin (-])",
         ttNudgeEndP: "+1 Frame Fin (+])",
-        ttPlaySegment: "Reproducir subtítulo (Ctrl+O)",
+        ttPlaySegment: "Reproducir subtítulo (Alt+O)",
         ttPlay: "Reproducir Segmento",
         ttPrev: "Subtítulo Anterior (Alt+Arr)",
         ttNext: "Siguiente Subtítulo (Alt+Abj)",
@@ -313,6 +313,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.addEventListener('keydown', (e) => {
+        // Atajo Alt+O: Reproducir segmento actual
+        if (e.altKey && (e.key === 'o' || e.key === 'O')) {
+            e.preventDefault();
+            let targetIdx = focusedSubtitleIndex !== -1 ? focusedSubtitleIndex : findCurrentSubIndex(els.videoPreview.currentTime);
+            if (targetIdx !== -1) window.playSingleSub(targetIdx);
+        }
+
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
             window.undoAction();
