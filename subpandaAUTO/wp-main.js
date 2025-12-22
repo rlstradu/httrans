@@ -1,7 +1,7 @@
-// wp-main.js - V7.4 (FULL COMPLETE: No missing lines, All features included)
+// wp-main.js - V7.5 (STABLE & ROBUST: Fixed DropZone, Safe Selectors, Error Proofing)
 
 // ==========================================
-// 1. VARIABLES GLOBALES & CONFIGURACIÓN
+// 1. VARIABLES GLOBALES (CRÍTICO: DEFINIDAS AL INICIO)
 // ==========================================
 
 // Elementos del DOM
@@ -33,7 +33,7 @@ let historyStack = [];
 const MAX_HISTORY = 50;
 let lastConsoleLine = null; 
 
-// Configuración por defecto (Atajos y QA)
+// Configuración por defecto
 const DEFAULT_SHORTCUTS = {
     playSegment: { keys: ['Alt', 'o'], code: 'KeyO', alt: true },
     playPause:   { keys: ['Alt', 'p'], code: 'KeyP', alt: true },
@@ -47,7 +47,14 @@ const DEFAULT_SHORTCUTS = {
     nudgeStartP: { keys: ['Numpad7'], code: 'Numpad7' },
     nudgeEndP:   { keys: ['Numpad8'], code: 'Numpad8' }
 };
-let userShortcuts = JSON.parse(localStorage.getItem('panda_shortcuts')) || JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+
+// Carga segura de LocalStorage
+let userShortcuts = JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+try {
+    const saved = localStorage.getItem('panda_shortcuts');
+    if (saved) userShortcuts = JSON.parse(saved);
+} catch(e) { console.warn("Error loading shortcuts:", e); }
+
 let qaSettings = { maxCPL: 42, maxCPS: 20 };
 
 // Traducciones
@@ -320,7 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2.5 Event Listeners
     if(els.dropZone) {
-        els.dropZone.addEventListener('click', () => els.fileInput.click());
+        els.dropZone.addEventListener('click', () => {
+            if(els.fileInput) els.fileInput.click();
+        });
         els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('border-[#ffb81f]', 'bg-yellow-50'); });
         els.dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-yellow-50'); });
         els.dropZone.addEventListener('drop', (e) => { e.preventDefault(); els.dropZone.classList.remove('border-[#ffb81f]', 'bg-pink-50'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
@@ -334,7 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if(els.langEs) els.langEs.addEventListener('click', () => setLanguage('es'));
     if(els.modeRadios) els.modeRadios.forEach(radio => radio.addEventListener('change', (e) => updateModeUI(e.target.value)));
     
-    // BOTÓN RESTART WITH SAME FILE
     if(els.backToConfigBtn) {
         els.backToConfigBtn.addEventListener('click', () => {
             if(els.videoPreview) els.videoPreview.pause();
@@ -385,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Setup
     updateModeUI('groq');
     setLanguage('en');
+    resetFile(false); // Force clean state
 }); 
 
 // ==========================================
@@ -392,8 +401,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 
 function injectHeaderButtons() {
-    const nav = document.querySelector('nav .flex.items-center.gap-4 .flex.bg-white\\/50');
-    if (!nav) return;
+    const langBtn = document.getElementById('lang-en');
+    if (!langBtn) return;
+    const parent = langBtn.parentElement;
+    if (!parent) return;
+    
+    // Check if already injected
+    if(document.getElementById('btn-qa')) return;
+
     const container = document.createElement('div');
     container.className = "flex gap-2 mr-2";
     
@@ -414,11 +429,12 @@ function injectHeaderButtons() {
 
     container.appendChild(btnQA);
     container.appendChild(btnSC);
-    nav.parentNode.insertBefore(container, nav);
+    parent.parentNode.insertBefore(container, parent);
 }
 
 function injectModals() {
-    // QA Modal
+    if(document.getElementById('modal-qa')) return;
+
     const qaModal = document.createElement('div');
     qaModal.id = "modal-qa";
     qaModal.className = "fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm";
@@ -442,7 +458,6 @@ function injectModals() {
         </div>
     `;
     
-    // Shortcuts Modal
     const scModal = document.createElement('div');
     scModal.id = "modal-shortcuts";
     scModal.className = "fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm";
@@ -993,480 +1008,5 @@ function audioBufferToWav(buffer) {
     function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
     return new Blob([out], { type: 'audio/wav' });
 }
-
-// --- UNDO SYSTEM ---
-function pushHistory() {
-    if (historyStack.length > MAX_HISTORY) historyStack.shift();
-    historyStack.push(JSON.parse(JSON.stringify(currentSubtitles)));
-}
-
-window.undoAction = () => {
-    if (historyStack.length === 0) return;
-    const previousState = historyStack.pop();
-    currentSubtitles = previousState;
-    renderSubtitleList();
-    renderRegions(); 
-    updateSubtitleOverlay(els.videoPreview.currentTime);
-};
-
-function injectUndoButton() {
-    const clearBtn = document.getElementById('clear-text-btn');
-    if(clearBtn && clearBtn.parentNode) {
-        const undoBtn = document.createElement('button');
-        undoBtn.id = 'undo-btn';
-        undoBtn.className = "text-xs bg-white text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition font-bold flex items-center gap-1 mr-2";
-        undoBtn.innerHTML = `${ICON_UNDO} ${translations[currentLang].btnUndo}`;
-        undoBtn.title = translations[currentLang].ttUndo;
-        undoBtn.onclick = window.undoAction;
-        clearBtn.parentNode.insertBefore(undoBtn, clearBtn);
-    }
-}
-
-// --- EDITOR LOGIC ---
-
-function showConfigPanel() {
-    els.editorContainer.classList.add('hidden');
-    els.configPanel.classList.remove('hidden');
-    els.runBtn.scrollIntoView({ behavior: 'smooth' });
-    const t = translations[currentLang];
-    els.runBtn.querySelector('span').innerText = t.updateBtn;
-}
-
-function showEditor() {
-    els.uploadSection.classList.add('hidden');
-    els.configPanel.classList.add('hidden');
-    els.headerSection.classList.add('hidden');
-    els.progressCont.classList.add('hidden');
-    if(els.resultsArea) els.resultsArea.classList.add('hidden');
-    els.editorContainer.classList.remove('hidden');
-    
-    historyStack = [];
-    
-    if (!wavesurfer) initWaveSurfer();
-    else { renderRegions(); renderSubtitleList(); }
-    
-    isTextCleared = false;
-    updateClearButtonUI();
-}
-
-function toggleTimecodeFormat() {
-    useFrames = !useFrames;
-    els.tcFormatBtn.innerText = useFrames ? "HH:MM:SS:FF" : "HH:MM:SS:MSS";
-    renderSubtitleList(); 
-    if(els.videoPreview) updateCurrentTimeDisplay(els.videoPreview.currentTime);
-}
-
-function updateClearButtonUI() {
-    if(!els.clearTextBtn) return;
-    const t = translations[currentLang];
-    if (isTextCleared) {
-        els.clearTextBtn.className = "text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition flex items-center gap-2";
-        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-arrow-u-up-left"></i> ${t.btnRecover}`;
-    } else {
-        els.clearTextBtn.className = "text-xs font-bold text-red-500 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition flex items-center gap-2";
-        els.clearTextBtn.innerHTML = `<i class="ph-bold ph-eraser"></i> ${t.btnClear}`;
-    }
-}
-
-function initWaveSurfer() {
-    if (!document.getElementById('waveform')) return;
-    wavesurfer = WaveSurfer.create({
-        container: '#waveform',
-        waveColor: '#4b5563',
-        progressColor: '#ffb81f',
-        url: audioBlobUrl,
-        height: 120,
-        normalize: true,
-        minimap: true,
-        autoCenter: true, 
-        minPxPerSec: 100, 
-        plugins: [ WaveSurfer.Regions.create() ]
-    });
-    wsRegions = wavesurfer.plugins[0];
-    wavesurfer.setVolume(0);
-    
-    const video = els.videoPreview;
-    
-    wavesurfer.on('interaction', () => {
-        video.currentTime = wavesurfer.getCurrentTime();
-        updateCurrentTimeDisplay(video.currentTime);
-    });
-
-    video.addEventListener('timeupdate', () => {
-        updateCurrentTimeDisplay(video.currentTime);
-
-        if (stopAtTime !== null && video.currentTime >= stopAtTime) {
-            video.pause(); video.currentTime = stopAtTime; stopAtTime = null;
-        }
-        if (!wavesurfer.isPlaying()) wavesurfer.setTime(video.currentTime);
-        
-        updateSubtitleOverlay(video.currentTime);
-        highlightActiveSub(video.currentTime);
-    });
-    video.addEventListener('play', () => wavesurfer.play());
-    video.addEventListener('pause', () => wavesurfer.pause());
-    
-    wavesurfer.on('ready', () => { wavesurfer.zoom(100); renderRegions(); renderSubtitleList(); });
-    wsRegions.on('region-updated', (region) => {
-        const index = parseInt(region.id.replace('sub-', ''));
-        if (currentSubtitles[index]) {
-            currentSubtitles[index].start = region.start;
-            currentSubtitles[index].end = region.end;
-            const timeSpan = document.getElementById(`time-display-${index}`);
-            if(timeSpan) timeSpan.innerText = `${fmtTimeShort(region.start)} - ${fmtTimeShort(region.end)}`;
-            updateMetrics(index);
-        }
-    });
-    wsRegions.on('region-clicked', (region, e) => { e.stopPropagation(); video.currentTime = region.start; video.play(); });
-}
-
-function renderRegions() {
-    wsRegions.clearRegions();
-    currentSubtitles.forEach((sub, index) => {
-        const contentDiv = document.createElement('div');
-        contentDiv.textContent = (index + 1).toString();
-        contentDiv.style.color = "black";
-        contentDiv.style.fontSize = "10px";
-        contentDiv.style.padding = "2px";
-        contentDiv.style.fontWeight = "bold";
-        wsRegions.addRegion({
-            id: `sub-${index}`, start: sub.start, end: sub.end,
-            content: contentDiv, color: 'rgba(255, 184, 31, 0.4)', drag: true, resize: true
-        });
-    });
-}
-
-function renderSubtitleList() {
-    els.subtitleList.innerHTML = '';
-    const t = translations[currentLang];
-    
-    currentSubtitles.forEach((sub, index) => {
-        const div = document.createElement('div');
-        div.id = `card-sub-${index}`;
-        div.className = "bg-white p-3 rounded border border-gray-200 hover:border-[#ffb81f] transition text-sm group mb-2";
-        
-        div.innerHTML = `
-            <div class="flex justify-between items-center mb-2">
-                <span class="font-mono font-bold text-gray-500 text-xs">#${index+1}</span>
-                <div class="flex items-center gap-2" id="tc-container-${index}">
-                    <button class="text-[#ffb81f] hover:text-[#e0a01a] transition outline-none" 
-                            onmousedown="event.preventDefault(); window.playSingleSub(${index})" 
-                            title="${t.ttPlaySegment}">
-                        ${ICON_PLAY}
-                    </button>
-                    <span id="time-display-${index}" onclick="window.editTimecode(${index})" 
-                          class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" 
-                          title="${t.ttEditTime}">
-                        ${fmtTimeShort(sub.start)} - ${fmtTimeShort(sub.end)}
-                    </span>
-                </div>
-            </div>
-            <textarea id="ta-${index}" class="w-full resize-none outline-none bg-transparent text-gray-800 font-medium mb-2 focus:bg-yellow-50 p-1 rounded" rows="2">${sub.text}</textarea>
-            <div id="metrics-${index}" class="flex justify-between text-xs text-gray-400 font-mono border-t border-gray-100 pt-1 mb-2 font-semibold"></div>
-            
-            <div class="flex items-center gap-1 mt-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                <div class="flex gap-px border border-gray-200 rounded overflow-hidden shrink-0">
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'start')" title="${t.ttNudgeStartM}">-[</button>
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'start')" title="${t.ttNudgeStartP}">+[</button>
-                    <div class="w-px bg-gray-200"></div>
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, -${ONE_FRAME}, 'end')" title="${t.ttNudgeEndM}">-]</button>
-                    <button class="px-1 py-1 hover:bg-gray-100 text-gray-500 hover:text-[#ffb81f] font-mono text-[10px] font-bold w-6" onclick="window.nudge(${index}, ${ONE_FRAME}, 'end')" title="${t.ttNudgeEndP}">+]</button>
-                </div>
-                
-                <button class="p-1 text-gray-300 hover:text-red-500 transition shrink-0" onclick="window.deleteSub(${index})" title="${t.ttDeleteSub}">${ICON_TRASH}</button>
-                
-                <div class="w-px bg-gray-200 h-4 mx-0.5 shrink-0"></div>
-
-                <div class="flex items-center gap-1 ml-auto shrink-0">
-                    <button class="p-1 hover:text-red-500 text-gray-400" onclick="window.clearSubText(${index})" title="${t.ttClear}">${ICON_ERASER}</button>
-                    <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, -1)" title="${t.ttShiftPrev}">${ICON_WORD_LEFT}</button>
-                    <button class="p-1 bg-gray-50 hover:bg-purple-100 text-purple-600 rounded border border-gray-200 hover:border-purple-300 transition" onclick="window.shiftWord(${index}, 1)" title="${t.ttShiftNext}">${ICON_WORD_RIGHT}</button>
-                    <div class="w-px bg-gray-200 h-4 mx-0.5"></div>
-                    <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, -1)" title="${t.ttPrev}">${ICON_UP}</button>
-                    <button class="p-1 hover:text-blue-500 text-gray-400" onclick="window.navSub(${index}, 1)" title="${t.ttNext}">${ICON_DOWN}</button>
-                </div>
-            </div>
-        `;
-        const ta = div.querySelector('textarea');
-        
-        let initialText = "";
-        ta.addEventListener('focus', () => { 
-            focusedSubtitleIndex = index;
-            initialText = sub.text;
-        });
-        
-        ta.addEventListener('blur', () => { 
-            focusedSubtitleIndex = -1; 
-            if(sub.text !== initialText) {
-                const newText = sub.text;
-                sub.text = initialText;
-                pushHistory(); 
-                sub.text = newText; 
-            }
-        });
-
-        ta.addEventListener('input', () => { 
-            sub.text = ta.value; 
-            updateSubtitleOverlay(els.videoPreview.currentTime); 
-            updateMetrics(index); 
-        });
-
-        div.addEventListener('click', (e) => { 
-             if(e.target.closest('input') || e.target.closest('button') || e.target.tagName === 'TEXTAREA') return;
-             els.videoPreview.currentTime = sub.start; 
-        });
-        els.subtitleList.appendChild(div);
-        updateMetrics(index);
-    });
-}
-
-function updateMetrics(index) {
-    const sub = currentSubtitles[index];
-    if (!sub) return;
-    const div = document.getElementById(`metrics-${index}`);
-    if(!div) return;
-    
-    const lines = sub.text.split('\n');
-    const l1 = lines[0] ? lines[0].length : 0;
-    const l2 = lines[1] ? lines[1].length : 0;
-    const maxLineLen = Math.max(l1, l2);
-    
-    const duration = sub.end - sub.start;
-    const charCount = sub.text.replace(/\n/g, '').length;
-    const cps = duration > 0 ? (charCount / duration).toFixed(1) : 0;
-    
-    let cplColor = maxLineLen > qaSettings.maxCPL ? "text-red-600 font-black" : "text-gray-500";
-    let cpsColor = cps > qaSettings.maxCPS ? "text-red-600 font-black" : "text-gray-500";
-    
-    div.innerHTML = `
-        <span class="${cplColor}">L1: ${l1} | L2: ${l2}</span>
-        <span class="${cpsColor}">CPS: ${cps}</span>
-    `;
-}
-
-function highlightActiveSub(time) {
-    if(focusedSubtitleIndex !== -1 && els.videoPreview.paused) return;
-
-    currentSubtitles.forEach((sub, i) => {
-        const card = document.getElementById(`card-sub-${i}`);
-        if (!card) return;
-        
-        if (time >= sub.start && time <= sub.end) {
-            if (!card.classList.contains('sub-card-active')) {
-                card.classList.add('sub-card-active');
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } else {
-            card.classList.remove('sub-card-active');
-        }
-    });
-}
-
-// GLOBAL HELPERS
-window.editTimecode = (index) => {
-    pushHistory();
-    const container = document.getElementById(`tc-container-${index}`);
-    const sub = currentSubtitles[index];
-    if (!container) return;
-    container.dataset.original = container.innerHTML;
-    container.innerHTML = `
-        <div class="flex items-center gap-1 bg-white p-1 rounded border border-[#ffb81f] shadow-sm">
-            <input type="text" id="start-in-${index}" value="${fmtTimeShort(sub.start)}" class="w-24 text-xs font-mono border border-gray-300 rounded px-1 py-1 focus:border-[#ffb81f] outline-none text-center">
-            <span class="text-xs text-gray-400">-</span>
-            <input type="text" id="end-in-${index}" value="${fmtTimeShort(sub.end)}" class="w-24 text-xs font-mono border border-gray-300 rounded px-1 py-1 focus:border-[#ffb81f] outline-none text-center">
-            <button onclick="window.saveTimecode(${index})" class="text-green-500 hover:text-green-700 ml-1 p-1 bg-green-50 rounded border border-green-200">${ICON_CHECK}</button>
-            <button onclick="window.cancelEditTimecode(${index})" class="text-red-500 hover:text-red-700 p-1 bg-red-50 rounded border border-red-200">${ICON_X}</button>
-        </div>
-    `;
-    const input = container.querySelector('input');
-    if(input) input.focus();
-    container.onclick = (e) => e.stopPropagation();
-};
-
-window.cancelEditTimecode = (index) => {
-    const container = document.getElementById(`tc-container-${index}`);
-    if (container && container.dataset.original) container.innerHTML = container.dataset.original;
-};
-
-window.saveTimecode = (index) => {
-    const startVal = document.getElementById(`start-in-${index}`).value;
-    const endVal = document.getElementById(`end-in-${index}`).value;
-    const newStart = parseTimeStr(startVal);
-    const newEnd = parseTimeStr(endVal);
-
-    if (newStart !== null && newEnd !== null && newStart < newEnd) {
-        currentSubtitles[index].start = newStart;
-        currentSubtitles[index].end = newEnd;
-        if(wsRegions) {
-            const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
-            if(region) region.setOptions({ start: newStart, end: newEnd });
-        }
-        const container = document.getElementById(`tc-container-${index}`);
-        const t = translations[currentLang];
-        container.innerHTML = `
-            <button class="text-[#ffb81f] hover:text-[#e0a01a] transition outline-none" onmousedown="event.preventDefault(); window.playSingleSub(${index})" title="${t.ttPlaySegment}">${ICON_PLAY}</button>
-            <span id="time-display-${index}" onclick="window.editTimecode(${index})" class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300 transition" title="${t.ttEditTime}">${fmtTimeShort(newStart)} - ${fmtTimeShort(newEnd)}</span>
-        `;
-        updateMetrics(index);
-    } else { alert("Invalid time format."); }
-};
-
-window.nudge = (index, amount, side) => {
-    pushHistory(); 
-    if(!currentSubtitles[index]) return;
-    if(side === 'start') {
-        currentSubtitles[index].start = Math.max(0, currentSubtitles[index].start + amount);
-        if(currentSubtitles[index].start >= currentSubtitles[index].end) currentSubtitles[index].start = currentSubtitles[index].end - 0.1; 
-    } else {
-        currentSubtitles[index].end = Math.max(currentSubtitles[index].start + 0.1, currentSubtitles[index].end + amount);
-    }
-    if(wsRegions) {
-        const region = wsRegions.getRegions().find(r => r.id === `sub-${index}`);
-        if(region) region.setOptions({ start: currentSubtitles[index].start, end: currentSubtitles[index].end });
-    }
-    const timeSpan = document.getElementById(`time-display-${index}`);
-    if(timeSpan) timeSpan.innerText = `${fmtTimeShort(currentSubtitles[index].start)} - ${fmtTimeShort(currentSubtitles[index].end)}`;
-    updateMetrics(index);
-};
-
-window.playSingleSub = (index) => {
-    if(!currentSubtitles[index]) return;
-    const sub = currentSubtitles[index];
-    if(playbackMonitorId) cancelAnimationFrame(playbackMonitorId);
-    stopAtTime = sub.end;
-    
-    if (wavesurfer) wavesurfer.setTime(sub.start);
-    els.videoPreview.currentTime = sub.start;
-    els.videoPreview.play();
-    
-    const checkTime = () => {
-        if (els.videoPreview.paused) return;
-        if (els.videoPreview.currentTime >= stopAtTime) {
-            els.videoPreview.pause();
-            els.videoPreview.currentTime = stopAtTime;
-            stopAtTime = null;
-        } else {
-            playbackMonitorId = requestAnimationFrame(checkTime);
-        }
-    };
-    playbackMonitorId = requestAnimationFrame(checkTime);
-};
-
-window.playSub = (index) => { if(!currentSubtitles[index]) return; els.videoPreview.currentTime = currentSubtitles[index].start; els.videoPreview.play(); };
-
-window.navSub = (index, dir) => {
-    const newIndex = index + dir;
-    if(newIndex >= 0 && newIndex < currentSubtitles.length) { 
-        // 1. Desplazamiento
-        const card = document.getElementById(`card-sub-${newIndex}`);
-        card.scrollIntoView({behavior: "smooth", block: "center"});
-        
-        // 2. Reproducción
-        window.playSingleSub(newIndex);
-        
-        // 3. Auto-foco
-        setTimeout(() => {
-            const textarea = document.getElementById(`ta-${newIndex}`);
-            if(textarea) {
-                textarea.focus();
-            }
-        }, 100);
-    }
-};
-
-window.deleteSub = (index) => {
-    pushHistory();
-    currentSubtitles.splice(index, 1);
-    
-    renderSubtitleList();
-    renderRegions(); 
-    
-    updateSubtitleOverlay(els.videoPreview.currentTime);
-};
-
-window.clearSubText = (index) => { 
-    pushHistory(); 
-    if(currentSubtitles[index]) { currentSubtitles[index].text = ""; document.getElementById(`ta-${index}`).value = ""; updateMetrics(index); updateSubtitleOverlay(els.videoPreview.currentTime); } 
-};
-
-window.shiftWord = (index, dir) => {
-    pushHistory();
-
-    if(dir === -1 && index > 0) { 
-        const currentText = currentSubtitles[index].text;
-        const prevText = currentSubtitles[index-1].text;
-        const match = currentText.match(/^(\S+)(\s*)/); 
-        
-        if(match) {
-            const word = match[1];
-            currentSubtitles[index].text = currentText.substring(match[0].length);
-            const spacer = prevText.trim().length > 0 ? " " : "";
-            currentSubtitles[index-1].text = prevText.trimEnd() + spacer + word;
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
-            document.getElementById(`ta-${index-1}`).value = currentSubtitles[index-1].text;
-            updateMetrics(index); updateMetrics(index-1);
-        }
-
-    } else if (dir === 1 && index < currentSubtitles.length - 1) { 
-        const currentText = currentSubtitles[index].text;
-        const nextText = currentSubtitles[index+1].text;
-        const match = currentText.match(/(\S+)\s*$/);
-
-        if(match) {
-            const word = match[1];
-            const wordIndex = match.index;
-            currentSubtitles[index].text = currentText.substring(0, wordIndex).trimEnd();
-            const spacer = nextText.trim().length > 0 ? " " : "";
-            currentSubtitles[index+1].text = word + spacer + nextText.trimStart();
-            document.getElementById(`ta-${index}`).value = currentSubtitles[index].text; 
-            document.getElementById(`ta-${index+1}`).value = currentSubtitles[index+1].text;
-            updateMetrics(index); updateMetrics(index+1);
-        }
-    }
-    updateSubtitleOverlay(els.videoPreview.currentTime);
-};
-
-function updateSubtitleOverlay(time) {
-    const activeSub = currentSubtitles.find(s => time >= s.start && time <= s.end);
-    
-    if(activeSub && activeSub.text.trim() !== "") {
-        els.subtitleOverlay.innerText = activeSub.text;
-        
-        // Forzar visibilidad y estilo
-        els.subtitleOverlay.style.display = "block";
-        els.subtitleOverlay.style.opacity = "1";
-        els.subtitleOverlay.style.background = "rgba(0,0,0,0.6)";
-        els.subtitleOverlay.style.textShadow = "2px 2px 3px black";
-        
-    } else {
-        els.subtitleOverlay.style.opacity = "0";
-    }
-    
-    highlightActiveSub(time);
-}
-
-function updateCurrentTimeDisplay(time) {
-    if(els.currentTimeDisplay) els.currentTimeDisplay.innerText = fmtTimeShort(time);
-}
-function parseTimeStr(timeStr) {
-    try {
-        const parts = timeStr.trim().split(':');
-        let seconds = 0;
-        if (useFrames && parts.length === 4) {
-            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(parts[2]); seconds += parseInt(parts[3]) * 0.04; return seconds;
-        }
-        if (parts.length === 3) {
-            const secParts = parts[2].split('.');
-            seconds += parseInt(parts[0]) * 3600; seconds += parseInt(parts[1]) * 60; seconds += parseInt(secParts[0]);
-            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
-        } else if (parts.length === 2) {
-            const secParts = parts[1].split('.');
-            seconds += parseInt(parts[0]) * 60; seconds += parseInt(secParts[0]);
-            if(secParts[1]) seconds += parseFloat("0." + secParts[1]);
-        }
-        return isNaN(seconds) ? null : seconds;
-    } catch (e) { return null; }
-}
-
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
 setLanguage('en');
