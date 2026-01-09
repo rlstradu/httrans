@@ -30,7 +30,7 @@
     <meta name="twitter:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png">
     <meta name="twitter:creator" content="@rlstradu">
 
-    <!-- DATOS ESTRUCTURADOS (JSON-LD) para Google -->
+    <!-- DATOS ESTRUCTURADOS (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -144,7 +144,7 @@
         /* Grid de herramientas */
         .tool-grid {
             display: grid;
-            /* 3 columnas en desktop */
+            /* 3 columnas en desktop para items */
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
         }
@@ -174,37 +174,6 @@
             border-color: #E23B5D;
         }
 
-        /* Badge de Nuevo */
-        .tool-item.new-item::after {
-            content: attr(data-badge);
-            position: absolute;
-            top: 25px;
-            right: -30px;
-            background: #E23B5D;
-            color: white;
-            padding: 5px 40px;
-            font-weight: 800;
-            font-size: 0.7rem;
-            letter-spacing: 0.05em;
-            transform: rotate(45deg);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* Estilos para Items Misteriosos */
-        .tool-item.mystery {
-            background: rgba(255, 255, 255, 0.4);
-            border: 2px dashed #cbd5e0;
-            cursor: default;
-        }
-        .tool-item.mystery:hover {
-            transform: translateY(-4px);
-            background: rgba(255, 255, 255, 0.5);
-            border-color: #a0aec0;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        }
-        
         .tool-logo {
             max-width: 200px;
             height: 120px;
@@ -232,7 +201,25 @@
             text-transform: none;
         }
 
-        /* Wrapper del logo */
+        /* Badge de Nuevo */
+        .tool-item.new-item::after {
+            content: attr(data-badge);
+            position: absolute;
+            top: 25px;
+            right: -30px;
+            background: #E23B5D;
+            color: white;
+            padding: 5px 40px;
+            font-weight: 800;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Wrapper del logo (Legacy - mantenido por si se usa en otros, pero ya no en Hero) */
         .logo-wrapper {
             position: relative;
             width: 200px;
@@ -242,7 +229,6 @@
             justify-content: center;
             align-items: center;
         }
-        
         .logo-front {
             position: relative;
             z-index: 2;
@@ -251,7 +237,6 @@
             object-fit: contain;
             transition: opacity 0.3s ease-in-out;
         }
-        
         .logo-back {
             position: absolute;
             top: 0;
@@ -262,15 +247,25 @@
             height: 100%;
             object-fit: cover;
             border-radius: 0.5rem;
+            background-color: white;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
             transition: opacity 0.3s ease-in-out;
         }
-        
-        .logo-wrapper:hover .logo-back {
-            opacity: 1;
+        .logo-wrapper:hover .logo-back { opacity: 1; }
+
+        /* Estilos para Items Misteriosos */
+        .tool-item.mystery {
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px dashed #cbd5e0;
+            cursor: default;
+        }
+        .tool-item.mystery:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.5);
+            border-color: #a0aec0;
         }
 
-        /* --- NUEVO ESTILO DE FOOTER (MENÚ) --- */
+        /* --- FOOTER (Estilo Menú Píldoras) --- */
         .footer-info {
             margin-top: 3rem;
             width: 100%;
@@ -284,7 +279,7 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 0.75rem; /* Espacio entre items */
+            gap: 0.75rem;
             width: 100%;
             max-width: 950px;
         }
@@ -293,10 +288,9 @@
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            /* Mayor contraste: fondo blanco casi opaco */
             background: rgba(255, 255, 255, 0.85);
             padding: 0.6rem 1.1rem;
-            border-radius: 99px; /* Forma de píldora */
+            border-radius: 99px;
             text-decoration: none;
             color: #4a5568;
             font-weight: 600;
@@ -304,7 +298,6 @@
             transition: all 0.2s ease;
             cursor: pointer;
             border: 1px solid rgba(255, 255, 255, 0.5);
-            /* Sombra para mejorar legibilidad sobre fondo animado */
             box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
         }
 
@@ -323,7 +316,7 @@
             flex-shrink: 0;
         }
         
-        /* Barra de Notificación Superior */
+        /* Barra de Notificación */
         .notification-bar {
             position: fixed;
             top: 0;
@@ -341,9 +334,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             font-size: 0.9rem;
         }
-        .notification-bar.visible {
-            transform: translateY(0);
-        }
+        .notification-bar.visible { transform: translateY(0); }
         .notification-bar a {
             background-color: #E23B5D;
             color: white !important;
@@ -354,10 +345,7 @@
             text-decoration: none;
             transition: background-color 0.2s ease;
         }
-        .notification-bar a:hover {
-            background-color: #d02a4c;
-            text-decoration: none;
-        }
+        .notification-bar a:hover { background-color: #d02a4c; }
         .notification-close-btn {
             background: transparent;
             border: none;
@@ -367,10 +355,6 @@
             margin-left: 20px;
             cursor: pointer;
             opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-        .notification-close-btn:hover {
-            opacity: 1;
         }
 
         /* Footer de Colaboración */
@@ -390,10 +374,7 @@
             font-size: 0.95rem;
             font-weight: 500;
         }
-        .traduversia-logo-footer {
-            height: 22px;
-        }
-
+        .traduversia-logo-footer { height: 22px; }
 
         /* Modals */
         .modal-overlay {
@@ -435,20 +416,15 @@
             cursor: pointer;
             transition: transform 0.2s ease;
         }
-        .modal-close-btn:hover {
-            transform: rotate(90deg);
-        }
+        .modal-close-btn:hover { transform: rotate(90deg); }
         
-        /* Modal de Changelog */
         #changelog-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1.5rem;
             margin-top: 1.5rem;
         }
-        .changelog-item {
-            text-align: center;
-        }
+        .changelog-item { text-align: center; }
         .changelog-item img {
             height: 80px;
             object-fit: contain;
@@ -460,14 +436,8 @@
             text-decoration: none;
             color: #E23B5D;
         }
-        .changelog-item a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Modal de Feedback */
-        #feedback-modal .modal-content {
-            max-width: 450px;
-        }
+
+        #feedback-modal .modal-content { max-width: 450px; }
         .feedback-email {
             background-color: rgba(0,0,0,0.05);
             padding: 10px 15px;
@@ -485,18 +455,12 @@
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s ease;
         }
-        .copy-email-btn:hover {
-            background-color: #d02a4c;
-        }
-        
-        /* Modal "Sobre mí", "Agradecimientos" y "Créditos" */
+
         #about-modal .modal-content,
         #thanks-modal .modal-content,
-        #credits-modal .modal-content {
-            text-align: left;
-        }
+        #credits-modal .modal-content { text-align: left; }
+        
         #about-modal .content-text p,
         #thanks-modal .content-text p,
         #credits-modal .content-text p {
@@ -506,7 +470,6 @@
             line-height: 1.7;
         }
 
-        /* Estilo para lista de créditos */
         .credits-list {
             list-style-type: none;
             padding: 0;
@@ -523,19 +486,12 @@
             color: #2c3e50;
             margin-right: 0.5rem;
         }
-
-
-        /* Enlaces en modal de agradecimientos y créditos */
         .thanks-link {
             color: #E23B5D;
             font-weight: 600;
             text-decoration: none;
-            transition: text-decoration 0.2s ease;
         }
-        .thanks-link:hover {
-            text-decoration: underline;
-        }
-
+        .thanks-link:hover { text-decoration: underline; }
 
         /* Selector de idioma */
         .language-selector {
@@ -558,20 +514,13 @@
             font-size: 0.8rem;
             font-weight: 600;
             color: #555;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .lang-button.active {
             background-color: #E23B5D;
             color: white;
         }
 
-        /* Botón Panda Hug */
-        .panda-hug-section {
-            margin-top: 2.5rem;
-        }
-        /* (Se pueden eliminar estilos antiguos de panda-hug-button ya que ahora es .footer-item) */
-
-        /* Estilos para el Pop-up del Newsletter */
+        /* Pop-up Newsletter */
         .newsletter-popup {
             position: fixed;
             bottom: -100%;
@@ -579,16 +528,10 @@
             width: 90%;
             max-width: 450px;
             z-index: 1000;
-            transition: bottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             opacity: 0;
             transition: opacity 0.8s ease, bottom 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-
-        .newsletter-popup.show {
-            bottom: 2rem;
-            opacity: 1;
-        }
-
+        .newsletter-popup.show { bottom: 2rem; opacity: 1; }
         .newsletter-popup-content {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(15px);
@@ -599,7 +542,6 @@
             position: relative;
             overflow: hidden;
         }
-
         .newsletter-close-btn {
             position: absolute;
             top: 10px;
@@ -622,10 +564,6 @@
         }
 
         /* Responsive */
-        @media (max-width: 520px) {
-            /* Footer menu stack on mobile if needed, flex-wrap handles it */
-        }
-
         @media (max-width: 768px) {
             body { padding-top: 1rem; }
             .main-container { padding: 1.5rem; margin: 0 1rem; }
@@ -634,38 +572,26 @@
             .description { font-size: 0.9rem; }
             .tool-grid { grid-template-columns: 1fr; gap: 1rem; }
             .language-selector { top: 10px; right: 10px; }
-            
             .newsletter-popup {
                 right: 50%;
                 transform: translateX(50%);
                 max-width: 90%;
             }
-            .newsletter-popup.show {
-                bottom: 1rem;
-            }
+            .newsletter-popup.show { bottom: 1rem; }
             .notification-bar {
                 flex-direction: column;
                 padding: 15px;
                 text-align: center;
             }
-            .notification-bar a {
-                margin-left: 0;
-                margin-top: 10px;
-            }
-            .notification-close-btn {
-                position: absolute;
-                top: 5px;
-                right: 5px;
-            }
-            .collaboration-footer-wrapper {
-                padding: 10px;
-                text-align: center;
-            }
+            .notification-bar a { margin-left: 0; margin-top: 10px; }
+            .notification-close-btn { position: absolute; top: 5px; right: 5px; }
+            .collaboration-footer-wrapper { padding: 10px; text-align: center; }
         }
     </style>
-    <!-- Estilos del formulario de MailerLite (sin cambios) -->
+    <!-- Estilos MailerLite (Sin cambios) -->
     <style type="text/css">@import url("https://assets.mlcdn.com/fonts.css?version=1752130");</style>
     <style type="text/css">
+    /* ...Estilos del formulario (abreviados para no saturar, son los mismos del index 10)... */
     .ml-form-embedSubmitLoad { display: inline-block; width: 20px; height: 20px; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
     .ml-form-embedSubmitLoad:after { content: " "; display: block; width: 11px; height: 11px; margin: 1px; border-radius: 50%; border: 4px solid #fff; border-color: #ffffff #ffffff #ffffff transparent; animation: ml-form-embedSubmitLoad 1.2s linear infinite; }
@@ -721,10 +647,10 @@
             <!-- Herramientas (generadas con JS para la animación) -->
         </div>
 
-        <!-- Footer Actualizado (Estilo Menú en 2 filas) -->
+        <!-- Footer Actualizado (Estilo Menú Píldoras para contener todos los botones) -->
         <footer class="footer-info fade-in" style="animation-delay: 0.8s;">
             
-            <!-- FILA 1: Foro, Changelog, Feedback, Instagram -->
+            <!-- FILA 1 -->
             <div class="footer-row">
                 <!-- Foro -->
                 <a href="https://foro.traduversia.com/c/cursos/introduccion-herramientas-traduccion-httrans/51" target="_blank" rel="noopener" class="footer-item">
@@ -751,7 +677,7 @@
                 </a>
             </div>
 
-            <!-- FILA 2: GitHub, Sobre el autor, Créditos, Agradecimientos, Panda Hug -->
+            <!-- FILA 2 -->
             <div class="footer-row">
                 <!-- GitHub -->
                 <a href="https://github.com/rlstradu/httrans" target="_blank" rel="noopener" class="footer-item">
@@ -794,57 +720,155 @@
         </a>
     </div>
 
+    <!-- Pop-up del Newsletter -->
+    <div id="newsletterPopup" class="newsletter-popup">
+        <div class="newsletter-popup-content">
+            <button id="newsletterCloseBtn" class="newsletter-close-btn">&times;</button>
+            <!-- Formulario de MailerLite -->
+            <div id="mlb2-28422372" class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-28422372">
+                <div class="ml-form-align-center">
+                    <div class="ml-form-embedWrapper embedForm">
+                        <div class="ml-form-embedBody ml-form-embedBodyDefault row-form">
+                            <div class="ml-form-embedContent">
+                                <h4 data-key="newsletterTitle"></h4>
+                                <p data-key="newsletterDescription"></p>
+                            </div>
+                            <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/1667168/forms/160002497567524097/subscribe" data-code="" method="post" target="_blank">
+                                <div class="ml-form-formContent">
+                                    <div class="ml-form-fieldRow ml-last-item">
+                                        <div class="ml-field-group ml-field-email ml-validate-email ml-validate-required">
+                                            <input aria-label="email" aria-required="true" type="email" class="form-control" data-inputmask="" name="fields[email]" placeholder="Email" autocomplete="email">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ml-form-embedPermissions">
+                                    <div class="ml-form-embedPermissionsContent default privacy-policy">
+                                        <p data-key="newsletterPrivacy"></p>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="ml-submit" value="1">
+                                <div class="ml-form-embedSubmit">
+                                    <button type="submit" class="primary" data-key="newsletterSubmit"></button>
+                                    <button disabled="disabled" style="display: none;" type="button" class="loading">
+                                        <div class="ml-form-embedSubmitLoad"></div>
+                                        <span class="sr-only">Loading...</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="anticsrf" value="true">
+                            </form>
+                        </div>
+                        <div class="ml-form-successBody row-success" style="display: none">
+                            <div class="ml-form-successContent">
+                                <h4 data-key="newsletterSuccessTitle"></h4>
+                                <p data-key="newsletterSuccessMessage"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL DE CHANGELOG -->
+    <div id="changelog-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+            <h2 class="toolkit-title" data-key="changelogTitle"></h2>
+            <div id="changelog-grid"></div>
+        </div>
+    </div>
+    
+    <!-- MODAL DE FEEDBACK -->
+    <div id="feedback-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="feedback-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h2 class="toolkit-title" data-key="feedback"></h2>
+            <p class="description" style="margin-bottom: 1rem;" data-key="feedbackText"></p>
+            <p class="feedback-email">rlstradu@gmail.com</p>
+            <button id="copy-email-btn" class="copy-email-btn" data-key="copyEmailBtn"></button>
+        </div>
+    </div>
+    
+    <!-- MODAL "SOBRE MÍ" -->
+    <div id="about-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="about-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h1 class="toolkit-title" data-key="aboutTitle" style="text-align: center;"></h1>
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Rafa-About-Httrans-v2.png" alt="Rafa López Sánchez" style="width: 40%; min-width: 200px; max-width: 300px; margin: 1.5rem auto 1rem auto; border-radius: 1rem; display: block;">
+            <div class="content-text">
+                <p data-key="p1"></p><p data-key="p2"></p><p data-key="p3"></p><p data-key="p4"></p>
+                <p data-key="p5"></p><p data-key="p6"></p><p data-key="p7"></p><p data-key="p8"></p>
+                <p data-key="p9"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL "AGRADECIMIENTOS" -->
+    <div id="thanks-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="thanks-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h1 class="toolkit-title" data-key="thanksTitle" style="text-align: center;"></h1>
+            <div class="content-text">
+                <p data-key="t1"></p>
+                <p data-key="t2"></p>
+                <p data-key="t3" style="font-weight: 500;"></p>
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Jinxi%20Birthday.png" alt="Jin Xi Panda" style="width: 30%; min-width: 150px; max-width: 250px; margin: 1rem auto 1.5rem auto; border-radius: 1rem; display: block;">
+                <p data-key="t4"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL "CRÉDITOS" -->
+    <div id="credits-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="credits-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h1 class="toolkit-title" data-key="creditsTitle" style="text-align: center;"></h1>
+            <div class="content-text">
+                <ul class="credits-list">
+                    <li><strong>Español:</strong> <a href="https://www.linkedin.com/in/rlstradu/" target="_blank" rel="noopener" class="thanks-link">Rafael López Sánchez</a></li>
+                    <li><strong>English:</strong> <a href="https://www.linkedin.com/in/rlstradu/" target="_blank" rel="noopener" class="thanks-link">Rafael López Sánchez</a></li>
+                    <li><strong>Français:</strong> <a href="https://www.linkedin.com/in/carolina-veltri/" target="_blank" rel="noopener" class="thanks-link">Carolina Veltri</a></li>
+                </ul>
+                <p data-key="creditsCta" style="margin-top: 1.5rem; font-weight: 500; font-size: 0.95rem;"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ABRAZO DE PANDA -->
+    <div id="panda-hug-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; padding: 1.5rem;">
+            <button id="panda-hug-modal-close-btn" class="modal-close-btn">&times;</button>
+            <img src="https://media.tenor.com/nOYJcoyj8uIAAAAM/panda-cute.gif" alt="Panda Hug GIF" class="w-full rounded-lg mb-4" style="border-radius: 0.75rem; margin-bottom: 1rem;">
+            <p class="description" data-key="pandaHugMessage" style="margin-bottom: 0;"></p>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- DATOS Y TRADUCCIONES ---
-            // Orden actualizado:
-            // 1. Poanda
-            // 2. Pandaterm
-            // 3. Pandoria
-            // 4. SubpandaASS (Donde estaba Pandascript)
-            // 5. SubPandaTM
-            // 6. SubPandaQA
-            // 7. Pandascript (Después de SubpandaQA)
-            // 8. Diffpanda
-            // 9. PandaTimer (Nuevo, junto a Charpanda)
-            // 10. Charpanda
-            // 11. Calpanda
-            // 12. Misterio 1 (Único misterio restante para tener 12 items)
-            
+            // --- CONFIGURACIÓN DE HERRAMIENTAS ---
+            // IMPORTANTE: SubpandaASS debe ser la primera (index 0) para que el CSS del Hero funcione.
             const tools = [
+                // 1. POANDA (AHORA PRIMERA)
                 { id: 'poanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/poanda-logo-final.png', href: 'https://rlstradu.github.io/httrans/poanda.html' },
                 { id: 'pandaterm', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png', href: 'https://rlstradu.github.io/httrans/pandaterm.html' },
                 { id: 'pandoria', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandoria-logo.png', href: 'https://rlstradu.github.io/httrans/pandoria.html' },
                 
-                // SUBPANDAASS (Movido aquí, con badge de Nuevo)
+                // 4. SUBPANDAASS (MOVIDO AQUÍ)
                 { 
                     id: 'subpandaass', 
                     icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-ass-logo-v1.png',
-                    hoverIcon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandaass.jpg',
                     href: 'https://httrans.org/subpandass.html',
                     new: true
                 },
                 
-                { id: 'subpandatm', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaatm-logo.png', href: 'https://rlstradu.github.io/httrans/subpandatm.html' },
+                { id: 'subpandatm', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png', href: 'https://rlstradu.github.io/httrans/subpandatm.html' },
                 { id: 'subpandaqa', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaqa-logo.png', href: 'https://rlstradu.github.io/httrans/subpandaqa.html' },
-                
-                // PANDASCRIPT (Movido aquí)
                 { id: 'pandascript', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-final.png', href: 'https://rlstradu.github.io/httrans/pandascript.html' },
-                
                 { id: 'diffpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/diffpanda-logo.png', href: 'https://rlstradu.github.io/httrans/diffpanda.html' },
-                
-                // PANDATIMER (Nuevo)
-                { 
-                    id: 'pandatimer', 
-                    icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png', 
-                    href: 'https://rlstradu.github.io/httrans/pandatimer.html',
-                    new: true
-                },
-
+                { id: 'pandatimer', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png', href: 'https://rlstradu.github.io/httrans/pandatimer.html', new: true },
                 { id: 'charpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png', href: 'https://rlstradu.github.io/httrans/charpanda.html' },
                 { id: 'calpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png', href: 'https://rlstradu.github.io/httrans/calpanda.html' },
-                
-                // CAJAS MISTERIOSAS (SOLO UNA)
+                // MISTERIO
                 { id: 'mystery1', isMystery: true }
             ];
 
@@ -855,9 +879,11 @@
                     notificationText: 'Aprende a usar estas herramientas en un curso gratuito en Traduversia',
                     notificationButton: '¡Apúntate ya!',
                     forumLink: 'Foro oficial de httrans',
-                    // Traducciones de herramientas
+                    
                     subpandaassMain: 'Subpanda<span style="color: #065BA2;">ASS</span>', 
                     subpandaassSub: 'Creador de subtítulos',
+                    subpandaassDesc: 'Ha nacido un pandita nuevo, SubpandaASS, ideado para crear subtítulos desde cero.', // Desc extra para Hero
+                    
                     poandaMain: 'Poanda', poandaSub: 'Editor de archivos PO',
                     pandatermMain: 'Pandaterm', pandatermSub: 'Editor de glosarios TBX',
                     pandoriaMain: 'Pandoria', pandoriaSub: 'Editor de memorias TMX',
@@ -915,9 +941,11 @@
                     notificationText: 'Learn to master these tools with a free course on Traduversia',
                     notificationButton: 'Join now',
                     forumLink: 'Official httrans Forum',
-                    // Tool translations
+                    
                     subpandaassMain: 'Subpanda<span style="color: #065BA2;">ASS</span>', 
                     subpandaassSub: 'Subtitle Creator',
+                    subpandaassDesc: 'A new panda is born, SubpandaASS, designed to create subtitles from scratch.', // Desc extra
+                    
                     poandaMain: 'Poanda', poandaSub: 'PO File Editor',
                     pandatermMain: 'Pandaterm', pandatermSub: 'TBX Glossary Editor',
                     pandoriaMain: 'Pandoria', pandoriaSub: 'TMX Memory Editor',
@@ -971,92 +999,73 @@
                 }
             };
 
-            // --- LÓGICA DE LA APLICACIÓN ---
             const toolGrid = document.querySelector('.tool-grid');
             const langButtons = document.querySelectorAll('.lang-button');
-            const pandaHugButton = document.getElementById('pandaHugButton');
-            const newsletterPopup = document.getElementById('newsletterPopup');
-            const newsletterCloseBtn = document.getElementById('newsletterCloseBtn');
-            const notificationBar = document.getElementById('notification-bar');
-            const notificationCloseBtn = document.getElementById('notification-close-btn');
-            const changelogModal = document.getElementById('changelog-modal');
-            const changelogTrigger = document.getElementById('changelog-trigger');
-            const modalCloseBtn = document.getElementById('modal-close-btn');
-            const changelogGrid = document.getElementById('changelog-grid');
-            const feedbackModal = document.getElementById('feedback-modal');
-            const feedbackTrigger = document.getElementById('feedback-trigger');
-            const feedbackModalCloseBtn = document.getElementById('feedback-modal-close-btn');
-            const copyEmailBtn = document.getElementById('copy-email-btn');
-            const aboutModal = document.getElementById('about-modal');
-            const aboutTrigger = document.getElementById('about-trigger');
-            const aboutModalCloseBtn = document.getElementById('about-modal-close-btn');
-            const pandaHugModal = document.getElementById('panda-hug-modal');
-            const pandaHugModalCloseBtn = document.getElementById('panda-hug-modal-close-btn');
-            const thanksModal = document.getElementById('thanks-modal');
-            const thanksTrigger = document.getElementById('thanks-trigger');
-            const thanksModalCloseBtn = document.getElementById('thanks-modal-close-btn');
-            const creditsModal = document.getElementById('credits-modal');
-            const creditsTrigger = document.getElementById('credits-trigger');
-            const creditsModalCloseBtn = document.getElementById('credits-modal-close-btn');
-
+            
+            // --- CÓDIGO DEFENSIVO (SAFE EVENT LISTENERS) ---
+            // Usamos una función auxiliar para asignar eventos solo si el elemento existe
+            function addSafeListener(id, event, handler) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener(event, handler);
+                }
+            }
 
             let currentLang = localStorage.getItem('selectedLang') || 'en';
 
             function renderTools() {
-                if (toolGrid) {
-                    toolGrid.innerHTML = '';
-                    tools.forEach((tool, index) => {
-                        const toolElement = document.createElement('a');
-                        toolElement.className = 'tool-item fade-in';
-                        toolElement.style.animationDelay = `${0.3 + index * 0.05}s`;
-                        
-                        if (tool.new) {
-                            toolElement.classList.add('new-item');
-                            toolElement.setAttribute('data-badge', translations[currentLang].badgeNew);
-                        }
+                if (!toolGrid) return;
+                toolGrid.innerHTML = '';
+                tools.forEach((tool, index) => {
+                    const toolElement = document.createElement('a');
+                    toolElement.className = 'tool-item fade-in';
+                    toolElement.style.animationDelay = `${0.3 + index * 0.05}s`;
+                    
+                    if (tool.new) {
+                        toolElement.classList.add('new-item');
+                        toolElement.setAttribute('data-badge', translations[currentLang].badgeNew);
+                    }
 
-                        if (tool.isMystery) {
-                            toolElement.href = '#';
-                            toolElement.className += ' mystery';
-                            // IMAGEN DEL NUEVO PANDA
-                            const mysteryImg = 'https://raw.githubusercontent.com/rlstradu/httrans/main/images/httrans-coming-soon.png';
-                            
-                            toolElement.innerHTML = `
-                                <img src="${mysteryImg}" alt="Coming Soon" class="tool-logo">
-                                <div>
-                                    <div class="tool-text-main" data-key="${tool.id}Main"></div>
-                                    <div class="tool-text-sub" data-key="${tool.id}Sub"></div>
-                                </div>
-                            `;
+                    if (tool.isMystery) {
+                        toolElement.href = '#';
+                        toolElement.className += ' mystery';
+                        const mysteryImg = 'https://raw.githubusercontent.com/rlstradu/httrans/main/images/httrans-coming-soon.png';
+                        toolElement.innerHTML = `
+                            <img src="${mysteryImg}" alt="Coming Soon" class="tool-logo">
+                            <div>
+                                <div class="tool-text-main" data-key="${tool.id}Main"></div>
+                                <div class="tool-text-sub" data-key="${tool.id}Sub"></div>
+                            </div>
+                        `;
+                    } else {
+                        toolElement.href = tool.href;
+                        toolElement.target = '_blank';
+                        
+                        let logoHTML = '';
+                        if (tool.hoverIcon) {
+                            logoHTML = `
+                            <div class="logo-wrapper">
+                                <img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo logo-front">
+                                <img src="${tool.hoverIcon}" alt="${tool.id} Hover" class="tool-logo logo-back">
+                            </div>`;
                         } else {
-                            toolElement.href = tool.href;
-                            toolElement.target = '_blank';
-                            
-                            let logoHTML = '';
-                            // Si la herramienta tiene un icono para hover (efecto reveal)
-                            if (tool.hoverIcon) {
-                                logoHTML = `
-                                <div class="logo-wrapper">
-                                    <img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo logo-front">
-                                    <img src="${tool.hoverIcon}" alt="${tool.id} Hover" class="tool-logo logo-back">
-                                </div>`;
-                            } else {
-                                // Logo estándar
-                                logoHTML = `<img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo">`;
-                            }
-
-                            toolElement.innerHTML = `
-                                ${logoHTML}
-                                <div>
-                                    <div class="tool-text-main" data-key="${tool.id}Main"></div>
-                                    <div class="tool-text-sub" data-key="${tool.id}Sub"></div>
-                                </div>
-                            `;
+                            logoHTML = `<img src="${tool.icon}" alt="${tool.id} Logo" class="tool-logo">`;
                         }
-                        
-                        toolGrid.appendChild(toolElement);
-                    });
-                }
+
+                        // Eliminamos la lógica del Hero (index === 0)
+                        let descHTML = ''; 
+
+                        toolElement.innerHTML = `
+                            ${logoHTML}
+                            <div>
+                                <div class="tool-text-main" data-key="${tool.id}Main"></div>
+                                <div class="tool-text-sub" data-key="${tool.id}Sub"></div>
+                                ${descHTML}
+                            </div>
+                        `;
+                    }
+                    toolGrid.appendChild(toolElement);
+                });
             }
 
             function updateText(lang) {
@@ -1066,211 +1075,123 @@
                         element.innerHTML = translations[lang][key];
                     }
                 });
-                
-                // Actualizar badges de "NUEVO" en los items correspondientes
                 document.querySelectorAll('.tool-item.new-item').forEach(item => {
                     item.setAttribute('data-badge', translations[lang].badgeNew);
                 });
             }
 
             function updateLangButtons(selectedLang) {
-                if (langButtons) {
-                    langButtons.forEach(button => {
-                        button.classList.toggle('active', button.dataset.lang === selectedLang);
-                    });
-                }
-            }
-
-            if (langButtons) {
                 langButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        currentLang = button.dataset.lang;
-                        localStorage.setItem('selectedLang', currentLang);
-                        updateLangButtons(currentLang);
-                        updateText(currentLang);
-                    });
+                    button.classList.toggle('active', button.dataset.lang === selectedLang);
                 });
             }
 
-            // Lógica del Pop-up del Newsletter
-            setTimeout(() => {
-                if (!sessionStorage.getItem('newsletterClosed')) {
-                    if (newsletterPopup) newsletterPopup.classList.add('show');
-                }
-            }, 5000); 
-            
-            if (newsletterCloseBtn) {
-                newsletterCloseBtn.addEventListener('click', () => {
-                    if (newsletterPopup) newsletterPopup.classList.remove('show');
-                    sessionStorage.setItem('newsletterClosed', 'true');
-                });
-            }
-
-            // Lógica de la Barra de Notificación
-            if (!sessionStorage.getItem('notificationClosed')) {
-                setTimeout(() => {
-                    if (notificationBar) notificationBar.classList.add('visible');
-                }, 3000);
-            }
-            if (notificationCloseBtn) {
-                notificationCloseBtn.addEventListener('click', () => {
-                    if (notificationBar) notificationBar.classList.remove('visible');
-                    sessionStorage.setItem('notificationClosed', 'true');
-                });
-            }
-
-            // Lógica del Modal de Changelog
-            if (changelogTrigger) {
-                changelogTrigger.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (changelogGrid) {
-                        changelogGrid.innerHTML = '';
-                        tools.forEach(tool => {
-                            // Solo mostrar changelog si no es misterioso
-                            if (!tool.isMystery) {
-                                const item = document.createElement('div');
-                                item.className = 'changelog-item';
-                                const changelogUrl = `https://rlstradu.github.io/httrans/changelog/${tool.id}.txt`;
-                                item.innerHTML = `
-                                    <img src="${tool.icon}" alt="${tool.id} Logo">
-                                    <a href="${changelogUrl}" target="_blank" rel="noopener" data-key="changelogView"></a>
-                                `;
-                                changelogGrid.appendChild(item);
-                            }
-                        });
-                    }
+            langButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    currentLang = button.dataset.lang;
+                    localStorage.setItem('selectedLang', currentLang);
+                    updateLangButtons(currentLang);
                     updateText(currentLang);
-                    if (changelogModal) changelogModal.style.display = 'flex';
                 });
-            }
-            if (modalCloseBtn) {
-                modalCloseBtn.addEventListener('click', () => {
-                    if (changelogModal) changelogModal.style.display = 'none';
-                });
-            }
-            if (changelogModal) {
-                changelogModal.addEventListener('click', (e) => {
-                    if (e.target === changelogModal) changelogModal.style.display = 'none';
-                });
-            }
+            });
 
-            // Lógica del Modal de Feedback
-            if (feedbackTrigger) {
-                feedbackTrigger.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (feedbackModal) feedbackModal.style.display = 'flex';
-                });
-            }
-            if (feedbackModalCloseBtn) {
-                feedbackModalCloseBtn.addEventListener('click', () => {
-                    if (feedbackModal) feedbackModal.style.display = 'none';
-                });
-            }
-            if (feedbackModal) {
-                feedbackModal.addEventListener('click', (e) => {
-                    if (e.target === feedbackModal) feedbackModal.style.display = 'none';
-                });
-            }
-            if (copyEmailBtn) {
-                copyEmailBtn.addEventListener('click', () => {
-                    const email = 'rlstradu@gmail.com';
-                    const tempInput = document.createElement('textarea');
-                    tempInput.value = email;
-                    document.body.appendChild(tempInput);
-                    tempInput.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(tempInput);
-
-                    const originalText = translations[currentLang].copyEmailBtn;
-                    copyEmailBtn.textContent = translations[currentLang].copiedEmailBtn;
-                    setTimeout(() => {
-                        copyEmailBtn.textContent = originalText;
-                    }, 2000);
-                });
-            }
-            
-            // Lógica del Modal "Sobre mí"
-            if (aboutTrigger) {
-                aboutTrigger.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (aboutModal) aboutModal.style.display = 'flex';
-                });
-            }
-            if (aboutModalCloseBtn) {
-                aboutModalCloseBtn.addEventListener('click', () => {
-                    if (aboutModal) aboutModal.style.display = 'none';
-                });
-            }
-            if (aboutModal) {
-                aboutModal.addEventListener('click', (e) => {
-                    if (e.target === aboutModal) aboutModal.style.display = 'none';
-                });
-            }
-
-            // Lógica del Modal "Agradecimientos"
-            if (thanksTrigger) {
-                thanksTrigger.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (thanksModal) thanksModal.style.display = 'flex';
-                });
-            }
-            if (thanksModalCloseBtn) {
-                thanksModalCloseBtn.addEventListener('click', () => {
-                    if (thanksModal) thanksModal.style.display = 'none';
-                });
-            }
-            if (thanksModal) {
-                thanksModal.addEventListener('click', (e) => {
-                    if (e.target === thanksModal) thanksModal.style.display = 'none';
-                });
-            }
-            
-            // Lógica del Modal "Créditos"
-            if (creditsTrigger) {
-                creditsTrigger.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (creditsModal) creditsModal.style.display = 'flex';
-                });
-            }
-            if (creditsModalCloseBtn) {
-                creditsModalCloseBtn.addEventListener('click', () => {
-                    if (creditsModal) creditsModal.style.display = 'none';
-                });
-            }
-            if (creditsModal) {
-                creditsModal.addEventListener('click', (e) => {
-                    if (e.target === creditsModal) creditsModal.style.display = 'none';
-                });
-            }
-
-            // Lógica del Modal de Abrazo de Panda
-            if (pandaHugButton) {
-                pandaHugButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (pandaHugModal) pandaHugModal.style.display = 'flex';
-                });
-            }
-            if (pandaHugModalCloseBtn) {
-                pandaHugModalCloseBtn.addEventListener('click', () => {
-                    if (pandaHugModal) pandaHugModal.style.display = 'none';
-                });
-            }
-            if (pandaHugModal) {
-                pandaHugModal.addEventListener('click', (e) => {
-                    if (e.target === pandaHugModal) {
-                        pandaHugModal.style.display = 'none';
+            // LOGICA POPUPS (Con comprobación defensiva)
+            const newsletterPopup = document.getElementById('newsletterPopup');
+            if (newsletterPopup) {
+                setTimeout(() => {
+                    if (!sessionStorage.getItem('newsletterClosed')) {
+                        newsletterPopup.classList.add('show');
                     }
-                });
+                }, 5000);
             }
+            addSafeListener('newsletterCloseBtn', 'click', () => {
+                if(newsletterPopup) newsletterPopup.classList.remove('show');
+                sessionStorage.setItem('newsletterClosed', 'true');
+            });
 
-            // --- INICIALIZACIÓN ---
+            const notificationBar = document.getElementById('notification-bar');
+            if (notificationBar && !sessionStorage.getItem('notificationClosed')) {
+                setTimeout(() => notificationBar.classList.add('visible'), 3000);
+            }
+            addSafeListener('notification-close-btn', 'click', () => {
+                if(notificationBar) notificationBar.classList.remove('visible');
+                sessionStorage.setItem('notificationClosed', 'true');
+            });
+
+            // LOGICA MODALES
+            const changelogModal = document.getElementById('changelog-modal');
+            const changelogGrid = document.getElementById('changelog-grid');
+            
+            addSafeListener('changelog-trigger', 'click', (e) => {
+                e.preventDefault();
+                if (changelogGrid) {
+                    changelogGrid.innerHTML = '';
+                    tools.forEach(tool => {
+                        if (!tool.isMystery) {
+                            const item = document.createElement('div');
+                            item.className = 'changelog-item';
+                            const changelogUrl = `https://rlstradu.github.io/httrans/changelog/${tool.id}.txt`;
+                            item.innerHTML = `
+                                <img src="${tool.icon}" alt="${tool.id} Logo">
+                                <a href="${changelogUrl}" target="_blank" rel="noopener" data-key="changelogView"></a>
+                            `;
+                            changelogGrid.appendChild(item);
+                        }
+                    });
+                    updateText(currentLang);
+                }
+                if (changelogModal) changelogModal.style.display = 'flex';
+            });
+            addSafeListener('modal-close-btn', 'click', () => { if(changelogModal) changelogModal.style.display = 'none'; });
+            addSafeListener('changelog-modal', 'click', (e) => { if (e.target === changelogModal) changelogModal.style.display = 'none'; });
+
+            const feedbackModal = document.getElementById('feedback-modal');
+            addSafeListener('feedback-trigger', 'click', (e) => { e.preventDefault(); if(feedbackModal) feedbackModal.style.display = 'flex'; });
+            addSafeListener('feedback-modal-close-btn', 'click', () => { if(feedbackModal) feedbackModal.style.display = 'none'; });
+            addSafeListener('feedback-modal', 'click', (e) => { if (e.target === feedbackModal) feedbackModal.style.display = 'none'; });
+            
+            addSafeListener('copy-email-btn', 'click', function() {
+                const btn = this; // referencia al botón
+                const email = 'rlstradu@gmail.com';
+                const tempInput = document.createElement('textarea');
+                tempInput.value = email;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                const originalText = translations[currentLang].copyEmailBtn;
+                btn.textContent = translations[currentLang].copiedEmailBtn;
+                setTimeout(() => { btn.textContent = originalText; }, 2000);
+            });
+
+            const aboutModal = document.getElementById('about-modal');
+            addSafeListener('about-trigger', 'click', (e) => { e.preventDefault(); if(aboutModal) aboutModal.style.display = 'flex'; });
+            addSafeListener('about-modal-close-btn', 'click', () => { if(aboutModal) aboutModal.style.display = 'none'; });
+            addSafeListener('about-modal', 'click', (e) => { if (e.target === aboutModal) aboutModal.style.display = 'none'; });
+
+            const thanksModal = document.getElementById('thanks-modal');
+            addSafeListener('thanks-trigger', 'click', (e) => { e.preventDefault(); if(thanksModal) thanksModal.style.display = 'flex'; });
+            addSafeListener('thanks-modal-close-btn', 'click', () => { if(thanksModal) thanksModal.style.display = 'none'; });
+            addSafeListener('thanks-modal', 'click', (e) => { if (e.target === thanksModal) thanksModal.style.display = 'none'; });
+
+            const creditsModal = document.getElementById('credits-modal');
+            addSafeListener('credits-trigger', 'click', (e) => { e.preventDefault(); if(creditsModal) creditsModal.style.display = 'flex'; });
+            addSafeListener('credits-modal-close-btn', 'click', () => { if(creditsModal) creditsModal.style.display = 'none'; });
+            addSafeListener('credits-modal', 'click', (e) => { if (e.target === creditsModal) creditsModal.style.display = 'none'; });
+
+            const pandaHugModal = document.getElementById('panda-hug-modal');
+            addSafeListener('pandaHugButton', 'click', (e) => { e.preventDefault(); if(pandaHugModal) pandaHugModal.style.display = 'flex'; });
+            addSafeListener('panda-hug-modal-close-btn', 'click', () => { if(pandaHugModal) pandaHugModal.style.display = 'none'; });
+            addSafeListener('panda-hug-modal', 'click', (e) => { if (e.target === pandaHugModal) pandaHugModal.style.display = 'none'; });
+
+            // INICIALIZACIÓN
             renderTools();
             updateLangButtons(currentLang);
             updateText(currentLang);
         });
     </script>
 
-    <!-- Scripts del formulario de MailerLite -->
+    <!-- Scripts MailerLite -->
     <script>
         function ml_webform_success_28422372() {
             var $ = ml_jQuery || jQuery;
@@ -1279,8 +1200,5 @@
         }
     </script>
     <script src="https://groot.mailerlite.com/js/w/webforms.min.js?v176e10baa5e7ed80d35ae235be3d5024" type="text/javascript"></script>
-    <script>
-        // Eliminado el fetch incompleto que podría causar errores de sintaxis
-    </script>
 </body>
 </html>
