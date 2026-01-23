@@ -141,7 +141,7 @@
             
             <!-- Language Dropdown -->
             <div class="glass-panel rounded-lg flex lang-select-wrapper">
-                <select id="langSelector" class="lang-select">
+                <select id="languageSelector" class="lang-select">
                     <option value="en">English</option>
                     <option value="es">Español</option>
                 </select>
@@ -155,7 +155,7 @@
     <!-- Main Content -->
     <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- Left: Active Timer (Limpio, sin botón de edición manual flotante) -->
+        <!-- Left: Active Timer -->
         <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col items-center text-center h-full relative overflow-hidden">
             <div class="absolute -bottom-10 -right-10 opacity-10 pointer-events-none text-panda-pink">
                 <svg class="w-32 h-32 icon-svg" viewBox="0 0 256 256"><path d="M96,104a32,32,0,0,1-32-32V64a32,32,0,0,1,64,0V72A32,32,0,0,1,96,104Zm96-32V64a32,32,0,0,0-64,0V72a32,32,0,0,0,64,0ZM48,152a32,32,0,0,0-32-32H16a32,32,0,0,0-32,32v8a32,32,0,0,0,32,32h0A32,32,0,0,0,48,152Zm192-32h-32a32,32,0,0,0-32,32v8a32,32,0,0,0,32,32h0a32,32,0,0,0,32-32ZM128,128a64.07,64.07,0,0,0-64,64c0,35.35,26.45,56,64,56s64-20.65,64-56A64.07,64.07,0,0,0,128,128Z"></path></svg>
@@ -287,56 +287,9 @@
 
     <!-- Logic -->
     <script>
-        // Fallback translations in case JSON fetch fails (e.g. running locally without server)
-        const defaultTranslations = {
-            backHome: "Back to Httrans",
-            tagline: "Manage your time very simply",
-            taskLabel: "TASK NAME",
-            placeholder: "Ex: Project X Translation...",
-            startBtn: "START",
-            resumeBtn: "RESUME",
-            pauseBtn: "PAUSE",
-            finishBtn: "FINISH",
-            logTitle: "Daily log",
-            logSubtitle: "Tasks completed today",
-            clearLog: "Clear",
-            emptyState: "No tasks recorded today",
-            totalTime: "Total time:",
-            statusRecording: "Tracking time...",
-            statusPaused: "Timer paused",
-            delete: "Delete task",
-            reactivate: "Resume task",
-            pauseTask: "Pause task",
-            finishTask: "Finish task",
-            modalTitle: "Are you sure?",
-            confirmClear: "Are you sure you want to clear the entire history? This action cannot be undone.",
-            cancelBtn: "Cancel",
-            deleteBtn: "Clear all",
-            footerCredits: "This application has been developed by Rafael López Sánchez.",
-            activeTag: "ACTIVE",
-            exportTitle: "Export Log",
-            exportSubtitle: "Choose export format:",
-            exportTxtLabel: "Text Format (.txt)",
-            exportTxtDesc: "Best for copy-pasting into invoices.",
-            exportJsonLabel: "Backup (.json)",
-            exportJsonDesc: "Use this file as a template or to restore your data.",
-            importTitle: "Import Log",
-            invalidTime: "Invalid format. Use HH:MM:SS",
-            editTimeTooltip: "Edit time manually",
-            saveTooltip: "Save",
-            cancelTooltip: "Cancel",
-            exportTooltip: "Save/Export",
-            exportTxtHeader: "Daily Log: ",
-            exportTxtTime: "Time: ",
-            exportTxtTotal: "TOTAL TIME: ",
-            editTaskTooltip: "Edit time",
-            saveEditTooltip: "Save changes",
-            cancelEditTooltip: "Cancel edit",
-            enterNewTime: "Enter new time (HH:MM:SS):"
-        };
-
-        // Initialize with defaults to avoid "undefined"
-        let translations = { ...defaultTranslations };
+        // Default fallbacks while loading
+        const defaultLanguage = 'en';
+        let i18n = {}; 
         
         let state = {
             startTime: 0,
@@ -345,7 +298,7 @@
             isRunning: false,
             activeTaskId: null, 
             editingTaskId: null, 
-            lang: localStorage.getItem('pandaTimerLang') || 'en', // DEFAULT TO ENGLISH
+            lang: localStorage.getItem('pandaTimerLang') || defaultLanguage,
             darkMode: localStorage.getItem('pandaTimerTheme') === 'dark',
             tasks: JSON.parse(localStorage.getItem('pandaTimerTasks')) || []
         };
@@ -353,7 +306,7 @@
         const el = {
             html: document.documentElement,
             themeToggle: document.getElementById('themeToggle'),
-            langSelector: document.getElementById('langSelector'),
+            langSelector: document.getElementById('languageSelector'), // Updated ID to match CharPanda style if desired, keeping 'languageSelector'
             taskInput: document.getElementById('taskInput'),
             timerDisplay: document.getElementById('timerDisplay'),
             startBtn: document.getElementById('startBtn'),
@@ -376,17 +329,64 @@
             closeExportModalBtn: document.getElementById('closeExportModalBtn')
         };
 
-        async function init() {
+        // --- I18N LOGIC (Adapted from CharPanda) ---
+        async function fetchLanguage(lang) {
+            try {
+                // Ensure this path matches your folder structure relative to the HTML file
+                const response = await fetch(`./pandatimer/locales/${lang}.json`);
+                if (!response.ok) {
+                    throw new Error(`File ${lang}.json not found`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.warn(error.message, `Loading default language (${defaultLanguage}).`);
+                const response = await fetch(`./pandatimer/locales/${defaultLanguage}.json`);
+                return await response.json();
+            }
+        }
+
+        async function setLanguage(lang) {
+            state.lang = lang;
+            localStorage.setItem('pandaTimerLang', lang);
+            el.langSelector.value = lang;
+
+            // 1. Load JSON
+            i18n = await fetchLanguage(lang);
+
+            // 2. Apply translations
+            document.querySelectorAll('[data-key]').forEach(elem => {
+                const key = elem.dataset.key;
+                if (i18n[key]) elem.innerText = i18n[key];
+            });
+
+            if(el.taskInput) {
+                el.taskInput.placeholder = i18n.placeholder || '';
+                if(el.taskInput.previousElementSibling) el.taskInput.previousElementSibling.innerText = i18n.taskLabel || 'TASK';
+            }
+            
+            if(el.importBtn) el.importBtn.title = i18n.importTitle || 'Import';
+            if(el.exportModalBtn) el.exportModalBtn.title = i18n.exportTitle || 'Export';
+
+            // Update Dynamic UI Elements
+            updateTimerUI(); 
+            renderTasks();
+        }
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', async () => {
             applyTheme();
-            el.langSelector.value = state.lang;
-            await loadLanguage(state.lang);
+            
+            // Wait for language to load before initializing logic that depends on it
+            await setLanguage(state.lang);
             
             loadActiveState();
             renderTasks();
-            updateTimerUI(); // Ensure buttons are in correct state on load
+            updateTimerUI(); // Ensure buttons are correct
             
             el.themeToggle.addEventListener('click', toggleTheme);
-            el.langSelector.addEventListener('change', (e) => setLang(e.target.value));
+            el.langSelector.addEventListener('change', async (e) => {
+                await setLanguage(e.target.value);
+            });
             
             el.startBtn.addEventListener('click', () => startTimer());
             el.pauseBtn.addEventListener('click', pauseTimer);
@@ -412,46 +412,7 @@
             });
 
             window.addEventListener('beforeunload', saveActiveState);
-        }
-
-        // --- I18N LOGIC ---
-        async function loadLanguage(lang) {
-            try {
-                const response = await fetch(`pandatimer/locales/${lang}.json`);
-                if (!response.ok) throw new Error('Failed to load language');
-                translations = await response.json();
-            } catch (error) {
-                console.warn("Language loading error (using defaults):", error);
-                // If fetch fails, keep current translations (defaults)
-            } finally {
-                applyTranslations();
-            }
-        }
-
-        function applyTranslations() {
-            const t = translations;
-            document.querySelectorAll('[data-key]').forEach(elem => {
-                const key = elem.dataset.key;
-                if (t[key]) elem.innerText = t[key];
-            });
-
-            if(el.taskInput) {
-                el.taskInput.placeholder = t.placeholder || '';
-                if(el.taskInput.previousElementSibling) el.taskInput.previousElementSibling.innerText = t.taskLabel || 'TASK';
-            }
-            
-            if(el.importBtn) el.importBtn.title = t.importTitle || 'Import';
-            if(el.exportModalBtn) el.exportModalBtn.title = t.exportTitle || 'Export';
-
-            updateTimerUI(); // Refresh button text
-            renderTasks();   // Refresh dynamic text in list
-        }
-
-        async function setLang(lang) {
-            state.lang = lang;
-            localStorage.setItem('pandaTimerLang', lang);
-            await loadLanguage(lang);
-        }
+        });
 
         // --- THEME LOGIC ---
         function toggleTheme() {
@@ -470,10 +431,9 @@
 
         // --- EXPORT LOGIC ---
         function exportToTxt() {
-            const t = translations;
             const dateStr = new Date().toLocaleDateString();
             
-            let content = `PandaTimer - ${t.exportTxtHeader || 'Log: '}${dateStr}\n`;
+            let content = `PandaTimer - ${i18n.exportTxtHeader || 'Log: '}${dateStr}\n`;
             content += `========================================\n\n`;
             
             let totalDuration = 0;
@@ -481,11 +441,11 @@
             state.tasks.forEach(task => {
                 totalDuration += task.duration;
                 content += `${task.name}\n`;
-                content += `${t.exportTxtTime || 'Time: '}${formatTime(task.duration)}\n`;
+                content += `${i18n.exportTxtTime || 'Time: '}${formatTime(task.duration)}\n`;
                 content += `----------------------------------------\n`;
             });
 
-            content += `\n${t.exportTxtTotal || 'Total: '}${formatTime(totalDuration)}`;
+            content += `\n${i18n.exportTxtTotal || 'Total: '}${formatTime(totalDuration)}`;
 
             downloadFile(content, `pandatimer_report_${new Date().toISOString().slice(0,10)}.txt`, 'text/plain');
             closeExportModal();
@@ -524,7 +484,6 @@
                     const row = document.createElement('div');
                     const isActive = task.id === state.activeTaskId;
                     const isEditing = task.id === state.editingTaskId;
-                    const t = translations;
 
                     let baseClass = "bg-white/95 dark:bg-gray-700/95 p-2 px-3 rounded-lg flex justify-between items-center group shadow-sm transition-all border mb-2";
                     if (isActive) baseClass += " active-task-card border-panda-pink";
@@ -551,11 +510,11 @@
                     }
 
                     if (isEditing) {
-                        btns += `<button onclick="saveTaskTime(${task.id})" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.saveEditTooltip || 'Save'}">${checkIcon}</button>`;
-                        btns += `<button onclick="cancelTaskEdit()" class="h-7 w-7 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.cancelEditTooltip || 'Cancel'}">${xIcon}</button>`;
+                        btns += `<button onclick="saveTaskTime(${task.id})" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${i18n.saveEditTooltip || 'Save'}">${checkIcon}</button>`;
+                        btns += `<button onclick="cancelTaskEdit()" class="h-7 w-7 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${i18n.cancelEditTooltip || 'Cancel'}">${xIcon}</button>`;
                     } else {
-                        btns += `<button onclick="enableTaskEdit(${task.id})" class="h-7 w-7 bg-blue-100 hover:bg-blue-500 text-blue-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.editTaskTooltip || 'Edit'}">${editIcon}</button>`;
-                        btns += `<button onclick="deleteTask(${task.id})" class="h-7 w-7 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.delete || 'Delete'}">${xIcon}</button>`;
+                        btns += `<button onclick="enableTaskEdit(${task.id})" class="h-7 w-7 bg-blue-100 hover:bg-blue-500 text-blue-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${i18n.editTaskTooltip || 'Edit'}">${editIcon}</button>`;
+                        btns += `<button onclick="deleteTask(${task.id})" class="h-7 w-7 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${i18n.delete || 'Delete'}">${xIcon}</button>`;
                     }
 
                     const timeHTML = isEditing 
@@ -569,7 +528,7 @@
                                 <span class="text-[10px] text-gray-500 font-medium flex items-center gap-1 bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
                                     ${new Date(task.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </span>
-                                ${isActive ? `<span class="text-[9px] font-bold text-white bg-panda-pink px-1.5 py-0.5 rounded-full">${t.activeTag || 'ACTIVE'}</span>` : ''}
+                                ${isActive ? `<span class="text-[9px] font-bold text-white bg-panda-pink px-1.5 py-0.5 rounded-full">${i18n.activeTag || 'ACTIVE'}</span>` : ''}
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
@@ -584,23 +543,21 @@
 
         // --- CRITICAL UI UPDATE LOGIC (RESTORED) ---
         function updateTimerUI() {
-            const t = translations;
-            
             if (state.isRunning) {
                 el.startBtn.disabled = true;
                 el.startBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                el.startBtn.querySelector('span').innerText = t.startBtn; // or Resume? Keep standard for now.
+                el.startBtn.querySelector('span').innerText = i18n.startBtn || 'START'; 
 
                 el.pauseBtn.disabled = false;
                 el.pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                el.pauseBtn.querySelector('span').innerText = t.pauseBtn;
+                el.pauseBtn.querySelector('span').innerText = i18n.pauseBtn || 'PAUSE';
 
                 el.finishBtn.disabled = false;
                 el.finishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 el.finishBtn.classList.add('bg-panda-dark', 'hover:bg-black');
-                el.finishBtn.querySelector('span').innerText = t.finishBtn;
+                el.finishBtn.querySelector('span').innerText = i18n.finishBtn || 'FINISH';
 
-                el.statusText.textContent = t.statusRecording;
+                el.statusText.textContent = i18n.statusRecording;
                 el.statusText.classList.add('text-panda-pink');
                 el.taskInput.parentElement.classList.add('opacity-75');
 
@@ -608,23 +565,23 @@
                 // Paused
                 el.startBtn.disabled = false;
                 el.startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                el.startBtn.querySelector('span').innerText = t.resumeBtn; 
+                el.startBtn.querySelector('span').innerText = i18n.resumeBtn || 'RESUME'; 
                 
                 el.pauseBtn.disabled = true;
                 el.pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 
                 el.finishBtn.disabled = false;
                 el.finishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                el.finishBtn.querySelector('span').innerText = t.finishBtn;
+                el.finishBtn.querySelector('span').innerText = i18n.finishBtn || 'FINISH';
 
-                el.statusText.textContent = t.statusPaused;
+                el.statusText.textContent = i18n.statusPaused;
                 el.statusText.classList.remove('text-panda-pink');
 
             } else {
                 // Stopped
                 el.startBtn.disabled = false;
                 el.startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                el.startBtn.querySelector('span').innerText = t.startBtn;
+                el.startBtn.querySelector('span').innerText = i18n.startBtn || 'START';
                 
                 el.pauseBtn.disabled = true;
                 el.pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -633,7 +590,7 @@
                 el.finishBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 el.finishBtn.classList.remove('bg-panda-dark', 'hover:bg-black');
                 el.finishBtn.classList.add('bg-gray-600');
-                el.finishBtn.querySelector('span').innerText = t.finishBtn;
+                el.finishBtn.querySelector('span').innerText = i18n.finishBtn || 'FINISH';
 
                 el.statusText.textContent = "";
                 el.taskInput.parentElement.classList.remove('opacity-75');
@@ -657,7 +614,7 @@
                 updateTimerDisplay(state.elapsedTime);
                 saveActiveState();
             }, 1000);
-            updateTimerUI(); // Update buttons immediately
+            updateTimerUI(); 
         }
 
         function pauseTimer() {
@@ -679,7 +636,6 @@
 
         // Helper Logic
         function createNewTask() {
-            const t = translations;
             const taskName = el.taskInput.value.trim() || (state.lang === 'es' ? 'Tarea sin nombre' : 'Untitled Task');
             const newTask = { id: Date.now(), name: taskName, duration: 0, timestamp: new Date().toISOString() };
             state.tasks.unshift(newTask); state.activeTaskId = newTask.id; state.elapsedTime = 0;
@@ -715,7 +671,7 @@
                      startTimer();
                  } else if (state.elapsedTime > 0) {
                      updateTimerDisplay(state.elapsedTime);
-                     updateTimerUI(); // Ensure paused state is reflected
+                     updateTimerUI(); 
                  }
              } catch(e) {}
         }
@@ -733,9 +689,9 @@
             const input = document.getElementById(`edit-input-${id}`);
             if(!input) return;
             const parts = input.value.trim().split(':');
-            if(parts.length !== 3) { alert(translations.invalidTime || 'Invalid format'); return; }
+            if(parts.length !== 3) { alert(i18n.invalidTime || 'Invalid format'); return; }
             const h = parseInt(parts[0]), m = parseInt(parts[1]), s = parseInt(parts[2]);
-            if(isNaN(h)||isNaN(m)||isNaN(s)) { alert(translations.invalidTime || 'Invalid format'); return; }
+            if(isNaN(h)||isNaN(m)||isNaN(s)) { alert(i18n.invalidTime || 'Invalid format'); return; }
             const newDur = ((h*3600)+(m*60)+s)*1000;
             const t = state.tasks.find(x => x.id === id);
             if(t) t.duration = newDur;
@@ -758,7 +714,7 @@
             const t = state.tasks.find(x => x.id === id);
             if(!t) return;
             if(state.activeTaskId && state.activeTaskId !== id) {
-                if(confirm(translations.confirmSwitch || (state.lang === 'es' ? "Tienes otra tarea activa. ¿Finalizarla?" : "Finish active task?"))) finishTimer(); else return;
+                if(confirm(i18n.confirmSwitch || (state.lang === 'es' ? "Tienes otra tarea activa. ¿Finalizarla?" : "Finish active task?"))) finishTimer(); else return;
             }
             state.activeTaskId = id; el.taskInput.value = t.name; state.elapsedTime = t.duration;
             updateTimerDisplay(state.elapsedTime); renderTasks(); startTimer();
@@ -802,8 +758,6 @@
              };
              r.readAsText(file);
         }
-
-        init();
     </script>
 </body>
 </html>
