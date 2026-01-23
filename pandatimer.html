@@ -1,93 +1,22 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- ==========================================
-         SEO & METADATA (English & Spanish)
+         SEO & METADATA
          ========================================== -->
-    <title>PandaTimer - Free Online Time Tracker / Contador de Tiempo Online Gratis</title>
+    <title>PandaTimer - Free Online Time Tracker</title>
     
-    <!-- Primary Meta Tags -->
-    <meta name="title" content="PandaTimer - Free Online Time Tracker / Contador de Tiempo Online Gratis">
-    <meta name="description" content="PandaTimer is a free online time tracking app for freelancers. Simple, secure & productive. // PandaTimer es una herramienta online gratuita para gestionar tu tiempo y registrar tareas. Ideal para traductores y freelancers.">
-    <meta name="keywords" content="time tracker, time tracking app, online timer, productivity tool, contador de tiempo, cronometro online, control de horas, gestion de tiempo, free time tracker, time management for translators, httrans, panda timer">
-    <meta name="author" content="Rafael López Sánchez (Httrans)">
-    <meta name="application-name" content="PandaTimer">
-    
-    <!-- Robots & Indexing -->
+    <meta name="title" content="PandaTimer - Free Online Time Tracker">
+    <meta name="description" content="PandaTimer is a free online time tracking app for freelancers.">
     <meta name="robots" content="index, follow">
-    <meta name="googlebot" content="index, follow">
     <link rel="canonical" href="https://httrans.org/pandatimer.html">
-
-    <!-- Open Graph / Facebook / LinkedIn (Social Media SEO) -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://httrans.org/pandatimer.html">
-    <meta property="og:title" content="PandaTimer - Gestiona tu tiempo de manera sencilla">
-    <meta property="og:description" content="The simplest way to track your daily tasks. La forma más sencilla de registrar tus tareas diarias. Free & Secure.">
-    <meta property="og:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png">
-    <meta property="og:locale" content="es_ES">
-    <meta property="og:locale:alternate" content="en_US">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://httrans.org/pandatimer.html">
-    <meta property="twitter:title" content="PandaTimer - Free Online Time Tracker">
-    <meta property="twitter:description" content="Boost your productivity with PandaTimer. Aumenta tu productividad con PandaTimer.">
-    <meta property="twitter:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png">
-
-    <!-- Mobile App Capabilities -->
-    <meta name="theme-color" content="#f8547e">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="PandaTimer">
-
-    <!-- Structured Data (JSON-LD) for Google Rich Results -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "PandaTimer",
-      "url": "https://httrans.org/pandatimer.html",
-      "description": "A free, simple, and secure online time tracking application for freelancers and translators.",
-      "genre": "Productivity",
-      "browserRequirements": "Requires JavaScript. Works in Chrome, Firefox, Safari, Edge.",
-      "softwareVersion": "1.0",
-      "operatingSystem": "All",
-      "applicationCategory": "BusinessApplication",
-      "image": "https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png",
-      "author": {
-        "@type": "Person",
-        "name": "Rafael López Sánchez",
-        "url": "https://traduversia.com"
-      },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "category": "Free"
-      },
-      "featureList": [
-        "Time tracking",
-        "Task logging",
-        "Daily history",
-        "Local storage backup",
-        "Dark mode"
-      ]
-    }
-    </script>
-
-    <!-- ==========================================
-         END SEO
-         ========================================== -->
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts (Montserrat) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -111,7 +40,7 @@
     </script>
 
     <style>
-        /* Animación de fondo (Modo Claro) */
+        /* Animación de fondo */
         body {
             min-height: 100vh;
             background: linear-gradient(45deg, #fde7ea, #e8eaf6, #e0f2f1, #fce4ec);
@@ -119,29 +48,16 @@
             animation: gradientBG 15s ease infinite;
             transition: background 0.5s ease;
         }
-
-        /* Fondo Modo Oscuro (Color #141a22 solicitado) */
-        .dark body {
-            background: #141a22;
-            color: #e2e8f0;
-            animation: none;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+        .dark body { background: #141a22; color: #e2e8f0; animation: none; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
         /* Glassmorphism */
         .glass-panel {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
         }
-
         .dark .glass-panel {
             background: rgba(30, 41, 59, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -149,61 +65,62 @@
         }
 
         /* Inputs */
-        .custom-input {
-            transition: all 0.3s ease;
+        .custom-input { transition: all 0.3s ease; }
+        .custom-input:focus { outline: none; border-color: #f8547e; box-shadow: 0 0 0 3px rgba(248, 84, 126, 0.2); }
+        
+        /* Inline Edit Input */
+        .list-time-input {
+            background: transparent; border: 1px solid #f8547e; color: inherit;
+            text-align: center; font-family: monospace; font-weight: bold; font-size: 1rem;
+            outline: none; border-radius: 4px; padding: 2px 4px; width: 90px;
         }
-        .custom-input:focus {
-            outline: none;
-            border-color: #f8547e;
-            box-shadow: 0 0 0 3px rgba(248, 84, 126, 0.2);
-        }
+        .dark .list-time-input { color: white; background: rgba(0,0,0,0.2); }
 
         /* Scrollbar */
-        .task-list-container::-webkit-scrollbar {
-            width: 6px;
+        .task-list-container::-webkit-scrollbar { width: 6px; }
+        .task-list-container::-webkit-scrollbar-track { background: transparent; }
+        .task-list-container::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 20px; }
+        .task-list-container::-webkit-scrollbar-thumb:hover { background-color: #f8547e; }
+        
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .icon-svg { display: inline-block; fill: currentColor; }
+        
+        .active-task-card { border-color: rgba(248, 84, 126, 0.6) !important; background-color: rgba(255, 255, 255, 1) !important; }
+        .dark .active-task-card { background-color: rgba(55, 65, 81, 1) !important; }
+
+        .footer-logo-glow:hover { filter: drop-shadow(0 0 12px rgba(248, 84, 126, 1)); transform: scale(1.05); }
+
+        /* Icon Buttons */
+        .icon-btn-small { padding: 8px; border-radius: 50%; transition: all 0.2s ease; color: #6b7280; display: flex; align-items: center; justify-content: center; }
+        .icon-btn-small:hover { background-color: rgba(248, 84, 126, 0.1); color: #f8547e; }
+        .dark .icon-btn-small { color: #e5e7eb; }
+        .dark .icon-btn-small:hover { background-color: rgba(248, 84, 126, 0.2); color: #f8547e; }
+
+        /* Language Select Styling */
+        .lang-select-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
-        .task-list-container::-webkit-scrollbar-track {
+        .lang-select {
+            appearance: none;
             background: transparent;
+            padding: 0.5rem 2rem 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #373737;
+            cursor: pointer;
+            outline: none;
+            border-radius: 0.5rem;
         }
-        .task-list-container::-webkit-scrollbar-thumb {
-            background-color: rgba(156, 163, 175, 0.5);
-            border-radius: 20px;
+        .dark .lang-select { color: #e2e8f0; }
+        .lang-select option {
+            background-color: white;
+            color: #373737;
         }
-        .task-list-container::-webkit-scrollbar-thumb:hover {
-            background-color: #f8547e;
-        }
-        
-        /* Button States */
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        /* SVG Icon Base Styles */
-        .icon-svg {
-            display: inline-block;
-            fill: currentColor;
-        }
-        
-        /* Borde sutil para tarea activa sin animación molesta */
-        .active-task-card {
-            border-color: rgba(248, 84, 126, 0.6) !important;
-            background-color: rgba(255, 255, 255, 1) !important;
-        }
-        .dark .active-task-card {
-            background-color: rgba(55, 65, 81, 1) !important;
-        }
-
-        /* Estilo para el logo del footer con resplandor rojo */
-        .footer-logo-glow {
-            filter: drop-shadow(0 0 8px rgba(248, 84, 126, 0.8)); /* Resplandor rojo/rosa */
-            transition: filter 0.3s ease, transform 0.3s ease;
-        }
-        .footer-logo-glow:hover {
-            filter: drop-shadow(0 0 12px rgba(248, 84, 126, 1));
-            transform: scale(1.05);
+        .dark .lang-select option {
+            background-color: #1f2937;
+            color: #e2e8f0;
         }
     </style>
 </head>
@@ -212,29 +129,25 @@
     <!-- Navbar -->
     <div class="w-full max-w-4xl flex justify-between items-center mb-6">
         <a href="index.html" class="flex items-center gap-2 text-panda-dark dark:text-white hover:text-panda-pink transition-colors font-semibold">
-            <!-- Icono Volver (SVG) -->
             <svg class="w-6 h-6 icon-svg" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg>
-            <span data-key="backHome">Volver a Httrans</span>
+            <span data-key="backHome">Back to Httrans</span>
         </a>
         
         <div class="flex items-center gap-3">
-            <!-- Theme Toggle: Icono Sol Simétrico (SVG) -->
+            <!-- Theme Toggle -->
             <button id="themeToggle" class="glass-panel w-10 h-10 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-all flex items-center justify-center shadow-sm text-panda-dark dark:text-yellow-400">
-               <svg class="w-6 h-6 icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                   <circle cx="12" cy="12" r="5"></circle>
-                   <line x1="12" y1="1" x2="12" y2="3"></line>
-                   <line x1="12" y1="21" x2="12" y2="23"></line>
-                   <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                   <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                   <line x1="1" y1="12" x2="3" y2="12"></line>
-                   <line x1="21" y1="12" x2="23" y2="12"></line>
-                   <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                   <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-               </svg>
+               <svg class="w-6 h-6 icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             </button>
-            <div class="glass-panel rounded-lg p-1 flex">
-                <button class="px-3 py-1 rounded-md text-sm font-bold transition-colors lang-btn active" data-lang="es">ES</button>
-                <button class="px-3 py-1 rounded-md text-sm font-bold transition-colors lang-btn" data-lang="en">EN</button>
+            
+            <!-- Language Dropdown -->
+            <div class="glass-panel rounded-lg flex lang-select-wrapper">
+                <select id="langSelector" class="lang-select">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
             </div>
         </div>
     </div>
@@ -242,194 +155,157 @@
     <!-- Main Content -->
     <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- Left: Active Timer -->
+        <!-- Left: Active Timer (Limpio, sin botón de edición manual flotante) -->
         <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col items-center text-center h-full relative overflow-hidden">
             <div class="absolute -bottom-10 -right-10 opacity-10 pointer-events-none text-panda-pink">
-                <!-- Icono Huella Panda (SVG) -->
                 <svg class="w-32 h-32 icon-svg" viewBox="0 0 256 256"><path d="M96,104a32,32,0,0,1-32-32V64a32,32,0,0,1,64,0V72A32,32,0,0,1,96,104Zm96-32V64a32,32,0,0,0-64,0V72a32,32,0,0,0,64,0ZM48,152a32,32,0,0,0-32-32H16a32,32,0,0,0-32,32v8a32,32,0,0,0,32,32h0A32,32,0,0,0,48,152Zm192-32h-32a32,32,0,0,0-32,32v8a32,32,0,0,0,32,32h0a32,32,0,0,0,32-32ZM128,128a64.07,64.07,0,0,0-64,64c0,35.35,26.45,56,64,56s64-20.65,64-56A64.07,64.07,0,0,0,128,128Z"></path></svg>
             </div>
 
-            <!-- Logo -->
             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png" alt="PandaTimer Logo" class="w-48 md:w-64 mb-4 drop-shadow-lg transition-transform hover:scale-105 duration-300">
             
-            <!-- Tagline -->
-            <p class="text-sm font-semibold text-gray-500 dark:text-gray-300 mb-8" data-key="tagline">Gestiona tu tiempo de manera muy sencilla</p>
+            <p class="text-sm font-semibold text-gray-500 dark:text-gray-300 mb-8" data-key="tagline">Manage your time very simply</p>
 
-            <!-- Task Input -->
             <div class="w-full mb-6">
-                <label class="block text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1" data-key="taskLabel">Tarea Actual</label>
-                <input type="text" id="taskInput" class="w-full bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-lg text-panda-dark dark:text-white placeholder-gray-400 custom-input" placeholder="Ej: Revisión proyecto X...">
+                <label class="block text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1" data-key="taskLabel">TASK NAME</label>
+                <input type="text" id="taskInput" class="w-full bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-lg text-panda-dark dark:text-white placeholder-gray-400 custom-input" placeholder="Ex: Project X Translation...">
             </div>
 
-            <!-- Timer Display -->
-            <div class="text-6xl md:text-7xl font-black text-panda-dark dark:text-white tracking-wider mb-8 tabular-nums font-mono" id="timerDisplay">
-                00:00:00
+            <div class="relative mb-8 w-full flex justify-center items-center group">
+                <div class="text-6xl md:text-7xl font-black text-panda-dark dark:text-white tracking-wider tabular-nums font-mono transition-opacity" id="timerDisplay">
+                    00:00:00
+                </div>
             </div>
 
-            <!-- Controls (3 Button Layout) -->
             <div class="flex gap-2 w-full">
-                <!-- Start / Resume -->
                 <button id="startBtn" class="flex-1 bg-panda-pink hover:bg-pink-600 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex flex-col justify-center items-center">
-                    <!-- Icono Play (SVG) -->
                     <svg class="w-8 h-8 icon-svg mb-1" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>
-                    <span class="text-xs tracking-wider" data-key="startBtn">EMPEZAR</span>
+                    <span class="text-xs tracking-wider" data-key="startBtn">START</span>
                 </button>
-                
-                <!-- Pause -->
                 <button id="pauseBtn" disabled class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex flex-col justify-center items-center">
-                    <!-- Icono Pause (SVG) -->
                     <svg class="w-8 h-8 icon-svg mb-1" viewBox="0 0 256 256"><path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"></path></svg>
-                    <span class="text-xs tracking-wider" data-key="pauseBtn">PAUSAR</span>
+                    <span class="text-xs tracking-wider" data-key="pauseBtn">PAUSE</span>
                 </button>
-
-                <!-- Finish -->
                 <button id="finishBtn" disabled class="flex-1 bg-gray-600 hover:bg-gray-800 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex flex-col justify-center items-center">
-                    <!-- Icono Stop/Finish (SVG) -->
                     <svg class="w-8 h-8 icon-svg mb-1" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Z"></path></svg>
-                    <span class="text-xs tracking-wider" data-key="finishBtn">FINALIZAR</span>
+                    <span class="text-xs tracking-wider" data-key="finishBtn">FINISH</span>
                 </button>
             </div>
-            
-            <!-- Status Indicator -->
             <div id="statusText" class="mt-4 text-sm font-medium text-gray-400 h-6"></div>
         </div>
 
         <!-- Right: Task Log -->
         <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col h-full">
-            <div class="flex justify-between items-end mb-4">
-                <div>
-                    <h2 class="text-xl font-bold text-panda-dark dark:text-white flex items-center gap-2">
-                        <!-- Icono Lista (SVG) -->
-                        <svg class="w-6 h-6 icon-svg text-panda-pink" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H120a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM120,72H216a8,8,0,0,0,0-16H120a8,8,0,0,0,0,16ZM216,184H120a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM83.74,51.52,58.07,77.18,44.26,63.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Zm0,56L58.07,133.18,44.26,119.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Zm0,56L58.07,189.18,44.26,175.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Z"></path></svg>
-                        <span data-key="logTitle">Registro del día</span>
-                    </h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-key="logSubtitle">Tus tareas completadas hoy</p>
+            <div class="flex flex-col mb-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-xl font-bold text-panda-dark dark:text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 icon-svg text-panda-pink" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H120a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM120,72H216a8,8,0,0,0,0-16H120a8,8,0,0,0,0,16ZM216,184H120a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM83.74,51.52,58.07,77.18,44.26,63.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Zm0,56L58.07,133.18,44.26,119.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Zm0,56L58.07,189.18,44.26,175.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Z"></path></svg>
+                            <span data-key="logTitle">Daily log</span>
+                        </h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-key="logSubtitle">Tasks completed today</p>
+                    </div>
+                    
+                    <!-- Controls (Import/Export/Clear) -->
+                    <div class="flex items-center gap-2">
+                        <input type="file" id="importInput" accept=".json" class="hidden">
+                        <button id="importBtn" class="icon-btn-small" title="Import log">
+                            <svg class="w-5 h-5" viewBox="0 0 256 256"><path d="M213.66,122.34a8,8,0,0,1-11.32,0L136,56V184a8,8,0,0,1-16,0V56L53.66,122.34a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,122.34ZM216,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152a8,8,0,0,1,16,0v56H200V152a8,8,0,0,1,16,0Z"></path></svg>
+                        </button>
+                        <button id="exportModalBtn" class="icon-btn-small" title="Export log">
+                            <svg class="w-5 h-5" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm-48,16v48H96V48ZM48,48H80V88a8,8,0,0,0,8,8h80a8,8,0,0,0,8-8V48h32V208H48Zm128,152H80a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8h96a8,8,0,0,1,8,8v56A8,8,0,0,1,176,200Z"></path></svg>
+                        </button>
+                        <div class="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                        <button id="clearLogBtn" class="text-xs text-red-500 hover:text-red-700 underline font-medium disabled:opacity-50 disabled:cursor-not-allowed" data-key="clearLog">Clear</button>
+                    </div>
                 </div>
-                <button id="clearLogBtn" class="text-xs text-red-500 hover:text-red-700 underline font-medium disabled:opacity-50 disabled:cursor-not-allowed" data-key="clearLog">Borrar todo</button>
             </div>
 
             <!-- List Container -->
             <div class="task-list-container flex-1 overflow-y-auto pr-1 space-y-2" id="taskList">
-                <!-- Empty State -->
                 <div id="emptyState" class="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
-                    <!-- Icono Reloj Vacio (SVG) -->
                     <svg class="w-16 h-16 icon-svg mb-2" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path></svg>
-                    <p class="text-sm" data-key="emptyState">No hay tareas registradas hoy</p>
+                    <p class="text-sm" data-key="emptyState">No tasks recorded today</p>
                 </div>
             </div>
 
             <!-- Total Footer -->
             <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 flex justify-between items-center">
-                <span class="font-bold text-gray-600 dark:text-gray-300" data-key="totalTime">Tiempo total:</span>
+                <span class="font-bold text-gray-600 dark:text-gray-300" data-key="totalTime">Total time:</span>
                 <span id="totalTimeDisplay" class="font-black text-xl text-panda-pink tabular-nums">00:00:00</span>
             </div>
         </div>
-
     </main>
 
-    <!-- Modal Confirmación -->
+    <!-- Modals -->
+    <!-- Confirm Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none">
         <div class="glass-panel bg-white dark:bg-[#141a22] p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center transform scale-95 transition-transform">
             <div class="mb-4 text-panda-pink flex justify-center">
-                <!-- Icono Alerta (SVG) -->
                 <svg class="w-16 h-16 icon-svg" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"></path></svg>
             </div>
-            <h3 class="text-xl font-bold text-panda-dark dark:text-white mb-2" data-key="modalTitle">¿Estás seguro?</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6" data-key="confirmClear">¿Estás seguro de que quieres borrar todo el historial?</p>
-            
+            <h3 class="text-xl font-bold text-panda-dark dark:text-white mb-2" data-key="modalTitle">Are you sure?</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6" data-key="confirmClear">Are you sure you want to clear the entire history? This action cannot be undone.</p>
             <div class="flex gap-3 justify-center">
-                <button id="cancelModalBtn" class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors" data-key="cancelBtn">
-                    Cancelar
-                </button>
-                <button id="confirmModalBtn" class="px-5 py-2.5 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg transition-colors" data-key="deleteBtn">
-                    Borrar todo
-                </button>
+                <button id="cancelModalBtn" class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors" data-key="cancelBtn">Cancel</button>
+                <button id="confirmModalBtn" class="px-5 py-2.5 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg transition-colors" data-key="deleteBtn">Clear all</button>
             </div>
         </div>
     </div>
 
-    <!-- Footer Updated with Credits and Glow Logo -->
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none">
+        <div class="glass-panel bg-white dark:bg-[#141a22] p-6 rounded-2xl shadow-2xl max-w-md w-full text-center transform scale-95 transition-transform">
+            <h3 class="text-xl font-bold text-panda-dark dark:text-white mb-4" data-key="exportTitle">Export Log</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6" data-key="exportSubtitle">Choose export format:</p>
+            <div class="flex flex-col gap-4">
+                <button id="exportTxtBtn" class="w-full flex items-center justify-between p-4 rounded-xl border-2 border-gray-100 dark:border-gray-600 hover:border-panda-pink hover:bg-pink-50 dark:hover:bg-gray-700 transition-all group">
+                    <div class="flex flex-col items-start">
+                        <span class="font-bold text-gray-800 dark:text-white group-hover:text-panda-pink" data-key="exportTxtLabel">Text Format (.txt)</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 text-left" data-key="exportTxtDesc">Best for copy-pasting into invoices.</span>
+                    </div>
+                    <svg class="w-6 h-6 text-gray-400 group-hover:text-panda-pink" viewBox="0 0 256 256"><path d="M216,40H136V24a8,8,0,0,0-24,0V40H40a16,16,0,0,0-16,16V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM216,200H40V56H216V200ZM176,88a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,88Zm0,32a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,120Zm0,32a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,152Z"></path></svg>
+                </button>
+                <button id="exportJsonBtn" class="w-full flex items-center justify-between p-4 rounded-xl border-2 border-gray-100 dark:border-gray-600 hover:border-panda-pink hover:bg-pink-50 dark:hover:bg-gray-700 transition-all group">
+                    <div class="flex flex-col items-start">
+                        <span class="font-bold text-gray-800 dark:text-white group-hover:text-panda-pink" data-key="exportJsonLabel">Backup (.json)</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 text-left" data-key="exportJsonDesc">Use this file as a template or to restore your data.</span>
+                    </div>
+                    <svg class="w-6 h-6 text-gray-400 group-hover:text-panda-pink" viewBox="0 0 256 256"><path d="M48,160a8,8,0,0,1,8-8,56.06,56.06,0,0,1,56,56,8,8,0,0,1-16,0,40,40,0,0,0-40-40A8,8,0,0,1,48,160Zm16,48a8,8,0,0,1,8-8,24,24,0,0,1,24,24,8,8,0,0,1-16,0,8,8,0,0,0-8-8A8,8,0,0,1,64,208Zm144-80a8,8,0,0,1-8,8,40,40,0,0,0-40,40,8,8,0,0,1-16,0,56.06,56.06,0,0,1,56-56A8,8,0,0,1,208,128Zm-32,48a8,8,0,0,1-8,8,8,8,0,0,0-8,8,8,8,0,0,1-16,0,24,24,0,0,1,24-24A8,8,0,0,1,176,176ZM232,56V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56ZM216,56H40V200H216Z"></path></svg>
+                </button>
+            </div>
+            <div class="mt-6 flex justify-center">
+                <button id="closeExportModalBtn" class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors" data-key="cancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
     <footer class="mt-8 mb-4 text-center flex flex-col items-center gap-3">
-        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium px-2" data-key="footerCredits">Esta aplicación ha sido desarrollada por Rafael López Sánchez y forma parte del proyecto httrans.</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium px-2" data-key="footerCredits">This application has been developed by Rafael López Sánchez.</p>
         <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png" alt="HTTrans Logo" class="h-6 footer-logo-glow">
     </footer>
 
     <!-- Logic -->
     <script>
-        // --- DATA & STATE ---
-        const translations = {
-            es: {
-                backHome: "Volver a Httrans",
-                tagline: "Gestiona tu tiempo de manera muy sencilla",
-                taskLabel: "NOMBRE DE LA TAREA",
-                placeholder: "Ej: Traducción proyecto X...",
-                startBtn: "EMPEZAR",
-                resumeBtn: "REANUDAR",
-                pauseBtn: "PAUSAR",
-                finishBtn: "FINALIZAR",
-                logTitle: "Registro del día",
-                logSubtitle: "Tus tareas completadas",
-                clearLog: "Borrar historial",
-                emptyState: "No hay tareas registradas hoy",
-                totalTime: "Tiempo total:",
-                statusRecording: "Grabando tiempo...",
-                statusPaused: "Temporizador en pausa",
-                delete: "Eliminar tarea",
-                reactivate: "Reanudar tarea",
-                pauseTask: "Pausar tarea",
-                finishTask: "Finalizar tarea",
-                modalTitle: "¿Estás seguro?",
-                confirmClear: "¿Estás seguro de que quieres borrar todo el historial? Esta acción no se puede deshacer.",
-                cancelBtn: "Cancelar",
-                deleteBtn: "Borrar todo",
-                footerCredits: "Esta aplicación ha sido desarrollada por Rafael López Sánchez y forma parte del proyecto httrans.",
-                activeTag: "ACTIVA"
-            },
-            en: {
-                backHome: "Back to Httrans",
-                tagline: "Manage your time very simply",
-                taskLabel: "TASK NAME",
-                placeholder: "Ex: Project X Translation...",
-                startBtn: "START",
-                resumeBtn: "RESUME",
-                pauseBtn: "PAUSE",
-                finishBtn: "FINISH",
-                logTitle: "Daily log",
-                logSubtitle: "Tasks completed today",
-                clearLog: "Clear history",
-                emptyState: "No tasks recorded today",
-                totalTime: "Total time:",
-                statusRecording: "Tracking time...",
-                statusPaused: "Timer paused",
-                delete: "Delete task",
-                reactivate: "Resume task",
-                pauseTask: "Pause task",
-                finishTask: "Finish task",
-                modalTitle: "Are you sure?",
-                confirmClear: "Are you sure you want to clear the entire history? This action cannot be undone.",
-                cancelBtn: "Cancel",
-                deleteBtn: "Clear all",
-                footerCredits: "This application has been developed by Rafael López Sánchez and is part of the httrans project.",
-                activeTag: "ACTIVE"
-            }
-        };
-
+        // Fallback inicial
+        let translations = {};
+        
         let state = {
             startTime: 0,
-            elapsedTime: 0, // This always tracks the TOTAL time of current active task
+            elapsedTime: 0, 
             intervalId: null,
             isRunning: false,
             activeTaskId: null, 
-            lang: localStorage.getItem('pandaTimerLang') || 'es',
+            editingTaskId: null, 
+            lang: localStorage.getItem('pandaTimerLang') || 'en', // DEFAULT TO ENGLISH
             darkMode: localStorage.getItem('pandaTimerTheme') === 'dark',
             tasks: JSON.parse(localStorage.getItem('pandaTimerTasks')) || []
         };
 
-        // --- DOM ELEMENTS ---
         const el = {
             html: document.documentElement,
             themeToggle: document.getElementById('themeToggle'),
-            langBtns: document.querySelectorAll('.lang-btn'),
+            langSelector: document.getElementById('langSelector'),
             taskInput: document.getElementById('taskInput'),
             timerDisplay: document.getElementById('timerDisplay'),
             startBtn: document.getElementById('startBtn'),
@@ -440,31 +316,46 @@
             emptyState: document.getElementById('emptyState'),
             totalTimeDisplay: document.getElementById('totalTimeDisplay'),
             clearLogBtn: document.getElementById('clearLogBtn'),
-            translatables: document.querySelectorAll('[data-key]'),
-            
-            // Modal Elements
+            exportModalBtn: document.getElementById('exportModalBtn'),
+            importBtn: document.getElementById('importBtn'),
+            importInput: document.getElementById('importInput'),
             confirmModal: document.getElementById('confirmModal'),
             cancelModalBtn: document.getElementById('cancelModalBtn'),
-            confirmModalBtn: document.getElementById('confirmModalBtn')
+            confirmModalBtn: document.getElementById('confirmModalBtn'),
+            exportModal: document.getElementById('exportModal'),
+            exportTxtBtn: document.getElementById('exportTxtBtn'),
+            exportJsonBtn: document.getElementById('exportJsonBtn'),
+            closeExportModalBtn: document.getElementById('closeExportModalBtn')
         };
 
-        // --- INITIALIZATION ---
-        function init() {
+        async function init() {
             applyTheme();
-            applyLang(state.lang);
+            el.langSelector.value = state.lang;
+            await loadLanguage(state.lang);
+            
             loadActiveState();
             renderTasks();
             
             el.themeToggle.addEventListener('click', toggleTheme);
-            el.langBtns.forEach(btn => btn.addEventListener('click', (e) => setLang(e.target.dataset.lang)));
+            el.langSelector.addEventListener('change', (e) => setLang(e.target.value));
             
             el.startBtn.addEventListener('click', () => startTimer());
             el.pauseBtn.addEventListener('click', pauseTimer);
             el.finishBtn.addEventListener('click', finishTimer);
-            el.clearLogBtn.addEventListener('click', openClearModal); // Changed handler
+            el.clearLogBtn.addEventListener('click', openClearModal); 
             el.taskInput.addEventListener('input', updateActiveTaskName);
 
-            // Modal Listeners
+            el.exportModalBtn.addEventListener('click', openExportModal);
+            el.importBtn.addEventListener('click', () => el.importInput.click());
+            el.importInput.addEventListener('change', importLog);
+            
+            el.exportTxtBtn.addEventListener('click', exportToTxt);
+            el.exportJsonBtn.addEventListener('click', exportToJson);
+            el.closeExportModalBtn.addEventListener('click', closeExportModal);
+            el.exportModal.addEventListener('click', (e) => {
+                if (e.target === el.exportModal) closeExportModal();
+            });
+
             el.cancelModalBtn.addEventListener('click', closeClearModal);
             el.confirmModalBtn.addEventListener('click', confirmClearLog);
             el.confirmModal.addEventListener('click', (e) => {
@@ -474,414 +365,56 @@
             window.addEventListener('beforeunload', saveActiveState);
         }
 
-        // --- MODAL LOGIC ---
-        function openClearModal() {
-            if(state.tasks.length === 0) return;
-            el.confirmModal.classList.remove('hidden');
-            // Small delay to allow display:block to apply before opacity transition
-            setTimeout(() => {
-                el.confirmModal.classList.remove('opacity-0', 'pointer-events-none');
-                el.confirmModal.querySelector('div').classList.remove('scale-95');
-                el.confirmModal.querySelector('div').classList.add('scale-100');
-            }, 10);
-        }
-
-        function closeClearModal() {
-            el.confirmModal.classList.add('opacity-0', 'pointer-events-none');
-            el.confirmModal.querySelector('div').classList.add('scale-95');
-            el.confirmModal.querySelector('div').classList.remove('scale-100');
-            setTimeout(() => {
-                el.confirmModal.classList.add('hidden');
-            }, 300); // Match transition duration
-        }
-
-        function confirmClearLog() {
-            // FORCE RESET of everything regardless of state
-            clearInterval(state.intervalId);
-            state.isRunning = false;
-            state.activeTaskId = null;
-            state.elapsedTime = 0;
-            
-            updateTimerDisplay(0);
-            updateTimerUI('stopped');
-            localStorage.removeItem('pandaTimerActiveState');
-            
-            // Clear data
-            state.tasks = [];
-            saveTasks();
-            renderTasks();
-            
-            closeClearModal();
-        }
-
-        // --- PERSISTENCE LOGIC (BACKUP) ---
-        function saveActiveState() {
-            const activeData = {
-                activeTaskId: state.activeTaskId,
-                taskName: el.taskInput.value,
-                elapsedTime: state.elapsedTime, 
-                isRunning: state.isRunning,
-                lastUpdate: Date.now()
-            };
-            localStorage.setItem('pandaTimerActiveState', JSON.stringify(activeData));
-        }
-
-        function loadActiveState() {
-            const saved = localStorage.getItem('pandaTimerActiveState');
-            if (!saved) {
-                updateTimerUI('stopped');
-                return;
-            }
-
+        // --- I18N LOGIC ---
+        async function loadLanguage(lang) {
             try {
-                const data = JSON.parse(saved);
-                state.activeTaskId = data.activeTaskId;
-                el.taskInput.value = data.taskName || '';
-                state.elapsedTime = data.elapsedTime || 0;
-                
-                if (state.activeTaskId) {
-                    const taskExists = state.tasks.find(t => t.id === state.activeTaskId);
-                    if (!taskExists && data.activeTaskId) {
-                        state.activeTaskId = null;
-                        state.elapsedTime = 0;
-                        updateTimerUI('stopped');
-                        return;
-                    }
-                }
-                
-                if (data.isRunning) {
-                    const now = Date.now();
-                    const missedTime = now - data.lastUpdate;
-                    
-                    // Add missed time to our total tracking
-                    state.elapsedTime += missedTime;
-                    
-                    if (state.activeTaskId) {
-                        const task = state.tasks.find(t => t.id === state.activeTaskId);
-                        if (task) {
-                            // Ensure task stays synced
-                            task.duration = state.elapsedTime;
-                            saveTasks();
-                        }
-                    }
-
-                    // Auto-start
-                    startTimer(true);
-                } else if (state.activeTaskId || state.elapsedTime > 0) {
-                    updateTimerDisplay(state.elapsedTime);
-                    updateTimerUI('paused');
-                } else {
-                    updateTimerUI('stopped');
-                }
-            } catch (e) {
-                console.error("Error loading state", e);
-                updateTimerUI('stopped');
-            }
-        }
-
-        // --- TIMER LOGIC ---
-        function startTimer(isResume = false) {
-            if (state.isRunning) return;
-
-            if (!state.activeTaskId) {
-                createNewTask();
-            }
-
-            state.isRunning = true;
-            // The magic fix: startTime is calculated relative to the *already accumulated* elapsedTime
-            state.startTime = Date.now() - state.elapsedTime;
-            
-            state.intervalId = setInterval(() => {
-                const now = Date.now();
-                // This gives us the total accumulated time for this task
-                const totalElapsed = now - state.startTime; 
-                state.elapsedTime = totalElapsed;
-                
-                // Sync to task list
-                if (state.activeTaskId) {
-                    const task = state.tasks.find(t => t.id === state.activeTaskId);
-                    if (task) {
-                        task.duration = totalElapsed;
-                        saveTasks();
-                        renderTasks(); 
-                    }
-                }
-
-                updateTimerDisplay(state.elapsedTime);
-                saveActiveState();
-            }, 1000);
-
-            updateTimerUI('running');
-            renderTasks();
-        }
-        
-        function createNewTask() {
-            const taskName = el.taskInput.value.trim() || (state.lang === 'es' ? 'Tarea sin nombre' : 'Untitled Task');
-            const newTask = {
-                id: Date.now(),
-                name: taskName,
-                duration: 0,
-                timestamp: new Date().toISOString()
-            };
-            state.tasks.unshift(newTask);
-            state.activeTaskId = newTask.id;
-            state.elapsedTime = 0;
-            saveTasks();
-            renderTasks();
-        }
-        
-        function updateActiveTaskName() {
-            if (state.activeTaskId) {
-                const task = state.tasks.find(t => t.id === state.activeTaskId);
-                if (task) {
-                    task.name = el.taskInput.value.trim() || (state.lang === 'es' ? 'Tarea sin nombre' : 'Untitled Task');
-                    saveTasks();
-                    renderTasks();
+                const response = await fetch(`pandatimer/locales/${lang}.json`);
+                if (!response.ok) throw new Error('Failed to load language');
+                translations = await response.json();
+                applyTranslations();
+            } catch (error) {
+                console.error("Language loading error:", error);
+                if (window.location.protocol === 'file:') {
+                    alert("Nota: Para que funcionen los idiomas externos, ejecuta este archivo en un servidor local (o usa VS Code Live Server).");
                 }
             }
         }
 
-        function pauseTimer() {
-            if (!state.isRunning) return;
+        function applyTranslations() {
+            const t = translations;
+            document.querySelectorAll('[data-key]').forEach(elem => {
+                const key = elem.dataset.key;
+                if (t[key]) elem.innerText = t[key];
+            });
 
-            state.isRunning = false;
-            clearInterval(state.intervalId);
-            saveActiveState();
+            if(el.taskInput) {
+                el.taskInput.placeholder = t.placeholder || '';
+                if(el.taskInput.previousElementSibling) el.taskInput.previousElementSibling.innerText = t.taskLabel || 'TASK';
+            }
             
-            updateTimerUI('paused');
-            renderTasks();
-        }
+            if(el.importBtn) el.importBtn.title = t.importTitle || 'Import';
+            if(el.exportModalBtn) el.exportModalBtn.title = t.exportTitle || 'Export';
 
-        function finishTimer() {
-            clearInterval(state.intervalId);
-            state.isRunning = false;
-            state.elapsedTime = 0;
-            state.startTime = 0;
-            state.activeTaskId = null;
-            
-            updateTimerDisplay(0);
-            el.taskInput.value = '';
-            
-            localStorage.removeItem('pandaTimerActiveState');
-            
-            renderTasks();
-            updateTimerUI('stopped');
-        }
-
-        function updateTimerDisplay(ms) {
-            el.timerDisplay.textContent = formatTime(ms);
-        }
-
-        function formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const h = Math.floor(totalSeconds / 3600);
-            const m = Math.floor((totalSeconds % 3600) / 60);
-            const s = totalSeconds % 60;
-            return `${pad(h)}:${pad(m)}:${pad(s)}`;
-        }
-
-        function pad(num) {
-            return num.toString().padStart(2, '0');
-        }
-
-        function updateTimerUI(status) {
-            const t = translations[state.lang];
-            
-            if (status === 'running') {
-                el.startBtn.disabled = true;
-                el.startBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                
-                el.pauseBtn.disabled = false;
-                el.pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                
-                el.finishBtn.disabled = false;
-                el.finishBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-300');
-                el.finishBtn.classList.add('bg-panda-dark', 'hover:bg-black'); 
-
+            if (state.isRunning) {
                 el.statusText.textContent = t.statusRecording;
-                el.statusText.classList.add('text-panda-pink');
-                el.taskInput.parentElement.classList.add('opacity-75');
-                
-                el.startBtn.querySelector('span').innerText = t.startBtn;
-
-            } else if (status === 'paused') {
-                el.startBtn.disabled = false;
-                el.startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                el.startBtn.querySelector('span').innerText = t.resumeBtn; 
-                
-                el.pauseBtn.disabled = true;
-                el.pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                
-                el.finishBtn.disabled = false;
-                el.finishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-
+                el.startBtn.querySelector('span').innerText = t.startBtn; 
+            } else if (state.activeTaskId) {
                 el.statusText.textContent = t.statusPaused;
-                el.statusText.classList.remove('text-panda-pink');
-
-            } else if (status === 'stopped') {
-                el.startBtn.disabled = false;
-                el.startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                el.startBtn.querySelector('span').innerText = t.startBtn;
-                
-                el.pauseBtn.disabled = true;
-                el.pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                
-                el.finishBtn.disabled = true;
-                el.finishBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                el.finishBtn.classList.remove('bg-panda-dark', 'hover:bg-black');
-                el.finishBtn.classList.add('bg-gray-600');
-
-                el.statusText.textContent = "";
-                el.taskInput.parentElement.classList.remove('opacity-75');
-            }
-        }
-
-        // --- TASK LIST LOGIC ---
-        function renderTasks() {
-            el.taskList.innerHTML = '';
-            let totalMs = 0;
-
-            if (state.tasks.length === 0) {
-                el.taskList.appendChild(el.emptyState);
-                el.emptyState.classList.remove('hidden');
-                el.clearLogBtn.disabled = true;
+                el.startBtn.querySelector('span').innerText = t.resumeBtn;
             } else {
-                el.emptyState.classList.add('hidden');
-                el.clearLogBtn.disabled = false;
-                
-                state.tasks.forEach(task => {
-                    totalMs += task.duration;
-                    const row = document.createElement('div');
-                    
-                    const isActive = task.id === state.activeTaskId;
-                    
-                    // High contrast background + Active Highlight
-                    let baseClass = "bg-white/95 dark:bg-gray-700/95 p-2 px-3 rounded-lg flex justify-between items-center group shadow-sm transition-all border mb-2";
-                    
-                    if (isActive) {
-                        baseClass += " active-task-card border-panda-pink";
-                    } else {
-                        baseClass += " border-gray-100 dark:border-gray-600 hover:shadow-md";
-                    }
-                    
-                    row.className = baseClass;
-                    
-                    // Determine button states based on activity
-                    let playPauseBtn = '';
-                    let stopBtn = '';
-
-                    // SVG Icons
-                    const playIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
-                    const pauseIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"></path></svg>`;
-                    const stopIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Z"></path></svg>`;
-
-                    if (isActive) {
-                        // Active Task Logic
-                        if (state.isRunning) {
-                            playPauseBtn = `<button onclick="pauseTimer()" class="h-7 w-7 bg-yellow-100 hover:bg-yellow-500 text-yellow-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].pauseTask}">${pauseIcon}</button>`;
-                        } else {
-                            playPauseBtn = `<button onclick="startTimer()" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].reactivate}">${playIcon}</button>`;
-                        }
-                        stopBtn = `<button onclick="finishTimer()" class="h-7 w-7 bg-gray-200 hover:bg-gray-600 text-gray-600 hover:text-white dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500 rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].finishTask}">${stopIcon}</button>`;
-                    } else {
-                        playPauseBtn = `<button onclick="reactivateTask(${task.id})" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].reactivate}">${playIcon}</button>`;
-                    }
-                    
-                    row.innerHTML = `
-                        <div class="overflow-hidden flex-1 mr-3">
-                            <p class="font-bold text-sm text-panda-dark dark:text-white truncate ${isActive ? 'text-panda-pink' : ''}">${task.name}</p>
-                            <div class="flex items-center gap-1.5 mt-0.5">
-                                <span class="text-[10px] text-gray-500 font-medium flex items-center gap-1 bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
-                                    <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path></svg>
-                                    ${new Date(task.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                </span>
-                                ${isActive ? `<span class="text-[9px] font-bold text-white bg-panda-pink px-1.5 py-0.5 rounded-full">${translations[state.lang].activeTag}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-mono font-bold text-base text-panda-pink tabular-nums">${formatTime(task.duration)}</span>
-                            
-                            <div class="flex gap-1.5">
-                                ${playPauseBtn}
-                                ${stopBtn}
-                                <button onclick="deleteTask(${task.id})" class="h-7 w-7 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].delete}">
-                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    el.taskList.appendChild(row);
-                });
+                el.startBtn.querySelector('span').innerText = t.startBtn;
             }
-
-            el.totalTimeDisplay.textContent = formatTime(totalMs);
-        }
-
-        function saveTasks() {
-            localStorage.setItem('pandaTimerTasks', JSON.stringify(state.tasks));
-        }
-
-        window.deleteTask = function(id) {
-            if (id === state.activeTaskId) {
-                 finishTimer(); 
-            }
-            state.tasks = state.tasks.filter(t => t.id !== id);
-            saveTasks();
+            
             renderTasks();
         }
 
-        window.reactivateTask = function(id) {
-            const task = state.tasks.find(t => t.id === id);
-            if (!task) return;
-            
-            if (state.activeTaskId && state.activeTaskId !== id) {
-                 const confirmSwitch = confirm(state.lang === 'es' 
-                    ? "Tienes otra tarea activa. ¿Quieres finalizarla para cambiar a esta?" 
-                    : "You have another active task. Finish it to switch?");
-                
-                if (confirmSwitch) {
-                    finishTimer(); 
-                } else {
-                    return; 
-                }
-            }
-
-            state.activeTaskId = id;
-            el.taskInput.value = task.name;
-            // CRITICAL FIX: Set elapsed time to the task's existing duration so main clock matches
-            state.elapsedTime = task.duration; 
-            
-            // Do NOT set startTime here; it's set when running starts. 
-            // Just update display to show current accum time.
-            updateTimerDisplay(state.elapsedTime);
-            
-            renderTasks();
-            
-            // CHANGE: Start immediately instead of pausing
-            startTimer(); 
+        async function setLang(lang) {
+            state.lang = lang;
+            localStorage.setItem('pandaTimerLang', lang);
+            await loadLanguage(lang);
         }
 
-        function clearLog() {
-            if(state.tasks.length === 0) return;
-            
-            if(confirm(translations[state.lang].confirmClear)) {
-                // FORCE RESET of everything regardless of state
-                clearInterval(state.intervalId);
-                state.isRunning = false;
-                state.activeTaskId = null;
-                state.elapsedTime = 0;
-                
-                updateTimerDisplay(0);
-                updateTimerUI('stopped');
-                localStorage.removeItem('pandaTimerActiveState');
-                
-                // Clear data
-                state.tasks = [];
-                saveTasks();
-                renderTasks();
-            }
-        }
-
+        // --- THEME LOGIC ---
         function toggleTheme() {
             state.darkMode = !state.darkMode;
             localStorage.setItem('pandaTimerTheme', state.darkMode ? 'dark' : 'light');
@@ -896,43 +429,278 @@
             }
         }
 
-        function setLang(lang) {
-            state.lang = lang;
-            localStorage.setItem('pandaTimerLang', lang);
-            applyLang(lang);
+        // --- EXPORT LOGIC ---
+        function exportToTxt() {
+            const t = translations;
+            const dateStr = new Date().toLocaleDateString();
+            
+            let content = `PandaTimer - ${t.exportTxtHeader || 'Log: '}${dateStr}\n`;
+            content += `========================================\n\n`;
+            
+            let totalDuration = 0;
+
+            state.tasks.forEach(task => {
+                totalDuration += task.duration;
+                content += `${task.name}\n`;
+                content += `${t.exportTxtTime || 'Time: '}${formatTime(task.duration)}\n`;
+                content += `----------------------------------------\n`;
+            });
+
+            content += `\n${t.exportTxtTotal || 'Total: '}${formatTime(totalDuration)}`;
+
+            downloadFile(content, `pandatimer_report_${new Date().toISOString().slice(0,10)}.txt`, 'text/plain');
+            closeExportModal();
         }
 
-        function applyLang(lang) {
-            el.langBtns.forEach(btn => {
-                if (btn.dataset.lang === lang) {
-                    btn.classList.add('bg-panda-pink', 'text-white');
-                    btn.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-300', 'dark:hover:bg-gray-600');
-                } else {
-                    btn.classList.remove('bg-panda-pink', 'text-white');
-                    btn.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-300', 'dark:hover:bg-gray-600');
-                }
-            });
+        // --- CORE LOGIC ---
+        function saveTasks() { localStorage.setItem('pandaTimerTasks', JSON.stringify(state.tasks)); }
+        
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
+        function pad(num) { return num.toString().padStart(2, '0'); }
 
-            const t = translations[lang];
-            el.translatables.forEach(elem => {
-                const key = elem.dataset.key;
-                if (t[key]) elem.innerText = t[key];
-            });
+        function renderTasks() {
+            el.taskList.innerHTML = '';
+            let totalMs = 0;
 
-            el.taskInput.placeholder = t.placeholder;
-            el.taskInput.previousElementSibling.innerText = t.taskLabel;
-            
-            if (state.isRunning) {
-                el.statusText.textContent = t.statusRecording;
-            } else if (state.activeTaskId) {
-                el.statusText.textContent = t.statusPaused;
-                el.startBtn.querySelector('span').innerText = t.resumeBtn;
+            if (state.tasks.length === 0) {
+                el.taskList.appendChild(el.emptyState);
+                el.emptyState.classList.remove('hidden');
+                el.clearLogBtn.disabled = true;
+                el.exportModalBtn.disabled = true;
+                el.exportModalBtn.classList.add('opacity-50');
             } else {
-                el.startBtn.querySelector('span').innerText = t.startBtn;
+                el.emptyState.classList.add('hidden');
+                el.clearLogBtn.disabled = false;
+                el.exportModalBtn.disabled = false;
+                el.exportModalBtn.classList.remove('opacity-50');
+                
+                state.tasks.forEach(task => {
+                    totalMs += task.duration;
+                    const row = document.createElement('div');
+                    const isActive = task.id === state.activeTaskId;
+                    const isEditing = task.id === state.editingTaskId;
+                    const t = translations;
+
+                    let baseClass = "bg-white/95 dark:bg-gray-700/95 p-2 px-3 rounded-lg flex justify-between items-center group shadow-sm transition-all border mb-2";
+                    if (isActive) baseClass += " active-task-card border-panda-pink";
+                    else baseClass += " border-gray-100 dark:border-gray-600 hover:shadow-md";
+                    
+                    row.className = baseClass;
+                    
+                    // Icons
+                    const playIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg>`;
+                    const pauseIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"></path></svg>`;
+                    const stopIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Z"></path></svg>`;
+                    const editIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152.05a16,16,0,0,0-4.69,11.31V216a16,16,0,0,0,16,16H100.69a16,16,0,0,0,11.31-4.69L235.31,104a16,16,0,0,0-15.31-22.63ZM94.06,216H48V169.94L160,57.94l46.06,46.06Z"></path></svg>`;
+                    const checkIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M229.66,58.34l-136,136a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1-11.32-11.32L93.66,182.69,218.34,58.34a8,8,0,0,1,11.32,11.32Z"></path></svg>`;
+                    const xIcon = `<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
+
+                    let btns = '';
+                    if (isActive) {
+                        btns = state.isRunning 
+                            ? `<button onclick="pauseTimer()" class="h-7 w-7 bg-yellow-100 hover:bg-yellow-500 text-yellow-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm">${pauseIcon}</button>`
+                            : `<button onclick="startTimer()" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm">${playIcon}</button>`;
+                        btns += `<button onclick="finishTimer()" class="h-7 w-7 bg-gray-200 hover:bg-gray-600 text-gray-600 hover:text-white dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500 rounded-full flex items-center justify-center transition-all shadow-sm">${stopIcon}</button>`;
+                    } else {
+                        btns = `<button onclick="reactivateTask(${task.id})" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm">${playIcon}</button>`;
+                    }
+
+                    if (isEditing) {
+                        btns += `<button onclick="saveTaskTime(${task.id})" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.saveEditTooltip || 'Save'}">${checkIcon}</button>`;
+                        btns += `<button onclick="cancelTaskEdit()" class="h-7 w-7 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.cancelEditTooltip || 'Cancel'}">${xIcon}</button>`;
+                    } else {
+                        btns += `<button onclick="enableTaskEdit(${task.id})" class="h-7 w-7 bg-blue-100 hover:bg-blue-500 text-blue-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.editTaskTooltip || 'Edit'}">${editIcon}</button>`;
+                        btns += `<button onclick="deleteTask(${task.id})" class="h-7 w-7 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${t.delete || 'Delete'}">${xIcon}</button>`;
+                    }
+
+                    const timeHTML = isEditing 
+                        ? `<input type="text" id="edit-input-${task.id}" class="list-time-input" value="${formatTime(task.duration)}" onkeydown="if(event.key==='Enter') saveTaskTime(${task.id}); if(event.key==='Escape') cancelTaskEdit();">`
+                        : `<span class="font-mono font-bold text-base text-panda-pink tabular-nums">${formatTime(task.duration)}</span>`;
+
+                    row.innerHTML = `
+                        <div class="overflow-hidden flex-1 mr-3">
+                            <p class="font-bold text-sm text-panda-dark dark:text-white truncate ${isActive ? 'text-panda-pink' : ''}">${task.name}</p>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                <span class="text-[10px] text-gray-500 font-medium flex items-center gap-1 bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
+                                    ${new Date(task.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
+                                ${isActive ? `<span class="text-[9px] font-bold text-white bg-panda-pink px-1.5 py-0.5 rounded-full">${t.activeTag || 'ACTIVE'}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${timeHTML}
+                            <div class="flex gap-1.5">${btns}</div>
+                        </div>`;
+                    el.taskList.appendChild(row);
+                });
             }
-            
-            // Re-render tasks to update dynamic tags like ACTIVA/ACTIVE
-            renderTasks();
+            el.totalTimeDisplay.textContent = formatTime(totalMs);
+        }
+
+        // Functions for timer state logic
+        function startTimer() {
+            if(state.isRunning) return;
+            if(state.editingTaskId !== null) cancelTaskEdit();
+            if(!state.activeTaskId) createNewTask();
+            state.isRunning = true;
+            state.startTime = Date.now() - state.elapsedTime;
+            state.intervalId = setInterval(() => {
+                const now = Date.now();
+                state.elapsedTime = now - state.startTime;
+                if(state.activeTaskId) {
+                    const t = state.tasks.find(x => x.id === state.activeTaskId);
+                    if(t) { t.duration = state.elapsedTime; saveTasks(); if(state.editingTaskId === null) renderTasks(); }
+                }
+                updateTimerDisplay(state.elapsedTime);
+                saveActiveState();
+            }, 1000);
+            applyTranslations(); 
+        }
+
+        function pauseTimer() {
+            if(!state.isRunning) return;
+            state.isRunning = false;
+            clearInterval(state.intervalId);
+            saveActiveState();
+            applyTranslations();
+        }
+
+        function finishTimer() {
+            clearInterval(state.intervalId);
+            state.isRunning = false; state.elapsedTime = 0; state.activeTaskId = null;
+            if(state.editingTaskId) cancelTaskEdit();
+            updateTimerDisplay(0); el.taskInput.value = '';
+            localStorage.removeItem('pandaTimerActiveState');
+            applyTranslations();
+        }
+
+        // Helper Logic
+        function createNewTask() {
+            const t = translations;
+            const taskName = el.taskInput.value.trim() || (state.lang === 'es' ? 'Tarea sin nombre' : 'Untitled Task');
+            const newTask = { id: Date.now(), name: taskName, duration: 0, timestamp: new Date().toISOString() };
+            state.tasks.unshift(newTask); state.activeTaskId = newTask.id; state.elapsedTime = 0;
+            saveTasks(); renderTasks();
+        }
+        
+        function updateActiveTaskName() {
+             if (state.activeTaskId) {
+                const task = state.tasks.find(t => t.id === state.activeTaskId);
+                if (task) { task.name = el.taskInput.value.trim() || 'Untitled'; saveTasks(); renderTasks(); }
+            }
+        }
+
+        function saveActiveState() {
+            const d = { activeTaskId: state.activeTaskId, taskName: el.taskInput.value, elapsedTime: state.elapsedTime, isRunning: state.isRunning, lastUpdate: Date.now() };
+            localStorage.setItem('pandaTimerActiveState', JSON.stringify(d));
+        }
+
+        function loadActiveState() {
+             const s = localStorage.getItem('pandaTimerActiveState');
+             if(!s) return;
+             try {
+                 const d = JSON.parse(s);
+                 state.activeTaskId = d.activeTaskId;
+                 el.taskInput.value = d.taskName || '';
+                 state.elapsedTime = d.elapsedTime || 0;
+                 if(d.isRunning) {
+                     state.elapsedTime += (Date.now() - d.lastUpdate);
+                     if(state.activeTaskId) {
+                         const t = state.tasks.find(x => x.id === state.activeTaskId);
+                         if(t) t.duration = state.elapsedTime;
+                     }
+                     startTimer();
+                 } else if (state.elapsedTime > 0) updateTimerDisplay(state.elapsedTime);
+             } catch(e) {}
+        }
+
+        function updateTimerDisplay(ms) { el.timerDisplay.textContent = formatTime(ms); }
+
+        // Inline Edit
+        window.enableTaskEdit = function(id) {
+            if (state.editingTaskId !== null) cancelTaskEdit();
+            if (state.isRunning && state.activeTaskId === id) pauseTimer();
+            state.editingTaskId = id; renderTasks();
+            setTimeout(() => { const i = document.getElementById(`edit-input-${id}`); if(i) i.focus(); }, 50);
+        }
+        window.saveTaskTime = function(id) {
+            const input = document.getElementById(`edit-input-${id}`);
+            if(!input) return;
+            const parts = input.value.trim().split(':');
+            if(parts.length !== 3) { alert(translations.invalidTime || 'Invalid format'); return; }
+            const h = parseInt(parts[0]), m = parseInt(parts[1]), s = parseInt(parts[2]);
+            if(isNaN(h)||isNaN(m)||isNaN(s)) { alert(translations.invalidTime || 'Invalid format'); return; }
+            const newDur = ((h*3600)+(m*60)+s)*1000;
+            const t = state.tasks.find(x => x.id === id);
+            if(t) t.duration = newDur;
+            if(state.activeTaskId === id) {
+                state.elapsedTime = newDur;
+                updateTimerDisplay(newDur);
+                if(state.isRunning) state.startTime = Date.now() - newDur;
+            }
+            state.editingTaskId = null; saveTasks(); renderTasks();
+        }
+        window.cancelTaskEdit = function() { state.editingTaskId = null; renderTasks(); }
+        
+        // Global access
+        window.deleteTask = function(id) {
+            if(id === state.activeTaskId) finishTimer();
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            saveTasks(); renderTasks();
+        }
+        window.reactivateTask = function(id) {
+            const t = state.tasks.find(x => x.id === id);
+            if(!t) return;
+            if(state.activeTaskId && state.activeTaskId !== id) {
+                if(confirm(translations.confirmSwitch || (state.lang === 'es' ? "Tienes otra tarea activa. ¿Finalizarla?" : "Finish active task?"))) finishTimer(); else return;
+            }
+            state.activeTaskId = id; el.taskInput.value = t.name; state.elapsedTime = t.duration;
+            updateTimerDisplay(state.elapsedTime); renderTasks(); startTimer();
+        }
+
+        // Modal Helpers
+        function openModal(m) { m.classList.remove('hidden', 'opacity-0', 'pointer-events-none'); m.querySelector('div').classList.remove('scale-95'); m.querySelector('div').classList.add('scale-100'); }
+        function closeModal(m) { m.classList.add('opacity-0', 'pointer-events-none'); m.querySelector('div').classList.add('scale-95'); m.querySelector('div').classList.remove('scale-100'); setTimeout(() => m.classList.add('hidden'), 300); }
+        function openClearModal() { if(state.tasks.length > 0) openModal(el.confirmModal); }
+        function closeClearModal() { closeModal(el.confirmModal); }
+        function confirmClearLog() { finishTimer(); state.tasks=[]; saveTasks(); renderTasks(); closeClearModal(); }
+        function openExportModal() { if(state.tasks.length > 0) openModal(el.exportModal); }
+        function closeExportModal() { closeModal(el.exportModal); }
+        function exportToJson() {
+            const dataStr = JSON.stringify(state.tasks, null, 2);
+            downloadFile(dataStr, `pandatimer_backup_${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+            closeExportModal();
+        }
+        function downloadFile(content, fileName, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url; link.download = fileName; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+        function importLog(e) {
+             const file = e.target.files[0];
+             if(!file) return;
+             const r = new FileReader();
+             r.onload = function(evt) {
+                 try {
+                     const imported = JSON.parse(evt.target.result);
+                     if(Array.isArray(imported)) {
+                         let count = 0;
+                         imported.forEach(t => { if(!state.tasks.some(x=>x.id===t.id)) { state.tasks.push(t); count++; } });
+                         state.tasks.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                         saveTasks(); renderTasks();
+                         alert(state.lang === 'es' ? `Importado: ${count} tareas.` : `Imported: ${count} tasks.`);
+                     }
+                 } catch(err){ alert("Error importing"); }
+                 el.importInput.value = '';
+             };
+             r.readAsText(file);
         }
 
         init();
