@@ -82,7 +82,7 @@
         .task-list-container::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 20px; }
         .task-list-container::-webkit-scrollbar-thumb:hover { background-color: #f8547e; }
         
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
         .icon-svg { display: inline-block; fill: currentColor; }
         
         .active-task-card { border-color: rgba(248, 84, 126, 0.6) !important; background-color: rgba(255, 255, 255, 1) !important; }
@@ -287,8 +287,56 @@
 
     <!-- Logic -->
     <script>
-        // Fallback inicial
-        let translations = {};
+        // Fallback translations in case JSON fetch fails (e.g. running locally without server)
+        const defaultTranslations = {
+            backHome: "Back to Httrans",
+            tagline: "Manage your time very simply",
+            taskLabel: "TASK NAME",
+            placeholder: "Ex: Project X Translation...",
+            startBtn: "START",
+            resumeBtn: "RESUME",
+            pauseBtn: "PAUSE",
+            finishBtn: "FINISH",
+            logTitle: "Daily log",
+            logSubtitle: "Tasks completed today",
+            clearLog: "Clear",
+            emptyState: "No tasks recorded today",
+            totalTime: "Total time:",
+            statusRecording: "Tracking time...",
+            statusPaused: "Timer paused",
+            delete: "Delete task",
+            reactivate: "Resume task",
+            pauseTask: "Pause task",
+            finishTask: "Finish task",
+            modalTitle: "Are you sure?",
+            confirmClear: "Are you sure you want to clear the entire history? This action cannot be undone.",
+            cancelBtn: "Cancel",
+            deleteBtn: "Clear all",
+            footerCredits: "This application has been developed by Rafael López Sánchez.",
+            activeTag: "ACTIVE",
+            exportTitle: "Export Log",
+            exportSubtitle: "Choose export format:",
+            exportTxtLabel: "Text Format (.txt)",
+            exportTxtDesc: "Best for copy-pasting into invoices.",
+            exportJsonLabel: "Backup (.json)",
+            exportJsonDesc: "Use this file as a template or to restore your data.",
+            importTitle: "Import Log",
+            invalidTime: "Invalid format. Use HH:MM:SS",
+            editTimeTooltip: "Edit time manually",
+            saveTooltip: "Save",
+            cancelTooltip: "Cancel",
+            exportTooltip: "Save/Export",
+            exportTxtHeader: "Daily Log: ",
+            exportTxtTime: "Time: ",
+            exportTxtTotal: "TOTAL TIME: ",
+            editTaskTooltip: "Edit time",
+            saveEditTooltip: "Save changes",
+            cancelEditTooltip: "Cancel edit",
+            enterNewTime: "Enter new time (HH:MM:SS):"
+        };
+
+        // Initialize with defaults to avoid "undefined"
+        let translations = { ...defaultTranslations };
         
         let state = {
             startTime: 0,
@@ -335,6 +383,7 @@
             
             loadActiveState();
             renderTasks();
+            updateTimerUI(); // Ensure buttons are in correct state on load
             
             el.themeToggle.addEventListener('click', toggleTheme);
             el.langSelector.addEventListener('change', (e) => setLang(e.target.value));
@@ -371,12 +420,11 @@
                 const response = await fetch(`pandatimer/locales/${lang}.json`);
                 if (!response.ok) throw new Error('Failed to load language');
                 translations = await response.json();
-                applyTranslations();
             } catch (error) {
-                console.error("Language loading error:", error);
-                if (window.location.protocol === 'file:') {
-                    alert("Nota: Para que funcionen los idiomas externos, ejecuta este archivo en un servidor local (o usa VS Code Live Server).");
-                }
+                console.warn("Language loading error (using defaults):", error);
+                // If fetch fails, keep current translations (defaults)
+            } finally {
+                applyTranslations();
             }
         }
 
@@ -395,17 +443,8 @@
             if(el.importBtn) el.importBtn.title = t.importTitle || 'Import';
             if(el.exportModalBtn) el.exportModalBtn.title = t.exportTitle || 'Export';
 
-            if (state.isRunning) {
-                el.statusText.textContent = t.statusRecording;
-                el.startBtn.querySelector('span').innerText = t.startBtn; 
-            } else if (state.activeTaskId) {
-                el.statusText.textContent = t.statusPaused;
-                el.startBtn.querySelector('span').innerText = t.resumeBtn;
-            } else {
-                el.startBtn.querySelector('span').innerText = t.startBtn;
-            }
-            
-            renderTasks();
+            updateTimerUI(); // Refresh button text
+            renderTasks();   // Refresh dynamic text in list
         }
 
         async function setLang(lang) {
@@ -543,6 +582,64 @@
             el.totalTimeDisplay.textContent = formatTime(totalMs);
         }
 
+        // --- CRITICAL UI UPDATE LOGIC (RESTORED) ---
+        function updateTimerUI() {
+            const t = translations;
+            
+            if (state.isRunning) {
+                el.startBtn.disabled = true;
+                el.startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                el.startBtn.querySelector('span').innerText = t.startBtn; // or Resume? Keep standard for now.
+
+                el.pauseBtn.disabled = false;
+                el.pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                el.pauseBtn.querySelector('span').innerText = t.pauseBtn;
+
+                el.finishBtn.disabled = false;
+                el.finishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                el.finishBtn.classList.add('bg-panda-dark', 'hover:bg-black');
+                el.finishBtn.querySelector('span').innerText = t.finishBtn;
+
+                el.statusText.textContent = t.statusRecording;
+                el.statusText.classList.add('text-panda-pink');
+                el.taskInput.parentElement.classList.add('opacity-75');
+
+            } else if (state.activeTaskId) {
+                // Paused
+                el.startBtn.disabled = false;
+                el.startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                el.startBtn.querySelector('span').innerText = t.resumeBtn; 
+                
+                el.pauseBtn.disabled = true;
+                el.pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                el.finishBtn.disabled = false;
+                el.finishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                el.finishBtn.querySelector('span').innerText = t.finishBtn;
+
+                el.statusText.textContent = t.statusPaused;
+                el.statusText.classList.remove('text-panda-pink');
+
+            } else {
+                // Stopped
+                el.startBtn.disabled = false;
+                el.startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                el.startBtn.querySelector('span').innerText = t.startBtn;
+                
+                el.pauseBtn.disabled = true;
+                el.pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                el.finishBtn.disabled = true;
+                el.finishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                el.finishBtn.classList.remove('bg-panda-dark', 'hover:bg-black');
+                el.finishBtn.classList.add('bg-gray-600');
+                el.finishBtn.querySelector('span').innerText = t.finishBtn;
+
+                el.statusText.textContent = "";
+                el.taskInput.parentElement.classList.remove('opacity-75');
+            }
+        }
+
         // Functions for timer state logic
         function startTimer() {
             if(state.isRunning) return;
@@ -560,7 +657,7 @@
                 updateTimerDisplay(state.elapsedTime);
                 saveActiveState();
             }, 1000);
-            applyTranslations(); 
+            updateTimerUI(); // Update buttons immediately
         }
 
         function pauseTimer() {
@@ -568,7 +665,7 @@
             state.isRunning = false;
             clearInterval(state.intervalId);
             saveActiveState();
-            applyTranslations();
+            updateTimerUI();
         }
 
         function finishTimer() {
@@ -577,7 +674,7 @@
             if(state.editingTaskId) cancelTaskEdit();
             updateTimerDisplay(0); el.taskInput.value = '';
             localStorage.removeItem('pandaTimerActiveState');
-            applyTranslations();
+            updateTimerUI();
         }
 
         // Helper Logic
@@ -616,7 +713,10 @@
                          if(t) t.duration = state.elapsedTime;
                      }
                      startTimer();
-                 } else if (state.elapsedTime > 0) updateTimerDisplay(state.elapsedTime);
+                 } else if (state.elapsedTime > 0) {
+                     updateTimerDisplay(state.elapsedTime);
+                     updateTimerUI(); // Ensure paused state is reflected
+                 }
              } catch(e) {}
         }
 
