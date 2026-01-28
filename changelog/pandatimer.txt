@@ -1,0 +1,45 @@
+=========================================
+PandaTimer v1.0.1 - Update
+=========================================
+
+Release Date: January 25, 2026
+
+- Export to TXT: Generate a clean, readable text report of your day's work, perfect for copying into invoices or emails.
+- JSON Backup: Export your full session history to a JSON file. Use this as a backup or as a template for recurring tasks.
+- Import Capability: Restore previous sessions or load templates instantly by uploading a valid PandaTimer JSON file.
+
+
+=========================================
+PandaTimer v1.0.0 - Launch Announcement
+=========================================
+
+Release Date: January 15, 2026
+
+We are excited to introduce PandaTimer, a free, simple, and secure online time tracking application designed specifically for freelancers and translators. PandaTimer runs entirely in your browser, ensuring your data remains private while offering robust features to manage your daily tasks.
+
+Key Features
+
+- Simple Controls: Start, pause, and finish tasks with a single click.
+- Persistent State: Your active timer and task history are saved automatically to your browser's local storage. You can close the tab and come back later without losing progress.
+- Task History: Automatically logs every completed task with its duration and timestamp.
+- Inline Editing: Made a mistake? You can edit the duration of any completed task directly in the log by clicking the pencil icon. The timer automatically pauses during edits to ensure accuracy.
+- Task Naming: Easily label your tasks to keep track of different projects or clients.
+- Multi-language Support: Launched with full support for English and Spanish. The architecture is built to easily support more languages in the future via external JSON files.
+- Dark Mode: A built-in dark theme that is easy on the eyes for those late-night translation sessions.
+- Responsive Design: Works seamlessly on desktop, tablets, and mobile devices.
+
+How It Works
+
+- Type & Start: Enter a task name and click "START".
+- Track: The timer runs in the background. You can pause and resume as needed.
+- Finish: Click "FINISH" to move the task to your daily log.
+- Manage: Edit times if necessary, delete tasks, or clear the log to start fresh.
+- Export: Save your daily report as a text file or backup your data.
+
+Feedback & Contributions
+
+This is the initial release of PandaTimer. 
+
+Developed by Rafael López Sánchez as part of the Httrans project.
+
+Thank you for using PandaTimer!
