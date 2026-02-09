@@ -622,6 +622,16 @@
             el.clearLogBtn.addEventListener('click', openClearModal); 
             el.taskInput.addEventListener('input', updateActiveTaskName);
 
+            // Iniciar reloj al pulsar Enter en el input de tarea
+            el.taskInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Evita comportamientos por defecto
+                    if (!state.isRunning) {
+                        startTimer();
+                    }
+                }
+            });
+
             // Export / Import Listeners
             el.exportModalBtn.addEventListener('click', openExportModal);
             el.importBtn.addEventListener('click', () => el.importInput.click());
