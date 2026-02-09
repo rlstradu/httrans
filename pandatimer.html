@@ -986,23 +986,35 @@
         }
 
         function finishTimer() {
-            clearInterval(state.intervalId);
-            state.isRunning = false;
-            state.elapsedTime = 0;
-            state.startTime = 0;
-            state.activeTaskId = null;
-            if (state.editingTaskId !== null) cancelTaskEdit();
-            
-            updateTimerDisplay(0);
-            el.taskInput.value = '';
-            localStorage.removeItem('pandaTimerActiveState');
-            renderTasks();
-            updateTimerUI('stopped');
-        }
+    clearInterval(state.intervalId);
+    state.isRunning = false;
+    state.elapsedTime = 0;
+    state.startTime = 0;
+    state.activeTaskId = null;
+    if (state.editingTaskId !== null) cancelTaskEdit();
+    
+    updateTimerDisplay(0);
+    
+    // Restaurar título original
+    document.title = "PandaTimer - Free Online Time Tracker"; 
+    
+    el.taskInput.value = '';
+    localStorage.removeItem('pandaTimerActiveState');
+    renderTasks();
+    updateTimerUI('stopped');
+}
 
         function updateTimerDisplay(ms) {
-            el.timerDisplay.textContent = formatTime(ms);
-        }
+    const formattedTime = formatTime(ms);
+    el.timerDisplay.textContent = formattedTime;
+
+    // Nueva lógica para la pestaña (Favicon/Title Status)
+    if (state.isRunning) {
+        document.title = `🔴 ${formattedTime} - PandaTimer`;
+    } else {
+        document.title = `PandaTimer - Free Online Time Tracker`;
+    }
+}
 
         function formatTime(ms) {
             const totalSeconds = Math.floor(ms / 1000);
