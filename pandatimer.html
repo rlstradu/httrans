@@ -986,35 +986,41 @@
         }
 
         function finishTimer() {
-    clearInterval(state.intervalId);
-    state.isRunning = false;
-    state.elapsedTime = 0;
-    state.startTime = 0;
-    state.activeTaskId = null;
-    if (state.editingTaskId !== null) cancelTaskEdit();
-    
-    updateTimerDisplay(0);
-    
-    // Restaurar título original
-    document.title = "PandaTimer - Free Online Time Tracker"; 
-    
-    el.taskInput.value = '';
-    localStorage.removeItem('pandaTimerActiveState');
-    renderTasks();
-    updateTimerUI('stopped');
-}
+            if (state.activeTaskId) {
+                const task = state.tasks.find(t => t.id === state.activeTaskId);
+                if (task) {
+                    task.endTime = new Date().toISOString(); // Guarda la hora de fin
+                }
+            }
+
+            clearInterval(state.intervalId);
+            state.isRunning = false;
+            state.elapsedTime = 0;
+            state.startTime = 0;
+            state.activeTaskId = null;
+            if (state.editingTaskId !== null) cancelTaskEdit();
+            
+            updateTimerDisplay(0);
+            document.title = "PandaTimer - Free Online Time Tracker"; 
+            
+            el.taskInput.value = '';
+            localStorage.removeItem('pandaTimerActiveState');
+            saveTasks(); // Importante guardar para que persista el endTime
+            renderTasks();
+            updateTimerUI('stopped');
+        }
 
         function updateTimerDisplay(ms) {
-    const formattedTime = formatTime(ms);
-    el.timerDisplay.textContent = formattedTime;
+            const formattedTime = formatTime(ms);
+            el.timerDisplay.textContent = formattedTime;
 
-    // Nueva lógica para la pestaña (Favicon/Title Status)
-    if (state.isRunning) {
-        document.title = `🔴 ${formattedTime} - PandaTimer`;
-    } else {
-        document.title = `PandaTimer - Free Online Time Tracker`;
-    }
-}
+            // Actualiza el título de la pestaña con el punto de grabación
+            if (state.isRunning) {
+                document.title = `🔴 ${formattedTime} - PandaTimer`;
+            } else {
+                document.title = `PandaTimer - Free Online Time Tracker`;
+            }
+        }
 
         function formatTime(ms) {
             const totalSeconds = Math.floor(ms / 1000);
@@ -1145,13 +1151,22 @@
                         timeDisplayHTML = `<span class="font-mono font-bold text-base text-panda-pink tabular-nums">${formatTime(task.duration)}</span>`;
                     }
 
+                    // Preparar el rango de tiempo (Inicio - Fin)
+                    const startTime = new Date(task.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    let timeRangeHTML = startTime;
+                    
+                    if (task.endTime) {
+                        const endTime = new Date(task.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        timeRangeHTML = `${startTime} — ${endTime}`;
+                    }
+
                     row.innerHTML = `
                         <div class="overflow-hidden flex-1 mr-3">
                             <p class="font-bold text-sm text-panda-dark dark:text-white truncate ${isActive ? 'text-panda-pink' : ''}">${task.name}</p>
                             <div class="flex items-center gap-1.5 mt-0.5">
-                                <span class="text-[10px] text-gray-500 font-medium flex items-center gap-1 bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
+                                <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1 bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
                                     <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path></svg>
-                                    ${new Date(task.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${timeRangeHTML}
                                 </span>
                                 ${isActive ? `<span class="text-[9px] font-bold text-white bg-panda-pink px-1.5 py-0.5 rounded-full">${translations[state.lang].activeTag}</span>` : ''}
                             </div>
@@ -1165,6 +1180,7 @@
                             </div>
                         </div>
                     `;
+
                     el.taskList.appendChild(row);
                 });
             }
