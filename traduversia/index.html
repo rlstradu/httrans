@@ -372,13 +372,11 @@
         .hero {
             background: transparent; 
             color: var(--text-light);
-            /* CAMBIO CRÍTICO: Eliminado min-height y ajustado padding para reducir espacio */
             padding: 20px 0 40px 0; 
             position: relative;
             z-index: 5; 
         }
 
-        /* Tamaño de fuente ajustado: más pequeño y con más peso */
         .hero-title-full {
             font-size: 1.5rem; 
             line-height: 1.3;
@@ -452,6 +450,13 @@
             z-index: 5; 
         }
 
+        .newsletter-title {
+            color: var(--logo-green);
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
         .form-row {
             display: flex;
             gap: 10px;
@@ -481,6 +486,7 @@
             transition: var(--transition);
             font-family: 'Roboto', sans-serif;
             font-size: 0.9rem;
+            white-space: nowrap; /* Evita que el texto se parta */
         }
 
         .btn-subscribe:hover {
@@ -781,102 +787,6 @@
             transform: translateY(-3px);
         }
 
-        /* --- PRUEBA SOCIAL --- */
-        .social-proof-section {
-            padding: 80px 0;
-            background-color: #fff;
-            border-top: 1px solid #eee;
-        }
-
-        .counters-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .counter-item h3 {
-            font-size: 3rem;
-            font-weight: 900;
-            color: var(--logo-green);
-            line-height: 1;
-            margin-bottom: 10px;
-        }
-        
-        .counter-item h3 span {
-             color: var(--bg-dark);
-        }
-
-        .counter-item p {
-            font-size: 1.1rem;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-        }
-
-        .testimonial-card {
-            background: #f9f9f9;
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid #eee;
-        }
-
-        .testimonial-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            gap: 15px;
-        }
-
-        .testimonial-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: var(--logo-green);
-            color: var(--bg-dark);
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0; 
-        }
-
-        .testimonial-info h4 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 2px;
-        }
-
-        .stars {
-            color: #ffc107; 
-            font-size: 0.9rem;
-        }
-
-        .course-tag {
-            display: inline-block;
-            background: #e0e0e0;
-            color: #555;
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .testimonial-text {
-            font-size: 0.95rem;
-            color: #555;
-            line-height: 1.6;
-            font-style: italic;
-        }
-
         /* --- RESPONSIVE --- */
         @media (max-width: 991px) {
             .split-wrapper {
@@ -913,8 +823,23 @@
             }
 
             .hero-right-col {
-                order: -1; 
+                order: 0; /* Restauramos el orden natural para que la imagen/form vayan después del texto */
                 padding-left: 0;
+            }
+            
+            /* Ajuste fondo formulario en móvil */
+            .newsletter-form {
+                background-color: var(--light-gray); /* Fondo claro en móvil */
+                border: none;
+            }
+            
+            /* Texto oscuro dentro del formulario en móvil */
+            .newsletter-title {
+                color: var(--bg-dark);
+            }
+            
+            .privacy-check {
+                color: var(--text-dark);
             }
             
             .courses-grid {
@@ -1072,7 +997,7 @@
                             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/traduversia/monigotes-tdv-2026.png" alt="Fundadores de Traduversia, Rafa y Pablo">
                         </div>
                         <div class="newsletter-form">
-                            <p style="color:var(--logo-green); font-weight:600; margin-bottom:15px; font-size: 0.95rem;">Suscríbete a nuestro boletín:</p>
+                            <p class="newsletter-title">Suscríbete a nuestro boletín:</p>
                             <form action="#" method="POST">
                                 <div class="form-row">
                                     <input type="email" class="input-email" placeholder="Tu correo electrónico" required>
