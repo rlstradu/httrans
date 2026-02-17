@@ -206,12 +206,16 @@
             font-size: 0.6rem;
         }
 
-        /* Botón estilo ACTION (Invertido: Fondo Oscuro, Texto Blanco -> Hover Verde) */
+        /* BOTONES ESTÁNDAR (Me apunto, Ir al curso, Promo) 
+           Fondo: #202020 (bg-dark)
+           Texto: Blanco
+           Hover: Fondo #202020, Texto #8bfe3d (logo-green)
+        */
         .btn-full-action {
             display: block;
             width: 100%;
-            background-color: var(--bg-dark); /* Fondo oscuro por defecto */
-            color: var(--white); /* Texto blanco por defecto */
+            background-color: var(--bg-dark); 
+            color: var(--white); 
             text-align: center;
             padding: 15px;
             border-radius: 6px;
@@ -225,13 +229,33 @@
         }
         
         .btn-full-action:hover {
-             background-color: var(--bg-dark); /* Fondo se mantiene oscuro */
-             color: var(--logo-green); /* Texto cambia a verde */
+             /* El fondo se mantiene, el texto cambia a verde */
+             background-color: var(--bg-dark); 
+             color: var(--logo-green); 
              transform: translateY(-2px);
              box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
 
-        /* Botón pequeño para promo flotante (Invertido) */
+        .btn-card-center {
+            display: block;
+            width: 100%;
+            background-color: var(--bg-dark);
+            color: var(--white);
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 15px; 
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .btn-card-center:hover {
+             background-color: var(--bg-dark);
+             color: var(--logo-green);
+        }
+
         .btn-promo-small {
             display: block;
             width: 100%;
@@ -384,7 +408,6 @@
             z-index: 5; 
         }
 
-        /* Tamaño de fuente ajustado: más pequeño y peso 300 */
         .hero-title-full {
             font-size: 1.5rem; 
             line-height: 1.3;
@@ -635,25 +658,85 @@
             fill: #777;
         }
 
-        /* Botón de Cards (Invertido) */
-        .btn-card-center {
-            display: block;
-            width: 100%;
-            background-color: var(--bg-dark);
-            color: var(--white);
+        /* --- CURSOS GRID Y CARDS --- */
+        .courses-section {
+            background-color: #f4f4f4;
+            padding: 80px 0;
+        }
+
+        .section-title {
             text-align: center;
-            padding: 10px;
-            border-radius: 6px;
+            margin-bottom: 50px;
+            font-size: 2rem;
+            color: var(--bg-dark);
             font-weight: 700;
-            text-transform: uppercase;
-            margin-top: 15px; 
+        }
+
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .course-card {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             transition: var(--transition);
-            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .course-thumb {
+            width: 100%;
+            height: 200px;
+            background-color: #ddd; 
+            object-fit: cover;
+            position: relative;
+            overflow: hidden;
         }
         
-        .btn-card-center:hover {
-             background-color: var(--bg-dark);
-             color: var(--logo-green);
+        .course-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .course-details {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .course-details h3 {
+            font-size: 1rem; 
+            font-weight: 900;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            text-transform: uppercase; 
+            color: var(--text-dark);
+            transition: color 0.3s ease;
+        }
+        
+        /* Enlaces para los cursos */
+        .course-link-wrapper {
+            text-decoration: none;
+            display: block; 
+        }
+        
+        /* HOVER TÍTULO CURSO: Negro Oscuro */
+        .course-link-wrapper:hover h3 {
+            color: #000000; 
         }
 
         /* --- FOOTER --- */
@@ -822,13 +905,10 @@
                 gap: 40px;
             }
 
-            /* Corrección para que el texto no se corte */
             .hero-content {
-                padding-right: 20px; 
-                padding-left: 20px; /* Margen de seguridad a ambos lados */
+                padding-right: 0; 
                 max-width: 100%; 
                 align-items: center; 
-                width: 100%; /* Forzar ancho completo */
             }
             
             .hero-title-full {
@@ -884,12 +964,6 @@
 
             .hero-title-full {
                 font-size: 1.6rem; 
-            }
-            
-            /* También aplicamos margen de seguridad en móvil */
-            .hero-content {
-                padding-left: 20px;
-                padding-right: 20px;
             }
             
             .courses-grid, 
