@@ -372,22 +372,20 @@
         .hero {
             background: transparent; 
             color: var(--text-light);
-            padding: 0 0 60px 0; 
-            min-height: 80vh;
-            display: flex;
-            align-items: center;
+            /* CAMBIO CRÍTICO: Eliminado min-height y ajustado padding para reducir espacio */
+            padding: 20px 0 40px 0; 
             position: relative;
             z-index: 5; 
         }
 
         /* Tamaño de fuente ajustado: más pequeño y con más peso */
         .hero-title-full {
-            font-size: 1.5rem; /* Reducido de 1.7rem */
+            font-size: 1.5rem; 
             line-height: 1.3;
             margin-bottom: 25px; 
             color: var(--logo-green);
             text-align: left; 
-            font-weight: 500; /* Aumentado de 300 a 500 (Medium) */
+            font-weight: 500; 
         }
 
         .hero-grid {
@@ -911,7 +909,7 @@
             
             .hero-title-full {
                 text-align: center;
-                font-size: 2rem;
+                font-size: 2.2rem;
             }
 
             .hero-right-col {
