@@ -383,7 +383,7 @@
             margin-bottom: 25px; 
             color: var(--logo-green);
             text-align: left; 
-            font-weight: 400; 
+            font-weight: 500; 
         }
 
         .hero-grid {
@@ -621,27 +621,6 @@
             fill: #777;
         }
 
-        .btn-full-dark {
-            background-color: var(--bg-dark);
-            color: white;
-            text-align: center;
-            padding: 15px;
-            border-radius: 6px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-top: auto;
-            transition: var(--transition);
-            display: block;
-            font-size: 1.1rem;
-            cursor: pointer;
-        }
-        
-        .btn-full-dark:hover {
-             background-color: #000;
-             color: var(--logo-green); 
-             box-shadow: 0 5px 15px rgba(139, 254, 61, 0.2); 
-        }
-
         /* --- CURSOS GRID Y CARDS --- */
         .courses-section {
             background-color: #f4f4f4;
@@ -787,6 +766,102 @@
             transform: translateY(-3px);
         }
 
+        /* --- PRUEBA SOCIAL --- */
+        .social-proof-section {
+            padding: 80px 0;
+            background-color: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        .counters-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .counter-item h3 {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--logo-green);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        
+        .counter-item h3 span {
+             color: var(--bg-dark);
+        }
+
+        .counter-item p {
+            font-size: 1.1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .testimonial-card {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+
+        .testimonial-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--logo-green);
+            color: var(--bg-dark);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0; 
+        }
+
+        .testimonial-info h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stars {
+            color: #ffc107; 
+            font-size: 0.9rem;
+        }
+
+        .course-tag {
+            display: inline-block;
+            background: #e0e0e0;
+            color: #555;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .testimonial-text {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
         /* --- RESPONSIVE --- */
         @media (max-width: 991px) {
             .split-wrapper {
@@ -823,17 +898,15 @@
             }
 
             .hero-right-col {
-                order: 0; /* Restauramos el orden natural para que la imagen/form vayan después del texto */
+                order: 0; 
                 padding-left: 0;
             }
             
-            /* Ajuste fondo formulario en móvil */
             .newsletter-form {
-                background-color: var(--light-gray); /* Fondo claro en móvil */
+                background-color: var(--light-gray); 
                 border: none;
             }
             
-            /* Texto oscuro dentro del formulario en móvil */
             .newsletter-title {
                 color: var(--bg-dark);
             }
@@ -935,7 +1008,6 @@
         
         <!-- PATRÓN DE FONDO ABSTRACTO (GRIS MEDIO) -->
         <div class="right-bg-pattern">
-            <!-- Representación de líneas de código / Scripts -->
             <svg class="bg-shape" style="top: 15%; right: 10%; width: 200px; height: 150px; opacity: 0.1;" viewBox="0 0 200 150">
                 <rect x="0" y="10" width="140" height="10" rx="5" fill="#cccccc"/>
                 <rect x="0" y="35" width="180" height="10" rx="5" fill="#cccccc"/>
@@ -944,7 +1016,6 @@
                 <rect x="0" y="110" width="100" height="10" rx="5" fill="#cccccc"/>
             </svg>
 
-            <!-- Representación de Píxeles (Videojuegos) -->
             <svg class="bg-shape" style="top: 50%; left: 5%; width: 120px; height: 120px; opacity: 0.1;" viewBox="0 0 100 100">
                 <rect x="0" y="0" width="20" height="20" fill="#cccccc"/>
                 <rect x="25" y="0" width="20" height="20" fill="#cccccc"/>
@@ -956,7 +1027,6 @@
                 <rect x="50" y="50" width="20" height="20" fill="#cccccc"/>
             </svg>
 
-            <!-- Representación de Onda de Audio (AV) -->
             <svg class="bg-shape" style="bottom: 5%; right: 0; width: 100%; height: 150px; opacity: 0.1;" viewBox="0 0 800 150" preserveAspectRatio="none">
                 <path d="M0,75 
                          Q20,75 30,50 Q40,25 50,75 Q60,125 70,75 
@@ -1201,7 +1271,7 @@
                         </div>
                     </div>
                     <span class="course-tag">HERRAMIENTAS DE TRADUCCIÓN</span>
-                    <p class="testimonial-text">"He flipado. No me quiero imaginar ni el trabajo que hay detrás y que las herramientas sean gratuitas. Todas son muy útiles y sencillas, aunque yo no me dedique a la traducción audivisual. Con respecto al contenido del curso, es muy didáctico, práctico y directo al grano. Como tiene que ser."</p>
+                    <p class="testimonial-text">"He flipado. No me quiero imaginar ni el trabajo que hay detrás y que las herramientas sean gratuitas. Todas son muy útiles y sencillas, aunque yo no me dedique a la traducción audivisual. Con respecto al contenido del curso, es muy didáctico, práctico y directo al grano. Como tiene que ser. Este semestre se lo mostraré a mis alumnos, les será de gran ayuda. ¡Gracias!"</p>
                 </div>
 
             </div>
