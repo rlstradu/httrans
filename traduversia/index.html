@@ -1,1 +1,1462 @@
-test
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traduversia - Formación para traductores</title>
+    <meta name="description" content="Especialízate en traducción con formación triple A: al grano, a tu ritmo y asequible. Cursos de traducción audiovisual y localización.">
+    
+    <!-- Google Fonts: Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- VARIABLES CSS --- */
+        :root {
+            --bg-dark: #202020;
+            --text-light: #f5f5f5;
+            --text-dark: #333333;
+            --logo-green: #8bfe3d;      
+            --action-green: #5eeb01;    
+            --white: #ffffff;
+            --light-gray: #f4f4f4;      
+            --transition: all 0.3s ease;
+        }
+
+        /* --- RESET BÁSICO --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--white);
+            -webkit-font-smoothing: antialiased; 
+            padding-top: 40px; 
+            transition: padding-top 0.5s ease-out; 
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* --- CLASE DE ANIMACIÓN FADE OUT --- */
+        .fade-out {
+            opacity: 0 !important;
+            transition: opacity 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        /* --- BARRA DE NOTIFICACIÓN SUPERIOR --- */
+        .top-notification-bar {
+            background-color: var(--logo-green);
+            color: black;
+            text-align: center;
+            padding: 10px 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 40px;
+            transition: transform 0.5s ease-out; 
+        }
+
+        .top-bar-close {
+            position: absolute;
+            right: 20px;
+            background: none;
+            border: none;
+            color: black;
+            font-size: 1.2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* --- CAJITA FLOTANTE (POP-UP) --- */
+        .floating-promo {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 320px;
+            z-index: 1500;
+            display: none; 
+            border: 1px solid #eee;
+            animation: slideIn 0.5s ease-out;
+            transition: opacity 0.5s ease-out; 
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .promo-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #333;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .promo-image {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .promo-content h4 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            line-height: 1.3;
+            color: var(--bg-dark);
+            font-weight: 700;
+        }
+
+        /* --- CUENTA ATRÁS ESTILO TILES --- */
+        .countdown-wrapper {
+            display: flex;
+            justify-content: space-between; 
+            width: 100%; 
+            gap: 10px;
+            margin: 15px 0 20px 0;
+        }
+
+        .floating-promo .countdown-wrapper {
+            gap: 8px;
+            margin: 10px 0 15px 0;
+        }
+
+        .tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--bg-dark);
+            padding: 10px 5px;
+            border-radius: 6px;
+            flex: 1; 
+            box-shadow: 0 4px 0px rgba(0,0,0,0.2);
+            border-bottom: 3px solid var(--logo-green); 
+            position: relative;
+        }
+
+        .floating-promo .tile {
+            padding: 5px;
+        }
+
+        .tile-number {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: var(--logo-green);
+            line-height: 1;
+        }
+
+        .floating-promo .tile-number {
+            font-size: 1.4rem;
+        }
+
+        .tile-label {
+            font-size: 0.7rem;
+            color: #ccc;
+            text-transform: uppercase;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .floating-promo .tile-label {
+            font-size: 0.6rem;
+        }
+
+        /* Botón estilo ACTION GREEN (Unificado) */
+        .btn-full-action {
+            display: block;
+            width: 100%;
+            background-color: var(--action-green); 
+            color: white; 
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: auto;
+            transition: var(--transition);
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn-full-action:hover {
+             background-color: #4cd600; 
+             transform: translateY(-2px);
+             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Botón pequeño para promo flotante (mismo estilo) */
+        .btn-promo-small {
+            display: block;
+            width: 100%;
+            background-color: var(--action-green);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .btn-promo-small:hover {
+            background-color: #4cd600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* --- BARRA DE COOKIES --- */
+        .cookie-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f5f5f5;
+            padding: 15px 20px;
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+            border-top: 1px solid #e0e0e0;
+            transition: opacity 0.5s ease-out; 
+        }
+
+        .cookie-text {
+            font-size: 0.85rem;
+            color: #555;
+            max-width: 800px;
+            line-height: 1.4;
+        }
+
+        .cookie-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-cookie-accept {
+            background-color: #888;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-cookie-accept:hover {
+            background-color: #666;
+        }
+
+        .btn-cookie-info {
+            background: none;
+            border: 1px solid #888;
+            color: #666;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-cookie-info:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* --- WRAPPER PARA FONDO UNIFICADO --- */
+        .split-wrapper {
+            background: linear-gradient(to right, var(--bg-dark) 50%, var(--light-gray) 50%);
+            overflow: hidden; 
+            position: relative;
+        }
+
+        /* --- PATRÓN DE FONDO --- */
+        .right-bg-pattern {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none; 
+            z-index: 1; 
+        }
+
+        .bg-shape {
+            position: absolute;
+            opacity: 0.6; 
+        }
+
+        /* --- HEADER / MENÚ --- */
+        header {
+            background-color: transparent; 
+            padding: 20px 0;
+            border-bottom: none; 
+            position: relative;
+            z-index: 10; 
+        }
+
+        .nav-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 50px; 
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--bg-dark); 
+            font-weight: 700; 
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            color: #4cd600; 
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            background: transparent; 
+            color: var(--text-light);
+            padding: 0 0 60px 0; 
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 5; 
+        }
+
+        /* Tamaño de fuente ajustado: más pequeño y con más peso */
+        .hero-title-full {
+            font-size: 1.5rem; /* Reducido de 1.7rem */
+            line-height: 1.3;
+            margin-bottom: 25px; 
+            color: var(--logo-green);
+            text-align: left; 
+            font-weight: 500; /* Aumentado de 300 a 500 (Medium) */
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: stretch; 
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            padding-right: 20px; 
+            max-width: 520px;
+        }
+
+        .hero-content p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #d1d1d1;
+        }
+
+        .highlight-text {
+            font-weight: 700; 
+            color: var(--white);
+        }
+
+        /* --- COLUMNA DERECHA --- */
+        .hero-right-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;     
+            gap: 0;
+            position: relative;
+            padding-left: 20px; 
+        }
+
+        .hero-image img {
+            border-radius: 0;
+            box-shadow: none;
+            width: auto;      
+            max-height: 280px; 
+            object-fit: contain; 
+            margin-bottom: -50px; 
+            position: relative;
+            z-index: 10; 
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); 
+        }
+
+        /* --- ESTILOS DEL FORMULARIO --- */
+        .newsletter-form {
+            background-color: var(--bg-dark); 
+            padding: 45px 30px 30px 30px; 
+            border-radius: 12px;
+            border: 2px solid var(--bg-dark);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 5; 
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-email {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: var(--white);
+            color: var(--text-dark);
+            font-family: 'Roboto', sans-serif;
+            font-size: 16px; 
+        }
+
+        .btn-subscribe {
+            background-color: var(--action-green);
+            color: var(--white);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: var(--transition);
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .btn-subscribe:hover {
+            background-color: #4cd600;
+            transform: translateY(-2px);
+        }
+
+        .privacy-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: #aaa; 
+            line-height: 1.4;
+        }
+
+        .privacy-check input {
+            margin-top: 3px;
+            accent-color: var(--logo-green);
+        }
+
+        /* --- LEAD MAGNET / CURSO GRATUITO --- */
+        .lead-magnet {
+            background-color: var(--white);
+            padding: 80px 0; 
+            position: relative; 
+            overflow: hidden;   
+        }
+        
+        .lead-magnet::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px; 
+            height: 600px;
+            background-image: url('https://raw.githubusercontent.com/rlstradu/httrans/main/traduversia/Logo-Transparente-TDV.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain; 
+            opacity: 0.05; 
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .lead-magnet-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2; 
+        }
+
+        .lead-magnet-title {
+            font-size: 2rem;
+            color: var(--bg-dark);
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .lead-magnet-container {
+            max-width: 500px; 
+            width: 100%;
+        }
+
+        .course-thumb-16-9 {
+            width: 100%;
+            aspect-ratio: 16 / 9; 
+            background-color: #ddd; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .course-thumb-16-9 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            transition: transform 0.5s ease;
+        }
+        
+        /* Efecto hover en imagen */
+        .course-card:hover .course-thumb-16-9 img,
+        .course-card:hover .course-thumb img {
+            transform: scale(1.05);
+        }
+        
+        .teachers-block {
+            margin: 20px 0;
+            text-align: center;
+            background-color: #f9f9f9; 
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        
+        .teachers-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .teacher-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .teacher-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .teacher-avatar svg {
+            width: 18px;
+            height: 18px;
+            fill: #777;
+        }
+
+        .btn-full-dark {
+            background-color: var(--bg-dark);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: auto;
+            transition: var(--transition);
+            display: block;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        
+        .btn-full-dark:hover {
+             background-color: #000;
+             color: var(--logo-green); 
+             box-shadow: 0 5px 15px rgba(139, 254, 61, 0.2); 
+        }
+
+        /* --- CURSOS GRID Y CARDS --- */
+        .courses-section {
+            background-color: #f4f4f4;
+            padding: 80px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+            font-size: 2rem;
+            color: var(--bg-dark);
+            font-weight: 700;
+        }
+
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .course-card {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .course-thumb {
+            width: 100%;
+            height: 200px;
+            background-color: #ddd; 
+            object-fit: cover;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .course-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .course-details {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .course-details h3 {
+            font-size: 1rem; 
+            font-weight: 900;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            text-transform: uppercase; 
+            color: var(--text-dark);
+            transition: color 0.3s ease;
+        }
+        
+        /* Enlaces para los cursos */
+        .course-link-wrapper {
+            text-decoration: none;
+            display: block; /* Para que el enlace ocupe todo el espacio de la imagen/titulo */
+        }
+        
+        .course-link-wrapper:hover h3 {
+            color: var(--action-green); /* Título verde al pasar el ratón */
+        }
+        
+        .btn-card-center {
+            display: block;
+            width: 100%;
+            background-color: var(--action-green);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 15px; 
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .btn-card-center:hover {
+             background-color: #4cd600;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            background-color: var(--bg-dark);
+            color: #888;
+            padding: 40px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            padding-bottom: 80px; 
+        }
+
+        .footer-links {
+            margin-bottom: 20px;
+        }
+
+        .footer-links a {
+            margin: 0 15px;
+            transition: var(--transition);
+            text-transform: uppercase; 
+            font-weight: 700; 
+            font-size: 0.85rem; 
+        }
+
+        .footer-links a:hover {
+            color: var(--logo-green);
+        }
+
+        /* Estilos Redes Sociales */
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .social-link svg {
+            width: 24px;
+            height: 24px;
+            fill: #888;
+            transition: var(--transition);
+        }
+
+        .social-link:hover svg {
+            fill: var(--logo-green);
+            transform: translateY(-3px);
+        }
+
+        /* --- PRUEBA SOCIAL --- */
+        .social-proof-section {
+            padding: 80px 0;
+            background-color: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        .counters-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .counter-item h3 {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--logo-green);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        
+        .counter-item h3 span {
+             color: var(--bg-dark);
+        }
+
+        .counter-item p {
+            font-size: 1.1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .testimonial-card {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+
+        .testimonial-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--logo-green);
+            color: var(--bg-dark);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0; 
+        }
+
+        .testimonial-info h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stars {
+            color: #ffc107; 
+            font-size: 0.9rem;
+        }
+
+        .course-tag {
+            display: inline-block;
+            background: #e0e0e0;
+            color: #555;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .testimonial-text {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 991px) {
+            .split-wrapper {
+                background: var(--bg-dark);
+            }
+
+            .right-bg-pattern {
+                display: none; 
+            }
+
+            .nav-links a {
+                color: var(--text-light); 
+            }
+
+            .hero {
+                padding-bottom: 60px;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr; 
+                text-align: center;
+                gap: 40px;
+            }
+
+            .hero-content {
+                padding-right: 0; 
+                max-width: 100%; 
+                align-items: center; 
+            }
+            
+            .hero-title-full {
+                text-align: center;
+                font-size: 2rem;
+            }
+
+            .hero-right-col {
+                order: -1; 
+                padding-left: 0;
+            }
+            
+            .courses-grid {
+                grid-template-columns: repeat(2, 1fr); 
+            }
+            
+            .counters-grid {
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding-top: 60px;
+            }
+            
+            .top-notification-bar {
+                font-size: 0.75rem; 
+                padding: 10px 30px 10px 10px;
+                text-align: left;
+            }
+
+            .nav-links {
+                display: none; 
+            }
+            
+            .nav-wrapper {
+                justify-content: center;
+            }
+
+            .hero-title-full {
+                font-size: 1.6rem; 
+            }
+            
+            .courses-grid, 
+            .counters-grid, 
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .counter-item h3 {
+                font-size: 2.5rem;
+            }
+            
+            .tile {
+                min-width: 50px;
+                padding: 5px 10px;
+            }
+            
+            .tile-number {
+                font-size: 1.5rem;
+            }
+            
+            .testimonial-card {
+                padding: 20px; 
+            }
+            
+            .newsletter-form {
+                padding: 30px 20px; 
+            }
+            
+            .lead-magnet::before {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .cookie-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .cookie-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .floating-promo {
+                display: none !important; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA DE NOTIFICACIÓN SUPERIOR -->
+    <div class="top-notification-bar" id="topNotification">
+        <span>Solo hasta el 31 de marzo, apúntate con un 20 % de descuento a nuestro curso "Traducción audiovisual: Nivel 1"</span>
+        <button class="top-bar-close" onclick="fadeAndRemove('topNotification')">×</button>
+    </div>
+
+    <!-- WRAPPER UNIFICADO -->
+    <div class="split-wrapper">
+        
+        <!-- PATRÓN DE FONDO ABSTRACTO (GRIS MEDIO) -->
+        <div class="right-bg-pattern">
+            <!-- Representación de líneas de código / Scripts -->
+            <svg class="bg-shape" style="top: 15%; right: 10%; width: 200px; height: 150px; opacity: 0.1;" viewBox="0 0 200 150">
+                <rect x="0" y="10" width="140" height="10" rx="5" fill="#cccccc"/>
+                <rect x="0" y="35" width="180" height="10" rx="5" fill="#cccccc"/>
+                <rect x="20" y="60" width="160" height="10" rx="5" fill="#cccccc"/>
+                <rect x="20" y="85" width="120" height="10" rx="5" fill="#cccccc"/>
+                <rect x="0" y="110" width="100" height="10" rx="5" fill="#cccccc"/>
+            </svg>
+
+            <!-- Representación de Píxeles (Videojuegos) -->
+            <svg class="bg-shape" style="top: 50%; left: 5%; width: 120px; height: 120px; opacity: 0.1;" viewBox="0 0 100 100">
+                <rect x="0" y="0" width="20" height="20" fill="#cccccc"/>
+                <rect x="25" y="0" width="20" height="20" fill="#cccccc"/>
+                <rect x="50" y="0" width="20" height="20" fill="#cccccc"/>
+                <rect x="0" y="25" width="20" height="20" fill="#cccccc"/>
+                <rect x="25" y="25" width="20" height="20" fill="#cccccc"/>
+                <rect x="75" y="25" width="20" height="20" fill="#cccccc"/>
+                <rect x="0" y="50" width="20" height="20" fill="#cccccc"/>
+                <rect x="50" y="50" width="20" height="20" fill="#cccccc"/>
+            </svg>
+
+            <!-- Representación de Onda de Audio (AV) -->
+            <svg class="bg-shape" style="bottom: 5%; right: 0; width: 100%; height: 150px; opacity: 0.1;" viewBox="0 0 800 150" preserveAspectRatio="none">
+                <path d="M0,75 
+                         Q20,75 30,50 Q40,25 50,75 Q60,125 70,75 
+                         Q80,50 90,60 Q100,70 110,75 
+                         Q130,75 140,20 Q150,-35 160,75 Q170,185 180,75
+                         Q200,75 220,75 L800,75" 
+                      fill="none" stroke="#cccccc" stroke-width="2"/>
+                <path d="M0,75 L800,75" stroke="#cccccc" stroke-width="1" stroke-dasharray="5,5"/>
+            </svg>
+        </div>
+
+        <!-- HEADER -->
+        <header>
+            <div class="container nav-wrapper">
+                <a href="#" class="logo">
+                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/main/traduversia/Logo-TDV-menu-web.png" alt="Logotipo Traduversia">
+                </a>
+                <nav class="nav-links">
+                    <a href="#">Cursos</a>
+                    <a href="#">Equipo</a>
+                    <a href="#">Filosofía</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- HERO SECTION -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-grid">
+                    <div class="hero-content">
+                        <h1 class="hero-title-full">Especialízate en traducción y cumple tus objetivos</h1>
+                        <p>Somos Rafa y Pablo, traductores con más de 15 años de experiencia en localización y traducción audiovisual, y los fundadores de Traduversia.</p>
+                        <p>Ofrecemos cursos, minimásteres y masterclasses de traducción que van al grano para que no pierdas tiempo, que puedes seguir a tu ritmo para no agobiarte con plazos y que son asequibles para formarte continuamente a un precio justo.</p>
+                        <p>También enviamos un boletín por correo electrónico que leen más de 10 000 personas del gremio con recursos útiles, reflexiones y anécdotas sobre traducción.</p>
+                    </div>
+                    <div class="hero-right-col">
+                        <div class="hero-image">
+                            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/traduversia/monigotes-tdv-2026.png" alt="Fundadores de Traduversia, Rafa y Pablo">
+                        </div>
+                        <div class="newsletter-form">
+                            <p style="color:var(--logo-green); font-weight:600; margin-bottom:15px; font-size: 0.95rem;">Suscríbete a nuestro boletín:</p>
+                            <form action="#" method="POST">
+                                <div class="form-row">
+                                    <input type="email" class="input-email" placeholder="Tu correo electrónico" required>
+                                    <button type="submit" class="btn-subscribe">Me suscribo</button>
+                                </div>
+                                <label class="privacy-check">
+                                    <input type="checkbox" required>
+                                    <span>He leído y acepto la política de privacidad y acepto recibir correos de Traduversia.</span>
+                                </label>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    
+    </div> <!-- FIN SPLIT WRAPPER -->
+
+    <!-- LEAD MAGNET / CURSO GRATUITO -->
+    <section class="lead-magnet">
+        <div class="container lead-magnet-wrapper">
+            
+            <h2 class="lead-magnet-title">Nuestra próxima masterclass</h2>
+
+            <div class="lead-magnet-container">
+                <div class="course-card">
+                    <a href="#" class="course-link-wrapper">
+                        <div class="course-thumb-16-9">
+                            <img src="https://traduversia.com/wp-content/uploads/2025/07/introduccion-a-las-herramientas-de-traduccion-con-httrans-310x233.png" alt="Curso de Introducción a herramientas">
+                        </div>
+                    </a>
+                    <div class="course-details" style="text-align: center;">
+                        <a href="#" class="course-link-wrapper">
+                            <h3 style="text-transform: none; font-size: 1.2rem;">La traducción en la era de la IA: panorama actual y estrategias de futuro</h3>
+                        </a>
+                        
+                        <div class="teachers-block">
+                            <span class="teachers-label">Impartido por:</span>
+                            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+                                <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Rafael López Sánchez</span></div>
+                                <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Stavroula Sokoli</span></div>
+                                <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Damián Santilli</span></div>
+                                <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Julia Díez</span></div>
+                                <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Andrew Steel</span></div>
+                            </div>
+                        </div>
+
+                        <p style="margin-top: 10px; margin-bottom: 5px; font-weight: 500;">Las inscripciones se cierran en...</p>
+                        
+                        <!-- CUENTA ATRÁS PRINCIPAL (Diseño Tiles) -->
+                        <div class="countdown-wrapper" id="main-countdown">
+                            <div class="tile">
+                                <span class="tile-number" id="main-hours">12</span>
+                                <span class="tile-label">Horas</span>
+                            </div>
+                            <div class="tile">
+                                <span class="tile-number" id="main-minutes">16</span>
+                                <span class="tile-label">Minutos</span>
+                            </div>
+                            <div class="tile">
+                                <span class="tile-number" id="main-seconds">32</span>
+                                <span class="tile-label">Segundos</span>
+                            </div>
+                        </div>
+                        
+                        <a href="#" class="btn-full-action">ME APUNTO</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OTROS CURSOS -->
+    <section class="courses-section">
+        <div class="container">
+            <h2 class="section-title">Nuestras formaciones destacadas</h2>
+            <div class="courses-grid">
+                
+                <div class="course-card">
+                    <a href="#" class="course-link-wrapper">
+                        <div class="course-thumb">
+                            <img src="https://traduversia.com/wp-content/uploads/2025/07/introduccion-a-las-herramientas-de-traduccion-con-httrans-310x233.png" alt="Curso Traduversia">
+                        </div>
+                    </a>
+                    <div class="course-details">
+                        <a href="#" class="course-link-wrapper">
+                            <h3>TRADUCCIÓN AUDIOVISUAL: NIVEL 1</h3>
+                        </a>
+                        <div style="margin-top: auto; margin-bottom: 15px;">
+                            <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Pablo Muñoz Sánchez</span></div>
+                            <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Rafael López Sánchez</span></div>
+                        </div>
+                        <a href="#" class="btn-full-action">IR AL CURSO</a>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <a href="#" class="course-link-wrapper">
+                        <div class="course-thumb">
+                             <img src="https://traduversia.com/wp-content/uploads/2025/07/introduccion-a-las-herramientas-de-traduccion-con-httrans-310x233.png" alt="Curso Traduversia">
+                        </div>
+                    </a>
+                    <div class="course-details">
+                        <a href="#" class="course-link-wrapper">
+                            <h3>LOCALIZACIÓN DE VIDEOJUEGOS Y SOFTWARE: NIVEL 1</h3>
+                        </a>
+                        <div style="margin-top: auto; margin-bottom: 15px;">
+                            <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Pablo Muñoz Sánchez</span></div>
+                            <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Rafael López Sánchez</span></div>
+                        </div>
+                        <a href="#" class="btn-full-action">IR AL CURSO</a>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <a href="#" class="course-link-wrapper">
+                        <div class="course-thumb">
+                             <img src="https://traduversia.com/wp-content/uploads/2025/07/introduccion-a-las-herramientas-de-traduccion-con-httrans-310x233.png" alt="Curso Traduversia">
+                        </div>
+                    </a>
+                    <div class="course-details">
+                        <a href="#" class="course-link-wrapper">
+                            <h3>INFORMÁTICA APLICADA A LA TRADUCCIÓN: NIVEL 1</h3>
+                        </a>
+                        <div style="margin-top: auto; margin-bottom: 15px;">
+                            <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Pablo Muñoz Sánchez</span></div>
+                            <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Rafael López Sánchez</span></div>
+                        </div>
+                        <a href="#" class="btn-full-action">IR AL CURSO</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- PRUEBA SOCIAL -->
+    <section class="social-proof-section">
+        <div class="container">
+            <h2 class="section-title">Nuestra comunidad en cifras</h2>
+            
+            <div class="counters-grid" id="counters">
+                <div class="counter-item">
+                    <h3>+<span data-target="20000">0</span></h3>
+                    <p>Alumnos formados</p>
+                </div>
+                <div class="counter-item">
+                    <h3>+<span data-target="1300">0</span></h3>
+                    <p>Reseñas de 5 estrellas</p>
+                </div>
+                <div class="counter-item">
+                    <h3>+<span data-target="10000">0</span></h3>
+                    <p>Lectores del boletín</p>
+                </div>
+            </div>
+
+            <div class="testimonials-grid">
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="testimonial-avatar">CA</div>
+                        <div class="testimonial-info">
+                            <h4>Carla Alvaro García</h4>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <span class="course-tag">TRADUCCIÓN AUDIOVISUAL: NIVEL 1</span>
+                    <p class="testimonial-text">"Todos los materiales del curso se han elegido cuidadosamente, tanto los de la parte teórica como los de la práctica. Pienso que la parte teórica está muy bien explicada y que proporciona una muy buena base para realizar los proyectos, que son muy variados y ejemplifican encargos reales. Es un curso muy interesante y que te acerca a la realidad del mercado profesional."</p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="testimonial-avatar">JJ</div>
+                        <div class="testimonial-info">
+                            <h4>Julia del Junco</h4>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <span class="course-tag">SUBTITULACIÓN CON AEGISUB</span>
+                    <p class="testimonial-text">"Un curso muy completo, detallado y muy bien estructurado. Se nota el trabajo que hay detrás, los conocimientos del profesor, así como su gran capacidad comunicadora. [...] En definitiva, un curso acertadísimo y con mucho potencial para aquellos que quieran dedicarse a subtitular con Aegisub."</p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="testimonial-avatar">CJ</div>
+                        <div class="testimonial-info">
+                            <h4>Cristina Jiménez Álvarez</h4>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <span class="course-tag">TRADUCCIÓN Y IA</span>
+                    <p class="testimonial-text">"Teniendo en cuenta la escasez de cursos sobre IA aplicada específicamente a la traducción, me parece que esta masterclass incluye todos los aspectos necesarios para iniciarse en esta tecnología. Las aplicaciones prácticas me han resultado muy útiles. ¡Muchas gracias! Siempre es un acierto confiar en vosotros."</p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="testimonial-avatar">LT</div>
+                        <div class="testimonial-info">
+                            <h4>Lourdes Torres</h4>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <span class="course-tag">HERRAMIENTAS DE TRADUCCIÓN</span>
+                    <p class="testimonial-text">"He flipado. No me quiero imaginar ni el trabajo que hay detrás y que las herramientas sean gratuitas. Todas son muy útiles y sencillas, aunque yo no me dedique a la traducción audivisual. Con respecto al contenido del curso, es muy didáctico, práctico y directo al grano. Como tiene que ser."</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="#">Aviso Legal</a>
+                <a href="#">Política de Privacidad</a>
+                <a href="#">Política de Cookies</a>
+            </div>
+
+            <div class="social-links">
+                <!-- Instagram (Logo Cuadrado Nuevo) -->
+                <a href="https://www.instagram.com/traduversia/?hl=es" target="_blank" class="social-link" aria-label="Instagram">
+                    <svg viewBox="0 0 24 24"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M18,5A1,1 0 0,1 19,6A1,1 0 0,1 18,7A1,1 0 0,1 17,6A1,1 0 0,1 18,5Z" /></svg>
+                </a>
+                <a href="https://linkedin.com/company/traduversia?originalSubdomain=es" target="_blank" class="social-link" aria-label="LinkedIn">
+                    <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </a>
+                <a href="https://x.com/Traduversia" target="_blank" class="social-link" aria-label="X (Twitter)">
+                    <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+            </div>
+
+            <p>&copy; 2026 Traduversia. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- BARRA DE COOKIES -->
+    <div class="cookie-banner" id="cookieBanner">
+        <div class="cookie-text">
+            Utilizamos cookies propias y de terceros para realizar el análisis de la navegación de los usuarios y mejorar nuestros servicios. Si continúas navegando, consideramos que aceptas su uso. Puedes cambiar la configuración u obtener más información aquí >>
+        </div>
+        <div class="cookie-buttons">
+            <button class="btn-cookie-accept" onclick="fadeAndRemove('cookieBanner')">ACEPTO</button>
+            <button class="btn-cookie-info">LEER MÁS</button>
+        </div>
+    </div>
+
+    <!-- CAJITA FLOTANTE (POP-UP) -->
+    <div class="floating-promo" id="floatingPromo">
+        <button class="promo-close" onclick="fadeAndRemove('floatingPromo')">×</button>
+        <img src="https://traduversia.com/wp-content/uploads/2025/07/introduccion-a-las-herramientas-de-traduccion-con-httrans-310x233.png" alt="Curso" class="promo-image">
+        <div class="promo-content">
+            <h4>La traducción en la era de la IA: panorama actual y estrategias de futuro</h4>
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Las inscripciones se cierran en...</p>
+            
+            <!-- CUENTA ATRÁS FLOTANTE (Diseño Tiles) -->
+            <div class="countdown-wrapper">
+                <div class="tile">
+                    <span class="tile-number" id="float-hours">12</span>
+                    <span class="tile-label">Horas</span>
+                </div>
+                <div class="tile">
+                    <span class="tile-number" id="float-minutes">16</span>
+                    <span class="tile-label">Minutos</span>
+                </div>
+                <div class="tile">
+                    <span class="tile-number" id="float-seconds">32</span>
+                    <span class="tile-label">Segundos</span>
+                </div>
+            </div>
+
+            <a href="#" class="btn-full-action">ME APUNTO</a>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // --- FUNCIÓN DE FADE OUT UNIFICADA ---
+        function fadeAndRemove(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.classList.add('fade-out');
+                setTimeout(() => {
+                    el.style.display = 'none';
+                    // Si es la barra superior, quitamos el padding del body
+                    if (elementId === 'topNotification') {
+                        document.body.style.paddingTop = '0';
+                    }
+                }, 500); // 500ms coincide con la transición CSS
+            }
+        }
+
+        // --- CUENTA ATRÁS ---
+        function startTimer(duration) {
+            var timer = duration, hours, minutes, seconds;
+            
+            function updateText() {
+                hours = parseInt(timer / 3600, 10);
+                minutes = parseInt((timer % 3600) / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                // Formato dos dígitos
+                var hStr = hours < 10 ? "0" + hours : hours;
+                var mStr = minutes < 10 ? "0" + minutes : minutes;
+                var sStr = seconds < 10 ? "0" + seconds : seconds;
+
+                // Actualizar Main Countdown
+                const mainHours = document.getElementById('main-hours');
+                const mainMinutes = document.getElementById('main-minutes');
+                const mainSeconds = document.getElementById('main-seconds');
+                if(mainHours) mainHours.textContent = hStr;
+                if(mainMinutes) mainMinutes.textContent = mStr;
+                if(mainSeconds) mainSeconds.textContent = sStr;
+
+                // Actualizar Floating Countdown
+                const floatHours = document.getElementById('float-hours');
+                const floatMinutes = document.getElementById('float-minutes');
+                const floatSeconds = document.getElementById('float-seconds');
+                if(floatHours) floatHours.textContent = hStr;
+                if(floatMinutes) floatMinutes.textContent = mStr;
+                if(floatSeconds) floatSeconds.textContent = sStr;
+
+                if (--timer < 0) {
+                    timer = duration; 
+                }
+            }
+
+            updateText();
+            setInterval(updateText, 1000);
+        }
+
+        // --- ANIMACIÓN CONTADORES ---
+        function animateCounters() {
+            const counters = document.querySelectorAll('.counter-item span');
+            const speed = 200; 
+
+            counters.forEach(counter => {
+                const updateCount = () => {
+                    const target = +counter.getAttribute('data-target');
+                    const count = +counter.innerText.replace(/\./g, ''); 
+                    
+                    const inc = target / speed;
+
+                    if (count < target) {
+                        counter.innerText = Math.ceil(count + inc);
+                        setTimeout(updateCount, 20);
+                    } else {
+                        counter.innerText = target.toLocaleString('es-ES'); 
+                    }
+                };
+                updateCount();
+            });
+        }
+
+        // --- INICIALIZACIÓN ---
+        window.onload = function () {
+            // 1. Iniciar cuenta atrás (44192s)
+            var timeInSeconds = 44192; 
+            startTimer(timeInSeconds);
+
+            // 2. Observer para contadores
+            let countersStarted = false;
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !countersStarted) {
+                        animateCounters();
+                        countersStarted = true;
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            const countersSection = document.querySelector('#counters');
+            if(countersSection) observer.observe(countersSection);
+
+            // 3. Mostrar cajita flotante a los 10 segundos
+            setTimeout(function() {
+                var promo = document.getElementById('floatingPromo');
+                if(promo) {
+                    promo.style.display = 'block';
+                }
+            }, 10000);
+        };
+    </script>
+</body>
+</html>
