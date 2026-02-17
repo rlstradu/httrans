@@ -31,6 +31,11 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            overflow-x: hidden; /* Corrección desbordamiento horizontal en móvil */
+            width: 100%;
+        }
+
         body {
             font-family: 'Roboto', sans-serif;
             line-height: 1.6;
@@ -201,12 +206,16 @@
             font-size: 0.6rem;
         }
 
-        /* Botón estilo ACTION GREEN (Unificado) */
+        /* BOTONES ESTÁNDAR (Me apunto, Ir al curso, Promo) 
+           Fondo: #202020 (bg-dark)
+           Texto: Blanco
+           Hover: Fondo #202020, Texto #8bfe3d (logo-green)
+        */
         .btn-full-action {
             display: block;
             width: 100%;
-            background-color: var(--action-green); 
-            color: white; 
+            background-color: var(--bg-dark); 
+            color: var(--white); 
             text-align: center;
             padding: 15px;
             border-radius: 6px;
@@ -220,17 +229,38 @@
         }
         
         .btn-full-action:hover {
-             background-color: #4cd600; 
+             /* El fondo se mantiene, el texto cambia a verde */
+             background-color: var(--bg-dark); 
+             color: var(--logo-green); 
              transform: translateY(-2px);
              box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
 
-        /* Botón pequeño para promo flotante (mismo estilo) */
+        .btn-card-center {
+            display: block;
+            width: 100%;
+            background-color: var(--bg-dark);
+            color: var(--white);
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 15px; 
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .btn-card-center:hover {
+             background-color: var(--bg-dark);
+             color: var(--logo-green);
+        }
+
         .btn-promo-small {
             display: block;
             width: 100%;
-            background-color: var(--action-green);
-            color: white;
+            background-color: var(--bg-dark);
+            color: var(--white);
             text-align: center;
             padding: 10px;
             border-radius: 4px;
@@ -241,7 +271,8 @@
         }
 
         .btn-promo-small:hover {
-            background-color: #4cd600;
+            background-color: var(--bg-dark);
+            color: var(--logo-green);
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
@@ -474,9 +505,14 @@
             font-size: 16px; 
         }
 
+        /* BOTÓN ME SUSCRIBO (Excepción) 
+           Fondo: #8bfe3d (Verde)
+           Texto: #202020 (Oscuro)
+           Hover: Fondo más oscuro, Texto igual
+        */
         .btn-subscribe {
-            background-color: var(--action-green);
-            color: var(--white);
+            background-color: var(--logo-green); 
+            color: var(--bg-dark); 
             border: none;
             padding: 12px 20px;
             border-radius: 4px;
@@ -486,11 +522,12 @@
             transition: var(--transition);
             font-family: 'Roboto', sans-serif;
             font-size: 0.9rem;
-            white-space: nowrap; /* Evita que el texto se parta */
+            white-space: nowrap; 
         }
 
         .btn-subscribe:hover {
-            background-color: #4cd600;
+            background-color: #7ad635; /* Un verde un poco más oscuro */
+            color: var(--bg-dark);
             transform: translateY(-2px);
         }
 
@@ -694,30 +731,12 @@
         /* Enlaces para los cursos */
         .course-link-wrapper {
             text-decoration: none;
-            display: block; /* Para que el enlace ocupe todo el espacio de la imagen/titulo */
+            display: block; 
         }
         
+        /* HOVER TÍTULO CURSO: Negro Oscuro */
         .course-link-wrapper:hover h3 {
-            color: var(--action-green); /* Título verde al pasar el ratón */
-        }
-        
-        .btn-card-center {
-            display: block;
-            width: 100%;
-            background-color: var(--action-green);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-top: 15px; 
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-        
-        .btn-card-center:hover {
-             background-color: #4cd600;
+            color: #000000; 
         }
 
         /* --- FOOTER --- */
@@ -1160,7 +1179,7 @@
                             <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Pablo Muñoz Sánchez</span></div>
                             <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Rafael López Sánchez</span></div>
                         </div>
-                        <a href="#" class="btn-full-action">IR AL CURSO</a>
+                        <a href="#" class="btn-card-center">IR AL CURSO</a>
                     </div>
                 </div>
 
@@ -1178,7 +1197,7 @@
                             <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Pablo Muñoz Sánchez</span></div>
                             <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Rafael López Sánchez</span></div>
                         </div>
-                        <a href="#" class="btn-full-action">IR AL CURSO</a>
+                        <a href="#" class="btn-card-center">IR AL CURSO</a>
                     </div>
                 </div>
 
@@ -1196,7 +1215,7 @@
                             <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Pablo Muñoz Sánchez</span></div>
                             <div class="teacher-item"><div class="teacher-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span>Rafael López Sánchez</span></div>
                         </div>
-                        <a href="#" class="btn-full-action">IR AL CURSO</a>
+                        <a href="#" class="btn-card-center">IR AL CURSO</a>
                     </div>
                 </div>
 
@@ -1339,7 +1358,7 @@
                 </div>
             </div>
 
-            <a href="#" class="btn-full-action">ME APUNTO</a>
+            <a href="#" class="btn-promo-small">Me apunto</a>
         </div>
     </div>
 
