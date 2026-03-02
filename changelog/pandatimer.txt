@@ -1,4 +1,16 @@
 =========================================
+PandaTimer v1.0.2 - Update
+=========================================
+
+Release Date: March 1, 2026
+
+Customizable Keyboard Shortcuts: Added a new settings menu (accessible via the keyboard icon) where you can assign your own custom hotkeys to Pause/Resume and Finish tasks. The default shortcuts are set to F9 and F10.
+
+In-App Changelog Viewer: Added a version badge (v 1.0.2) at the top of the screen. Clicking it opens a stylish built-in window that fetches and displays the latest release notes directly within the app.
+
+UI & Usability Improvements: Updated the task input placeholder to include a helpful hint ("Press Enter to start tracking time") and optimized its font size to ensure it fits perfectly across all screen sizes.
+
+=========================================
 PandaTimer v1.0.1 - Update
 =========================================
 
