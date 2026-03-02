@@ -44,41 +44,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PandaTimer">
 
-    <!-- Structured Data (JSON-LD) for Google Rich Results -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "PandaTimer",
-      "url": "https://httrans.org/pandatimer.html",
-      "description": "A free, simple, and secure online time tracking application for freelancers and translators.",
-      "genre": "Productivity",
-      "browserRequirements": "Requires JavaScript. Works in Chrome, Firefox, Safari, Edge.",
-      "softwareVersion": "1.3",
-      "operatingSystem": "All",
-      "applicationCategory": "BusinessApplication",
-      "image": "https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png",
-      "author": {
-        "@type": "Person",
-        "name": "Rafael López Sánchez",
-        "url": "https://traduversia.com"
-      },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "category": "Free"
-      },
-      "featureList": [
-        "Time tracking",
-        "Task logging",
-        "Manual time editing",
-        "Data export/import",
-        "Dark mode"
-      ]
-    }
-    </script>
-
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts (Montserrat) -->
@@ -116,7 +81,7 @@
             transition: background 0.5s ease;
         }
 
-        /* Fondo Modo Oscuro (Color #141a22 solicitado) */
+        /* Fondo Modo Oscuro */
         .dark body {
             background: #141a22;
             color: #e2e8f0;
@@ -213,7 +178,7 @@
 
         /* Estilo para el logo del footer con resplandor rojo */
         .footer-logo-glow {
-            filter: drop-shadow(0 0 8px rgba(248, 84, 126, 0.8)); /* Resplandor rojo/rosa */
+            filter: drop-shadow(0 0 8px rgba(248, 84, 126, 0.8));
             transition: filter 0.3s ease, transform 0.3s ease;
         }
         .footer-logo-glow:hover {
@@ -226,7 +191,7 @@
             padding: 8px;
             border-radius: 50%;
             transition: all 0.2s ease;
-            color: #6b7280; /* Default light mode color */
+            color: #6b7280;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -238,7 +203,7 @@
         
         /* DARK MODE SPECIFIC FOR ACTION BUTTONS */
         .dark .icon-btn-small {
-            color: #e5e7eb; /* Much lighter gray/white for visibility */
+            color: #e5e7eb;
         }
         .dark .icon-btn-small:hover {
             background-color: rgba(248, 84, 126, 0.2);
@@ -256,6 +221,19 @@
             pointer-events: auto;
             transform: scale(1);
         }
+
+        /* Efecto de pulso para cuando está capturando la tecla */
+        .capturing-key {
+            animation: pulse-border 1.5s infinite;
+            background-color: rgba(248, 84, 126, 0.1) !important;
+            color: #f8547e !important;
+            border-color: #f8547e !important;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(248, 84, 126, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(248, 84, 126, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(248, 84, 126, 0); }
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-start p-4 md:p-8">
@@ -269,6 +247,11 @@
         </a>
         
         <div class="flex items-center gap-3">
+            <!-- Settings Toggle: Icono Teclado (SVG) -->
+            <button id="settingsModalBtn" class="glass-panel w-10 h-10 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-all flex items-center justify-center shadow-sm text-panda-dark dark:text-gray-400" title="Atajos">
+                <svg class="w-6 h-6 icon-svg" viewBox="0 0 256 256"><path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM224,192H32V64H224V192ZM136,136v16a8,8,0,0,1-8,8H96a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8h32A8,8,0,0,1,136,136Zm-32-8h24v16H104Zm64-32v16a8,8,0,0,1-8,8H144a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h16A8,8,0,0,1,168,96Zm-16,16V104h8v8Zm48,24v16a8,8,0,0,1-8,8H176a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8h16A8,8,0,0,1,200,136Zm-16,16V144h8v8Zm-64-56v16a8,8,0,0,1-8,8H96a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h16A8,8,0,0,1,120,96Zm-16,16V104h8v8ZM88,96v16a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80A8,8,0,0,1,88,96ZM72,112V104h8v8ZM88,136v16a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8H80A8,8,0,0,1,88,136Zm-16,16V144h8v8Z"></path></svg>
+            </button>
+            
             <!-- Theme Toggle: Icono Sol Simétrico (SVG) -->
             <button id="themeToggle" class="glass-panel w-10 h-10 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-all flex items-center justify-center shadow-sm text-panda-dark dark:text-yellow-400">
                <svg class="w-6 h-6 icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -287,6 +270,11 @@
                 <button class="px-3 py-1 rounded-md text-sm font-bold transition-colors lang-btn active" data-lang="es">ES</button>
                 <button class="px-3 py-1 rounded-md text-sm font-bold transition-colors lang-btn" data-lang="en">EN</button>
             </div>
+            
+            <!-- Version Badge -->
+            <button id="versionBtn" class="glass-panel px-3 py-1.5 rounded-lg text-[11px] font-black text-gray-500 hover:text-panda-pink hover:bg-white dark:text-gray-300 dark:hover:bg-gray-700 transition-all shadow-sm flex items-center justify-center tracking-widest" title="Changelog">
+                v 1.0.2
+            </button>
         </div>
     </div>
 
@@ -309,7 +297,7 @@
             <!-- Task Input -->
             <div class="w-full mb-6">
                 <label class="block text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1" data-key="taskLabel">Tarea Actual</label>
-                <input type="text" id="taskInput" class="w-full bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-lg text-panda-dark dark:text-white placeholder-gray-400 custom-input" placeholder="Ej: Revisión proyecto X...">
+                <input type="text" id="taskInput" class="w-full bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-sm md:text-base text-panda-dark dark:text-white placeholder-gray-400 placeholder:text-xs md:placeholder:text-sm custom-input" placeholder="Escribe el nombre de tu proyecto y pulsa Enter para empezar a contar el tiempo...">
             </div>
 
             <!-- Timer Display Container -->
@@ -401,6 +389,41 @@
 
     </main>
 
+    <!-- Modal Ajustes (Atajos) -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none">
+        <div class="glass-panel bg-white dark:bg-[#141a22] p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center transform scale-95 transition-transform">
+            <h3 class="text-xl font-bold text-panda-dark dark:text-white mb-2 flex items-center justify-center gap-2">
+                <svg class="w-6 h-6 icon-svg" viewBox="0 0 256 256"><path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM224,192H32V64H224V192ZM136,136v16a8,8,0,0,1-8,8H96a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8h32A8,8,0,0,1,136,136Zm-32-8h24v16H104Zm64-32v16a8,8,0,0,1-8,8H144a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h16A8,8,0,0,1,168,96Zm-16,16V104h8v8Zm48,24v16a8,8,0,0,1-8,8H176a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8h16A8,8,0,0,1,200,136Zm-16,16V144h8v8Zm-64-56v16a8,8,0,0,1-8,8H96a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h16A8,8,0,0,1,120,96Zm-16,16V104h8v8ZM88,96v16a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80A8,8,0,0,1,88,96ZM72,112V104h8v8ZM88,136v16a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8H80A8,8,0,0,1,88,136Zm-16,16V144h8v8Z"></path></svg>
+                <span data-key="settingsTitle">Atajos de teclado</span>
+            </h3>
+
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 px-2" data-key="shortcutInstruction">Para personalizar un atajo, solo haz clic en la tecla y pulsa la tecla que quieras usar.</p>
+
+            <div class="flex flex-col gap-3 text-left mb-6">
+                <!-- Setting: Shortcut Play/Pause -->
+                <div class="flex justify-between items-center bg-white/50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300" data-key="shortcutLabel">Pausar/Reanudar</span>
+                    <button id="shortcutBtn" class="px-4 py-1.5 bg-gray-200 hover:bg-panda-pink hover:text-white dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-panda-pink transition-all rounded-lg font-mono text-sm font-bold min-w-[80px] text-center border-2 border-transparent">
+                        F9
+                    </button>
+                </div>
+                <!-- Setting: Shortcut Finish -->
+                <div class="flex justify-between items-center bg-white/50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300" data-key="shortcutFinishLabel">Finalizar tarea</span>
+                    <button id="shortcutFinishBtn" class="px-4 py-1.5 bg-gray-200 hover:bg-panda-pink hover:text-white dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-panda-pink transition-all rounded-lg font-mono text-sm font-bold min-w-[80px] text-center border-2 border-transparent">
+                        F10
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex justify-center">
+                <button id="closeSettingsBtn" class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors" data-key="closeBtn">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Confirmación Borrado -->
     <div id="confirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none">
         <div class="glass-panel bg-white dark:bg-[#141a22] p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center transform scale-95 transition-transform">
@@ -448,8 +471,34 @@
             </div>
             
             <div class="mt-6 flex justify-center">
-                <button id="closeExportModalBtn" class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors" data-key="cancelBtn">
+                <button id="closeExportModalBtn" class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors" data-key="closeBtn">
                     Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Changelog -->
+    <div id="changelogModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none">
+        <div class="glass-panel bg-white dark:bg-[#141a22] p-6 rounded-2xl shadow-2xl max-w-2xl w-full text-center transform scale-95 transition-transform flex flex-col max-h-[85vh]">
+            <h3 class="text-xl font-bold text-panda-dark dark:text-white mb-2 flex items-center justify-center gap-2">
+                <svg class="w-6 h-6 icon-svg text-panda-pink" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,160H40V56H216V200ZM184,96a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16H176A8,8,0,0,1,184,96Zm0,32a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16H176A8,8,0,0,1,184,128Zm0,32a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16H176A8,8,0,0,1,184,160Z"></path></svg>
+                <span data-key="changelogTitle">Registro de Cambios</span>
+            </h3>
+            
+            <div class="flex-1 overflow-y-auto my-4 text-left bg-gray-50 dark:bg-[#0d1117] p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner relative">
+                <!-- Mac-like window buttons purely for aesthetics -->
+                <div class="absolute top-3 left-4 flex gap-1.5 opacity-50 mb-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                </div>
+                <pre id="changelogContent" class="mt-4 whitespace-pre-wrap break-words font-mono text-xs md:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">Cargando...</pre>
+            </div>
+            
+            <div class="flex justify-center mt-2">
+                <button id="closeChangelogBtn" class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors" data-key="closeBtn">
+                    Cerrar
                 </button>
             </div>
         </div>
@@ -469,7 +518,7 @@
                 backHome: "Volver a Httrans",
                 tagline: "Gestiona tu tiempo de manera muy sencilla",
                 taskLabel: "NOMBRE DE LA TAREA",
-                placeholder: "Ej: Proyecto X...",
+                placeholder: "Escribe el nombre de tu proyecto y pulsa Enter para empezar a contar el tiempo...",
                 startBtn: "EMPEZAR",
                 resumeBtn: "REANUDAR",
                 pauseBtn: "PAUSAR",
@@ -499,7 +548,6 @@
                 exportJsonDesc: "Usa este archivo como plantilla o para restaurar tus datos.",
                 importTitle: "Importar registro",
                 invalidTime: "Formato incorrecto. Usa HH:MM:SS",
-                // New Tooltips & Prompts
                 saveTooltip: "Guardar",
                 cancelTooltip: "Cancelar",
                 exportTooltip: "Guardar/Exportar",
@@ -508,13 +556,23 @@
                 exportTxtTotal: "TIEMPO TOTAL: ",
                 editTaskTooltip: "Editar tiempo",
                 saveEditTooltip: "Guardar cambios",
-                cancelEditTooltip: "Cancelar edición"
+                cancelEditTooltip: "Cancelar edición",
+                // Nuevas traducciones para ajustes
+                settingsTitle: "Atajos de teclado",
+                shortcutInstruction: "Para personalizar un atajo, solo haz clic en la tecla y pulsa la tecla que quieras usar.",
+                shortcutLabel: "Pausar/Reanudar",
+                shortcutFinishLabel: "Finalizar tarea",
+                pressKey: "Pulsa una tecla...",
+                spaceKey: "Espacio",
+                closeBtn: "Cerrar",
+                // Novedades (Changelog)
+                changelogTitle: "Registro de Cambios"
             },
             en: {
                 backHome: "Back to Httrans",
                 tagline: "Manage your time very simply",
                 taskLabel: "TASK NAME",
-                placeholder: "Ex: Project X...",
+                placeholder: "Type your project name and press Enter to start tracking time...",
                 startBtn: "START",
                 resumeBtn: "RESUME",
                 pauseBtn: "PAUSE",
@@ -544,7 +602,6 @@
                 exportJsonDesc: "Use this file as a template or to restore your data.",
                 importTitle: "Import Log",
                 invalidTime: "Invalid format. Use HH:MM:SS",
-                // New Tooltips & Prompts
                 saveTooltip: "Save",
                 cancelTooltip: "Cancel",
                 exportTooltip: "Save/Export",
@@ -553,7 +610,17 @@
                 exportTxtTotal: "TOTAL TIME: ",
                 editTaskTooltip: "Edit time",
                 saveEditTooltip: "Save changes",
-                cancelEditTooltip: "Cancel edit"
+                cancelEditTooltip: "Cancel edit",
+                // Nuevas traducciones para ajustes
+                settingsTitle: "Keyboard Shortcuts",
+                shortcutInstruction: "To customize a shortcut, just click on the key and press the key you want to use.",
+                shortcutLabel: "Pause/Resume",
+                shortcutFinishLabel: "Finish task",
+                pressKey: "Press a key...",
+                spaceKey: "Space",
+                closeBtn: "Close",
+                // Novedades (Changelog)
+                changelogTitle: "Changelog"
             }
         };
 
@@ -563,10 +630,14 @@
             intervalId: null,
             isRunning: false,
             activeTaskId: null, 
-            editingTaskId: null, // NEW: Track which task is being edited inline
+            editingTaskId: null, 
             lang: localStorage.getItem('pandaTimerLang') || 'es',
             darkMode: localStorage.getItem('pandaTimerTheme') === 'dark',
-            tasks: JSON.parse(localStorage.getItem('pandaTimerTasks')) || []
+            tasks: JSON.parse(localStorage.getItem('pandaTimerTasks')) || [],
+            // Atajos guardados
+            shortcutPlayPause: localStorage.getItem('pandaTimerShortcut') || 'F9',
+            shortcutFinish: localStorage.getItem('pandaTimerShortcutFinish') || 'F10',
+            capturingAction: null
         };
 
         // --- DOM ELEMENTS ---
@@ -594,16 +665,26 @@
             importBtn: document.getElementById('importBtn'),
             importInput: document.getElementById('importInput'),
             
-            // Modal Elements (Confirm)
+            // Modals
             confirmModal: document.getElementById('confirmModal'),
             cancelModalBtn: document.getElementById('cancelModalBtn'),
             confirmModalBtn: document.getElementById('confirmModalBtn'),
 
-            // Modal Elements (Export)
             exportModal: document.getElementById('exportModal'),
             exportTxtBtn: document.getElementById('exportTxtBtn'),
             exportJsonBtn: document.getElementById('exportJsonBtn'),
-            closeExportModalBtn: document.getElementById('closeExportModalBtn')
+            closeExportModalBtn: document.getElementById('closeExportModalBtn'),
+
+            settingsModalBtn: document.getElementById('settingsModalBtn'),
+            settingsModal: document.getElementById('settingsModal'),
+            closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+            shortcutBtn: document.getElementById('shortcutBtn'),
+            shortcutFinishBtn: document.getElementById('shortcutFinishBtn'),
+
+            versionBtn: document.getElementById('versionBtn'),
+            changelogModal: document.getElementById('changelogModal'),
+            closeChangelogBtn: document.getElementById('closeChangelogBtn'),
+            changelogContent: document.getElementById('changelogContent')
         };
 
         // --- INITIALIZATION ---
@@ -612,6 +693,7 @@
             applyLang(state.lang);
             loadActiveState();
             renderTasks();
+            updateShortcutUI();
             
             el.themeToggle.addEventListener('click', toggleTheme);
             el.langBtns.forEach(btn => btn.addEventListener('click', (e) => setLang(e.target.dataset.lang)));
@@ -625,11 +707,30 @@
             // Iniciar reloj al pulsar Enter en el input de tarea
             el.taskInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault(); // Evita comportamientos por defecto
+                    e.preventDefault();
                     if (!state.isRunning) {
                         startTimer();
                     }
                 }
+            });
+
+            // Atajos de teclado global
+            window.addEventListener('keydown', handleGlobalKeydown);
+
+            // Settings Listeners
+            el.settingsModalBtn.addEventListener('click', () => openModal(el.settingsModal));
+            el.closeSettingsBtn.addEventListener('click', closeSettings);
+            el.settingsModal.addEventListener('click', (e) => {
+                if (e.target === el.settingsModal) closeSettings();
+            });
+            el.shortcutBtn.addEventListener('click', () => startCapturingShortcut('playpause'));
+            el.shortcutFinishBtn.addEventListener('click', () => startCapturingShortcut('finish'));
+
+            // Changelog Listeners
+            el.versionBtn.addEventListener('click', openChangelog);
+            el.closeChangelogBtn.addEventListener('click', () => closeModal(el.changelogModal));
+            el.changelogModal.addEventListener('click', (e) => {
+                if (e.target === el.changelogModal) closeModal(el.changelogModal);
             });
 
             // Export / Import Listeners
@@ -653,6 +754,110 @@
             });
 
             window.addEventListener('beforeunload', saveActiveState);
+        }
+
+        // --- GLOBAL KEYBOARD SHORTCUT LOGIC ---
+        function handleGlobalKeydown(e) {
+            // Si estamos configurando el atajo, capturamos cualquier tecla
+            if (state.capturingAction) {
+                e.preventDefault();
+                
+                // Evitamos teclas de sistema como tab o shift por separado para mejor usabilidad
+                if (['Shift', 'Control', 'Alt', 'Meta', 'Tab'].includes(e.key)) return;
+
+                if (state.capturingAction === 'playpause') {
+                    state.shortcutPlayPause = e.key;
+                    localStorage.setItem('pandaTimerShortcut', e.key);
+                } else if (state.capturingAction === 'finish') {
+                    state.shortcutFinish = e.key;
+                    localStorage.setItem('pandaTimerShortcutFinish', e.key);
+                }
+                
+                endCapturingShortcut();
+                return;
+            }
+
+            // Bloquear atajo si el usuario está escribiendo en un input
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                return;
+            }
+
+            // Activar pausa / reanudar
+            if (e.key === state.shortcutPlayPause) {
+                e.preventDefault();
+                if (state.isRunning) {
+                    pauseTimer();
+                } else {
+                    // Solo iniciamos si ya hay tarea, o si ha escrito algo en el input
+                    if (state.activeTaskId || el.taskInput.value.trim() !== '') {
+                        startTimer();
+                    }
+                }
+            }
+            
+            // Activar finalizar
+            if (e.key === state.shortcutFinish) {
+                e.preventDefault();
+                if (state.activeTaskId) {
+                    finishTimer();
+                }
+            }
+        }
+
+        function startCapturingShortcut(action) {
+            // Si estaba capturando el otro, lo restauramos visualmente
+            if (state.capturingAction && state.capturingAction !== action) {
+                endCapturingShortcut();
+            }
+            
+            state.capturingAction = action;
+            const btn = action === 'playpause' ? el.shortcutBtn : el.shortcutFinishBtn;
+            
+            btn.innerText = translations[state.lang].pressKey;
+            btn.classList.add('capturing-key');
+        }
+
+        function endCapturingShortcut() {
+            state.capturingAction = null;
+            el.shortcutBtn.classList.remove('capturing-key');
+            el.shortcutFinishBtn.classList.remove('capturing-key');
+            updateShortcutUI();
+        }
+
+        function closeSettings() {
+            if (state.capturingAction) {
+                endCapturingShortcut(); // Cancelamos si cierra sin elegir
+            }
+            closeModal(el.settingsModal);
+        }
+
+        // --- CHANGELOG LOGIC ---
+        async function openChangelog() {
+            openModal(el.changelogModal);
+            el.changelogContent.textContent = "Cargando...";
+            try {
+                // Prevenimos la cache añadiendo un timestamp a la petición (útil al actualizar versiones)
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`https://httrans.org/changelog/pandatimer.txt?t=${cacheBuster}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const text = await response.text();
+                el.changelogContent.textContent = text;
+            } catch (error) {
+                el.changelogContent.textContent = state.lang === 'es' 
+                    ? "Error al cargar el registro de cambios. Por favor, asegúrate de tener conexión o inténtalo de nuevo más tarde." 
+                    : "Error loading changelog. Please check your connection or try again later.";
+            }
+        }
+
+        function updateShortcutUI() {
+            const formatKey = (keyText) => {
+                if (keyText === ' ') return translations[state.lang].spaceKey;
+                if (keyText.length === 1) return keyText.toUpperCase();
+                return keyText;
+            };
+
+            el.shortcutBtn.innerText = formatKey(state.shortcutPlayPause);
+            el.shortcutFinishBtn.innerText = formatKey(state.shortcutFinish);
         }
 
         // --- MODAL UTILS ---
@@ -710,7 +915,7 @@
 
         // --- EXPORT FUNCTIONALITY ---
         function exportToTxt() {
-            const t = translations[state.lang]; // Get current language translations
+            const t = translations[state.lang];
             const dateStr = new Date().toLocaleDateString();
             
             let content = `PandaTimer - ${t.exportTxtHeader}${dateStr}\n`;
@@ -787,13 +992,10 @@
 
         // --- INLINE EDIT LOGIC ---
         window.enableTaskEdit = function(id) {
-            // If editing another task, cancel it first? Or just switch. Let's switch.
             if (state.editingTaskId !== null && state.editingTaskId !== id) {
                 cancelTaskEdit();
             }
 
-            // If the task being edited is the CURRENT running task, pause the timer
-            // to avoid state conflict/visual glitches
             if (state.isRunning && state.activeTaskId === id) {
                 pauseTimer();
             }
@@ -801,11 +1003,9 @@
             state.editingTaskId = id;
             renderTasks();
             
-            // Auto focus the input
             const input = document.getElementById(`edit-input-${id}`);
             if(input) {
                 input.focus();
-                // Move cursor to end
                 const val = input.value;
                 input.value = '';
                 input.value = val;
@@ -836,20 +1036,16 @@
 
             const newDuration = ((h * 3600) + (m * 60) + s) * 1000;
             
-            // Update task in state
             const task = state.tasks.find(tk => tk.id === id);
             if (task) {
                 task.duration = newDuration;
             }
 
-            // If this is the active task, update main display too
             if (state.activeTaskId === id) {
                 state.elapsedTime = newDuration;
                 if (!state.isRunning) {
                     updateTimerDisplay(newDuration);
                 } else {
-                    // This case shouldn't happen because we pause on edit start, 
-                    // but safety first:
                     state.startTime = Date.now() - newDuration;
                 }
             }
@@ -925,7 +1121,6 @@
         // --- TIMER LOGIC ---
         function startTimer(isResume = false) {
             if (state.isRunning) return;
-            // If editing, cancel edit before starting (or save? Cancel is safer to avoid jumps)
             if (state.editingTaskId !== null) cancelTaskEdit();
 
             if (!state.activeTaskId) {
@@ -945,7 +1140,6 @@
                     if (task) {
                         task.duration = totalElapsed;
                         saveTasks();
-                        // Only re-render if NOT editing something else (to prevent input focus loss)
                         if (state.editingTaskId === null) {
                             renderTasks(); 
                         }
@@ -999,7 +1193,7 @@
             if (state.activeTaskId) {
                 const task = state.tasks.find(t => t.id === state.activeTaskId);
                 if (task) {
-                    task.endTime = new Date().toISOString(); // Guarda la hora de fin
+                    task.endTime = new Date().toISOString();
                 }
             }
 
@@ -1015,7 +1209,7 @@
             
             el.taskInput.value = '';
             localStorage.removeItem('pandaTimerActiveState');
-            saveTasks(); // Importante guardar para que persista el endTime
+            saveTasks(); 
             renderTasks();
             updateTimerUI('stopped');
         }
@@ -1024,7 +1218,6 @@
             const formattedTime = formatTime(ms);
             el.timerDisplay.textContent = formattedTime;
 
-            // Actualiza el título de la pestaña con el punto de grabación
             if (state.isRunning) {
                 document.title = `🔴 ${formattedTime} - PandaTimer`;
             } else {
@@ -1128,7 +1321,6 @@
                     let stopBtn = '';
                     let actionBtns = '';
 
-                    // Play/Pause Logic
                     if (isActive) {
                         if (state.isRunning) {
                             playPauseBtn = `<button onclick="pauseTimer()" class="h-7 w-7 bg-yellow-100 hover:bg-yellow-500 text-yellow-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].pauseTask}">${pauseIcon}</button>`;
@@ -1140,7 +1332,6 @@
                         playPauseBtn = `<button onclick="reactivateTask(${task.id})" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].reactivate}">${playIcon}</button>`;
                     }
 
-                    // Edit / Save / Cancel / Delete Logic
                     if (isEditing) {
                         actionBtns = `
                             <button onclick="saveTaskTime(${task.id})" class="h-7 w-7 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-full flex items-center justify-center transition-all shadow-sm" title="${translations[state.lang].saveEditTooltip}">${checkIcon}</button>
@@ -1153,7 +1344,6 @@
                         `;
                     }
                     
-                    // Time Display or Input
                     let timeDisplayHTML = '';
                     if (isEditing) {
                         timeDisplayHTML = `<input type="text" id="edit-input-${task.id}" class="list-time-input" value="${formatTime(task.duration)}" onkeydown="if(event.key==='Enter') saveTaskTime(${task.id}); if(event.key==='Escape') cancelTaskEdit();">`;
@@ -1161,7 +1351,6 @@
                         timeDisplayHTML = `<span class="font-mono font-bold text-base text-panda-pink tabular-nums">${formatTime(task.duration)}</span>`;
                     }
 
-                    // Preparar el rango de tiempo (Inicio - Fin)
                     const startTime = new Date(task.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     let timeRangeHTML = startTime;
                     
@@ -1249,6 +1438,7 @@
             state.lang = lang;
             localStorage.setItem('pandaTimerLang', lang);
             applyLang(lang);
+            updateShortcutUI();
         }
 
         function applyLang(lang) {
