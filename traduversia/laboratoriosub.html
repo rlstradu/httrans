@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio de subtitulación de Traduversia</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#202020',
+                            accent: '#8cff3f'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- WaveSurfer & Regions Plugin -->
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+
+    <style>
+        body {
+            background-color: #202020;
+            color: white;
+            overflow: hidden; /* Prevent full body scroll */
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8cff3f;
+        }
+        
+        .sub-card.active {
+            border-color: #8cff3f;
+            background-color: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        .sub-card {
+            border-color: #374151;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Ocultar botones de zoom si no hay hover en video */
+        #video-controls-overlay {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        #video-container:hover #video-controls-overlay {
+            opacity: 1;
+        }
+
+        /* Animación para el icono de carga */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="h-screen font-sans flex flex-col">
+
+    <!-- HEADER -->
+    <header class="flex items-center justify-between p-4 border-b border-gray-700 bg-black/20 shadow-md shrink-0">
+        <div class="flex items-center gap-4">
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/main/traduversia/Logo-Transparente-TDV.png" alt="Traduversia Logo" class="h-10" />
+            <h1 id="app-title" class="text-xl font-semibold hidden md:block text-brand-accent">
+                Laboratorio de subtitulación de Traduversia
+            </h1>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <span id="shortcuts-info" class="text-xs text-gray-400 hidden lg:block mr-4">
+                Atajos: Alt+↓ (Sig), Alt+↑ (Ant), Alt+P (Reproducir)
+            </span>
+
+            <button id="btn-lang" class="flex items-center gap-1 hover:bg-white/10 p-2 rounded transition" title="Idioma">
+                <i data-lucide="globe" class="w-5 h-5"></i> <span id="lang-label" class="text-sm uppercase">es</span>
+            </button>
+
+            <button id="btn-settings" class="flex items-center gap-1 hover:bg-white/10 p-2 rounded transition" title="Ajustes">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        
+        <!-- LEFT PANEL: Video & Actions -->
+        <div class="w-full lg:w-2/5 p-4 flex flex-col gap-4 border-r border-gray-700 bg-black/10 overflow-y-auto">
+            
+            <!-- Video Container -->
+            <div id="video-container" class="relative w-full bg-black rounded-t-lg shadow-lg border border-gray-700 border-b-0 shrink-0" style="aspect-ratio: 16/9;">
+                
+                <!-- Reproductor directo sin crossorigin para garantizar que se vea -->
+                <video 
+                    id="video-player"
+                    src="https://traduversia.com/wp-content/uploads/2026/03/Anna-Olson-Cookies.mp4"
+                    class="absolute top-0 left-0 w-full h-full object-contain bg-black"
+                    controls
+                ></video>
+
+                <!-- Mensaje de error general de carga de vídeo -->
+                <div id="video-error" class="absolute inset-0 flex items-center justify-center bg-black/90 text-red-500 font-semibold text-center p-4 hidden z-20">
+                    <div>
+                        <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
+                        Error al cargar el archivo de vídeo.<br>
+                        <span class="text-sm text-gray-300 font-normal">Comprueba que la URL existe y es correcta.</span>
+                    </div>
+                </div>
+
+                <!-- Controles de tamaño de vista previa -->
+                <div id="video-controls-overlay" class="absolute top-2 right-2 flex gap-1 bg-black/60 backdrop-blur-sm p-1 rounded z-10">
+                    <button id="btn-font-dec" class="text-white hover:text-brand-accent px-2 font-bold text-sm" title="Reducir tamaño">A-</button>
+                    <button id="btn-font-inc" class="text-white hover:text-brand-accent px-2 font-bold text-sm" title="Aumentar tamaño">A+</button>
+                </div>
+                
+                <!-- Subtitle Preview Overlay -->
+                <div id="preview-overlay" class="absolute bottom-12 w-full flex justify-center pointer-events-none px-4 hidden z-10">
+                    <div id="preview-text" class="bg-black/75 text-white px-4 py-2 rounded text-center font-medium drop-shadow-md whitespace-pre-line" style="text-shadow: 1px 1px 2px black; font-size: 16px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Waveform y Controles -->
+            <div class="bg-gray-900 border border-gray-700 rounded-b-lg p-2 flex flex-col gap-2 relative shadow-lg shrink-0">
+                <div class="flex justify-between items-center text-xs text-gray-400 px-2">
+                    <span class="uppercase tracking-wider font-semibold">Onda de sonido</span>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1 bg-black/30 rounded px-1">
+                            <button id="btn-zoom-out" class="p-1 hover:text-brand-accent transition" title="Alejar">
+                                <i data-lucide="zoom-out" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <span id="zoom-label" class="w-8 text-center text-[10px]">120</span>
+                            <button id="btn-zoom-in" class="p-1 hover:text-brand-accent transition" title="Acercar">
+                                <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <button id="btn-lock-regions" class="flex items-center gap-1 px-2 py-1 rounded transition bg-red-500/20 text-red-400 hover:bg-red-500/30">
+                            <i data-lucide="lock" class="w-3.5 h-3.5" id="lock-icon"></i>
+                            <span id="lock-text">Bloqueado</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="relative w-full h-[80px]">
+                    <div id="waveform" class="w-full h-full"></div>
+                    
+                    <!-- Botón inicial para cargar la onda -->
+                    <div id="waveform-init" class="absolute inset-0 flex items-center justify-center z-20 bg-gray-900/90">
+                        <button id="btn-load-waveform" class="flex items-center gap-2 bg-brand-accent text-black font-semibold px-4 py-2 rounded hover:opacity-90 transition text-sm">
+                            <i data-lucide="waves" class="w-4 h-4"></i> <span id="lbl-load-waveform">Cargar onda de sonido</span>
+                        </button>
+                    </div>
+
+                    <!-- Indicador de carga para la onda -->
+                    <div id="waveform-loading" class="absolute inset-0 flex items-center justify-center text-xs text-brand-accent font-medium z-10 bg-gray-900/90 text-center hidden">
+                        <i data-lucide="loader" class="w-4 h-4 mr-2 animate-spin-slow"></i> <span id="lbl-generating-waveform">Generando onda... (puede tardar unos segundos)</span>
+                    </div>
+
+                    <div id="waveform-error" class="absolute inset-0 flex items-center justify-center text-xs text-red-400 font-medium hidden z-10 bg-gray-900/95 text-center px-4">
+                        ⚠️ El proxy ha fallado al intentar extraer el audio. Aún es necesario configurar CORS en tu servidor.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-3 mt-2 shrink-0">
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 p-3 rounded cursor-pointer transition text-sm">
+                        <i data-lucide="upload" class="w-4 h-4"></i> <span id="lbl-import-orig">Importar original</span>
+                        <input type="file" id="file-orig" accept=".srt" class="hidden" />
+                    </label>
+                    
+                    <label class="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 p-3 rounded cursor-pointer transition text-sm text-brand-accent">
+                        <i data-lucide="upload" class="w-4 h-4"></i> <span id="lbl-import-trans">Importar traducción</span>
+                        <input type="file" id="file-trans" accept=".srt" class="hidden" />
+                    </label>
+                </div>
+
+                <button id="btn-export" class="flex items-center justify-center gap-2 text-black font-semibold p-3 rounded transition bg-brand-accent hover:opacity-90">
+                    <i data-lucide="download" class="w-4 h-4"></i> <span id="lbl-export">Exportar traducción</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Subtitles Grid -->
+        <div id="subtitles-grid" class="w-full lg:w-3/5 overflow-y-auto p-4 flex flex-col gap-3 pb-32 scroll-smooth">
+            <!-- Los subtítulos se renderizarán aquí -->
+        </div>
+    </main>
+
+    <!-- MODAL DE AJUSTES -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2 text-brand-accent">
+                <i data-lucide="settings" class="w-5 h-5"></i> <span id="modal-title">Ajustes</span>
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label id="lbl-max-len" class="block text-sm text-gray-400 mb-1">Caracteres máximos por línea</label>
+                    <input type="number" id="input-max-len" value="42" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-brand-accent" />
+                </div>
+                <div>
+                    <label id="lbl-max-cps" class="block text-sm text-gray-400 mb-1">CPS máximo (Caracteres/segundo)</label>
+                    <input type="number" id="input-max-cps" value="20" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-brand-accent" />
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end gap-3">
+                <button id="btn-close-settings" class="px-4 py-2 rounded bg-gray-800 hover:bg-gray-700 transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // --- CONSTANTS & DEFAULT DATA ---
+        const DEFAULT_VIDEO_URL = 'https://traduversia.com/wp-content/uploads/2026/03/Anna-Olson-Cookies.mp4';
+        
+        // EL TRUCO: Pasamos la URL por un Proxy CORS público solo para decodificar la onda de sonido
+        // Cambiamos a allorigins que suele ser más permisivo en entornos de prueba restrictivos
+        const PROXIED_AUDIO_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(DEFAULT_VIDEO_URL);
+        
+        const DEFAULT_SRT = `1
+00:00:01,270 --> 00:00:03,750
+How can anyone possibly resist
+
+2
+00:00:03,750 --> 00:00:05,670
+a freshly baked drop cookie
+
+3
+00:00:05,670 --> 00:00:08,550
+especially with a glass of ice cold milk
+
+4
+00:00:08,550 --> 00:00:10,710
+but now
+we have to start with the basics
+
+5
+00:00:10,710 --> 00:00:13,290
+the classic chocolate chip cookie.
+
+6
+00:00:13,290 --> 00:00:15,690
+I'll start by measuring out half a cup of butter
+
+7
+00:00:15,690 --> 00:00:16,970
+that's 4 ounces by weight
+
+8
+00:00:16,970 --> 00:00:18,970
+And I find it's easier to measure by weight
+
+9
+00:00:18,970 --> 00:00:21,390
+then put my butter into a measuring cup
+
+10
+00:00:21,390 --> 00:00:24,870
+I've got exactly four onces there.
+
+11
+00:00:25,510 --> 00:00:28,630
+I judge a good chocolate chip on that balance of
+
+12
+00:00:28,630 --> 00:00:30,750
+crispy outside, chewy inside
+
+13
+00:00:30,930 --> 00:00:33,250
+sweetness to dark chocolate chips
+
+14
+00:00:33,250 --> 00:00:34,790
+and it's all about those nuances.
+
+15
+00:00:34,790 --> 00:00:36,630
+I find, to get just that right amount of sweetness
+
+16
+00:00:36,630 --> 00:00:38,790
+I need half a cup granulated sugar
+
+17
+00:00:38,790 --> 00:00:41,230
+and also half a cup of light brown sugar.
+
+18
+00:00:41,490 --> 00:00:44,930
+It's easy enough to make drop cookies by hand.
+
+19
+00:00:44,930 --> 00:00:49,030
+But an important step is this process called craming.
+
+20
+00:00:49,030 --> 00:00:51,670
+Using your spatula and rubbing against
+
+21
+00:00:51,670 --> 00:00:52,590
+the side of the bowl
+
+22
+00:00:52,590 --> 00:00:53,790
+the butter and the sugar
+
+23
+00:00:53,790 --> 00:00:55,610
+to cream the butter an sugar together.
+
+24
+00:00:55,610 --> 00:00:57,430
+And that lends structure to the cookie
+
+25
+00:00:57,430 --> 00:00:58,430
+so  they'll hold together,
+
+26
+00:00:58,430 --> 00:00:59,530
+they wont crumble apart.
+
+27
+00:00:59,530 --> 00:01:01,470
+And as soon as you see
+
+28
+00:01:01,470 --> 00:01:04,790
+this creamy consistency, then you can add an egg.
+
+29
+00:01:04,790 --> 00:01:06,990
+Because my butter was at room temperature
+
+30
+00:01:06,990 --> 00:01:09,890
+it's a good idea to have your egg at room temperature.
+
+31
+00:01:09,890 --> 00:01:12,970
+At the same time, I'll add a teaspoon of vanilla
+
+32
+00:01:12,970 --> 00:01:14,970
+and just blend this together.
+
+33
+00:01:16,770 --> 00:01:17,270
+Okay
+
+34
+00:01:17,530 --> 00:01:19,370
+Now, for the dry ingredints
+
+35
+00:01:19,370 --> 00:01:22,450
+I'll ad a cup and a quarter of all purpuse flour.
+
+36
+00:01:22,450 --> 00:01:25,570
+And now, I'll share with you my signature ingredient
+
+37
+00:01:27,570 --> 00:01:30,070
+a tablespoon of corn starch.
+
+39
+00:01:30,070 --> 00:01:33,870
+I am a big fan of cookies that are crispy on the outside
+
+40
+00:01:33,870 --> 00:01:35,470
+but chewy on the center.
+
+41
+00:01:35,470 --> 00:01:38,810
+This addition wil ensure they will stay soft in the center.
+
+42
+00:01:39,690 --> 00:01:43,050
+Now, I'll add half a teasppon of baking soda
+
+43
+00:01:43,050 --> 00:01:44,570
+Half a teaspoon of salt
+
+44
+00:01:46,550 --> 00:01:48,630
+And I'll just sift this through
+
+45
+00:01:49,990 --> 00:01:52,830
+and then just combine until blended.
+
+46
+00:01:52,830 --> 00:01:54,830
+You don't commonly associate
+
+47
+00:01:54,830 --> 00:01:57,490
+the work of a pastry chef with something simple,
+
+48
+00:01:57,490 --> 00:01:58,630
+like a drop cookie.
+
+49
+00:01:58,630 --> 00:02:01,690
+But honestly, in my profession, I've made
+
+50
+00:02:01,690 --> 00:02:03,530
+thousands of drop cookies.
+
+51
+00:02:03,530 --> 00:02:06,290
+So you really get a lot of practice in there.
+
+52
+00:02:06,290 --> 00:02:09,390
+There we go, I've got the flour blended into the dough
+
+53
+00:02:09,390 --> 00:02:12,110
+And of course, where would a chocolate chip cookie be
+
+54
+00:02:12,110 --> 00:02:13,530
+without the chocolate chips?
+
+55
+00:02:13,530 --> 00:02:16,490
+I am using chocolate chips, that are made for
+
+56
+00:02:16,490 --> 00:02:17,650
+chocolate chip cookies.
+
+57
+00:02:17,650 --> 00:02:19,330
+And they hold their shape
+
+58
+00:02:19,330 --> 00:02:22,310
+they also set up nicely after they've cooled.
+
+59
+00:02:22,310 --> 00:02:25,830
+I find that a cup and a half is the perfect amount.
+
+60
+00:02:25,830 --> 00:02:28,670
+You need to have a bit of chocolate in every bite
+
+61
+00:02:28,670 --> 00:02:32,990
+That being said, if you're big fan, a little bit extra is just fine.
+
+62
+00:02:33,950 --> 00:02:37,830
+I also like to add a cup of chopped, toasted pecans.
+
+63
+00:02:38,950 --> 00:02:41,590
+So of course the idea here is to make sure
+
+64
+00:02:41,590 --> 00:02:46,450
+that the chips and pecans are really worked into the cookie dough batter.
+
+65
+00:02:46,450 --> 00:02:48,270
+You can really tell by this dough
+
+66
+00:02:48,270 --> 00:02:51,790
+that every bite is going to get more than one chocolate chip.
+
+67
+00:02:52,830 --> 00:02:56,890
+Okay, now it's time for scooping and dropping the cookies
+
+68
+00:02:57,850 --> 00:03:00,090
+The simplest technique is to just
+
+69
+00:03:00,090 --> 00:03:02,730
+use a measurement of about two tablespoons
+
+70
+00:03:02,730 --> 00:03:04,930
+quickly roll it in your hands
+
+71
+00:03:04,930 --> 00:03:06,830
+into a ball shape.
+
+72
+00:03:06,830 --> 00:03:09,870
+A question I get asked often about chocolate chip cookies
+
+73
+00:03:09,870 --> 00:03:12,590
+is why you can make the same particular recipe
+
+74
+00:03:12,590 --> 00:03:14,210
+but they bake out differently.
+
+75
+00:03:14,210 --> 00:03:16,550
+Sometimes they spread, and sometimes they hold their shape.
+
+76
+00:03:16,550 --> 00:03:19,030
+It's the room temperature butter you start with
+
+77
+00:03:19,030 --> 00:03:21,070
+that impacts the way that bakes.
+
+78
+00:03:21,070 --> 00:03:24,090
+To fix that, simply preshape your cookies
+
+79
+00:03:24,090 --> 00:03:25,130
+like I am now
+
+80
+00:03:25,130 --> 00:03:28,030
+and then pop the dough in the fridge for an hour
+
+81
+00:03:28,030 --> 00:03:29,410
+When it sets the dough
+
+82
+00:03:29,410 --> 00:03:32,110
+no matter how you started with your cookie recipe
+
+83
+00:03:32,110 --> 00:03:34,010
+they will always bake out beautifully.
+
+84
+00:03:34,930 --> 00:03:37,250
+Now I fit 24 cookies on this one tray
+
+85
+00:03:37,250 --> 00:03:39,550
+Not that I'm going to bake 24 on one tray
+
+86
+00:03:39,550 --> 00:03:42,390
+but it takes up less space in the fridge when I chill them.
+
+87
+00:03:42,830 --> 00:03:46,270
+I'll just pop these in the fridge to chill for an hour
+
+88
+00:03:50,050 --> 00:03:54,250
+and I have a tray that's already spent an hour in the fridge.
+
+89
+00:03:54,250 --> 00:03:57,210
+As you can see, these are quite firmly set now
+
+90
+00:03:57,210 --> 00:03:59,350
+so I know, they'll bake off evenly.
+
+91
+00:03:59,550 --> 00:04:02,510
+A great tip to get ahead on your cookie baking
+
+92
+00:04:02,510 --> 00:04:04,190
+is to actually make your batches
+
+93
+00:04:04,190 --> 00:04:05,250
+chill them like this
+
+94
+00:04:05,250 --> 00:04:08,090
+then you can actually pack them up together
+
+95
+00:04:08,090 --> 00:04:10,130
+in resealable bags and freeze them.
+
+96
+00:04:10,130 --> 00:04:13,390
+You need emergency cookies after a really bad day at school?
+
+97
+00:04:13,390 --> 00:04:14,730
+Pull out two or three
+
+98
+00:04:14,730 --> 00:04:17,890
+let them thaw for twenty minutes on the counter before baking
+
+99
+00:04:17,890 --> 00:04:20,430
+and you've got freshly baked cookies on the spot.
+
+100
+00:04:20,430 --> 00:04:23,850
+So now, of course  I have to make room for the cookies to bake
+
+101
+00:04:26,130 --> 00:04:28,130
+So I'll put twelve on each tray
+
+102
+00:04:28,130 --> 00:04:31,010
+It's a good idea to leave about 2 inches space
+
+103
+00:04:31,010 --> 00:04:33,590
+between each of the cookies in all directions.
+
+104
+00:04:34,730 --> 00:04:36,490
+Here we go, evenly spaced.
+
+105
+00:04:37,550 --> 00:04:39,690
+I've preheted my oven to 355
+
+106
+00:04:39,690 --> 00:04:45,850
+and the cookies take between 15 and 18 minutes to turn a nice golden brown just around the edges.
+
+107
+00:04:52,710 --> 00:04:57,430
+I let my chocolate chip cookies cool on their tray before removing them
+
+108
+00:04:57,430 --> 00:04:58,890
+so they set up a little bit
+
+109
+00:05:02,910 --> 00:05:04,830
+I have a tray that's just cool
+
+110
+00:05:04,830 --> 00:05:07,410
+That is the hardest part about making chocolate chip cookies
+
+111
+00:05:07,410 --> 00:05:10,090
+waiting for them to cool just a little bit.
+
+112
+00:05:10,090 --> 00:05:11,070
+But you can see!
+
+113
+00:05:11,450 --> 00:05:14,330
+Chocolate, this is still soft and melting.
+
+114
+00:05:14,330 --> 00:05:17,150
+And the cookies are chewy all the way through
+
+115
+00:05:17,150 --> 00:05:19,190
+Every bite is gonna have some chocolate chip
+
+116
+00:05:19,190 --> 00:05:21,450
+and a little bit of that buttery pecan.`;
+
+        const i18n = {
+            es: {
+                title: 'Laboratorio de subtitulación de Traduversia',
+                importOriginal: 'Importar original',
+                importTranslation: 'Importar traducción',
+                exportTranslation: 'Exportar traducción',
+                settings: 'Ajustes',
+                language: 'Idioma',
+                original: 'Texto Original',
+                translation: 'Traducción',
+                maxLineLength: 'Caracteres máximos por línea',
+                maxCPS: 'CPS máximo (Caracteres/segundo)',
+                save: 'Guardar',
+                close: 'Cerrar',
+                statsLine: 'L',
+                statsCPS: 'CPS',
+                shortcutsInfo: 'Atajos: Alt+↓ (Sig), Alt+↑ (Ant), Alt+P (Reproducir)',
+                locked: 'Bloqueado',
+                unlocked: 'Desbloqueado',
+                loadWaveform: 'Cargar onda de sonido',
+                generatingWaveform: 'Generando onda... (puede tardar unos segundos)'
+            },
+            en: {
+                title: 'Traduversia Subtitling Lab',
+                importOriginal: 'Import Original',
+                importTranslation: 'Import Translation',
+                exportTranslation: 'Export Translation',
+                settings: 'Settings',
+                language: 'Language',
+                original: 'Original Text',
+                translation: 'Translation',
+                maxLineLength: 'Max Characters per Line',
+                maxCPS: 'Max CPS (Characters/second)',
+                save: 'Save',
+                close: 'Close',
+                statsLine: 'L',
+                statsCPS: 'CPS',
+                shortcutsInfo: 'Shortcuts: Alt+↓ (Next), Alt+↑ (Prev), Alt+P (Play)',
+                locked: 'Locked',
+                unlocked: 'Unlocked',
+                loadWaveform: 'Load Audio Waveform',
+                generatingWaveform: 'Generating waveform... (may take a few seconds)'
+            }
+        };
+
+        // --- STATE VARIABLES ---
+        let appState = {
+            lang: 'es',
+            subtitles: [],
+            selectedIndex: 0,
+            settings: { maxLineLength: 42, maxCps: 20 },
+            regionsLocked: true,
+            zoomLevel: 120,
+            previewSize: 16,
+            stopAtTime: null
+        };
+
+        let wavesurfer = null;
+        let wsRegions = null;
+        let skipRegionUpdate = false;
+        
+        // --- DOM ELEMENTS ---
+        const video = document.getElementById('video-player');
+        const grid = document.getElementById('subtitles-grid');
+        const previewOverlay = document.getElementById('preview-overlay');
+        const previewText = document.getElementById('preview-text');
+        
+        // --- UTILS ---
+        const timeToSeconds = (timeString) => {
+            const parts = timeString.split(':');
+            const secParts = parts[2].split(',');
+            return parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(secParts[0], 10) + parseInt(secParts[1], 10) / 1000;
+        };
+
+        const secondsToTime = (seconds) => {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            const pad = (num, size) => num.toString().padStart(size, '0');
+            return `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)},${pad(ms, 3)}`;
+        };
+
+        const parseSRT = (data) => {
+            const regex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]*?)(?=(?:\n\d+\n\d{2}:\d{2}:\d{2},\d{3})|$)/g;
+            const subs = [];
+            let match;
+            while ((match = regex.exec(data)) !== null) {
+                subs.push({
+                    id: parseInt(match[1], 10),
+                    start: timeToSeconds(match[2]),
+                    end: timeToSeconds(match[3]),
+                    originalText: match[4].trim(),
+                    translatedText: ''
+                });
+            }
+            return subs;
+        };
+
+        const generateSRT = (subs, useTranslation = true) => {
+            return subs.map((sub, i) => {
+                const text = useTranslation && sub.translatedText.trim() ? sub.translatedText : sub.originalText;
+                return `${i + 1}\n${secondsToTime(sub.start)} --> ${secondsToTime(sub.end)}\n${text.trim()}\n`;
+            }).join('\n');
+        };
+
+        const getCPS = (text, start, end) => {
+            const duration = end - start;
+            if (duration <= 0) return 0;
+            return Math.round((text.length / duration) * 10) / 10;
+        };
+
+        const getLinesLengths = (text) => text.split('\n').map(line => line.length);
+
+        // --- CORE FUNCTIONS ---
+
+        function initApp() {
+            lucide.createIcons();
+            
+            // Cargar datos por defecto
+            appState.subtitles = parseSRT(DEFAULT_SRT);
+            renderGrid();
+            syncRegions();
+            updateLanguageUI();
+            
+            // Eventos del video
+            video.addEventListener('timeupdate', handleTimeUpdate);
+            
+            // Solo salta si el archivo en sí no existe (error 404, etc)
+            video.addEventListener('error', () => {
+                document.getElementById('video-error').classList.remove('hidden');
+            });
+            
+            // Eventos de botones
+            setupEventListeners();
+        }
+
+        function loadWaveform() {
+            document.getElementById('waveform-init').classList.add('hidden');
+            document.getElementById('waveform-loading').classList.remove('hidden');
+
+            // Iniciar WaveSurfer usando directamente el elemento de vídeo como reproductor,
+            // pero pasándole la URL con Proxy para que pueda descargar y pintar la onda
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                media: video,
+                url: PROXIED_AUDIO_URL,
+                waveColor: '#4a4a4a',
+                progressColor: '#8cff3f', // BRAND_ACCENT
+                autoCenter: true,
+                height: 80,
+                barWidth: 2,
+                minPxPerSec: appState.zoomLevel
+            });
+
+            wsRegions = wavesurfer.registerPlugin(WaveSurfer.Regions.create());
+
+            wsRegions.on('region-updated', (region) => {
+                skipRegionUpdate = true;
+                const idx = appState.subtitles.findIndex(s => s.id.toString() === region.id);
+                if (idx !== -1) {
+                    appState.subtitles[idx].start = region.start;
+                    appState.subtitles[idx].end = region.end;
+                    updateSubtitleTimeUI(idx);
+                }
+                setTimeout(() => { skipRegionUpdate = false; }, 100);
+            });
+
+            wsRegions.on('region-clicked', (region, e) => {
+                e.stopPropagation();
+                const idx = appState.subtitles.findIndex(s => s.id.toString() === region.id);
+                if (idx !== -1) {
+                    selectSubtitle(idx);
+                    video.currentTime = region.start;
+                }
+            });
+
+            // Ocultar cargador cuando la onda está lista y sincronizar regiones
+            wavesurfer.on('ready', () => {
+                document.getElementById('waveform-loading').classList.add('hidden');
+                syncRegions();
+            });
+
+            // Si falla el Proxy CORS, mostramos un error pero NO rompemos el vídeo
+            wavesurfer.on('error', (err) => {
+                console.warn('Proxy CORS Error:', err);
+                document.getElementById('waveform-loading').classList.add('hidden');
+                document.getElementById('waveform-error').classList.remove('hidden');
+            });
+        }
+
+        function renderGrid() {
+            grid.innerHTML = '';
+            appState.subtitles.forEach((sub, index) => {
+                const isSelected = appState.selectedIndex === index;
+                const activeClass = isSelected ? 'active' : '';
+                
+                const card = document.createElement('div');
+                card.id = `sub-${index}`;
+                card.className = `sub-card p-3 rounded-lg border transition-all scroll-mt-4 ${activeClass}`;
+                card.onclick = () => selectSubtitle(index);
+                
+                const t = i18n[appState.lang];
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span id="time-${index}" class="text-gray-400 text-xs font-mono bg-black/40 px-2 py-1 rounded">
+                            #${sub.id} | ${secondsToTime(sub.start)} ➔ ${secondsToTime(sub.end)}
+                        </span>
+                        <button class="btn-play p-1 rounded-full hover:bg-white/10 text-gray-300 transition" title="Play (Alt+P)" data-index="${index}">
+                            <i data-lucide="play" class="w-3.5 h-3.5 ${isSelected ? 'text-brand-accent' : ''}"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <span class="lbl-original text-xs text-gray-500 mb-1 uppercase tracking-wider">${t.original}</span>
+                            <textarea id="orig-${index}" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm text-gray-300 focus:outline-none focus:border-gray-500 resize-none h-20">${sub.originalText}</textarea>
+                            <div id="stats-orig-${index}" class="stats-container flex gap-3 text-xs mt-1 font-mono"></div>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="lbl-translation text-xs mb-1 uppercase tracking-wider font-semibold text-brand-accent">${t.translation}</span>
+                            <textarea id="trans-${index}" class="w-full bg-gray-800 border rounded p-2 text-sm text-white focus:outline-none resize-none h-20 transition-colors ${isSelected ? 'border-brand-accent' : 'border-[#374151]'}">${sub.translatedText}</textarea>
+                            <div id="stats-trans-${index}" class="stats-container flex gap-3 text-xs mt-1 font-mono"></div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+                
+                // Set text area listeners
+                const origTa = card.querySelector(`#orig-${index}`);
+                const transTa = card.querySelector(`#trans-${index}`);
+                
+                origTa.oninput = (e) => {
+                    appState.subtitles[index].originalText = e.target.value;
+                    updateStats(index, 'orig', e.target.value);
+                };
+                transTa.oninput = (e) => {
+                    appState.subtitles[index].translatedText = e.target.value;
+                    updateStats(index, 'trans', e.target.value);
+                };
+                
+                // Play listener
+                card.querySelector('.btn-play').onclick = (e) => {
+                    e.stopPropagation();
+                    playSubtitle(index);
+                };
+
+                // Init stats
+                updateStats(index, 'orig', sub.originalText);
+                updateStats(index, 'trans', sub.translatedText);
+            });
+            lucide.createIcons();
+            
+            // Scroll to selection
+            if(appState.subtitles.length > 0) scrollToSubtitle(appState.selectedIndex);
+        }
+
+        function updateStats(index, type, text) {
+            const sub = appState.subtitles[index];
+            const lines = getLinesLengths(text);
+            const cps = getCPS(text, sub.start, sub.end);
+            const container = document.getElementById(`stats-${type}-${index}`);
+            if(!container) return;
+            
+            const t = i18n[appState.lang];
+            let html = `<div class="flex gap-2">`;
+            lines.forEach((len, i) => {
+                const colorClass = len > appState.settings.maxLineLength ? 'text-red-500 font-bold' : 'text-gray-400';
+                html += `<span class="${colorClass}">${t.statsLine}${i + 1}: ${len}</span>`;
+            });
+            html += `</div><span class="text-gray-500">|</span>`;
+            
+            const cpsClass = cps > appState.settings.maxCps ? 'text-red-500 font-bold' : 'text-gray-400';
+            html += `<span class="${cpsClass}">${t.statsCPS}: ${cps}</span>`;
+            
+            container.innerHTML = html;
+        }
+
+        function updateSubtitleTimeUI(index) {
+            const sub = appState.subtitles[index];
+            const el = document.getElementById(`time-${index}`);
+            if(el) {
+                el.innerText = `#${sub.id} | ${secondsToTime(sub.start)} ➔ ${secondsToTime(sub.end)}`;
+            }
+            updateStats(index, 'orig', sub.originalText);
+            updateStats(index, 'trans', sub.translatedText);
+        }
+
+        function selectSubtitle(index) {
+            const oldIndex = appState.selectedIndex;
+            appState.selectedIndex = index;
+            
+            // Remove active classes
+            const oldCard = document.getElementById(`sub-${oldIndex}`);
+            if(oldCard) {
+                oldCard.classList.remove('active');
+                const ta = document.getElementById(`trans-${oldIndex}`);
+                if(ta) ta.classList.remove('border-brand-accent');
+                const icon = oldCard.querySelector('.btn-play i');
+                if(icon) icon.classList.remove('text-brand-accent');
+            }
+            
+            // Add active classes
+            const newCard = document.getElementById(`sub-${index}`);
+            if(newCard) {
+                newCard.classList.add('active');
+                const ta = document.getElementById(`trans-${index}`);
+                if(ta) ta.classList.add('border-brand-accent');
+                const icon = newCard.querySelector('.btn-play i');
+                if(icon) icon.classList.add('text-brand-accent');
+            }
+            
+            syncRegions();
+            scrollToSubtitle(index);
+        }
+
+        function scrollToSubtitle(index) {
+            const el = document.getElementById(`sub-${index}`);
+            if(el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // En un timeout para asegurar que enfoca después del scroll
+                setTimeout(() => {
+                    const ta = document.getElementById(`trans-${index}`);
+                    if(ta) ta.focus();
+                }, 100);
+            }
+        }
+
+        function playSubtitle(index) {
+            const sub = appState.subtitles[index];
+            if(!sub) return;
+            video.currentTime = sub.start;
+            video.play();
+            appState.stopAtTime = sub.end;
+        }
+
+        function syncRegions() {
+            if(!wsRegions || skipRegionUpdate) return;
+            wsRegions.clearRegions();
+            appState.subtitles.forEach((sub, i) => {
+                const isSelected = i === appState.selectedIndex;
+                wsRegions.addRegion({
+                    id: sub.id.toString(),
+                    start: sub.start,
+                    end: sub.end,
+                    content: `${sub.id}`,
+                    color: isSelected ? 'rgba(140, 255, 63, 0.4)' : 'rgba(255, 255, 255, 0.15)',
+                    drag: !appState.regionsLocked,
+                    resize: !appState.regionsLocked,
+                });
+            });
+        }
+
+        function handleTimeUpdate() {
+            const t = video.currentTime;
+            
+            // Preview logic
+            const currentSub = appState.subtitles.find(s => t >= s.start && t <= s.end);
+            if(currentSub) {
+                previewOverlay.classList.remove('hidden');
+                previewText.innerText = currentSub.translatedText.trim() || currentSub.originalText;
+            } else {
+                previewOverlay.classList.add('hidden');
+            }
+
+            // Stop logic
+            if(appState.stopAtTime && t >= appState.stopAtTime) {
+                video.pause();
+                appState.stopAtTime = null;
+            }
+        }
+
+        function updateLanguageUI() {
+            const t = i18n[appState.lang];
+            document.getElementById('app-title').innerText = t.title;
+            document.getElementById('shortcuts-info').innerText = t.shortcutsInfo;
+            document.getElementById('lang-label').innerText = appState.lang;
+            document.getElementById('lbl-import-orig').innerText = t.importOriginal;
+            document.getElementById('lbl-import-trans').innerText = t.importTranslation;
+            document.getElementById('lbl-export').innerText = t.exportTranslation;
+            document.getElementById('modal-title').innerText = t.settings;
+            document.getElementById('lbl-max-len').innerText = t.maxLineLength;
+            document.getElementById('lbl-max-cps').innerText = t.maxCPS;
+            document.getElementById('btn-close-settings').innerText = t.close;
+            document.getElementById('lock-text').innerText = appState.regionsLocked ? t.locked : t.unlocked;
+            document.getElementById('lbl-load-waveform').innerText = t.loadWaveform;
+            document.getElementById('lbl-generating-waveform').innerText = t.generatingWaveform;
+            
+            // Update labels in grid
+            document.querySelectorAll('.lbl-original').forEach(el => el.innerText = t.original);
+            document.querySelectorAll('.lbl-translation').forEach(el => el.innerText = t.translation);
+            
+            // Force re-render of stats
+            appState.subtitles.forEach((sub, i) => {
+                updateStats(i, 'orig', sub.originalText);
+                updateStats(i, 'trans', sub.translatedText);
+            });
+        }
+
+        function setupEventListeners() {
+            // Keydowns
+            window.addEventListener('keydown', (e) => {
+                if(!e.altKey) return;
+                if(e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextIdx = Math.min(appState.selectedIndex + 1, appState.subtitles.length - 1);
+                    selectSubtitle(nextIdx);
+                    playSubtitle(nextIdx);
+                } else if(e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevIdx = Math.max(appState.selectedIndex - 1, 0);
+                    selectSubtitle(prevIdx);
+                    playSubtitle(prevIdx);
+                } else if(e.key === 'p' || e.key === 'P') {
+                    e.preventDefault();
+                    playSubtitle(appState.selectedIndex);
+                }
+            });
+
+            // Zoom
+            document.getElementById('btn-zoom-in').onclick = () => {
+                appState.zoomLevel = Math.min(300, appState.zoomLevel + 20);
+                document.getElementById('zoom-label').innerText = appState.zoomLevel;
+                if(wavesurfer) wavesurfer.zoom(appState.zoomLevel);
+            };
+            document.getElementById('btn-zoom-out').onclick = () => {
+                appState.zoomLevel = Math.max(20, appState.zoomLevel - 20);
+                document.getElementById('zoom-label').innerText = appState.zoomLevel;
+                if(wavesurfer) wavesurfer.zoom(appState.zoomLevel);
+            };
+
+            // Font Preview Size
+            document.getElementById('btn-font-inc').onclick = () => {
+                appState.previewSize = Math.min(48, appState.previewSize + 2);
+                previewText.style.fontSize = appState.previewSize + 'px';
+            };
+            document.getElementById('btn-font-dec').onclick = () => {
+                appState.previewSize = Math.max(10, appState.previewSize - 2);
+                previewText.style.fontSize = appState.previewSize + 'px';
+            };
+
+            // Lock Regions
+            document.getElementById('btn-lock-regions').onclick = (e) => {
+                appState.regionsLocked = !appState.regionsLocked;
+                const btn = e.currentTarget;
+                const icon = document.getElementById('lock-icon');
+                if(appState.regionsLocked) {
+                    btn.classList.replace('bg-green-500/20', 'bg-red-500/20');
+                    btn.classList.replace('text-green-400', 'text-red-400');
+                    btn.classList.replace('hover:bg-green-500/30', 'hover:bg-red-500/30');
+                    icon.setAttribute('data-lucide', 'lock');
+                } else {
+                    btn.classList.replace('bg-red-500/20', 'bg-green-500/20');
+                    btn.classList.replace('text-red-400', 'text-green-400');
+                    btn.classList.replace('hover:bg-red-500/30', 'hover:bg-green-500/30');
+                    icon.setAttribute('data-lucide', 'unlock');
+                }
+                document.getElementById('lock-text').innerText = appState.regionsLocked ? i18n[appState.lang].locked : i18n[appState.lang].unlocked;
+                lucide.createIcons();
+                syncRegions();
+            };
+
+            // Lang Toggle
+            document.getElementById('btn-lang').onclick = () => {
+                appState.lang = appState.lang === 'es' ? 'en' : 'es';
+                updateLanguageUI();
+            };
+
+            // Botón de carga de onda de sonido diferida
+            document.getElementById('btn-load-waveform').onclick = loadWaveform;
+
+            // Settings Modal
+            const modal = document.getElementById('settings-modal');
+            document.getElementById('btn-settings').onclick = () => modal.classList.remove('hidden');
+            document.getElementById('btn-close-settings').onclick = () => {
+                modal.classList.add('hidden');
+                appState.settings.maxLineLength = parseInt(document.getElementById('input-max-len').value) || 42;
+                appState.settings.maxCps = parseInt(document.getElementById('input-max-cps').value) || 20;
+                renderGrid(); // Rerender to apply new setting limits
+            };
+
+            // Export
+            document.getElementById('btn-export').onclick = () => {
+                const srtContent = generateSRT(appState.subtitles, true);
+                const blob = new Blob([srtContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'traduccion.srt';
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            // Import
+            document.getElementById('file-orig').onchange = (e) => handleFileUpload(e, 'orig');
+            document.getElementById('file-trans').onchange = (e) => handleFileUpload(e, 'trans');
+        }
+
+        function handleFileUpload(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const content = evt.target.result;
+                const parsed = parseSRT(content);
+                if (type === 'orig') {
+                    appState.subtitles = parsed;
+                } else if (type === 'trans') {
+                    appState.subtitles = appState.subtitles.map((sub, i) => ({
+                        ...sub,
+                        translatedText: parsed[i] ? parsed[i].originalText : sub.translatedText
+                    }));
+                }
+                renderGrid();
+                syncRegions();
+            };
+            reader.readAsText(file);
+            e.target.value = null;
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>
