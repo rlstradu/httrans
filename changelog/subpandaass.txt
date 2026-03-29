@@ -1,0 +1,94 @@
+============================================================
+      CHANGELOG - SUBPANDAASS v1.0.0 - December 2025
+============================================================
+
+This first release establishes the foundation of SubpandaASS 
+as a comprehensive, fast, and visual tool for creating, 
+syncing, and editing subtitles directly from the browser.
+
+------------------------------------------------------------
+>>> MAIN FEATURES
+------------------------------------------------------------
+* Dual-panel interface: Workspace divided between the video 
+  player/waveform and an interactive subtitle table.
+* Dedicated work modes: Smooth transitions between Edit Mode, 
+  Sync Mode, and Preview Mode to adapt the interface to your 
+  workflow.
+* Translation Mode: Allows loading a base file and keeping 
+  the original text visible in the table and player while 
+  drafting the translation.
+* In-Video Editor: Enables editing the active subtitle text 
+  directly over the video player with a visual preview of 
+  styles.
+
+------------------------------------------------------------
+>>> VIDEO, AUDIO, AND SYNCHRONIZATION
+------------------------------------------------------------
+* Interactive waveform: High-performance audio visualization 
+  powered by WaveSurfer.js, featuring a minimap, zoom, and 
+  mouse region selection.
+* Shot change detection: Native in-browser video analysis 
+  using FFmpeg (WASM) to automatically detect and mark 
+  camera cuts on the timeline.
+* Advanced synchronization: Shortcuts for setting in/out 
+  times and a "Quick sync" (Spotting Hold) feature that 
+  creates a subtitle while holding a key and closes it 
+  upon release.
+* Playback controls: Real-time adjustments for volume, 
+  waveform zoom, and playback speed (from 0.5x to 2x).
+
+------------------------------------------------------------
+>>> INTEGRATED QUALITY ASSURANCE (QA)
+------------------------------------------------------------
+* Real-time analysis: Automatic verification of metrics such 
+  as CPS (Characters per second), WPM (Words per minute), 
+  CPL (Characters per line), and timing overlaps.
+* Style and formatting rules: Detection of double spaces, 
+  tag errors, asymmetrical punctuation, spaces after dashes, 
+  and empty subtitles.
+* Floating review panel: Movable interface to manage pending, 
+  ignored, or reviewed errors.
+* Report generation: Export QA status to PDF, HTML, and 
+  Word (.doc) formats.
+
+------------------------------------------------------------
+>>> ASS STYLE EDITOR
+------------------------------------------------------------
+* Visual style manager: Graphical interface to create and 
+  modify .ass specification styles.
+* Deep customization: Full control over fonts, sizes, colors 
+  (primary, secondary, outline, shadow), borders, margins, 
+  and encoding.
+* Numpad alignment: Visual 9-position grid to place 
+  subtitles on the screen.
+
+------------------------------------------------------------
+>>> IMPORT, EXPORT, AND AUTOSAVE
+------------------------------------------------------------
+* Project management (.json): Save and load your entire 
+  workspace, including subtitles, ASS styles, shot markers, 
+  and QA settings.
+* Format compatibility: Read and write support for standard 
+  .srt and .ass files.
+* Plain text importer: Tool to paste text scripts (.txt) and 
+  automatically convert them into subtitle blocks based on 
+  dividers or line breaks.
+* Backup system: Automatic backups to local browser storage 
+  every 60 seconds with a restore option.
+
+------------------------------------------------------------
+>>> ADDITIONAL TOOLS AND UTILITIES
+------------------------------------------------------------
+* Find and Replace: Bottom bar with support for case 
+  sensitivity and Regular Expressions (Regex).
+* Keyboard shortcut manager: Panel to remap playback, 
+  creation, and navigation shortcuts, with options to 
+  import/export keyboard profiles.
+* Symbol picker: Quick menu to insert special characters 
+  organized by categories (currencies, math, diacritics, 
+  etc.).
+* Internationalization (i18n): Fully translated interface 
+  that can be toggled in real-time between English and 
+  Spanish.
+
+============================================================
