@@ -332,6 +332,18 @@ min-width: 25ch;
             cursor: pointer;
             border-radius: 50%;
         }
+        #sync-notepad-resizer {
+            background-color: var(--light-gray);
+            height: 6px;
+            cursor: row-resize;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease;
+            border-radius: 3px;
+            margin: 2px 0;
+            display: none; /* Oculto por defecto */
+        }
+        #sync-notepad-resizer:hover { background-color: var(--primary-blue); }
+        
         /* Drag and Drop Overlay */
         #drag-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -361,14 +373,6 @@ min-width: 25ch;
         /* Shortcut Input Style */
         .shortcut-input { background-color: var(--dark-gray); border: 1px solid var(--light-gray); color: var(--text-primary); padding: 6px 10px; border-radius: 6px; text-align: center; cursor: pointer; width: 150px; }
         .shortcut-input:focus { outline: 2px solid var(--primary-blue); border-color: var(--primary-blue); }
-
-        /* Text Import Modal Styles */
-        #import-text-modal .modal-content { max-width: 90vw; width: 1200px; height: 90vh; }
-        #text-import-main-area { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
-        #text-import-textarea { flex-grow: 1; resize: none; background-color: var(--dark-gray); color: var(--text-primary); border: 1px solid var(--light-gray); border-radius: 8px; padding: 12px; font-family: monospace; height: 400px; }
-        #text-import-preview-container { flex-shrink: 0; overflow-y: auto; background-color: var(--dark-gray); border: 1px solid var(--light-gray); border-radius: 8px; }
-        #text-import-resizer { background-color: var(--light-gray); height: 8px; cursor: row-resize; flex-shrink: 0; margin: 4px 0; border-radius: 4px; }
-        #text-import-resizer:hover { background-color: var(--primary-blue); }
         .compact-btn { padding: 0.25rem 0.75rem !important; height: 36px !important; font-size: 0.875rem !important; }
         .compact-icon-btn { padding: 0 !important; width: 36px !important; height: 36px !important; }
         
@@ -935,7 +939,7 @@ margin: 10px;
                         <div class="context-menu-divider"></div>
                         <div id="open-backup-modal-btn" class="menu-item"><span data-i18n="backup">Copia de seguridad</span></div>
                         <div class="context-menu-divider"></div>
-                        <div id="open-text-import-modal-btn" class="menu-item"><span data-i18n="import_text">Crear subtítulos desde texto</span></div>
+                        <label for="sync-text-loader" class="menu-item"><span data-i18n="import_text_sync">Importar texto para sincronizar...</span></label>
                         <div class="context-menu-divider"></div>
                         <label for="video-loader" class="menu-item"><span data-i18n="load_video">Cargar vídeo</span></label>
                         <div class="context-menu-divider"></div>
@@ -1001,13 +1005,14 @@ margin: 10px;
             <input type="file" id="shortcuts-loader" class="hidden" accept=".json,application/json">
             <input type="file" id="qa-profile-loader" class="hidden" accept=".json,application/json">
             <input type="file" id="shot-change-loader" class="hidden" accept=".txt,text/plain">
+            <input type="file" id="sync-text-loader" class="hidden" accept=".txt,text/plain">
 
             <button id="qa-review-modal-btn" class="header-menu-btn" data-i18n="qa_review">Revisión de QA</button>
             <button id="qa-settings-modal-btn" class="header-menu-btn" data-i18n="qa_settings">Ajustes de QA</button>
             <button id="open-shortcuts-modal" class="header-menu-btn" data-i18n="shortcuts">Atajos</button>
         </div>
 
-        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <div class="menu-wrapper">
                 <button id="lang-selector-btn" class="header-menu-btn">
                     <span class="text-lg mr-1">🌐</span> <span id="current-lang-label">ES</span>
@@ -1019,6 +1024,7 @@ margin: 10px;
                     </div>
                 </div>
             </div>
+            <button id="changelog-btn" class="header-menu-btn font-mono" title="Ver Changelog">v 1.0.0</button>
         </div>
 
     </header>
@@ -1168,6 +1174,29 @@ margin: 10px;
                     <button id="fr-bar-close-btn" class="icon-btn compact-icon-btn" data-tooltip="Cerrar"data-i18n-tooltip="btn_close">&times;</button>
                 </div>
             </div>
+
+            <div id="notepad-toggle-bar" class="flex justify-center bg-dark-gray border-t border-light-gray p-1 flex-shrink-0">
+                <button id="open-notepad-bottom-btn" class="text-xs text-gray-400 hover:text-white transition-colors" data-i18n="open_notepad">Abrir bloc de notas</button>
+            </div>
+            
+            <div id="sync-notepad-resizer"></div>
+
+            <div id="sync-notepad-container" class="hidden flex-col bg-medium-gray border border-light-gray rounded-lg p-2 flex-shrink-0" style="height: 180px; min-height: 80px;">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-semibold text-gray-400" data-i18n="import_text_sync">Importar texto para sincronizar...</span>
+                    <div class="flex gap-2">
+                        <button id="create-sub-from-notepad-btn" class="text-btn compact-btn bg-blue-600 hover:bg-blue-700" data-i18n="btn_create_sub_from_text" data-i18n-tooltip="tooltip_create_sub_from_text" data-tooltip="Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido">Crear subtítulo</button>
+                        <button id="close-notepad-btn" class="icon-btn compact-icon-btn hover:text-red-500">&times;</button>
+                    </div>
+                </div>
+                <div class="flex flex-row flex-grow min-h-0 gap-2 w-full">
+                    <textarea id="sync-notepad-textarea" style="background-color: var(--dark-gray); color: var(--text-primary); border-color: var(--light-gray);" class="w-full flex-grow border rounded p-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="El texto importado aparecerá aquí..." data-i18n-placeholder="txt_ph_sync_notepad"></textarea>
+                    <div class="w-8 flex-shrink-0 overflow-hidden relative">
+                        <div id="sync-notepad-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pointer-events-none" style="line-height: 1.25rem;"></div>
+                    </div>
+                </div>
+            </div>
+
         </aside>
     </div>
 
@@ -1200,6 +1229,15 @@ margin: 10px;
         </div>
     </div>
 
+    <div id="changelog-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Changelog (v 1.0.0)</h2>
+                <button class="close-changelog-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <pre id="changelog-content" class="text-sm text-gray-300 overflow-y-auto whitespace-pre-wrap p-4 bg-dark-gray rounded-lg border border-light-gray" style="max-height: 60vh; font-family: monospace;">Cargando...</pre>
+        </div>
+    </div>
     <div id="shortcuts-modal" class="modal"><div class="modal-content"></div></div>
     <div id="alert-modal" class="modal"><div class="modal-content"></div></div>
     <div id="confirmation-modal" class="modal"><div class="modal-content"></div></div>
@@ -1272,72 +1310,6 @@ margin: 10px;
                         <button id="fr-next-btn" class="icon-btn compact-icon-btn">▶</button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    <div id="import-text-modal" class="modal">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold" data-i18n="import_text">Crear subtítulos desde texto</h2>
-                <button class="close-text-import-modal text-3xl font-bold hover:text-red-500">&times;</button>
-            </div>
-            <div id="text-import-main-area">
-                <div class="flex-shrink-0 bg-dark-gray p-2 rounded-lg mb-4">
-                     <div class="flex flex-wrap items-end gap-x-6 gap-y-3">
-                        <label for="txt-loader" data-i18n="txt_btn_import" class="text-btn compact-btn cursor-pointer">Importar .txt</label>
-                        
-                        <div class="flex items-end gap-4">
-                            <div class="flex flex-col gap-1">
-                                <label data-i18n="txt_label_separator" class="text-xs font-medium text-gray-400">Divisor de subtítulos</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="text" id="text-import-separator" value="|" class="text-import-input border border-gray-600 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-12 p-2 text-center h-9">
-                                    <div class="flex items-center">
-                                        <input id="text-import-double-break" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2">
-                                        <label for="text-import-double-break" data-i18n="txt_chk_double_break" class="ml-2 text-sm font-medium text-gray-300">o doble salto</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="text-import-autosplit-btn" data-i18n="txt_btn_autosplit" class="text-btn compact-btn">Autodividir</button>
-                        </div>
-                        
-                        <div class="border-l border-gray-600 h-10"></div>
-
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-medium text-gray-400" data-i18n="lbl_find_replace_group">Buscar y reemplazar</label>
-                            <div class="flex items-center gap-2">
-                                <input type="text" id="text-import-find" placeholder="Buscar..." class="text-import-input border border-gray-600 text-sm rounded-lg block w-48 p-2 h-9">
-                                <button id="text-import-search-btn" class="text-btn compact-btn">Buscar</button>
-                                <button id="text-import-prev-btn" class="icon-btn compact-icon-btn">◀</button>
-                                <span id="text-import-search-count" class="text-sm px-1">0/0</span>
-                                <button id="text-import-next-btn" class="icon-btn compact-icon-btn">▶</button>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <input type="text" id="text-import-replace" placeholder="Reemplazar con..." class="text-import-input border border-gray-600 text-sm rounded-lg block w-48 p-2 h-9">
-                                <button id="text-import-replace-btn" class="text-btn compact-btn">Reemplazar</button>
-                                <button id="text-import-replace-all-btn" class="text-btn compact-btn">Todo</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <textarea id="text-import-textarea" placeholder="Pega aquí tu guion..."data-i18n-placeholder="txt_ph_area"></textarea>></textarea>
-                <div id="text-import-resizer"></div>
-                <div id="text-import-preview-container">
-                    <table class="w-full text-left text-sm">
-                        <thead class="text-xs text-gray-400 uppercase">
-                            <tr>
-                                <th class="p-2" style="width: 5%;">#</th>
-                                <th class="p-2" data-i18n="txt_header_text" style="width: 75%;">Texto</th>
-                                <th class="p-2 text-center" data-i18n="txt_header_lines" style="width: 10%;">Líneas</th>
-                                <th class="p-2 text-center" style="width: 10%;">CPL</th>
-                            </tr>
-                        </thead>
-                        <tbody id="text-import-preview-body"></tbody>
-                    </table>
-
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-light-gray flex justify-end">
-                <button id="create-subs-from-text-btn" data-i18n="txt_btn_create" class="text-btn bg-blue-600 hover:bg-blue-700">Crear subtítulos en la línea de tiempo</button>
             </div>
         </div>
     </div>
@@ -1563,7 +1535,13 @@ margin: 10px;
             save_srt: "Guardar .srt",
             save_ass: "Guardar .ass",
             backup: "Copia de seguridad",
-            import_text: "Crear subtítulos desde texto",
+            import_text_sync: "Importar texto para sincronizar...",
+            btn_create_sub_from_text: "Crear subtítulo",
+            open_notepad: "Abrir bloc de notas",
+            tooltip_create_sub_from_text: "Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido",
+            txt_ph_sync_notepad: "El texto importado aparecerá aquí...",
+            sc_name_createSubFromNotepad: "Crear desde bloc de notas",
+            sc_desc_createSubFromNotepad: "Crea subtítulo con el texto seleccionado en el bloc.",
             load_video: "Cargar vídeo",
             import_shot_changes: "Importar cambios de plano (.txt)",
 
@@ -1630,18 +1608,6 @@ margin: 10px;
         fr_chk_case: "Distinguir mayúsculas",
         fr_chk_regex: "Usar expresiones regulares",
         msg_replacements_count: "reemplazos realizados.",
-
-        // --- IMPORTADOR DE TEXTO ---
-        txt_btn_import: "Importar .txt",
-        txt_label_separator: "Divisor de subtítulos",
-        txt_chk_double_break: "o doble salto",
-        txt_btn_autosplit: "Autodividir",
-        txt_header_text: "Texto",
-        txt_header_lines: "Líneas",
-        txt_header_cpl: "CPL",
-        txt_btn_create: "Crear subtítulos en la línea de tiempo",
-        msg_no_preview_subs: "No hay subtítulos en la vista previa para crear.",
-        msg_subs_created: "subtítulos creados. Ahora puedes sincronizarlos.",
 
         // --- EDITOR DE ESTILOS ASS ---
         ass_title_main: "Principal",
@@ -1788,7 +1754,7 @@ margin: 10px;
 
                 // Grupo: Otros
         msg_colab_instructions: `<p class="mb-4">Vas a abrir una ventana nueva para generar los cambios de plano. Sigue estos pasos:</p><ol class="list-decimal list-inside space-y-2"><li>En la ventana nueva, pulsa el botón de <b>Play (▶️)</b>.</li><li>Sube tu vídeo cuando te lo pida.</li><li>Espera a que termine el análisis (puede tardar minutos).</li><li>Se descargará un archivo llamado <b>codigos_de_tiempo.txt</b>.</li><li>Cierra la ventana de Colab y vuelve aquí.</li><li>Usa <b>Archivo > Importar cambios de plano (.txt)</b> para cargar ese archivo.</li></ol>`,
-        txt_ph_area: "Pega aquí tu guion...",
+
         ctx_split: "Dividir subtítulo",
         ctx_merge_prev: "Unir con anterior",
         ctx_merge_next: "Unir con siguiente",
@@ -1942,7 +1908,13 @@ margin: 10px;
             save_srt: "Save .srt",
             save_ass: "Save .ass",
             backup: "Backup",
-            import_text: "Create subtitles from text",
+            import_text_sync: "Import text for syncing...",
+            btn_create_sub_from_text: "Create subtitle",
+            open_notepad: "Open notepad",
+            tooltip_create_sub_from_text: "Creates a subtitle from the selected text in a selected waveform fragment",
+            txt_ph_sync_notepad: "Imported text will appear here...",
+            sc_name_createSubFromNotepad: "Create from notepad",
+            sc_desc_createSubFromNotepad: "Creates subtitle using selected text in the notepad.",
             load_video: "Load Video",
             import_shot_changes: "Import shot changes (.txt)",
 
@@ -2008,18 +1980,6 @@ margin: 10px;
         fr_chk_case: "Match case",
         fr_chk_regex: "Use regular expressions",
         msg_replacements_count: "replacements made.",
-
-        // --- TEXT IMPORT ---
-        txt_btn_import: "Import .txt",
-        txt_label_separator: "Subtitle separator",
-        txt_chk_double_break: "or double break",
-        txt_btn_autosplit: "Autosplit",
-        txt_header_text: "Text",
-        txt_header_lines: "Lines",
-        txt_header_cpl: "CPL",
-        txt_btn_create: "Create subtitles on timeline",
-        msg_no_preview_subs: "No subtitles in preview to create.",
-        msg_subs_created: "subtitles created. You can now sync them.",
 
         // --- ASS STYLE EDITOR ---
         ass_title_main: "Main",
@@ -2166,7 +2126,6 @@ margin: 10px;
 
         // Group: Others
         msg_colab_instructions: `<p class="mb-4">A new window will open to generate shot changes. Follow these steps:</p><ol class="list-decimal list-inside space-y-2"><li>In the new window, press the <b>Play (▶️)</b> button.</li><li>Upload your video when asked.</li><li>Wait for the analysis to finish (it may take minutes).</li><li>A file named <b>codigos_de_tiempo.txt</b> will be downloaded.</li><li>Close the Colab window and come back here.</li><li>Use <b>File > Import shot changes (.txt)</b> to load that file.</li></ol>`,
-        txt_ph_area: "Paste your script here...",
         ctx_split: "Split Subtitle",
         ctx_merge_prev: "Merge with Previous",
         ctx_merge_next: "Merge with Next",
@@ -2434,25 +2393,7 @@ qaReviewModalBtn.addEventListener('click', () => {
         const restoreBackupBtn = document.getElementById('restore-backup-btn');
         const exportBackupJsonBtn = document.getElementById('export-backup-json-btn');
         const exportBackupSrtBtn = document.getElementById('export-backup-srt-btn');
-        // Text Import Modal Elements
-        const importTextModal = document.getElementById('import-text-modal');
-        const openTextImportModalBtn = document.getElementById('open-text-import-modal-btn');
-        const textImportTextarea = document.getElementById('text-import-textarea');
-        const textImportPreviewContainer = document.getElementById('text-import-preview-container');
-        const textImportResizer = document.getElementById('text-import-resizer');
-        const textImportPreviewBody = document.getElementById('text-import-preview-body');
-        const textImportSeparator = document.getElementById('text-import-separator');
-        const textImportDoubleBreak = document.getElementById('text-import-double-break');
-        const textImportFind = document.getElementById('text-import-find');
-        const textImportReplace = document.getElementById('text-import-replace');
-        const textImportSearchBtn = document.getElementById('text-import-search-btn');
-        const textImportPrevBtn = document.getElementById('text-import-prev-btn');
-        const textImportNextBtn = document.getElementById('text-import-next-btn');
-        const textImportSearchCount = document.getElementById('text-import-search-count');
-        const textImportReplaceBtn = document.getElementById('text-import-replace-btn');
-        const textImportReplaceAllBtn = document.getElementById('text-import-replace-all-btn');
-        const textImportAutosplitBtn = document.getElementById('text-import-autosplit-btn');
-        const createSubsFromTextBtn = document.getElementById('create-subs-from-text-btn');
+        
         // Work Mode Elements
         const modeEditBtn = document.getElementById('mode-edit-btn');
         const modeSyncBtn = document.getElementById('mode-sync-btn');
@@ -2583,6 +2524,7 @@ let activeQaStatus = 'visible'; // 'visible' son los pendientes.
             spottingHold: { code: 'Backquote', altKey: false, ctrlKey: false, shiftKey: false },
  spottingHold: { code: 'Backquote', altKey: false, ctrlKey: false, shiftKey: false },
             createFromSelection: { code: 'KeyN', altKey: true, ctrlKey: false, shiftKey: false },
+            createSubFromNotepad: { code: 'KeyM', altKey: true, ctrlKey: false, shiftKey: false },
             nudgeForward: { code: 'KeyV', altKey: true, ctrlKey: false, shiftKey: false },
             nudgeBackward: { code: 'KeyC', altKey: true, ctrlKey: false, shiftKey: false },
  nudgeStartBackward: { code: 'KeyZ', altKey: true, ctrlKey: false, shiftKey: false },
@@ -2612,6 +2554,7 @@ let activeQaStatus = 'visible'; // 'visible' son los pendientes.
                 setOutTime: { name: 'Creación: marcar fin', desc: 'Cierra el subtítulo que se está creando.' },
                 createAndHold: { name: 'Crear al pulsar, cerrar al soltar', desc: 'Crea un subtítulo al pulsar la tecla y cierra al soltarla.' },
                 createFromSelection: { name: 'Crear desde selección', desc: 'Convierte la selección actual de la onda en un subtítulo.' },
+                createSubFromNotepad: { name: 'Crear desde bloc de notas', desc: 'Crea un subtítulo con el texto seleccionado en el bloc.' },
                 splitSub: { name: 'Edición: dividir subtítulo', desc: 'Divide el subtítulo actual en dos en la posición del cursor.' },
                 mergePrev: { name: 'Edición: unir con anterior', desc: 'Combina el subtítulo actual con el anterior.' },
                 mergeNext: { name: 'Edición: unir con siguiente', desc: 'Combina el subtítulo actual con el siguiente.' },
@@ -2655,7 +2598,8 @@ let activeQaStatus = 'visible'; // 'visible' son los pendientes.
         const saveState = () => {
             const state = {
                 subtitles: JSON.parse(JSON.stringify(subtitles)),
-                assStyles: JSON.parse(JSON.stringify(assStyles))
+                assStyles: JSON.parse(JSON.stringify(assStyles)),
+                notepadText: document.getElementById('sync-notepad-textarea') ? document.getElementById('sync-notepad-textarea').value : ''
             };
             historyStack.push(JSON.stringify(state));
             redoStack = []; 
@@ -2667,6 +2611,10 @@ let activeQaStatus = 'visible'; // 'visible' son los pendientes.
             const state = JSON.parse(stateString);
             subtitles = state.subtitles;
             assStyles = state.assStyles;
+            if (state.notepadText !== undefined) {
+                const textarea = document.getElementById('sync-notepad-textarea');
+                if (textarea) textarea.value = state.notepadText;
+            }
             renderSubtitles(true);
             updateUndoRedoButtons();
         };
@@ -2675,7 +2623,8 @@ let activeQaStatus = 'visible'; // 'visible' son los pendientes.
             if (historyStack.length === 0) return;
             const currentState = {
                 subtitles: JSON.parse(JSON.stringify(subtitles)),
-                assStyles: JSON.parse(JSON.stringify(assStyles))
+                assStyles: JSON.parse(JSON.stringify(assStyles)),
+                notepadText: document.getElementById('sync-notepad-textarea') ? document.getElementById('sync-notepad-textarea').value : ''
             };
             redoStack.push(JSON.stringify(currentState));
             restoreState(historyStack.pop());
@@ -2685,7 +2634,8 @@ let activeQaStatus = 'visible'; // 'visible' son los pendientes.
             if (redoStack.length === 0) return;
             const currentState = {
                 subtitles: JSON.parse(JSON.stringify(subtitles)),
-                assStyles: JSON.parse(JSON.stringify(assStyles))
+                assStyles: JSON.parse(JSON.stringify(assStyles)),
+                notepadText: document.getElementById('sync-notepad-textarea') ? document.getElementById('sync-notepad-textarea').value : ''
             };
             historyStack.push(JSON.stringify(currentState));
             restoreState(redoStack.pop());
@@ -4262,7 +4212,8 @@ createAndHold: () => {
                 }
             },
             // --- LÍNEA AÑADIDA ---
-            createFromSelection: handleCreateSubtitleFromSelection
+            createFromSelection: handleCreateSubtitleFromSelection,
+            createSubFromNotepad: () => { document.getElementById('create-sub-from-notepad-btn').click(); }
         };
 
         if (actions[actionName]) actions[actionName]();
@@ -4864,7 +4815,6 @@ qaSettingsModalBtn.addEventListener('click', () => {
             if (e.target === qaSettingsModal) qaSettingsModal.style.display = 'none';
             if (e.target === qaReviewModal) qaReviewModal.style.display = 'none';
             if (e.target === backupModal) backupModal.style.display = 'none';
-            if (e.target === importTextModal) importTextModal.style.display = 'none';
             if (e.target === confirmationModal) confirmationModal.style.display = 'none';
             if (e.target === pdfNameModal) pdfNameModal.style.display = 'none';
             if (e.target === assStyleEditorModal) assStyleEditorModal.style.display = 'none';
@@ -5053,238 +5003,7 @@ cancelDetectionBtn.addEventListener('click', () => {
             URL.revokeObjectURL(a.href);
         });
 
-        // --- LÓGICA DE IMPORTACIÓN DE TEXTO ---
-        let previewSubs = [];
-        let textImportSearchResults = [];
-        let textImportCurrentSearchIndex = -1;
-
-        const updateTextImportPreview = () => {
-            const rawText = textImportTextarea.value;
-            const separator = textImportDoubleBreak.checked ? /\n\s*\n/ : (textImportSeparator.value || '|');
-            
-            const blocks = rawText.split(separator).filter(block => block.trim() !== '');
-            previewSubs = blocks.map(block => ({ text: block.trim() }));
-
-            textImportPreviewBody.innerHTML = '';
-            previewSubs.forEach((sub, index) => {
-                const lines = sub.text.split('\n');
-                const cpl = lines.map(line => line.length).join(' / ');
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="p-2 text-gray-400">${index + 1}</td>
-                    <td class="p-2">${sub.text.replace(/\n/g, '<br>')}</td>
-                    <td class="p-2 text-center">${lines.length}</td>
-                    <td class="p-2 text-center font-mono text-xs">${cpl}</td>
-                `;
-                textImportPreviewBody.appendChild(row);
-            });
-        };
-
-        openTextImportModalBtn.addEventListener('click', () => {
-            importTextModal.style.display = 'flex';
-            updateTextImportPreview();
-        });
-
-        importTextModal.querySelector('.close-text-import-modal').addEventListener('click', () => {
-            importTextModal.style.display = 'none';
-        });
-
-        txtLoader.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                textImportTextarea.value = event.target.result;
-                updateTextImportPreview();
-            };
-            reader.readAsText(file);
-            e.target.value = '';
-        });
-
-        [textImportTextarea, textImportSeparator].forEach(el => el.addEventListener('input', () => {
-            updateTextImportPreview();
-            textImportSearchResults = [];
-            textImportCurrentSearchIndex = -1;
-            updateTextImportSearchCount();
-        }));
-        textImportDoubleBreak.addEventListener('change', updateTextImportPreview);
-
-        textImportReplaceBtn.addEventListener('click', () => {
-            const findText = textImportFind.value;
-            const replaceText = textImportReplace.value;
-            if (findText && textImportCurrentSearchIndex > -1) {
-                const match = textImportSearchResults[textImportCurrentSearchIndex];
-                const text = textImportTextarea.value;
-                textImportTextarea.value = text.substring(0, match.index) + replaceText + text.substring(match.index + findText.length);
-                performTextImportSearch();
-            }
-        });
-        
-        textImportReplaceAllBtn.addEventListener('click', () => {
-            const findText = textImportFind.value;
-            const replaceText = textImportReplace.value;
-            if (findText) {
-                textImportTextarea.value = textImportTextarea.value.split(findText).join(replaceText);
-                updateTextImportPreview();
-                textImportSearchResults = [];
-                textImportCurrentSearchIndex = -1;
-                updateTextImportSearchCount();
-            }
-        });
-
-        const performTextImportSearch = () => {
-            const searchTerm = textImportFind.value;
-            const text = textImportTextarea.value;
-            textImportSearchResults = [];
-            if (!searchTerm) {
-                updateTextImportSearchCount();
-                return;
-            }
-            let match;
-            const regex = new RegExp(searchTerm, 'gi');
-            while ((match = regex.exec(text)) !== null) {
-                textImportSearchResults.push({ index: match.index });
-            }
-            
-            if (textImportSearchResults.length > 0) {
-                textImportCurrentSearchIndex = 0;
-                highlightTextImportMatch();
-            } else {
-                textImportCurrentSearchIndex = -1;
-            }
-            updateTextImportSearchCount();
-        };
-
-        const highlightTextImportMatch = () => {
-            if (textImportCurrentSearchIndex === -1) return;
-            const match = textImportSearchResults[textImportCurrentSearchIndex];
-            const searchTerm = textImportFind.value;
-            textImportTextarea.focus();
-            textImportTextarea.setSelectionRange(match.index, match.index + searchTerm.length);
-            
-            const lineHeight = textImportTextarea.scrollHeight / textImportTextarea.value.split('\n').length;
-            const line = textImportTextarea.value.substring(0, match.index).split('\n').length -1;
-            textImportTextarea.scrollTop = line * lineHeight;
-        };
-
-        const updateTextImportSearchCount = () => {
-            if (textImportSearchResults.length === 0) {
-                textImportSearchCount.textContent = '0/0';
-            } else {
-                textImportSearchCount.textContent = `${textImportCurrentSearchIndex + 1}/${textImportSearchResults.length}`;
-            }
-        };
-
-        textImportSearchBtn.addEventListener('click', performTextImportSearch);
-        textImportFind.addEventListener('keydown', (e) => { if (e.key === 'Enter') performTextImportSearch(); });
-
-        textImportNextBtn.addEventListener('click', () => {
-            if (textImportSearchResults.length > 0) {
-                textImportCurrentSearchIndex = (textImportCurrentSearchIndex + 1) % textImportSearchResults.length;
-                highlightTextImportMatch();
-                updateTextImportSearchCount();
-            }
-        });
-
-        textImportPrevBtn.addEventListener('click', () => {
-            if (textImportSearchResults.length > 0) {
-                textImportCurrentSearchIndex = (textImportCurrentSearchIndex - 1 + textImportSearchResults.length) % textImportSearchResults.length;
-                highlightTextImportMatch();
-                updateTextImportSearchCount();
-            }
-        });
-
-
-        textImportAutosplitBtn.addEventListener('click', () => {
-            const text = textImportTextarea.value;
-            const maxCpl = qaSettings.maxCpl;
-            const separator = textImportSeparator.value || '|';
-            
-            let result = '';
-            const paragraphs = text.split(/\n\s*\n/);
-            paragraphs.forEach(p => {
-                let currentLine = '';
-                let currentSub = [];
-                const words = p.replace(/\n/g, ' ').split(' ');
-                
-                words.forEach(word => {
-                    if (currentLine.length + word.length + 1 <= maxCpl) {
-                        currentLine += (currentLine ? ' ' : '') + word;
-                    } else {
-                        currentSub.push(currentLine);
-                        currentLine = word;
-                    }
-
-                    if (currentSub.length >= qaSettings.maxLines) {
-                        result += currentSub.join('\n') + `\n${separator}\n`;
-                        currentSub = [];
-                    }
-                });
-                
-                if (currentLine) currentSub.push(currentLine);
-                if (currentSub.length > 0) result += currentSub.join('\n') + `\n${separator}\n`;
-            });
-
-            textImportTextarea.value = result.trim().replace(new RegExp(`\\n${separator.replace(/\|/g, '\\|')}\\n$`), '');
-            updateTextImportPreview();
-        });
-
-        createSubsFromTextBtn.addEventListener('click', () => {
-            if (previewSubs.length === 0) {
-            showModalAlert(t('msg_no_preview_subs'));
-            return;
-            }
-            saveState();
-            let currentNextId = getNextAvailableId(); // Obtenemos el ID inicial
-        const newSubs = previewSubs.map(sub => ({
-                id: String(currentNextId++), // Usamos el ID y LUEGO lo incrementamos
-                start: -1, // Marcar como no sincronizado
-                end: -1,
-                text: sub.text,
-                style: 'Default'
-            }));
-            
-            subtitles.push(...newSubs);
-            renderSubtitles(false); // No renderizar regiones todavía
-            showModalAlert(`${previewSubs.length} subtítulos creados. Ahora puedes sincronizarlos.`);
-            importTextModal.style.display = 'none';
-            setActiveSubtitle(subtitles.length - newSubs.length, { focusEditor: false });
-        });
-
-        // --- Resizer para el modal de importación de texto ---
-        textImportResizer.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            document.body.style.cursor = 'row-resize';
-            document.addEventListener('mousemove', handleTextImportResize);
-            document.addEventListener('mouseup', () => {
-                document.body.style.cursor = '';
-                document.removeEventListener('mousemove', handleTextImportResize);
-            }, { once: true });
-        });
-
-        function handleTextImportResize(e) {
-            const mainArea = document.getElementById('text-import-main-area');
-            const mainAreaRect = mainArea.getBoundingClientRect();
-            
-            let newTextareaHeight = e.clientY - mainAreaRect.top;
-
-            const minHeight = 100; // Mínimo 100px para cada panel
-            const resizerHeight = textImportResizer.offsetHeight;
-            const controlsHeight = mainArea.querySelector('.flex-shrink-0').offsetHeight;
-            const totalHeight = mainArea.clientHeight;
-
-            if (newTextareaHeight < minHeight + controlsHeight) {
-                newTextareaHeight = minHeight + controlsHeight;
-            }
-            if (newTextareaHeight > totalHeight - minHeight - resizerHeight) {
-                newTextareaHeight = totalHeight - minHeight - resizerHeight;
-            }
-            
-            const previewHeight = totalHeight - newTextareaHeight - resizerHeight - 12; // Adjusted for margins
-
-            textImportTextarea.style.height = `${newTextareaHeight - controlsHeight - 12}px`;
-            textImportPreviewContainer.style.height = `${previewHeight}px`;
-        }
+       
 
         // --- Lógica de Modos de Trabajo ---
         const setWorkMode = (mode) => {
@@ -6358,6 +6077,185 @@ newProjectBtn.addEventListener('click', () => {
     }
    });
     
+   // --- LÓGICA DEL CHANGELOG ---
+    const changelogBtn = document.getElementById('changelog-btn');
+    const changelogModal = document.getElementById('changelog-modal');
+    const changelogContent = document.getElementById('changelog-content');
+
+    changelogBtn.addEventListener('click', async () => {
+        changelogModal.style.display = 'flex';
+        changelogContent.textContent = 'Cargando changelog...';
+        try {
+            // Añadimos un timestamp para evitar la caché del navegador
+            const response = await fetch('https://httrans.org/changelog/subpandaass.txt?t=' + new Date().getTime());
+            if (!response.ok) throw new Error('Error de conexión');
+            const text = await response.text();
+            changelogContent.textContent = text;
+        } catch (error) {
+            changelogContent.textContent = 'No se pudo cargar el changelog en este momento.';
+            console.error('Error obteniendo changelog:', error);
+        }
+    });
+
+    changelogModal.querySelector('.close-changelog-modal').addEventListener('click', () => {
+        changelogModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === changelogModal) changelogModal.style.display = 'none';
+    });
+
+   // --- LÓGICA DEL BLOC DE NOTAS PARA SINCRONIZAR ---
+    const syncTextLoader = document.getElementById('sync-text-loader');
+    const syncNotepadContainer = document.getElementById('sync-notepad-container');
+    const syncNotepadResizer = document.getElementById('sync-notepad-resizer');
+    const syncNotepadTextarea = document.getElementById('sync-notepad-textarea');
+    const syncNotepadStats = document.getElementById('sync-notepad-stats');
+    const createSubFromNotepadBtn = document.getElementById('create-sub-from-notepad-btn');
+
+    // Función para actualizar las estadísticas de las primeras 4 líneas
+    const updateNotepadStats = () => {
+        if (!syncNotepadTextarea || !syncNotepadStats) return;
+        const lines = syncNotepadTextarea.value.split('\n').slice(0, 4);
+        
+        syncNotepadStats.innerHTML = lines.map((line) => {
+            const len = line.trimEnd().length; // No contamos saltos de línea ni espacios al final
+            const isLong = qaSettings && qaSettings.maxCplEnabled && len > qaSettings.maxCpl;
+            return `<div class="${isLong ? 'text-red-400 font-bold' : ''}" style="height: 1.25rem;">${len > 0 ? len : '-'}</div>`;
+        }).join('');
+    };
+
+    // Actualizar cuando el usuario escribe o modifica el texto
+    syncNotepadTextarea.addEventListener('input', updateNotepadStats);
+    
+    // Sincronizar el scroll (por si el usuario baja por el bloc de notas)
+    syncNotepadTextarea.addEventListener('scroll', () => {
+        syncNotepadStats.style.transform = `translateY(-${syncNotepadTextarea.scrollTop}px)`;
+    });
+    const closeNotepadBtn = document.getElementById('close-notepad-btn');
+
+    const openNotepadBottomBtn = document.getElementById('open-notepad-bottom-btn');
+    const notepadToggleBar = document.getElementById('notepad-toggle-bar');
+
+    // Cargar el archivo TXT
+    syncTextLoader.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            saveState(); // Guardamos el estado antes de sobreescribir el bloc
+            syncNotepadTextarea.value = ev.target.result;
+            updateNotepadStats(); // <-- AÑADIDO
+            syncNotepadContainer.classList.remove('hidden');
+            syncNotepadContainer.classList.add('flex');
+            syncNotepadResizer.style.display = 'block';
+            notepadToggleBar.classList.add('hidden');
+        };
+        reader.readAsText(file);
+        e.target.value = ''; // Resetear el input
+    });
+
+    // Abrir el bloc de notas manualmente
+    openNotepadBottomBtn.addEventListener('click', () => {
+        syncNotepadContainer.classList.remove('hidden');
+        syncNotepadContainer.classList.add('flex');
+        syncNotepadResizer.style.display = 'block';
+        notepadToggleBar.classList.add('hidden'); // Ocultar el botón
+    });
+
+    // Cerrar el bloc de notas
+    closeNotepadBtn.addEventListener('click', () => {
+        syncNotepadContainer.classList.add('hidden');
+        syncNotepadContainer.classList.remove('flex');
+        syncNotepadResizer.style.display = 'none';
+        notepadToggleBar.classList.remove('hidden'); // Mostrar el botón
+    });
+
+    // Lógica para redimensionar el bloc de notas y la tabla
+    syncNotepadResizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        document.body.style.cursor = 'row-resize';
+        document.addEventListener('mousemove', handleNotepadResize);
+        document.addEventListener('mouseup', () => {
+            document.body.style.cursor = '';
+            document.removeEventListener('mousemove', handleNotepadResize);
+        }, { once: true });
+    });
+
+    function handleNotepadResize(e) {
+        const rightPanel = document.getElementById('right-panel');
+        const panelRect = rightPanel.getBoundingClientRect();
+        // Calculamos la altura basándonos en el ratón y el límite inferior del panel
+        let newHeight = panelRect.bottom - e.clientY;
+        
+        if (newHeight < 80) newHeight = 80; // Altura mínima del bloc
+        if (newHeight > panelRect.height - 150) newHeight = panelRect.height - 150; // Altura máxima (deja espacio para la tabla)
+        
+        syncNotepadContainer.style.height = `${newHeight}px`;
+    }
+
+    // Permitir el atajo de teclado directamente dentro del textarea
+    syncNotepadTextarea.addEventListener('keydown', (e) => {
+        const sc = shortcuts.createSubFromNotepad;
+        if (sc && e.code === sc.code && e.altKey === sc.altKey && e.ctrlKey === sc.ctrlKey && e.shiftKey === sc.shiftKey) {
+            e.preventDefault();
+            createSubFromNotepadBtn.click();
+        }
+    });
+
+    // Crear subtítulo a partir del texto seleccionado
+    createSubFromNotepadBtn.addEventListener('click', () => {
+        const startPos = syncNotepadTextarea.selectionStart;
+        const endPos = syncNotepadTextarea.selectionEnd;
+        const selectedText = syncNotepadTextarea.value.substring(startPos, endPos).trim();
+
+        if (!selectedText) {
+            showModalAlert('Selecciona el texto que quieres convertir en subtítulo dentro del bloc de notas.');
+            return;
+        }
+        if (!selectionRegion) {
+            showModalAlert('Primero, haz clic derecho y arrastra sobre la onda para crear una selección (fragmento verde).');
+            return;
+        }
+
+        saveState();
+        
+        const newSubtitle = {
+            id: String(getNextAvailableId()),
+            start: selectionRegion.start,
+            end: selectionRegion.end,
+            text: selectedText,
+            style: 'Default'
+        };
+
+        subtitles.push(newSubtitle);
+        
+        // Magia: Borramos el texto seleccionado y eliminamos el salto de línea posterior para que el texto suba
+        let val = syncNotepadTextarea.value;
+        let removeEnd = endPos;
+        
+        // Consumimos espacios vacíos que queden justo después de la selección
+        while(removeEnd < val.length && (val[removeEnd] === ' ' || val[removeEnd] === '\t')) {
+            removeEnd++;
+        }
+        // Consumimos a lo sumo UN salto de línea posterior
+        if (removeEnd < val.length && val[removeEnd] === '\r') removeEnd++;
+        if (removeEnd < val.length && val[removeEnd] === '\n') removeEnd++;
+
+        syncNotepadTextarea.value = val.substring(0, startPos) + val.substring(removeEnd);
+        updateNotepadStats(); // <-- AÑADIDO
+        
+        // Quitamos el foco y lo devolvemos para que el scroll se ajuste si es necesario
+        syncNotepadTextarea.blur();
+        syncNotepadTextarea.focus();
+        
+        selectionRegion.remove();
+        selectionRegion = null;
+
+        renderSubtitles(true);
+        setActiveSubtitle(subtitles.length - 1);
+    });
+
    // --- Inicializar idioma al cargar ---
     changeLanguage('en');
 
