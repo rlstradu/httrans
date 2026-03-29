@@ -1,4 +1,48 @@
 ============================================================
+    CHANGELOG - SUBPANDAASS v1.0.1 - March 2026
+============================================================
+
+This update introduces a completely revamped workflow for 
+syncing plain text scripts, replacing the old text importer 
+with a highly interactive and precise Sync Notepad, along 
+with interface improvements for a smoother experience.
+
+------------------------------------------------------------
+>>> NEW SYNC NOTEPAD
+------------------------------------------------------------
+* Interactive workspace: New "Import text for syncing..." 
+  option opens a dedicated notepad below the subtitle grid 
+  for precise, manual text syncing.
+* Quick creation: Generate a subtitle instantly from 
+  highlighted notepad text and a selected waveform region 
+  (Default shortcut: Alt + M).
+* Auto-consume text: The notepad automatically deletes the 
+  used text and cleans up subsequent line breaks, keeping 
+  your next dialogue line ready at the top.
+* Real-time CPL counters: Live Character Per Line (CPL) 
+  tracking for the first 4 lines. Numbers turn red if they 
+  exceed your configured QA limits.
+* Undo/Redo integration: The notepad's text state is now 
+  fully integrated into the history system to prevent data 
+  loss when reverting actions.
+* Workspace flexibility: Includes a draggable horizontal 
+  resizer to adjust the panel height, plus a quick 
+  "Open notepad" toggle button for manual pasting.
+
+------------------------------------------------------------
+>>> INTERFACE AND OPTIMIZATION
+------------------------------------------------------------
+* In-App Changelog: Added a clickable version number in 
+  the top header to quickly view release notes without 
+  leaving the application.
+* Legacy tool removal: Completely removed the old "Create 
+  subtitles from text" modal and its autosplit logic to 
+  streamline the interface and encourage a more accurate 
+  syncing workflow.
+
+============================================================
+
+============================================================
       CHANGELOG - SUBPANDAASS v1.0.0 - December 2025
 ============================================================
 
