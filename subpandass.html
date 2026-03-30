@@ -1208,15 +1208,15 @@ margin: 10px;
                     </div>
                 </div>
                 <div class="flex flex-row flex-grow min-h-0 gap-2 w-full">
-                    <div class="flex flex-row flex-grow min-h-0 relative w-1/2">
-                        <textarea id="sync-notepad-textarea" wrap="off" style="background-color: var(--dark-gray); color: var(--text-primary); border-color: var(--light-gray); line-height: 1.25rem;" class="w-full flex-grow border rounded p-2 pr-8 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 whitespace-pre overflow-auto" placeholder="El texto importado aparecerá aquí..." data-i18n-placeholder="txt_ph_sync_notepad"></textarea>
-                        <div class="w-8 absolute top-0 right-0 h-full flex-shrink-0 overflow-hidden pointer-events-none bg-dark-gray/90 border-l border-light-gray rounded-r">
+                    <div class="flex flex-row flex-grow min-h-0 w-1/2 border rounded overflow-hidden focus-within:ring-1 focus-within:ring-blue-500" style="border-color: var(--light-gray); background-color: var(--dark-gray);">
+                        <textarea id="sync-notepad-textarea" wrap="off" style="background-color: transparent; color: var(--text-primary); line-height: 1.25rem; outline: none; border: none;" class="w-full flex-grow p-2 text-sm resize-none whitespace-pre overflow-auto" placeholder="El texto importado aparecerá aquí..." data-i18n-placeholder="txt_ph_sync_notepad"></textarea>
+                        <div class="w-8 relative h-full flex-shrink-0 overflow-hidden pointer-events-none border-l z-10" style="border-color: var(--light-gray); background-color: var(--medium-gray);">
                             <div id="sync-notepad-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pr-1" style="line-height: 1.25rem;"></div>
                         </div>
                     </div>
-                    <div id="sync-notepad-trans-col" class="flex flex-row flex-grow min-h-0 relative w-1/2 hidden">
-                        <textarea id="sync-notepad-trans-textarea" wrap="off" style="background-color: var(--dark-gray); color: var(--text-primary); border-color: var(--light-gray); line-height: 1.25rem;" class="w-full flex-grow border rounded p-2 pr-8 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 whitespace-pre overflow-auto" placeholder="Escribe aquí la traducción..." data-i18n-placeholder="txt_ph_sync_notepad_trans"></textarea>
-                        <div class="w-8 absolute top-0 right-0 h-full flex-shrink-0 overflow-hidden pointer-events-none bg-dark-gray/90 border-l border-light-gray rounded-r">
+                    <div id="sync-notepad-trans-col" class="flex flex-row flex-grow min-h-0 w-1/2 hidden border rounded overflow-hidden focus-within:ring-1 focus-within:ring-blue-500" style="border-color: var(--light-gray); background-color: var(--dark-gray);">
+                        <textarea id="sync-notepad-trans-textarea" wrap="off" style="background-color: transparent; color: var(--text-primary); line-height: 1.25rem; outline: none; border: none;" class="w-full flex-grow p-2 text-sm resize-none whitespace-pre overflow-auto" placeholder="Escribe aquí la traducción..." data-i18n-placeholder="txt_ph_sync_notepad_trans"></textarea>
+                        <div class="w-8 relative h-full flex-shrink-0 overflow-hidden pointer-events-none border-l z-10" style="border-color: var(--light-gray); background-color: var(--medium-gray);">
                             <div id="sync-notepad-trans-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pr-1" style="line-height: 1.25rem;"></div>
                         </div>
                     </div>
