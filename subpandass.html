@@ -1569,6 +1569,11 @@ margin: 10px;
 
     const translations = {
         es: {
+            // --- SEO Y METADATOS ---
+            seo_title: "SubpandaASS | Editor de subtítulos avanzado",
+            seo_desc: "SubpandaASS es una herramienta web profesional y gratuita para editar, traducir y sincronizar subtítulos (SRT y ASS) creado por Rafael López Sánchez para el proyecto httrans.org.",
+            seo_og_desc: "Edita, traduce y sincroniza subtítulos directamente desde tu navegador.",
+
             // --- MENÚ PRINCIPAL ---
             menu_file: "Archivo",
             menu_edit: "Editar",
@@ -1951,6 +1956,11 @@ margin: 10px;
         },
 
         en: {
+            // --- SEO Y METADATOS ---
+            seo_title: "SubpandaASS | Advanced Subtitle Editor",
+            seo_desc: "SubpandaASS is a free, professional web tool to edit, translate, and sync subtitles (SRT and ASS) created by Rafael López Sánchez for the httrans.org project.",
+            seo_og_desc: "Edit, translate, and sync subtitles directly from your browser.",
+
             // --- MAIN MENU ---
             menu_file: "File",
             menu_edit: "Edit",
@@ -2374,6 +2384,25 @@ margin: 10px;
                 el.placeholder = translations[lang][key];
             }
         });
+        
+        // 5. Actualizar Metadatos (Pestaña, Google y Redes Sociales)
+        if (translations[lang]['seo_title']) {
+            document.title = translations[lang]['seo_title'];
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) ogTitle.content = translations[lang]['seo_title'];
+            const twTitle = document.querySelector('meta[name="twitter:title"]');
+            if (twTitle) twTitle.content = translations[lang]['seo_title'];
+        }
+        if (translations[lang]['seo_desc']) {
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) metaDesc.content = translations[lang]['seo_desc'];
+        }
+        if (translations[lang]['seo_og_desc']) {
+            const ogDesc = document.querySelector('meta[property="og:description"]');
+            if (ogDesc) ogDesc.content = translations[lang]['seo_og_desc'];
+            const twDesc = document.querySelector('meta[name="twitter:description"]');
+            if (twDesc) twDesc.content = translations[lang]['seo_og_desc'];
+        }
         
         console.log("Idioma cambiado a:", lang);
     };
@@ -6337,23 +6366,18 @@ newProjectBtn.addEventListener('click', () => {
         syncNotepadContainer.style.height = `${newHeight}px`;
     }
 
-    // Permitir el atajo de teclado directamente dentro del textarea
-    syncNotepadTextarea.addEventListener('keydown', (e) => {
+    // Permitir el atajo de teclado directamente dentro de ambos textareas
+    const handleNotepadKeydown = (e) => {
         const sc = shortcuts.createSubFromNotepad;
         if (sc && e.code === sc.code && e.altKey === sc.altKey && e.ctrlKey === sc.ctrlKey && e.shiftKey === sc.shiftKey) {
             e.preventDefault();
             createSubFromNotepadBtn.click();
         }
-    });
+    };
+    syncNotepadTextarea.addEventListener('keydown', handleNotepadKeydown);
+    syncNotepadTransTextarea.addEventListener('keydown', handleNotepadKeydown);
 
-    // Crear subtítulo a partir del texto seleccionado
-    createSubFromNotepadBtn.addEventListener('click', () => {
-        const startPos = syncNotepadTextarea.selectionStart;
-        const endPos = syncNotepadTextarea.selectionEnd;
-        const selectedText = syncNotepadTextarea.value.substring(startPos, endPos).trim();
-
-        if (!selectedText) {
-            show// Crear subtítulo detectando automáticamente en qué bloc has seleccionado el texto
+    // Crear subtítulo detectando automáticamente en qué bloc has seleccionado el texto
     createSubFromNotepadBtn.addEventListener('click', () => {
         let activeTextarea = null;
         
@@ -6406,51 +6430,6 @@ newProjectBtn.addEventListener('click', () => {
         // Ajuste de scroll
         activeTextarea.blur();
         activeTextarea.focus();
-        
-        selectionRegion.remove();
-        selectionRegion = null;
-
-        renderSubtitles(true);
-        setActiveSubtitle(subtitles.length - 1);
-    });
-    ModalAlert('Selecciona el texto que quieres convertir en subtítulo dentro del bloc de notas.');
-            return;
-        }
-        if (!selectionRegion) {
-            showModalAlert('Primero, haz clic derecho y arrastra sobre la onda para crear una selección (fragmento verde).');
-            return;
-        }
-
-        saveState();
-        
-        const newSubtitle = {
-            id: String(getNextAvailableId()),
-            start: selectionRegion.start,
-            end: selectionRegion.end,
-            text: selectedText,
-            style: 'Default'
-        };
-
-        subtitles.push(newSubtitle);
-        
-        // Magia: Borramos el texto seleccionado y eliminamos el salto de línea posterior para que el texto suba
-        let val = syncNotepadTextarea.value;
-        let removeEnd = endPos;
-        
-        // Consumimos espacios vacíos que queden justo después de la selección
-        while(removeEnd < val.length && (val[removeEnd] === ' ' || val[removeEnd] === '\t')) {
-            removeEnd++;
-        }
-        // Consumimos a lo sumo UN salto de línea posterior
-        if (removeEnd < val.length && val[removeEnd] === '\r') removeEnd++;
-        if (removeEnd < val.length && val[removeEnd] === '\n') removeEnd++;
-
-        syncNotepadTextarea.value = val.substring(0, startPos) + val.substring(removeEnd);
-        updateNotepadStats(); // <-- AÑADIDO
-        
-        // Quitamos el foco y lo devolvemos para que el scroll se ajuste si es necesario
-        syncNotepadTextarea.blur();
-        syncNotepadTextarea.focus();
         
         selectionRegion.remove();
         selectionRegion = null;
