@@ -1182,17 +1182,27 @@ margin: 10px;
             <div id="sync-notepad-resizer"></div>
 
             <div id="sync-notepad-container" class="hidden flex-col bg-medium-gray border border-light-gray rounded-lg p-2 flex-shrink-0" style="height: 180px; min-height: 80px;">
-                <div class="flex justify-between items-center mb-2">
+                <div class="flex justify-between items-center mb-2 flex-shrink-0">
                     <span class="text-sm font-semibold text-gray-400" data-i18n="import_text_sync">Importar texto para sincronizar...</span>
                     <div class="flex gap-2">
-                        <button id="create-sub-from-notepad-btn" class="text-btn compact-btn bg-blue-600 hover:bg-blue-700" data-i18n="btn_create_sub_from_text" data-i18n-tooltip="tooltip_create_sub_from_text" data-tooltip="Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido">Crear subtítulo</button>
+                        <button id="export-notepad-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_export_notepad" data-i18n-tooltip="tooltip_export_notepad" data-tooltip="Guardar texto del bloc de notas">Guardar texto</button>
+                        <button id="toggle-notepad-translation-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_notepad_translation_mode" data-i18n-tooltip="tooltip_notepad_translation_mode" data-tooltip="Activa doble columna para traducir">Modo Traducción</button>
+                        <button id="create-sub-from-notepad-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_create_sub_from_text" data-i18n-tooltip="tooltip_create_sub_from_text" data-tooltip="Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido">Crear subtítulo</button>
                         <button id="close-notepad-btn" class="icon-btn compact-icon-btn hover:text-red-500">&times;</button>
                     </div>
                 </div>
                 <div class="flex flex-row flex-grow min-h-0 gap-2 w-full">
-                    <textarea id="sync-notepad-textarea" style="background-color: var(--dark-gray); color: var(--text-primary); border-color: var(--light-gray);" class="w-full flex-grow border rounded p-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="El texto importado aparecerá aquí..." data-i18n-placeholder="txt_ph_sync_notepad"></textarea>
-                    <div class="w-8 flex-shrink-0 overflow-hidden relative">
-                        <div id="sync-notepad-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pointer-events-none" style="line-height: 1.25rem;"></div>
+                    <div class="flex flex-row flex-grow min-h-0 relative w-1/2">
+                        <textarea id="sync-notepad-textarea" wrap="off" style="background-color: var(--dark-gray); color: var(--text-primary); border-color: var(--light-gray); line-height: 1.25rem;" class="w-full flex-grow border rounded p-2 pr-8 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 whitespace-pre overflow-auto" placeholder="El texto importado aparecerá aquí..." data-i18n-placeholder="txt_ph_sync_notepad"></textarea>
+                        <div class="w-8 absolute top-0 right-0 h-full flex-shrink-0 overflow-hidden pointer-events-none bg-dark-gray/90 border-l border-light-gray rounded-r">
+                            <div id="sync-notepad-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pr-1" style="line-height: 1.25rem;"></div>
+                        </div>
+                    </div>
+                    <div id="sync-notepad-trans-col" class="flex flex-row flex-grow min-h-0 relative w-1/2 hidden">
+                        <textarea id="sync-notepad-trans-textarea" wrap="off" style="background-color: var(--dark-gray); color: var(--text-primary); border-color: var(--light-gray); line-height: 1.25rem;" class="w-full flex-grow border rounded p-2 pr-8 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 whitespace-pre overflow-auto" placeholder="Escribe aquí la traducción..." data-i18n-placeholder="txt_ph_sync_notepad_trans"></textarea>
+                        <div class="w-8 absolute top-0 right-0 h-full flex-shrink-0 overflow-hidden pointer-events-none bg-dark-gray/90 border-l border-light-gray rounded-r">
+                            <div id="sync-notepad-trans-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pr-1" style="line-height: 1.25rem;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1232,7 +1242,7 @@ margin: 10px;
     <div id="changelog-modal" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">Changelog (v 1.0.0)</h2>
+                <h2 class="text-2xl font-bold">Changelog</h2>
                 <button class="close-changelog-modal text-3xl font-bold hover:text-red-500">&times;</button>
             </div>
             <pre id="changelog-content" class="text-sm text-gray-300 overflow-y-auto whitespace-pre-wrap p-4 bg-dark-gray rounded-lg border border-light-gray" style="max-height: 60vh; font-family: monospace;">Cargando...</pre>
@@ -1483,6 +1493,32 @@ margin: 10px;
         </div>
     </div>
 
+    <div id="export-notepad-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="modal_title_export_notepad">Guardar Bloc de Notas</h2>
+                <button class="close-export-notepad-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-sm text-gray-300" data-i18n="msg_choose_export_notepad">Elige qué texto quieres descargar como archivo .txt:</p>
+                <div class="flex justify-around mt-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="export-notepad-choice" value="original" checked class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600">
+                        <span data-i18n="lbl_export_original">Texto Original</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="export-notepad-choice" value="translation" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600">
+                        <span data-i18n="lbl_export_translation">Traducción</span>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-4 mt-6 pt-4 border-t border-light-gray">
+                    <button id="cancel-export-notepad-btn" class="text-btn" data-i18n="btn_cancel">Cancelar</button>
+                    <button id="confirm-export-notepad-btn" class="text-btn bg-blue-600 hover:bg-blue-700" data-i18n="btn_export">Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="save-project-modal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <div class="flex justify-between items-center mb-4">
@@ -1540,8 +1576,17 @@ margin: 10px;
             open_notepad: "Abrir bloc de notas",
             tooltip_create_sub_from_text: "Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido",
             txt_ph_sync_notepad: "El texto importado aparecerá aquí...",
+            txt_ph_sync_notepad_trans: "Escribe aquí la traducción...",
+            btn_notepad_translation_mode: "Modo traducción",
+            tooltip_notepad_translation_mode: "Activa doble columna para traducir",
+            btn_export_notepad: "Guardar texto",
+            tooltip_export_notepad: "Guardar texto del bloc de notas en un archivo",
+            modal_title_export_notepad: "Guardar bloc de notas",
+            msg_choose_export_notepad: "Elige qué texto quieres descargar como archivo .txt:",
+            lbl_export_original: "Texto original",
+            lbl_export_translation: "Traducción",
             sc_name_createSubFromNotepad: "Crear desde bloc de notas",
-            sc_desc_createSubFromNotepad: "Crea subtítulo con el texto seleccionado en el bloc.",
+            sc_desc_createSubFromNotepad: "Crea un subtítulo con el texto seleccionado en el bloc.",
             load_video: "Cargar vídeo",
             import_shot_changes: "Importar cambios de plano (.txt)",
 
@@ -1913,6 +1958,15 @@ margin: 10px;
             open_notepad: "Open notepad",
             tooltip_create_sub_from_text: "Creates a subtitle from the selected text in a selected waveform fragment",
             txt_ph_sync_notepad: "Imported text will appear here...",
+            txt_ph_sync_notepad_trans: "Write the translation here...",
+            btn_notepad_translation_mode: "Translation Mode",
+            tooltip_notepad_translation_mode: "Toggle double column for translation",
+            btn_export_notepad: "Save Text",
+            tooltip_export_notepad: "Save notepad text to a file",
+            modal_title_export_notepad: "Save Notepad",
+            msg_choose_export_notepad: "Choose which text to download as a .txt file:",
+            lbl_export_original: "Original text",
+            lbl_export_translation: "Translation",
             sc_name_createSubFromNotepad: "Create from notepad",
             sc_desc_createSubFromNotepad: "Creates subtitle using selected text in the notepad.",
             load_video: "Load Video",
@@ -4410,6 +4464,12 @@ const loadProjectData = (jsonData, projectName) => {
         fpsInput.value = frameRate;
         nextSubtitleId = subtitles.length > 0 ? Math.max(...subtitles.map(s => parseInt(s.id, 10) || 0)) + 1 : 1;
         
+        const notepadOriginalTextarea = document.getElementById('sync-notepad-textarea');
+        const notepadTranslationTextarea = document.getElementById('sync-notepad-trans-textarea');
+        if (notepadOriginalTextarea) notepadOriginalTextarea.value = data.notepadOriginal || '';
+        if (notepadTranslationTextarea) notepadTranslationTextarea.value = data.notepadTranslation || '';
+        if (typeof updateNotepadStats === 'function') updateNotepadStats();
+        
         renderSubtitles(true);
         renderShotChanges();
         applyColumnVisibility(); // Usamos la nueva función de visibilidad
@@ -4514,7 +4574,9 @@ confirmSaveProjectBtn.addEventListener('click', () => {
         return;
     }
     
-    const projectData = JSON.stringify({ subtitles, shotChanges, assStyles, qaSettings, frameRate }, null, 2);
+    const notepadOriginal = document.getElementById('sync-notepad-textarea')?.value || '';
+    const notepadTranslation = document.getElementById('sync-notepad-trans-textarea')?.value || '';
+    const projectData = JSON.stringify({ subtitles, shotChanges, assStyles, qaSettings, frameRate, notepadOriginal, notepadTranslation }, null, 2);
     
     // Lógica de descarga
     const blob = new Blob([projectData], { type: 'application/json;charset=utf-8' });
@@ -6111,27 +6173,92 @@ newProjectBtn.addEventListener('click', () => {
     const syncNotepadResizer = document.getElementById('sync-notepad-resizer');
     const syncNotepadTextarea = document.getElementById('sync-notepad-textarea');
     const syncNotepadStats = document.getElementById('sync-notepad-stats');
+    const syncNotepadTransTextarea = document.getElementById('sync-notepad-trans-textarea');
+    const syncNotepadTransStats = document.getElementById('sync-notepad-trans-stats');
+    const syncNotepadTransCol = document.getElementById('sync-notepad-trans-col');
+    const toggleNotepadTranslationBtn = document.getElementById('toggle-notepad-translation-btn');
     const createSubFromNotepadBtn = document.getElementById('create-sub-from-notepad-btn');
 
-    // Función para actualizar las estadísticas de las primeras 4 líneas
-    const updateNotepadStats = () => {
-        if (!syncNotepadTextarea || !syncNotepadStats) return;
-        const lines = syncNotepadTextarea.value.split('\n').slice(0, 4);
+    // Lógica para exportar el bloc de notas
+    const exportNotepadBtn = document.getElementById('export-notepad-btn');
+    const exportNotepadModal = document.getElementById('export-notepad-modal');
+    
+    exportNotepadBtn.addEventListener('click', () => {
+        exportNotepadModal.style.display = 'flex';
+    });
+    
+    exportNotepadModal.querySelector('.close-export-notepad-modal').addEventListener('click', () => exportNotepadModal.style.display = 'none');
+    document.getElementById('cancel-export-notepad-btn').addEventListener('click', () => exportNotepadModal.style.display = 'none');
+    
+    document.getElementById('confirm-export-notepad-btn').addEventListener('click', () => {
+        const choice = document.querySelector('input[name="export-notepad-choice"]:checked').value;
+        const textToExport = choice === 'original' ? syncNotepadTextarea.value : syncNotepadTransTextarea.value;
         
-        syncNotepadStats.innerHTML = lines.map((line) => {
-            const len = line.trimEnd().length; // No contamos saltos de línea ni espacios al final
-            const isLong = qaSettings && qaSettings.maxCplEnabled && len > qaSettings.maxCpl;
-            return `<div class="${isLong ? 'text-red-400 font-bold' : ''}" style="height: 1.25rem;">${len > 0 ? len : '-'}</div>`;
-        }).join('');
+        if (!textToExport.trim()) {
+            showModalAlert('El bloc de notas seleccionado está vacío.');
+            return;
+        }
+        
+        const blob = new Blob([textToExport], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `bloc_de_notas_${choice}_${new Date().toISOString().slice(0,10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        
+        exportNotepadModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === exportNotepadModal) exportNotepadModal.style.display = 'none';
+    });
+
+    // Botón para alternar el Modo Traducción
+    toggleNotepadTranslationBtn.addEventListener('click', () => {
+        syncNotepadTransCol.classList.toggle('hidden');
+        // Al prescindir de fondos azules, marcamos el botón activo cambiando el texto a azul brillante
+        toggleNotepadTranslationBtn.classList.toggle('text-blue-400');
+    });
+
+    // Función unificada para actualizar estadísticas de TODAS las líneas
+    const updateNotepadStats = () => {
+        const generateStatsHTML = (textarea) => {
+            const lines = textarea.value.split('\n'); // Ahora toma todas las líneas
+            return lines.map((line) => {
+                const len = line.trimEnd().length;
+                const isLong = qaSettings && qaSettings.maxCplEnabled && len > qaSettings.maxCpl;
+                return `<div class="${isLong ? 'text-red-400 font-bold' : ''}" style="height: 1.25rem;">${len > 0 ? len : '-'}</div>`;
+            }).join('');
+        };
+
+        if (syncNotepadTextarea && syncNotepadStats) {
+            syncNotepadStats.innerHTML = generateStatsHTML(syncNotepadTextarea);
+        }
+        if (syncNotepadTransTextarea && syncNotepadTransStats) {
+            syncNotepadTransStats.innerHTML = generateStatsHTML(syncNotepadTransTextarea);
+        }
     };
 
-    // Actualizar cuando el usuario escribe o modifica el texto
+    // Actualizar cuando el usuario escribe
     syncNotepadTextarea.addEventListener('input', updateNotepadStats);
+    syncNotepadTransTextarea.addEventListener('input', updateNotepadStats);
     
-    // Sincronizar el scroll (por si el usuario baja por el bloc de notas)
-    syncNotepadTextarea.addEventListener('scroll', () => {
-        syncNotepadStats.style.transform = `translateY(-${syncNotepadTextarea.scrollTop}px)`;
-    });
+    // Sincronizar el scroll de ambas cajas de texto y de sus stats
+    const syncScroll = (sourceElem) => {
+        const scrollTop = sourceElem.scrollTop;
+        syncNotepadStats.style.transform = `translateY(-${scrollTop}px)`;
+        syncNotepadTransStats.style.transform = `translateY(-${scrollTop}px)`;
+        
+        // Sincronizar las columnas entre sí
+        if (sourceElem === syncNotepadTextarea && !syncNotepadTransCol.classList.contains('hidden')) {
+            syncNotepadTransTextarea.scrollTop = scrollTop;
+        } else if (sourceElem === syncNotepadTransTextarea) {
+            syncNotepadTextarea.scrollTop = scrollTop;
+        }
+    };
+
+    syncNotepadTextarea.addEventListener('scroll', () => syncScroll(syncNotepadTextarea));
+    syncNotepadTransTextarea.addEventListener('scroll', () => syncScroll(syncNotepadTransTextarea));
     const closeNotepadBtn = document.getElementById('close-notepad-btn');
 
     const openNotepadBottomBtn = document.getElementById('open-notepad-bottom-btn');
@@ -6210,7 +6337,67 @@ newProjectBtn.addEventListener('click', () => {
         const selectedText = syncNotepadTextarea.value.substring(startPos, endPos).trim();
 
         if (!selectedText) {
-            showModalAlert('Selecciona el texto que quieres convertir en subtítulo dentro del bloc de notas.');
+            show// Crear subtítulo detectando automáticamente en qué bloc has seleccionado el texto
+    createSubFromNotepadBtn.addEventListener('click', () => {
+        let activeTextarea = null;
+        
+        // Damos prioridad a la columna de traducción si está visible y tiene selección
+        if (!syncNotepadTransCol.classList.contains('hidden') && syncNotepadTransTextarea.selectionStart !== syncNotepadTransTextarea.selectionEnd) {
+            activeTextarea = syncNotepadTransTextarea;
+        } else if (syncNotepadTextarea.selectionStart !== syncNotepadTextarea.selectionEnd) {
+            activeTextarea = syncNotepadTextarea;
+        }
+
+        if (!activeTextarea) {
+            showModalAlert('Selecciona el texto que quieres convertir en subtítulo dentro de alguno de los blocs de notas.');
+            return;
+        }
+
+        const startPos = activeTextarea.selectionStart;
+        const endPos = activeTextarea.selectionEnd;
+        const selectedText = activeTextarea.value.substring(startPos, endPos).trim();
+
+        if (!selectionRegion) {
+            showModalAlert('Primero, haz clic derecho y arrastra sobre la onda para crear una selección (fragmento verde).');
+            return;
+        }
+
+        saveState();
+        
+        const newSubtitle = {
+            id: String(getNextAvailableId()),
+            start: selectionRegion.start,
+            end: selectionRegion.end,
+            text: selectedText,
+            style: 'Default'
+        };
+
+        subtitles.push(newSubtitle);
+        
+        // Magia: Borramos el texto seleccionado del bloc de notas correspondiente
+        let val = activeTextarea.value;
+        let removeEnd = endPos;
+        
+        while(removeEnd < val.length && (val[removeEnd] === ' ' || val[removeEnd] === '\t')) {
+            removeEnd++;
+        }
+        if (removeEnd < val.length && val[removeEnd] === '\r') removeEnd++;
+        if (removeEnd < val.length && val[removeEnd] === '\n') removeEnd++;
+
+        activeTextarea.value = val.substring(0, startPos) + val.substring(removeEnd);
+        updateNotepadStats(); 
+        
+        // Ajuste de scroll
+        activeTextarea.blur();
+        activeTextarea.focus();
+        
+        selectionRegion.remove();
+        selectionRegion = null;
+
+        renderSubtitles(true);
+        setActiveSubtitle(subtitles.length - 1);
+    });
+    ModalAlert('Selecciona el texto que quieres convertir en subtítulo dentro del bloc de notas.');
             return;
         }
         if (!selectionRegion) {
@@ -6264,3 +6451,4 @@ newProjectBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
