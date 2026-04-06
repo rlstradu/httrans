@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de firmas de HispaTAV v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #e92340;
+            --primary-hover: #c01b33;
+            --text-dark: #333333;
+            --bg-light: #f0f2f5;
+            --white: #ffffff;
+            --border-color: #e1e4e8;
+            --font-main: 'Montserrat', sans-serif;
+            --font-sec: 'Noto Serif', serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: clamp(24px, 5vw, 32px);
+        }
+
+        .container {
+            display: flex;
+            gap: 25px;
+            max-width: 1400px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .card {
+            background-color: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+        }
+
+        .form-area {
+            flex: 1 1 350px;
+            max-width: 450px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .preview-area {
+            display: flex;
+            flex-direction: column;
+            flex: 2 1 600px;
+            min-width: 300px;
+        }
+
+        .form-section {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .form-section-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #666;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #444;
+        }
+
+        input[type="text"], input[type="email"], input[type="url"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: var(--font-main);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        .toggle-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            accent-color: var(--primary-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: var(--font-main);
+            width: 100%;
+            transition: all 0.2s;
+            font-size: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: var(--text-dark); }
+        .btn-outline { background-color: transparent; border: 1px solid #ccc; color: #333; }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: var(--font-main);
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .preview-box {
+            border: 1px solid var(--border-color);
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-color: #f9fafb;
+            padding: 60px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        /* Estilos de información e instrucciones */
+        .info-card {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-title {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-section h4 {
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .info-section p, .info-section li {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul { padding-left: 18px; }
+
+        .troubleshooting {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff9f0;
+            border-left: 4px solid #f59e0b;
+            border-radius: 4px;
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 280px;
+            background-color: #10b981;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .photo-input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .photo-method-btn { flex: 1; padding: 8px; font-size: 12px; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 4px; }
+        .photo-method-btn.active { background: #e0e0e0; font-weight: bold; }
+
+        @media (max-width: 992px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .form-area { position: static; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Generador de firmas de HispaTAV</h1>
+
+    <div class="container">
+        <!-- PANEL DE FORMULARIO -->
+        <div class="card form-area">
+            
+            <div class="form-section">
+                <div class="form-section-title">1. Datos Personales</div>
+                <div class="form-group">
+                    <label>Nombre y apellidos</label>
+                    <input type="text" id="input-name" value="Rafael López Sánchez">
+                </div>
+                <div class="form-group">
+                    <label>Cargo en el evento</label>
+                    <input type="text" id="input-role" value="Traductor Audiovisual">
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="input-email" value="contacto@hispatav.com">
+                </div>
+                <div class="form-group">
+                    <label>Sitio web</label>
+                    <input type="text" id="input-web" value="hispatav.com">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">2. Foto de Perfil (Opcional)</div>
+                <div class="photo-input-group">
+                    <button class="photo-method-btn active" onclick="setPhotoMethod('file')" id="btn-method-file">Subir Archivo</button>
+                    <button class="photo-method-btn" onclick="setPhotoMethod('url')" id="btn-method-url">URL Pública</button>
+                </div>
+                
+                <div class="form-group" id="group-file-photo">
+                    <input type="file" id="input-file-photo" accept="image/*" onchange="procesarImagenLocal(this)">
+                </div>
+
+                <div class="form-group" id="group-url-photo" style="display: none;">
+                    <input type="url" id="input-url-photo" placeholder="https://ejemplo.com/mifoto.jpg" oninput="procesarImagenURL()">
+                </div>
+
+                <div class="form-group" id="filtros-foto" style="display: none;">
+                    <label style="font-size: 12px;">Filtro de la foto</label>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px;">
+                        <label><input type="radio" name="filtro" value="normal" checked onchange="aplicarFiltro()"> Normal</label>
+                        <label><input type="radio" name="filtro" value="bn" onchange="aplicarFiltro()"> B/N</label>
+                        <label><input type="radio" name="filtro" value="rojo" onchange="aplicarFiltro()"> Rojo</label>
+                    </div>
+                </div>
+                <button id="btn-quitar-foto" class="btn btn-outline" style="display: none; margin-top: 10px;" onclick="quitarFoto()">Eliminar foto</button>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">3. Diseño</div>
+                <label class="toggle-group">
+                    <input type="checkbox" id="toggle-frame" checked onchange="actualizarVistas()">
+                    <span>Mostrar marco de celuloide</span>
+                </label>
+                <label class="toggle-group">
+                    <input type="checkbox" id="toggle-shadow" checked onchange="actualizarVistas()">
+                    <span>Añadir sombra discreta</span>
+                </label>
+                <label class="toggle-group">
+                    <input type="checkbox" id="toggle-icons" checked onchange="actualizarVistas()">
+                    <span>Mostrar iconos</span>
+                </label>
+            </div>
+
+        </div>
+
+        <!-- PANEL DE VISTA PREVIA -->
+        <div class="card preview-area">
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="cambiarPestana('modern')" id="tab-modern">📱 Gmail / Webmail</button>
+                <button class="tab-btn" onclick="cambiarPestana('generic')" id="tab-generic">💼 Outlook / Desktop</button>
+            </div>
+
+            <div class="preview-box" id="preview-container">
+                <!-- Firma inyectada aquí -->
+            </div>
+
+            <button class="btn btn-secondary" onclick="copiarFirma()">
+                Copiar firma al portapapeles
+            </button>
+
+            <!-- INSTRUCCIONES -->
+            <div class="info-card">
+                <div class="info-title">
+                    <span>📖</span> Guía de uso e instalación
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-section">
+                        <h4>¿Qué versión elegir?</h4>
+                        <ul>
+                            <li><strong>Gmail / Webmail:</strong> Utiliza iconos SVG más nítidos. Ideal para navegadores web y aplicaciones móviles modernas.</li>
+                            <li><strong>Outlook / Desktop:</strong> Utiliza caracteres estándar para iconos. Necesaria para Microsoft Outlook (escritorio), Apple Mail y entornos corporativos restrictivos.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h4>Pasos de instalación</h4>
+                        <ol>
+                            <li>Configura tus datos personales y diseño.</li>
+                            <li>Pulsa el botón <strong>"Copiar firma al portapapeles"</strong>.</li>
+                            <li>Ve a la configuración de tu gestor de correo.</li>
+                            <li>Pega directamente en el cuadro de edición con <code>Ctrl + V</code> (o <code>Cmd + V</code>).</li>
+                            <li>Guarda los cambios.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="troubleshooting">
+                    <strong>⚠️ ¿Algo no se ve bien?</strong>
+                    <p>Si tras enviar un correo no aparecen los iconos, la foto o el marco, el cliente de correo del destinatario podría estar bloqueando el diseño avanzado.</p>
+                    <p><strong>Solución:</strong> Prueba a desmarcar las casillas de diseño (quitar marco o iconos) para obtener una versión más simplificada. Recomendamos siempre <strong>enviar un correo de prueba</strong> para verificar el resultado.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">¡Firma copiada!</div>
+
+    <script>
+        let currentTab = 'modern';
+        let photoData = { type: 'none', src: '' }; 
+        let imagenOriginalObj = null;
+
+        const LOGO_URL = "https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/isotipo-hispatav1.png";
+
+        function cambiarPestana(tabName) {
+            currentTab = tabName;
+            document.getElementById('tab-modern').classList.remove('active');
+            document.getElementById('tab-generic').classList.remove('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            actualizarVistas();
+        }
+
+        function setPhotoMethod(method) {
+            document.getElementById('btn-method-file').classList.remove('active');
+            document.getElementById('btn-method-url').classList.remove('active');
+            document.getElementById(`btn-method-${method}`).classList.add('active');
+            document.getElementById('group-file-photo').style.display = method === 'file' ? 'block' : 'none';
+            document.getElementById('group-url-photo').style.display = method === 'url' ? 'block' : 'none';
+            quitarFoto();
+        }
+
+        function procesarImagenLocal(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        imagenOriginalObj = img;
+                        document.getElementById('filtros-foto').style.display = "block";
+                        document.getElementById('btn-quitar-foto').style.display = "inline-block";
+                        aplicarFiltro();
+                    };
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function aplicarFiltro() {
+            if (!imagenOriginalObj) return;
+            const filtro = document.querySelector('input[name="filtro"]:checked').value;
+            const canvas = document.createElement('canvas');
+            
+            // Recorte cuadrado centrado
+            const size = Math.min(imagenOriginalObj.width, imagenOriginalObj.height);
+            canvas.width = 400; // Resolución fija para evitar problemas
+            canvas.height = 400;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(
+                imagenOriginalObj, 
+                (imagenOriginalObj.width - size) / 2, (imagenOriginalObj.height - size) / 2, size, size, 
+                0, 0, 400, 400
+            );
+
+            if (filtro !== 'normal') {
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i+1], b = data[i+2];
+                    const gray = 0.3 * r + 0.59 * g + 0.11 * b;
+                    if (filtro === 'bn') {
+                        data[i] = data[i+1] = data[i+2] = gray;
+                    } else if (filtro === 'rojo') {
+                        data[i] = Math.min(255, r * 0.7 + 233 * 0.3);
+                        data[i+1] = g * 0.5;
+                        data[i+2] = b * 0.5;
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            photoData = { type: 'file', src: canvas.toDataURL('image/jpeg', 0.8) };
+            actualizarVistas();
+        }
+
+        function procesarImagenURL() {
+            const url = document.getElementById('input-url-photo').value.trim();
+            if (url) {
+                photoData = { type: 'url', src: url };
+                document.getElementById('btn-quitar-foto').style.display = "inline-block";
+            } else {
+                photoData = { type: 'none', src: '' };
+            }
+            actualizarVistas();
+        }
+
+        function quitarFoto() {
+            imagenOriginalObj = null;
+            photoData = { type: 'none', src: '' };
+            document.getElementById('filtros-foto').style.display = "none";
+            document.getElementById('btn-quitar-foto').style.display = "none";
+            actualizarVistas();
+        }
+
+        function construirHTML(modo) {
+            const name = document.getElementById('input-name').value || 'Nombre Apellidos';
+            const role = document.getElementById('input-role').value || 'Cargo';
+            const email = document.getElementById('input-email').value;
+            const web = document.getElementById('input-web').value;
+            const showFrame = document.getElementById('toggle-frame').checked;
+            const showIcons = document.getElementById('toggle-icons').checked;
+            const showShadow = document.getElementById('toggle-shadow').checked;
+            const isGeneric = (modo === 'generic');
+
+            const fontMain = isGeneric ? "Arial, sans-serif" : "'Montserrat', Arial, sans-serif";
+            const fontSec = isGeneric ? "'Times New Roman', serif" : "'Noto Serif', serif";
+            
+            const shadowStyle = showShadow ? "box-shadow: 0 4px 15px rgba(0,0,0,0.15);" : "";
+
+            const iconEmailGeneric = `<span style="color: #ffffff; font-family: Segoe UI, Arial; font-size: 14px; line-height: 1;">&#9993;</span>`; 
+            const iconWebGeneric = `<span style="color: #ffffff; font-family: Segoe UI, Arial; font-size: 14px; line-height: 1;">&#10148;</span>`; 
+
+            const iconEmailModern = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIHg9IjMiIHk9IjUiIHJ4PSIyIi8+PHBhdGggZD0ibTcgOWw1IDUgNS01Ii8+PC9zdmc+";
+            const iconWebModern = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PHBhdGggZD0iTTIgMTJoMjBNMTIgMmExNSAxNSAwIDAgMSA0IDEwIDE1IDE1IDAgMCAxLTQgMTAgMTUgMTUgMCAwIDEtNC0xMCAxNSAxNSAwIDAgMSA0LTEweiIvPjwvc3ZnPg==";
+
+            let html = ``;
+
+            if (showFrame) {
+                html += `<table cellpadding="0" cellspacing="0" border="0" style="background-color: #333333; border: 8px solid #333333; ${shadowStyle}"><tr><td style="border-top: 8px dashed #ffffff; border-bottom: 8px dashed #ffffff; padding: 12px 0;">`;
+            }
+
+            html += `<table cellpadding="0" cellspacing="0" border="0" style="font-family: ${fontMain}; border-collapse: collapse; ${!showFrame ? shadowStyle : ''}"><tr>`;
+
+            // BLOQUE LOGO
+            html += `<td width="160" height="140" align="center" valign="middle" style="background-color: #ffffff; padding: 15px; mso-line-height-rule: exactly;">`;
+            html += `<img src="${LOGO_URL}" alt="Logo" width="120" border="0" style="display: block; width: 120px; outline: none; border:0;">`;
+            html += `</td>`;
+
+            // BLOQUE FOTO (Corregido para rellenar de arriba a abajo)
+            if (photoData.type !== 'none') {
+                html += `<td width="140" height="140" style="background-color: #333333; padding: 0; margin: 0; mso-line-height-rule: exactly;">`;
+                html += `<div style="width: 140px; height: 140px; background-image: url('${photoData.src}'); background-size: cover; background-position: center; display: block;">`;
+                // Imagen oculta para navegadores que no cargan el background del div pero que respeta el tamaño
+                html += `<!--[if gte mso 9]>
+                <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:140px;height:140px;">
+                <v:fill type="frame" src="${photoData.src}" color="#333333" />
+                <v:textbox inset="0,0,0,0">
+                <![endif]-->`;
+                html += `<img src="${photoData.src}" width="140" height="140" style="display: block; width: 140px; height: 140px; opacity: 0; position: absolute;" alt="Foto">`;
+                html += `<!--[if gte mso 9]>
+                </v:textbox>
+                </v:rect>
+                <![endif]-->`;
+                html += `</div></td>`;
+            }
+
+            // BLOQUE DATOS
+            html += `<td valign="middle" style="background-color: #e92340; padding: 15px 30px; min-width: 240px; height: 140px; mso-line-height-rule: exactly;">`;
+            html += `<div style="font-size: 19px; font-weight: bold; color: #ffffff; line-height: 22px; margin-bottom: 2px; white-space: nowrap;">${name}</div>`;
+            html += `<div style="font-family: ${fontSec}; font-size: 14px; font-style: italic; color: #ffffff; line-height: 18px; padding-bottom: 12px; white-space: nowrap;">${role}</div>`;
+
+            if (email || web) {
+                html += `<table cellpadding="0" cellspacing="0" border="0">`;
+                if (email) {
+                    html += `<tr><td width="24" valign="middle" style="padding-bottom: 4px; mso-line-height-rule: exactly;">`;
+                    if (showIcons) {
+                        html += isGeneric ? iconEmailGeneric : `<img src="${iconEmailModern}" width="16" height="16" style="display: block; border:0;">`;
+                    }
+                    html += `</td><td valign="middle" style="padding-bottom: 4px; mso-line-height-rule: exactly;">`;
+                    html += `<a href="mailto:${email}" style="font-size: 12px; color: #ffffff; text-decoration: none; font-family: ${fontMain};">${email}</a>`;
+                    html += `</td></tr>`;
+                }
+                if (web) {
+                    html += `<tr><td width="24" valign="middle" style="mso-line-height-rule: exactly;">`;
+                    if (showIcons) {
+                        html += isGeneric ? iconWebGeneric : `<img src="${iconWebModern}" width="15" height="15" style="display: block; border:0;">`;
+                    }
+                    html += `</td><td valign="middle" style="mso-line-height-rule: exactly;">`;
+                    html += `<a href="https://${web}" target="_blank" style="font-size: 12px; font-weight: bold; color: #ffffff; text-decoration: none; font-family: ${fontMain};">${web}</a>`;
+                    html += `</td></tr>`;
+                }
+                html += `</table>`;
+            }
+            html += `</td></tr></table>`;
+
+            if (showFrame) html += `</td></tr></table>`;
+            return html;
+        }
+
+        function actualizarVistas() {
+            document.getElementById('preview-container').innerHTML = construirHTML(currentTab);
+        }
+
+        function copiarFirma() {
+            const container = document.getElementById('preview-container');
+            const range = document.createRange();
+            range.selectNode(container);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            const toast = document.getElementById("toast");
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 3000);
+            sel.removeAllRanges();
+        }
+
+        ['input-name', 'input-role', 'input-email', 'input-web'].forEach(id => {
+            document.getElementById(id).addEventListener('input', actualizarVistas);
+        });
+
+        window.onload = actualizarVistas;
+    </script>
+</body>
+</html>
