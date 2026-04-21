@@ -1,4 +1,28 @@
 ============================================================
+CHANGELOG - SUBPANDAASS v1.0.2 - April 2026
+
+This update enhances the Sync Notepad workflow even further,
+introducing a faster and more intuitive way to create subtitles
+on the fly directly from your text.
+
+PANDA BUTTON & SMART TEXT IMPORT
+
+>>> Panda button integration: A new button has been added to
+the Sync Notepad, enhancing the "Import text for syncing..."
+feature with instant subtitle creation capabilities.
+
+>>> On-the-fly subtitling: Simply press the panda button to
+generate subtitles directly from the notepad content,
+speeding up your syncing workflow.
+
+>>> Smart text grouping: The program now intelligently detects
+blank line breaks and groups consecutive lines into a
+single subtitle block.
+
+
+============================================================
+
+============================================================
     CHANGELOG - SUBPANDAASS v1.0.1 - March 2026
 ============================================================
 
