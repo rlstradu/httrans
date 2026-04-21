@@ -1204,6 +1204,7 @@ margin: 10px;
                         <button id="export-notepad-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_export_notepad" data-i18n-tooltip="tooltip_export_notepad" data-tooltip="Guardar texto del bloc de notas">Guardar texto</button>
                         <button id="toggle-notepad-translation-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_notepad_translation_mode" data-i18n-tooltip="tooltip_notepad_translation_mode" data-tooltip="Activa doble columna para traducir">Modo Traducción</button>
                         <button id="create-sub-from-notepad-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_create_sub_from_text" data-i18n-tooltip="tooltip_create_sub_from_text" data-tooltip="Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido">Crear subtítulo</button>
+                        <button id="panda-notepad-btn" class="icon-btn compact-icon-btn transition-colors" data-tooltip="Crear subtítulo con la primera línea al pulsar y soltar (Insert)">🐼</button>
                         <button id="close-notepad-btn" class="icon-btn compact-icon-btn hover:text-red-500">&times;</button>
                     </div>
                 </div>
@@ -1632,6 +1633,8 @@ margin: 10px;
             lbl_export_translation: "Traducción",
             sc_name_createSubFromNotepad: "Crear desde bloc de notas",
             sc_desc_createSubFromNotepad: "Crea un subtítulo con el texto seleccionado en el bloc.",
+            sc_name_notepadPandaHold: "Crear con bloc de notas al pulsar",
+            sc_desc_notepadPandaHold: "Crea un subtítulo con la primera línea del bloc al pulsar y cierra al soltar.",
             load_video: "Cargar vídeo",
             import_shot_changes: "Importar cambios de plano (.txt)",
 
@@ -2025,6 +2028,8 @@ margin: 10px;
             lbl_export_translation: "Translation",
             sc_name_createSubFromNotepad: "Create from notepad",
             sc_desc_createSubFromNotepad: "Creates subtitle using selected text in the notepad.",
+            sc_name_notepadPandaHold: "Create from notepad on hold",
+            sc_desc_notepadPandaHold: "Hold to create a subtitle using the first line of the notepad, release to close.",
             load_video: "Load Video",
             import_shot_changes: "Import shot changes (.txt)",
 
@@ -2617,6 +2622,7 @@ const showFeedbackMessage = (elementId, duration = 2000) => {
         let isUserEditing = false;
         let isSpottingHoldActive = false;
 let isCreatingSubtitle = false;
+let isNotepadPandaCreating = false;
 let lastActiveSubtitleIndex = -1;
         let workMode = 'edit'; // 'edit' or 'sync'
 let selectionRegion = null; // Guardará la región creada al arrastrar
@@ -2662,6 +2668,7 @@ let autoPlayNavLoops = 1;
  spottingHold: { code: 'Backquote', altKey: false, ctrlKey: false, shiftKey: false },
             createFromSelection: { code: 'KeyN', altKey: true, ctrlKey: false, shiftKey: false },
             createSubFromNotepad: { code: 'KeyM', altKey: true, ctrlKey: false, shiftKey: false },
+            notepadPandaHold: { code: 'Insert', altKey: false, ctrlKey: false, shiftKey: false },
             nudgeForward: { code: 'KeyV', altKey: true, ctrlKey: false, shiftKey: false },
             nudgeBackward: { code: 'KeyC', altKey: true, ctrlKey: false, shiftKey: false },
  nudgeStartBackward: { code: 'KeyZ', altKey: true, ctrlKey: false, shiftKey: false },
@@ -2694,6 +2701,7 @@ let autoPlayNavLoops = 1;
                 createAndHold: { name: 'Crear al pulsar, cerrar al soltar', desc: 'Crea un subtítulo al pulsar la tecla y cierra al soltarla.' },
                 createFromSelection: { name: 'Crear desde selección', desc: 'Convierte la selección actual de la onda en un subtítulo.' },
                 createSubFromNotepad: { name: 'Crear desde bloc de notas', desc: 'Crea un subtítulo con el texto seleccionado en el bloc.' },
+                notepadPandaHold: { name: 'Crear con bloc de notas al pulsar (Panda)', desc: 'Crea subtítulo con la primera línea del bloc al pulsar y cierra al soltar.' },
                 splitSub: { name: 'Edición: dividir subtítulo', desc: 'Divide el subtítulo actual en dos en la posición del cursor.' },
                 mergePrev: { name: 'Edición: unir con anterior', desc: 'Combina el subtítulo actual con el anterior.' },
                 mergeNext: { name: 'Edición: unir con siguiente', desc: 'Combina el subtítulo actual con el siguiente.' },
@@ -4431,7 +4439,8 @@ createAndHold: () => {
             },
             // --- LÍNEA AÑADIDA ---
             createFromSelection: handleCreateSubtitleFromSelection,
-            createSubFromNotepad: () => { document.getElementById('create-sub-from-notepad-btn').click(); }
+            createSubFromNotepad: () => { document.getElementById('create-sub-from-notepad-btn').click(); },
+            notepadPandaHold: () => { handleNotepadPandaPress(); }
         };
 
         if (actions[actionName]) actions[actionName]();
@@ -4469,6 +4478,12 @@ createAndHold: () => {
             if (shortcuts.createAndHold?.code === e.code && isPressAndHoldCreating) {
                 e.preventDefault();
                 releasePressAndHold();
+            }
+            
+            // Lógica para el Botón Panda del Bloc de Notas
+            if (shortcuts.notepadPandaHold?.code === e.code && isNotepadPandaCreating) {
+                e.preventDefault();
+                releaseNotepadPanda();
             }
         });
 
@@ -6405,6 +6420,84 @@ newProjectBtn.addEventListener('click', () => {
     const toggleNotepadTranslationBtn = document.getElementById('toggle-notepad-translation-btn');
     const createSubFromNotepadBtn = document.getElementById('create-sub-from-notepad-btn');
 
+    // --- NUEVA LÓGICA: Botón Panda del Bloc de Notas ---
+    const extractFirstLineFromNotepad = () => {
+        let activeTextarea = syncNotepadTextarea;
+        
+        // Seleccionar inteligentemente la caja de texto (priorizar donde haya texto o foco)
+        if (!syncNotepadTransCol.classList.contains('hidden')) {
+            if (document.activeElement === syncNotepadTransTextarea || syncNotepadTransTextarea.value.trim() !== '') {
+                activeTextarea = syncNotepadTransTextarea;
+            }
+        }
+        
+        let val = activeTextarea.value.trimStart();
+        if (!val) return '';
+
+        // Buscamos un bloque de texto hasta encontrar un salto de línea vacío (dos o más saltos seguidos)
+        // Usamos [\s\S] para máxima compatibilidad en cualquier navegador.
+        const blockMatch = val.match(/([\s\S]*?)(?:\n\s*\n|$)/);
+        
+        let extractedBlock = '';
+        if (blockMatch) {
+            extractedBlock = blockMatch[1].trim();
+            // Recortamos el bloque extraído incluyendo el separador, y limpiamos espacios
+            activeTextarea.value = val.substring(blockMatch[0].length).trimStart();
+        } else {
+            extractedBlock = val.trim();
+            activeTextarea.value = '';
+        }
+        
+        updateNotepadStats();
+        return extractedBlock;
+    };
+
+    window.handleNotepadPandaPress = () => {
+        if (isNotepadPandaCreating) return;
+        
+        // Si hay un subtítulo seleccionado, lo deseleccionamos para poder crear el nuevo
+        if (activeSubtitleIndex !== -1) {
+            setActiveSubtitle(-1);
+        }
+
+        isNotepadPandaCreating = true;
+        document.getElementById('panda-notepad-btn').classList.add('!bg-blue-500', '!text-white');
+        
+        const firstLine = extractFirstLineFromNotepad();
+        
+        isCreatingSubtitle = true;
+        if (!wsRegions) return;
+        saveState();
+        
+        const currentTime = videoPlayer.currentTime;
+        const newSubtitle = { 
+            id: String(getNextAvailableId()), 
+            start: currentTime, 
+            end: currentTime + 0.1, 
+            text: firstLine, 
+            style: 'Default' 
+        };
+        subtitles.push(newSubtitle);
+        setActiveSubtitle(subtitles.length - 1);
+        renderSubtitles();
+    };
+
+    window.releaseNotepadPanda = () => {
+         if (isNotepadPandaCreating) {
+            document.getElementById('panda-notepad-btn').classList.remove('!bg-blue-500', '!text-white');
+            isNotepadPandaCreating = false;
+            handleSetOutTime(); // Cierra el subtítulo
+        }
+    };
+
+    const pandaNotepadBtn = document.getElementById('panda-notepad-btn');
+    if(pandaNotepadBtn) {
+        pandaNotepadBtn.addEventListener('mousedown', handleNotepadPandaPress);
+        document.body.addEventListener('mouseup', releaseNotepadPanda);
+        pandaNotepadBtn.addEventListener('mouseleave', releaseNotepadPanda);
+    }
+    // --- FIN NUEVA LÓGICA ---
+
     // Lógica para exportar el bloc de notas
     const exportNotepadBtn = document.getElementById('export-notepad-btn');
     const exportNotepadModal = document.getElementById('export-notepad-modal');
@@ -6468,6 +6561,17 @@ newProjectBtn.addEventListener('click', () => {
     // Actualizar cuando el usuario escribe
     syncNotepadTextarea.addEventListener('input', updateNotepadStats);
     syncNotepadTransTextarea.addEventListener('input', updateNotepadStats);
+
+    // Deseleccionar subtítulos al interactuar con el bloc de notas
+    [syncNotepadTextarea, syncNotepadTransTextarea].forEach(textarea => {
+        ['focus', 'click'].forEach(eventType => {
+            textarea.addEventListener(eventType, () => {
+                if (activeSubtitleIndex !== -1) {
+                    setActiveSubtitle(-1);
+                }
+            });
+        });
+    });
     
     // Sincronizar el scroll de ambas cajas de texto y de sus stats
     const syncScroll = (sourceElem) => {
@@ -6553,6 +6657,13 @@ newProjectBtn.addEventListener('click', () => {
         if (sc && e.code === sc.code && e.altKey === sc.altKey && e.ctrlKey === sc.ctrlKey && e.shiftKey === sc.shiftKey) {
             e.preventDefault();
             createSubFromNotepadBtn.click();
+        }
+        
+        // Habilitar el atajo del Botón Panda (Insert) mientras el cursor está en el bloc
+        const scPanda = shortcuts.notepadPandaHold;
+        if (scPanda && e.code === scPanda.code && e.altKey === scPanda.altKey && e.ctrlKey === scPanda.ctrlKey && e.shiftKey === scPanda.shiftKey) {
+            e.preventDefault();
+            handleNotepadPandaPress();
         }
     };
     syncNotepadTextarea.addEventListener('keydown', handleNotepadKeydown);
