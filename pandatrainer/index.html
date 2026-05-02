@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PandaTrainer</title>
+    <!-- Tailwind CSS para el diseño -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pandaGreen: '#51a200',
+                        pandaDark: '#373737',
+                        pandaLight: '#f9fafb',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ocultar barra de desplazamiento para las categorías */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animación suave para el Modal */
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-100 text-pandaDark font-sans antialiased">
+
+    <!-- Contenedor Principal estilo App Móvil y PC -->
+    <div id="app-container" class="w-full max-w-5xl mx-auto bg-white min-h-screen md:min-h-[95vh] md:my-6 md:rounded-2xl shadow-2xl relative flex flex-col transition-all duration-300">
+        
+        <!-- Cabecera -->
+        <header class="bg-white p-4 shadow-sm flex items-center justify-between sticky top-0 z-10 md:rounded-t-2xl">
+            <!-- Espaciador para centrar el logo -->
+            <div class="w-24"></div> 
+            
+            <!-- Logo Centrado -->
+            <div class="flex-1 flex justify-center py-2">
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandatrainer/media/pandatrainer-logo.png" alt="PandaTrainer Logo" class="h-24 md:h-32 w-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300">
+            </div>
+            
+            <!-- Controles (Vista e Idioma) -->
+            <div class="flex items-center gap-4 w-24 justify-end">
+                <!-- Botón Alternar Vista Móvil/PC -->
+                <button id="viewToggleBtn" onclick="toggleViewMode()" class="text-gray-500 hover:text-pandaGreen transition-colors focus:outline-none" title="Alternar Vista">
+                    <svg id="icon-mobile" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <svg id="icon-pc" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </button>
+
+                <!-- Botón de Idioma (ES | EN) -->
+                <div class="flex items-center text-sm font-bold">
+                    <button id="lang-es" onclick="setLang('es')" class="text-pandaGreen hover:scale-110 transition-transform">ES</button>
+                    <span class="mx-1 text-gray-300">|</span>
+                    <button id="lang-en" onclick="setLang('en')" class="text-gray-400 hover:scale-110 transition-transform">EN</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navegación de Pestañas -->
+        <nav class="flex border-b border-gray-200 bg-white">
+            <button id="tab-exercises" class="flex-1 py-3 text-center font-semibold text-pandaGreen border-b-2 border-pandaGreen transition-colors" onclick="switchTab('exercises')">
+                <span data-lang="es">Ejercicios</span>
+                <span data-lang="en" class="hidden">Exercises</span>
+            </button>
+            <button id="tab-routine" class="flex-1 py-3 text-center font-semibold text-gray-500 border-b-2 border-transparent transition-colors" onclick="switchTab('routine')">
+                <span data-lang="es">Mi Rutina</span>
+                <span data-lang="en" class="hidden">My Routine</span>
+            </button>
+        </nav>
+
+        <!-- Pestaña: EJERCICIOS -->
+        <main id="view-exercises" class="flex-1 overflow-y-auto pb-6">
+            <!-- Filtro de Categorías -->
+            <div class="bg-pandaLight border-b border-gray-200 relative flex items-center overflow-hidden">
+                <!-- Botón Izquierda -->
+                <button onclick="scrollCategories('left')" class="absolute left-0 z-10 h-full px-1 flex items-center bg-gradient-to-r from-pandaLight via-pandaLight/90 to-transparent text-pandaGreen hover:text-pandaDark focus:outline-none" aria-label="Deslizar izquierda">
+                    <div class="bg-white rounded-full shadow-md p-1 ml-1 border border-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </div>
+                </button>
+                
+                <div id="category-filters" class="flex gap-2 overflow-x-auto no-scrollbar py-3 px-10 w-full scroll-smooth">
+                    <!-- Los botones de filtro se generan por JS -->
+                </div>
+
+                <!-- Botón Derecha -->
+                <button onclick="scrollCategories('right')" class="absolute right-0 z-10 h-full px-1 flex items-center bg-gradient-to-l from-pandaLight via-pandaLight/90 to-transparent text-pandaGreen hover:text-pandaDark focus:outline-none" aria-label="Deslizar derecha">
+                    <div class="bg-white rounded-full shadow-md p-1 mr-1 border border-gray-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Lista de Ejercicios (Grid dinámico) -->
+            <div id="exercises-list" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-all duration-300">
+                <!-- Los ejercicios se inyectan aquí -->
+            </div>
+        </main>
+
+        <!-- Pestaña: MI RUTINA -->
+        <main id="view-routine" class="flex-1 overflow-y-auto p-4 hidden pb-6">
+            <div id="routine-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4 transition-all duration-300">
+                <!-- Los items de rutina se inyectan aquí -->
+            </div>
+            
+            <!-- Estado vacío -->
+            <div id="empty-routine" class="text-center mt-10 text-gray-400 hidden">
+                <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <p data-lang="es">Tu rutina está vacía.</p>
+                <p data-lang="en" class="hidden">Your routine is empty.</p>
+                <button onclick="switchTab('exercises')" class="mt-4 px-4 py-2 bg-pandaGreen text-white rounded-full font-medium shadow-sm active:scale-95 transition-transform">
+                    <span data-lang="es">+ Añadir Ejercicios</span>
+                    <span data-lang="en" class="hidden">+ Add Exercises</span>
+                </button>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL POPUP (Oculto por defecto) -->
+    <div id="modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden relative shadow-2xl">
+            <!-- Botón Cerrar (X) -->
+            <button onclick="closeModal()" class="absolute top-3 right-3 z-10 bg-pandaDark/80 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-pandaGreen transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <!-- Contenido Multimedia ajustado -->
+            <div id="modal-media" class="w-full bg-black flex justify-center items-center h-[50vh] md:h-[60vh]">
+                <!-- Se inyecta <video> o <img> aquí -->
+            </div>
+            
+            <!-- Título y Acción -->
+            <div class="p-5">
+                <h3 id="modal-title" class="text-xl font-bold text-pandaDark mb-1">Título del Ejercicio</h3>
+                <p id="modal-category" class="text-sm text-pandaGreen font-semibold mb-4">Categoría</p>
+                
+                <button id="modal-add-btn" class="w-full bg-pandaDark text-white py-3 rounded-xl font-semibold hover:bg-pandaGreen transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span data-lang="es" class="lang-modal-add">Añadir a Mi Rutina</span>
+                    <span data-lang="en" class="lang-modal-add hidden">Add to Routine</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LÓGICA JAVASCRIPT -->
+    <script>
+        // ESTADO DE LA APLICACIÓN
+        let currentLang = 'es';
+        let currentCategory = 'All';
+        let isMobileViewForce = false; // Nuevo estado para forzar vista móvil
+        let routine = JSON.parse(localStorage.getItem('pandaTrainerRoutine')) || [];
+        
+        // DICCIONARIO DE TRADUCCIONES UI
+        const translations = {
+            es: { sets: "Series", reps: "Reps", mins: "Minutos", remove: "Eliminar" },
+            en: { sets: "Sets", reps: "Reps", mins: "Minutes", remove: "Remove" }
+        };
+
+        // CATEGORÍAS DISPONIBLES
+        const categories = [
+            { id: 'All', es: 'Todos', en: 'All' },
+            { id: 'Chest', es: 'Pecho', en: 'Chest' },
+            { id: 'Biceps', es: 'Bíceps', en: 'Biceps' },
+            { id: 'Triceps', es: 'Tríceps', en: 'Triceps' },
+            { id: 'Back', es: 'Espalda', en: 'Back' },
+            { id: 'Shoulders', es: 'Hombros', en: 'Shoulders' },
+            { id: 'Abs', es: 'Abdominales', en: 'Abs' },
+            { id: 'Quads', es: 'Cuádriceps', en: 'Quads' },
+            { id: 'Hamstrings', es: 'Isquiotibiales', en: 'Hamstrings' },
+            { id: 'Hips', es: 'Caderas', en: 'Hips' },
+            { id: 'Calves', es: 'Pantorrillas', en: 'Calves' },
+            { id: 'Forearms', es: 'Antebrazos', en: 'Forearms' },
+            { id: 'Neck', es: 'Cuello', en: 'Neck' },
+            { id: 'Cardio', es: 'Cardio', en: 'Cardio' }
+        ];
+
+        // BASE DE DATOS DE EJERCICIOS (Traducciones al español ajustadas a normas RAE)
+        const db = [
+            { id: 1, file: "Triceps Pushdown (Cable).mp4", cat: ["Triceps"], en: "Triceps Pushdown", es: "Extensión de tríceps" },
+            { id: 2, file: "Biceps Curl.mp4", cat: ["Biceps"], en: "Biceps Curl", es: "Curl de bíceps" },
+            { id: 3, file: "Cable Assisted Inverse Leg Curl.mp4", cat: ["Hamstrings"], en: "Assisted Inverse Leg Curl", es: "Curl inverso asistido de pierna" },
+            { id: 4, file: "Cable Cross over Revers Fly.mp4", cat: ["Shoulders", "Back"], en: "Cross Over Reverse Fly", es: "Vuelo inverso cruzado" },
+            { id: 5, file: "Cable Curl Biceps.mp4", cat: ["Biceps"], en: "Cable Biceps Curl", es: "Curl de bíceps en polea" },
+            { id: 6, file: "Cable Deadlift.mp4", cat: ["Hamstrings", "Back"], en: "Cable Deadlift", es: "Peso muerto en polea" },
+            { id: 7, file: "Cable Donkey Kickback v2.mp4", cat: ["Hips"], en: "Donkey Kickback v2", es: "Patada de burro v2" },
+            { id: 8, file: "Cable Donkey Kickback.mp4", cat: ["Hips"], en: "Donkey Kickback", es: "Patada de burro" },
+            { id: 9, file: "Cable Forward Lunge.jpg", cat: ["Quads"], en: "Forward Lunge", es: "Zancada frontal" },
+            { id: 10, file: "Cable Front Shoulder Raise.mp4", cat: ["Shoulders"], en: "Front Shoulder Raise", es: "Elevación frontal de hombro" },
+            { id: 11, file: "Cable Front Squat.jpg", cat: ["Quads"], en: "Front Squat", es: "Sentadilla frontal" },
+            { id: 12, file: "Cable Front Squat.mp4", cat: ["Quads"], en: "Front Squat (Video)", es: "Sentadilla frontal (vídeo)" },
+            { id: 13, file: "Cable Half Kneeling Face Pull.mp4", cat: ["Shoulders", "Back"], en: "Half Kneeling Face Pull", es: "Face pull semiarrodillado" },
+            { id: 14, file: "Cable Hip Abduction 2.mp4", cat: ["Hips"], en: "Hip Abduction 2", es: "Abducción de cadera 2" },
+            { id: 15, file: "Cable Hip Abduction.jpg", cat: ["Hips"], en: "Hip Abduction (Img)", es: "Abducción de cadera (img)" },
+            { id: 16, file: "Cable hip abduction.mp4", cat: ["Hips"], en: "Hip Abduction", es: "Abducción de cadera" },
+            { id: 17, file: "Cable Hip Adduction.jpg", cat: ["Hips"], en: "Hip Adduction (Img)", es: "Aducción de cadera (img)" },
+            { id: 18, file: "Cable Hip Adduction.mp4", cat: ["Hips"], en: "Hip Adduction", es: "Aducción de cadera" },
+            { id: 19, file: "Cable horizontal Pallof Press.mp4", cat: ["Abs"], en: "Horizontal Pallof Press", es: "Press Pallof horizontal" },
+            { id: 20, file: "Cable Kneel Crunch v2.mp4", cat: ["Abs"], en: "Kneeling Crunch v2", es: "Encogimiento arrodillado v2" },
+            { id: 21, file: "Cable Kneeling Crunch.mp4", cat: ["Abs"], en: "Kneeling Crunch", es: "Encogimiento arrodillado" },
+            { id: 22, file: "Cable Kneeling Rear Delt Row.mp4", cat: ["Shoulders", "Back"], en: "Kneeling Rear Delt Row", es: "Remo posterior arrodillado" },
+            { id: 23, file: "Cable Lateral Raise.mp4", cat: ["Shoulders"], en: "Lateral Raise", es: "Elevación lateral" },
+            { id: 24, file: "Cable Lunge.jpg", cat: ["Quads"], en: "Cable Lunge", es: "Zancada en polea" },
+            { id: 25, file: "Cable Lying Face Pull.mp4", cat: ["Shoulders", "Back"], en: "Lying Face Pull", es: "Face pull tumbado" },
+            { id: 26, file: "Cable One Arm Lateral Raise.mp4", cat: ["Shoulders"], en: "One Arm Lateral Raise", es: "Elevación lateral a 1 mano" },
+            { id: 27, file: "Cable Overhead Tricep Extension.mp4", cat: ["Triceps"], en: "Overhead Tricep Extension", es: "Extensión de tríceps sobre cabeza" },
+            { id: 28, file: "Cable Rear Delt Row.mp4", cat: ["Shoulders", "Back"], en: "Rear Delt Row", es: "Remo de deltoides posterior" },
+            { id: 29, file: "Cable Seated Crunch.mp4", cat: ["Abs"], en: "Seated Crunch", es: "Encogimiento sentado" },
+            { id: 30, file: "Cable Seated Face Pull (with rope).jpg", cat: ["Shoulders", "Back"], en: "Seated Face Pull (Rope)", es: "Face pull sentado (cuerda)" },
+            { id: 31, file: "Cable Seated Neck Flexion.mp4", cat: ["Neck"], en: "Seated Neck Flexion", es: "Flexión de cuello sentado" },
+            { id: 32, file: "Cable Seated Single Leg Extension.mp4", cat: ["Quads"], en: "Seated Single Leg Extension", es: "Extensión de 1 pierna sentado" },
+            { id: 33, file: "Cable Standing Crunch.mp4", cat: ["Abs"], en: "Standing Crunch", es: "Encogimiento de pie" },
+            { id: 34, file: "Cable Standing Face Pull (with rope).mp4", cat: ["Shoulders", "Back"], en: "Standing Face Pull (Rope)", es: "Face pull de pie (cuerda)" },
+            { id: 35, file: "Cable Standing Face Pull.mp4", cat: ["Shoulders", "Back"], en: "Standing Face Pull", es: "Face pull de pie" },
+            { id: 36, file: "Cable Standing Front Raise Variation.mp4", cat: ["Shoulders"], en: "Standing Front Raise Var.", es: "Variante elevación frontal" },
+            { id: 37, file: "Cable Standing Rear Delt Horizontal Row.jpg", cat: ["Shoulders", "Back"], en: "Standing Rear Delt Row", es: "Remo horizontal posterior" },
+            { id: 38, file: "Cable Standing Reverse Grip Curl.mp4", cat: ["Biceps"], en: "Standing Reverse Grip Curl", es: "Curl invertido de pie" },
+            { id: 39, file: "Cable Standing Single Delt Row.mp4", cat: ["Shoulders", "Back"], en: "Standing Single Delt Row", es: "Remo de hombro a 1 mano" },
+            { id: 40, file: "Cable Standing Wrist Curl.jpg", cat: ["Forearms"], en: "Standing Wrist Curl", es: "Curl de muñeca de pie" },
+            { id: 41, file: "Cable Standing Wrist Reverse Curl.jpg", cat: ["Forearms"], en: "Standing Wrist Reverse Curl", es: "Curl invertido de muñeca" },
+            { id: 42, file: "Cable Standing Wrist Roll.jpg", cat: ["Forearms"], en: "Standing Wrist Roll", es: "Rodillo de muñeca" },
+            { id: 43, file: "Cable Twist 2.mp4", cat: ["Abs"], en: "Cable Twist 2", es: "Giro en polea 2" },
+            { id: 44, file: "Cable Twist.mp4", cat: ["Abs"], en: "Cable Twist", es: "Giro en polea" },
+            { id: 45, file: "Cable Y-raise.mp4", cat: ["Shoulders"], en: "Cable Y-Raise", es: "Elevación en Y (polea)" },
+            { id: 46, file: "Chest-Supported Cable Seated Rear Delt Fly.mp4", cat: ["Shoulders", "Back"], en: "Chest-Supported Rear Delt Fly", es: "Vuelo posterior apoyado" },
+            { id: 47, file: "Curl with Multipurpose V bar.mp4", cat: ["Biceps"], en: "Curl with V-Bar", es: "Curl con barra en V" },
+            { id: 48, file: "High Pulley Overhead Tricep Extension.mp4", cat: ["Triceps"], en: "High Pulley Tricep Ext.", es: "Extensión de tríceps en polea alta" },
+            { id: 49, file: "Cable-Mid-Fly_Chest.gif", cat: ["Chest"], en: "Cable Mid Fly", es: "Cruce medio en polea" },
+            { id: 50, file: "Cable-Low-Fly_Chest.mp4", cat: ["Chest"], en: "Cable Low Fly", es: "Cruce bajo en polea" },
+            { id: 51, file: "Cable-Standing-Up-Straight-Crossovers_Chest-flat.mp4", cat: ["Chest"], en: "Standing Straight Crossovers", es: "Cruce de pie recto" },
+            { id: 52, file: "Cable-Decline-Fly_Chest-flat.mp4", cat: ["Chest"], en: "Decline Cable Fly", es: "Cruce declinado en polea" },
+            { id: 53, file: "Cable-Lying-Fly_Chest-flat.mp4", cat: ["Chest"], en: "Lying Cable Fly", es: "Cruce tumbado en polea" },
+            { id: 54, file: "Cable-Incline-Bench-Press_Chest-flat.mp4", cat: ["Chest"], en: "Incline Cable Bench Press", es: "Press de banca inclinado en polea" },
+            { id: 55, file: "Cable-Bar-Lateral-Pulldown_Back-flat.mp4", cat: ["Back"], en: "Bar Lateral Pulldown", es: "Jalón lateral con barra" },
+            { id: 56, file: "Treadmill-Walking.jpg", cat: ["Cardio"], en: "Treadmill Walking", es: "Caminar en cinta", isCardio: true },
+            { id: 57, file: "Treadmill-Running.jpg", cat: ["Cardio"], en: "Treadmill Running", es: "Correr en cinta", isCardio: true }
+        ];
+
+        // FUNCIÓN PARA GENERAR LA RUTA EXACTA DEL MEDIO (Sin paréntesis)
+        function getMediaUrl(filename) {
+            const baseUrl = "https://jugandoatraducir.com/wp-content/uploads/2026/05/";
+            // Reemplaza los espacios por guiones y elimina todos los paréntesis
+            let formattedName = filename.replace(/\s+/g, '-');
+            formattedName = formattedName.replace(/[()]/g, '');
+            return baseUrl + formattedName;
+        }
+
+        // FUNCIÓN PARA ALTERNAR LA VISTA (MÓVIL / PC)
+        function toggleViewMode() {
+            isMobileViewForce = !isMobileViewForce;
+            const container = document.getElementById('app-container');
+            const exList = document.getElementById('exercises-list');
+            const roList = document.getElementById('routine-list');
+            const iconMobile = document.getElementById('icon-mobile');
+            const iconPc = document.getElementById('icon-pc');
+
+            if (isMobileViewForce) {
+                // Forzar vista móvil
+                container.classList.remove('max-w-5xl');
+                container.classList.add('max-w-md');
+                
+                exList.classList.remove('md:grid-cols-2', 'lg:grid-cols-3');
+                roList.classList.remove('lg:grid-cols-2');
+                
+                iconPc.classList.add('hidden');
+                iconMobile.classList.remove('hidden');
+            } else {
+                // Vista PC (Responsive normal)
+                container.classList.remove('max-w-md');
+                container.classList.add('max-w-5xl');
+                
+                exList.classList.add('md:grid-cols-2', 'lg:grid-cols-3');
+                roList.classList.add('lg:grid-cols-2');
+                
+                iconMobile.classList.add('hidden');
+                iconPc.classList.remove('hidden');
+            }
+        }
+
+        // CONTROL DE IDIOMA
+        function setLang(lang) {
+            currentLang = lang;
+            
+            // Actualizar estilos de los botones ES/EN
+            const btnEs = document.getElementById('lang-es');
+            const btnEn = document.getElementById('lang-en');
+            
+            if (lang === 'es') {
+                btnEs.className = "text-pandaGreen hover:scale-110 transition-transform";
+                btnEn.className = "text-gray-400 hover:scale-110 transition-transform";
+            } else {
+                btnEn.className = "text-pandaGreen hover:scale-110 transition-transform";
+                btnEs.className = "text-gray-400 hover:scale-110 transition-transform";
+            }
+            
+            // Alternar visibilidad de los spans según el idioma
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                if (el.getAttribute('data-lang') === currentLang) {
+                    if (el.tagName === 'SPAN') {
+                        el.classList.remove('hidden'); 
+                    } else {
+                        el.classList.remove('hidden');
+                    }
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            // Re-renderizar las vistas dinámicas
+            renderFilters();
+            renderExercises();
+            renderRoutine();
+        }
+
+        // CAMBIO DE PESTAÑAS (Ejercicios vs Rutina)
+        function switchTab(tab) {
+            const btnEx = document.getElementById('tab-exercises');
+            const btnRo = document.getElementById('tab-routine');
+            const viewEx = document.getElementById('view-exercises');
+            const viewRo = document.getElementById('view-routine');
+
+            if (tab === 'exercises') {
+                btnEx.classList.add('text-pandaGreen', 'border-pandaGreen');
+                btnEx.classList.remove('text-gray-500', 'border-transparent');
+                btnRo.classList.add('text-gray-500', 'border-transparent');
+                btnRo.classList.remove('text-pandaGreen', 'border-pandaGreen');
+                viewEx.classList.remove('hidden');
+                viewRo.classList.add('hidden');
+            } else {
+                btnRo.classList.add('text-pandaGreen', 'border-pandaGreen');
+                btnRo.classList.remove('text-gray-500', 'border-transparent');
+                btnEx.classList.add('text-gray-500', 'border-transparent');
+                btnEx.classList.remove('text-pandaGreen', 'border-pandaGreen');
+                viewRo.classList.remove('hidden');
+                viewEx.classList.add('hidden');
+                renderRoutine();
+            }
+        }
+
+        // RENDERIZAR FILTROS DE CATEGORÍAS
+        function renderFilters() {
+            const container = document.getElementById('category-filters');
+            container.innerHTML = '';
+
+            categories.forEach(cat => {
+                const isSelected = currentCategory === cat.id;
+                const btn = document.createElement('button');
+                
+                // Estilos dinámicos del botón
+                btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    isSelected ? 'bg-pandaGreen text-white shadow-md' : 'bg-white text-pandaDark border border-gray-200'
+                }`;
+                btn.innerText = currentLang === 'es' ? cat.es : cat.en;
+                
+                btn.onclick = () => {
+                    currentCategory = cat.id;
+                    renderFilters(); // Re-pintar para actualizar colores
+                    renderExercises(); // Re-pintar lista
+                };
+                
+                container.appendChild(btn);
+            });
+        }
+
+        // RENDERIZAR LISTA DE EJERCICIOS
+        function renderExercises() {
+            const container = document.getElementById('exercises-list');
+            container.innerHTML = '';
+
+            const filteredDb = currentCategory === 'All' 
+                ? db 
+                : db.filter(ex => ex.cat.includes(currentCategory));
+
+            if (filteredDb.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 mt-6 col-span-full">${currentLang === 'es' ? 'No hay ejercicios en esta categoría aún.' : 'No exercises in this category yet.'}</p>`;
+                return;
+            }
+
+            filteredDb.forEach(ex => {
+                // Obtener nombres de todas las categorías a las que pertenece el ejercicio
+                const catNames = ex.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ');
+                const exName = currentLang === 'es' ? ex.es : ex.en;
+                // Soporte universal para imágenes: si no es .mp4, lo tratamos como imagen (.jpg, .gif, etc)
+                const isImg = !ex.file.toLowerCase().endsWith('.mp4');
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer";
+                card.onclick = () => openModal(ex.id);
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 flex-shrink-0 rounded-lg bg-gray-100 flex items-center justify-center text-pandaGreen overflow-hidden">
+                            ${isImg 
+                                ? `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`
+                                : `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>`
+                            }
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-pandaDark text-sm leading-tight">${exName}</h4>
+                            <span class="text-xs text-pandaGreen font-semibold">${catNames}</span>
+                        </div>
+                    </div>
+                    <button class="w-8 h-8 rounded-full bg-pandaLight flex items-center justify-center text-pandaDark hover:bg-pandaGreen hover:text-white transition-colors flex-shrink-0" onclick="event.stopPropagation(); addToRoutine(${ex.id})">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // FUNCIONALIDAD DEL MODAL
+        function openModal(id) {
+            const ex = db.find(e => e.id === id);
+            if (!ex) return;
+
+            const modal = document.getElementById('modal');
+            const mediaContainer = document.getElementById('modal-media');
+            const title = document.getElementById('modal-title');
+            const cat = document.getElementById('modal-category');
+            const addBtn = document.getElementById('modal-add-btn');
+
+            // Textos
+            title.innerText = currentLang === 'es' ? ex.es : ex.en;
+            cat.innerText = ex.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ');
+
+            // Media
+            const mediaUrl = getMediaUrl(ex.file);
+            mediaContainer.innerHTML = ''; // Limpiar anterior
+            
+            if (ex.file.toLowerCase().endsWith('.mp4')) {
+                const video = document.createElement('video');
+                video.src = mediaUrl;
+                video.autoplay = true;
+                video.loop = true;
+                video.muted = true;
+                video.playsInline = true;
+                video.className = "w-full h-full object-contain";
+                mediaContainer.appendChild(video);
+            } else {
+                const img = document.createElement('img');
+                img.src = mediaUrl;
+                img.className = "w-full h-full object-contain";
+                mediaContainer.appendChild(img);
+            }
+
+            // Configurar el botón de añadir
+            addBtn.onclick = () => {
+                addToRoutine(ex.id);
+                closeModal();
+            };
+
+            // Mostrar modal
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            // Limpiar media para que el video pare
+            document.getElementById('modal-media').innerHTML = ''; 
+        }
+
+        // FUNCIONALIDAD DE SCROLL HORIZONTAL DE CATEGORÍAS
+        function scrollCategories(direction) {
+            const container = document.getElementById('category-filters');
+            const scrollAmount = 180; // Cantidad de píxeles que avanza con cada toque
+            if (direction === 'left') {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        // CREADOR DE RUTINA
+        function addToRoutine(id) {
+            const ex = db.find(e => e.id === id);
+            
+            let routineItem = { ...ex };
+            
+            // Lógica condicional: si es cardio añade minutos, si no, series/reps
+            if (ex.isCardio) {
+                routineItem.mins = 15;
+            } else {
+                routineItem.sets = 3;
+                routineItem.reps = 12;
+            }
+            
+            routine.push(routineItem);
+            saveRoutine();
+            
+            // Pequeño feedback visual
+            alert(currentLang === 'es' ? 'Añadido a tu rutina' : 'Added to your routine');
+        }
+
+        function saveRoutine() {
+            localStorage.setItem('pandaTrainerRoutine', JSON.stringify(routine));
+            if (document.getElementById('view-routine').classList.contains('hidden') === false) {
+                renderRoutine();
+            }
+        }
+
+        function updateRoutineData(index, field, value) {
+            routine[index][field] = value;
+            saveRoutine();
+        }
+
+        function removeFromRoutine(index) {
+            routine.splice(index, 1);
+            saveRoutine();
+        }
+
+        function renderRoutine() {
+            const container = document.getElementById('routine-list');
+            const emptyState = document.getElementById('empty-routine');
+            container.innerHTML = '';
+
+            if (routine.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            const t = translations[currentLang];
+
+            routine.forEach((item, index) => {
+                const exName = currentLang === 'es' ? item.es : item.en;
+                // Extraer los nombres de las categorías si existen, si no, mantener compatibilidad con localStorage antiguo
+                const catNames = Array.isArray(item.cat) 
+                    ? item.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ')
+                    : categories.find(c => c.id === item.cat)[currentLang];
+
+                const row = document.createElement('div');
+                row.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3";
+                
+                // Lógica de visualización dependiendo de si es cardio o fuerza
+                let controlsHtml = '';
+                if (item.isCardio) {
+                    controlsHtml = `
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">${t.mins}</label>
+                                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                    <button onclick="updateRoutineData(${index}, 'mins', Math.max(1, ${item.mins || 15} - 1))" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
+                                    <input type="number" value="${item.mins || 15}" readonly class="w-full text-center bg-transparent text-pandaDark font-bold outline-none">
+                                    <button onclick="updateRoutineData(${index}, 'mins', ${item.mins || 15} + 1)" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const sets = item.sets || 3;
+                    const reps = item.reps || 12;
+                    controlsHtml = `
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">${t.sets}</label>
+                                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                    <button onclick="updateRoutineData(${index}, 'sets', Math.max(1, ${sets - 1}))" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
+                                    <input type="number" value="${sets}" readonly class="w-full text-center bg-transparent text-pandaDark font-bold outline-none">
+                                    <button onclick="updateRoutineData(${index}, 'sets', ${sets + 1})" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">${t.reps}</label>
+                                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                    <button onclick="updateRoutineData(${index}, 'reps', Math.max(1, ${reps - 1}))" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
+                                    <input type="number" value="${reps}" readonly class="w-full text-center bg-transparent text-pandaDark font-bold outline-none">
+                                    <button onclick="updateRoutineData(${index}, 'reps', ${reps + 1})" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                row.innerHTML = `
+                    <div class="flex justify-between items-start mb-3 border-b border-gray-100 pb-2">
+                        <div>
+                            <h4 class="font-bold text-pandaDark text-sm">${exName}</h4>
+                            <span class="text-xs text-pandaGreen">${catNames}</span>
+                        </div>
+                        <button onclick="removeFromRoutine(${index})" class="text-red-400 hover:text-red-600 text-xs flex items-center gap-1 font-medium transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    ${controlsHtml}
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFilters();
+            renderExercises();
+            
+            // Cerrar modal al hacer clic fuera del contenido
+            document.getElementById('modal').addEventListener('click', (e) => {
+                if (e.target.id === 'modal') closeModal();
+            });
+        });
+
+    </script>
+</body>
+</html>
