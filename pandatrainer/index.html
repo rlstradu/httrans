@@ -93,20 +93,24 @@
 
         <!-- Navegación de Pestañas -->
         <nav class="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <button id="tab-exercises" class="flex-1 py-3 text-center font-semibold text-pandaGreen border-b-2 border-pandaGreen transition-colors" onclick="switchTab('exercises')">
+            <button id="tab-exercises" class="flex-1 py-3 px-1 text-center font-semibold text-xs sm:text-sm md:text-base text-pandaGreen border-b-2 border-pandaGreen transition-colors" onclick="switchTab('exercises')">
                 <span data-lang="es">EJERCICIOS</span>
                 <span data-lang="en" class="hidden">EXERCISES</span>
             </button>
-            <button id="tab-routine" class="flex-1 py-3 text-center font-semibold text-gray-500 dark:text-gray-400 border-b-2 border-transparent transition-colors" onclick="switchTab('routine')">
+            <button id="tab-routine" class="flex-1 py-3 px-1 text-center font-semibold text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 border-b-2 border-transparent transition-colors" onclick="switchTab('routine')">
                 <span data-lang="es">MI RUTINA</span>
                 <span data-lang="en" class="hidden">MY ROUTINE</span>
+            </button>
+            <button id="tab-workouts" class="flex-1 py-3 px-1 text-center font-semibold text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 border-b-2 border-transparent transition-colors" onclick="switchTab('workouts')">
+                <span data-lang="es">ENTRENAMIENTOS</span>
+                <span data-lang="en" class="hidden">WORKOUTS</span>
             </button>
         </nav>
 
         <!-- Pestaña: EJERCICIOS -->
-        <main id="view-exercises" class="flex-1 overflow-y-auto pb-6">
+        <main id="view-exercises" class="flex-1 flex flex-col overflow-hidden">
             <!-- Filtro de Categorías -->
-            <div class="bg-pandaLight dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 relative flex items-center overflow-hidden">
+            <div class="bg-pandaLight dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 relative flex items-center flex-shrink-0">
                 <!-- Botón Izquierda -->
                 <button onclick="scrollCategories('left')" class="absolute left-0 z-10 h-full px-1 flex items-center bg-gradient-to-r from-pandaLight via-pandaLight/90 dark:from-gray-900 dark:via-gray-900/90 to-transparent text-pandaGreen hover:text-pandaDark dark:hover:text-white focus:outline-none" aria-label="Deslizar izquierda">
                     <div class="bg-white dark:bg-gray-800 rounded-full shadow-md p-1 ml-1 border border-gray-100 dark:border-gray-700">
@@ -126,8 +130,18 @@
                 </button>
             </div>
 
+            <!-- Buscador en tiempo real -->
+            <div class="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="search-input" oninput="handleSearch(this.value)" class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-pandaDark dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pandaGreen focus:border-transparent transition-colors shadow-sm" placeholder="Buscar ejercicios...">
+                </div>
+            </div>
+
             <!-- Lista de Ejercicios (Grid dinámico) -->
-            <div id="exercises-list" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-all duration-300">
+            <div id="exercises-list" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-all duration-300 overflow-y-auto pb-6">
                 <!-- Los ejercicios se inyectan aquí -->
             </div>
         </main>
@@ -177,10 +191,53 @@
             </div>
         </main>
 
+        <!-- Pestaña: ENTRENAMIENTOS -->
+        <main id="view-workouts" class="flex-1 flex flex-col overflow-hidden hidden">
+            <!-- Pestañas de Grupos (AÍDA / RAFA) -->
+            <div class="bg-pandaLight dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 px-4 py-3">
+                <div id="workout-tabs" class="flex gap-3 overflow-x-auto no-scrollbar">
+                    <!-- Las pestañas se inyectan por JS -->
+                </div>
+            </div>
+
+            <!-- Contenedor scrolleable de entrenamientos -->
+            <div id="workouts-list" class="p-4 flex flex-col gap-3 flex-1 overflow-y-auto pb-6 transition-all duration-300">
+                <!-- Los entrenamientos se inyectarán aquí -->
+            </div>
+            
+            <!-- Estado vacío temporal para Entrenamientos -->
+            <div id="empty-workouts" class="text-center mt-10 text-gray-400 dark:text-gray-500 flex-1 overflow-y-auto p-4">
+                <svg class="w-16 h-16 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <p data-lang="es" class="font-bold text-lg mb-1">Próximamente</p>
+                <p data-lang="es" class="text-sm">Aquí aparecerán tus rutinas guiadas.</p>
+                <p data-lang="en" class="hidden font-bold text-lg mb-1">Coming Soon</p>
+                <p data-lang="en" class="hidden text-sm">Your guided workouts will appear here.</p>
+            </div>
+        </main>
+
     </div>
 
     <!-- Contenedor para Notificaciones Motivacionales (Toast) -->
     <div id="toast-container" class="fixed bottom-24 left-0 right-0 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+    <!-- SWAP EXERCISE MODAL -->
+    <div id="swap-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-end md:justify-center p-0 md:p-4 fade-in">
+        <div class="bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full max-w-lg overflow-hidden relative shadow-2xl flex flex-col h-[85vh] md:h-[75vh]">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 sticky top-0 z-10">
+                <h3 class="text-lg font-bold text-pandaDark dark:text-white" data-lang="es">Cambiar Ejercicio</h3>
+                <h3 class="text-lg font-bold text-pandaDark dark:text-white hidden" data-lang="en">Swap Exercise</h3>
+                <button onclick="closeSwapModal()" class="text-gray-500 hover:text-pandaGreen dark:text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <input type="text" id="swap-search" oninput="renderSwapList(this.value)" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-pandaDark dark:text-white focus:outline-none focus:ring-2 focus:ring-pandaGreen transition-colors" placeholder="Buscar / Search...">
+            </div>
+            <div id="swap-list" class="flex-1 overflow-y-auto p-2">
+                <!-- Se inyecta la lista por JS -->
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL POPUP (Oculto por defecto) -->
     <div id="modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 fade-in">
@@ -215,15 +272,22 @@
         let currentLang = 'es';
         let currentCategory = 'All';
         let isMobileViewForce = false;
+        let searchQuery = '';
+        let swapContext = { type: '', index: -1, parentId: null };
+        let currentWorkoutGroup = 'g-aida'; // Nuevo estado para la pestaña de entrenamientos
         
         // Empezamos con rutina vacía, pero leemos si hay una guardada previamente
         let routine = [];
         let savedRoutine = JSON.parse(localStorage.getItem('pandaTrainerRoutine')) || [];
         
-        // DICCIONARIO DE TRADUCCIONES UI (Actualizado con frases motivacionales)
+        // DICCIONARIO DE TRADUCCIONES UI (Actualizado con frases motivacionales y buscador)
         const translations = {
             es: { 
                 sets: "Series", reps: "Reps", mins: "Minutos", remove: "Eliminar", complete: "Completar",
+                searchPlaceholder: "Buscar ejercicios...",
+                loadWorkout: "CARGAR ENTRENAMIENTO",
+                swap: "Cambiar",
+                viewExercise: "Ver ejercicio",
                 motivational: [
                     "¡BIEN HECHO! ¡DALE DURO!", 
                     "¡UNO MENOS, QUE NO DECAIGA!", 
@@ -234,6 +298,10 @@
             },
             en: { 
                 sets: "Sets", reps: "Reps", mins: "Minutes", remove: "Remove", complete: "Complete",
+                searchPlaceholder: "Search exercises...",
+                loadWorkout: "LOAD WORKOUT",
+                swap: "Swap",
+                viewExercise: "View exercise",
                 motivational: [
                     "WELL DONE! KEEP IT UP!", 
                     "ANOTHER ONE BITES THE DUST!", 
@@ -263,7 +331,7 @@
             { id: 'Cardio', es: 'Cardio', en: 'Cardio' }
         ];
 
-        // BASE DE DATOS DE EJERCICIOS
+        // BASE DE DATOS DE EJERCICIOS (Actualizada con los 11 nuevos)
         const db = [
             { id: 1, file: "Triceps Pushdown (Cable).mp4", cat: ["Triceps"], en: "Triceps Pushdown", es: "Extensión de tríceps" },
             { id: 2, file: "Biceps Curl.mp4", cat: ["Biceps"], en: "Biceps Curl", es: "Curl de bíceps" },
@@ -276,7 +344,7 @@
             { id: 9, file: "Cable Forward Lunge.jpg", cat: ["Quads", "Legs"], en: "Forward Lunge", es: "Zancada frontal" },
             { id: 10, file: "Cable Front Shoulder Raise.mp4", cat: ["Shoulders"], en: "Front Shoulder Raise", es: "Elevación frontal de hombro" },
             { id: 11, file: "Cable Front Squat.jpg", cat: ["Quads", "Legs"], en: "Front Squat", es: "Sentadilla frontal" },
-            { id: 12, file: "Cable Front Squat.mp4", cat: ["Quads", "Legs"], en: "Front Squat (Video)", es: "Sentadilla frontal (vídeo)" },
+            { id: 12, file: "Cable Front Squat.mp4", cat: ["Quads", "Legs"], en: "Front Squat 2 (Tricep Rope)", es: "Sentadilla frontal 2 (cuerda tríceps)" },
             { id: 13, file: "Cable Half Kneeling Face Pull.mp4", cat: ["Shoulders", "Back"], en: "Half Kneeling Face Pull", es: "Face pull semiarrodillado" },
             { id: 14, file: "Cable Hip Abduction 2.mp4", cat: ["Hips"], en: "Hip Abduction 2", es: "Abducción de cadera 2" },
             { id: 15, file: "Cable Hip Abduction.jpg", cat: ["Hips"], en: "Hip Abduction (Img)", es: "Abducción de cadera (img)" },
@@ -321,7 +389,122 @@
             { id: 54, file: "Cable-Incline-Bench-Press_Chest-flat.mp4", cat: ["Chest"], en: "Incline Cable Bench Press", es: "Press de banca inclinado en polea" },
             { id: 55, file: "Cable-Bar-Lateral-Pulldown_Back-flat.mp4", cat: ["Back"], en: "Bar Lateral Pulldown", es: "Jalón lateral con barra" },
             { id: 56, file: "caminar-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Walking", es: "Caminar en cinta", isCardio: true },
-            { id: 57, file: "correr-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Running", es: "Correr en cinta", isCardio: true }
+            { id: 57, file: "correr-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Running", es: "Correr en cinta", isCardio: true },
+            { id: 58, file: "respiracion-diafragmatica.gif", cat: ["Abs"], en: "Diaphragmatic Breathing", es: "Respiración diafragmática", isCardio: true },
+            { id: 59, file: "hip-thrust-bench.gif", cat: ["Hips", "Legs"], en: "Bench Hip Thrust", es: "Hip thrust en banco" },
+            { id: 60, file: "Press-Hombro-Cable-Shoulder-Press_Shoulders-flat.mp4", cat: ["Shoulders"], en: "Cable Shoulder Press", es: "Press de hombro en polea" },
+            { id: 61, file: "remo-unilateral-polea.gif", cat: ["Back"], en: "Single Arm Cable Row", es: "Remo unilateral en polea" },
+            { id: 62, file: "zancadas.gif", cat: ["Quads", "Legs"], en: "Lunges", es: "Zancadas" },
+            { id: 63, file: "circulo-cadera.gif", cat: ["Hips"], en: "Hip Circles", es: "Rotación de cadera", isCardio: true },
+            { id: 64, file: "Bodyweight-Incline-Side-Plank_Waist_Plancha_Inclinada.gif", cat: ["Abs"], en: "Incline Side Plank", es: "Plancha lateral inclinada" },
+            { id: 65, file: "glute-bridge-puente-de-gluteos.mp4", cat: ["Hips", "Legs"], en: "Glute Bridge", es: "Puente de glúteos" },
+            { id: 66, file: "Cable-pull-through_hips_peso_rumano.mp4", cat: ["Hips", "Hamstrings", "Legs"], en: "Cable Pull Through", es: "Pull through en polea" },
+            { id: 67, file: "bird-dog.gif", cat: ["Abs", "Back"], en: "Bird Dog", es: "Bird dog" },
+            { id: 68, file: "dead-bug.gif", cat: ["Abs"], en: "Dead Bug", es: "Dead bug" },
+            { id: 69, file: "pulley-jalon-pecho-polea.gif", cat: ["Back"], en: "Lat Pulldown", es: "Jalón al pecho" },
+            { id: 70, file: "remo-sentado-seated-row.mp4", cat: ["Back"], en: "Seated Row", es: "Remo sentado" },
+            { id: 71, file: "Elevacion-Talones-Mancuernas-Dumbbell-Standing-Single-Leg-Calf-Raise_Calves-fla.mp4", cat: ["Calves", "Legs"], en: "Calf Raise", es: "Elevación de talones" },
+            { id: 72, file: "Dominadas-Agarre-Neutro-Hammer-Grip-Pull-up-on-Dip-Cage_Back-flat.mp4", cat: ["Back"], en: "Neutral Grip Pull-up", es: "Dominadas neutras" },
+            { id: 73, file: "Dominadas-Espalda-Pull-up_Back-flat.mp4", cat: ["Back"], en: "Pull-up", es: "Dominadas espalda" },
+            { id: 74, file: "dominadas-agarre-supino.jpg", cat: ["Back", "Biceps"], en: "Chin-up", es: "Dominadas supinas" }
+        ];
+
+        // BASE DE DATOS DE ENTRENAMIENTOS PREDEFINIDOS (Ahora organizados por grupos)
+        const workoutGroups = [
+            {
+                id: 'g-aida',
+                es: 'AÍDA',
+                en: 'AÍDA',
+                workouts: [
+                    {
+                        id: 1,
+                        es: "Entrenamiento 1 (Día 1)",
+                        en: "Workout 1 (Day 1)",
+                        desc_es: "Fuerza + core",
+                        desc_en: "Strength + core",
+                        exercises: [
+                            { id: 56, mins: 20 },
+                            { id: 58, mins: 4 },
+                            { id: 68, sets: 3, reps: 8 },
+                            { id: 67, sets: 3, reps: 8 },
+                            { id: 12, sets: 3, reps: 10 },
+                            { id: 69, sets: 3, reps: 10 },
+                            { id: 19, sets: 3, reps: 10 },
+                            { id: 66, sets: 3, reps: 10 },
+                            { id: 70, sets: 3, reps: 10 }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        es: "Entrenamiento 2 (Día 2)",
+                        en: "Workout 2 (Day 2)",
+                        desc_es: "Cardio + core",
+                        desc_en: "Cardio + core",
+                        exercises: [
+                            { id: 56, mins: 30 },
+                            { id: 65, sets: 3, reps: 12 },
+                            { id: 19, sets: 3, reps: 10 },
+                            { id: 64, sets: 3, reps: 20 },
+                            { id: 63, mins: 10 }
+                        ]
+                    },
+                    {
+                        id: 3,
+                        es: "Entrenamiento 3 (Día 3)",
+                        en: "Workout 3 (Day 3)",
+                        desc_es: "Fuerza + cardio",
+                        desc_en: "Strength + cardio",
+                        exercises: [
+                            { id: 62, sets: 3, reps: 8 },
+                            { id: 61, sets: 3, reps: 10 },
+                            { id: 60, sets: 3, reps: 10 },
+                            { id: 2, sets: 3, reps: 12 },
+                            { id: 1, sets: 3, reps: 12 },
+                            { id: 59, sets: 3, reps: 10 },
+                            { id: 56, mins: 10 }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'g-rafa',
+                es: 'RAFA',
+                en: 'RAFA',
+                workouts: [
+                    {
+                        id: 4,
+                        es: "Entrenamiento 1 (Día 1)",
+                        en: "Workout 1 (Day 1)",
+                        desc_es: "Cuerpo completo",
+                        desc_en: "Full body",
+                        exercises: [
+                            { id: 57, mins: 15 },
+                            { id: 23, sets: 3, reps: 12 },
+                            { id: 12, sets: 3, reps: 12 },
+                            { id: 44, sets: 3, reps: 15 },
+                            { id: 32, sets: 3, reps: 15 },
+                            { id: 71, sets: 3, reps: 15 },
+                            { id: 74, sets: 3, reps: 12 }
+                        ]
+                    },
+                    {
+                        id: 5,
+                        es: "Entrenamiento 2 (Día 2)",
+                        en: "Workout 2 (Day 2)",
+                        desc_es: "Tren superior + core",
+                        desc_en: "Upper body + core",
+                        exercises: [
+                            { id: 57, mins: 15 },
+                            { id: 70, sets: 3, reps: 12 },
+                            { id: 5, sets: 3, reps: 12 },
+                            { id: 69, sets: 3, reps: 12 },
+                            { id: 20, sets: 3, reps: 15 },
+                            { id: 1, sets: 3, reps: 12 },
+                            { id: 49, sets: 3, reps: 12 }
+                        ]
+                    }
+                ]
+            }
         ];
 
         // FUNCIÓN PARA MODO OSCURO
@@ -401,34 +584,36 @@
                 }
             });
 
+            // Actualizar placeholder del buscador
+            document.getElementById('search-input').placeholder = translations[currentLang].searchPlaceholder;
+
             renderFilters();
             renderExercises();
             renderRoutine();
+            renderWorkouts();
         }
 
-        // CAMBIO DE PESTAÑAS (Ejercicios vs Rutina)
+        // CAMBIO DE PESTAÑAS (Ejercicios vs Rutina vs Entrenamientos)
         function switchTab(tab) {
-            const btnEx = document.getElementById('tab-exercises');
-            const btnRo = document.getElementById('tab-routine');
-            const viewEx = document.getElementById('view-exercises');
-            const viewRo = document.getElementById('view-routine');
-
-            if (tab === 'exercises') {
-                btnEx.classList.add('text-pandaGreen', 'border-pandaGreen');
-                btnEx.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-                btnRo.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-                btnRo.classList.remove('text-pandaGreen', 'border-pandaGreen');
-                viewEx.classList.remove('hidden');
-                viewRo.classList.add('hidden');
-            } else {
-                btnRo.classList.add('text-pandaGreen', 'border-pandaGreen');
-                btnRo.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-                btnEx.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-                btnEx.classList.remove('text-pandaGreen', 'border-pandaGreen');
-                viewRo.classList.remove('hidden');
-                viewEx.classList.add('hidden');
-                renderRoutine();
-            }
+            const tabs = ['exercises', 'routine', 'workouts'];
+            
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const view = document.getElementById(`view-${t}`);
+                
+                if (t === tab) {
+                    btn.classList.add('text-pandaGreen', 'border-pandaGreen');
+                    btn.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                    view.classList.remove('hidden');
+                    
+                    if (tab === 'routine') renderRoutine();
+                    if (tab === 'workouts') renderWorkouts();
+                } else {
+                    btn.classList.remove('text-pandaGreen', 'border-pandaGreen');
+                    btn.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                    view.classList.add('hidden');
+                }
+            });
         }
 
         // RENDERIZAR FILTROS DE CATEGORÍAS
@@ -455,17 +640,28 @@
             });
         }
 
+        // CONTROLADOR DE BÚSQUEDA
+        function handleSearch(query) {
+            searchQuery = query.toLowerCase();
+            renderExercises();
+        }
+
         // RENDERIZAR LISTA DE EJERCICIOS
         function renderExercises() {
             const container = document.getElementById('exercises-list');
             container.innerHTML = '';
 
-            const filteredDb = currentCategory === 'All' 
-                ? db 
-                : db.filter(ex => ex.cat.includes(currentCategory));
+            const filteredDb = db.filter(ex => {
+                // Filtro por categoría
+                const matchesCategory = currentCategory === 'All' || ex.cat.includes(currentCategory);
+                // Filtro por búsqueda (busca en español y en inglés)
+                const matchesSearch = ex.es.toLowerCase().includes(searchQuery) || ex.en.toLowerCase().includes(searchQuery);
+                
+                return matchesCategory && matchesSearch;
+            });
 
             if (filteredDb.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 dark:text-gray-500 mt-6 col-span-full">${currentLang === 'es' ? 'No hay ejercicios en esta categoría aún.' : 'No exercises in this category yet.'}</p>`;
+                container.innerHTML = `<p class="text-center text-gray-400 dark:text-gray-500 mt-6 col-span-full">${currentLang === 'es' ? 'No se encontraron ejercicios.' : 'No exercises found.'}</p>`;
                 return;
             }
 
@@ -570,7 +766,7 @@
             
             routine.push(routineItem);
             saveRoutine();
-            alert(currentLang === 'es' ? 'Añadido a tu rutina' : 'Added to your routine');
+            showGeneralToast(currentLang === 'es' ? 'Añadido a tu rutina' : 'Added to your routine', 'success');
             
             // Ocultar banner de rutina previa si el usuario empieza a añadir cosas nuevas
             document.getElementById('previous-routine-banner').classList.add('hidden');
@@ -603,7 +799,7 @@
         // Completar ejercicio con animación
         function completeExercise(index, btnElement) {
             // Encontrar la tarjeta del ejercicio
-            const row = btnElement.closest('.bg-white');
+            const row = btnElement.closest('.bg-white') || btnElement.closest('.bg-gray-800');
             
             // Añadir la clase de animación espectacular
             row.classList.add('complete-anim');
@@ -638,9 +834,240 @@
             }, 3500);
         }
 
+        // Mostrar notificación general (Toast genérico)
+        function showGeneralToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colorClass = type === 'success' ? 'border-pandaGreen text-pandaGreen' : 'border-red-400 text-red-400';
+            const icon = type === 'success' 
+                ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+            toast.className = `bg-white dark:bg-gray-800 px-5 py-2.5 rounded-full font-semibold shadow-xl text-sm toast-anim border-l-4 ${colorClass} flex items-center gap-2 dark:text-gray-200`;
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // --- LÓGICA DE CAMBIAR EJERCICIO (SWAP) ---
+        function openSwapModal(type, index, parentId = null) {
+            swapContext = { type, index, parentId };
+            document.getElementById('swap-modal').classList.remove('hidden');
+            document.getElementById('swap-search').value = '';
+            renderSwapList('');
+        }
+
+        function closeSwapModal() {
+            document.getElementById('swap-modal').classList.add('hidden');
+            swapContext = { type: '', index: -1, parentId: null };
+        }
+
+        function renderSwapList(query) {
+            const container = document.getElementById('swap-list');
+            container.innerHTML = '';
+            const q = query.toLowerCase();
+
+            const filteredDb = db.filter(ex => 
+                ex.es.toLowerCase().includes(q) || ex.en.toLowerCase().includes(q)
+            );
+
+            filteredDb.forEach(ex => {
+                const exName = currentLang === 'es' ? ex.es : ex.en;
+                const catNames = ex.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ');
+                
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors group";
+                btn.innerHTML = `
+                    <div>
+                        <div class="font-bold text-sm text-pandaDark dark:text-white group-hover:text-pandaGreen transition-colors">${exName}</div>
+                        <div class="text-xs text-pandaGreen">${catNames}</div>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400 group-hover:text-pandaGreen transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                `;
+                btn.onclick = () => confirmSwap(ex.id);
+                container.appendChild(btn);
+            });
+        }
+
+        function confirmSwap(newExId) {
+            if (swapContext.index === -1) return;
+            const newEx = db.find(e => e.id === newExId);
+            
+            if (swapContext.type === 'routine') {
+                const oldItem = routine[swapContext.index];
+                let newItem = { ...newEx };
+                if (newEx.isCardio) {
+                    newItem.mins = oldItem.mins || 15;
+                } else {
+                    newItem.sets = oldItem.sets || 3;
+                    newItem.reps = oldItem.reps || 12;
+                }
+                routine[swapContext.index] = newItem;
+                saveRoutine(); // Automáticamente llama a renderRoutine
+                showGeneralToast(currentLang === 'es' ? 'Ejercicio cambiado en rutina' : 'Exercise swapped in routine', 'success');
+            } else if (swapContext.type === 'workout') {
+                let wk = null;
+                workoutGroups.forEach(g => {
+                    const found = g.workouts.find(w => w.id === swapContext.parentId);
+                    if (found) wk = found;
+                });
+                
+                if (!wk) return;
+                
+                const oldItem = wk.exercises[swapContext.index];
+                let newItem = { id: newEx.id };
+                if (newEx.isCardio) {
+                    newItem.mins = oldItem.mins || 15;
+                } else {
+                    newItem.sets = oldItem.sets || 3;
+                    newItem.reps = oldItem.reps || 12;
+                }
+                wk.exercises[swapContext.index] = newItem;
+                renderWorkouts();
+                showGeneralToast(currentLang === 'es' ? 'Ejercicio cambiado en entrenamiento' : 'Exercise swapped in workout', 'success');
+            }
+            
+            closeSwapModal();
+        }
+
+        // FUNCIONALIDAD DE ACORDEÓN PARA ENTRENAMIENTOS
+        function toggleWorkoutAccordion(id) {
+            const body = document.getElementById(`workout-body-${id}`);
+            const chevron = document.getElementById(`chevron-${id}`);
+            
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                body.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
+        // RENDERIZAR ENTRENAMIENTOS PREDEFINIDOS
+        function renderWorkouts() {
+            const tabsContainer = document.getElementById('workout-tabs');
+            const container = document.getElementById('workouts-list');
+            const emptyState = document.getElementById('empty-workouts');
+            
+            // Renderizar las pestañas de grupos (AÍDA / RAFA)
+            tabsContainer.innerHTML = '';
+            workoutGroups.forEach(group => {
+                const isSelected = currentWorkoutGroup === group.id;
+                const btn = document.createElement('button');
+                btn.className = `whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-black tracking-widest uppercase transition-colors shadow-sm ${
+                    isSelected 
+                        ? 'bg-pandaGreen text-white' 
+                        : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-pandaGreen dark:hover:border-pandaGreen hover:text-pandaGreen dark:hover:text-pandaGreen'
+                }`;
+                btn.innerText = currentLang === 'es' ? group.es : group.en;
+                btn.onclick = () => {
+                    currentWorkoutGroup = group.id;
+                    renderWorkouts();
+                };
+                tabsContainer.appendChild(btn);
+            });
+
+            container.innerHTML = '';
+            
+            const activeGroup = workoutGroups.find(g => g.id === currentWorkoutGroup);
+
+            if (!activeGroup || !activeGroup.workouts || activeGroup.workouts.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            activeGroup.workouts.forEach(wk => {
+                const title = currentLang === 'es' ? wk.es : wk.en;
+                const desc = currentLang === 'es' ? wk.desc_es : wk.desc_en;
+                const btnText = translations[currentLang].loadWorkout;
+                
+                let previewHtml = '';
+                wk.exercises.forEach((ex, index) => {
+                    const dbEx = db.find(e => e.id === ex.id);
+                    if (dbEx) {
+                        const exName = currentLang === 'es' ? dbEx.es : dbEx.en;
+                        const details = dbEx.isCardio ? `${ex.mins} ${translations[currentLang].mins.toLowerCase()}` : `${ex.sets}x${ex.reps}`;
+                        previewHtml += `
+                            <li class="text-sm text-gray-600 dark:text-gray-400 mb-1 flex justify-between items-center py-2 border-b border-gray-50 dark:border-gray-700 last:border-0 group">
+                                <button onclick="openModal(${dbEx.id})" class="flex-1 truncate pr-2 hover:text-pandaGreen transition-colors flex items-center gap-2 text-left" title="${translations[currentLang].viewExercise}">
+                                    <svg class="w-4 h-4 flex-shrink-0 text-gray-400 group-hover:text-pandaGreen transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span class="truncate">${exName}</span>
+                                </button>
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <span class="font-bold text-pandaGreen whitespace-nowrap">${details}</span>
+                                    <button onclick="openSwapModal('workout', ${index}, ${wk.id})" class="text-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1" title="${translations[currentLang].swap}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                    </button>
+                                </div>
+                            </li>`;
+                    }
+                });
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden";
+                card.innerHTML = `
+                    <button onclick="toggleWorkoutAccordion(${wk.id})" class="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left focus:outline-none">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 flex-shrink-0 rounded-full bg-pandaLight dark:bg-gray-700 flex items-center justify-center text-pandaGreen">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-pandaDark dark:text-white text-base md:text-lg leading-tight pr-2">${title}</h3>
+                                ${desc ? `<p class="text-xs md:text-sm text-pandaGreen font-medium mt-0.5">${desc}</p>` : ''}
+                            </div>
+                        </div>
+                        <svg id="chevron-${wk.id}" class="w-5 h-5 text-gray-400 transition-transform duration-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <div id="workout-body-${wk.id}" class="hidden px-4 pb-4">
+                        <ul class="border-t border-gray-100 dark:border-gray-700 pt-3 mb-4">
+                            ${previewHtml}
+                        </ul>
+                        <button onclick="loadWorkout(${wk.id})" class="w-full bg-pandaDark dark:bg-gray-700 text-white py-3 rounded-xl font-bold hover:bg-pandaGreen dark:hover:bg-pandaGreen transition-colors flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                            <span>${btnText}</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // CARGAR UN ENTRENAMIENTO PREDEFINIDO
+        function loadWorkout(id) {
+            let wk = null;
+            workoutGroups.forEach(g => {
+                const found = g.workouts.find(w => w.id === id);
+                if (found) wk = found;
+            });
+            
+            if (!wk) return;
+
+            routine = wk.exercises.map(wkEx => {
+                const dbEx = db.find(e => e.id === wkEx.id);
+                return {
+                    ...dbEx,
+                    ...wkEx
+                };
+            });
+
+            saveRoutine();
+            switchTab('routine');
+            document.getElementById('previous-routine-banner').classList.add('hidden');
+            
+            showGeneralToast(currentLang === 'es' ? 'Entrenamiento cargado con éxito' : 'Workout loaded successfully', 'success');
+        }
+
         // Exportar rutina a JSON
         function exportRoutine() {
-            if(routine.length === 0) return alert(currentLang === 'es' ? 'La rutina está vacía' : 'Routine is empty');
+            if(routine.length === 0) return showGeneralToast(currentLang === 'es' ? 'La rutina está vacía' : 'Routine is empty', 'error');
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(routine));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
@@ -667,9 +1094,9 @@
                         saveRoutine();
                         renderRoutine();
                         document.getElementById('previous-routine-banner').classList.add('hidden');
-                        alert(currentLang === 'es' ? 'Rutina importada con éxito' : 'Routine imported successfully');
+                        showGeneralToast(currentLang === 'es' ? 'Rutina importada con éxito' : 'Routine imported successfully', 'success');
                     } catch (err) {
-                        alert(currentLang === 'es' ? 'Error al leer el archivo. Asegúrate de que es un archivo JSON válido.' : 'Error reading file. Make sure it is a valid JSON file.');
+                        showGeneralToast(currentLang === 'es' ? 'Error al leer el archivo. Asegúrate de que es JSON.' : 'Error reading file. Make sure it is JSON.', 'error');
                     }
                 }
             }
@@ -707,7 +1134,7 @@
                     : categories.find(c => c.id === item.cat)[currentLang];
 
                 const row = document.createElement('div');
-                row.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-3 transition-all duration-300 transform origin-left";
+                row.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-3 transition-all duration-300 transform origin-left relative";
                 
                 let controlsHtml = '';
                 if (item.isCardio) {
@@ -759,6 +1186,10 @@
                             <button onclick="completeExercise(${index}, this)" class="bg-pandaLight dark:bg-gray-700 text-pandaGreen hover:bg-pandaGreen hover:text-white transition-colors p-1.5 rounded-full shadow-sm" title="${t.complete}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                             </button>
+                            <!-- Botón Cambiar (Swap) -->
+                            <button onclick="openSwapModal('routine', ${index})" class="text-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1" title="${t.swap}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                            </button>
                             <!-- Botón Eliminar (Papelera/X) -->
                             <button onclick="removeFromRoutine(${index})" class="text-red-400 hover:text-red-600 transition-colors p-1" title="${t.remove}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -782,9 +1213,14 @@
 
             renderFilters();
             renderExercises();
+            renderWorkouts();
             
             document.getElementById('modal').addEventListener('click', (e) => {
                 if (e.target.id === 'modal') closeModal();
+            });
+
+            document.getElementById('swap-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'swap-modal') closeSwapModal();
             });
         });
 
