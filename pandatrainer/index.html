@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -27,27 +28,56 @@
         /* Animación suave para el Modal */
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Animación espectacular al completar ejercicio */
+        @keyframes completeAnim {
+            0% { transform: scale(1); opacity: 1; }
+            40% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.5) translateX(200%); opacity: 0; }
+        }
+        .complete-anim { animation: completeAnim 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; pointer-events: none; }
+
+        /* Animación del mensaje motivacional flotante (Toast) */
+        @keyframes toastFadeInOut {
+            0% { opacity: 0; transform: translateY(50px) scale(0.8); }
+            15% { opacity: 1; transform: translateY(0) scale(1.05); }
+            25% { opacity: 1; transform: translateY(0) scale(1); }
+            85% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.9); }
+        }
+        .toast-anim { animation: toastFadeInOut 3.5s ease-in-out forwards; }
     </style>
+    <script>
+        // Aplicar modo oscuro al cargar si es la preferencia del usuario
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 </head>
-<body class="bg-gray-100 text-pandaDark font-sans antialiased">
+<body class="bg-gray-100 dark:bg-gray-900 text-pandaDark dark:text-gray-100 font-sans antialiased transition-colors duration-300">
 
     <!-- Contenedor Principal estilo App Móvil y PC -->
-    <div id="app-container" class="w-full max-w-5xl mx-auto bg-white min-h-screen md:min-h-[95vh] md:my-6 md:rounded-2xl shadow-2xl relative flex flex-col transition-all duration-300">
+    <div id="app-container" class="w-full max-w-5xl mx-auto bg-white dark:bg-gray-800 min-h-screen md:min-h-[95vh] md:my-6 md:rounded-2xl shadow-2xl relative flex flex-col transition-all duration-300">
         
         <!-- Cabecera -->
-        <header class="bg-white p-4 shadow-sm flex items-center justify-between sticky top-0 z-10 md:rounded-t-2xl">
-            <!-- Espaciador para centrar el logo -->
-            <div class="w-24"></div> 
+        <header class="bg-white dark:bg-gray-800 p-4 shadow-sm flex items-center justify-between sticky top-0 z-10 md:rounded-t-2xl border-b border-transparent dark:border-gray-700">
+            <!-- Controles Izquierda (Tema) -->
+            <div class="w-24 flex items-center">
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="text-gray-500 hover:text-pandaGreen dark:text-gray-400 dark:hover:text-pandaGreen transition-colors focus:outline-none" title="Alternar Modo Oscuro">
+                    <svg id="icon-sun" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="icon-moon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div> 
             
             <!-- Logo Centrado -->
             <div class="flex-1 flex justify-center py-2">
-                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandatrainer/media/pandatrainer-logo.png" alt="PandaTrainer Logo" class="h-24 md:h-32 w-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300">
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandatrainer/media/pandatrainer-logo.png" alt="PandaTrainer Logo" class="h-24 md:h-32 w-auto object-contain drop-shadow-xl dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.7)] hover:scale-105 transition-all duration-300">
             </div>
             
-            <!-- Controles (Vista e Idioma) -->
+            <!-- Controles Derecha (Vista e Idioma) -->
             <div class="flex items-center gap-4 w-24 justify-end">
                 <!-- Botón Alternar Vista Móvil/PC -->
-                <button id="viewToggleBtn" onclick="toggleViewMode()" class="text-gray-500 hover:text-pandaGreen transition-colors focus:outline-none" title="Alternar Vista">
+                <button id="viewToggleBtn" onclick="toggleViewMode()" class="text-gray-500 hover:text-pandaGreen dark:text-gray-400 dark:hover:text-pandaGreen transition-colors focus:outline-none" title="Alternar Vista">
                     <svg id="icon-mobile" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     <svg id="icon-pc" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 </button>
@@ -55,31 +85,31 @@
                 <!-- Botón de Idioma (ES | EN) -->
                 <div class="flex items-center text-sm font-bold">
                     <button id="lang-es" onclick="setLang('es')" class="text-pandaGreen hover:scale-110 transition-transform">ES</button>
-                    <span class="mx-1 text-gray-300">|</span>
-                    <button id="lang-en" onclick="setLang('en')" class="text-gray-400 hover:scale-110 transition-transform">EN</button>
+                    <span class="mx-1 text-gray-300 dark:text-gray-600">|</span>
+                    <button id="lang-en" onclick="setLang('en')" class="text-gray-400 dark:text-gray-500 hover:scale-110 transition-transform">EN</button>
                 </div>
             </div>
         </header>
 
         <!-- Navegación de Pestañas -->
-        <nav class="flex border-b border-gray-200 bg-white">
+        <nav class="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button id="tab-exercises" class="flex-1 py-3 text-center font-semibold text-pandaGreen border-b-2 border-pandaGreen transition-colors" onclick="switchTab('exercises')">
-                <span data-lang="es">Ejercicios</span>
-                <span data-lang="en" class="hidden">Exercises</span>
+                <span data-lang="es">EJERCICIOS</span>
+                <span data-lang="en" class="hidden">EXERCISES</span>
             </button>
-            <button id="tab-routine" class="flex-1 py-3 text-center font-semibold text-gray-500 border-b-2 border-transparent transition-colors" onclick="switchTab('routine')">
-                <span data-lang="es">Mi Rutina</span>
-                <span data-lang="en" class="hidden">My Routine</span>
+            <button id="tab-routine" class="flex-1 py-3 text-center font-semibold text-gray-500 dark:text-gray-400 border-b-2 border-transparent transition-colors" onclick="switchTab('routine')">
+                <span data-lang="es">MI RUTINA</span>
+                <span data-lang="en" class="hidden">MY ROUTINE</span>
             </button>
         </nav>
 
         <!-- Pestaña: EJERCICIOS -->
         <main id="view-exercises" class="flex-1 overflow-y-auto pb-6">
             <!-- Filtro de Categorías -->
-            <div class="bg-pandaLight border-b border-gray-200 relative flex items-center overflow-hidden">
+            <div class="bg-pandaLight dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 relative flex items-center overflow-hidden">
                 <!-- Botón Izquierda -->
-                <button onclick="scrollCategories('left')" class="absolute left-0 z-10 h-full px-1 flex items-center bg-gradient-to-r from-pandaLight via-pandaLight/90 to-transparent text-pandaGreen hover:text-pandaDark focus:outline-none" aria-label="Deslizar izquierda">
-                    <div class="bg-white rounded-full shadow-md p-1 ml-1 border border-gray-100">
+                <button onclick="scrollCategories('left')" class="absolute left-0 z-10 h-full px-1 flex items-center bg-gradient-to-r from-pandaLight via-pandaLight/90 dark:from-gray-900 dark:via-gray-900/90 to-transparent text-pandaGreen hover:text-pandaDark dark:hover:text-white focus:outline-none" aria-label="Deslizar izquierda">
+                    <div class="bg-white dark:bg-gray-800 rounded-full shadow-md p-1 ml-1 border border-gray-100 dark:border-gray-700">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </div>
                 </button>
@@ -89,8 +119,8 @@
                 </div>
 
                 <!-- Botón Derecha -->
-                <button onclick="scrollCategories('right')" class="absolute right-0 z-10 h-full px-1 flex items-center bg-gradient-to-l from-pandaLight via-pandaLight/90 to-transparent text-pandaGreen hover:text-pandaDark focus:outline-none" aria-label="Deslizar derecha">
-                    <div class="bg-white rounded-full shadow-md p-1 mr-1 border border-gray-100">
+                <button onclick="scrollCategories('right')" class="absolute right-0 z-10 h-full px-1 flex items-center bg-gradient-to-l from-pandaLight via-pandaLight/90 dark:from-gray-900 dark:via-gray-900/90 to-transparent text-pandaGreen hover:text-pandaDark dark:hover:text-white focus:outline-none" aria-label="Deslizar derecha">
+                    <div class="bg-white dark:bg-gray-800 rounded-full shadow-md p-1 mr-1 border border-gray-100 dark:border-gray-700">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </button>
@@ -104,29 +134,59 @@
 
         <!-- Pestaña: MI RUTINA -->
         <main id="view-routine" class="flex-1 overflow-y-auto p-4 hidden pb-6">
+            
+            <!-- Opciones de Exportar / Importar -->
+            <div class="flex justify-end gap-3 mb-4">
+                <button onclick="importRoutine()" class="text-sm font-semibold flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-pandaGreen dark:hover:text-pandaGreen transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span data-lang="es">Importar</span>
+                    <span data-lang="en" class="hidden">Import</span>
+                </button>
+                <button onclick="exportRoutine()" class="text-sm font-semibold flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-pandaGreen dark:hover:text-pandaGreen transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span data-lang="es">Exportar</span>
+                    <span data-lang="en" class="hidden">Export</span>
+                </button>
+            </div>
+
+            <!-- Banner Cargar Rutina Anterior -->
+            <div id="previous-routine-banner" class="bg-pandaGreen/10 dark:bg-pandaGreen/20 border border-pandaGreen/30 p-4 rounded-xl mb-6 flex flex-col items-center justify-center text-center hidden">
+                <p class="text-pandaDark dark:text-gray-200 font-medium mb-3">
+                    <span data-lang="es">Se ha encontrado una rutina reciente. ¿Deseas cargarla?</span>
+                    <span data-lang="en" class="hidden">A recent routine was found. Do you want to load it?</span>
+                </p>
+                <button onclick="loadPreviousRoutine()" class="bg-pandaGreen text-white px-5 py-2 rounded-full font-bold shadow-md hover:bg-green-600 transition-colors">
+                    <span data-lang="es">Cargar Rutina Anterior</span>
+                    <span data-lang="en" class="hidden">Load Previous Routine</span>
+                </button>
+            </div>
+
             <div id="routine-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4 transition-all duration-300">
                 <!-- Los items de rutina se inyectan aquí -->
             </div>
             
             <!-- Estado vacío -->
-            <div id="empty-routine" class="text-center mt-10 text-gray-400 hidden">
-                <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            <div id="empty-routine" class="text-center mt-10 text-gray-400 dark:text-gray-500 hidden">
+                <svg class="w-16 h-16 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                 <p data-lang="es">Tu rutina está vacía.</p>
                 <p data-lang="en" class="hidden">Your routine is empty.</p>
                 <button onclick="switchTab('exercises')" class="mt-4 px-4 py-2 bg-pandaGreen text-white rounded-full font-medium shadow-sm active:scale-95 transition-transform">
-                    <span data-lang="es">+ Añadir Ejercicios</span>
-                    <span data-lang="en" class="hidden">+ Add Exercises</span>
+                    <span data-lang="es">+ AÑADIR EJERCICIOS</span>
+                    <span data-lang="en" class="hidden">+ ADD EXERCISES</span>
                 </button>
             </div>
         </main>
 
     </div>
 
+    <!-- Contenedor para Notificaciones Motivacionales (Toast) -->
+    <div id="toast-container" class="fixed bottom-24 left-0 right-0 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
     <!-- MODAL POPUP (Oculto por defecto) -->
     <div id="modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden relative shadow-2xl">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden relative shadow-2xl border border-transparent dark:border-gray-700">
             <!-- Botón Cerrar (X) -->
-            <button onclick="closeModal()" class="absolute top-3 right-3 z-10 bg-pandaDark/80 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-pandaGreen transition-colors">
+            <button onclick="closeModal()" class="absolute top-3 right-3 z-10 bg-pandaDark/80 dark:bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-pandaGreen transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
             
@@ -137,10 +197,10 @@
             
             <!-- Título y Acción -->
             <div class="p-5">
-                <h3 id="modal-title" class="text-xl font-bold text-pandaDark mb-1">Título del Ejercicio</h3>
+                <h3 id="modal-title" class="text-xl font-bold text-pandaDark dark:text-white mb-1">Título del Ejercicio</h3>
                 <p id="modal-category" class="text-sm text-pandaGreen font-semibold mb-4">Categoría</p>
                 
-                <button id="modal-add-btn" class="w-full bg-pandaDark text-white py-3 rounded-xl font-semibold hover:bg-pandaGreen transition-colors flex items-center justify-center gap-2">
+                <button id="modal-add-btn" class="w-full bg-pandaDark dark:bg-gray-700 text-white py-3 rounded-xl font-semibold hover:bg-pandaGreen dark:hover:bg-pandaGreen transition-colors flex items-center justify-center gap-2 shadow-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span data-lang="es" class="lang-modal-add">Añadir a Mi Rutina</span>
                     <span data-lang="en" class="lang-modal-add hidden">Add to Routine</span>
@@ -154,13 +214,34 @@
         // ESTADO DE LA APLICACIÓN
         let currentLang = 'es';
         let currentCategory = 'All';
-        let isMobileViewForce = false; // Nuevo estado para forzar vista móvil
-        let routine = JSON.parse(localStorage.getItem('pandaTrainerRoutine')) || [];
+        let isMobileViewForce = false;
         
-        // DICCIONARIO DE TRADUCCIONES UI
+        // Empezamos con rutina vacía, pero leemos si hay una guardada previamente
+        let routine = [];
+        let savedRoutine = JSON.parse(localStorage.getItem('pandaTrainerRoutine')) || [];
+        
+        // DICCIONARIO DE TRADUCCIONES UI (Actualizado con frases motivacionales)
         const translations = {
-            es: { sets: "Series", reps: "Reps", mins: "Minutos", remove: "Eliminar" },
-            en: { sets: "Sets", reps: "Reps", mins: "Minutes", remove: "Remove" }
+            es: { 
+                sets: "Series", reps: "Reps", mins: "Minutos", remove: "Eliminar", complete: "Completar",
+                motivational: [
+                    "¡BIEN HECHO! ¡DALE DURO!", 
+                    "¡UNO MENOS, QUE NO DECAIGA!", 
+                    "¡ASÍ SE HACE, MODO BESTIA!", 
+                    "¡EXCELENTE TRABAJO!",
+                    "¡SIN DOLOR NO HAY GLORIA!"
+                ] 
+            },
+            en: { 
+                sets: "Sets", reps: "Reps", mins: "Minutes", remove: "Remove", complete: "Complete",
+                motivational: [
+                    "WELL DONE! KEEP IT UP!", 
+                    "ANOTHER ONE BITES THE DUST!", 
+                    "THAT'S HOW IT'S DONE!", 
+                    "OUTSTANDING WORK!",
+                    "NO PAIN, NO GAIN!"
+                ] 
+            }
         };
 
         // CATEGORÍAS DISPONIBLES
@@ -172,6 +253,7 @@
             { id: 'Back', es: 'Espalda', en: 'Back' },
             { id: 'Shoulders', es: 'Hombros', en: 'Shoulders' },
             { id: 'Abs', es: 'Abdominales', en: 'Abs' },
+            { id: 'Legs', es: 'Piernas', en: 'Legs' },
             { id: 'Quads', es: 'Cuádriceps', en: 'Quads' },
             { id: 'Hamstrings', es: 'Isquiotibiales', en: 'Hamstrings' },
             { id: 'Hips', es: 'Caderas', en: 'Hips' },
@@ -181,20 +263,20 @@
             { id: 'Cardio', es: 'Cardio', en: 'Cardio' }
         ];
 
-        // BASE DE DATOS DE EJERCICIOS (Traducciones al español ajustadas a normas RAE)
+        // BASE DE DATOS DE EJERCICIOS
         const db = [
             { id: 1, file: "Triceps Pushdown (Cable).mp4", cat: ["Triceps"], en: "Triceps Pushdown", es: "Extensión de tríceps" },
             { id: 2, file: "Biceps Curl.mp4", cat: ["Biceps"], en: "Biceps Curl", es: "Curl de bíceps" },
-            { id: 3, file: "Cable Assisted Inverse Leg Curl.mp4", cat: ["Hamstrings"], en: "Assisted Inverse Leg Curl", es: "Curl inverso asistido de pierna" },
+            { id: 3, file: "Cable Assisted Inverse Leg Curl.mp4", cat: ["Hamstrings", "Legs"], en: "Assisted Inverse Leg Curl", es: "Curl inverso asistido de pierna" },
             { id: 4, file: "Cable Cross over Revers Fly.mp4", cat: ["Shoulders", "Back"], en: "Cross Over Reverse Fly", es: "Vuelo inverso cruzado" },
             { id: 5, file: "Cable Curl Biceps.mp4", cat: ["Biceps"], en: "Cable Biceps Curl", es: "Curl de bíceps en polea" },
-            { id: 6, file: "Cable Deadlift.mp4", cat: ["Hamstrings", "Back"], en: "Cable Deadlift", es: "Peso muerto en polea" },
+            { id: 6, file: "Cable Deadlift.mp4", cat: ["Hamstrings", "Back", "Legs"], en: "Cable Deadlift", es: "Peso muerto en polea" },
             { id: 7, file: "Cable Donkey Kickback v2.mp4", cat: ["Hips"], en: "Donkey Kickback v2", es: "Patada de burro v2" },
             { id: 8, file: "Cable Donkey Kickback.mp4", cat: ["Hips"], en: "Donkey Kickback", es: "Patada de burro" },
-            { id: 9, file: "Cable Forward Lunge.jpg", cat: ["Quads"], en: "Forward Lunge", es: "Zancada frontal" },
+            { id: 9, file: "Cable Forward Lunge.jpg", cat: ["Quads", "Legs"], en: "Forward Lunge", es: "Zancada frontal" },
             { id: 10, file: "Cable Front Shoulder Raise.mp4", cat: ["Shoulders"], en: "Front Shoulder Raise", es: "Elevación frontal de hombro" },
-            { id: 11, file: "Cable Front Squat.jpg", cat: ["Quads"], en: "Front Squat", es: "Sentadilla frontal" },
-            { id: 12, file: "Cable Front Squat.mp4", cat: ["Quads"], en: "Front Squat (Video)", es: "Sentadilla frontal (vídeo)" },
+            { id: 11, file: "Cable Front Squat.jpg", cat: ["Quads", "Legs"], en: "Front Squat", es: "Sentadilla frontal" },
+            { id: 12, file: "Cable Front Squat.mp4", cat: ["Quads", "Legs"], en: "Front Squat (Video)", es: "Sentadilla frontal (vídeo)" },
             { id: 13, file: "Cable Half Kneeling Face Pull.mp4", cat: ["Shoulders", "Back"], en: "Half Kneeling Face Pull", es: "Face pull semiarrodillado" },
             { id: 14, file: "Cable Hip Abduction 2.mp4", cat: ["Hips"], en: "Hip Abduction 2", es: "Abducción de cadera 2" },
             { id: 15, file: "Cable Hip Abduction.jpg", cat: ["Hips"], en: "Hip Abduction (Img)", es: "Abducción de cadera (img)" },
@@ -206,7 +288,7 @@
             { id: 21, file: "Cable Kneeling Crunch.mp4", cat: ["Abs"], en: "Kneeling Crunch", es: "Encogimiento arrodillado" },
             { id: 22, file: "Cable Kneeling Rear Delt Row.mp4", cat: ["Shoulders", "Back"], en: "Kneeling Rear Delt Row", es: "Remo posterior arrodillado" },
             { id: 23, file: "Cable Lateral Raise.mp4", cat: ["Shoulders"], en: "Lateral Raise", es: "Elevación lateral" },
-            { id: 24, file: "Cable Lunge.jpg", cat: ["Quads"], en: "Cable Lunge", es: "Zancada en polea" },
+            { id: 24, file: "Cable Lunge.jpg", cat: ["Quads", "Legs"], en: "Cable Lunge", es: "Zancada en polea" },
             { id: 25, file: "Cable Lying Face Pull.mp4", cat: ["Shoulders", "Back"], en: "Lying Face Pull", es: "Face pull tumbado" },
             { id: 26, file: "Cable One Arm Lateral Raise.mp4", cat: ["Shoulders"], en: "One Arm Lateral Raise", es: "Elevación lateral a 1 mano" },
             { id: 27, file: "Cable Overhead Tricep Extension.mp4", cat: ["Triceps"], en: "Overhead Tricep Extension", es: "Extensión de tríceps sobre cabeza" },
@@ -214,7 +296,7 @@
             { id: 29, file: "Cable Seated Crunch.mp4", cat: ["Abs"], en: "Seated Crunch", es: "Encogimiento sentado" },
             { id: 30, file: "Cable Seated Face Pull (with rope).jpg", cat: ["Shoulders", "Back"], en: "Seated Face Pull (Rope)", es: "Face pull sentado (cuerda)" },
             { id: 31, file: "Cable Seated Neck Flexion.mp4", cat: ["Neck"], en: "Seated Neck Flexion", es: "Flexión de cuello sentado" },
-            { id: 32, file: "Cable Seated Single Leg Extension.mp4", cat: ["Quads"], en: "Seated Single Leg Extension", es: "Extensión de 1 pierna sentado" },
+            { id: 32, file: "Cable Seated Single Leg Extension.mp4", cat: ["Quads", "Legs"], en: "Seated Single Leg Extension", es: "Extensión de 1 pierna sentado" },
             { id: 33, file: "Cable Standing Crunch.mp4", cat: ["Abs"], en: "Standing Crunch", es: "Encogimiento de pie" },
             { id: 34, file: "Cable Standing Face Pull (with rope).mp4", cat: ["Shoulders", "Back"], en: "Standing Face Pull (Rope)", es: "Face pull de pie (cuerda)" },
             { id: 35, file: "Cable Standing Face Pull.mp4", cat: ["Shoulders", "Back"], en: "Standing Face Pull", es: "Face pull de pie" },
@@ -238,14 +320,29 @@
             { id: 53, file: "Cable-Lying-Fly_Chest-flat.mp4", cat: ["Chest"], en: "Lying Cable Fly", es: "Cruce tumbado en polea" },
             { id: 54, file: "Cable-Incline-Bench-Press_Chest-flat.mp4", cat: ["Chest"], en: "Incline Cable Bench Press", es: "Press de banca inclinado en polea" },
             { id: 55, file: "Cable-Bar-Lateral-Pulldown_Back-flat.mp4", cat: ["Back"], en: "Bar Lateral Pulldown", es: "Jalón lateral con barra" },
-            { id: 56, file: "Treadmill-Walking.jpg", cat: ["Cardio"], en: "Treadmill Walking", es: "Caminar en cinta", isCardio: true },
-            { id: 57, file: "Treadmill-Running.jpg", cat: ["Cardio"], en: "Treadmill Running", es: "Correr en cinta", isCardio: true }
+            { id: 56, file: "caminar-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Walking", es: "Caminar en cinta", isCardio: true },
+            { id: 57, file: "correr-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Running", es: "Correr en cinta", isCardio: true }
         ];
+
+        // FUNCIÓN PARA MODO OSCURO
+        function toggleTheme() {
+            const root = document.documentElement;
+            if (root.classList.contains('dark')) {
+                root.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('icon-sun').classList.add('hidden');
+                document.getElementById('icon-moon').classList.remove('hidden');
+            } else {
+                root.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('icon-moon').classList.add('hidden');
+                document.getElementById('icon-sun').classList.remove('hidden');
+            }
+        }
 
         // FUNCIÓN PARA GENERAR LA RUTA EXACTA DEL MEDIO (Sin paréntesis)
         function getMediaUrl(filename) {
             const baseUrl = "https://jugandoatraducir.com/wp-content/uploads/2026/05/";
-            // Reemplaza los espacios por guiones y elimina todos los paréntesis
             let formattedName = filename.replace(/\s+/g, '-');
             formattedName = formattedName.replace(/[()]/g, '');
             return baseUrl + formattedName;
@@ -261,23 +358,17 @@
             const iconPc = document.getElementById('icon-pc');
 
             if (isMobileViewForce) {
-                // Forzar vista móvil
                 container.classList.remove('max-w-5xl');
                 container.classList.add('max-w-md');
-                
                 exList.classList.remove('md:grid-cols-2', 'lg:grid-cols-3');
                 roList.classList.remove('lg:grid-cols-2');
-                
                 iconPc.classList.add('hidden');
                 iconMobile.classList.remove('hidden');
             } else {
-                // Vista PC (Responsive normal)
                 container.classList.remove('max-w-md');
                 container.classList.add('max-w-5xl');
-                
                 exList.classList.add('md:grid-cols-2', 'lg:grid-cols-3');
                 roList.classList.add('lg:grid-cols-2');
-                
                 iconMobile.classList.add('hidden');
                 iconPc.classList.remove('hidden');
             }
@@ -287,19 +378,17 @@
         function setLang(lang) {
             currentLang = lang;
             
-            // Actualizar estilos de los botones ES/EN
             const btnEs = document.getElementById('lang-es');
             const btnEn = document.getElementById('lang-en');
             
             if (lang === 'es') {
                 btnEs.className = "text-pandaGreen hover:scale-110 transition-transform";
-                btnEn.className = "text-gray-400 hover:scale-110 transition-transform";
+                btnEn.className = "text-gray-400 dark:text-gray-500 hover:scale-110 transition-transform";
             } else {
                 btnEn.className = "text-pandaGreen hover:scale-110 transition-transform";
-                btnEs.className = "text-gray-400 hover:scale-110 transition-transform";
+                btnEs.className = "text-gray-400 dark:text-gray-500 hover:scale-110 transition-transform";
             }
             
-            // Alternar visibilidad de los spans según el idioma
             document.querySelectorAll('[data-lang]').forEach(el => {
                 if (el.getAttribute('data-lang') === currentLang) {
                     if (el.tagName === 'SPAN') {
@@ -312,7 +401,6 @@
                 }
             });
 
-            // Re-renderizar las vistas dinámicas
             renderFilters();
             renderExercises();
             renderRoutine();
@@ -327,15 +415,15 @@
 
             if (tab === 'exercises') {
                 btnEx.classList.add('text-pandaGreen', 'border-pandaGreen');
-                btnEx.classList.remove('text-gray-500', 'border-transparent');
-                btnRo.classList.add('text-gray-500', 'border-transparent');
+                btnEx.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                btnRo.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
                 btnRo.classList.remove('text-pandaGreen', 'border-pandaGreen');
                 viewEx.classList.remove('hidden');
                 viewRo.classList.add('hidden');
             } else {
                 btnRo.classList.add('text-pandaGreen', 'border-pandaGreen');
-                btnRo.classList.remove('text-gray-500', 'border-transparent');
-                btnEx.classList.add('text-gray-500', 'border-transparent');
+                btnRo.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                btnEx.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
                 btnEx.classList.remove('text-pandaGreen', 'border-pandaGreen');
                 viewRo.classList.remove('hidden');
                 viewEx.classList.add('hidden');
@@ -352,16 +440,15 @@
                 const isSelected = currentCategory === cat.id;
                 const btn = document.createElement('button');
                 
-                // Estilos dinámicos del botón
                 btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    isSelected ? 'bg-pandaGreen text-white shadow-md' : 'bg-white text-pandaDark border border-gray-200'
+                    isSelected ? 'bg-pandaGreen text-white shadow-md' : 'bg-white dark:bg-gray-800 text-pandaDark dark:text-gray-200 border border-gray-200 dark:border-gray-700'
                 }`;
                 btn.innerText = currentLang === 'es' ? cat.es : cat.en;
                 
                 btn.onclick = () => {
                     currentCategory = cat.id;
-                    renderFilters(); // Re-pintar para actualizar colores
-                    renderExercises(); // Re-pintar lista
+                    renderFilters(); 
+                    renderExercises();
                 };
                 
                 container.appendChild(btn);
@@ -378,35 +465,33 @@
                 : db.filter(ex => ex.cat.includes(currentCategory));
 
             if (filteredDb.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 mt-6 col-span-full">${currentLang === 'es' ? 'No hay ejercicios en esta categoría aún.' : 'No exercises in this category yet.'}</p>`;
+                container.innerHTML = `<p class="text-center text-gray-400 dark:text-gray-500 mt-6 col-span-full">${currentLang === 'es' ? 'No hay ejercicios en esta categoría aún.' : 'No exercises in this category yet.'}</p>`;
                 return;
             }
 
             filteredDb.forEach(ex => {
-                // Obtener nombres de todas las categorías a las que pertenece el ejercicio
                 const catNames = ex.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ');
                 const exName = currentLang === 'es' ? ex.es : ex.en;
-                // Soporte universal para imágenes: si no es .mp4, lo tratamos como imagen (.jpg, .gif, etc)
                 const isImg = !ex.file.toLowerCase().endsWith('.mp4');
 
                 const card = document.createElement('div');
-                card.className = "bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer";
+                card.className = "bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer";
                 card.onclick = () => openModal(ex.id);
 
                 card.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 flex-shrink-0 rounded-lg bg-gray-100 flex items-center justify-center text-pandaGreen overflow-hidden">
+                        <div class="w-12 h-12 flex-shrink-0 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-pandaGreen overflow-hidden">
                             ${isImg 
                                 ? `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`
                                 : `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>`
                             }
                         </div>
                         <div>
-                            <h4 class="font-bold text-pandaDark text-sm leading-tight">${exName}</h4>
+                            <h4 class="font-bold text-pandaDark dark:text-gray-100 text-sm leading-tight">${exName}</h4>
                             <span class="text-xs text-pandaGreen font-semibold">${catNames}</span>
                         </div>
                     </div>
-                    <button class="w-8 h-8 rounded-full bg-pandaLight flex items-center justify-center text-pandaDark hover:bg-pandaGreen hover:text-white transition-colors flex-shrink-0" onclick="event.stopPropagation(); addToRoutine(${ex.id})">
+                    <button class="w-8 h-8 rounded-full bg-pandaLight dark:bg-gray-700 flex items-center justify-center text-pandaDark dark:text-gray-200 hover:bg-pandaGreen dark:hover:bg-pandaGreen hover:text-white dark:hover:text-white transition-colors flex-shrink-0" onclick="event.stopPropagation(); addToRoutine(${ex.id})">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     </button>
                 `;
@@ -425,13 +510,11 @@
             const cat = document.getElementById('modal-category');
             const addBtn = document.getElementById('modal-add-btn');
 
-            // Textos
             title.innerText = currentLang === 'es' ? ex.es : ex.en;
             cat.innerText = ex.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ');
 
-            // Media
             const mediaUrl = getMediaUrl(ex.file);
-            mediaContainer.innerHTML = ''; // Limpiar anterior
+            mediaContainer.innerHTML = ''; 
             
             if (ex.file.toLowerCase().endsWith('.mp4')) {
                 const video = document.createElement('video');
@@ -449,27 +532,22 @@
                 mediaContainer.appendChild(img);
             }
 
-            // Configurar el botón de añadir
             addBtn.onclick = () => {
                 addToRoutine(ex.id);
                 closeModal();
             };
 
-            // Mostrar modal
             modal.classList.remove('hidden');
         }
 
         function closeModal() {
-            const modal = document.getElementById('modal');
-            modal.classList.add('hidden');
-            // Limpiar media para que el video pare
+            document.getElementById('modal').classList.add('hidden');
             document.getElementById('modal-media').innerHTML = ''; 
         }
 
-        // FUNCIONALIDAD DE SCROLL HORIZONTAL DE CATEGORÍAS
         function scrollCategories(direction) {
             const container = document.getElementById('category-filters');
-            const scrollAmount = 180; // Cantidad de píxeles que avanza con cada toque
+            const scrollAmount = 180;
             if (direction === 'left') {
                 container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
             } else {
@@ -477,13 +555,12 @@
             }
         }
 
-        // CREADOR DE RUTINA
+        // --- CREADOR Y GESTOR DE RUTINAS ---
+
         function addToRoutine(id) {
             const ex = db.find(e => e.id === id);
-            
             let routineItem = { ...ex };
             
-            // Lógica condicional: si es cardio añade minutos, si no, series/reps
             if (ex.isCardio) {
                 routineItem.mins = 15;
             } else {
@@ -493,16 +570,24 @@
             
             routine.push(routineItem);
             saveRoutine();
-            
-            // Pequeño feedback visual
             alert(currentLang === 'es' ? 'Añadido a tu rutina' : 'Added to your routine');
+            
+            // Ocultar banner de rutina previa si el usuario empieza a añadir cosas nuevas
+            document.getElementById('previous-routine-banner').classList.add('hidden');
         }
 
         function saveRoutine() {
             localStorage.setItem('pandaTrainerRoutine', JSON.stringify(routine));
-            if (document.getElementById('view-routine').classList.contains('hidden') === false) {
+            if (!document.getElementById('view-routine').classList.contains('hidden')) {
                 renderRoutine();
             }
+        }
+        
+        function loadPreviousRoutine() {
+            routine = [...savedRoutine];
+            document.getElementById('previous-routine-banner').classList.add('hidden');
+            saveRoutine();
+            renderRoutine();
         }
 
         function updateRoutineData(index, field, value) {
@@ -515,10 +600,94 @@
             saveRoutine();
         }
 
+        // Completar ejercicio con animación
+        function completeExercise(index, btnElement) {
+            // Encontrar la tarjeta del ejercicio
+            const row = btnElement.closest('.bg-white');
+            
+            // Añadir la clase de animación espectacular
+            row.classList.add('complete-anim');
+            
+            // Esperar a que acabe la animación (500ms) para borrarlo y mostrar el mensaje
+            setTimeout(() => {
+                routine.splice(index, 1);
+                saveRoutine(); // Esto re-renderiza la lista automáticamente
+                showMotivationalToast();
+            }, 500);
+        }
+
+        // Mostrar notificación flotante
+        function showMotivationalToast() {
+            const container = document.getElementById('toast-container');
+            const msgs = translations[currentLang].motivational;
+            // Seleccionar un mensaje al azar
+            const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
+            
+            const toast = document.createElement('div');
+            toast.className = "bg-pandaDark dark:bg-pandaLight text-white dark:text-pandaDark px-6 py-3 rounded-full font-bold shadow-2xl text-sm md:text-base toast-anim border-2 border-pandaGreen flex items-center gap-2";
+            toast.innerHTML = `
+                <svg class="w-6 h-6 text-pandaGreen" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                <span>${randomMsg}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Destruir el elemento del DOM tras terminar su animación (3.5 segundos)
+            setTimeout(() => {
+                toast.remove();
+            }, 3500);
+        }
+
+        // Exportar rutina a JSON
+        function exportRoutine() {
+            if(routine.length === 0) return alert(currentLang === 'es' ? 'La rutina está vacía' : 'Routine is empty');
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(routine));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "PandaTrainer_Rutina.json");
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // Importar rutina desde JSON
+        function importRoutine() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.readAsText(file, 'UTF-8');
+                reader.onload = readerEvent => {
+                    try {
+                        const content = readerEvent.target.result;
+                        routine = JSON.parse(content);
+                        saveRoutine();
+                        renderRoutine();
+                        document.getElementById('previous-routine-banner').classList.add('hidden');
+                        alert(currentLang === 'es' ? 'Rutina importada con éxito' : 'Routine imported successfully');
+                    } catch (err) {
+                        alert(currentLang === 'es' ? 'Error al leer el archivo. Asegúrate de que es un archivo JSON válido.' : 'Error reading file. Make sure it is a valid JSON file.');
+                    }
+                }
+            }
+            input.click();
+        }
+
         function renderRoutine() {
             const container = document.getElementById('routine-list');
             const emptyState = document.getElementById('empty-routine');
+            const prevBanner = document.getElementById('previous-routine-banner');
             container.innerHTML = '';
+
+            // Mostrar banner de carga si está vacía pero hay datos en localStorage
+            if (routine.length === 0 && savedRoutine.length > 0) {
+                prevBanner.classList.remove('hidden');
+            } else {
+                prevBanner.classList.add('hidden');
+            }
 
             if (routine.length === 0) {
                 container.classList.add('hidden');
@@ -533,25 +702,23 @@
 
             routine.forEach((item, index) => {
                 const exName = currentLang === 'es' ? item.es : item.en;
-                // Extraer los nombres de las categorías si existen, si no, mantener compatibilidad con localStorage antiguo
                 const catNames = Array.isArray(item.cat) 
                     ? item.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ')
                     : categories.find(c => c.id === item.cat)[currentLang];
 
                 const row = document.createElement('div');
-                row.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3";
+                row.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-3 transition-all duration-300 transform origin-left";
                 
-                // Lógica de visualización dependiendo de si es cardio o fuerza
                 let controlsHtml = '';
                 if (item.isCardio) {
                     controlsHtml = `
                         <div class="flex gap-4">
                             <div class="flex-1">
-                                <label class="block text-xs font-semibold text-gray-500 mb-1">${t.mins}</label>
-                                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                    <button onclick="updateRoutineData(${index}, 'mins', Math.max(1, ${item.mins || 15} - 1))" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
-                                    <input type="number" value="${item.mins || 15}" readonly class="w-full text-center bg-transparent text-pandaDark font-bold outline-none">
-                                    <button onclick="updateRoutineData(${index}, 'mins', ${item.mins || 15} + 1)" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">${t.mins}</label>
+                                <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                    <button onclick="updateRoutineData(${index}, 'mins', Math.max(1, ${item.mins || 15} - 1))" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${item.mins || 15}" readonly class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none">
+                                    <button onclick="updateRoutineData(${index}, 'mins', ${item.mins || 15} + 1)" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
                                 </div>
                             </div>
                         </div>
@@ -562,19 +729,19 @@
                     controlsHtml = `
                         <div class="flex gap-4">
                             <div class="flex-1">
-                                <label class="block text-xs font-semibold text-gray-500 mb-1">${t.sets}</label>
-                                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                    <button onclick="updateRoutineData(${index}, 'sets', Math.max(1, ${sets - 1}))" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
-                                    <input type="number" value="${sets}" readonly class="w-full text-center bg-transparent text-pandaDark font-bold outline-none">
-                                    <button onclick="updateRoutineData(${index}, 'sets', ${sets + 1})" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">${t.sets}</label>
+                                <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                    <button onclick="updateRoutineData(${index}, 'sets', Math.max(1, ${sets - 1}))" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${sets}" readonly class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none">
+                                    <button onclick="updateRoutineData(${index}, 'sets', ${sets + 1})" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
                                 </div>
                             </div>
                             <div class="flex-1">
-                                <label class="block text-xs font-semibold text-gray-500 mb-1">${t.reps}</label>
-                                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                    <button onclick="updateRoutineData(${index}, 'reps', Math.max(1, ${reps - 1}))" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">-</button>
-                                    <input type="number" value="${reps}" readonly class="w-full text-center bg-transparent text-pandaDark font-bold outline-none">
-                                    <button onclick="updateRoutineData(${index}, 'reps', ${reps + 1})" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 font-bold">+</button>
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">${t.reps}</label>
+                                <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                    <button onclick="updateRoutineData(${index}, 'reps', Math.max(1, ${reps - 1}))" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${reps}" readonly class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none">
+                                    <button onclick="updateRoutineData(${index}, 'reps', ${reps + 1})" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
                                 </div>
                             </div>
                         </div>
@@ -582,14 +749,21 @@
                 }
 
                 row.innerHTML = `
-                    <div class="flex justify-between items-start mb-3 border-b border-gray-100 pb-2">
+                    <div class="flex justify-between items-start mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">
                         <div>
-                            <h4 class="font-bold text-pandaDark text-sm">${exName}</h4>
+                            <h4 class="font-bold text-pandaDark dark:text-white text-sm pr-2">${exName}</h4>
                             <span class="text-xs text-pandaGreen">${catNames}</span>
                         </div>
-                        <button onclick="removeFromRoutine(${index})" class="text-red-400 hover:text-red-600 text-xs flex items-center gap-1 font-medium transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <!-- Botón Completar (Tic Verde) -->
+                            <button onclick="completeExercise(${index}, this)" class="bg-pandaLight dark:bg-gray-700 text-pandaGreen hover:bg-pandaGreen hover:text-white transition-colors p-1.5 rounded-full shadow-sm" title="${t.complete}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </button>
+                            <!-- Botón Eliminar (Papelera/X) -->
+                            <button onclick="removeFromRoutine(${index})" class="text-red-400 hover:text-red-600 transition-colors p-1" title="${t.remove}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
                     </div>
                     ${controlsHtml}
                 `;
@@ -599,10 +773,16 @@
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', () => {
+            // Mostrar los iconos correctos según el modo oscuro actual
+            if (document.documentElement.classList.contains('dark')) {
+                document.getElementById('icon-sun').classList.remove('hidden');
+            } else {
+                document.getElementById('icon-moon').classList.remove('hidden');
+            }
+
             renderFilters();
             renderExercises();
             
-            // Cerrar modal al hacer clic fuera del contenido
             document.getElementById('modal').addEventListener('click', (e) => {
                 if (e.target.id === 'modal') closeModal();
             });
