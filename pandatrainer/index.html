@@ -27,6 +27,16 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
+        /* Ocultar flechas de los input type number nativos */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
         /* Animación suave para el Modal */
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -153,6 +163,11 @@
             
             <!-- Opciones de Exportar / Importar -->
             <div class="flex justify-end gap-3 mb-4">
+                <button onclick="clearRoutine()" class="text-sm font-semibold flex items-center gap-1 text-red-400 hover:text-red-600 transition-colors mr-auto">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <span data-lang="es">Borrar todos</span>
+                    <span data-lang="en" class="hidden">Clear All</span>
+                </button>
                 <button onclick="importRoutine()" class="text-sm font-semibold flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-pandaGreen dark:hover:text-pandaGreen transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     <span data-lang="es">Importar</span>
@@ -222,6 +237,31 @@
     <!-- Contenedor para Notificaciones Motivacionales (Toast) -->
     <div id="toast-container" class="fixed bottom-24 left-0 right-0 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
 
+    <!-- CONFIRM MODAL PARA BORRAR RUTINA -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm overflow-hidden relative shadow-2xl border border-transparent dark:border-gray-700 p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-pandaDark dark:text-white mb-2" data-lang="es">¿Borrar toda la rutina?</h3>
+            <h3 class="text-xl font-bold text-pandaDark dark:text-white mb-2 hidden" data-lang="en">Clear entire routine?</h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                <span data-lang="es">¿Estás seguro de que deseas eliminar todos los ejercicios de tu rutina actual? Esta acción no se puede deshacer.</span>
+                <span data-lang="en" class="hidden">Are you sure you want to remove all exercises from your current routine? This action cannot be undone.</span>
+            </p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-3 rounded-xl font-semibold bg-gray-100 dark:bg-gray-700 text-pandaDark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <span data-lang="es">Cancelar</span>
+                    <span data-lang="en" class="hidden">Cancel</span>
+                </button>
+                <button onclick="executeClearRoutine()" class="flex-1 py-3 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md">
+                    <span data-lang="es">Borrar Todo</span>
+                    <span data-lang="en" class="hidden">Clear All</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SWAP EXERCISE MODAL -->
     <div id="swap-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-end md:justify-center p-0 md:p-4 fade-in">
         <div class="bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full max-w-lg overflow-hidden relative shadow-2xl flex flex-col h-[85vh] md:h-[75vh]">
@@ -282,10 +322,11 @@
         let routine = [];
         let savedRoutine = JSON.parse(localStorage.getItem('pandaTrainerRoutine')) || [];
         
-        // DICCIONARIO DE TRADUCCIONES UI (Actualizado con frases motivacionales y buscador)
+        // DICCIONARIO DE TRADUCCIONES UI (Actualizado con Kilos, Velocidad e Inclinación)
         const translations = {
             es: { 
                 sets: "Series", reps: "Reps", mins: "Minutos", remove: "Eliminar", complete: "Completar",
+                weight: "Kilos", speed: "Velocidad", incline: "Inclinación",
                 searchPlaceholder: "Buscar ejercicios...",
                 loadWorkout: "CARGAR ENTRENAMIENTO",
                 swap: "Cambiar",
@@ -300,6 +341,7 @@
             },
             en: { 
                 sets: "Sets", reps: "Reps", mins: "Minutes", remove: "Remove", complete: "Complete",
+                weight: "Kilos", speed: "Speed", incline: "Incline",
                 searchPlaceholder: "Search exercises...",
                 loadWorkout: "LOAD WORKOUT",
                 swap: "Swap",
@@ -333,7 +375,7 @@
             { id: 'Cardio', es: 'Cardio', en: 'Cardio' }
         ];
 
-        // BASE DE DATOS DE EJERCICIOS (Actualizada con los 11 nuevos)
+        // BASE DE DATOS DE EJERCICIOS (Se añade flag isTreadmill a las cintas)
         const db = [
             { id: 1, file: "Triceps Pushdown (Cable).mp4", cat: ["Triceps"], en: "Triceps Pushdown", es: "Extensión de tríceps" },
             { id: 2, file: "Biceps Curl.mp4", cat: ["Biceps"], en: "Biceps Curl", es: "Curl de bíceps" },
@@ -390,8 +432,8 @@
             { id: 53, file: "Cable-Lying-Fly_Chest-flat.mp4", cat: ["Chest"], en: "Lying Cable Fly", es: "Cruce tumbado en polea" },
             { id: 54, file: "Cable-Incline-Bench-Press_Chest-flat.mp4", cat: ["Chest"], en: "Incline Cable Bench Press", es: "Press de banca inclinado en polea" },
             { id: 55, file: "Cable-Bar-Lateral-Pulldown_Back-flat.mp4", cat: ["Back"], en: "Bar Lateral Pulldown", es: "Jalón lateral con barra" },
-            { id: 56, file: "caminar-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Walking", es: "Caminar en cinta", isCardio: true },
-            { id: 57, file: "correr-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Running", es: "Correr en cinta", isCardio: true },
+            { id: 56, file: "caminar-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Walking", es: "Caminar en cinta", isCardio: true, isTreadmill: true },
+            { id: 57, file: "correr-en-cinta.mp4", cat: ["Cardio"], en: "Treadmill Running", es: "Correr en cinta", isCardio: true, isTreadmill: true },
             { id: 58, file: "respiracion-diafragmatica.gif", cat: ["Abs"], en: "Diaphragmatic Breathing", es: "Respiración diafragmática", isCardio: true },
             { id: 59, file: "hip-thrust-bench.gif", cat: ["Hips", "Legs"], en: "Bench Hip Thrust", es: "Hip thrust en banco" },
             { id: 60, file: "Press-Hombro-Cable-Shoulder-Press_Shoulders-flat.mp4", cat: ["Shoulders"], en: "Cable Shoulder Press", es: "Press de hombro en polea" },
@@ -411,7 +453,7 @@
             { id: 74, file: "dominadas-agarre-supino.jpg", cat: ["Back", "Biceps"], en: "Chin-up", es: "Dominadas supinas" }
         ];
 
-        // BASE DE DATOS DE ENTRENAMIENTOS PREDEFINIDOS (Ahora organizados por grupos)
+        // BASE DE DATOS DE ENTRENAMIENTOS PREDEFINIDOS
         const workoutGroups = [
             {
                 id: 'g-aida',
@@ -730,10 +772,26 @@
                 mediaContainer.appendChild(img);
             }
 
-            addBtn.onclick = () => {
-                addToRoutine(ex.id);
-                closeModal();
-            };
+            // Adaptar el botón negro principal según si estamos cambiando o añadiendo
+            if (swapContext.index !== -1) {
+                addBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    <span>${translations[currentLang].swap}</span>
+                `;
+                addBtn.onclick = () => {
+                    confirmSwap(ex.id);
+                    closeModal();
+                };
+            } else {
+                addBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>${currentLang === 'es' ? 'Añadir a Mi Rutina' : 'Add to Routine'}</span>
+                `;
+                addBtn.onclick = () => {
+                    addToRoutine(ex.id);
+                    closeModal();
+                };
+            }
 
             modal.classList.remove('hidden');
         }
@@ -759,11 +817,16 @@
             const ex = db.find(e => e.id === id);
             let routineItem = { ...ex };
             
-            if (ex.isCardio) {
+            if (ex.isTreadmill) {
+                routineItem.mins = 15;
+                routineItem.speed = 5;
+                routineItem.incline = 0;
+            } else if (ex.isCardio) {
                 routineItem.mins = 15;
             } else {
                 routineItem.sets = 3;
                 routineItem.reps = 12;
+                routineItem.weight = 0;
             }
             
             routine.push(routineItem);
@@ -796,6 +859,25 @@
         function removeFromRoutine(index) {
             routine.splice(index, 1);
             saveRoutine();
+        }
+
+        // --- LÓGICA DE BORRAR TODA LA RUTINA ---
+        function clearRoutine() {
+            if (routine.length === 0) {
+                return showGeneralToast(currentLang === 'es' ? 'La rutina ya está vacía' : 'Routine is already empty', 'error');
+            }
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        function executeClearRoutine() {
+            routine = [];
+            saveRoutine();
+            closeConfirmModal();
+            showGeneralToast(currentLang === 'es' ? 'Rutina borrada con éxito' : 'Routine cleared successfully', 'success');
         }
 
         // Completar ejercicio con animación
@@ -879,17 +961,23 @@
                 const exName = currentLang === 'es' ? ex.es : ex.en;
                 const catNames = ex.cat.map(cId => categories.find(c => c.id === cId)[currentLang]).join(', ');
                 
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors group";
-                btn.innerHTML = `
-                    <div>
-                        <div class="font-bold text-sm text-pandaDark dark:text-white group-hover:text-pandaGreen transition-colors">${exName}</div>
-                        <div class="text-xs text-pandaGreen">${catNames}</div>
+                const row = document.createElement('div');
+                row.className = "w-full p-2 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors group";
+                row.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 overflow-hidden pr-2">
+                        <button onclick="openModal(${ex.id})" class="p-2 text-gray-400 hover:text-pandaGreen dark:text-gray-500 dark:hover:text-pandaGreen transition-colors focus:outline-none flex-shrink-0" title="${translations[currentLang].viewExercise}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                        <button onclick="confirmSwap(${ex.id})" class="flex-1 text-left flex flex-col justify-center focus:outline-none truncate">
+                            <div class="font-bold text-sm text-pandaDark dark:text-white group-hover:text-pandaGreen transition-colors truncate">${exName}</div>
+                            <div class="text-xs text-pandaGreen truncate">${catNames}</div>
+                        </button>
                     </div>
-                    <svg class="w-5 h-5 text-gray-400 group-hover:text-pandaGreen transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <button onclick="confirmSwap(${ex.id})" class="flex-shrink-0 text-gray-400 group-hover:text-pandaGreen transition-colors p-2 focus:outline-none" title="${translations[currentLang].swap}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    </button>
                 `;
-                btn.onclick = () => confirmSwap(ex.id);
-                container.appendChild(btn);
+                container.appendChild(row);
             });
         }
 
@@ -900,12 +988,19 @@
             if (swapContext.type === 'routine') {
                 const oldItem = routine[swapContext.index];
                 let newItem = { ...newEx };
-                if (newEx.isCardio) {
+                
+                if (newEx.isTreadmill) {
+                    newItem.mins = oldItem.mins || 15;
+                    newItem.speed = oldItem.speed || 5;
+                    newItem.incline = oldItem.incline || 0;
+                } else if (newEx.isCardio) {
                     newItem.mins = oldItem.mins || 15;
                 } else {
                     newItem.sets = oldItem.sets || 3;
                     newItem.reps = oldItem.reps || 12;
+                    newItem.weight = oldItem.weight || 0;
                 }
+                
                 routine[swapContext.index] = newItem;
                 saveRoutine(); // Automáticamente llama a renderRoutine
                 showGeneralToast(currentLang === 'es' ? 'Ejercicio cambiado en rutina' : 'Exercise swapped in routine', 'success');
@@ -920,12 +1015,18 @@
                 
                 const oldItem = wk.exercises[swapContext.index];
                 let newItem = { id: newEx.id };
-                if (newEx.isCardio) {
+                if (newEx.isTreadmill) {
+                    newItem.mins = oldItem.mins || 15;
+                    newItem.speed = oldItem.speed || 5;
+                    newItem.incline = oldItem.incline || 0;
+                } else if (newEx.isCardio) {
                     newItem.mins = oldItem.mins || 15;
                 } else {
                     newItem.sets = oldItem.sets || 3;
                     newItem.reps = oldItem.reps || 12;
+                    newItem.weight = oldItem.weight || 0;
                 }
+                
                 wk.exercises[swapContext.index] = newItem;
                 renderWorkouts();
                 showGeneralToast(currentLang === 'es' ? 'Ejercicio cambiado en entrenamiento' : 'Exercise swapped in workout', 'success');
@@ -1054,10 +1155,15 @@
 
             routine = wk.exercises.map(wkEx => {
                 const dbEx = db.find(e => e.id === wkEx.id);
-                return {
-                    ...dbEx,
-                    ...wkEx
-                };
+                // Asegurarnos de que los valores por defecto existan al cargar un entreno
+                let loadedEx = { ...dbEx, ...wkEx };
+                if (dbEx.isTreadmill) {
+                    if(!loadedEx.speed) loadedEx.speed = 5;
+                    if(!loadedEx.incline) loadedEx.incline = 0;
+                } else if (!dbEx.isCardio) {
+                    if(!loadedEx.weight) loadedEx.weight = 0;
+                }
+                return loadedEx;
             });
 
             saveRoutine();
@@ -1070,13 +1176,21 @@
         // Exportar rutina a JSON
         function exportRoutine() {
             if(routine.length === 0) return showGeneralToast(currentLang === 'es' ? 'La rutina está vacía' : 'Routine is empty', 'error');
+            
+            // Obtener la fecha actual para el nombre del archivo
+            const d = new Date();
+            const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(routine));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "PandaTrainer_Rutina.json");
+            // El archivo ahora se llamará por ejemplo: PandaTrainer_Rutina_2026-05-05.json
+            downloadAnchorNode.setAttribute("download", `PandaTrainer_Rutina_${dateString}.json`);
             document.body.appendChild(downloadAnchorNode); 
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
+            
+            showGeneralToast(currentLang === 'es' ? 'Rutina exportada con éxito' : 'Routine exported successfully', 'success');
         }
 
         // Importar rutina desde JSON
@@ -1139,15 +1253,48 @@
                 row.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-3 transition-all duration-300 transform origin-left relative";
                 
                 let controlsHtml = '';
-                if (item.isCardio) {
+                
+                if (item.isTreadmill) {
+                    controlsHtml = `
+                        <div class="grid grid-cols-3 gap-2">
+                            <!-- Minutos -->
+                            <div class="flex-1">
+                                <label class="block text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 truncate">${t.mins}</label>
+                                <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                    <button onclick="updateRoutineData(${index}, 'mins', Math.max(1, Number(${item.mins || 15}) - 1))" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${item.mins || 15}" onchange="updateRoutineData(${index}, 'mins', Number(this.value))" class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none text-sm">
+                                    <button onclick="updateRoutineData(${index}, 'mins', Number(${item.mins || 15}) + 1)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
+                                </div>
+                            </div>
+                            <!-- Velocidad -->
+                            <div class="flex-1">
+                                <label class="block text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 truncate">${t.speed}</label>
+                                <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                    <button onclick="updateRoutineData(${index}, 'speed', Math.max(0, Number(${item.speed || 5}) - 0.5))" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" step="0.5" value="${item.speed || 5}" onchange="updateRoutineData(${index}, 'speed', Number(this.value))" class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none text-sm">
+                                    <button onclick="updateRoutineData(${index}, 'speed', Number(${item.speed || 5}) + 0.5)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
+                                </div>
+                            </div>
+                            <!-- Inclinación -->
+                            <div class="flex-1">
+                                <label class="block text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 truncate">${t.incline}</label>
+                                <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                    <button onclick="updateRoutineData(${index}, 'incline', Math.max(0, Number(${item.incline || 0}) - 1))" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${item.incline || 0}" onchange="updateRoutineData(${index}, 'incline', Number(this.value))" class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none text-sm">
+                                    <button onclick="updateRoutineData(${index}, 'incline', Number(${item.incline || 0}) + 1)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (item.isCardio) {
                     controlsHtml = `
                         <div class="flex gap-4">
-                            <div class="flex-1">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">${t.mins}</label>
+                            <div class="w-1/3">
+                                <label class="block text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 truncate">${t.mins}</label>
                                 <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
-                                    <button onclick="updateRoutineData(${index}, 'mins', Math.max(1, ${item.mins || 15} - 1))" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
-                                    <input type="number" value="${item.mins || 15}" readonly class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none">
-                                    <button onclick="updateRoutineData(${index}, 'mins', ${item.mins || 15} + 1)" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
+                                    <button onclick="updateRoutineData(${index}, 'mins', Math.max(1, Number(${item.mins || 15}) - 1))" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${item.mins || 15}" onchange="updateRoutineData(${index}, 'mins', Number(this.value))" class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none text-sm">
+                                    <button onclick="updateRoutineData(${index}, 'mins', Number(${item.mins || 15}) + 1)" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
                                 </div>
                             </div>
                         </div>
@@ -1155,22 +1302,34 @@
                 } else {
                     const sets = item.sets || 3;
                     const reps = item.reps || 12;
+                    const weight = item.weight || 0;
                     controlsHtml = `
-                        <div class="flex gap-4">
+                        <div class="grid grid-cols-3 gap-2">
+                            <!-- Series -->
                             <div class="flex-1">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">${t.sets}</label>
+                                <label class="block text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 truncate">${t.sets}</label>
                                 <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
-                                    <button onclick="updateRoutineData(${index}, 'sets', Math.max(1, ${sets - 1}))" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
-                                    <input type="number" value="${sets}" readonly class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none">
-                                    <button onclick="updateRoutineData(${index}, 'sets', ${sets + 1})" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
+                                    <button onclick="updateRoutineData(${index}, 'sets', Math.max(1, Number(${sets}) - 1))" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${sets}" onchange="updateRoutineData(${index}, 'sets', Number(this.value))" class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none text-sm">
+                                    <button onclick="updateRoutineData(${index}, 'sets', Number(${sets}) + 1)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
                                 </div>
                             </div>
+                            <!-- Reps -->
                             <div class="flex-1">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">${t.reps}</label>
+                                <label class="block text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 truncate">${t.reps}</label>
                                 <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
-                                    <button onclick="updateRoutineData(${index}, 'reps', Math.max(1, ${reps - 1}))" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
-                                    <input type="number" value="${reps}" readonly class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none">
-                                    <button onclick="updateRoutineData(${index}, 'reps', ${reps + 1})" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
+                                    <button onclick="updateRoutineData(${index}, 'reps', Math.max(1, Number(${reps}) - 1))" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" value="${reps}" onchange="updateRoutineData(${index}, 'reps', Number(this.value))" class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none text-sm">
+                                    <button onclick="updateRoutineData(${index}, 'reps', Number(${reps}) + 1)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
+                                </div>
+                            </div>
+                            <!-- Kilos -->
+                            <div class="flex-1">
+                                <label class="block text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 truncate">${t.weight}</label>
+                                <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                    <button onclick="updateRoutineData(${index}, 'weight', Math.max(0, Number(${weight}) - 2.5))" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">-</button>
+                                    <input type="number" step="0.5" value="${weight}" onchange="updateRoutineData(${index}, 'weight', Number(this.value))" class="w-full text-center bg-transparent text-pandaDark dark:text-white font-bold outline-none text-sm">
+                                    <button onclick="updateRoutineData(${index}, 'weight', Number(${weight}) + 2.5)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-bold dark:text-white">+</button>
                                 </div>
                             </div>
                         </div>
@@ -1179,11 +1338,14 @@
 
                 row.innerHTML = `
                     <div class="flex justify-between items-start mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">
-                        <div>
-                            <h4 class="font-bold text-pandaDark dark:text-white text-sm pr-2">${exName}</h4>
-                            <span class="text-xs text-pandaGreen">${catNames}</span>
+                        <div class="flex-1 pr-2">
+                            <button onclick="openModal(${item.id})" class="text-left font-bold text-pandaDark dark:text-white text-sm hover:text-pandaGreen dark:hover:text-pandaGreen transition-colors flex items-center gap-1.5 group mb-0.5 focus:outline-none" title="${t.viewExercise}">
+                                <svg class="w-4 h-4 flex-shrink-0 text-gray-400 group-hover:text-pandaGreen transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                <span class="leading-tight">${exName}</span>
+                            </button>
+                            <span class="text-[11px] font-semibold text-pandaGreen block ml-5">${catNames}</span>
                         </div>
-                        <div class="flex items-center gap-2 flex-shrink-0">
+                        <div class="flex items-center gap-1.5 flex-shrink-0">
                             <!-- Botón Completar (Tic Verde) -->
                             <button onclick="completeExercise(${index}, this)" class="bg-pandaLight dark:bg-gray-700 text-pandaGreen hover:bg-pandaGreen hover:text-white transition-colors p-1.5 rounded-full shadow-sm" title="${t.complete}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -1223,6 +1385,10 @@
 
             document.getElementById('swap-modal').addEventListener('click', (e) => {
                 if (e.target.id === 'swap-modal') closeSwapModal();
+            });
+
+            document.getElementById('confirm-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'confirm-modal') closeConfirmModal();
             });
         });
 
