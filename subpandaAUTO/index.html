@@ -3,7 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SubPandaAUTO - HTTrans</title>
+    
+    <title>SubPandaAUTO - HTTrans | Creador de subtítulos automáticos con IA</title>
+    <meta name="description" content="Genera subtítulos automáticos gratis y rápido con IA. Soporta Groq y modelos locales (Whisper). Transcribe y traduce videos y audios fácilmente. Auto-subtitles AI tool.">
+    <meta name="keywords" content="subtítulos automáticos, auto-subtitles, crear subtítulos automáticos, auto subtitling, AI subtitles, transcribir audio a texto, whisper web, groq api subtitles, HTTrans, automatizar subtítulos, subtitulador IA">
+    <meta name="author" content="Rafael López Sánchez">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="SubPandaAUTO - Generador de Subtítulos con IA">
+    <meta property="og:description" content="Herramienta gratuita basada en navegador para generar, traducir y editar subtítulos automáticamente usando Whisper y Groq.">
+    <meta property="og:url" content="https://httrans.org/">
+    <meta property="og:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/subpandaAUTO.png">
+
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaAUTO/favicon-subpandaAUTO.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/phosphor.js"></script>
     <!-- WaveSurfer y Plugin de Regiones -->
@@ -201,7 +215,10 @@
                     </div>
 
                     <div class="flex justify-between items-center">
-                        <label class="text-sm font-semibold text-gray-600" title="Maximum number of lines per subtitle" data-key="maxLinesLabel">Max Lines</label>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-600 cursor-pointer" title="Maximum number of lines per subtitle">
+                            <input type="checkbox" id="cb-max-lines" checked class="accent-[#ffb81f] w-4 h-4 cursor-pointer">
+                            <span data-key="maxLinesLabel">Max Lines</span>
+                        </label>
                         <select id="max-lines" class="p-1.5 border border-gray-300 rounded w-24 text-center text-sm font-semibold text-gray-700 bg-white">
                             <option value="1">1</option>
                             <option value="2" selected>2</option>
@@ -366,7 +383,7 @@
 
     </main>
 
-    <footer class="text-center mt-4 mb-4 text-gray-400 text-xs font-medium">Made with ❤️ and 🐼 by Rafael López Sánchez</footer>
+    <footer class="text-center mt-4 mb-4 text-gray-400 text-xs font-medium" data-key="footerText">This tool is part of the httrans.org project and was created by Rafael López Sánchez.</footer>
     <script type="module" src="wp-main.js"></script>
 </body>
 </html>
