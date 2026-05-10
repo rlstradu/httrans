@@ -77,7 +77,8 @@ const translations = {
         dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten, i, you, he, she, it, we, they",
         alertSelectRegion: "Please select a fragment of the waveform first to create a subtitle.",
         btnCreatePanda: "Create subtitle",
-        confirmLeave: "Are you sure you want to leave? You may lose your unsaved progress."
+        confirmLeave: "Are you sure you want to leave? You may lose your unsaved progress.",
+        footerText: "This tool is part of the httrans.org project and was created by Rafael López Sánchez."
     },
     es: {
         backLink: "Volver a HTTrans",
@@ -151,7 +152,8 @@ const translations = {
         dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez, yo, tú, él, ella, ello, nosotros, nosotras, vosotros, vosotras, ellos, ellas",
         alertSelectRegion: "Selecciona un fragmento de la onda de sonido primero para poder crear el subtítulo.",
         btnCreatePanda: "Crear subtítulo",
-        confirmLeave: "¿Seguro que quieres salir? Podrías perder tu progreso."
+        confirmLeave: "¿Seguro que quieres salir? Podrías perder tu progreso.",
+        footerText: "Esta herramienta forma parte del proyecto httrans.org y ha sido creada por Rafael López Sánchez."
     }
 };
 
@@ -1124,6 +1126,7 @@ function updateSubtitleOverlay(time) {
 function processResultsV9(data) {
     // Leer estado de los Checkboxes ON/OFF
     const useMaxCpl = document.getElementById('cb-max-cpl').checked;
+    const useMaxLines = document.getElementById('cb-max-lines').checked;
     const useMinDur = document.getElementById('cb-min-dur').checked;
     const useMaxDur = document.getElementById('cb-max-dur').checked;
     const useMinGap = document.getElementById('cb-min-gap').checked;
@@ -1132,7 +1135,7 @@ function processResultsV9(data) {
 
     // Asignar valores condicionándolos a los Checkboxes
     const maxCPL = useMaxCpl ? (parseInt(document.getElementById('max-cpl').value) || 42) : 9999;
-    const maxLines = parseInt(document.getElementById('max-lines').value);
+    const maxLines = useMaxLines ? (parseInt(document.getElementById('max-lines').value) || 2) : 9999;
     const minDurVal = useMinDur ? (parseFloat(document.getElementById('min-duration').value) || 1.0) : 0;
     const maxDurVal = useMaxDur ? (parseFloat(document.getElementById('max-duration').value) || 7.0) : Infinity;
     
