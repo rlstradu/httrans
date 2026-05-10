@@ -74,7 +74,9 @@ const translations = {
         ttEditTime: "Click to edit timestamps",
         btnUndo: "Undo",
         ttUndo: "Undo last action (Ctrl+Z)",
-        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten"
+        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten",
+        alertSelectRegion: "Please select a fragment of the waveform first to create a subtitle.",
+        btnCreatePanda: "Create subtitle"
     },
     es: {
         backLink: "Volver a HTTrans",
@@ -145,7 +147,9 @@ const translations = {
         ttEditTime: "Clic para editar tiempos manualmente",
         btnUndo: "Deshacer",
         ttUndo: "Deshacer última acción (Ctrl+Z)",
-        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez"
+        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez",
+        alertSelectRegion: "Selecciona un fragmento de la onda de sonido primero para poder crear el subtítulo.",
+        btnCreatePanda: "Crear subtítulo"
     }
 };
 
@@ -313,6 +317,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.addEventListener('keydown', (e) => {
+        // Atajo Alt+Enter / Cmd+Enter: Crear subtítulo manual
+        if ((e.altKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            window.createManualSubtitle();
+        }
+
         // Atajo Alt+O: Reproducir segmento actual
         if (e.altKey && (e.key === 'o' || e.key === 'O')) {
             e.preventDefault();
@@ -733,6 +743,18 @@ function initWaveSurfer() {
     });
     video.addEventListener('play', () => wavesurfer.play());
     video.addEventListener('pause', () => wavesurfer.pause());
+    
+    // Habilitar la selección manual arrastrando el ratón
+    wsRegions.enableDragSelection({ color: 'rgba(255, 184, 31, 0.4)' });
+    wsRegions.on('region-created', (region) => {
+        if (!region.id.startsWith('sub-')) {
+            // Eliminar otras selecciones temporales para dejar solo la última
+            wsRegions.getRegions().forEach(r => {
+                if (!r.id.startsWith('sub-') && r.id !== region.id) r.remove();
+            });
+        }
+    });
+
     wavesurfer.on('ready', () => { wavesurfer.zoom(100); renderRegions(); renderSubtitleList(); });
     wsRegions.on('region-updated', (region) => {
         const index = parseInt(region.id.replace('sub-', ''));
@@ -746,6 +768,42 @@ function initWaveSurfer() {
     });
     wsRegions.on('region-clicked', (region, e) => { e.stopPropagation(); video.currentTime = region.start; video.play(); });
 }
+
+window.createManualSubtitle = () => {
+    const tempRegions = wsRegions.getRegions().filter(r => !r.id.startsWith('sub-'));
+    if (tempRegions.length === 0) {
+        alert(translations[currentLang].alertSelectRegion);
+        return;
+    }
+    
+    pushHistory(); // Guardar estado para el Undo
+    const region = tempRegions[0];
+    
+    const newSub = {
+        start: region.start,
+        end: region.end,
+        text: ""
+    };
+
+    // Añadir y reordenar el array cronológicamente
+    currentSubtitles.push(newSub);
+    currentSubtitles.sort((a, b) => a.start - b.start);
+
+    // Renderizar la nueva lista y onda
+    renderSubtitleList();
+    renderRegions();
+    updateSubtitleOverlay(els.videoPreview.currentTime);
+
+    // Hacer scroll al nuevo subtítulo y poner foco en el textarea
+    const newIndex = currentSubtitles.indexOf(newSub);
+    setTimeout(() => {
+        const ta = document.getElementById(`ta-${newIndex}`);
+        if(ta) {
+            ta.focus();
+            document.getElementById(`card-sub-${newIndex}`).scrollIntoView({behavior: "smooth", block: "center"});
+        }
+    }, 100);
+};
 
 function renderRegions() {
     wsRegions.clearRegions();
@@ -1171,29 +1229,32 @@ function balancedSplitV9(text, maxCpl, dontBreakList) {
     const mid = Math.floor(words.length / 2); return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
 }
 
-// FIX: Padding de silencios para cumplir Min Dur
+// FIX: Padding de silencios estrictos para cumplir Min Dur y evitar Solapamientos
 function applyTimeRules(subs, minDur, maxDur, minGap) {
     for (let i = 0; i < subs.length; i++) {
         let current = subs[i];
-        let duration = current.end - current.start;
+        
+        // Prevención de errores: si por algún motivo finaliza antes de empezar
+        if (current.end <= current.start) current.end = current.start + 0.5;
 
-        // Si es muy corto, intentamos extenderlo hacia el silencio siguiente
-        if (duration < minDur) {
-            let limit = Infinity;
-            
-            if (i < subs.length - 1) {
-                // El límite es el inicio del siguiente menos el gap
-                limit = subs[i+1].start - minGap;
+        let limit = Infinity;
+        
+        if (i < subs.length - 1) {
+            let next = subs[i+1];
+            // 1. REGLA ESTRICTA: Resolver solapamientos y forzar el Gap ANTES de nada
+            if (current.end > next.start - minGap) {
+                current.end = Math.max(current.start + 0.1, next.start - minGap);
             }
-            
-            // Calculamos nuevo final deseado (inicio + minDur)
+            limit = next.start - minGap;
+        }
+
+        // 2. Padding para el Min Duration
+        let duration = current.end - current.start;
+        if (duration < minDur) {
             let desiredEnd = current.start + minDur;
-            
-            // Si el espacio libre lo permite, extendemos
             if (desiredEnd <= limit) {
                 current.end = desiredEnd;
             } else {
-                // Si no cabe todo, extendemos hasta donde podamos
                 current.end = limit; 
             }
         }
