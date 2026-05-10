@@ -75,7 +75,7 @@
 <body class="p-4 md:p-8">
 
     <nav class="w-full max-w-6xl mx-auto mb-8 flex justify-between items-center">
-        <a href="index.html" class="flex items-center gap-3 text-gray-600 hover:text-[#ffb81f] transition">
+        <a href="https://httrans.org" class="flex items-center gap-3 text-gray-600 hover:text-[#ffb81f] transition">
             <i class="ph-bold ph-arrow-left text-xl"></i>
             <span class="font-bold" data-key="backLink">Back to HTTrans</span>
         </a>
@@ -383,7 +383,60 @@
 
     </main>
 
-    <footer class="text-center mt-4 mb-4 text-gray-400 text-xs font-medium" data-key="footerText">This tool is part of the httrans.org project and was created by Rafael López Sánchez.</footer>
+    <footer class="flex flex-col items-center gap-3 mt-4 mb-8 text-gray-400 text-xs font-medium">
+        <p data-key="footerText">This tool is part of the httrans.org project and was created by Rafael López Sánchez.</p>
+        <button onclick="window.toggleLegalModal()" class="flex items-center gap-1.5 hover:text-[#ffb81f] transition-colors bg-white/50 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+            <i class="ph-bold ph-info"></i>
+            <span data-key="btnLegal">Legal & Ethics</span>
+        </button>
+    </footer>
+
+    <div id="legal-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-panel w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl p-6 md:p-8 relative shadow-2xl">
+            <button onclick="window.toggleLegalModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+            
+            <h2 class="text-xl font-black text-[#202020] mb-6 flex items-center gap-2 border-b border-gray-100 pb-3">
+                <i class="ph-fill ph-shield-check text-[#ffb81f]"></i>
+                <span data-key="legalTitle">Terms, Privacy & Ethics</span>
+            </h2>
+
+            <div class="space-y-6 text-sm leading-relaxed text-gray-600">
+                <section>
+                    <h3 class="font-bold text-[#202020] flex items-center gap-2 mb-1">
+                        <i class="ph-bold ph-eye-slash text-[#ffb81f]"></i> <span data-key="p1Title">Privacy</span>
+                    </h3>
+                    <p data-key="p1Desc">This tool does not store, save, or distribute any uploaded audio or video files. All processing is performed locally in your browser or sent directly to the Groq API if configured by the user.</p>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-[#202020] flex items-center gap-2 mb-1">
+                        <i class="ph-bold ph-key text-[#ffb81f]"></i> <span data-key="p2Title">API Usage</span>
+                    </h3>
+                    <p data-key="p2Desc">When using Cloud Mode, the user is responsible for their own Groq API Key and must comply with Groq's Terms of Service.</p>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-[#202020] flex items-center gap-2 mb-1">
+                        <i class="ph-bold ph-copyright text-[#ffb81f]"></i> <span data-key="p3Title">Content Responsibility</span>
+                    </h3>
+                    <p data-key="p3Desc">The user is solely responsible for possessing the necessary copyrights or permissions for any files processed with this tool.</p>
+                </section>
+
+                <section class="bg-yellow-50/50 p-4 rounded-2xl border border-yellow-100">
+                    <h3 class="font-bold text-[#202020] flex items-center gap-2 mb-1">
+                        <i class="ph-fill ph-briefcase text-[#ffb81f]"></i> <span data-key="p4Title">Professional Ethics</span>
+                    </h3>
+                    <p data-key="p4Desc">This tool was created by a professional subtitler and is designed to be used with professional judgment and as a support resource within the augmented subtitling methodology, and not to create low-quality automatic subtitles or replace the work of a professional subtitler. This project is in favor of human subtitling and the use of technology to enhance the work of the human subtitler.</p>
+                </section>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button onclick="window.toggleLegalModal()" class="bg-[#202020] text-white font-bold py-2 px-8 rounded-xl hover:bg-gray-800 transition" data-key="btnClose">Close</button>
+            </div>
+        </div>
+    </div>
     <script type="module" src="wp-main.js"></script>
 </body>
 </html>
