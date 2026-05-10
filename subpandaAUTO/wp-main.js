@@ -267,8 +267,31 @@ document.addEventListener('DOMContentLoaded', () => {
         dlSrt: document.getElementById('download-srt-btn'),
         dlTxt: document.getElementById('download-txt-btn'),
         
-        endPunctuationInput: document.getElementById('end-punctuation')
+        endPunctuationInput: document.getElementById('end-punctuation'),
+        
+        // Elementos del Modal Legal
+        btnLegalOpen: document.getElementById('btn-legal-open'),
+        btnLegalCloseX: document.getElementById('btn-legal-close-x'),
+        btnLegalCloseBtn: document.getElementById('btn-legal-close-btn'),
+        legalModal: document.getElementById('legal-modal')
     };
+
+    // Lógica del Pop-up Legal
+    const toggleLegalModal = () => {
+        if (els.legalModal) {
+            els.legalModal.classList.toggle('hidden');
+            if (!els.legalModal.classList.contains('hidden')) {
+                document.body.style.overflow = 'hidden'; // Bloquea el scroll del fondo
+            } else {
+                document.body.style.overflow = ''; // Restaura el scroll
+            }
+        }
+    };
+
+    // Enlazamos los clics a la función
+    if (els.btnLegalOpen) els.btnLegalOpen.addEventListener('click', toggleLegalModal);
+    if (els.btnLegalCloseX) els.btnLegalCloseX.addEventListener('click', toggleLegalModal);
+    if (els.btnLegalCloseBtn) els.btnLegalCloseBtn.addEventListener('click', toggleLegalModal);
 
     if(els.subtitleOverlay) {
         els.subtitleOverlay.style.zIndex = "50";
@@ -1350,17 +1373,5 @@ function parseTimeStr(str) {
 }
 
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
-
-window.toggleLegalModal = () => {
-    const modal = document.getElementById('legal-modal');
-    if (modal) {
-        modal.classList.toggle('hidden');
-        if (!modal.classList.contains('hidden')) {
-            document.body.style.overflow = 'hidden'; // Bloquear scroll de fondo
-        } else {
-            document.body.style.overflow = '';
-        }
-    }
-};
 
 setLanguage('en');
