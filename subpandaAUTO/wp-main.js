@@ -78,7 +78,18 @@ const translations = {
         alertSelectRegion: "Please select a fragment of the waveform first to create a subtitle.",
         btnCreatePanda: "Create subtitle",
         confirmLeave: "Are you sure you want to leave? You may lose your unsaved progress.",
-        footerText: "This tool is part of the httrans.org project and was created by Rafael López Sánchez."
+        footerText: "This tool is part of the httrans.org project and was created by Rafael López Sánchez.",
+        btnLegal: "Legal & Ethics",
+        legalTitle: "Terms, Privacy & Ethics",
+        btnClose: "Close",
+        p1Title: "Privacy",
+        p1Desc: "This tool does not store, save, or distribute any uploaded audio or video files. All processing is performed locally in your browser or sent directly to the Groq API if configured by the user.",
+        p2Title: "API Usage",
+        p2Desc: "When using Cloud Mode, the user is responsible for their own Groq API Key and must comply with Groq's Terms of Service.",
+        p3Title: "Content Responsibility",
+        p3Desc: "The user is solely responsible for possessing the necessary copyrights or permissions for any files processed with this tool.",
+        p4Title: "Professional Ethics",
+        p4Desc: "This tool was created by a professional subtitler and is designed to be used with professional judgment and as a support resource within the augmented subtitling methodology, and not to create low-quality automatic subtitles or replace the work of a professional subtitler. This project is in favor of human subtitling and the use of technology to enhance the work of the human subtitler."
     },
     es: {
         backLink: "Volver a HTTrans",
@@ -153,7 +164,18 @@ const translations = {
         alertSelectRegion: "Selecciona un fragmento de la onda de sonido primero para poder crear el subtítulo.",
         btnCreatePanda: "Crear subtítulo",
         confirmLeave: "¿Seguro que quieres salir? Podrías perder tu progreso.",
-        footerText: "Esta herramienta forma parte del proyecto httrans.org y ha sido creada por Rafael López Sánchez."
+        footerText: "Esta herramienta forma parte del proyecto httrans.org y ha sido creada por Rafael López Sánchez.",
+        btnLegal: "Términos, privacidad y ética profesional",
+        legalTitle: "Términos, privacidad y ética profesional",
+        btnClose: "Cerrar",
+        p1Title: "Privacidad",
+        p1Desc: "Esta herramienta no almacena, guarda ni distribuye los archivos de audio o vídeo subidos. Todo el procesamiento se realiza localmente en tu navegador o se envía directamente a la API de Groq si el usuario así lo configura.",
+        p2Title: "Uso de la API",
+        p2Desc: "Al usar el modo Cloud, el usuario es responsable del uso de su propia API Key de Groq y debe cumplir con los Términos de Servicio de Groq.",
+        p3Title: "Responsabilidad del contenido",
+        p3Desc: "El usuario es el único responsable de poseer los derechos de autor o los permisos necesarios de los archivos que procese con esta herramienta.",
+        p4Title: "Ética profesional",
+        p4Desc: "Esta herramienta ha sido creada por un subtitulador profesional y está pensada para usarla con criterio profesional y como recurso de apoyo dentro de la metodología de la subtitulación aumentada, y no para crear subtítulos automáticos de baja calidad o reemplazar el trabajo de un subtitulador profesional. Este proyecto está a favor de la subtitulación humana y del uso de tecnología para potenciar la labor del subtitulador humano."
     }
 };
 
@@ -394,8 +416,7 @@ function updateModeUI(mode) {
             else { label.classList.remove('border-[#ffb81f]', 'shadow-md'); label.classList.add('border-gray-200'); }
         });
         const savedKey = localStorage.getItem('groq_api_key');
-        const defaultKey = "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";
-        if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || defaultKey;
+        if(document.getElementById('groq-key')) document.getElementById('groq-key').value = savedKey || "";
     } else {
         els.groqContainer.classList.add('hidden');
         els.localModelContainer.classList.remove('opacity-50', 'pointer-events-none');
@@ -1329,4 +1350,17 @@ function parseTimeStr(str) {
 }
 
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
+
+window.toggleLegalModal = () => {
+    const modal = document.getElementById('legal-modal');
+    if (modal) {
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden')) {
+            document.body.style.overflow = 'hidden'; // Bloquear scroll de fondo
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+};
+
 setLanguage('en');
