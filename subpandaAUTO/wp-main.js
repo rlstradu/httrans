@@ -33,9 +33,9 @@ const translations = {
         maxLinesLabel: "Max Lines",
         cplLabel: "Max chars/line (CPL)",
         punctuationLabel: "Force break on punctuation",
-        dontBreakLabel: "Do not end line on (Prepositions/Articles)",
+        dontBreakLabel: "Do not end line on",
         dropTitle: "Click or drag your file here",
-        dropSubtitle: "Supports MP3, WAV, MP4, MKV, MOV...",
+        dropSubtitle: "Supports MP4, MKV, MOV, MP3, WAV...",
         fileWarning: "<strong>Heads up!</strong> Large file. Browser might slow down.",
         startBtn: "Start",
         updateBtn: "Update Segmentation", 
@@ -74,9 +74,10 @@ const translations = {
         ttEditTime: "Click to edit timestamps",
         btnUndo: "Undo",
         ttUndo: "Undo last action (Ctrl+Z)",
-        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten",
+        dontBreakDefaults: "the, a, an, and, but, or, nor, for, yet, so, of, to, in, with, on, at, by, from, about, as, into, like, through, after, over, between, out, against, during, without, before, under, around, among, my, your, his, her, its, our, their, this, that, one, two, three, four, five, six, seven, eight, nine, ten, i, you, he, she, it, we, they",
         alertSelectRegion: "Please select a fragment of the waveform first to create a subtitle.",
-        btnCreatePanda: "Create subtitle"
+        btnCreatePanda: "Create subtitle",
+        confirmLeave: "Are you sure you want to leave? You may lose your unsaved progress."
     },
     es: {
         backLink: "Volver a HTTrans",
@@ -106,9 +107,9 @@ const translations = {
         maxLinesLabel: "Máx. Líneas",
         cplLabel: "Máx. caracteres/línea (CPL)",
         punctuationLabel: "Forzar corte en puntuación",
-        dontBreakLabel: "No terminar línea en (Preposiciones/Artículos)",
+        dontBreakLabel: "No terminar línea en",
         dropTitle: "Haz clic o arrastra tu archivo aquí",
-        dropSubtitle: "Soporta MP3, WAV, MP4, MKV, MOV...",
+        dropSubtitle: "Compatible con MP4, MKV, MOV, MP3, WAV...",
         fileWarning: "<strong>¡Ojo!</strong> Archivo grande. El navegador podría ir lento.",
         startBtn: "Iniciar",
         updateBtn: "Actualizar Segmentación",
@@ -147,9 +148,10 @@ const translations = {
         ttEditTime: "Clic para editar tiempos manualmente",
         btnUndo: "Deshacer",
         ttUndo: "Deshacer última acción (Ctrl+Z)",
-        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez",
+        dontBreakDefaults: "el, la, los, las, un, una, unos, unas, y, o, pero, ni, que, a, ante, bajo, cabe, con, contra, de, desde, en, entre, hacia, hasta, para, por, según, sin, so, sobre, tras, mi, tu, su, mis, tus, sus, un, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez, yo, tú, él, ella, ello, nosotros, nosotras, vosotros, vosotras, ellos, ellas",
         alertSelectRegion: "Selecciona un fragmento de la onda de sonido primero para poder crear el subtítulo.",
-        btnCreatePanda: "Crear subtítulo"
+        btnCreatePanda: "Crear subtítulo",
+        confirmLeave: "¿Seguro que quieres salir? Podrías perder tu progreso."
     }
 };
 
@@ -349,6 +351,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateModeUI('groq');
     setLanguage('en');
+
+    // Avisar antes de cerrar/recargar la pestaña
+    window.addEventListener('beforeunload', (e) => {
+        if (audioData || currentSubtitles.length > 0) {
+            const t = translations[currentLang];
+            e.preventDefault();
+            e.returnValue = t.confirmLeave; // Chrome requiere esto
+            return t.confirmLeave;
+        }
+    });
 }); 
 
 // --- 4. FUNCIONES GLOBALES ---
@@ -1110,21 +1122,32 @@ function updateSubtitleOverlay(time) {
 }
 
 function processResultsV9(data) {
-    const maxCPL = parseInt(document.getElementById('max-cpl').value);
+    // Leer estado de los Checkboxes ON/OFF
+    const useMaxCpl = document.getElementById('cb-max-cpl').checked;
+    const useMinDur = document.getElementById('cb-min-dur').checked;
+    const useMaxDur = document.getElementById('cb-max-dur').checked;
+    const useMinGap = document.getElementById('cb-min-gap').checked;
+    const usePunct = document.getElementById('cb-punct').checked;
+    const useDontBreak = document.getElementById('cb-dont-break').checked;
+
+    // Asignar valores condicionándolos a los Checkboxes
+    const maxCPL = useMaxCpl ? (parseInt(document.getElementById('max-cpl').value) || 42) : 9999;
     const maxLines = parseInt(document.getElementById('max-lines').value);
-    const minDurVal = parseFloat(document.getElementById('min-duration').value) || 1.0;
-    const maxDurVal = parseFloat(document.getElementById('max-duration').value) || 7.0;
+    const minDurVal = useMinDur ? (parseFloat(document.getElementById('min-duration').value) || 1.0) : 0;
+    const maxDurVal = useMaxDur ? (parseFloat(document.getElementById('max-duration').value) || 7.0) : Infinity;
+    
     const minGapVal = parseFloat(document.getElementById('min-gap-val').value) || 0;
     const minGapUnit = document.getElementById('min-gap-unit').value;
-    let minGapSeconds = minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000;
+    let minGapSeconds = useMinGap ? (minGapUnit === 'frames' ? minGapVal * 0.040 : minGapVal / 1000) : 0;
+    
     const dontBreakStr = document.getElementById('dont-break-on').value;
-    const dontBreakList = [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s);
+    const dontBreakList = useDontBreak ? [...dontBreakStr.split(','), "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "zero"].map(s => s.trim().toLowerCase()).filter(s => s) : [];
     
     let punctuationStr = ".?!:…";
     if (els.endPunctuationInput && els.endPunctuationInput.value) {
         punctuationStr = els.endPunctuationInput.value;
     }
-    const strongPunct = punctuationStr.split('');
+    const strongPunct = usePunct ? punctuationStr.split('') : [];
 
     let allWords = [];
     if (data.chunks) { data.chunks.forEach(chunk => { let start = chunk.timestamp[0]; let end = chunk.timestamp[1]; if (start !== null && end !== null) allWords.push({ word: chunk.text, start: start, end: end }); }); }
