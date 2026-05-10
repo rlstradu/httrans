@@ -385,7 +385,7 @@
 
     <footer class="flex flex-col items-center gap-3 mt-4 mb-8 text-gray-400 text-xs font-medium">
         <p data-key="footerText">This tool is part of the httrans.org project and was created by Rafael López Sánchez.</p>
-        <button onclick="window.toggleLegalModal()" class="flex items-center gap-1.5 hover:text-[#ffb81f] transition-colors bg-white/50 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+        <button id="btn-legal-open" class="flex items-center gap-1.5 hover:text-[#ffb81f] transition-colors bg-white/50 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
             <i class="ph-bold ph-info"></i>
             <span data-key="btnLegal">Legal & Ethics</span>
         </button>
@@ -393,7 +393,7 @@
 
     <div id="legal-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-panel w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl p-6 md:p-8 relative shadow-2xl">
-            <button onclick="window.toggleLegalModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
+            <button id="btn-legal-close-x" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
                 <i class="ph-bold ph-x text-2xl"></i>
             </button>
             
