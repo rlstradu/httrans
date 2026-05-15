@@ -1,3 +1,19 @@
+=======================================
+Poanda v1.0.5 - Mac Compatibility & Segmentation Fixes
+Release Date: May 15, 2026
+======================================= 
+
+
+This update focuses on resolving segment formatting issues, improving compatibility with macOS, and introducing a highly requested keyboard shortcut to speed up your translation workflow based on user feedback.
+
+New Features & Improvements
+"Copy Source" Shortcut: You can now instantly copy the original source text (msgid) into the translation field (msgstr) using a dedicated keyboard shortcut (Ctrl + Shift + C by default). Using this shortcut automatically triggers the recalculation of statistics and enables the save buttons. This action has also been added to the Shortcuts customization menu in both English and Spanish.
+
+Mac-Friendly Default Shortcuts: We have updated the default keyboard shortcuts for navigating between segments to avoid conflicts with macOS Mission Control. Moving to the next or previous segment now defaults to Ctrl + Shift + Arrow Down and Ctrl + Shift + Arrow Up. (Note: Existing users will need to click "Reset to Defaults" in the Shortcuts menu to apply these new keys).
+
+Bug Fixes & Stability
+Disabled Automatic Sentence Segmentation: Addressed a critical issue where auto-segmenting text by sentences caused extra, unwanted spaces to be injected into the final .po file (especially noticeable when dealing with image tags or specific punctuation). Poanda now treats the entire translation unit as a single block, mirroring the exact behavior of standard offline tools like Poedit and strictly preserving the original spacing.
+
 ======================================= 
 Poanda v1.0.4 - AI Assistant & Dark Mode
 ======================================= 
