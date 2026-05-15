@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">Poanda</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/favicon-poanda.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -148,6 +149,14 @@
             background-color: #374151 !important;
             color: #e5e7eb !important;
             border-color: #4b5563 !important;
+        }
+        body.dark-mode #versionToggle {
+            background-color: #374151 !important;
+            color: #e5e7eb !important;
+            border-color: #4b5563 !important;
+        }
+        body.dark-mode #versionToggle:hover {
+            background-color: #4b5563 !important;
         }
         body.dark-mode .top-utility-buttons-container button:hover,
         body.dark-mode .top-utility-buttons-container .dropdown-btn:hover {
@@ -492,7 +501,7 @@
         <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
         <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
         <button id="darkModeToggle" class="ml-2 p-1 rounded-full hover:bg-gray-200 transition duration-300" title="Dark Mode">🌙</button>
-        <span id="versionToggle" class="ml-3 text-xs font-semibold text-gray-500 hover:text-gray-800 cursor-pointer transition duration-300" title="Ver Changelog">v1.0.5</span>
+        <span id="versionToggle" class="ml-3 text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 border border-gray-300 px-2 py-1 rounded shadow-md cursor-pointer transition duration-300" title="Ver Changelog">v1.0.5</span>
     </div>
 
     <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
@@ -517,6 +526,9 @@
             <button id="backupBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
                 <span data-i18n="backup_btn">Backup</span>
                 <span id="backupIndicator"></span>
+            </button>
+            <button id="undoBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="undo_btn">Undo</span>
             </button>
             <div class="dropdown">
                 <button id="toolsBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
@@ -823,6 +835,7 @@
     <script>
         // Global variables for Poanda editor
         let poEntries = [];
+        let undoStack = []; // Pila para el historial de Deshacer
         let currentFileName = 'translations.po';
         let currentLanguage = 'en'; // Default language set to English
         let findState = {
@@ -1159,6 +1172,9 @@
                 'load_backup_from_disk_btn': 'Load Backup from Disk',
                 'delete_local_backup_btn': 'Delete Local Backup',
                 'backup_deleted': 'Local backup has been deleted.',
+                'undo_btn': 'Undo',
+                'undo_success': 'Action undone.',
+                'undo_empty': 'Nothing to undo.',
                 'backup_loaded_from_file': 'Backup loaded successfully from file.',
                 'error_loading_backup_file': 'Error loading backup file. Ensure it is a valid .poanda-backup file.',
                 'delete_local_backup_btn_confirm': 'Are you sure you want to delete the local backup? This action cannot be undone.',
@@ -1385,6 +1401,9 @@
                 'load_backup_from_disk_btn': 'Cargar copia del disco',
                 'delete_local_backup_btn': 'Eliminar copia local',
                 'backup_deleted': 'La copia de seguridad local ha sido eliminada.',
+                'undo_btn': 'Deshacer',
+                'undo_success': 'Has deshecho la última acción.',
+                'undo_empty': 'No haya nada que deshacer.',
                 'backup_loaded_from_file': 'Copia de seguridad cargada con éxito desde el archivo.',
                 'error_loading_backup_file': 'Error al cargar el archivo de copia de seguridad. Asegúrate de que es un archivo .poanda-backup válido.',
                 'delete_local_backup_btn_confirm': '¿Seguro que quieres eliminar la copia de seguridad local? Esta acción no se puede deshacer.',
@@ -2071,6 +2090,26 @@ const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewB
 /**
      * Updates the enabled/disabled state of save buttons and menu items.
      */
+    function pushToUndoStack() {
+            // Guardamos un máximo de 15 estados para no saturar la memoria del navegador
+            undoStack.push(JSON.parse(JSON.stringify(poEntries)));
+            if (undoStack.length > 15) {
+                undoStack.shift();
+            }
+        }
+
+        document.getElementById('undoBtn').addEventListener('click', () => {
+            if (undoStack.length > 0) {
+                poEntries = undoStack.pop();
+                renderTranslations(poEntries);
+                updateStatsDisplay();
+                updateSaveButtonsState();
+                showMessage(translations[currentLanguage]['undo_success']);
+            } else {
+                showMessage(translations[currentLanguage]['undo_empty']);
+            }
+        });
+
     function updateSaveButtonsState() {
         const hasEntries = poEntries.length > 0;
         const isJson = currentFileType === 'json';
@@ -2245,6 +2284,7 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
             if (!checkbox || !checkbox.checked || !translationText) return;
 
             let propagatedCount = 0;
+            let snapshotTaken = false;
 
             poEntries.forEach((entry, eIdx) => {
                 if (entry.isHeader) return;
@@ -2256,6 +2296,12 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                     // 2. Verificamos si el original es idéntico
                     if (segment.original === originalText) {
                         
+                        // Guardar en el historial de Deshacer una sola vez antes de alterar segmentos
+                        if (!snapshotTaken) {
+                            pushToUndoStack();
+                            snapshotTaken = true;
+                        }
+
                         // 3. Actualizamos los datos
                         segment.translation = translationText;
                         segment.wordCountTranslation = countWords(translationText);
@@ -2514,6 +2560,7 @@ function updateCharCount(textarea, originalLength, charCountSpan) {
                         const targetTextarea = document.getElementById(`msgstr-${currentEntryIndex}-${currentSegmentIndex}`);
 
                         if (originalText !== undefined && targetTextarea && !targetTextarea.readOnly) {
+                            pushToUndoStack();
                             // Paste original text into the translation textarea
                             targetTextarea.value = originalText;
 
@@ -3155,6 +3202,7 @@ setTimeout(() => {
                     const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
                     
                     if (originalText !== undefined && targetTextarea && !targetTextarea.readOnly) {
+                        pushToUndoStack();
                         targetTextarea.value = originalText;
                         // Disparamos el evento para que recalcule estadísticas, contadores y active los botones de guardado
                         targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -3420,6 +3468,7 @@ setTimeout(() => {
                 return;
             }
 
+            pushToUndoStack();
             let replacedCount = 0;
             let regex;
             try {
@@ -5632,6 +5681,7 @@ function makeModalDraggable(modalElement) {
             if (focused) {
                 const textarea = document.getElementById(`msgstr-${focused.entryIndex}-${focused.segmentIndex}`);
                 if (textarea && !textarea.readOnly) {
+                    pushToUndoStack();
                     // Limpiar texto de markdown simple si la IA lo devolvió
                     const cleanText = text.replace(/\*\*/g, '').replace(/```/g, '').trim();
                     textarea.value = cleanText;
