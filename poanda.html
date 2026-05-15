@@ -492,6 +492,7 @@
         <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
         <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
         <button id="darkModeToggle" class="ml-2 p-1 rounded-full hover:bg-gray-200 transition duration-300" title="Dark Mode">🌙</button>
+        <span id="versionToggle" class="ml-3 text-xs font-semibold text-gray-500 hover:text-gray-800 cursor-pointer transition duration-300" title="Ver Changelog">v1.0.5</span>
     </div>
 
     <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
@@ -802,7 +803,19 @@
                 </div>
             </div>
         </div>
-    </div>
+        
+        <div id="changelogModal" class="modal hidden">
+            <div class="modal-content" style="width: 750px; max-width: 95%;">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-on-light-contrast m-0">Changelog</h2>
+                    <button id="changelogCloseBtn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold leading-none cursor-pointer">&times;</button>
+                </div>
+                <div class="overflow-y-auto rounded-md" style="max-height: 60vh;">
+                    <pre id="changelogContent" class="po-display-code whitespace-pre-wrap text-sm p-4 m-0 min-h-[150px]">Cargando...</pre>
+                </div>
+            </div>
+        </div>
+        </div>
 
     <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]"><div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2"><p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p><p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p><p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p></div></div>
     <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"></div><p id="loadingMessage"></p></div>
@@ -1032,6 +1045,7 @@
                 'shortcut_glossary_insert_4': 'Insert Glossary Term 4',
                 'shortcut_glossary_insert_5': 'Insert Glossary Term 5',
                 'shortcut_toggleAI': 'Toggle AI Assistant',
+                'shortcut_copyOriginal': 'Copy Original to Translation',
                 'save_shortcuts_btn': 'Save Shortcuts',
                 'import_shortcuts_btn': 'Import',
                 'export_shortcuts_btn': 'Export',
@@ -1257,6 +1271,7 @@
                 'shortcut_glossary_insert_4': 'Insertar término del glosario 4',
                 'shortcut_glossary_insert_5': 'Insertar término del glosario 5',
                 'shortcut_toggleAI': 'Alternar Asistente de IA',
+                'shortcut_copyOriginal': 'Copiar original a la traducción',
                 'save_shortcuts_btn': 'Guardar atajos',
                 'import_shortcuts_btn': 'Importar',
                 'export_shortcuts_btn': 'Exportar',
@@ -1447,8 +1462,8 @@
         // --- Shortcut Configuration ---
       const defaultShortcutConfig = {
             validateAndNext: { ctrlKey: true, altKey: false, shiftKey: false, key: 'Enter' },
-            nextSegment: { ctrlKey: true, altKey: false, shiftKey: false, key: 'ArrowDown' },
-            prevSegment: { ctrlKey: true, altKey: false, shiftKey: false, key: 'ArrowUp' },
+            nextSegment: { ctrlKey: true, altKey: false, shiftKey: true, key: 'ArrowDown' },
+            prevSegment: { ctrlKey: true, altKey: false, shiftKey: true, key: 'ArrowUp' },
  insertTMMatch1: { ctrlKey: true, altKey: true, shiftKey: false, key: '1' },
         insertTMMatch2: { ctrlKey: true, altKey: true, shiftKey: false, key: '2' },
         insertTMMatch3: { ctrlKey: true, altKey: true, shiftKey: false, key: '3' },
@@ -1460,7 +1475,8 @@
             insertGlossaryTerm4: { ctrlKey: true, altKey: false, shiftKey: false, key: '4' },
             insertGlossaryTerm5: { ctrlKey: true, altKey: false, shiftKey: false, key: '5' },
             toggleAI: { ctrlKey: true, altKey: false, shiftKey: true, key: 'A' },
-            insertLastAI: { ctrlKey: false, altKey: true, shiftKey: true, key: 'I' }
+            insertLastAI: { ctrlKey: false, altKey: true, shiftKey: true, key: 'I' },
+            copyOriginal: { ctrlKey: true, altKey: false, shiftKey: true, key: 'C' }
         };
 
         let shortcutConfig = {};
@@ -1709,8 +1725,9 @@ const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewB
                     }];
                 } else {
                     entry.isHeader = false;
-                    const originalSegments = splitTextIntoSentences(entry.msgid || '');
-                    const translatedSegments = splitTextIntoSentences(entry.msgstr || '');
+                    // Deshabilitamos la segmentación por frases para evitar problemas de espacios
+                    const originalSegments = [entry.msgid || ''];
+                    const translatedSegments = [entry.msgstr || ''];
 
                     entry.sentenceSegments = [];
                     const maxLength = Math.max(originalSegments.length, translatedSegments.length);
@@ -1797,7 +1814,8 @@ const copyIconSVG = `<svg class="w-4 h-4 inline-block" fill="currentColor" viewB
                         fullMsgstr = entry.msgstr || '';
                     } else {
                         // For regular entries, join segmented translations
-                        fullMsgstr = entry.sentenceSegments.map(s => s.translation).join(' ').trim();
+                        // Eliminamos el .trim() y unimos sin espacios extra para respetar el formato exacto del PO
+                        fullMsgstr = entry.sentenceSegments.map(s => s.translation).join('');
                     }
                 } else {
                     fullMsgstr = entry.msgstr || ''; // Fallback if no segments
@@ -3130,6 +3148,19 @@ setTimeout(() => {
                     goToPreviousTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
                 }
                 break;
+
+            case 'copyOriginal':
+                if (currentFocused) {
+                    const originalText = poEntries[currentFocused.entryIndex]?.sentenceSegments[currentFocused.segmentIndex]?.original;
+                    const targetTextarea = document.getElementById(`msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`);
+                    
+                    if (originalText !== undefined && targetTextarea && !targetTextarea.readOnly) {
+                        targetTextarea.value = originalText;
+                        // Disparamos el evento para que recalcule estadísticas, contadores y active los botones de guardado
+                        targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+                break;
         }
     } // Cierre de la función handleShortcutAction
 
@@ -3584,6 +3615,9 @@ setTimeout(() => {
                             break;
                         case 'prevSegment':
                             translationKey = 'shortcut_prev';
+                            break;
+                        case 'copyOriginal':
+                            translationKey = 'shortcut_copyOriginal';
                             break;
                         default:
                             // Un respaldo para futuros atajos que sí coincidan
@@ -5365,6 +5399,37 @@ function makeModalDraggable(modalElement) {
             
 
  makeModalDraggable(document.getElementById('findReplaceModal'));
+            makeModalDraggable(document.getElementById('changelogModal'));
+
+            // --- LÓGICA CHANGELOG ---
+            const versionToggle = document.getElementById('versionToggle');
+            const changelogModal = document.getElementById('changelogModal');
+            const changelogCloseBtn = document.getElementById('changelogCloseBtn');
+            const changelogContent = document.getElementById('changelogContent');
+
+            if (versionToggle && changelogModal) {
+                versionToggle.addEventListener('click', async () => {
+                    changelogContent.textContent = 'Cargando changelog...';
+                    changelogModal.classList.remove('hidden');
+                    try {
+                        // Se añade el timestamp a la URL para evitar que el navegador guarde el txt en caché
+                        const response = await fetch(`https://httrans.org/changelog/poanda.txt?t=${new Date().getTime()}`);
+                        if (response.ok) {
+                            const text = await response.text();
+                            changelogContent.textContent = text;
+                        } else {
+                            changelogContent.textContent = 'Error al cargar el changelog (HTTP ' + response.status + ').';
+                        }
+                    } catch (error) {
+                        changelogContent.textContent = 'Error de red al cargar el changelog.';
+                        console.error("Error al obtener el changelog:", error);
+                    }
+                });
+
+                changelogCloseBtn.addEventListener('click', () => {
+                    changelogModal.classList.add('hidden');
+                });
+            }
 
             // --- LÓGICA MODO OSCURO ---
             const darkModeToggle = document.getElementById('darkModeToggle');
