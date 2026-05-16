@@ -299,7 +299,7 @@
             </div>
 
             <!-- Logo -->
-            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png" alt="PandaTimer Logo" class="w-48 md:w-64 mb-4 drop-shadow-lg transition-transform hover:scale-105 duration-300">
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png" alt="PandaTimer Logo" class="w-48 md:w-64 mb-4 drop-shadow-lg dark:drop-shadow-[0_0_12px_rgba(255,255,255,0.6)] transition-transform hover:scale-105 duration-300">
             
             <!-- Tagline -->
             <p class="text-sm font-semibold text-gray-500 dark:text-gray-300 mb-8" data-key="tagline">Gestiona tu tiempo de manera muy sencilla</p>
@@ -351,8 +351,7 @@
             <div class="flex flex-col mb-4">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h2 class="text-xl font-bold text-panda-dark dark:text-white flex items-center gap-2">
-                            <!-- Icono Lista (SVG) -->
+                        <h2 class="text-lg font-bold text-panda-dark dark:text-white flex items-center gap-2">
                             <svg class="w-6 h-6 icon-svg text-panda-pink" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H120a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM120,72H216a8,8,0,0,0,0-16H120a8,8,0,0,0,0,16ZM216,184H120a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM83.74,51.52,58.07,77.18,44.26,63.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Zm0,56L58.07,133.18,44.26,119.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Zm0,56L58.07,189.18,44.26,175.38a8,8,0,0,0-11.31,11.31l19.46,19.46a8,8,0,0,0,11.32,0l31.32-31.32a8,8,0,0,0-11.31-11.31Z"></path></svg>
                             <span data-key="logTitle">Registro del día</span>
                         </h2>
@@ -363,14 +362,12 @@
                     <div class="flex items-center gap-2">
                         <input type="file" id="importInput" accept=".json" class="hidden">
                         
-                        <!-- NEW ICON: Upload (Cloud Up) -->
-                        <button id="importBtn" class="icon-btn-small" title="Importar registro">
-                            <svg class="w-5 h-5" viewBox="0 0 256 256"><path d="M213.66,122.34a8,8,0,0,1-11.32,0L136,56V184a8,8,0,0,1-16,0V56L53.66,122.34a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,122.34ZM216,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152a8,8,0,0,1,16,0v56H200V152a8,8,0,0,1,16,0Z"></path></svg>
+                     <button id="importBtn" class="icon-btn-small" title="Importar registro">
+                            <svg class="w-5 h-5 icon-svg" viewBox="0 0 256 256"><path d="M213.66,122.34a8,8,0,0,1-11.32,0L136,56V184a8,8,0,0,1-16,0V56L53.66,122.34a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,122.34ZM216,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152a8,8,0,0,1,16,0v56H200V152a8,8,0,0,1,16,0Z"></path></svg>
                         </button>
                         
-                        <!-- NEW ICON: Save (Floppy Disk) -->
                         <button id="exportModalBtn" class="icon-btn-small" title="Guardar/Exportar">
-                            <svg class="w-5 h-5" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm-48,16v48H96V48ZM48,48H80V88a8,8,0,0,0,8,8h80a8,8,0,0,0,8-8V48h32V208H48Zm128,152H80a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8h96a8,8,0,0,1,8,8v56A8,8,0,0,1,176,200Z"></path></svg>
+                            <svg class="w-5 h-5 icon-svg" viewBox="0 0 256 256"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm-48,16v48H96V48ZM48,48H80V88a8,8,0,0,0,8,8h80a8,8,0,0,0,8-8V48h32V208H48Zm128,152H80a8,8,0,0,1-8-8V136a8,8,0,0,1,8-8h96a8,8,0,0,1,8,8v56A8,8,0,0,1,176,200Z"></path></svg>
                         </button>
 
                         <div class="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
