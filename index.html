@@ -265,55 +265,73 @@
             border-color: #a0aec0;
         }
 
-        /* --- FOOTER (Estilo Menú Píldoras) --- */
-        .footer-info {
-            margin-top: 3rem;
-            width: 100%;
+        /* --- SIDE MENU --- */
+        .side-menu {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
             display: flex;
             flex-direction: column;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 1rem 0.5rem;
+            border-radius: 0 1rem 1rem 0;
+            box-shadow: 2px 0 15px rgba(31, 38, 135, 0.1);
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-left: none;
+        }
+
+        .side-item {
+            display: flex;
             align-items: center;
             gap: 0.8rem;
-        }
-
-        .footer-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.75rem;
-            width: 100%;
-            max-width: 950px;
-        }
-
-        .footer-item {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
             background: rgba(255, 255, 255, 0.85);
-            padding: 0.6rem 1.1rem;
+            padding: 0.6rem;
             border-radius: 99px;
             text-decoration: none;
             color: #4a5568;
             font-weight: 600;
             font-size: 0.9rem;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             cursor: pointer;
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            width: 42px; /* Solo muestra icono inicialmente */
+            height: 42px;
+            overflow: hidden;
+            white-space: nowrap;
         }
 
-        .footer-item:hover {
+        .side-item:hover {
+            width: auto; /* Expande para mostrar el texto al pasar el ratón */
+            padding-right: 1.2rem;
             background: rgba(255, 255, 255, 1);
-            transform: translateY(-3px);
             color: #E23B5D;
             box-shadow: 0 5px 15px rgba(226, 59, 93, 0.15);
             border-color: rgba(226, 59, 93, 0.2);
         }
 
-        .footer-item i, 
-        .footer-item svg {
-            font-size: 1.25rem;
+        .side-item i, 
+        .side-item svg {
+            font-size: 1.3rem;
             color: #E23B5D;
             flex-shrink: 0;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .side-text {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: inline-block;
+        }
+
+        .side-item:hover .side-text {
+            opacity: 1;
         }
         
         /* Barra de Notificación */
@@ -565,7 +583,25 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            body { padding-top: 1rem; }
+            body { padding-top: 1rem; padding-bottom: 5rem; }
+            .side-menu {
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                transform: none;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                border-radius: 1rem 1rem 0 0;
+                border-left: 1px solid rgba(255, 255, 255, 0.4);
+                border-bottom: none;
+                padding: 0.8rem;
+                gap: 0.4rem;
+            }
+            .side-item { width: auto; padding: 0.6rem; }
+            .side-item:hover { padding-right: 0.6rem; }
+            .side-text { display: none; } /* Ocultar texto en móvil para ahorrar espacio */
             .main-container { padding: 1.5rem; margin: 0 1rem; }
             .logo { max-width: 250px; }
             .toolkit-title { font-size: 1.2rem; }
@@ -648,68 +684,52 @@
         </div>
 
         <!-- Footer Actualizado (Estilo Menú Píldoras para contener todos los botones) -->
-        <footer class="footer-info fade-in" style="animation-delay: 0.8s;">
+        <aside class="side-menu fade-in" style="animation-delay: 0.8s;">
+            <a href="https://foro.traduversia.com/c/cursos/introduccion-herramientas-traduccion-httrans/51" target="_blank" rel="noopener" class="side-item" title="Foro">
+                <i class="ph-duotone ph-chats-circle"></i>
+                <span class="side-text" data-key="forumLink"></span>
+            </a>
             
-            <!-- FILA 1 -->
-            <div class="footer-row">
-                <!-- Foro -->
-                <a href="https://foro.traduversia.com/c/cursos/introduccion-herramientas-traduccion-httrans/51" target="_blank" rel="noopener" class="footer-item">
-                    <i class="ph-duotone ph-chats-circle"></i>
-                    <span data-key="forumLink"></span>
-                </a>
-                
-                <!-- Changelog -->
-                <div id="changelog-trigger" class="footer-item">
-                    <i class="ph-duotone ph-list-dashes"></i>
-                    <span data-key="changelogLink"></span>
-                </div>
-
-                <!-- Feedback -->
-                <div id="feedback-trigger" class="footer-item">
-                    <i class="ph-duotone ph-paper-plane-tilt"></i>
-                    <span data-key="feedback"></span>
-                </div>
-
-                <!-- Instagram -->
-                <a href="https://www.instagram.com/httrans_org" target="_blank" rel="noopener" class="footer-item">
-                    <i class="ph-duotone ph-instagram-logo"></i>
-                    <span data-key="instagramLink"></span>
-                </a>
+            <div id="changelog-trigger" class="side-item" title="Changelogs">
+                <i class="ph-duotone ph-list-dashes"></i>
+                <span class="side-text" data-key="changelogLink"></span>
             </div>
 
-            <!-- FILA 2 -->
-            <div class="footer-row">
-                <!-- GitHub -->
-                <a href="https://github.com/rlstradu/httrans" target="_blank" rel="noopener" class="footer-item">
-                    <i class="ph-duotone ph-github-logo"></i>
-                    <span data-key="githubRepo"></span>
-                </a>
-
-                <!-- Sobre el autor -->
-                <div id="about-trigger" class="footer-item">
-                    <i class="ph-duotone ph-user"></i>
-                    <span data-key="aboutTitle"></span>
-                </div>
-
-                <!-- Créditos -->
-                <div id="credits-trigger" class="footer-item">
-                    <i class="ph-duotone ph-translate"></i>
-                    <span data-key="creditsLink"></span>
-                </div>
-
-                <!-- Agradecimientos -->
-                <div id="thanks-trigger" class="footer-item">
-                    <i class="ph-duotone ph-heart"></i>
-                    <span data-key="thanksLink"></span>
-                </div>
-
-                <!-- Abrazo de Panda -->
-                <div id="pandaHugButton" class="footer-item">
-                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/panda-hug-love.png" alt="Panda Hug" style="width: 20px; height: 20px; object-fit: contain;">
-                    <span data-key="pandaHugCta"></span>
-                </div>
+            <div id="feedback-trigger" class="side-item" title="Feedback">
+                <i class="ph-duotone ph-paper-plane-tilt"></i>
+                <span class="side-text" data-key="feedback"></span>
             </div>
-        </footer>
+
+            <a href="https://www.instagram.com/httrans_org" target="_blank" rel="noopener" class="side-item" title="Instagram">
+                <i class="ph-duotone ph-instagram-logo"></i>
+                <span class="side-text" data-key="instagramLink"></span>
+            </a>
+
+            <a href="https://github.com/rlstradu/httrans" target="_blank" rel="noopener" class="side-item" title="GitHub">
+                <i class="ph-duotone ph-github-logo"></i>
+                <span class="side-text" data-key="githubRepo"></span>
+            </a>
+
+            <div id="about-trigger" class="side-item" title="Sobre el autor">
+                <i class="ph-duotone ph-user"></i>
+                <span class="side-text" data-key="aboutTitle"></span>
+            </div>
+
+            <div id="credits-trigger" class="side-item" title="Créditos de traducción">
+                <i class="ph-duotone ph-translate"></i>
+                <span class="side-text" data-key="creditsLink"></span>
+            </div>
+
+            <div id="thanks-trigger" class="side-item" title="Agradecimientos">
+                <i class="ph-duotone ph-heart"></i>
+                <span class="side-text" data-key="thanksLink"></span>
+            </div>
+
+            <div id="pandaHugButton" class="side-item" title="Abrazo de panda">
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/panda-hug-love.png" alt="Panda Hug" style="width: 24px; height: 24px; object-fit: contain;">
+                <span class="side-text" data-key="pandaHugCta"></span>
+            </div>
+        </aside>
     </div>
 
     <!-- FOOTER DE COLABORACIÓN -->
@@ -826,8 +846,10 @@
             <div class="content-text">
                 <ul class="credits-list">
                     <li><strong>Español:</strong> <a href="https://www.linkedin.com/in/rlstradu/" target="_blank" rel="noopener" class="thanks-link">Rafael López Sánchez</a></li>
+                    <li><strong>Español (Argentina):</strong> Gastón Romero Bosc y Germán Brandeburgo</li>
                     <li><strong>English:</strong> <a href="https://www.linkedin.com/in/rlstradu/" target="_blank" rel="noopener" class="thanks-link">Rafael López Sánchez</a></li>
                     <li><strong>Français:</strong> <a href="https://www.linkedin.com/in/carolina-veltri/" target="_blank" rel="noopener" class="thanks-link">Carolina Veltri</a></li>
+                    <li><strong>Català:</strong> Marc Pons</li>
                 </ul>
                 <p data-key="creditsCta" style="margin-top: 1.5rem; font-weight: 500; font-size: 0.95rem;"></p>
             </div>
@@ -857,19 +879,17 @@
                 { 
                     id: 'subpandaass', 
                     icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-ass-logo-v1.png',
-                    href: 'https://httrans.org/subpandass.html',
-                    new: true
+                    href: 'https://httrans.org/subpandass.html'
                 },
                 
                 { id: 'subpandatm', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandatm-logo.png', href: 'https://rlstradu.github.io/httrans/subpandatm.html' },
+                { id: 'subpandaauto', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/subpandaAUTO.png', href: 'https://httrans.org/subpandaAUTO/', new: true },
                 { id: 'subpandaqa', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpandaqa-logo.png', href: 'https://rlstradu.github.io/httrans/subpandaqa.html' },
                 { id: 'pandascript', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandascript-final.png', href: 'https://rlstradu.github.io/httrans/pandascript.html' },
                 { id: 'diffpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/diffpanda-logo.png', href: 'https://rlstradu.github.io/httrans/diffpanda.html' },
-                { id: 'pandatimer', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png', href: 'https://rlstradu.github.io/httrans/pandatimer.html', new: true },
+                { id: 'pandatimer', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatimer-logo-v1.png', href: 'https://rlstradu.github.io/httrans/pandatimer.html' },
                 { id: 'charpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png', href: 'https://rlstradu.github.io/httrans/charpanda.html' },
-                { id: 'calpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png', href: 'https://rlstradu.github.io/httrans/calpanda.html' },
-                // MISTERIO
-                { id: 'mystery1', isMystery: true }
+                { id: 'calpanda', icon: 'https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/calpanda-logo.png', href: 'https://rlstradu.github.io/httrans/calpanda.html' }
             ];
 
             const translations = {
@@ -889,6 +909,7 @@
                     pandoriaMain: 'Pandoria', pandoriaSub: 'Editor de memorias TMX',
                     pandascriptMain: 'Pandascript', pandascriptSub: 'Editor de transcripciones',
                     subpandatmMain: 'SubPandaTM', subpandatmSub: 'Traducción de subtítulos',
+                    subpandaautoMain: 'SubpandaAUTO', subpandaautoSub: 'Creador de subtítulos automáticos',
                     subpandaqaMain: 'SubPandaQA', subpandaqaSub: 'Revisión de subtítulos SRT',
                     diffpandaMain: 'DiffPanda', diffpandaSub: 'Comparador de textos',
                     charpandaMain: 'Charpanda', charpandaSub: 'Contador de caracteres',
@@ -951,6 +972,7 @@
                     pandoriaMain: 'Pandoria', pandoriaSub: 'TMX Memory Editor',
                     pandascriptMain: 'Pandascript', pandascriptSub: 'Transcript Editor',
                     subpandatmMain: 'SubPandaTM', subpandatmSub: 'Subtitle Translation',
+                    subpandaautoMain: 'SubpandaAUTO', subpandaautoSub: 'Auto Subtitle Creator',
                     subpandaqaMain: 'SubPandaQA', subpandaqaSub: 'SRT Subtitle Review',
                     diffpandaMain: 'DiffPanda', diffpandaSub: 'Text Comparison Tool',
                     charpandaMain: 'Charpanda', charpandaSub: 'Character Counter',
