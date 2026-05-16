@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CharPanda</title>
+<title>CharPanda - Contador de caracteres y palabras online</title>
+<meta name="description" content="CharPanda es una herramienta online gratuita para contar caracteres, palabras y establecer límites de texto. Ideal para traductores, redactores, estudiantes y profesionales." />
+<meta name="keywords" content="contador de caracteres, contar palabras online, límite de caracteres, herramienta de texto, traductor, CharPanda, contador de letras" />
+<meta name="author" content="CharPanda" />
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rlstradu/httrans/main/images/favicon-charpanda.png" />
 <style>
   /* Base styles */
   body {
@@ -18,6 +22,129 @@
     flex-direction: column;
     min-height: 100vh;
   }
+.version-badge {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: #e2e8f0;
+    color: #475569;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    user-select: none;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+  .version-badge:hover {
+    transform: scale(1.05);
+    background: #cbd5e1;
+  }
+  body.dark-mode .version-badge {
+    background: #3a3f47;
+    color: #94a3b8;
+  }
+  body.dark-mode .version-badge:hover {
+    background: #475569;
+  }
+
+  /* Estilos del Modal del Changelog */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  .modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .modal-content {
+    background: #fff;
+    width: 90%;
+    max-width: 650px;
+    border-radius: 12px;
+    padding: 20px 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+    transition: background 0.3s ease;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+  }
+  .modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #2c3e50;
+    font-weight: 700;
+  }
+  .close-modal {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #888;
+    transition: color 0.2s ease;
+    padding: 0;
+  }
+  .close-modal:hover {
+    color: #f44336;
+  }
+  #changelogText {
+    flex-grow: 1;
+    overflow-y: auto;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #d0d7de;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    color: #333;
+    margin: 0;
+  }
+
+  /* Modo Oscuro del Modal */
+  body.dark-mode .modal-content {
+    background: #3a3f47;
+  }
+  body.dark-mode .modal-header {
+    border-bottom-color: #5a5f67;
+  }
+  body.dark-mode .modal-header h3 {
+    color: #e0e0e0;
+  }
+  body.dark-mode .close-modal {
+    color: #bbb;
+  }
+  body.dark-mode .close-modal:hover {
+    color: #ff7961;
+  }
+  body.dark-mode #changelogText {
+    background: #282c34;
+    border-color: #5a5f67;
+    color: #f0f0f0;
+  }
+
   header {
     max-width: 900px;
     margin: 0 auto 40px auto;
@@ -392,6 +519,8 @@
 </head>
 <body>
 
+<div class="version-badge" id="versionBadge" title="Ver Changelog">v1.1.1</div>
+
 <header>
   <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/charpanda-logo.png" alt="CharPanda Logo" class="app-logo">
   <p id="app-description"></p>
@@ -400,7 +529,9 @@
 <select id="languageSelector" class="lang-select">
   <option value="en">English</option>
   <option value="es">Español</option>
+  <option value="es_ar">Español (Argentina)</option>
   <option value="fr">Français</option>
+  <option value="ca">Català</option>
 </select>
   </div>
 </header>
@@ -462,6 +593,16 @@
     <!-- FIN DE CONTROLES REUBICADOS -->
   </div>
 </main>
+
+<div id="changelogModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Changelog</h3>
+      <button id="closeModalBtn" class="close-modal">&times;</button>
+    </div>
+    <pre id="changelogText">Cargando changelog...</pre>
+  </div>
+</div>
 
 <footer>
   <a href="https://rlstradu.github.io/httrans/" target="_blank" class="httrans-link">
@@ -807,6 +948,46 @@ languageSelector.value = lang;
       messageBox.addEventListener('transitionend', () => messageBox.remove());
     }, 3000);
   }
+
+  // Lógica del Modal del Changelog
+  const versionBadgeBtn = document.getElementById('versionBadge');
+  const changelogModal = document.getElementById('changelogModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const changelogTextElement = document.getElementById('changelogText');
+  let isChangelogLoaded = false;
+
+  versionBadgeBtn.addEventListener('click', () => {
+    changelogModal.classList.add('active');
+    
+    // Solo hace la petición la primera vez que se abre para ahorrar recursos
+    if (!isChangelogLoaded) {
+      fetch('https://httrans.org/changelog/charpanda.txt')
+        .then(response => {
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.text();
+        })
+        .then(text => {
+          changelogTextElement.textContent = text;
+          isChangelogLoaded = true;
+        })
+        .catch(error => {
+          changelogTextElement.textContent = 'No se pudo cargar el changelog en este momento. Por favor, compruébalo más tarde.';
+          console.error('Error fetching changelog:', error);
+        });
+    }
+  });
+
+  // Cerrar modal con la X
+  closeModalBtn.addEventListener('click', () => {
+    changelogModal.classList.remove('active');
+  });
+
+  // Cerrar modal al hacer clic en el fondo oscuro
+  changelogModal.addEventListener('click', (e) => {
+    if (e.target === changelogModal) {
+      changelogModal.classList.remove('active');
+    }
+  });
 
 </script>
 
