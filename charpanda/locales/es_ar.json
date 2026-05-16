@@ -18,7 +18,7 @@
   "pasteError": "No se pudo pegar el texto. Por favor, permití el acceso al portapapeles.",
   "pastePlaceholder": "Pegá el texto acá...",
   "pasted": "¡Pegado!",
-  "percentageLimitLabel": "El texto traducido no puede exceder el texto original en más de un",
+  "percentageLimitLabel": "El texto traducido no puede exceder el original en más de un",
   "remaining": "Restantes",
   "text1Title": "Texto 1 (Original)",
   "text2Title": "Texto 2 (Traducido)",
