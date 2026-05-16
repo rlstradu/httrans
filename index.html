@@ -269,8 +269,10 @@
         .side-menu {
             position: fixed;
             left: 1.5rem;
-            top: 50%;
-            transform: translateY(-50%);
+            top: 0;
+            bottom: 0;
+            margin: auto 0;
+            height: fit-content;
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
@@ -378,7 +380,7 @@
             font-size: 0.95rem;
             font-weight: 500;
         }
-        .traduversia-logo-footer { height: 22px; }
+        .traduversia-logo-footer { height: 38px; }
 
         /* Modals */
         .modal-overlay {
@@ -667,11 +669,21 @@
         <div class="tool-grid">
             </div>
     </div> <aside class="side-menu fade-in" style="animation-delay: 0.8s;">
-            <a href="https://foro.traduversia.com/c/cursos/introduccion-herramientas-traduccion-httrans/51" target="_blank" rel="noopener" class="side-item" title="Foro">
-                <i class="ph-duotone ph-chats-circle"></i>
-                <span class="side-text" data-key="forumLink"></span>
-            </a>
-            
+            <div id="about-trigger" class="side-item" title="Sobre el autor">
+                <i class="ph-duotone ph-user"></i>
+                <span class="side-text" data-key="aboutTitle"></span>
+            </div>
+
+            <div id="credits-trigger" class="side-item" title="Créditos de traducción">
+                <i class="ph-duotone ph-translate"></i>
+                <span class="side-text" data-key="creditsLink"></span>
+            </div>
+
+            <div id="thanks-trigger" class="side-item" title="Agradecimientos">
+                <i class="ph-duotone ph-heart"></i>
+                <span class="side-text" data-key="thanksLink"></span>
+            </div>
+
             <div id="changelog-trigger" class="side-item" title="Changelogs">
                 <i class="ph-duotone ph-list-dashes"></i>
                 <span class="side-text" data-key="changelogLink"></span>
@@ -692,20 +704,10 @@
                 <span class="side-text" data-key="githubRepo"></span>
             </a>
 
-            <div id="about-trigger" class="side-item" title="Sobre el autor">
-                <i class="ph-duotone ph-user"></i>
-                <span class="side-text" data-key="aboutTitle"></span>
-            </div>
-
-            <div id="credits-trigger" class="side-item" title="Créditos de traducción">
-                <i class="ph-duotone ph-translate"></i>
-                <span class="side-text" data-key="creditsLink"></span>
-            </div>
-
-            <div id="thanks-trigger" class="side-item" title="Agradecimientos">
-                <i class="ph-duotone ph-heart"></i>
-                <span class="side-text" data-key="thanksLink"></span>
-            </div>
+            <a href="https://foro.traduversia.com/c/cursos/introduccion-herramientas-traduccion-httrans/51" target="_blank" rel="noopener" class="side-item" title="Foro">
+                <i class="ph-duotone ph-chats-circle"></i>
+                <span class="side-text" data-key="forumLink"></span>
+            </a>
 
             <div id="pandaHugButton" class="side-item" title="Abrazo de panda">
                 <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/panda-hug-love.png" alt="Panda Hug" style="width: 24px; height: 24px; object-fit: contain;">
