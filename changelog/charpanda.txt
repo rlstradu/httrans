@@ -1,4 +1,22 @@
 =======================================
+CharPanda v1.1.1 - Localization & UI Enhancements
+Release Date: May 16, 2026
+=======================================
+
+This update focuses on expanding our global reach, improving search engine visibility, and making it easier for users to track new updates directly within the app.
+
+New Languages Added
+CharPanda is now more accessible than ever! We have added full support for Argentinian Spanish (Español de Argentina) and Catalan (Català) to our language menu. Special thanks to Gastón Romero Bosc and Germán Brandeburgo for handling the Argentinian Spanish translations of Charpanda, and to Marc Pons for the Catalan translation.
+
+In-App Changelog Modal
+You can now keep track of the latest CharPanda updates without leaving the page. We've added a neat version badge in the top right corner. Clicking on it opens a sleek, minimalist modal that fetches and displays our official changelog text.
+
+SEO and Favicon Improvements
+To help more users find our tool online, we've updated the site's metadata (including a better title and description) for optimal search engine optimization (SEO). Plus, CharPanda now sports a brand new custom favicon, so it looks great and is easy to spot in your browser tabs and bookmarks.
+
+=======================================
+
+=======================================
  CharPanda v1.1.0 - Smart Limits Update
 =======================================
 
