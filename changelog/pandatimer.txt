@@ -1,4 +1,17 @@
 =========================================
+PandaTimer v1.0.3 - Update
+Release Date: May 16, 2026
+=========================================
+
+New Languages (French & Catalan): PandaTimer is now available in French and Catalan! A huge thank you to Carolina Veltri for her excellent French translation, and to Marc Pons for his wonderful Catalan translation.
+
+Language Dropdown Menu: Replaced the standalone language buttons with a clean, scalable dropdown menu to seamlessly accommodate our new language options.
+
+Custom Favicon: Added a dedicated Panda favicon so you can easily spot your time tracker among your open browser tabs.
+
+UI & Dark Mode Enhancements: Adjusted the "Daily log" title size to prevent text wrapping in certain languages. Fixed the Export/Import icon colors to ensure proper visibility in Dark Mode, and added a subtle white glow around the main Panda logo to make it pop against dark backgrounds.
+
+=========================================
 PandaTimer v1.0.2 - Update
 =========================================
 
