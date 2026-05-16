@@ -722,7 +722,7 @@
         <div class="tool-grid">
             </div>
     </div> <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
-            <i class="ph-duotone ph-list" id="menu-icon"></i>
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/main/images/hamburger_icon.svg" id="menu-icon" alt="Menú" style="width: 24px; height: 24px; object-fit: contain;">
         </button>
 
         <aside class="side-menu fade-in" style="animation-delay: 0.8s;">
@@ -1256,18 +1256,13 @@
                 menuToggle.addEventListener('click', (e) => {
                     e.stopPropagation();
                     sideMenu.classList.toggle('open');
-                    if (sideMenu.classList.contains('open')) {
-                        menuIcon.className = 'ph-duotone ph-x';
-                    } else {
-                        menuIcon.className = 'ph-duotone ph-list';
-                    }
+                    // Ya no cambiamos el icono porque solo tenemos la imagen del menú de hamburguesa
                 });
 
                 // Cerrar el menú automáticamente si se pulsa una opción (ej: al abrir un modal)
                 document.querySelectorAll('.side-item').forEach(item => {
                     item.addEventListener('click', () => {
                         sideMenu.classList.remove('open');
-                        menuIcon.className = 'ph-duotone ph-list';
                     });
                 });
 
@@ -1275,7 +1270,6 @@
                 document.addEventListener('click', (e) => {
                     if (sideMenu.classList.contains('open') && !sideMenu.contains(e.target) && e.target !== menuToggle) {
                         sideMenu.classList.remove('open');
-                        menuIcon.className = 'ph-duotone ph-list';
                     }
                 });
             }
