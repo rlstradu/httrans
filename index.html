@@ -647,7 +647,7 @@
             .toolkit-title { font-size: 1.2rem; }
             .description { font-size: 0.9rem; }
             .tool-grid { grid-template-columns: 1fr; gap: 1rem; }
-            .language-selector { top: 10px; right: 10px; }
+            .language-selector { top: 15px; left: 15px; right: auto; }
             .newsletter-popup {
                 right: 50%;
                 transform: translateX(50%);
@@ -722,7 +722,7 @@
         <div class="tool-grid">
             </div>
     </div> <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
-            <i class="ph-bold ph-list" id="menu-icon"></i>
+            <i class="ph-duotone ph-list" id="menu-icon"></i>
         </button>
 
         <aside class="side-menu fade-in" style="animation-delay: 0.8s;">
@@ -1257,9 +1257,9 @@
                     e.stopPropagation();
                     sideMenu.classList.toggle('open');
                     if (sideMenu.classList.contains('open')) {
-                        menuIcon.className = 'ph-bold ph-x';
+                        menuIcon.className = 'ph-duotone ph-x';
                     } else {
-                        menuIcon.className = 'ph-bold ph-list';
+                        menuIcon.className = 'ph-duotone ph-list';
                     }
                 });
 
@@ -1267,7 +1267,7 @@
                 document.querySelectorAll('.side-item').forEach(item => {
                     item.addEventListener('click', () => {
                         sideMenu.classList.remove('open');
-                        menuIcon.className = 'ph-bold ph-list';
+                        menuIcon.className = 'ph-duotone ph-list';
                     });
                 });
 
@@ -1275,7 +1275,7 @@
                 document.addEventListener('click', (e) => {
                     if (sideMenu.classList.contains('open') && !sideMenu.contains(e.target) && e.target !== menuToggle) {
                         sideMenu.classList.remove('open');
-                        menuIcon.className = 'ph-bold ph-list';
+                        menuIcon.className = 'ph-duotone ph-list';
                     }
                 });
             }
