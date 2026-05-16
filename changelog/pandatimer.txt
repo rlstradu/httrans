@@ -1,7 +1,8 @@
 =========================================
 PandaTimer v1.0.3 - Update
-Release Date: May 16, 2026
 =========================================
+
+Release Date: May 16, 2026
 
 New Languages (French & Catalan): PandaTimer is now available in French and Catalan! A huge thank you to Carolina Veltri for her excellent French translation, and to Marc Pons for his wonderful Catalan translation.
 
