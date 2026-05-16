@@ -268,21 +268,14 @@
         /* --- SIDE MENU --- */
         .side-menu {
             position: fixed;
-            left: 0;
+            left: 1.5rem;
             top: 50%;
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 1rem 0.5rem;
-            border-radius: 0 1rem 1rem 0;
-            box-shadow: 2px 0 15px rgba(31, 38, 135, 0.1);
+            gap: 0.8rem;
+            background: transparent;
             z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-left: none;
         }
 
         .side-item {
@@ -290,7 +283,7 @@
             align-items: center;
             gap: 0.8rem;
             background: rgba(255, 255, 255, 0.85);
-            padding: 0.6rem;
+            padding: 0.6rem 1.2rem;
             border-radius: 99px;
             text-decoration: none;
             color: #4a5568;
@@ -299,20 +292,19 @@
             transition: all 0.3s ease;
             cursor: pointer;
             border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            width: 42px; /* Solo muestra icono inicialmente */
-            height: 42px;
-            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            width: auto;
             white-space: nowrap;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .side-item:hover {
-            width: auto; /* Expande para mostrar el texto al pasar el ratón */
-            padding-right: 1.2rem;
             background: rgba(255, 255, 255, 1);
             color: #E23B5D;
-            box-shadow: 0 5px 15px rgba(226, 59, 93, 0.15);
-            border-color: rgba(226, 59, 93, 0.2);
+            box-shadow: 0 6px 20px rgba(226, 59, 93, 0.2);
+            border-color: rgba(226, 59, 93, 0.3);
+            transform: translateY(-2px);
         }
 
         .side-item i, 
@@ -320,18 +312,12 @@
             font-size: 1.3rem;
             color: #E23B5D;
             flex-shrink: 0;
-            width: 24px;
             text-align: center;
         }
         
         .side-text {
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            display: inline-block;
-        }
-
-        .side-item:hover .side-text {
             opacity: 1;
+            display: inline-block;
         }
         
         /* Barra de Notificación */
@@ -594,14 +580,13 @@
                 flex-wrap: wrap;
                 justify-content: center;
                 border-radius: 1rem 1rem 0 0;
-                border-left: 1px solid rgba(255, 255, 255, 0.4);
-                border-bottom: none;
-                padding: 0.8rem;
-                gap: 0.4rem;
+                background: rgba(255, 255, 255, 0.9);
+                border-top: 1px solid rgba(255, 255, 255, 0.4);
+                padding: 1rem;
+                gap: 0.5rem;
             }
-            .side-item { width: auto; padding: 0.6rem; }
-            .side-item:hover { padding-right: 0.6rem; }
-            .side-text { display: none; } /* Ocultar texto en móvil para ahorrar espacio */
+            .side-item { padding: 0.6rem; margin: 0; }
+            .side-text { display: none; } /* En móvil ocultamos el texto para que quepan todos */
             .main-container { padding: 1.5rem; margin: 0 1rem; }
             .logo { max-width: 250px; }
             .toolkit-title { font-size: 1.2rem; }
@@ -730,13 +715,14 @@
                 <span class="side-text" data-key="pandaHugCta"></span>
             </div>
         </aside>
+
     </div>
 
     <!-- FOOTER DE COLABORACIÓN -->
     <div class="collaboration-footer-wrapper">
         <span data-key="footerCollaboratorText"></span>
         <a href="https://traduversia.com/" target="_blank" rel="noopener">
-            <img src="https://traduversia.com/wp-content/uploads/2014/09/logotipo_traduversia_transparente-06-460x78.png" alt="Logo Traduversia" class="traduversia-logo-footer">
+            <img src="https://traduversia.com/wp-content/uploads/2026/03/Logo-Traduversia-Web-2026-scaled.png" alt="Logo Traduversia" class="traduversia-logo-footer">
         </a>
     </div>
 
