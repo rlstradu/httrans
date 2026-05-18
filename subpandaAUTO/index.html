@@ -393,7 +393,7 @@
 
     <div id="legal-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-panel w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl p-6 md:p-8 relative shadow-2xl">
-            <button id="btn-legal-close-x" onclick="document.getElementById('legal-modal').classList.add('hidden'); document.body.classList.remove('overflow-hidden');" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
+            <button id="btn-legal-close-x" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
                 <i class="ph-bold ph-x text-2xl"></i>
             </button>
             
@@ -433,7 +433,7 @@
             </div>
 
             <div class="mt-8 text-center">
-                <button onclick="document.getElementById('legal-modal').classList.add('hidden'); document.body.classList.remove('overflow-hidden');" class="bg-[#202020] text-white font-bold py-2 px-8 rounded-xl hover:bg-gray-800 transition" data-key="btnClose">Close</button>
+                <button id="btn-legal-close-btn" class="bg-[#202020] text-white font-bold py-2 px-8 rounded-xl hover:bg-gray-800 transition" data-key="btnClose">Close</button>
             </div>
         </div>
     </div>
