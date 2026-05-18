@@ -5,61 +5,55 @@ Release Date: May 18, 2026
 
 SubPandaAUTO is an AI-powered automatic transcription and subtitling tool. It allows you to process video and audio privately on your local browser, or leverage cloud processing for maximum speed and quality.
 
-Key Features
-AI Transcription & Translation
+-----------------------------------------
+KEY FEATURES
+-----------------------------------------
 
-Dual Processing Modes: Choose between "Local Mode" for free, private processing via your device's CPU/GPU, or "Cloud Mode" (using the Groq API) for ultra-fast, high-quality results.
+[ AI Transcription & Translation ]
 
-Flexible AI Models: Local mode supports Whisper Tiny, Base, Small, and Distil-Small models to balance speed and quality.
+* Dual Processing Modes: Choose between "Local Mode" for free, private processing via your device's CPU/GPU, or "Cloud Mode" (using the Groq API) for ultra-fast, high-quality results.
+* Flexible AI Models: Local mode supports Whisper Tiny, Base, Small, and Distil-Small models to balance speed and quality.
+* Smart Task Selection: Transcribe audio in its original language, translate it directly to English, or use "Spotting" mode to generate properly timed but empty subtitle blocks.
+* Multilingual Support: Auto-detect the spoken language, or manually select from 12 supported languages including Spanish, English, French, German, Italian, Portuguese, and Japanese.
 
-Smart Task Selection: Transcribe audio in its original language, translate it directly to English, or use "Spotting" mode to generate properly timed but empty subtitle blocks.
+[ Advanced Smart Segmentation ]
 
-Multilingual Support: Auto-detect the spoken language, or manually select from 12 supported languages including Spanish, English, French, German, Italian, Portuguese, and Japanese.
+* Strict Time Rules: Enforce a Minimum and Maximum Duration for your subtitles, and set a strict Minimum Gap (in frames or milliseconds) between blocks to prevent overlaps.
+* Format Control: Set Maximum Lines (1 or 2) and Maximum Characters per Line (CPL).
+* Linguistic Precision: Force line breaks on specific punctuation and define a custom "Do not end line on" list (e.g., articles, prepositions) to ensure a professional reading flow.
 
-Advanced Smart Segmentation
+[ Media Playback & Waveform Editor ]
 
-Strict Time Rules: Enforce a Minimum and Maximum Duration for your subtitles, and set a strict Minimum Gap (in frames or milliseconds) between blocks to prevent overlaps.
+* Broad Format Support: Open video and audio files directly, supporting MP4, MKV, MOV, MP3, and WAV.
+* Interactive Waveform: Visualize audio with an interactive WaveSurfer waveform that allows for zooming and manual region selection to create subtitles from scratch.
+* Video Preview with Overlay: Real-time video playback with on-screen subtitle rendering.
+* Timecode Formats: Toggle timecode displays between standard milliseconds (HH:MM:SS:MSS) or frames (HH:MM:SS:FF).
 
-Format Control: Set Maximum Lines (1 or 2) and Maximum Characters per Line (CPL).
+[ Subtitle Editing Tools ]
 
-Linguistic Precision: Force line breaks on specific punctuation and define a custom "Do not end line on" list (e.g., articles, prepositions) to ensure a professional reading flow.
+* Real-time Metrics: Instantly view Characters per Line (L1/L2) and Characters per Second (CPS), with automatic color warnings for exceeding character or reading speed limits.
+* Precision Nudge Controls: Easily add or subtract a single frame from the start or end of any subtitle block using the quick action buttons.
+* Word Shifting: Move the first or last word of a subtitle to the adjacent previous or next block with a single click.
+* Comprehensive Undo System: Safe editing with Ctrl+Z shortcut support and a history stack to revert unwanted changes.
+* Quick Exports: Export your finished project directly as a standard SRT file or TXT document.
 
-Media Playback & Waveform Editor
+[ Interface & Accessibility ]
 
-Broad Format Support: Open video and audio files directly, supporting MP4, MKV, MOV, MP3, and WAV.
+* Multilingual Interface: The application UI can be toggled instantly between English and Spanish.
+* Professional Ethics Built-in: A dedicated Legal & Ethics section reinforces the use of AI as an augmented subtitling resource rather than a replacement for human professionals.
 
-Interactive Waveform: Visualize audio with an interactive WaveSurfer waveform that allows for zooming and manual region selection to create subtitles from scratch.
+-----------------------------------------
+GETTING STARTED
+-----------------------------------------
 
-Video Preview with Overlay: Real-time video playback with on-screen subtitle rendering.
+1. Open the index.html file in your web browser.
+2. Configure your "Assistant Preferences", including the AI Model and Segmentation parameters.
+3. Click or drag your media file into the drop zone and click "Start" to begin processing.
 
-Timecode Formats: Toggle timecode displays between standard milliseconds (HH:MM:SS:MSS) or frames (HH:MM:SS:FF).
+-----------------------------------------
+FEEDBACK & CONTRIBUTIONS
+-----------------------------------------
 
-Subtitle Editing Tools
-
-Real-time Metrics: Instantly view Characters per Line (L1/L2) and Characters per Second (CPS), with automatic color warnings for exceeding character or reading speed limits.
-
-Precision Nudge Controls: Easily add or subtract a single frame from the start or end of any subtitle block using the quick action buttons.
-
-Word Shifting: Move the first or last word of a subtitle to the adjacent previous or next block with a single click.
-
-Comprehensive Undo System: Safe editing with Ctrl+Z shortcut support and a history stack to revert unwanted changes.
-
-Quick Exports: Export your finished project directly as a standard SRT file or TXT document.
-
-Interface & Accessibility
-
-Multilingual Interface: The application UI can be toggled instantly between English and Spanish.
-
-Professional Ethics Built-in: A dedicated Legal & Ethics section reinforces the use of AI as an augmented subtitling resource rather than a replacement for human professionals.
-
-Getting Started
-Open the index.html file in your web browser.
-
-Configure your "Assistant Preferences", including the AI Model and Segmentation parameters.
-
-Click or drag your media file into the drop zone and click "Start" to begin processing.
-
-Feedback & Contributions
 As this is the v0.5 beta release, we welcome your feedback. If you find any bugs, have feature suggestions, or want to contribute, please feel free to reach out.
 
 Thank you for using SubPandaAUTO!
