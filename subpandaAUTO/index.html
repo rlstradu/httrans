@@ -84,7 +84,7 @@
                 <button id="lang-en" class="lang-btn active px-3 py-1 rounded-md text-sm font-bold">EN</button>
                 <button id="lang-es" class="lang-btn px-3 py-1 rounded-md text-sm font-bold">ES</button>
             </div>
-            <span class="hidden md:inline-block text-sm font-semibold bg-white/50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200">BETA v0.5</span>
+            <button id="btn-changelog-open" class="hidden md:inline-block text-sm font-semibold bg-white/50 hover:bg-yellow-50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200 transition cursor-pointer">BETA v0.5</button>
         </div>
     </nav>
 
@@ -437,6 +437,55 @@
             </div>
         </div>
     </div>
+    <div id="changelog-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-panel w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl p-6 md:p-8 relative shadow-2xl">
+            <button id="btn-changelog-close" onclick="document.getElementById('changelog-modal').classList.add('hidden'); document.body.style.overflow = '';" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+            
+            <h2 class="text-xl font-black text-[#202020] mb-4 flex items-center gap-2 border-b border-gray-100 pb-3 shrink-0">
+                <i class="ph-fill ph-file-text text-[#ffb81f]"></i>
+                <span>Changelog</span>
+            </h2>
+
+            <div class="flex-1 overflow-y-auto bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <pre id="changelog-content" class="text-xs text-gray-600 whitespace-pre-wrap font-mono leading-relaxed">Loading changelog...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnOpenChangelog = document.getElementById('btn-changelog-open');
+            const changelogModal = document.getElementById('changelog-modal');
+            const changelogContent = document.getElementById('changelog-content');
+            let isLoaded = false;
+
+            if (btnOpenChangelog) {
+                btnOpenChangelog.addEventListener('click', async () => {
+                    // 1. Mostramos el modal y bloqueamos el scroll del fondo
+                    changelogModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+
+                    // 2. Cargamos el texto desde tu servidor (solo si no se ha cargado ya)
+                    if (!isLoaded) {
+                        try {
+                            const response = await fetch('https://httrans.org/changelog/subpandaauto.txt');
+                            if (response.ok) {
+                                const text = await response.text();
+                                changelogContent.textContent = text;
+                            } else {
+                                changelogContent.textContent = "Error loading changelog.";
+                            }
+                            isLoaded = true;
+                        } catch (error) {
+                            changelogContent.textContent = "Connection error while loading changelog.";
+                        }
+                    }
+                });
+            }
+        });
+    </script>
     <script type="module" src="wp-main.js"></script>
 </body>
 </html>
