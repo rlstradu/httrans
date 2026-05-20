@@ -1728,6 +1728,17 @@ adView.classList.remove('bg-gray-800', 'bg-white');
             document.execCommand('insertHTML', false, html);
         }
 
+function handleTimestampClick(e) {
+            const timestamp = e.target.closest('.timestamp');
+            if (timestamp && video.src) {
+                const seconds = parseFloat(timestamp.dataset.seconds);
+                if (!isNaN(seconds)) {
+                    // Restamos el offset para ir al tiempo real del archivo de video
+                    video.currentTime = Math.max(0, seconds - tcrOffsetSeconds);
+                }
+            }
+        }
+
         function parseTimeCodeToSeconds(timeCodeString) {
             let match = timeCodeString.match(/(\d{2}):(\d{2}):(\d{2})[,:](\d{2,3})/);
             if(match) return parseInt(match[1])*3600 + parseInt(match[2])*60 + parseInt(match[3]) + parseInt(match[4])/(match[4].length === 3 ? 1000 : DEFAULT_FRAMERATE);
@@ -2681,7 +2692,10 @@ adView.classList.remove('bg-gray-800', 'bg-white');
                 isEditorPristine = false;
             }
         });
-        editor.addEventListener('click', (e) => { /* ... (sin cambios) ... */ });
+
+        editor.addEventListener('click', (e) => {
+            handleTimestampClick(e);
+        });
 
         newTranscriptionBtn.addEventListener('click', (e) => { e.preventDefault(); showNewTranscriptionConfirm(); });
         openProjectBtn.addEventListener('click', (e) => { e.preventDefault(); showOpenProjectModal(); });
