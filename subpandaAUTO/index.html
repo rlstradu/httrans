@@ -23,6 +23,8 @@
     <!-- WaveSurfer y Plugin de Regiones -->
     <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -84,6 +86,7 @@
                 <button id="lang-en" class="lang-btn active px-3 py-1 rounded-md text-sm font-bold">EN</button>
                 <button id="lang-es" class="lang-btn px-3 py-1 rounded-md text-sm font-bold">ES</button>
             </div>
+            <button id="btn-tutorial" class="hidden md:inline-block text-xl text-gray-400 hover:text-[#ffb81f] transition cursor-pointer" title="Tutorial / Help"><i class="ph-bold ph-question"></i></button>
             <button id="btn-changelog-open" class="hidden md:inline-block text-sm font-semibold bg-white/50 hover:bg-yellow-50 px-3 py-1 rounded-full text-[#ffb81f] border border-yellow-200 transition cursor-pointer">BETA v0.5</button>
         </div>
     </nav>
@@ -131,7 +134,7 @@
             </h3>
             
             <!-- MODO DE PROCESAMIENTO -->
-            <div class="mb-6 bg-yellow-50/50 p-4 rounded-xl border border-yellow-100">
+            <div id="tour-mode" class="mb-6 bg-yellow-50/50 p-4 rounded-xl border border-yellow-100">
                 <label class="block text-sm font-bold text-gray-700 mb-2" data-key="modeLabel">Processing Mode</label>
                 <div class="flex gap-4 flex-wrap">
                     <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-lg border-2 border-[#ffb81f] shadow-md transition relative overflow-hidden">
@@ -161,7 +164,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div id="tour-settings" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Columna Izquierda -->
                 <div class="space-y-5">
                     <div id="local-model-container" class="opacity-50 pointer-events-none">
