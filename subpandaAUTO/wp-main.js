@@ -89,7 +89,20 @@ const translations = {
         p3Title: "Content Responsibility",
         p3Desc: "The user is solely responsible for possessing the necessary copyrights or permissions for any files processed with this tool.",
         p4Title: "Professional Ethics",
-        p4Desc: "This tool was created by a professional subtitler and is designed to be used with professional judgment and as a support resource within the augmented subtitling methodology, and not to create low-quality automatic subtitles or replace the work of a professional subtitler. This project is in favor of human subtitling and the use of technology to enhance the work of the human subtitler."
+        p4Desc: "This tool was created by a professional subtitler and is designed to be used with professional judgment and as a support resource within the augmented subtitling methodology, and not to create low-quality automatic subtitles or replace the work of a professional subtitler. This project is in favor of human subtitling and the use of technology to enhance the work of the human subtitler.",
+        tour1Title: "1. Upload File",
+        tour1Desc: "Load the audio or video file you want to subtitle or transcribe here. You can click or drag and drop.",
+        tour2Title: "2. Processing Mode",
+        tour2Desc: "Groq is much faster and more efficient, but requires an API Key. Whisper is slower, but runs locally on your PC.",
+        tour3Title: "3. Define Parameters",
+        tour3Desc: "Set your audio language, AI model, and strict rules for subtitles (minimum duration, gap, max lines...).",
+        tour4Title: "4. Start & Monitor",
+        tour4Desc: "Click Start and watch the background process progress in the terminal below.",
+        tour5Title: "5. Edit & Export",
+        tour5Desc: "Once finished, the visual editor will open automatically. Make necessary adjustments and export the final result.",
+        tourNext: "Next →",
+        tourPrev: "← Previous",
+        tourDone: "Done"
     },
     es: {
         backLink: "Volver a HTTrans",
@@ -175,7 +188,20 @@ const translations = {
         p3Title: "Responsabilidad del contenido",
         p3Desc: "El usuario es el único responsable de poseer los derechos de autor o los permisos necesarios de los archivos que procese con esta herramienta.",
         p4Title: "Ética profesional",
-        p4Desc: "Esta herramienta ha sido creada por un subtitulador profesional y está pensada para usarla con criterio profesional y como recurso de apoyo dentro de la metodología de la subtitulación aumentada, y no para crear subtítulos automáticos de baja calidad o reemplazar el trabajo de un subtitulador profesional. Este proyecto está a favor de la subtitulación humana y del uso de tecnología para potenciar la labor del subtitulador humano."
+        p4Desc: "Esta herramienta ha sido creada por un subtitulador profesional y está pensada para usarla con criterio profesional y como recurso de apoyo dentro de la metodología de la subtitulación aumentada, y no para crear subtítulos automáticos de baja calidad o reemplazar el trabajo de un subtitulador profesional. Este proyecto está a favor de la subtitulación humana y del uso de tecnología para potenciar la labor del subtitulador humano.",
+        tour1Title: "1. Carga tu archivo",
+        tour1Desc: "Sube aquí el archivo que quieras subtitular o transcribir. Puedes hacer clic o arrastrarlo.",
+        tour2Title: "2. Elige el modelo",
+        tour2Desc: "Groq es mucho más rápido y eficiente, pero enviará tu archivo a los servidores de Groq. Whisper es mucho más lento, pero funciona en local en tu PC.",
+        tour3Title: "3. Define los ajustes",
+        tour3Desc: "Define los parámetros o ajustes de tus subtítulos (idioma, duración mínima, huecos...).",
+        tour4Title: "4. Iniciar y observar",
+        tour4Desc: "Dale a Iniciar y observa el progreso del proceso en la consola.",
+        tour5Title: "5. Editor y exportación",
+        tour5Desc: "Si no hay problemas, se abrirá el editor para que hagas los cambios necesarios. También podrás exportar el proyecto.",
+        tourNext: "Siguiente →",
+        tourPrev: "← Anterior",
+        tourDone: "Terminar"
     }
 };
 
@@ -1373,5 +1399,43 @@ function parseTimeStr(str) {
 }
 
 function download(content, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = name; a.click(); }
+
+// --- LÓGICA DEL TUTORIAL INTERACTIVO ---
+window.startTutorial = () => {
+    const t = translations[currentLang];
+    const driver = window.driver.js.driver;
+    const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        nextBtnText: t.tourNext,
+        prevBtnText: t.tourPrev,
+        doneBtnText: t.tourDone,
+        steps: [
+            { element: '#drop-zone', popover: { title: t.tour1Title, description: t.tour1Desc, side: "bottom", align: 'start' }},
+            { element: '#tour-mode', popover: { title: t.tour2Title, description: t.tour2Desc, side: "bottom", align: 'start' }},
+            { element: '#tour-settings', popover: { title: t.tour3Title, description: t.tour3Desc, side: "top", align: 'start' }},
+            { element: '#run-btn', popover: { title: t.tour4Title, description: t.tour4Desc, side: "top", align: 'start' }},
+            // El último paso se centra en la pantalla sin señalar ningún elemento concreto (ya que el editor está oculto al inicio)
+            { popover: { title: t.tour5Title, description: t.tour5Desc } }
+        ],
+        onDestroyStarted: () => {
+            // Guarda en la caché del navegador que ya ha visto el tutorial para no molestar más
+            localStorage.setItem('panda_tutorial_seen', 'true');
+            driverObj.destroy();
+        }
+    });
+    driverObj.drive();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Si nunca ha visto el tutorial, se lanza automáticamente al entrar
+    if (!localStorage.getItem('panda_tutorial_seen')) {
+        setTimeout(() => window.startTutorial(), 500);
+    }
+    
+    // Conecta el botoncito de ayuda de arriba a la derecha para lanzarlo manualmente
+    const btnTutorial = document.getElementById('btn-tutorial');
+    if (btnTutorial) btnTutorial.addEventListener('click', window.startTutorial);
+});
 
 setLanguage('en');
