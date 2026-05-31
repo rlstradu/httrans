@@ -441,11 +441,7 @@
     </div>
     <div id="changelog-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-panel w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl p-6 md:p-8 relative shadow-2xl">
-            <button id="btn-changelog-close" onclick="document.getElementById('changelog-modal').classList.add('hidden'); document.body.style.overflow = '';" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
-                <i class="ph-bold ph-x text-2xl"></i>
-            </button>
-            
-            <button id="btn-changelog-close" onclick="document.getElementById('changelog-modal').classList.add('hidden'); document.body.style.overflow = '';" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition cursor-pointer z-10">
+            <button onclick="document.getElementById('changelog-modal').classList.add('hidden'); document.body.style.overflow = '';" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition cursor-pointer z-10">
                 <i class="ph-bold ph-x text-2xl"></i>
             </button>
             
@@ -456,6 +452,10 @@
 
             <div class="flex-1 overflow-y-auto bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <pre id="changelog-content" class="text-xs text-gray-600 whitespace-pre-wrap font-mono leading-relaxed">Loading changelog...</pre>
+            </div>
+
+            <div class="mt-6 text-center shrink-0">
+                <button onclick="document.getElementById('changelog-modal').classList.add('hidden'); document.body.style.overflow = '';" class="bg-[#202020] text-white font-bold py-2 px-8 rounded-xl hover:bg-gray-800 transition">Close</button>
             </div>
         </div>
     </div>
