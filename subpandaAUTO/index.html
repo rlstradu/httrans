@@ -95,9 +95,32 @@
             <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/subpandaAUTO.png" 
                  alt="SubPandaAUTO Logo" 
                  class="w-96 h-auto mx-auto mb-4 logo-bounce">
-            <p class="text-gray-500 max-w-2xl mx-auto font-medium">
+            <p class="text-gray-500 max-w-2xl mx-auto font-medium mb-8">
                 <span data-key="heroDesc">AI-powered automatic transcription and subtitling tool.</span>
             </p>
+
+            <div class="max-w-4xl mx-auto w-full">
+                <div id="drop-zone" class="border-3 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-white/50 hover:bg-yellow-50 hover:border-[#ffb81f] transition-colors cursor-pointer group shadow-sm">
+                    <input type="file" id="file-input" class="hidden" accept="audio/*,video/*">
+                    <div class="mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <i class="ph-duotone ph-cloud-arrow-up text-6xl text-gray-400 group-hover:text-[#ffb81f]"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-700 mb-2" data-key="dropTitle">Click or drag your file here</h3>
+                    <p class="text-sm text-gray-500 mb-4" data-key="dropSubtitle">Supports MP4, MKV, MOV, MP3, WAV...</p>
+                    <div id="file-warning" class="hidden bg-orange-100 text-orange-800 text-xs p-3 rounded-lg max-w-md mx-auto flex items-start text-left gap-2">
+                        <i class="ph-bold ph-warning text-lg mt-0.5"></i>
+                        <span data-key="fileWarning">
+                            <strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. 
+                            We recommend extracting audio to MP3 first if you experience issues.
+                        </span>
+                    </div>
+                    <div id="file-info" class="hidden mt-4 inline-flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
+                        <i class="ph-fill ph-file-audio text-[#ffb81f] mr-2"></i>
+                        <span id="file-name" class="font-semibold text-gray-700 text-sm truncate max-w-[200px]">filename.mp3</span>
+                        <button id="remove-file" class="ml-3 text-gray-400 hover:text-red-500"><i class="ph-bold ph-x"></i></button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- PANEL DE CONFIGURACIÓN -->
@@ -254,27 +277,6 @@
 
         <!-- DROP ZONE & BOTONES -->
         <div id="upload-section" class="max-w-4xl mx-auto w-full grid grid-cols-1 gap-6 transition-all duration-500">
-            <div id="drop-zone" class="border-3 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-white/50 hover:bg-yellow-50 hover:border-[#ffb81f] transition-colors cursor-pointer group">
-                <input type="file" id="file-input" class="hidden" accept="audio/*,video/*">
-                <div class="mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="ph-duotone ph-cloud-arrow-up text-6xl text-gray-400 group-hover:text-[#ffb81f]"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-700 mb-2" data-key="dropTitle">Click or drag your file here</h3>
-                <p class="text-sm text-gray-500 mb-4" data-key="dropSubtitle">Supports MP4, MKV, MOV, MP3, WAV...</p>
-                <div id="file-warning" class="hidden bg-orange-100 text-orange-800 text-xs p-3 rounded-lg max-w-md mx-auto flex items-start text-left gap-2">
-                    <i class="ph-bold ph-warning text-lg mt-0.5"></i>
-                    <span data-key="fileWarning">
-                        <strong>Heads up!</strong> This file is large (>500MB). The browser might slow down. 
-                        We recommend extracting audio to MP3 first if you experience issues.
-                    </span>
-                </div>
-                <div id="file-info" class="hidden mt-4 inline-flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-                    <i class="ph-fill ph-file-audio text-[#ffb81f] mr-2"></i>
-                    <span id="file-name" class="font-semibold text-gray-700 text-sm truncate max-w-[200px]">filename.mp3</span>
-                    <button id="remove-file" class="ml-3 text-gray-400 hover:text-red-500"><i class="ph-bold ph-x"></i></button>
-                </div>
-            </div>
-
             <div class="flex gap-4">
                 <button id="run-btn" disabled class="flex-1 py-4 rounded-xl font-black text-lg text-[#202020] shadow-lg transition-all transform flex justify-center items-center gap-2 
                     bg-[#ffb81f] hover:bg-[#e0a01a] hover:scale-[1.02] cursor-pointer 
