@@ -351,15 +351,24 @@
                 try {
                     let requestUrl = proxy.includes("allorigins") ? proxy + encodeURIComponent(url) : proxy + url;
                     const respuesta = await fetch(requestUrl);
-                    if (!respuesta.ok) throw new Error("Network error");
                     
-                    const datos = await respuesta.json();
-                    return proxy.includes("allorigins") ? datos.contents : (typeof datos === 'string' ? datos : JSON.stringify(datos));
+                    if (!respuesta.ok) throw new Error(`Error HTTP: ${respuesta.status}`);
+                    
+                    // AllOrigins devuelve un JSON estructurado, los demás devuelven el XML directamente
+                    if (proxy.includes("allorigins")) {
+                        const datos = await respuesta.json();
+                        if (!datos.contents) throw new Error("Sin contenido");
+                        return datos.contents;
+                    } else {
+                        const textoCrudo = await respuesta.text();
+                        return textoCrudo;
+                    }
                 } catch (e) {
+                    console.warn(`Aviso: Falló el proxy ${proxy}`, e);
                     errorUltimo = e;
                 }
             }
-            throw errorUltimo;
+            throw errorUltimo || new Error("Bloqueo de red o CORS");
         }
 
         async function cargarFeeds() {
