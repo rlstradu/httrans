@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pandafeed - Mi Muro Unificado</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons para la iconografía de la interfaz -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos personalizados de la barra de desplazamiento y pestañas */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+    <!-- Cabecera -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <!-- Logo completo sin enmarcar y sin textos -->
+            <div class="flex items-center">
+                <img 
+                    src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandafeed-logo-trans.png" 
+                    alt="Pandafeed Logo" 
+                    class="h-10 w-auto hover:scale-105 transition-transform duration-300"
+                    onerror="this.src='https://placehold.co/200x50/e2e8f0/475569?text=Pandafeed'"
+                >
+            </div>
+
+            <!-- Navegación por pestañas -->
+            <nav class="flex gap-2">
+                <button onclick="cambiarPestana('muro')" id="btn-muro" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 bg-slate-900 text-white transition-all shadow-sm">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Muro</span>
+                </button>
+                <button onclick="cambiarPestana('canales')" id="btn-canales" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600 hover:bg-slate-100 transition-all">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Añadir Feed</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-8">
+        
+        <!-- Notificaciones de sistema (Toast) -->
+        <div id="toast" class="opacity-0 pointer-events-none fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl z-50 flex items-center gap-2 text-sm transition-opacity duration-300">
+            <span id="toast-message">Cargado con éxito</span>
+        </div>
+
+        <!-- ================= PESTAÑA: EL MURO ================= -->
+        <section id="pane-muro" class="tab-content active space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="rss" class="text-amber-500"></i> Mi Muro
+                </h2>
+                <button onclick="actualizarTodo()" class="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium shadow-sm active:scale-95 transition-all">
+                    <i data-lucide="refresh-cw" id="refresh-icon" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Actualizar</span>
+                </button>
+            </div>
+
+            <!-- Filtro dinámico por categorías -->
+            <div id="contenedor-filtros" class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <!-- Se inyecta dinámicamente desde JS -->
+            </div>
+
+            <!-- Lista de Publicaciones -->
+            <div id="muro-posts" class="space-y-5">
+                <div class="bg-white p-10 rounded-xl border border-slate-200 text-center text-slate-500 shadow-sm flex flex-col items-center">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3 text-slate-400"></i>
+                    <p class="font-medium text-slate-700">Cargando contenido...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PESTAÑA: CONFIGURACIÓN / CANALES ================= -->
+        <section id="pane-canales" class="tab-content space-y-6">
+            <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="settings-2" class="text-slate-500"></i> Gestionar Canales
+            </h2>
+
+            <!-- Formulario para agregar nuevo feed -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full -mr-10 -mt-10 opacity-50 pointer-events-none"></div>
+                <h3 class="text-lg font-semibold text-slate-800 relative z-10">Añadir Nueva Fuente</h3>
+                
+                <form id="add-feed-form" onsubmit="agregarFeed(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4 relative z-10">
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nombre</label>
+                        <input type="text" id="feed-name" required placeholder="Ej. TechCrunch, Wired..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all bg-slate-50 focus:bg-white">
+                    </div>
+                    
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Categoría</label>
+                        <input type="text" id="feed-category" required placeholder="Ej. Prensa, Twitter..." list="opciones-categorias" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all bg-slate-50 focus:bg-white">
+                        <datalist id="opciones-categorias">
+                            <option value="Prensa">
+                            <option value="LinkedIn">
+                            <option value="Twitter">
+                            <option value="Tecnología">
+                            <option value="Blogs">
+                        </datalist>
+                    </div>
+
+                    <div class="md:col-span-5">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">URL del Feed RSS / XML</label>
+                        <input type="url" id="feed-url" required placeholder="https://ejemplo.com/feed/" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all bg-slate-50 focus:bg-white">
+                        <p class="text-[10px] text-slate-400 mt-1">Asegúrate de que termina en /feed/ o .xml</p>
+                    </div>
+
+                    <div class="md:col-span-12 flex justify-end mt-2">
+                        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Añadir a mi Muro
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Listado de canales seguidos actualmente -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <h3 class="text-lg font-semibold text-slate-800">Tus Fuentes Guardadas</h3>
+                    <span id="counter-canales" class="text-xs bg-white text-slate-600 px-3 py-1 rounded-full font-bold border border-slate-200 shadow-sm">0</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                                <th class="py-3 px-4">Categoría</th>
+                                <th class="py-3 px-4">Nombre</th>
+                                <th class="py-3 px-4 hidden md:table-cell">URL del Feed</th>
+                                <th class="py-3 px-4 text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-canales" class="text-sm divide-y divide-slate-50 bg-white">
+                            <!-- Se inyecta dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 mt-auto">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandafeed-logo-trans.png" alt="Mini Logo" class="w-4 h-4 opacity-50 grayscale">
+                <p>Pandafeed &copy; 2026</p>
+            </div>
+            <div class="flex gap-4">
+                <span class="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> App Local Privada
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lógica de la Aplicación -->
+    <script>
+        // Fuentes por defecto iniciales
+        const FUENTES_POR_DEFECTO = [
+            { id: "1", nombre: "Julia Diez", categoria: "Substack", url: "https://juliadiez.substack.com/feed" },
+            { id: "2", nombre: "Xosé Castro", categoria: "Bluesky", url: "https://bsky.app/profile/xosecastro.bsky.social/rss" },
+            { id: "3", nombre: "Scheherezade", categoria: "Bluesky", url: "https://bsky.app/profile/scheherezade.bsky.social/rss" }
+        ];
+
+        // Múltiples proxies gratuitos para evitar el bloqueo de CORS del navegador
+        const PROXIES_CORS = [
+            "https://api.allorigins.win/get?url=",
+            "https://corsproxy.io/?",
+            "https://api.codetabs.com/v1/proxy?quest="
+        ];
+
+        let misFuentes = [];
+        let todasLasPublicaciones = [];
+        let filtroActual = 'todas';
+
+        // Iniciar la app al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            inicializarFuentes();
+            cargarFeeds();
+        });
+
+        function inicializarFuentes() {
+            const guardado = localStorage.getItem('panda_feeds_v3');
+            if (guardado) {
+                misFuentes = JSON.parse(guardado);
+            } else {
+                misFuentes = [...FUENTES_POR_DEFECTO];
+                localStorage.setItem('panda_feeds_v3', JSON.stringify(misFuentes));
+            }
+            renderizarFiltros();
+            renderizarTablaCanales();
+        }
+
+        function cambiarPestana(pestana) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-900', 'text-white', 'shadow-sm');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+            });
+
+            document.getElementById(`pane-${pestana}`).classList.add('active');
+            const botonActivo = document.getElementById(`btn-${pestana}`);
+            botonActivo.classList.remove('text-slate-600', 'hover:bg-slate-100');
+            botonActivo.classList.add('bg-slate-900', 'text-white', 'shadow-sm');
+        }
+
+        function showToast(mensaje) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = mensaje;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function getClasesTema(categoria) {
+            const temas = [
+                { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100', dot: 'bg-blue-500', hex: 'bg-blue-500' },
+                { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100', dot: 'bg-emerald-500', hex: 'bg-emerald-500' },
+                { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100', dot: 'bg-amber-500', hex: 'bg-amber-500' },
+                { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-100', dot: 'bg-rose-500', hex: 'bg-rose-500' },
+                { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-100', dot: 'bg-purple-500', hex: 'bg-purple-500' },
+                { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-100', dot: 'bg-sky-500', hex: 'bg-sky-500' },
+                { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-100', dot: 'bg-orange-500', hex: 'bg-orange-500' },
+                { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-100', dot: 'bg-indigo-500', hex: 'bg-indigo-500' }
+            ];
+            // Generar un hash numérico consistente a partir del nombre de la categoría
+            let hash = 0;
+            if(categoria) {
+                for (let i = 0; i < categoria.length; i++) {
+                    hash = categoria.charCodeAt(i) + ((hash << 5) - hash);
+                }
+            }
+            return temas[Math.abs(hash) % temas.length];
+        }
+
+        function obtenerInsigniaHTML(categoria) {
+            const theme = getClasesTema(categoria);
+            return `<span class="inline-flex items-center gap-1.5 ${theme.bg} ${theme.text} text-[10px] uppercase tracking-wider px-2 py-1 rounded-md font-bold border ${theme.border}">
+                        <span class="w-1.5 h-1.5 rounded-full ${theme.dot}"></span> ${categoria}
+                    </span>`;
+        }
+
+        function renderizarFiltros() {
+            const contenedor = document.getElementById('contenedor-filtros');
+            // Sacar categorías únicas y ordenarlas alfabéticamente
+            const categoriasUnicas = [...new Set(misFuentes.map(f => f.categoria || 'General'))].sort();
+            
+            let html = `<button onclick="filtrarCategoria('todas')" class="filtro-btn px-4 py-1.5 rounded-full text-xs font-semibold ${filtroActual === 'todas' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'} transition-all whitespace-nowrap">Todas</button>`;
+            
+            categoriasUnicas.forEach(cat => {
+                const activo = filtroActual === cat;
+                const theme = getClasesTema(cat);
+                const clasesActivo = activo ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50';
+                
+                html += `<button onclick="filtrarCategoria('${cat}')" class="filtro-btn px-4 py-1.5 rounded-full text-xs font-semibold ${clasesActivo} transition-all flex items-center gap-1.5 whitespace-nowrap">
+                    <span class="w-2.5 h-2.5 rounded-full ${theme.dot}"></span> ${cat}
+                </button>`;
+            });
+            
+            contenedor.innerHTML = html;
+        }
+
+        function renderizarTablaCanales() {
+            const tbody = document.getElementById('lista-canales');
+            const contador = document.getElementById('counter-canales');
+            
+            tbody.innerHTML = '';
+            contador.innerText = misFuentes.length;
+
+            if (misFuentes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-slate-400 italic">No tienes feeds guardados.</td></tr>`;
+                return;
+            }
+
+            misFuentes.forEach(fuente => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors group";
+                tr.innerHTML = `
+                    <td class="py-3 px-4">${obtenerInsigniaHTML(fuente.categoria || 'General')}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-700">${fuente.nombre}</td>
+                    <td class="py-3 px-4 text-xs text-slate-400 max-w-[200px] truncate hidden md:table-cell">${fuente.url}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="eliminarFeed('${fuente.id}')" class="text-slate-300 hover:text-rose-500 p-2 hover:bg-rose-50 rounded-lg transition-all group-hover:text-rose-400" title="Eliminar">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function agregarFeed(event) {
+            event.preventDefault();
+            const nuevaFuente = {
+                id: Date.now().toString(),
+                nombre: document.getElementById('feed-name').value,
+                categoria: document.getElementById('feed-category').value.trim() || 'General',
+                url: document.getElementById('feed-url').value
+            };
+            misFuentes.push(nuevaFuente);
+            localStorage.setItem('panda_feeds_v3', JSON.stringify(misFuentes));
+            document.getElementById('add-feed-form').reset();
+            renderizarFiltros();
+            renderizarTablaCanales();
+            showToast("✅ Feed añadido a tu colección");
+            cargarFeeds();
+        }
+
+        function eliminarFeed(id) {
+            misFuentes = misFuentes.filter(f => f.id !== id);
+            localStorage.setItem('panda_feeds_v3', JSON.stringify(misFuentes));
+            
+            // Reajustar el filtro si se elimina la última fuente de esa categoría
+            const categoriasRestantes = misFuentes.map(f => f.categoria);
+            if (filtroActual !== 'todas' && !categoriasRestantes.includes(filtroActual)) {
+                filtroActual = 'todas';
+            }
+            
+            renderizarFiltros();
+            renderizarTablaCanales();
+            showToast("🗑️ Fuente eliminada");
+            cargarFeeds();
+        }
+
+        async function fetchConRespaldo(url) {
+            let errorUltimo = null;
+            for (let proxy of PROXIES_CORS) {
+                try {
+                    let requestUrl = proxy.includes("allorigins") ? proxy + encodeURIComponent(url) : proxy + url;
+                    const respuesta = await fetch(requestUrl);
+                    if (!respuesta.ok) throw new Error("Network error");
+                    
+                    const datos = await respuesta.json();
+                    return proxy.includes("allorigins") ? datos.contents : (typeof datos === 'string' ? datos : JSON.stringify(datos));
+                } catch (e) {
+                    errorUltimo = e;
+                }
+            }
+            throw errorUltimo;
+        }
+
+        async function cargarFeeds() {
+            const muro = document.getElementById('muro-posts');
+            muro.innerHTML = `
+                <div class="bg-white p-10 rounded-xl border border-slate-200 text-center shadow-sm flex flex-col items-center">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3 text-slate-400"></i>
+                    <p class="font-medium text-slate-700">Cargando contenido...</p>
+                </div>
+            `;
+            todasLasPublicaciones = [];
+
+            if (misFuentes.length === 0) {
+                muro.innerHTML = `
+                    <div class="bg-amber-50 p-8 rounded-xl border border-amber-100 text-center text-amber-800 shadow-sm">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-3 text-amber-600"></i>
+                        <p class="font-bold">Tu muro está vacío</p>
+                        <p class="text-sm mt-1">Ve a la pestaña "Añadir Feed" para agregar contenido.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const promesas = misFuentes.map(async (fuente) => {
+                try {
+                    const xmlContenido = await fetchConRespaldo(fuente.url);
+                    const doc = new DOMParser().parseFromString(xmlContenido, "text/xml");
+                    
+                    let items = doc.getElementsByTagName("item");
+                    let esAtom = false;
+                    if (items.length === 0) {
+                        items = doc.getElementsByTagName("entry");
+                        esAtom = true;
+                    }
+
+                    for (let i = 0; i < Math.min(items.length, 12); i++) {
+                        const item = items[i];
+                        let titulo = item.getElementsByTagName("title")[0]?.textContent || "Sin título";
+                        let link = esAtom ? (item.getElementsByTagName("link")[0]?.getAttribute("href") || "#") : (item.getElementsByTagName("link")[0]?.textContent || "#");
+                        
+                        let fechaStr = esAtom ? (item.getElementsByTagName("published")[0]?.textContent || item.getElementsByTagName("updated")[0]?.textContent) : item.getElementsByTagName("pubDate")[0]?.textContent;
+                        
+                        let contenidoHtml = esAtom ? (item.getElementsByTagName("content")[0]?.textContent || item.getElementsByTagName("summary")[0]?.textContent || "") : (item.getElementsByTagName("content:encoded")[0]?.textContent || item.getElementsByTagName("description")[0]?.textContent || "");
+
+                        const tempDiv = document.createElement("div");
+                        tempDiv.innerHTML = contenidoHtml;
+                        const textoPlano = tempDiv.textContent || tempDiv.innerText || "";
+                        const resumen = textoPlano.substring(0, 180) + (textoPlano.length > 180 ? "..." : "");
+
+                        todasLasPublicaciones.push({
+                            id: Math.random().toString(36).substring(2, 9),
+                            fuenteNombre: fuente.nombre,
+                            titulo: titulo, link: link,
+                            fecha: fechaStr ? new Date(fechaStr) : new Date(),
+                            resumen: resumen || "Haz clic en 'Leer artículo completo' para ver el contenido.",
+                            contenidoCompleto: contenidoHtml,
+                            categoria: fuente.categoria || 'General'
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error en canal ${fuente.nombre}:`, error);
+                }
+            });
+
+            await Promise.all(promesas);
+            todasLasPublicaciones.sort((a, b) => b.fecha - a.fecha);
+            renderizarMuro();
+        }
+
+        function renderizarMuro() {
+            const muro = document.getElementById('muro-posts');
+            muro.innerHTML = '';
+
+            const filtrados = filtroActual === 'todas' ? todasLasPublicaciones : todasLasPublicaciones.filter(p => p.categoria === filtroActual);
+
+            if (filtrados.length === 0) {
+                muro.innerHTML = `
+                    <div class="bg-slate-50 p-10 rounded-xl border border-slate-200 border-dashed text-center text-slate-500">
+                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 text-slate-300"></i>
+                        <p class="font-medium">No hay publicaciones para este filtro</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            filtrados.forEach(post => {
+                const theme = getClasesTema(post.categoria);
+
+                const card = document.createElement('article');
+                card.className = `bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden`;
+                
+                card.innerHTML = `
+                    <div class="h-1 w-full bg-slate-100"><div class="h-full w-1/4 ${theme.hex}"></div></div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between text-xs text-slate-500 mb-3">
+                            <div class="flex items-center gap-2">
+                                ${obtenerInsigniaHTML(post.categoria)}
+                                <span class="font-bold text-slate-700">${post.fuenteNombre}</span>
+                            </div>
+                            <time class="bg-slate-50 px-2 py-1 rounded text-slate-500 border border-slate-100">
+                                ${post.fecha.toLocaleDateString()}
+                            </time>
+                        </div>
+
+                        <h3 class="text-xl font-bold text-slate-900 leading-snug mb-3 hover:text-amber-600 transition-colors">
+                            <a href="${post.link}" target="_blank" class="block">
+                                ${post.titulo}
+                            </a>
+                        </h3>
+
+                        <div id="resumen-${post.id}" class="text-sm text-slate-600 leading-relaxed">
+                            ${post.resumen}
+                        </div>
+
+                        <div id="contenido-${post.id}" class="hidden mt-4 pt-4 border-t border-slate-100 text-sm text-slate-700 leading-relaxed overflow-hidden">
+                            <div class="prose prose-sm max-w-none prose-slate prose-a:text-amber-600">
+                                ${post.contenidoCompleto || '<p class="italic text-slate-400">Contenido no disponible en el feed RSS.</p>'}
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex justify-between items-center">
+                            <button onclick="toggleArticulo('${post.id}')" id="btn-toggle-${post.id}" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                                <i data-lucide="eye" class="w-3.5 h-3.5 icon-state"></i>
+                                <span class="text-label">Expandir lectura</span>
+                            </button>
+                            
+                            <a href="${post.link}" target="_blank" class="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1 group">
+                                Abrir original <i data-lucide="external-link" class="w-3.5 h-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                muro.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function toggleArticulo(id) {
+            const divResumen = document.getElementById(`resumen-${id}`);
+            const divContenido = document.getElementById(`contenido-${id}`);
+            const btn = document.getElementById(`btn-toggle-${id}`);
+            const icon = btn.querySelector('.icon-state');
+            
+            if (divContenido.classList.contains('hidden')) {
+                divContenido.classList.remove('hidden');
+                divResumen.classList.add('hidden');
+                btn.querySelector('.text-label').innerText = "Ocultar contenido";
+                btn.classList.replace('bg-slate-100', 'bg-amber-100');
+                btn.classList.replace('hover:bg-slate-200', 'hover:bg-amber-200');
+                btn.classList.replace('text-slate-700', 'text-amber-800');
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                divContenido.classList.add('hidden');
+                divResumen.classList.remove('hidden');
+                btn.querySelector('.text-label').innerText = "Expandir lectura";
+                btn.classList.replace('bg-amber-100', 'bg-slate-100');
+                btn.classList.replace('hover:bg-amber-200', 'hover:bg-slate-200');
+                btn.classList.replace('text-amber-800', 'text-slate-700');
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        function filtrarCategoria(categoria) {
+            filtroActual = categoria;
+            renderizarFiltros();
+            renderizarMuro();
+        }
+
+        async function actualizarTodo() {
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('animate-spin');
+            await cargarFeeds();
+            icon.classList.remove('animate-spin');
+            showToast("✨ Muro actualizado con éxito");
+        }
+    </script>
+</body>
+</html>
