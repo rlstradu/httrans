@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pandafeed - Mi Muro Unificado</title>
+    <title>Pandafeed - Mi muro personalizado</title>
     <!-- Tailwind CSS para diseño moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons para la iconografía de la interfaz -->
@@ -26,14 +26,14 @@
 
     <!-- Cabecera -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <!-- Logo completo sin enmarcar y sin textos -->
             <div class="flex items-center">
                 <img 
                     src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandafeed-logo-trans.png" 
                     alt="Pandafeed Logo" 
-                    class="h-10 w-auto hover:scale-105 transition-transform duration-300"
-                    onerror="this.src='https://placehold.co/200x50/e2e8f0/475569?text=Pandafeed'"
+                    class="h-16 sm:h-22 w-auto hover:scale-105 transition-transform duration-300 drop-shadow-sm"
+                    onerror="this.src='https://placehold.co/200x80/e2e8f0/475569?text=Pandafeed'"
                 >
             </div>
 
@@ -117,7 +117,7 @@
                     <div class="md:col-span-5">
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">URL del Feed RSS / XML</label>
                         <input type="url" id="feed-url" required placeholder="https://ejemplo.com/feed/" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all bg-slate-50 focus:bg-white">
-                        <p class="text-[10px] text-slate-400 mt-1">Asegúrate de que termina en /feed/ o .xml</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Asegúrate de que termina en /feed/ o /rss</p>
                     </div>
 
                     <div class="md:col-span-12 flex justify-end mt-2">
@@ -179,13 +179,6 @@
             { id: "3", nombre: "Scheherezade", categoria: "Bluesky", url: "https://bsky.app/profile/scheherezade.bsky.social/rss" }
         ];
 
-        // Múltiples proxies gratuitos para evitar el bloqueo de CORS del navegador
-        const PROXIES_CORS = [
-            "https://api.allorigins.win/get?url=",
-            "https://corsproxy.io/?",
-            "https://api.codetabs.com/v1/proxy?quest="
-        ];
-
         let misFuentes = [];
         let todasLasPublicaciones = [];
         let filtroActual = 'todas';
@@ -245,7 +238,6 @@
                 { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-100', dot: 'bg-orange-500', hex: 'bg-orange-500' },
                 { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-100', dot: 'bg-indigo-500', hex: 'bg-indigo-500' }
             ];
-            // Generar un hash numérico consistente a partir del nombre de la categoría
             let hash = 0;
             if(categoria) {
                 for (let i = 0; i < categoria.length; i++) {
@@ -264,7 +256,6 @@
 
         function renderizarFiltros() {
             const contenedor = document.getElementById('contenedor-filtros');
-            // Sacar categorías únicas y ordenarlas alfabéticamente
             const categoriasUnicas = [...new Set(misFuentes.map(f => f.categoria || 'General'))].sort();
             
             let html = `<button onclick="filtrarCategoria('todas')" class="filtro-btn px-4 py-1.5 rounded-full text-xs font-semibold ${filtroActual === 'todas' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'} transition-all whitespace-nowrap">Todas</button>`;
@@ -333,7 +324,6 @@
             misFuentes = misFuentes.filter(f => f.id !== id);
             localStorage.setItem('panda_feeds_v3', JSON.stringify(misFuentes));
             
-            // Reajustar el filtro si se elimina la última fuente de esa categoría
             const categoriasRestantes = misFuentes.map(f => f.categoria);
             if (filtroActual !== 'todas' && !categoriasRestantes.includes(filtroActual)) {
                 filtroActual = 'todas';
@@ -343,32 +333,6 @@
             renderizarTablaCanales();
             showToast("🗑️ Fuente eliminada");
             cargarFeeds();
-        }
-
-        async function fetchConRespaldo(url) {
-            let errorUltimo = null;
-            for (let proxy of PROXIES_CORS) {
-                try {
-                    let requestUrl = proxy.includes("allorigins") ? proxy + encodeURIComponent(url) : proxy + url;
-                    const respuesta = await fetch(requestUrl);
-                    
-                    if (!respuesta.ok) throw new Error(`Error HTTP: ${respuesta.status}`);
-                    
-                    // AllOrigins devuelve un JSON estructurado, los demás devuelven el XML directamente
-                    if (proxy.includes("allorigins")) {
-                        const datos = await respuesta.json();
-                        if (!datos.contents) throw new Error("Sin contenido");
-                        return datos.contents;
-                    } else {
-                        const textoCrudo = await respuesta.text();
-                        return textoCrudo;
-                    }
-                } catch (e) {
-                    console.warn(`Aviso: Falló el proxy ${proxy}`, e);
-                    errorUltimo = e;
-                }
-            }
-            throw errorUltimo || new Error("Bloqueo de red o CORS");
         }
 
         async function cargarFeeds() {
@@ -395,46 +359,131 @@
 
             const promesas = misFuentes.map(async (fuente) => {
                 try {
-                    const xmlContenido = await fetchConRespaldo(fuente.url);
-                    const doc = new DOMParser().parseFromString(xmlContenido, "text/xml");
+                    // Motor principal: API RSS2JSON (Bypass de CORS y Cloudflare, lee RSS y Atom)
+                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(fuente.url)}`;
+                    const respuesta = await fetch(apiUrl);
                     
-                    let items = doc.getElementsByTagName("item");
-                    let esAtom = false;
-                    if (items.length === 0) {
-                        items = doc.getElementsByTagName("entry");
-                        esAtom = true;
-                    }
+                    if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+                    const datos = await respuesta.json();
+                    
+                    if (datos.status === 'ok') {
+                        const items = datos.items.slice(0, 12); // Extraer los últimos 12 artículos
+                        items.forEach(item => {
+                            // Limpieza de HTML para el resumen
+                            const tempDiv = document.createElement("div");
+                            tempDiv.innerHTML = item.content || item.description || "";
+                            const textoPlano = tempDiv.textContent || tempDiv.innerText || "";
+                            const resumen = textoPlano.substring(0, 180) + (textoPlano.length > 180 ? "..." : "");
 
-                    for (let i = 0; i < Math.min(items.length, 12); i++) {
-                        const item = items[i];
-                        let titulo = item.getElementsByTagName("title")[0]?.textContent || "Sin título";
-                        let link = esAtom ? (item.getElementsByTagName("link")[0]?.getAttribute("href") || "#") : (item.getElementsByTagName("link")[0]?.textContent || "#");
-                        
-                        let fechaStr = esAtom ? (item.getElementsByTagName("published")[0]?.textContent || item.getElementsByTagName("updated")[0]?.textContent) : item.getElementsByTagName("pubDate")[0]?.textContent;
-                        
-                        let contenidoHtml = esAtom ? (item.getElementsByTagName("content")[0]?.textContent || item.getElementsByTagName("summary")[0]?.textContent || "") : (item.getElementsByTagName("content:encoded")[0]?.textContent || item.getElementsByTagName("description")[0]?.textContent || "");
+                            // Extracción robusta de la imagen principal
+                            let imagenUrl = null;
+                            if (item.thumbnail && String(item.thumbnail).startsWith('http')) {
+                                imagenUrl = item.thumbnail;
+                            } else if (item.enclosure && item.enclosure.link && String(item.enclosure.type).includes('image')) {
+                                imagenUrl = item.enclosure.link;
+                            }
+                            
+                            // Si no hay imagen en metadatos, la extraemos del HTML del contenido (vital para Bluesky)
+                            if (!imagenUrl) {
+                                const tempDocImg = new DOMParser().parseFromString(item.content || item.description || "", "text/html");
+                                const imgElement = tempDocImg.querySelector("img");
+                                if (imgElement && imgElement.getAttribute("src") && imgElement.getAttribute("src").startsWith("http")) {
+                                    imagenUrl = imgElement.getAttribute("src");
+                                }
+                            }
 
-                        const tempDiv = document.createElement("div");
-                        tempDiv.innerHTML = contenidoHtml;
-                        const textoPlano = tempDiv.textContent || tempDiv.innerText || "";
-                        const resumen = textoPlano.substring(0, 180) + (textoPlano.length > 180 ? "..." : "");
+                            // Limpiar títulos vacíos
+                            let tituloPost = item.title ? item.title.trim() : null;
 
-                        todasLasPublicaciones.push({
-                            id: Math.random().toString(36).substring(2, 9),
-                            fuenteNombre: fuente.nombre,
-                            titulo: titulo, link: link,
-                            fecha: fechaStr ? new Date(fechaStr) : new Date(),
-                            resumen: resumen || "Haz clic en 'Leer artículo completo' para ver el contenido.",
-                            contenidoCompleto: contenidoHtml,
-                            categoria: fuente.categoria || 'General'
+                            todasLasPublicaciones.push({
+                                id: Math.random().toString(36).substring(2, 9),
+                                fuenteNombre: fuente.nombre,
+                                titulo: tituloPost,
+                                link: item.link || "#",
+                                fecha: new Date(item.pubDate.replace(/-/g, '/')), // Corrección de fecha para Safari/Chrome
+                                resumen: resumen || "Haz clic en 'Expandir lectura' para ver el contenido.",
+                                contenidoCompleto: item.content || item.description || '<p class="italic text-slate-400">Contenido no disponible en el feed RSS.</p>',
+                                categoria: fuente.categoria || 'General',
+                                imagen: imagenUrl
+                            });
                         });
+                        return; // Éxito con el motor principal
                     }
+                    throw new Error("RSS2JSON devolvió error en los datos");
                 } catch (error) {
-                    console.error(`Error en canal ${fuente.nombre}:`, error);
+                    console.warn(`Fallo primario en ${fuente.nombre}, intentando vía cruda...`, error);
+                    
+                    // Sistema de respaldo (En caso de que la API principal falle)
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(fuente.url)}`;
+                        const resFallback = await fetch(proxyUrl);
+                        if (!resFallback.ok) throw new Error("Fallback HTTP error");
+                        
+                        const xmlTexto = await resFallback.text();
+                        const doc = new DOMParser().parseFromString(xmlTexto, "text/xml");
+                        
+                        let items = doc.getElementsByTagName("item");
+                        let esAtom = false;
+                        if (items.length === 0) {
+                            items = doc.getElementsByTagName("entry");
+                            esAtom = true;
+                        }
+
+                        for (let i = 0; i < Math.min(items.length, 12); i++) {
+                            const item = items[i];
+                            let titulo = item.getElementsByTagName("title")[0]?.textContent || null;
+                            if (titulo) titulo = titulo.trim();
+                            
+                            let link = esAtom ? (item.getElementsByTagName("link")[0]?.getAttribute("href") || "#") : (item.getElementsByTagName("link")[0]?.textContent || "#");
+                            let fechaStr = esAtom ? (item.getElementsByTagName("published")[0]?.textContent || item.getElementsByTagName("updated")[0]?.textContent) : item.getElementsByTagName("pubDate")[0]?.textContent;
+                            let contenidoHtml = esAtom ? (item.getElementsByTagName("content")[0]?.textContent || item.getElementsByTagName("summary")[0]?.textContent || "") : (item.getElementsByTagName("content:encoded")[0]?.textContent || item.getElementsByTagName("description")[0]?.textContent || "");
+
+                            const tempDiv = document.createElement("div");
+                            tempDiv.innerHTML = contenidoHtml;
+                            const textoPlano = tempDiv.textContent || tempDiv.innerText || "";
+                            const resumen = textoPlano.substring(0, 180) + (textoPlano.length > 180 ? "..." : "");
+
+                            // Extracción inteligente de la imagen para el fallback
+                            let imagenUrl = null;
+                            let media = item.getElementsByTagName("media:content")[0];
+                            if (media && media.getAttribute("url")) {
+                                imagenUrl = media.getAttribute("url");
+                            } else {
+                                let enc = item.getElementsByTagName("enclosure")[0];
+                                if (enc && enc.getAttribute("url") && String(enc.getAttribute("type")).includes("image")) {
+                                    imagenUrl = enc.getAttribute("url");
+                                }
+                            }
+
+                            // Si no hay imagen, escaneamos el HTML
+                            if (!imagenUrl) {
+                                const tempDocImg = new DOMParser().parseFromString(contenidoHtml, "text/html");
+                                const imgElement = tempDocImg.querySelector("img");
+                                if (imgElement && imgElement.getAttribute("src") && imgElement.getAttribute("src").startsWith("http")) {
+                                    imagenUrl = imgElement.getAttribute("src");
+                                }
+                            }
+
+                            todasLasPublicaciones.push({
+                                id: Math.random().toString(36).substring(2, 9),
+                                fuenteNombre: fuente.nombre,
+                                titulo: titulo, link: link,
+                                fecha: fechaStr ? new Date(fechaStr) : new Date(),
+                                resumen: resumen || "Haz clic en 'Expandir lectura' para ver el contenido.",
+                                contenidoCompleto: contenidoHtml,
+                                categoria: fuente.categoria || 'General',
+                                imagen: imagenUrl
+                            });
+                        }
+                    } catch (fallbackError) {
+                        console.error(`Error total en canal ${fuente.nombre}: No se pudo cargar de ninguna forma.`, fallbackError);
+                    }
                 }
             });
 
             await Promise.all(promesas);
+            
+            // Ordenar todos los artículos extraídos por fecha de más reciente a más antiguo
             todasLasPublicaciones.sort((a, b) => b.fecha - a.fecha);
             renderizarMuro();
         }
@@ -462,6 +511,34 @@
                 const card = document.createElement('article');
                 card.className = `bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden`;
                 
+                // Lógica de Título Dinámico
+                let tituloHtml = '';
+                if (post.titulo && post.titulo !== 'Publicación sin título') {
+                    tituloHtml = `
+                        <h3 class="text-xl font-bold text-slate-900 leading-snug mb-3 hover:text-amber-600 transition-colors">
+                            <a href="${post.link}" target="_blank" class="block">
+                                ${post.titulo}
+                            </a>
+                        </h3>`;
+                }
+
+                // Lógica del Botón e Imagen
+                let btnImagenHtml = '';
+                let contenedorImagenHtml = '';
+                if (post.imagen) {
+                    btnImagenHtml = `
+                        <button onclick="toggleImagen('${post.id}')" id="btn-img-${post.id}" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                            <i data-lucide="image" class="w-3.5 h-3.5 icon-img-state"></i>
+                            <span class="text-label-img">Mostrar imagen</span>
+                        </button>
+                    `;
+                    contenedorImagenHtml = `
+                        <div id="contenedor-img-${post.id}" class="hidden mt-4 mb-2 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex justify-center">
+                            <img src="${post.imagen}" alt="Imagen adjunta" class="max-w-full h-auto max-h-96 object-contain rounded-lg shadow-sm">
+                        </div>
+                    `;
+                }
+
                 card.innerHTML = `
                     <div class="h-1 w-full bg-slate-100"><div class="h-full w-1/4 ${theme.hex}"></div></div>
                     <div class="p-6">
@@ -475,27 +552,28 @@
                             </time>
                         </div>
 
-                        <h3 class="text-xl font-bold text-slate-900 leading-snug mb-3 hover:text-amber-600 transition-colors">
-                            <a href="${post.link}" target="_blank" class="block">
-                                ${post.titulo}
-                            </a>
-                        </h3>
+                        ${tituloHtml}
 
                         <div id="resumen-${post.id}" class="text-sm text-slate-600 leading-relaxed">
                             ${post.resumen}
                         </div>
+                        
+                        ${contenedorImagenHtml}
 
                         <div id="contenido-${post.id}" class="hidden mt-4 pt-4 border-t border-slate-100 text-sm text-slate-700 leading-relaxed overflow-hidden">
-                            <div class="prose prose-sm max-w-none prose-slate prose-a:text-amber-600">
-                                ${post.contenidoCompleto || '<p class="italic text-slate-400">Contenido no disponible en el feed RSS.</p>'}
+                            <div class="prose prose-sm max-w-none prose-slate prose-a:text-amber-600 prose-img:rounded-lg prose-img:w-full">
+                                ${post.contenidoCompleto}
                             </div>
                         </div>
 
-                        <div class="mt-5 flex justify-between items-center">
-                            <button onclick="toggleArticulo('${post.id}')" id="btn-toggle-${post.id}" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                                <i data-lucide="eye" class="w-3.5 h-3.5 icon-state"></i>
-                                <span class="text-label">Expandir lectura</span>
-                            </button>
+                        <div class="mt-5 flex justify-between items-center flex-wrap gap-3">
+                            <div class="flex gap-2">
+                                <button onclick="toggleArticulo('${post.id}')" id="btn-toggle-${post.id}" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                                    <i data-lucide="eye" class="w-3.5 h-3.5 icon-state"></i>
+                                    <span class="text-label">Expandir lectura</span>
+                                </button>
+                                ${btnImagenHtml}
+                            </div>
                             
                             <a href="${post.link}" target="_blank" class="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1 group">
                                 Abrir original <i data-lucide="external-link" class="w-3.5 h-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform"></i>
@@ -530,6 +608,29 @@
                 btn.classList.replace('hover:bg-amber-200', 'hover:bg-slate-200');
                 btn.classList.replace('text-amber-800', 'text-slate-700');
                 icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        function toggleImagen(id) {
+            const divImg = document.getElementById(`contenedor-img-${id}`);
+            const btn = document.getElementById(`btn-img-${id}`);
+            const icon = btn.querySelector('.icon-img-state');
+            
+            if (divImg.classList.contains('hidden')) {
+                divImg.classList.remove('hidden');
+                btn.querySelector('.text-label-img').innerText = "Ocultar imagen";
+                btn.classList.replace('bg-slate-100', 'bg-blue-100');
+                btn.classList.replace('hover:bg-slate-200', 'hover:bg-blue-200');
+                btn.classList.replace('text-slate-700', 'text-blue-800');
+                icon.setAttribute('data-lucide', 'image-minus');
+            } else {
+                divImg.classList.add('hidden');
+                btn.querySelector('.text-label-img').innerText = "Mostrar imagen";
+                btn.classList.replace('bg-blue-100', 'bg-slate-100');
+                btn.classList.replace('hover:bg-blue-200', 'hover:bg-slate-200');
+                btn.classList.replace('text-blue-800', 'text-slate-700');
+                icon.setAttribute('data-lucide', 'image');
             }
             lucide.createIcons();
         }
