@@ -1,4 +1,37 @@
 ========================================= 
+PandaTerm v1.2.0 - Modular Codebase & CAT Tool Compatibility
+========================================= 
+Release Date: August 23, 2026
+
+This release is a behind-the-scenes overhaul focused on compatibility and maintainability rather than new features. The codebase has been split into a proper project structure, and the TBX export has been fixed and verified against the official TBX standard so glossaries created in PandaTerm import cleanly into Subversia, Locversia, and third-party CAT tools. The app's design and day-to-day workflow are unchanged.
+
+Key Features
+
+Modular Codebase
+
+* **Refactored from a single HTML file into a clean project structure (index.html, css/styles.css, and a dozen focused files under js/), making the app far easier to maintain and extend going forward.
+* **No visual or behavioral changes beyond the fixes listed below: PandaTerm looks and works exactly as before, and still runs by simply double-clicking index.html — no server or build step required.
+
+TBX Compatibility Fixes
+
+* **Fixed element casing (langSet vs LangSet) that could cause a glossary exported from PandaTerm to import as completely empty in Subversia.
+* **Added proper XML escaping for terms, definitions, and notes containing characters like &, <, >, or quotes, which previously produced malformed files that failed to parse anywhere, including on re-import into PandaTerm itself.
+* **Added the martifHeader block required by the TBX file structure.
+* **Fixed the ordering of termNote and descrip elements inside each tig to match the official TBXcoreStructV02.dtd. Verified with real DTD validation (xmllint --valid), not just visual inspection.
+
+Verified Third-Party CAT Tool Compatibility
+
+* **PandaTerm's TBX export now validates cleanly against the official TBX DTD.
+* **Confirmed compatible with memoQ, which imports TBX, CSV, and Excel glossaries directly with no conversion step.
+* **Documented that Trados/MultiTerm requires every glossary import (TBX or CSV) to go through the separate MultiTerm Convert utility first — this is a Trados requirement, not a PandaTerm limitation, but it's worth knowing before importing.
+
+UI Fix
+
+* **Fixed a visual glitch where the delete-confirmation modal would briefly flash off-center before jumping to the middle of the screen.
+
+Known limitation carried over from this release: PandaTerm's CSV export (semicolon-delimited, 7 columns) still doesn't match Subversia's own CSV importer (comma-delimited, term expected in the first column). CSV export works well for memoQ, which lets you map columns by hand. A dedicated fix for Subversia's CSV importer is tracked as a follow-up.
+
+========================================= 
 PandaTerm v1.1.1 - Direct Code Import
 ========================================= 
 Release Date: November 25, 2025
