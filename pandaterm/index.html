@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title">PandaTerm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="lang-switcher-container">
+    <button id="versionBtn" onclick="showChangelogModal()" class="version-btn" title="Ver novedades / What's new">v1.2.0</button>
+    <button id="langBtnEN" onclick="setUILanguage('en')" class="lang-btn">EN</button>
+    <button id="langBtnES" onclick="setUILanguage('es')" class="lang-btn">ES</button>
+  </div>
+  <div class="logo-container">
+    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/pandaterm-logo.png" alt="PandaTerm Logo" class="logo" />
+  </div>
+  <p class="description" data-i18n="app_description"></p>
+
+
+  <div class="container">
+    <div class="controls">
+      <button onclick="resetGlossary()" data-i18n="new_glossary" class="btn-secondary">Nuevo glosario</button>
+
+      <button onclick="document.getElementById('fileInput').click()" data-i18n="import_button" class="btn-secondary">Importar</button>
+      <input type="file" id="fileInput" accept=".xml,.tbx,.csv" />
+
+      <button onclick="showImportCodeDialog()" data-i18n="import_code_button" class="btn-secondary">Importar código</button>
+
+      <button onclick="showExportDialog()" data-i18n="export_button" class="btn-secondary">Exportar</button>
+
+      <button onclick="toggleTheme()" id="themeToggleButton" data-i18n="toggle_theme" class="btn-secondary">Cambiar tema</button>
+      <button onclick="undo()" id="undoButton" data-i18n="undo_button" class="btn-secondary" disabled>Deshacer</button>
+    </div>
+    <div id="languageConfigSection">
+      <h2 data-i18n="config_lang_title">Configurar idiomas del glosario</h2>
+      <div class="info-box">
+        <p data-i18n="config_lang_info">
+          Define los idiomas de origen y destino de tu glosario. Puedes introducir el código ISO directamente o seleccionarlo de las sugerencias. Es fundamental que el código ISO sea correcto para que funcione correctamente con tu herramienta TAO.
+        </p>
+      </div>
+      <div class="lang-display">
+        <div class="input-group">
+          <label for="configSrcLang" data-i18n="source_language">Idioma de origen:</label>
+          <input id="configSrcLang" list="isoLanguages" value="en-US" />
+        </div>
+        <div class="input-group">
+          <label for="configTgtLang" data-i18n="target_language">Idioma de destino:</label>
+          <input id="configTgtLang" list="isoLanguages" value="es-ES" />
+        </div>
+        <button onclick="confirmGlossaryLanguages()" data-i18n="confirm_languages" class="btn-primary">Confirmar idiomas</button>
+      </div>
+    </div>
+
+    <div id="editorSection" class="hidden-section">
+        <h2 data-i18n="current_lang_title" class="collapsible-header" onclick="toggleCollapse('currentLangContent')">Idiomas actuales del glosario<span class="arrow">►</span></h2>
+        <div class="lang-display" id="currentLangContent">
+            <div class="input-group">
+                <label data-i18n="source_language">Idioma de origen:</label>
+                <input id="displaySrcLang" disabled />
+            </div>
+            <div class="input-group">
+                <label data-i18n="target_language">Idioma de destino:</label>
+                <input id="displayTgtLang" disabled />
+            </div>
+        </div>
+        <h2 data-i18n="add_term_title" class="collapsible-header" onclick="toggleCollapse('addTermContent')">Añadir término<span class="arrow">►</span></h2>
+        <div class="add-term" id="addTermContent">
+            <div class="add-term-row">
+                <div class="input-group">
+                    <label for="srcTerm" data-i18n="term">Término:<span class="required-asterisk">*</span></label>
+                    <input id="srcTerm" />
+                </div>
+                <div class="input-group">
+                    <label for="tgtTerm" data-i18n="translation">Traducción:<span class="required-asterisk">*</span></label>
+                    <input id="tgtTerm" />
+                </div>
+            </div>
+
+            <div class="add-term-row">
+                <div class="input-group" id="definitionInputGroup">
+                    <label for="definition"><span data-i18n="definition">Definición:</span></label>
+                    <textarea id="definition"></textarea>
+                </div>
+                <div class="input-group" id="notesInputGroup">
+                    <label for="notes"><span data-i18n="notes">Notas:</span></label>
+                    <textarea id="notes"></textarea>
+                </div>
+            </div>
+
+            <div class="add-term-row">
+                <div class="input-group" id="partOfSpeechInputGroup">
+                    <label for="partOfSpeech"><span data-i18n="part_of_speech">Categoría gramatical:</span></label>
+                    <select id="partOfSpeech">
+                        <option value="" data-i18n="select_pos_placeholder">Seleccionar</option>
+                        <option value="noun">noun</option>
+                        <option value="verb">verb</option>
+                        <option value="adj">adj</option>
+                        <option value="adv">adv</option>
+                    </select>
+                </div>
+                <button onclick="addTerm()" data-i18n="add_button" class="btn-primary">Añadir</button>
+            </div>
+        </div>
+        <h2 data-i18n="search_title">Buscar</h2>
+        <div class="search-section">
+            <input id="searchTerm" placeholder="Buscar término..." oninput="renderGlossary()" data-i18n-placeholder="search_placeholder" />
+            <div class="search-options">
+                <label>
+                    <input type="radio" name="searchScope" value="all" checked onchange="renderGlossary()">
+                    <span data-i18n="search_all">Todos</span>
+                </label>
+                <label>
+                    <input type="radio" name="searchScope" value="source" onchange="renderGlossary()">
+                    <span data-i18n="search_source">Solo origen</span>
+                </label>
+                <label>
+                    <input type="radio" name="searchScope" value="target" onchange="renderGlossary()">
+                    <span data-i18n="search_target">Solo destino</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th data-i18n="source_term_col" data-column-id="source_term_col">Término de origen</th>
+                        <th data-i18n="target_term_col" data-column-id="target_term_col">Término de destino</th>
+                        <th data-i18n="definition_col" data-column-id="definition_col">Definición</th>
+                        <th data-i18n="notes_col" data-column-id="notes_col">Notas</th>
+                        <th data-i18n="part_of_speech_col" data-column-id="part_of_speech_col">Categoría gramatical</th>
+                        <th data-i18n="actions_col" data-column-id="actions_col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="glossaryTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <datalist id="isoLanguages">
+      </datalist>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <!--
+    Plain classic scripts, not ES modules — loaded in dependency order,
+    each one relying on the previous ones' top-level `const`/`function`
+    declarations already being visible. See js/main.js for why (in short:
+    ES modules are blocked from loading over file://, which broke opening
+    this file by double-clicking it; classic scripts have no such
+    restriction). If you add a new js/ file, add its <script> tag here in
+    the right spot for what it depends on, and js/main.js must stay last.
+  -->
+  <script src="js/translations.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/dialogs.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/glossaryTable.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/tbx.js"></script>
+  <script src="js/csv.js"></script>
+  <script src="js/exportDialog.js"></script>
+  <script src="js/changelog.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
