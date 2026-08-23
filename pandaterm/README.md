@@ -39,6 +39,7 @@ Deploying is the same as before: upload the whole folder (`index.html`,
 | `js/tbx.js` | TBX import/export (see Compatibility notes below). |
 | `js/csv.js` | CSV import/export. |
 | `js/exportDialog.js` | The "Export" button's format-choice modal. |
+| `js/changelog.js` | The version button (top-right, next to the language switcher) and its "What's new" modal, which fetches the changelog text live (see below). |
 | `js/main.js` | Wires everything together: `DOMContentLoaded` init and event listeners. Must load last. |
 
 No design or behavior changes were made in this refactor beyond the TBX
@@ -85,6 +86,34 @@ delimited, 7 columns) doesn't match Subversia's own CSV glossary
 importer (comma delimited, term in column 1). That's a separate gap,
 out of scope for this pass since the request was specifically about
 TBX.
+
+## Version button / changelog modal
+
+Top-right, next to the language switcher, there's a small `vX.Y.Z` button
+(`js/changelog.js`). Clicking it opens a modal with a read-only text box
+showing the changelog, fetched **live** from:
+
+    https://httrans.org/changelog/pandaterm.txt
+
+Nothing about the changelog's text is bundled into the app — publishing an
+updated `pandaterm.txt` at that address is enough to change what the modal
+shows, no PandaTerm code change or release needed. The version *number* on
+the button itself (`PANDATERM_VERSION` in `js/changelog.js`) is a plain
+constant and still needs to be bumped by hand on each release.
+
+One thing to know: when PandaTerm is opened via `file://` (double-click),
+the browser sends the fetch request with `Origin: null`. That only
+succeeds in loading the text if the server hosting the changelog file
+answers with a permissive CORS header (`Access-Control-Allow-Origin: *`,
+or one that explicitly allows `null`) for that URL — most static hosts
+don't set this by default. I wasn't able to check this from here (outbound
+requests to httrans.org were blocked from this sandbox — looked like a WAF
+rejecting the request, not a PandaTerm bug), so please open the modal once
+after publishing to confirm it loads. If it doesn't, the fix is on the
+server side (enable CORS for that file, or that whole path), not in
+PandaTerm — the modal falls back to a short error message plus a direct
+"open in a new tab" link either way, so it degrades gracefully instead of
+looking broken.
 
 ## Compatibility notes (third-party CAT tools: Trados, memoQ)
 

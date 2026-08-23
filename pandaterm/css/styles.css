@@ -355,6 +355,25 @@ button:active {
     border-color: var(--primary-color);
 }
 
+.version-btn {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    opacity: 0.7;
+    min-width: unset;
+    flex-grow: 0;
+    padding: 8px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 20px;
+    box-shadow: none;
+}
+
+.version-btn:hover {
+    opacity: 1;
+    background-color: var(--card-background);
+}
+
 .btn-danger {
   background-color: var(--btn-danger-bg);
   color: white;
@@ -679,6 +698,21 @@ td.editable select:focus {
 
 body.dark-mode .code-editor {
     background-color: #303030;
+}
+
+.changelog-link {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+.changelog-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.changelog-link a:hover {
+    text-decoration: underline;
 }
 
 .validation-status {

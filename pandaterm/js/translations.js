@@ -87,7 +87,13 @@ const translations = {
     "paste_code_here": "Paste your XML/TBX code here...",
     "import_action_button": "Import Code",
     "valid_xml": "✓ Valid XML Structure",
-    "invalid_xml": "⚠ Invalid XML"
+    "invalid_xml": "⚠ Invalid XML",
+    // Changelog modal translations
+    "close_button": "Close",
+    "changelog_title": "What's new",
+    "changelog_loading": "Loading changelog...",
+    "changelog_error": "Couldn't load the changelog right now. You can view it directly at the link below.",
+    "changelog_open_link": "Open in a new tab ↗"
   },
   es: {
     title: "PandaTerm",
@@ -166,7 +172,13 @@ const translations = {
     "paste_code_here": "Pega tu código XML/TBX aquí...",
     "import_action_button": "Importar código",
     "valid_xml": "✓ Estructura XML Válida",
-    "invalid_xml": "⚠ XML Inválido"
+    "invalid_xml": "⚠ XML Inválido",
+    // Changelog modal translations
+    "close_button": "Cerrar",
+    "changelog_title": "Novedades",
+    "changelog_loading": "Cargando registro de cambios...",
+    "changelog_error": "No se pudo cargar el registro de cambios ahora mismo. Puedes verlo directamente en el enlace de abajo.",
+    "changelog_open_link": "Abrir en una pestaña nueva ↗"
   }
 };
 

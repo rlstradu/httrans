@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme(state.currentTheme);
   setUILanguage(state.currentUILanguage);
 
+  // 2b. Rellenar el botón de versión (arriba a la derecha)
+  initVersionButton();
+
   // 3. Intentar cargar backup
   const backupResult = loadBackupFromLocalStorage();
 
