@@ -1,0 +1,371 @@
+/* ===========================================================================
+   Pandoria — css/styles.css
+
+   This file has two parts:
+
+   1. A Tailwind CSS v3 build (Preflight + exactly the utility classes used
+      in index.html), compiled offline with the Tailwind CLI against this
+      project's own markup. The original single-file version loaded Tailwind
+      from the Play CDN (<script src="https://cdn.tailwindcss.com">), which
+      compiles utilities live in the browser — that requires internet access
+      every time the app opens, and if that request is blocked (offline, a
+      restrictive network, an ad/script blocker) the ENTIRE layout collapses,
+      since virtually every element's styling comes from Tailwind classes.
+      This compiled-once, checked-in version removes that dependency: the app
+      now looks and works identically with no network access at all. If you
+      add NEW Tailwind classes to index.html later, this block needs to be
+      regenerated (Tailwind CLI: `npx tailwindcss -i input.css -o
+      css/output.css --content index.html` with a plain `@tailwind base;
+      @tailwind components; @tailwind utilities;` input file, using
+      tailwindcss@3 to match what the Play CDN itself compiles), otherwise the
+      new classes just won't have any effect since they're not in this file.
+
+   2. Pandoria's own hand-written CSS (animations, .btn/.modal/.lang-btn
+      variants, the alignment wizard, code-editor look, etc.), copied
+      verbatim from the original inline <style> block, plus a small addition
+      at the very end for the new version button / changelog link — no
+      existing rule was changed, so the visual design is unchanged throughout.
+   =========================================================================== */
+
+/* ---- 1. Tailwind CSS v3 (Preflight + used utilities), compiled offline ---- */
+
+*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width:640px){.container{max-width:640px}}@media (min-width:768px){.container{max-width:768px}}@media (min-width:1024px){.container{max-width:1024px}}@media (min-width:1280px){.container{max-width:1280px}}@media (min-width:1536px){.container{max-width:1536px}}.visible{visibility:visible}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.right-6{right:1.5rem}.top-0{top:0}.top-6{top:1.5rem}.mx-4{margin-left:1rem;margin-right:1rem}.mx-auto{margin-left:auto;margin-right:auto}.my-4{margin-top:1rem;margin-bottom:1rem}.my-6{margin-top:1.5rem;margin-bottom:1.5rem}.mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mt-1{margin-top:.25rem}.mt-4{margin-top:1rem}.\!block{display:block!important}.block{display:block}.flex{display:flex}.table{display:table}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-auto{height:auto}.min-h-screen{min-height:100vh}.w-2\/12{width:16.666667%}.w-5\/12{width:41.666667%}.w-64{width:16rem}.w-full{width:100%}.min-w-\[100px\]{min-width:100px}.min-w-\[120px\]{min-width:120px}.max-w-md{max-width:28rem}.flex-shrink{flex-shrink:1}.flex-grow{flex-grow:1}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.rounded-lg{border-radius:.5rem}.rounded-md{border-radius:.375rem}.rounded-xl{border-radius:.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254/var(--tw-border-opacity,1))}.border-gray-300{--tw-border-opacity:1;border-color:rgb(209 213 219/var(--tw-border-opacity,1))}.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255/var(--tw-bg-opacity,1))}.bg-gray-100{--tw-bg-opacity:1;background-color:rgb(243 244 246/var(--tw-bg-opacity,1))}.bg-gray-50{--tw-bg-opacity:1;background-color:rgb(249 250 251/var(--tw-bg-opacity,1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.pt-8{padding-top:2rem}.text-left{text-align:left}.text-center{text-align:center}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128/var(--tw-text-opacity,1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99/var(--tw-text-opacity,1))}.text-gray-700{--tw-text-opacity:1;color:rgb(55 65 81/var(--tw-text-opacity,1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55/var(--tw-text-opacity,1))}.shadow-lg{--tw-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color)}.shadow-lg,.shadow-sm{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color)}.outline{outline-style:solid}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.ease-out{transition-timing-function:cubic-bezier(0,0,.2,1)}.focus\:border-orange-500:focus{--tw-border-opacity:1;border-color:rgb(249 115 22/var(--tw-border-opacity,1))}.focus\:ring-orange-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(249 115 22/var(--tw-ring-opacity,1))}@media (min-width:640px){.sm\:p-6{padding:1.5rem}}@media (min-width:768px){.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:p-8{padding:2rem}}
+
+/* ---- 2. Pandoria's own CSS (verbatim from the original inline <style>) ---- */
+
+    @keyframes gradientAnimation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #1f2937;
+      background: linear-gradient(-45deg, #f3f4f6, #e5e7eb, #d1d5db, #f9fafb);
+      background-size: 400% 400%;
+      animation: gradientAnimation 15s ease infinite;
+    }
+    .container {
+      background-color: #ffffff;
+      max-width: 1200px;
+      position: relative;
+      animation: fadeInUp 0.8s ease-out forwards;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 5px 10px rgba(0,0,0,0.04);
+    }
+    .btn {
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+     .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: none;
+    }
+    .btn-primary {
+      background-color: #FF5F18; /* Naranja */
+      color: #ffffff; /* Blanco */
+    }
+    .btn-primary:hover:not(:disabled) {
+      background-color: #E05215; /* Naranja más oscuro */
+    }
+    .btn-secondary {
+      background-color: #202020; /* Gris oscuro */
+      color: #ffffff; /* Blanco */
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background-color: #404040; /* Gris más claro */
+    }
+     .btn-danger {
+      background-color: #ef4444;
+      color: white;
+    }
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.6);
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 24px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 600px;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        animation: fadeInUp 0.5s ease-out forwards;
+        display: flex;
+        flex-direction: column;
+    }
+    .editable-cell {
+        padding: 0.75rem;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+        transition: border-color 0.2s;
+    }
+    .editable-cell:focus {
+        outline: none;
+        border-color: #FF5F18;
+        background-color: #fff;
+    }
+    .table-container {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    #tmTableBody tr:hover {
+        transform: scale(1.01);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        z-index: 10;
+        position: relative;
+    }
+    .lang-btn {
+        background-color: #e5e7eb;
+        color: #4b5563;
+        border: 2px solid transparent;
+        transition: all 0.2s ease-in-out;
+    }
+    .lang-btn.active {
+        background-color: #FF5F18;
+        color: #ffffff;
+    }
+    .lang-btn:not(.active):hover {
+        background-color: #d1d5db;
+    }
+    /* Estilos para el Asistente de Alineación */
+    #alignmentWizardModal .modal-content {
+        max-width: 90vw;
+        height: 90vh;
+    }
+    .wizard-body {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 1rem;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    .wizard-column {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .wizard-segment {
+        border: 1px solid #d1d5db;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background-color: #f9fafb;
+        font-size: 0.875rem;
+        min-height: 34px;
+    }
+    .wizard-segment[contenteditable="true"]:focus {
+        outline: 1px solid #FF5F18;
+        background-color: #fff;
+    }
+    .wizard-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 0;
+    }
+    .wizard-action-btn {
+        background: #e5e7eb;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin: 0 4px;
+    }
+    .wizard-action-btn:hover {
+        background: #d1d5db;
+    }
+    
+    /* Estado de Validación de Código */
+    .validation-status {
+        margin-top: 10px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        min-height: 1.5rem;
+    }
+    .status-valid {
+        color: #16a34a; /* Green 600 */
+    }
+    .status-invalid {
+        color: #dc2626; /* Red 600 */
+    }
+    #codeImportArea {
+        font-family: monospace;
+        font-size: 0.85rem;
+        white-space: pre;
+        overflow-x: auto;
+    }
+
+    /* Version button (top-right, next to the language switcher) and the
+       "what's new" changelog modal it opens. Added in the modular refactor,
+       styled to sit quietly next to .lang-btn without competing with it. */
+    .version-btn {
+        background-color: transparent;
+        color: #6b7280; /* Gray 500, matches text-gray-500 elsewhere */
+        border: 1px solid #d1d5db; /* Gray 300, matches border-gray-300 */
+        font-size: 0.75rem;
+        opacity: 0.85;
+    }
+    .version-btn:hover {
+        opacity: 1;
+        background-color: #f3f4f6; /* Gray 100 */
+    }
+    #changelogText {
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        text-align: left;
+        min-height: 300px;
+    }
+    .changelog-link {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        text-align: right;
+    }
+    .changelog-link a {
+        color: #FF5F18;
+        text-decoration: none;
+    }
+    .changelog-link a:hover {
+        text-decoration: underline;
+    }
+
+    /* =======================================================================
+       Dark mode — toggled by adding/removing `dark-mode` on <body>
+       (js/theme.js), same mechanism as PandaTerm.
+
+       Pandoria's markup mixes Tailwind utility classes (bg-white,
+       text-gray-600, border-gray-300, etc.) with a handful of hand-written
+       classes above (.container, .modal-content, .lang-btn, .wizard-*).
+       Rather than adding `dark:` variants to every element in index.html
+       and recompiling the Tailwind build, this overrides the SAME
+       selectors already in use — Tailwind's utility classes and Pandoria's
+       own — scoped under `body.dark-mode`. Because this block comes last
+       in the file, these rules win the cascade over both the Tailwind
+       build above and the light-mode custom CSS above, with no change to
+       index.html's classes and no Tailwind rebuild needed.
+
+       Palette: page background and cards step from near-black (#0f172a)
+       to dark slate (#1f2937), text steps from gray-100 (headings) down to
+       gray-400 (muted/secondary), borders sit at gray-600 (#4b5563). The
+       brand orange (#FF5F18) is untouched — it already reads fine on a
+       dark background and is used as-is throughout (buttons, active
+       language pill, focus rings, the changelog link).
+       ======================================================================= */
+
+    body.dark-mode {
+        color: #e5e7eb;
+        background: linear-gradient(-45deg, #0f172a, #1f2937, #111827, #0b1120);
+        background-size: 400% 400%;
+    }
+    body.dark-mode .container,
+    body.dark-mode .bg-white,
+    body.dark-mode .modal-content {
+        background-color: #1f2937 !important;
+    }
+    body.dark-mode .bg-gray-50,
+    body.dark-mode .wizard-segment {
+        background-color: #111827 !important;
+    }
+    body.dark-mode .bg-gray-100 {
+        background-color: #374151 !important;
+    }
+    body.dark-mode .bg-blue-50 {
+        background-color: #16273f !important;
+    }
+    body.dark-mode .border-blue-200 {
+        border-color: #2c4a6e !important;
+    }
+    body.dark-mode .border-gray-300,
+    body.dark-mode .wizard-segment {
+        border-color: #4b5563 !important;
+    }
+    body.dark-mode .text-gray-500 {
+        color: #9ca3af !important;
+    }
+    body.dark-mode .text-gray-600 {
+        color: #cbd5e1 !important;
+    }
+    body.dark-mode .text-gray-700 {
+        color: #e5e7eb !important;
+    }
+    body.dark-mode .text-gray-800 {
+        color: #f3f4f6 !important;
+    }
+    body.dark-mode input,
+    body.dark-mode textarea,
+    body.dark-mode select {
+        background-color: #111827;
+        color: #e5e7eb;
+        border-color: #4b5563;
+    }
+    body.dark-mode input::placeholder,
+    body.dark-mode textarea::placeholder {
+        color: #6b7280;
+    }
+    body.dark-mode .editable-cell:focus,
+    body.dark-mode .wizard-segment[contenteditable="true"]:focus {
+        background-color: #111827;
+    }
+    body.dark-mode .lang-btn {
+        background-color: #374151;
+        color: #d1d5db;
+    }
+    body.dark-mode .lang-btn.active {
+        background-color: #FF5F18;
+        color: #ffffff;
+    }
+    body.dark-mode .lang-btn:not(.active):hover {
+        background-color: #4b5563;
+    }
+    body.dark-mode .wizard-action-btn {
+        background: #374151;
+        color: #e5e7eb;
+    }
+    body.dark-mode .wizard-action-btn:hover {
+        background: #4b5563;
+    }
+    body.dark-mode .version-btn {
+        color: #9ca3af;
+        border-color: #4b5563;
+    }
+    body.dark-mode .version-btn:hover {
+        background-color: #374151;
+    }
+    body.dark-mode #tmTableBody tr:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
