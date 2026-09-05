@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- FAVICON -->
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/favicon-httrans.png">
     
     <!-- SEO BÁSICO Y PALABRAS CLAVE -->
     <title>HTTrans - Herramientas gratuitas para traductores y localizadores</title>
@@ -20,14 +20,14 @@
     <meta property="og:url" content="https://httrans.org/">
     <meta property="og:title" content="HTTrans - Toolkit gratuito para profesionales de la traducción">
     <meta property="og:description" content="Colección de herramientas web gratuitas para traductores, subtituladores y localizadores. Mejora tu productividad sin instalar nada.">
-    <meta property="og:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png">
+    <meta property="og:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatools-logo-final.png">
     <meta property="og:locale" content="es_ES">
 
     <!-- TWITTER CARDS -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="HTTrans - Herramientas gratuitas para traductores">
     <meta name="twitter:description" content="Suite de herramientas online gratuitas para traductores, localizadores y subtituladores. Creado por un traductor para traductores.">
-    <meta name="twitter:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatools-logo-final.png">
     <meta name="twitter:creator" content="@rlstradu">
 
     <!-- DATOS ESTRUCTURADOS (JSON-LD) -->
@@ -50,7 +50,7 @@
         "name": "Rafael López Sánchez",
         "url": "https://www.linkedin.com/in/rlstradu/"
       },
-      "image": "https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png",
+      "image": "https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatools-logo-final.png",
       "featureList": "Editor de subtítulos, conversor TMX, gestor de glosarios TBX, contador de palabras, herramientas de transcripción"
     }
     </script>
@@ -129,6 +129,15 @@
             text-transform: uppercase;
             margin-bottom: 1rem;
             letter-spacing: 0.05em;
+        }
+
+        .former-name {
+            color: #718096;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-style: italic;
+            margin: 0 auto 1.75rem auto;
+            max-width: 600px;
         }
 
         .description {
@@ -715,8 +724,8 @@
         </div>
 
         <!-- Contenido principal -->
-        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/httrans-logo-final.png" alt="HTTrans Logo" class="logo fade-in">
-        <h1 class="toolkit-title fade-in" style="animation-delay: 0.1s;">HTML TRANSLATION TOOLKIT</h1>
+        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatools-logo-final.png" alt="Pandatools Logo" class="logo fade-in">
+        <p class="former-name fade-in" style="animation-delay: 0.1s;" data-key="formerName"></p>
         <p class="description fade-in" style="animation-delay: 0.2s;" data-key="description"></p>
         
         <div class="tool-grid">
@@ -854,7 +863,7 @@
         <div class="modal-content">
             <button id="about-modal-close-btn" class="modal-close-btn">&times;</button>
             <h1 class="toolkit-title" data-key="aboutTitle" style="text-align: center;"></h1>
-            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/Rafa-About-Httrans-v2.png" alt="Rafa López Sánchez" style="width: 40%; min-width: 200px; max-width: 300px; margin: 1.5rem auto 1rem auto; border-radius: 1rem; display: block;">
+            <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatools-author.png" alt="Rafa López Sánchez" style="width: 40%; min-width: 200px; max-width: 300px; margin: 1.5rem auto 1rem auto; border-radius: 1rem; display: block;">
             <div class="content-text">
                 <p data-key="p1"></p><p data-key="p2"></p><p data-key="p3"></p><p data-key="p4"></p>
                 <p data-key="p5"></p><p data-key="p6"></p><p data-key="p7"></p><p data-key="p8"></p>
@@ -935,6 +944,7 @@
             const translations = {
                 es: {
                     badgeNew: 'NUEVO',
+                    formerName: 'también conocido como las pandaherramientas o httrans, por su nombre anterior',
                     description: 'Una colección de herramientas sencillas y prácticas, diseñadas por un traductor al que le encantan los pandas y pensadas para facilitar el trabajo diario de otros traductores. Son completamente gratuitas, no requieren instalación y pueden usarse directamente desde cualquier navegador.',
                     notificationText: 'Aprende a usar estas herramientas en un curso gratuito en Traduversia',
                     notificationButton: '¡Apúntate ya!',
@@ -998,6 +1008,7 @@
                 },
                 en: {
                     badgeNew: 'NEW',
+                    formerName: 'previously known as HTML Translation Toolkit (HTTrans)',
                     description: 'A handy set of simple, practical tools created by a fellow translator who loves pandas, designed to make your day-to-day work easier. They’re completely free, require no installation, and work right from your browser.',
                     notificationText: 'Learn to master these tools with a free course on Traduversia',
                     notificationButton: 'Join now',
