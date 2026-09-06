@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/favicon-httrans.png">
     
     <!-- SEO BÁSICO Y PALABRAS CLAVE -->
-    <title>HTTrans - Herramientas gratuitas para traductores y localizadores</title>
-    <meta name="description" content="Descubre HTTrans, la suite definitiva de software gratuito y herramientas online para traductores, localizadores, subtituladores, traductores audiovisuales y de doblaje. Incluye conversores, contadores, editores de subtítulos, glosarios y más. Sin instalación.">
+    <title>PandaTools by HTTrans - Herramientas gratuitas para traductores y localizadores</title>
+    <meta name="description" content="Descubre PandaTools, la suite de herramientas gratuitas de HTTrans para traductores, localizadores, subtituladores, traductores audiovisuales y de doblaje. Incluye conversores, contadores, editores de subtítulos, glosarios y más. Sin instalación.">
     <meta name="keywords" content="herramientas para traductores, software gratis traducción, herramientas online traducción, traductores audiovisuales, subtituladores, herramientas de subtitulación gratis, accesibilidad, traductores de doblaje, transcriptores, revisores, correctores, conversión tmx, gestión terminológica, contador de palabras, facturación traductores, software libre traducción, web apps translators">
     <meta name="author" content="Rafael López Sánchez">
     <meta name="robots" content="index, follow">
@@ -18,15 +18,15 @@
     <!-- OPEN GRAPH (Facebook, LinkedIn, WhatsApp) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://httrans.org/">
-    <meta property="og:title" content="HTTrans - Toolkit gratuito para profesionales de la traducción">
-    <meta property="og:description" content="Colección de herramientas web gratuitas para traductores, subtituladores y localizadores. Mejora tu productividad sin instalar nada.">
+    <meta property="og:title" content="PandaTools by HTTrans - Toolkit gratuito para profesionales de la traducción">
+    <meta property="og:description" content="Colección de herramientas web gratuitas de HTTrans para traductores, subtituladores y localizadores. Mejora tu productividad sin instalar nada.">
     <meta property="og:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatools-logo-final.png">
     <meta property="og:locale" content="es_ES">
 
     <!-- TWITTER CARDS -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="HTTrans - Herramientas gratuitas para traductores">
-    <meta name="twitter:description" content="Suite de herramientas online gratuitas para traductores, localizadores y subtituladores. Creado por un traductor para traductores.">
+    <meta name="twitter:title" content="PandaTools by HTTrans - Herramientas gratuitas para traductores">
+    <meta name="twitter:description" content="Suite de herramientas online gratuitas de HTTrans para traductores, localizadores y subtituladores. Creado por un traductor para traductores.">
     <meta name="twitter:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/images/pandatools-logo-final.png">
     <meta name="twitter:creator" content="@rlstradu">
 
@@ -35,7 +35,8 @@
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": "HTTrans",
+      "name": "PandaTools",
+      "alternateName": "HTTrans",
       "headline": "Herramientas gratuitas para traductores y localizadores",
       "description": "Suite de aplicaciones web gratuitas para profesionales de la traducción, localización y subtitulación. Incluye herramientas TAO, gestión de glosarios, conversión de formatos y facturación.",
       "applicationCategory": "BusinessApplication",
@@ -184,8 +185,8 @@
         }
 
         .tool-logo {
-            max-width: 200px;
-            height: 120px;
+            max-width: 230px;
+            height: 140px;
             object-fit: contain;
             margin: 0 auto 1rem auto;
             transition: transform 0.3s ease;
@@ -735,6 +736,11 @@
         </button>
 
         <aside class="side-menu fade-in" style="animation-delay: 0.8s;">
+            <a href="https://httrans.subscribepage.io/" target="_blank" rel="noopener" class="side-item" title="Newsletter">
+                <i class="ph-duotone ph-envelope-simple-open"></i>
+                <span class="side-text" data-key="newsletterLink"></span>
+            </a>
+
             <div id="about-trigger" class="side-item" title="Sobre el autor">
                 <i class="ph-duotone ph-user"></i>
                 <span class="side-text" data-key="aboutTitle"></span>
@@ -768,11 +774,6 @@
             <a href="https://github.com/rlstradu/httrans" target="_blank" rel="noopener" class="side-item" title="GitHub">
                 <i class="ph-duotone ph-github-logo"></i>
                 <span class="side-text" data-key="githubRepo"></span>
-            </a>
-
-            <a href="https://foro.traduversia.com/c/cursos/introduccion-herramientas-traduccion-httrans/51" target="_blank" rel="noopener" class="side-item" title="Foro">
-                <i class="ph-duotone ph-chats-circle"></i>
-                <span class="side-text" data-key="forumLink"></span>
             </a>
 
             <div id="pandaHugButton" class="side-item" title="Abrazo de panda">
@@ -944,27 +945,28 @@
             const translations = {
                 es: {
                     badgeNew: 'NUEVO',
-                    formerName: 'también conocido como las pandaherramientas o httrans',
+                    formerName: 'por HTTrans (HTML Translation Toolkit)',
                     description: 'Una colección de herramientas sencillas y prácticas, diseñadas por un traductor al que le encantan los pandas y pensadas para facilitar el trabajo diario de otros traductores. Son completamente gratuitas, no requieren instalación y pueden usarse directamente desde cualquier navegador.',
                     notificationText: 'Aprende a usar estas herramientas en un curso gratuito en Traduversia',
                     notificationButton: '¡Apúntate ya!',
                     forumLink: 'Foro oficial de httrans',
+                    newsletterLink: 'Boletín',
                     
                     subpandaassMain: 'Subpanda<span style="color: #065BA2;">ASS</span>', 
                     subpandaassSub: 'Creador de subtítulos',
                     subpandaassDesc: 'Ha nacido un pandita nuevo, SubpandaASS, ideado para crear subtítulos desde cero.', // Desc extra para Hero
                     
-                    poandaMain: 'Poanda', poandaSub: 'Editor de archivos PO',
-                    pandatermMain: 'Pandaterm', pandatermSub: 'Editor de glosarios TBX',
-                    pandoriaMain: 'Pandoria', pandoriaSub: 'Editor de memorias TMX',
-                    pandascriptMain: 'Pandascript', pandascriptSub: 'Editor de transcripciones',
-                    subpandatmMain: 'SubPandaTM', subpandatmSub: 'Traducción de subtítulos',
-                    subpandaautoMain: 'SubpandaAUTO', subpandaautoSub: 'Creador de subtítulos automáticos',
-                    subpandaqaMain: 'SubPandaQA', subpandaqaSub: 'Revisión de subtítulos SRT',
-                    diffpandaMain: 'DiffPanda', diffpandaSub: 'Comparador de textos',
-                    charpandaMain: 'Charpanda', charpandaSub: 'Contador de caracteres',
-                    calpandaMain: 'Calpanda', calpandaSub: 'Herramienta de facturación',
-                    pandatimerMain: 'PandaTimer', pandatimerSub: 'Registro de tiempo',
+                    poandaMain: '<span style="color: rgb(244 135 144);">Po</span>anda', poandaSub: 'Editor de archivos PO',
+                    pandatermMain: 'Panda<span style="color: rgb(125 206 199);">term</span>', pandatermSub: 'Editor de glosarios TBX',
+                    pandoriaMain: 'Pand<span style="color: rgb(255 94 24);">oria</span>', pandoriaSub: 'Editor de memorias TMX',
+                    pandascriptMain: 'Panda<span style="color: rgb(255 72 83);">script</span>', pandascriptSub: 'Editor de transcripciones',
+                    subpandatmMain: 'SubPanda<span style="color: rgb(9 91 162);">TM</span>', subpandatmSub: 'Traducción de subtítulos',
+                    subpandaautoMain: 'Subpanda<span style="color: rgb(255 184 31);">AUTO</span>', subpandaautoSub: 'Creador de subtítulos automáticos',
+                    subpandaqaMain: 'SubPanda<span style="color: rgb(9 91 162);">QA</span>', subpandaqaSub: 'Revisión de subtítulos SRT',
+                    diffpandaMain: '<span style="color: rgb(236 165 229);">Diff</span>Panda', diffpandaSub: 'Comparador de textos',
+                    charpandaMain: '<span style="color: rgb(255 134 93);">C</span><span style="color: rgb(255 211 74);">h</span><span style="color: rgb(253 125 141);">a</span><span style="color: rgb(157 179 234);">r</span>panda', charpandaSub: 'Contador de caracteres',
+                    calpandaMain: '<span style="color: rgb(255 211 74);">Cal</span>panda', calpandaSub: 'Herramienta de facturación',
+                    pandatimerMain: 'Panda<span style="color: rgb(248 84 126);">Timer</span>', pandatimerSub: 'Registro de tiempo',
                     mystery1Main: 'Un nuevo pandita está en camino', mystery1Sub: 'Próximamente',
 
                     projectBy: 'Proyecto de Rafael López Sánchez',
@@ -1008,27 +1010,28 @@
                 },
                 en: {
                     badgeNew: 'NEW',
-                    formerName: 'previously known as HTML Translation Toolkit (HTTrans)',
+                    formerName: 'by HTTrans (HTML Translation Toolkit)',
                     description: 'A handy set of simple, practical tools created by a fellow translator who loves pandas, designed to make your day-to-day work easier. They’re completely free, require no installation, and work right from your browser.',
                     notificationText: 'Learn to master these tools with a free course on Traduversia',
                     notificationButton: 'Join now',
                     forumLink: 'Official httrans Forum',
+                    newsletterLink: 'Newsletter',
                     
                     subpandaassMain: 'Subpanda<span style="color: #065BA2;">ASS</span>', 
                     subpandaassSub: 'Subtitle Creator',
                     subpandaassDesc: 'A new panda is born, SubpandaASS, designed to create subtitles from scratch.', // Desc extra
                     
-                    poandaMain: 'Poanda', poandaSub: 'PO File Editor',
-                    pandatermMain: 'Pandaterm', pandatermSub: 'TBX Glossary Editor',
-                    pandoriaMain: 'Pandoria', pandoriaSub: 'TMX Memory Editor',
-                    pandascriptMain: 'Pandascript', pandascriptSub: 'Transcript Editor',
-                    subpandatmMain: 'SubPandaTM', subpandatmSub: 'Subtitle Translation',
-                    subpandaautoMain: 'SubpandaAUTO', subpandaautoSub: 'Auto Subtitle Creator',
-                    subpandaqaMain: 'SubPandaQA', subpandaqaSub: 'SRT Subtitle Review',
-                    diffpandaMain: 'DiffPanda', diffpandaSub: 'Text Comparison Tool',
-                    charpandaMain: 'Charpanda', charpandaSub: 'Character Counter',
-                    calpandaMain: 'Calpanda', calpandaSub: 'Invoice Generator',
-                    pandatimerMain: 'PandaTimer', pandatimerSub: 'Time Tracker',
+                    poandaMain: '<span style="color: rgb(244 135 144);">Po</span>anda', poandaSub: 'PO File Editor',
+                    pandatermMain: 'Panda<span style="color: rgb(125 206 199);">term</span>', pandatermSub: 'TBX Glossary Editor',
+                    pandoriaMain: 'Pand<span style="color: rgb(255 94 24);">oria</span>', pandoriaSub: 'TMX Memory Editor',
+                    pandascriptMain: 'Panda<span style="color: rgb(255 72 83);">script</span>', pandascriptSub: 'Transcript Editor',
+                    subpandatmMain: 'SubPanda<span style="color: rgb(9 91 162);">TM</span>', subpandatmSub: 'Subtitle Translation',
+                    subpandaautoMain: 'Subpanda<span style="color: rgb(255 184 31);">AUTO</span>', subpandaautoSub: 'Auto Subtitle Creator',
+                    subpandaqaMain: 'SubPanda<span style="color: rgb(9 91 162);">QA</span>', subpandaqaSub: 'SRT Subtitle Review',
+                    diffpandaMain: '<span style="color: rgb(236 165 229);">Diff</span>Panda', diffpandaSub: 'Text Comparison Tool',
+                    charpandaMain: '<span style="color: rgb(255 134 93);">C</span><span style="color: rgb(255 211 74);">h</span><span style="color: rgb(253 125 141);">a</span><span style="color: rgb(157 179 234);">r</span>panda', charpandaSub: 'Character Counter',
+                    calpandaMain: '<span style="color: rgb(255 211 74);">Cal</span>panda', calpandaSub: 'Invoice Generator',
+                    pandatimerMain: 'Panda<span style="color: rgb(248 84 126);">Timer</span>', pandatimerSub: 'Time Tracker',
                     mystery1Main: 'A new little panda is on the way', mystery1Sub: 'Coming soon',
 
                     projectBy: 'Project by Rafael López Sánchez',
