@@ -2,17 +2,13 @@ import { calculateSimilarity, countWords } from './core/text.js';
 import { generateTMX } from './core/tmx.js';
 import { hideLoadingOverlay, showLoadingOverlay } from './dialogs.js';
 import {
-    displayTmSrcLang,
-    displayTmTgtLang,
-    tmConfigSrcLang,
-    tmConfigTgtLang,
-    tmEditorSection,
     tmInternalMessage,
-    tmLanguageConfigSection,
     tmNoMatchFoundMessage,
     tmSearchInput,
     tmSearchResultsTableBody,
 } from './dom.js';
+import { mismoIdioma } from './core/idiomas.js';
+import { pintarParDelProyecto } from './idiomas-proyecto.js';
 import { getCurrentFocusedIndex } from './editor.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
@@ -49,48 +45,37 @@ function hideTMInternalMessage() {
 
 function resetTM() {
     state.translationMemory = [];
-    state.tmSourceLanguage = '';
-    state.tmTargetLanguage = '';
     if (tmSearchInput) tmSearchInput.value = '';
     renderTMSearchResults([]);
-    showTMLanguageConfigSection();
-    showTMInternalMessage(translations[state.currentLanguage]['tm_initial_message']);
-}
-
-function showTMLanguageConfigSection() {
-    if (tmLanguageConfigSection && tmEditorSection) {
-        tmLanguageConfigSection.style.display = 'block';
-        tmEditorSection.style.display = 'none';
-        if (tmConfigSrcLang) tmConfigSrcLang.value = 'en-US';
-        if (tmConfigTgtLang) tmConfigTgtLang.value = 'es-ES';
-        hideTMInternalMessage();
-    }
-}
-
-function showTMEditorSection() {
-    if (tmLanguageConfigSection && tmEditorSection && displayTmSrcLang && displayTmTgtLang) {
-        tmLanguageConfigSection.style.display = 'none';
-        tmEditorSection.style.display = 'block';
-        displayTmSrcLang.value = state.tmSourceLanguage;
-        displayTmTgtLang.value = state.tmTargetLanguage;
-        tmSearch();
-        hideTMInternalMessage();
-    }
-}
-
-function confirmTMLanguages() {
-    const srcLang = tmConfigSrcLang ? tmConfigSrcLang.value.trim() : '';
-    const tgtLang = tmConfigTgtLang ? tmConfigTgtLang.value.trim() : '';
-
-    if (!srcLang || !tgtLang) {
-        showTMInternalMessage(translations[state.currentLanguage]['lang_config_required'], true);
-        return;
-    }
-
-    state.tmSourceLanguage = srcLang;
-    state.tmTargetLanguage = tgtLang;
-
+    hideTMInternalMessage();
     showTMEditorSection();
+}
+
+/**
+ * Enseña el aviso de "esto está vacío" mientras la memoria no tenga nada.
+ *
+ * Antes salía un mensaje que decía "crea una memoria nueva o importa un TMX",
+ * y mandaba a buscar un botón que no hace falta pulsar: la memoria existe desde
+ * que se abre el archivo, lo que pasa es que está vacía y se llena sola al
+ * validar segmentos. Lo que sí conviene decir es que se puede traer una de
+ * fuera, porque eso no se adivina.
+ */
+function avisarSiLaMemoriaEstaVacia() {
+    const aviso = document.getElementById('memoriaVacia');
+    if (!aviso) return;
+    aviso.classList.toggle('hidden', (state.translationMemory || []).length > 0);
+}
+
+/**
+ * Deja a la vista el par de idiomas del proyecto y busca.
+ *
+ * La memoria ya no pregunta idiomas: los toma del proyecto, igual que el
+ * glosario. Eran el mismo dato escrito en dos sitios que se podían contradecir.
+ */
+function showTMEditorSection() {
+    pintarParDelProyecto('memoriaParIdiomas');
+    avisarSiLaMemoriaEstaVacia();
+    tmSearch();
 }
 
 function processTMXContent(content) {
@@ -116,16 +101,6 @@ function processTMXContent(content) {
 
         const tuElements = xmlDoc.getElementsByTagName('tu');
         let newTM = [];
-        let detectedSrcLang = '';
-        let detectedTgtLang = '';
-
-        if (tuElements.length > 0) {
-            const tuvElements = tuElements[0].getElementsByTagName('tuv');
-            if (tuvElements.length >= 2) {
-                detectedSrcLang = tuvElements[0].getAttribute('xml:lang');
-                detectedTgtLang = tuvElements[1].getAttribute('xml:lang');
-            }
-        }
 
         for (let tu of tuElements) {
             const tuvElements = tu.getElementsByTagName('tuv');
@@ -149,10 +124,7 @@ function processTMXContent(content) {
         }
 
         state.translationMemory = newTM;
-        state.tmSourceLanguage =
-            detectedSrcLang || (tmConfigSrcLang ? tmConfigSrcLang.value : 'en-US');
-        state.tmTargetLanguage =
-            detectedTgtLang || (tmConfigTgtLang ? tmConfigTgtLang.value : 'es-ES');
+        avisarSiLaMemoriaEstaVacia();
 
         showTMInternalMessage(
             `TMX loaded with ${state.translationMemory.length} translation units.`,
@@ -208,16 +180,16 @@ function downloadTMX() {
 
 function addOrUpdateTMEntry(original, translation) {
     if (!original || !translation) return;
-    if (!state.tmSourceLanguage || !state.tmTargetLanguage) {
-        console.warn('TM languages not configured. Skipping TM update.');
+    if (!state.sourceLang || !state.targetLang) {
+        console.warn('El proyecto no tiene par de idiomas; no se toca la memoria.');
         return;
     }
 
     const existingIndex = state.translationMemory.findIndex(
         (entry) =>
             entry.srcText === original &&
-            entry.srcLang === state.tmSourceLanguage &&
-            entry.tgtLang === state.tmTargetLanguage,
+            mismoIdioma(entry.srcLang, state.sourceLang) &&
+            mismoIdioma(entry.tgtLang, state.targetLang),
     );
 
     if (existingIndex !== -1) {
@@ -225,14 +197,15 @@ function addOrUpdateTMEntry(original, translation) {
         state.translationMemory[existingIndex].tgtWordCount = countWords(translation);
     } else {
         state.translationMemory.push({
-            srcLang: state.tmSourceLanguage,
+            srcLang: state.sourceLang,
             srcText: original,
-            tgtLang: state.tmTargetLanguage,
+            tgtLang: state.targetLang,
             tgtText: translation,
             srcWordCount: countWords(original),
             tgtWordCount: countWords(translation),
         });
     }
+    avisarSiLaMemoriaEstaVacia();
     tmSearch();
 }
 
@@ -240,8 +213,8 @@ function findBestTMMatch(sourceSegmentText) {
     if (
         state.translationMemory.length === 0 ||
         !sourceSegmentText.trim() ||
-        !state.tmSourceLanguage ||
-        !state.tmTargetLanguage
+        !state.sourceLang ||
+        !state.targetLang
     ) {
         return null;
     }
@@ -251,9 +224,13 @@ function findBestTMMatch(sourceSegmentText) {
     const MIN_FUZZY_THRESHOLD = 70;
 
     state.translationMemory.forEach((entry) => {
+        // Se compara por lengua y no por etiqueta entera: una memoria exportada
+        // de otra herramienta viene marcada "en-US" y el proyecto puede estar
+        // en "en". Exigir que coincidan letra por letra dejaría sin usar la
+        // memoria entera, y nadie entendería por qué.
         if (
-            entry.srcLang === state.tmSourceLanguage &&
-            entry.tgtLang === state.tmTargetLanguage &&
+            mismoIdioma(entry.srcLang, state.sourceLang) &&
+            mismoIdioma(entry.tgtLang, state.targetLang) &&
             entry.srcText.trim()
         ) {
             const score = calculateSimilarity(sourceSegmentText, entry.srcText);
@@ -346,10 +323,11 @@ function renderTMSearchResults(results, activeSegmentOriginalText) {
     }
     tmSearchResultsTableBody.innerHTML = '';
     if (results.length === 0) {
-        if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
-        if (tmInternalMessage && tmInternalMessage.classList.contains('hidden')) {
-            if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.remove('hidden');
-        }
+        // Con la memoria vacía, "no se encontraron coincidencias" no dice nada
+        // que no diga ya el aviso de arriba, y dos mensajes seguidos para el
+        // mismo hecho se leen como si fueran dos problemas distintos.
+        const vacia = (state.translationMemory || []).length === 0;
+        if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.toggle('hidden', vacia);
         return;
     } else {
         if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');
@@ -403,13 +381,11 @@ function renderTMSearchResults(results, activeSegmentOriginalText) {
 
 export {
     addOrUpdateTMEntry,
-    confirmTMLanguages,
     downloadTMX,
     findBestTMMatch,
     processTMXContent,
     resetTM,
     showTMEditorSection,
     showTMInternalMessage,
-    showTMLanguageConfigSection,
     tmSearch,
 };

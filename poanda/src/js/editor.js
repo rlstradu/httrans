@@ -1,10 +1,16 @@
-import { countWords } from './core/text.js';
-import { showMessage } from './dialogs.js';
 import {
-    convertToMoButton,
+    compararEtiquetas,
+    extraerEtiquetas,
+    partirPorEtiquetas,
+    perfilDeFormato,
+} from './core/etiquetas.js';
+import { countWords } from './core/text.js';
+import { initEtiquetasEnTraduccion, marcadoDeCapa } from './etiquetas-campo.js';
+import { showMessage } from './dialogs.js';
+import { guardarNota } from './persistencia.js';
+import {
     poSearchContainer,
     poSearchInput,
-    savePoButton,
     searchInOriginalCheckbox,
     searchInTranslationCheckbox,
     statsContainer,
@@ -13,12 +19,113 @@ import {
 } from './dom.js';
 import { updateSaveButtonsState } from './files.js';
 import { renderGlossary } from './glossary.js';
-import { copyIconSVG } from './icons.js';
+import { copyIconSVG, commentIconSVG } from './icons.js';
+import { repartirComentarios } from './core/comentarios.js';
 import { updateSearchCounter } from './search.js';
+import { marcadoZonaSoltar } from './dropzone.js';
 import { state } from './state.js';
 import { updateStatsDisplay, updateUtilityButtonStates } from './stats.js';
 import { addOrUpdateTMEntry, findBestTMMatch, tmSearch } from './tm.js';
 import { translations } from './translations.js';
+
+/**
+ * Perfil de etiquetas del archivo que está abierto.
+ *
+ * Cada formato tiene sus códigos: un PO lleva %s y {nombre}, un JSON de i18next
+ * lleva {{nombre}}, un HTML lleva etiquetas de verdad. Sin archivo abierto se
+ * usa el de PO, que es lo que abre Poanda por defecto.
+ */
+function perfilActual() {
+    return perfilDeFormato(state.currentFileType || 'po');
+}
+
+/** Escapa el texto que va a salir como HTML. */
+function escaparHtml(texto) {
+    return String(texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+/**
+ * Construye el marcado del texto original: etiquetas en color y, si toca,
+ * términos del glosario y resultados de la búsqueda resaltados.
+ *
+ * Los tres resaltados escriben en el mismo elemento, así que tienen que salir de
+ * un único sitio: antes cada uno reescribía el <pre> por su cuenta y el último
+ * en pasar borraba lo de los otros. Aquí el texto se trocea una vez, las
+ * etiquetas se envuelven en su color y los otros dos resaltados se aplican solo
+ * dentro de los trozos de texto normal, que es donde tienen sentido: buscar
+ * "href" no debería iluminar media etiqueta.
+ *
+ * De paso se escapa el HTML. Antes no se hacía, así que un msgid con <b> dentro
+ * se veía en negrita en lugar de verse tal cual, que es justo lo contrario de lo
+ * que necesita quien tiene que copiar esa etiqueta a la traducción.
+ *
+ * @param {string} texto Texto original del segmento.
+ * @param {{glosario?: boolean, busqueda?: RegExp|null}} opciones
+ * @returns {{html: string, terminos: Set<string>}}
+ */
+function marcadoDelOriginal(texto, { glosario = false, busqueda = null } = {}) {
+    const terminos = new Set();
+    const perfil = perfilActual();
+
+    const html = partirPorEtiquetas(texto, perfil)
+        .map((trozo) => {
+            if (trozo.esEtiqueta) {
+                const valor = escaparHtml(trozo.texto).replace(/'/g, '&#39;');
+                return (
+                    `<span class="etiqueta" data-etiqueta="${valor}" role="button" tabindex="0"` +
+                    ` title="${escaparHtml(translations[state.currentLanguage]['tag_insert_hint'] || '')}">` +
+                    `${escaparHtml(trozo.texto)}</span>`
+                );
+            }
+
+            let parte = escaparHtml(trozo.texto);
+
+            if (glosario) {
+                const resultado = applyGlossaryHighlightToText(parte);
+                parte = resultado.html;
+                resultado.foundTerms.forEach((t) => terminos.add(t));
+            }
+
+            if (busqueda) {
+                busqueda.lastIndex = 0;
+                parte = parte.replace(
+                    busqueda,
+                    (encontrado) => `<span class="search-highlight">${encontrado}</span>`,
+                );
+            }
+
+            return parte;
+        })
+        .join('');
+
+    return { html, terminos };
+}
+
+/**
+ * Vuelve a pintar el texto original de un segmento en su estado de reposo.
+ *
+ * @param {number} entryIndex
+ * @param {number} segmentIndex
+ * @param {string} texto
+ */
+function repintarOriginal(entryIndex, segmentIndex, texto) {
+    const pre = document.getElementById(`msgid-pre-${entryIndex}-${segmentIndex}`);
+    if (pre) pre.innerHTML = marcadoDelOriginal(texto).html;
+}
+
+/** Deja todos los textos originales en reposo, sin glosario ni búsqueda. */
+function repintarTodosLosOriginales() {
+    state.poEntries.forEach((entry, entryIndex) => {
+        if (entry.isHeader) return;
+        entry.sentenceSegments.forEach((segmento, segmentIndex) => {
+            repintarOriginal(entryIndex, segmentIndex, segmento.original);
+        });
+    });
+}
 
 function pushToUndoStack() {
     // Guardamos un máximo de 15 estados para no saturar la memoria del navegador
@@ -28,54 +135,427 @@ function pushToUndoStack() {
     }
 }
 
+/**
+ * Ajusta el alto del cuadro de traducción a lo que hay escrito.
+ *
+ * Dos cuidados que parecen manías y no lo son:
+ *
+ * - Se pone el alto a cero antes de medir. Con 'auto', el navegador le da al
+ *   textarea el alto de su atributo `rows` (dos líneas por defecto), así que
+ *   scrollHeight nunca baja de ahí y todos los segmentos salían de dos líneas.
+ * - Nunca queda más bajo que el original. Si la traducción está vacía, el
+ *   cuadro sigue teniendo el alto del texto de al lado: así hay dónde pinchar y
+ *   las dos columnas de la fila miden lo mismo.
+ *
+ * Medir solo funciona con el elemento ya metido en la página: fuera de ella
+ * scrollHeight vale 0. Por eso el primer ajuste se hace al final del dibujado.
+ *
+ * @param {HTMLTextAreaElement} textarea
+ * @param {HTMLElement|null} originalElement Texto original con el que emparejar.
+ */
 function autoResizeTextarea(textarea, originalElement) {
-    textarea.style.height = 'auto';
-    if (textarea.value.trim() === '' && originalElement) {
-        // If textarea is empty, set its height to match the original element's scroll height
-        textarea.style.height = originalElement.scrollHeight + 'px';
-    } else {
-        // Otherwise, let it expand to its own content
-        textarea.style.height = textarea.scrollHeight + 'px';
+    textarea.style.height = '0px';
+    const altoPropio = textarea.scrollHeight;
+    const altoOriginal = originalElement ? originalElement.scrollHeight : 0;
+    textarea.style.height = `${Math.max(altoPropio, altoOriginal)}px`;
+}
+
+/**
+ * Da a cada cuadro de traducción el alto que le toca, una vez dibujada la lista.
+ *
+ * Va aparte del dibujado porque medir requiere que los elementos ya estén en la
+ * página. Se hace todo de una pasada para no ir alternando escritura y medida,
+ * que es lo que obliga al navegador a recalcular la página una vez por segmento.
+ */
+function ajustarAltoDeLosCuadros() {
+    translationsContainer.querySelectorAll('textarea.msgstr-textarea').forEach((textarea) => {
+        const columna = textarea.closest('.segmento-cuerpo');
+        autoResizeTextarea(textarea, columna ? columna.querySelector('.segmento-origen pre') : null);
+    });
+}
+
+/**
+ * Marca cuál es la fila en la que se está trabajando.
+ *
+ * La marca va en la fila y no en la entrada porque una entrada con formas de
+ * plural ocupa varias filas: señalarlas todas encendía media pantalla y no
+ * decía en cuál estabas.
+ *
+ * @param {number} entryIndex
+ * @param {number} segmentIndex
+ */
+function marcarFilaActiva(entryIndex, segmentIndex) {
+    document
+        .querySelectorAll('.segmento-fila-activa')
+        .forEach((fila) => fila.classList.remove('segmento-fila-activa'));
+
+    const textarea = document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`);
+    const fila = textarea ? textarea.closest('.segmento-fila') : null;
+    if (fila) fila.classList.add('segmento-fila-activa');
+}
+
+/** Apaga la marca de la fila de un segmento concreto. */
+function desmarcarFila(entryIndex, segmentIndex) {
+    const textarea = document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`);
+    const fila = textarea ? textarea.closest('.segmento-fila') : null;
+    if (fila) fila.classList.remove('segmento-fila-activa');
+}
+
+/**
+ * Revisa las etiquetas de un segmento y enciende o apaga su aviso.
+ *
+ * El aviso vive en la columna del visto, encima de él, y solo aparece cuando hay
+ * algo que decir. Una traducción vacía nunca da aviso: llenar la pantalla de
+ * marcas rojas nada más abrir el archivo consigue que no se mire ninguna.
+ *
+ * @param {number} entryIndex
+ * @param {number} segmentIndex
+ */
+function revisarEtiquetas(entryIndex, segmentIndex) {
+    const aviso = document.getElementById(`avisoEtiquetas-${entryIndex}-${segmentIndex}`);
+    const textarea = document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`);
+    const segmento = state.poEntries[entryIndex]?.sentenceSegments?.[segmentIndex];
+    if (!aviso || !textarea || !segmento) return;
+
+    const resultado = compararEtiquetas(segmento.original, textarea.value, perfilActual());
+    const hayProblema = !resultado.correcto;
+
+    aviso.hidden = !hayProblema;
+    aviso.title = hayProblema
+        ? `${translations[state.currentLanguage]['tag_mismatch'] || 'Tags do not match'}: ${resultado.resumen}`
+        : '';
+
+    const fila = textarea.closest('.segmento-fila');
+    if (fila) fila.classList.toggle('etiquetas-mal', hayProblema);
+}
+
+/**
+ * Mete una etiqueta en la traducción, donde esté el cursor.
+ *
+ * @param {HTMLTextAreaElement} textarea
+ * @param {string} etiqueta
+ */
+function insertarEtiqueta(textarea, etiqueta) {
+    if (!textarea || textarea.readOnly) return;
+
+    const inicio = textarea.selectionStart ?? textarea.value.length;
+    const fin = textarea.selectionEnd ?? inicio;
+
+    textarea.value = textarea.value.slice(0, inicio) + etiqueta + textarea.value.slice(fin);
+
+    // El cursor queda detrás de lo insertado, listo para seguir escribiendo.
+    const despues = inicio + etiqueta.length;
+    textarea.setSelectionRange(despues, despues);
+    textarea.focus();
+
+    // Se avisa como si se hubiera tecleado: así se enteran el recuento, las
+    // estadísticas, el guardado y la revisión de etiquetas.
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/**
+ * Inserta la primera etiqueta del original que todavía no esté en la traducción.
+ *
+ * Es el atajo de siempre en las herramientas TAO (el F8 de Trados y memoQ): se
+ * traduce sin soltar el teclado y las etiquetas se van poniendo por orden.
+ *
+ * @param {number} entryIndex
+ * @param {number} segmentIndex
+ * @returns {boolean} Si había alguna que poner.
+ */
+function insertarSiguienteEtiquetaQueFalta(entryIndex, segmentIndex) {
+    const textarea = document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`);
+    const segmento = state.poEntries[entryIndex]?.sentenceSegments?.[segmentIndex];
+    if (!textarea || !segmento) return false;
+
+    const perfil = perfilActual();
+    const enOrigen = extraerEtiquetas(segmento.original, perfil).map((e) => e.texto);
+    const yaPuestas = extraerEtiquetas(textarea.value, perfil).map((e) => e.texto);
+
+    // Se busca la primera del original que no esté ya puesta, contando
+    // repeticiones: dos %s en el original necesitan dos %s en la traducción.
+    const pendientes = [...yaPuestas];
+    const siguiente = enOrigen.find((etiqueta) => {
+        const donde = pendientes.indexOf(etiqueta);
+        if (donde >= 0) {
+            pendientes.splice(donde, 1);
+            return false;
+        }
+        return true;
+    });
+
+    if (!siguiente) return false;
+    insertarEtiqueta(textarea, siguiente);
+    return true;
+}
+
+/** Texto de ayuda del recuento del original, en el idioma activo. */
+function tituloCuentaOriginal() {
+    const t = translations[state.currentLanguage];
+    return `${t['char_count_original']}${t['char_units']}`.trim();
+}
+
+/** Texto de ayuda del recuento de la traducción, en el idioma activo. */
+function tituloCuentaTraduccion() {
+    const t = translations[state.currentLanguage];
+    return `${t['char_count_translation']}${t['char_units']}`.trim();
+}
+
+/**
+ * Pone al día el recuento de caracteres de la traducción.
+ *
+ * Solo el número: la etiqueta va en el título emergente. Antes se escribía
+ * "Original: 13 caracteres | Traducción: 0 caracteres" debajo del segmento, que
+ * en una lista de mil ocupaba más que el propio texto. Ahora cada recuento vive
+ * dentro de su columna, en la esquina, y se lee de un vistazo sin leerlo.
+ *
+ * @param {HTMLTextAreaElement} textarea
+ * @param {HTMLElement|null} charCountSpan
+ */
+function updateCharCount(textarea, charCountSpan) {
+    if (charCountSpan) {
+        charCountSpan.textContent = String(textarea.value.length);
     }
 }
 
-function updateCharCount(textarea, originalLength, charCountSpan) {
-    if (charCountSpan) {
-        charCountSpan.textContent = `${translations[state.currentLanguage]['char_count_original']}${originalLength} ${translations[state.currentLanguage]['char_units']} | ${translations[state.currentLanguage]['char_count_translation']}${textarea.value.length} ${translations[state.currentLanguage]['char_units']}`;
+/**
+ * Cabecera de contexto de una entrada: la etiqueta con el contexto y las
+ * referencias del archivo, y una raya que llega hasta el borde.
+ *
+ * Solo van aquí las cosas que **identifican** el segmento: el contexto del PO y
+ * la referencia al código, que se leen de un vistazo para ubicarse. Las notas
+ * del programador se han ido al icono de comentario, porque hay que leerlas
+ * enteras y solo las traen unos pocos segmentos. Ver core/comentarios.js.
+ *
+ * Devuelve null cuando la entrada no trae nada que contar, para no dejar una
+ * línea vacía entre segmento y segmento.
+ *
+ * @param {object} entry Entrada del archivo PO.
+ * @returns {HTMLElement|null}
+ */
+function crearCabeceraContexto(entry) {
+    const partes = [];
+    if (entry.msgctxt) partes.push(entry.msgctxt);
+    partes.push(...repartirComentarios(entry.comments).referencias);
+    if (partes.length === 0) return null;
+
+    const cabecera = document.createElement('div');
+    cabecera.className = 'segmento-contexto';
+
+    const etiqueta = document.createElement('span');
+    etiqueta.className = 'segmento-contexto-etiqueta';
+    etiqueta.textContent = partes.join(' · ');
+    etiqueta.title = translations[state.currentLanguage]['context_msgctxt'] || 'Context';
+    cabecera.appendChild(etiqueta);
+
+    const raya = document.createElement('span');
+    raya.className = 'segmento-contexto-raya';
+    cabecera.appendChild(raya);
+
+    return cabecera;
+}
+
+/**
+ * Deja el icono de comentario como corresponda: encendido si hay algo que leer
+ * —una nota del archivo o una escrita aquí—, apagado si no, y con el texto
+ * entero en el title para poder leer una nota corta sin abrir nada.
+ *
+ * @param {number} entryIndex
+ * @param {number} segmentIndex
+ * @param {string[]} notasDelArchivo
+ * @param {HTMLElement} [boton] El botón, si ya se tiene a mano.
+ */
+function actualizarIconoDeComentario(entryIndex, segmentIndex, notasDelArchivo, boton) {
+    const icono =
+        boton || document.getElementById(`comentarioBtn-${entryIndex}-${segmentIndex}`);
+    if (!icono) return;
+
+    const propia =
+        state.poEntries[entryIndex]?.sentenceSegments[segmentIndex]?.nota || '';
+    const idioma = translations[state.currentLanguage] || {};
+    const partes = [...notasDelArchivo];
+    if (propia) partes.push(propia);
+
+    icono.classList.toggle('con-nota', partes.length > 0);
+    icono.title =
+        partes.length > 0
+            ? partes.join('\n')
+            : idioma['comment_add'] || 'Add a comment';
+}
+
+/** Cierra la cajita de comentario que hubiera abierta, sin guardar nada. */
+function cerrarCajaDeComentario() {
+    document.querySelectorAll('.comentario-caja').forEach((caja) => caja.remove());
+}
+
+/**
+ * Abre —o cierra— la cajita de comentario de un segmento.
+ *
+ * No es un cuadro de diálogo: es una cajita que se despliega debajo de la fila,
+ * pegada al segmento del que habla. Un diálogo tapa el texto justo cuando hace
+ * falta mirarlo, y obliga a cerrarlo para seguir traduciendo; así se escribe la
+ * nota con el original delante y se sigue.
+ *
+ * La nota se guarda en el proyecto, no en el archivo: cuando devuelvas el
+ * archivo traducido saldrá igual que si no hubieras escrito nada. Es donde la
+ * pone también Locversia, y es lo que evita colarle notas internas al cliente.
+ *
+ * @param {number} entryIndex
+ * @param {number} segmentIndex
+ * @param {string[]} notasDelArchivo
+ */
+function abrirComentario(entryIndex, segmentIndex, notasDelArchivo) {
+    const segmento = state.poEntries[entryIndex]?.sentenceSegments[segmentIndex];
+    if (!segmento) return;
+
+    // Pulsar otra vez el icono del mismo segmento cierra: el icono enciende y
+    // apaga la cajita, que es lo que espera cualquiera al ver un botón así.
+    const yaAbierta = document.getElementById(`comentarioCaja-${entryIndex}-${segmentIndex}`);
+    cerrarCajaDeComentario();
+    if (yaAbierta) return;
+
+    const fila = document
+        .getElementById(`msgstr-${entryIndex}-${segmentIndex}`)
+        ?.closest('.segmento-fila');
+    if (!fila) return;
+
+    const idioma = translations[state.currentLanguage] || {};
+
+    const caja = document.createElement('div');
+    caja.id = `comentarioCaja-${entryIndex}-${segmentIndex}`;
+    caja.className = 'comentario-caja';
+
+    // Lo que venía en el archivo se enseña, pero no se toca: no es nuestro.
+    if (notasDelArchivo.length > 0) {
+        const titulillo = document.createElement('p');
+        titulillo.className = 'comentario-titulillo';
+        titulillo.textContent = idioma['comment_from_file'] || 'From the file';
+        caja.appendChild(titulillo);
+
+        const delArchivo = document.createElement('div');
+        delArchivo.className = 'comentario-archivo';
+        delArchivo.textContent = notasDelArchivo.join('\n');
+        caja.appendChild(delArchivo);
     }
+
+    const campo = document.createElement('textarea');
+    campo.id = `comentarioTexto-${entryIndex}-${segmentIndex}`;
+    campo.className = 'comentario-campo';
+    campo.rows = 2;
+    campo.value = segmento.nota || '';
+    campo.placeholder = idioma['comment_yours'] || '';
+    caja.appendChild(campo);
+
+    const botones = document.createElement('div');
+    botones.className = 'comentario-botones';
+
+    const guardarBtn = document.createElement('button');
+    guardarBtn.type = 'button';
+    guardarBtn.className = 'comentario-boton comentario-guardar';
+    guardarBtn.textContent = idioma['save_button'] || 'Save';
+
+    const cancelarBtn = document.createElement('button');
+    cancelarBtn.type = 'button';
+    cancelarBtn.className = 'comentario-boton comentario-cancelar';
+    cancelarBtn.textContent = idioma['cancel_button'] || 'Cancel';
+
+    // Eliminar solo aparece cuando hay algo que eliminar: un botón de borrar
+    // encendido sobre una nota que no existe solo sirve para dar un susto.
+    if (segmento.nota) {
+        const eliminarBtn = document.createElement('button');
+        eliminarBtn.type = 'button';
+        eliminarBtn.className = 'comentario-boton comentario-eliminar';
+        eliminarBtn.textContent = idioma['delete_button'] || 'Delete';
+        eliminarBtn.addEventListener('click', () => aplicarComentario(''));
+        botones.appendChild(eliminarBtn);
+    }
+
+    botones.appendChild(cancelarBtn);
+    botones.appendChild(guardarBtn);
+    caja.appendChild(botones);
+
+    fila.insertAdjacentElement('afterend', caja);
+    campo.focus();
+    // El cursor al final: lo normal al volver a una nota es añadirle algo, no
+    // reescribirla desde el principio.
+    campo.setSelectionRange(campo.value.length, campo.value.length);
+
+    async function aplicarComentario(texto) {
+        segmento.nota = texto;
+        cerrarCajaDeComentario();
+        actualizarIconoDeComentario(entryIndex, segmentIndex, notasDelArchivo);
+        await guardarNota(entryIndex, segmentIndex, texto);
+    }
+
+    guardarBtn.addEventListener('click', () => aplicarComentario(campo.value.trim()));
+    cancelarBtn.addEventListener('click', cerrarCajaDeComentario);
+    campo.addEventListener('keydown', (evento) => {
+        // Enter a secas hace párrafo, que en una nota hace falta; se guarda con
+        // Ctrl+Enter, como en el resto de cuadros de texto largos.
+        if (evento.key === 'Enter' && (evento.ctrlKey || evento.metaKey)) {
+            evento.preventDefault();
+            aplicarComentario(campo.value.trim());
+        }
+        if (evento.key === 'Escape') {
+            evento.preventDefault();
+            cerrarCajaDeComentario();
+        }
+    });
 }
 
 function setTranslationEditableState(entryIndex, segmentIndex, isEditable) {
     const msgstrTextarea = document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`);
     const validateButton = document.getElementById(`validateBtn-${entryIndex}-${segmentIndex}`);
-    const editButton = document.getElementById(`editBtn-${entryIndex}-${segmentIndex}`);
-    const checkIcon = document.getElementById(`checkIcon-${entryIndex}-${segmentIndex}`);
     const translationUnit = document.getElementById(`translation-unit-${entryIndex}`); // Get the parent unit
 
-    if (!msgstrTextarea || !validateButton || !editButton || !checkIcon || !translationUnit) {
+    if (!msgstrTextarea || !validateButton || !translationUnit) {
         console.error(`Elements not found for index ${entryIndex}-${segmentIndex}`);
         return;
     }
 
     msgstrTextarea.readOnly = !isEditable;
     if (!isEditable) {
-        msgstrTextarea.classList.add('bg-gray-200');
+        msgstrTextarea.classList.add('segmento-texto-bloqueado');
         translationUnit.classList.remove('translation-unit-active'); // Remove active highlight on validate
+        desmarcarFila(entryIndex, segmentIndex);
 
         // Update translation status and words when segment is validated
         const segment = state.poEntries[entryIndex].sentenceSegments[segmentIndex];
+        // Lo escrito tarda unas décimas en llegar a los datos, para no hacer
+        // cuentas con cada letra. Validar es de las cosas que se hacen justo
+        // después de escribir, así que aquí se cierra ese hueco a mano: si no,
+        // lo último tecleado no entraba en la memoria y nadie entendía por qué
+        // ese segmento no aparecía luego como coincidencia.
+        segment.translation = msgstrTextarea.value;
         segment.isTranslated = msgstrTextarea.value.trim() !== '';
+        // Validar a mano es lo que convierte un borrador de la IA en una
+        // traducción: a partir de ahí es tuya y deja de estar marcada.
+        if (segment.borradorIA) {
+            delete segment.borradorIA;
+            document
+                .getElementById(`translation-unit-${entryIndex}`)
+                ?.querySelectorAll('.borrador-ia')
+                .forEach((fila) => fila.classList.remove('borrador-ia'));
+            document
+                .getElementById(`translation-unit-${entryIndex}`)
+                ?.querySelectorAll('.segmento-borrador')
+                .forEach((marca) => marca.remove());
+        }
         segment.wordCountTranslation = countWords(msgstrTextarea.value);
         updateStatsDisplay(); // Update stats
         addOrUpdateTMEntry(segment.original, segment.translation); // Add/Update TM
     } else {
-        msgstrTextarea.classList.remove('bg-gray-200');
+        msgstrTextarea.classList.remove('segmento-texto-bloqueado');
         translationUnit.classList.add('translation-unit-active'); // Add active highlight on edit/focus
+        marcarFilaActiva(entryIndex, segmentIndex);
     }
 
-    validateButton.style.display = isEditable ? 'inline-block' : 'none';
-    editButton.style.display = isEditable ? 'none' : 'inline-block';
-    checkIcon.style.display = isEditable ? 'none' : 'inline-block';
+    // El visto se enciende al validar y se apaga al volver a editar; es el mismo
+    // botón, así que también cambia lo que dice al pasar el ratón.
+    validateButton.classList.toggle('validado', !isEditable);
+    validateButton.setAttribute('aria-pressed', String(!isEditable));
+    validateButton.title =
+        translations[state.currentLanguage][isEditable ? 'validate' : 'edit'] || '';
 
     if (isEditable) {
         msgstrTextarea.focus();
@@ -141,8 +621,8 @@ function applyGlossaryHighlightToText(text) {
     let highlightedHtml = text;
     const currentFoundTerms = new Set(); // Terms found in *this specific* segment
 
-    // Ensure glossarySourceLanguage is set and matches the original's implicit language
-    if (!state.glossarySourceLanguage) {
+    // Sin saber de qué idioma se traduce no hay nada que resaltar.
+    if (!state.sourceLang) {
         return { html: text, foundTerms: currentFoundTerms }; // Cannot highlight without source language
     }
 
@@ -155,7 +635,7 @@ function applyGlossaryHighlightToText(text) {
         // For a more robust solution, each poEntry might need a source language field.
         // For now, we assume the glossary source language is the relevant source for highlighting.
         // Also, ensure the glossary entry has a source term.
-        if (state.glossarySourceLanguage && glossaryEntry.srcTerm) {
+        if (state.sourceLang && glossaryEntry.srcTerm) {
             const term = glossaryEntry.srcTerm;
             // Use word boundaries \b to avoid partial word matches
             // Escape special regex characters in the term
@@ -186,13 +666,8 @@ function renderTranslations(entries) {
     state.lastFocusedSegment = null; // Reset AI context memory
 
     if (entries.length === 0) {
-        translationsContainer.innerHTML = `
-                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                        ${translations[state.currentLanguage]['no_translations']}
-                    </div>
-                `;
-        savePoButton.disabled = true;
-        convertToMoButton.disabled = true;
+        translationsContainer.innerHTML = marcadoZonaSoltar();
+        updateSaveButtonsState();
         poSearchContainer.classList.add('hidden'); // Hide search bar
         statsContainer.classList.remove('show'); // Hide stats if no translations
         updateUtilityButtonStates();
@@ -202,6 +677,11 @@ function renderTranslations(entries) {
 
     poSearchContainer.classList.remove('hidden'); // Show search bar
 
+    // Numeración corrida de las filas, como en cualquier herramienta TAO: cuenta
+    // filas visibles, no entradas del archivo, porque una entrada larga se parte
+    // en varias frases y cada una es una fila.
+    let numeroDeSegmento = 1;
+
     entries.forEach((entry, entryIndex) => {
         // Skip rendering header entry explicitly in the main editor area, but keep in poEntries
         if (entry.isHeader) {
@@ -210,144 +690,197 @@ function renderTranslations(entries) {
 
         const translationUnit = document.createElement('div');
         translationUnit.id = `translation-unit-${entryIndex}`; // Added ID for highlighting
-        translationUnit.className = 'translation-unit-bg p-4 rounded-lg shadow-sm border';
+        translationUnit.className = 'segmento-grupo';
 
-        if (entry.comments && entry.comments.length > 0) {
-            const commentsDiv = document.createElement('div');
-            commentsDiv.className = 'text-xs text-gray-500 mb-2 whitespace-pre-wrap';
-            commentsDiv.textContent = entry.comments.join('\n');
-            translationUnit.appendChild(commentsDiv);
-        }
-        if (entry.msgctxt) {
-            const msgctxtLabel = document.createElement('label');
-            msgctxtLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
-            msgctxtLabel.textContent = translations[state.currentLanguage]['context_msgctxt'];
-            translationUnit.appendChild(msgctxtLabel);
+        // El contexto y las referencias del archivo van arriba, en una etiqueta
+        // pequeña con una raya que cruza el ancho: ocupa una línea en lugar de
+        // los dos bloques con título que había antes, y así el segmento (que es
+        // a lo que se viene) empieza mucho más arriba.
+        const cabeceraContexto = crearCabeceraContexto(entry);
+        if (cabeceraContexto) translationUnit.appendChild(cabeceraContexto);
 
-            const msgctxtPre = document.createElement('pre');
-            msgctxtPre.className =
-                'po-display-code p-2 rounded-md text-base overflow-auto max-h-32';
-            msgctxtPre.textContent = entry.msgctxt;
-            translationUnit.appendChild(msgctxtPre);
-        }
+        // Las notas del programador van al icono de comentario del pie de la
+        // traducción. Son de la entrada entera, así que las formas de plural de
+        // una misma cadena comparten nota.
+        const { notas } = repartirComentarios(entry.comments);
 
         entry.sentenceSegments.forEach((segment, segmentIndex) => {
+            // Una fila por segmento, toda de una pieza: número, original,
+            // traducción y validación. El recuento de cada texto va dentro de su
+            // propia columna, abajo a la derecha, y el visto de validar en una
+            // columna estrecha al final de la fila.
             const segmentRow = document.createElement('div');
-            segmentRow.className = 'translation-row mb-4';
+            segmentRow.className = 'segmento-fila';
+            // Lo que ha traducido la IA y nadie ha revisado se marca: un archivo
+            // donde no se distingue lo repasado de lo automático es un archivo
+            // en el que no se puede confiar.
+            if (segment.borradorIA) segmentRow.classList.add('borrador-ia');
+
+            const numeroCol = document.createElement('div');
+            numeroCol.className = 'segmento-numero';
+
+            if (segment.borradorIA) {
+                const marca = document.createElement('span');
+                marca.className = 'segmento-borrador';
+                marca.textContent = '✦';
+                marca.title = translations[state.currentLanguage]['ai_borrador'] || 'AI draft';
+                numeroCol.appendChild(marca);
+            }
+            numeroCol.textContent = numeroDeSegmento;
+            numeroDeSegmento += 1;
+
+            // Formas de plural: cada una es su propia fila, así que hay que
+            // decir cuál es. Se usa la notación del propio archivo ([0], [1])
+            // porque es la que aparece en el PO y no se presta a confusión.
+            if (segment.formaPlural !== undefined) {
+                const marcaPlural = document.createElement('span');
+                marcaPlural.className = 'segmento-plural';
+                marcaPlural.textContent = `[${segment.formaPlural}]`;
+                marcaPlural.title = `${
+                    translations[state.currentLanguage]['plural_form'] || 'Plural form'
+                } ${segment.formaPlural}`;
+                numeroCol.appendChild(marcaPlural);
+            }
+
+            segmentRow.appendChild(numeroCol);
+
+            const cuerpo = document.createElement('div');
+            cuerpo.className = 'segmento-cuerpo';
 
             const originalCol = document.createElement('div');
-            originalCol.className = 'original-col';
-
-            const msgidLabel = document.createElement('label');
-            msgidLabel.className = 'block text-sm font-medium text-on-light-contrast mb-1';
-            msgidLabel.textContent = translations[state.currentLanguage]['original_msgid'];
-            originalCol.appendChild(msgidLabel);
+            originalCol.className = 'segmento-col segmento-origen';
 
             const msgidPre = document.createElement('pre');
             msgidPre.id = `msgid-pre-${entryIndex}-${segmentIndex}`; // Added ID for easier lookup
-            msgidPre.className = 'po-display-code p-2 rounded-md text-base overflow-auto max-h-32';
-            msgidPre.textContent = segment.original; // Initial text without highlight
+            msgidPre.className = 'segmento-texto';
+            // Con las etiquetas ya en color: son lo primero que hay que ver del
+            // original, porque son lo que hay que copiar tal cual.
+            msgidPre.innerHTML = marcadoDelOriginal(segment.original).html;
             originalCol.appendChild(msgidPre);
-            segmentRow.appendChild(originalCol);
+
+            const pieOrigen = document.createElement('div');
+            pieOrigen.className = 'segmento-pie';
+            const cuentaOrigen = document.createElement('span');
+            cuentaOrigen.id = `charCountOriginal-${entryIndex}-${segmentIndex}`;
+            cuentaOrigen.className = 'segmento-cuenta';
+            cuentaOrigen.textContent = String(segment.original.length);
+            cuentaOrigen.title = tituloCuentaOriginal();
+            pieOrigen.appendChild(cuentaOrigen);
+            originalCol.appendChild(pieOrigen);
+
+            cuerpo.appendChild(originalCol);
 
             const translationCol = document.createElement('div');
-            translationCol.className = 'translation-col';
+            translationCol.className = 'segmento-col segmento-destino';
 
-            // --- NUEVO: Contenedor de cabecera para Label + Etiqueta Amarilla ---
-            const translationHeader = document.createElement('div');
-            translationHeader.className = 'flex justify-between items-center mb-1';
-
-            const msgstrLabel = document.createElement('label');
-            msgstrLabel.className = 'block text-sm font-medium text-on-light-contrast';
-            msgstrLabel.textContent = translations[state.currentLanguage]['translation_msgstr'];
-            translationHeader.appendChild(msgstrLabel);
-
-            // La etiqueta amarilla (oculta por defecto)
+            // La etiqueta amarilla del glosario (oculta por defecto)
             const glossaryBadge = document.createElement('span');
             glossaryBadge.id = `glossary-match-${entryIndex}-${segmentIndex}`;
-            glossaryBadge.className =
-                'hidden flex items-center gap-1 text-xs font-semibold text-black bg-yellow-300 px-2 py-0.5 rounded-md whitespace-normal h-auto';
-            translationHeader.appendChild(glossaryBadge);
+            glossaryBadge.className = 'hidden segmento-glosario';
+            translationCol.appendChild(glossaryBadge);
 
-            translationCol.appendChild(translationHeader);
-            // --- FIN NUEVO BLOQUE ---
+            // El cuadro de traducción va sobre una capa que dibuja los recuadros
+            // amarillos de las etiquetas: un textarea no admite color por dentro,
+            // así que el color lo pone la capa de abajo y las letras el textarea
+            // de encima. Ver etiquetas-campo.js.
+            const campo = document.createElement('div');
+            campo.className = 'campo-con-capa';
+
+            const capa = document.createElement('div');
+            capa.className = 'capa-etiquetas segmento-texto';
+            capa.setAttribute('aria-hidden', 'true');
+            capa.innerHTML = marcadoDeCapa(segment.translation, perfilActual());
+            campo.appendChild(capa);
 
             const msgstrTextarea = document.createElement('textarea');
             msgstrTextarea.id = `msgstr-${entryIndex}-${segmentIndex}`;
-            msgstrTextarea.className =
-                'msgstr-textarea mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-red-500 focus:border-red-500 text-base';
+            msgstrTextarea.className = 'msgstr-textarea segmento-texto';
             msgstrTextarea.value = segment.translation;
             msgstrTextarea.dataset.entryIndex = entryIndex;
             msgstrTextarea.dataset.segmentIndex = segmentIndex;
             msgstrTextarea.dataset.originalLength = segment.original.length;
+            // rows=1 para que el alto de partida sea una línea y no dos: el alto
+            // de verdad lo pone ajustarAltoDeLosCuadros() según lo que haya escrito.
+            msgstrTextarea.rows = 1;
+            campo.appendChild(msgstrTextarea);
 
-            translationCol.appendChild(msgstrTextarea);
-            segmentRow.appendChild(translationCol);
-            translationUnit.appendChild(segmentRow);
+            translationCol.appendChild(campo);
 
-            const controlsContainer = document.createElement('div');
-            controlsContainer.className = 'flex items-center justify-between mt-2 w-full';
+            const pieDestino = document.createElement('div');
+            pieDestino.className = 'segmento-pie';
+
+            // Icono de comentario. Siempre está en su sitio, para que el pie no
+            // baile de una fila a otra: apagado cuando no hay nada, encendido
+            // cuando hay una nota del archivo o una escrita aquí.
+            const comentarioButton = document.createElement('button');
+            comentarioButton.id = `comentarioBtn-${entryIndex}-${segmentIndex}`;
+            comentarioButton.className = 'segmento-icono segmento-comentario';
+            comentarioButton.type = 'button';
+            comentarioButton.dataset.entryIndex = entryIndex;
+            comentarioButton.dataset.segmentIndex = segmentIndex;
+            comentarioButton.innerHTML = commentIconSVG;
+            actualizarIconoDeComentario(entryIndex, segmentIndex, notas, comentarioButton);
+            comentarioButton.addEventListener('click', () =>
+                abrirComentario(entryIndex, segmentIndex, notas),
+            );
+            pieDestino.appendChild(comentarioButton);
+
+            const copyOriginalButton = document.createElement('button');
+            copyOriginalButton.id = `copyOriginalBtn-${entryIndex}-${segmentIndex}`;
+            copyOriginalButton.className = 'copy-original-button segmento-icono';
+            copyOriginalButton.dataset.entryIndex = entryIndex;
+            copyOriginalButton.dataset.segmentIndex = segmentIndex;
+            copyOriginalButton.setAttribute(
+                'title',
+                translations[state.currentLanguage]['copy_original_btn'] || 'Copy Original',
+            );
+            copyOriginalButton.innerHTML = copyIconSVG;
+            pieDestino.appendChild(copyOriginalButton);
 
             const charCountSpan = document.createElement('span');
             charCountSpan.id = `charCount-${entryIndex}-${segmentIndex}`;
-            charCountSpan.className = 'inline-block text-sm font-semibold text-on-light-contrast';
-            controlsContainer.appendChild(charCountSpan);
+            charCountSpan.className = 'segmento-cuenta';
+            charCountSpan.title = tituloCuentaTraduccion();
+            pieDestino.appendChild(charCountSpan);
 
-            const actionButtonsContainer = document.createElement('div');
-            actionButtonsContainer.className = 'flex items-center space-x-2';
+            translationCol.appendChild(pieDestino);
+            cuerpo.appendChild(translationCol);
+            segmentRow.appendChild(cuerpo);
 
-            const checkIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            checkIcon.setAttribute('id', `checkIcon-${entryIndex}-${segmentIndex}`);
-            checkIcon.setAttribute('class', 'check-icon text-green-500');
-            checkIcon.setAttribute('fill', 'none');
-            checkIcon.setAttribute('viewBox', '0 0 24 24');
-            checkIcon.setAttribute('stroke', 'currentColor');
-            checkIcon.innerHTML = `
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    `;
-            actionButtonsContainer.appendChild(checkIcon);
+            // Columna de validación: un solo botón que enciende y apaga. Antes
+            // eran dos ("Validar" y "Editar") que se turnaban el sitio.
+            const estadoCol = document.createElement('div');
+            estadoCol.className = 'segmento-estado';
 
-            // --- START: UPDATED COPY ORIGINAL BUTTON ---
-            const copyOriginalButton = document.createElement('button');
-            copyOriginalButton.id = `copyOriginalBtn-${entryIndex}-${segmentIndex}`;
-            // Adjusted classes for padding with icon
-            copyOriginalButton.className =
-                'copy-original-button font-medium py-1 px-2 rounded-md shadow-sm transition duration-300 btn-modal-neutral';
-            copyOriginalButton.dataset.entryIndex = entryIndex;
-            copyOriginalButton.dataset.segmentIndex = segmentIndex;
-
-            // Set tooltip text using the title attribute and translation key
-            const tooltipText =
-                translations[state.currentLanguage]['copy_original_btn'] || 'Copy Original';
-            copyOriginalButton.setAttribute('title', tooltipText);
-
-            // Set the button content to the SVG icon
-            copyOriginalButton.innerHTML = copyIconSVG;
-
-            actionButtonsContainer.appendChild(copyOriginalButton); // Add BEFORE validate button
-            // --- END: UPDATED COPY ORIGINAL BUTTON ---
+            // Aviso de etiquetas: encima del visto, oculto mientras todo cuadre.
+            const avisoEtiquetas = document.createElement('span');
+            avisoEtiquetas.id = `avisoEtiquetas-${entryIndex}-${segmentIndex}`;
+            avisoEtiquetas.className = 'segmento-aviso';
+            avisoEtiquetas.textContent = '!';
+            avisoEtiquetas.hidden = true;
+            estadoCol.appendChild(avisoEtiquetas);
 
             const validateButton = document.createElement('button');
             validateButton.id = `validateBtn-${entryIndex}-${segmentIndex}`;
-            validateButton.className =
-                'validate-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-validate';
-            validateButton.textContent = translations[state.currentLanguage]['validate'];
+            validateButton.className = 'validate-button segmento-check';
             validateButton.dataset.entryIndex = entryIndex;
             validateButton.dataset.segmentIndex = segmentIndex;
-            actionButtonsContainer.appendChild(validateButton);
+            validateButton.setAttribute('aria-pressed', 'false');
+            validateButton.title = translations[state.currentLanguage]['validate'];
 
-            const editButton = document.createElement('button');
-            editButton.id = `editBtn-${entryIndex}-${segmentIndex}`;
-            editButton.className =
-                'edit-button font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 btn-edit';
-            editButton.textContent = translations[state.currentLanguage]['edit'];
-            editButton.dataset.entryIndex = entryIndex;
-            editButton.dataset.segmentIndex = segmentIndex;
-            editButton.style.display = 'none';
-            actionButtonsContainer.appendChild(editButton);
+            const checkIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            checkIcon.setAttribute('id', `checkIcon-${entryIndex}-${segmentIndex}`);
+            checkIcon.setAttribute('class', 'check-icon');
+            checkIcon.setAttribute('fill', 'none');
+            checkIcon.setAttribute('viewBox', '0 0 24 24');
+            checkIcon.setAttribute('stroke', 'currentColor');
+            checkIcon.innerHTML =
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 12.5l5.5 5.5L20 7" />';
+            validateButton.appendChild(checkIcon);
 
-            controlsContainer.appendChild(actionButtonsContainer);
-            translationUnit.appendChild(controlsContainer);
+            estadoCol.appendChild(validateButton);
+            segmentRow.appendChild(estadoCol);
+            translationUnit.appendChild(segmentRow);
 
             // --- START: UPDATED EVENT LISTENER FOR COPY BUTTON ---
             copyOriginalButton.addEventListener('click', (event) => {
@@ -400,11 +933,11 @@ function renderTranslations(entries) {
                 const charCountSpan = document.getElementById(
                     `charCount-${entryIndex}-${segmentIndex}`,
                 );
-                updateCharCount(
-                    event.target,
-                    parseInt(event.target.dataset.originalLength),
-                    charCountSpan,
-                );
+                updateCharCount(event.target, charCountSpan);
+                // El aviso de etiquetas se actualiza al momento: enterarse tarde
+                // de que falta un %s es enterarse cuando ya has seguido a otra
+                // frase y hay que volver.
+                revisarEtiquetas(entryIndex, segmentIndex);
 
                 // --- B. LÓGICA PESADA (Retardada 300ms) ---
                 // Si el usuario sigue escribiendo, cancelamos el cálculo anterior
@@ -446,6 +979,7 @@ function renderTranslations(entries) {
                 });
                 state.lastFocusedSegment = { entryIndex, segmentIndex }; // Remember this segment for AI
                 translationUnit.classList.add('translation-unit-active');
+                marcarFilaActiva(entryIndex, segmentIndex);
 
                 state.termsFoundInActiveSegment.clear();
                 const originalSegmentPre = document.getElementById(
@@ -453,14 +987,14 @@ function renderTranslations(entries) {
                 );
                 if (
                     originalSegmentPre &&
-                    state.glossarySourceLanguage &&
+                    state.sourceLang &&
                     state.glossary.length > 0
                 ) {
-                    const highlightResult = applyGlossaryHighlightToText(segment.original);
-                    originalSegmentPre.innerHTML = highlightResult.html;
-                    highlightResult.foundTerms.forEach((term) =>
-                        state.termsFoundInActiveSegment.add(term),
-                    );
+                    // Se repinta entero: las etiquetas van en el mismo elemento
+                    // y se perderían si aquí solo se pusiera el glosario.
+                    const marcado = marcadoDelOriginal(segment.original, { glosario: true });
+                    originalSegmentPre.innerHTML = marcado.html;
+                    marcado.terminos.forEach((term) => state.termsFoundInActiveSegment.add(term));
                 }
 
                 // --- NUEVO: Mostrar etiqueta de glosario ---
@@ -537,7 +1071,8 @@ function renderTranslations(entries) {
                     `msgid-pre-${entryIndex}-${segmentIndex}`,
                 );
                 if (originalSegmentPre) {
-                    originalSegmentPre.textContent = segment.original;
+                    // Se quita el glosario, pero las etiquetas se quedan.
+                    originalSegmentPre.innerHTML = marcadoDelOriginal(segment.original).html;
                 }
                 state.termsFoundInActiveSegment.clear();
                 updateGlossaryTableHighlights();
@@ -554,8 +1089,19 @@ function renderTranslations(entries) {
             });
 
             validateButton.addEventListener('click', (event) => {
-                const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
-                const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
+                // currentTarget y no target: dentro del botón está el SVG del
+                // visto, y pulsando encima el evento nace ahí.
+                const boton = event.currentTarget;
+                const currentEntryIndex = parseInt(boton.dataset.entryIndex);
+                const currentSegmentIndex = parseInt(boton.dataset.segmentIndex);
+
+                // El mismo botón valida y desvalida: si ya estaba validado,
+                // vuelve a dejar el segmento editable.
+                if (boton.classList.contains('validado')) {
+                    setTranslationEditableState(currentEntryIndex, currentSegmentIndex, true);
+                    return;
+                }
+
                 // Disparar Autopropagación al validar
                 const txtArea = document.getElementById(
                     `msgstr-${currentEntryIndex}-${currentSegmentIndex}`,
@@ -573,28 +1119,25 @@ function renderTranslations(entries) {
                 goToNextTranslation(currentEntryIndex, currentSegmentIndex);
             });
 
-            editButton.addEventListener('click', (event) => {
-                const currentEntryIndex = parseInt(event.target.dataset.entryIndex);
-                const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
-                setTranslationEditableState(currentEntryIndex, currentSegmentIndex, true);
-            });
-
-            autoResizeTextarea(msgstrTextarea, msgidPre);
-            updateCharCount(msgstrTextarea, segment.original.length, charCountSpan);
+            updateCharCount(msgstrTextarea, charCountSpan);
+            revisarEtiquetas(entryIndex, segmentIndex);
         });
 
         if (entry.fuzzy) {
             const fuzzyIndicator = document.createElement('span');
-            fuzzyIndicator.className =
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-2';
+            fuzzyIndicator.className = 'segmento-fuzzy';
             fuzzyIndicator.textContent = translations[state.currentLanguage]['fuzzy'];
             translationUnit.appendChild(fuzzyIndicator);
         }
 
         translationsContainer.appendChild(translationUnit);
     });
-    savePoButton.disabled = false;
-    convertToMoButton.disabled = false;
+
+    // Los cuadros de traducción se ajustan al alto de su texto ahora, cuando ya
+    // están en la página: medidos antes, mientras se construían aparte, el
+    // navegador devuelve cero y todos salían de una línea.
+    ajustarAltoDeLosCuadros();
+    updateSaveButtonsState();
     statsContainer.classList.add('show');
     updateStatsDisplay();
     updateUtilityButtonStates();
@@ -611,15 +1154,13 @@ function filterPOEntries() {
     const searchInOriginal = searchInOriginalCheckbox.checked;
     const searchInTranslation = searchInTranslationCheckbox.checked;
 
-    // Clear previous search state
+    // Se limpia lo resaltado antes. Antes se hacía sustituyendo el contenido del
+    // elemento por su texto plano, lo que de paso se llevaba por delante el color
+    // de las etiquetas; ahora se vuelve a dibujar el original entero, que es
+    // barato y deja cada cosa en su sitio.
     state.searchResults = [];
     state.currentSearchIndex = -1;
-    document.querySelectorAll('.search-highlight, .current-search-highlight').forEach((el) => {
-        const parent = el.parentNode;
-        if (parent) {
-            parent.innerHTML = parent.textContent; // Revert to plain text
-        }
-    });
+    repintarTodosLosOriginales();
 
     if (!query) {
         state.poEntries.forEach((entry, index) => {
@@ -643,15 +1184,16 @@ function filterPOEntries() {
 
         // Highlight in original
         if (searchInOriginal) {
-            const msgidElements = unit.querySelectorAll('.original-col pre');
-            msgidElements.forEach((el) => {
-                const originalText = el.textContent;
-                if (originalText.match(queryRegex)) {
-                    matchFound = true;
-                    el.innerHTML = originalText.replace(
-                        queryRegex,
-                        (match) => `<span class="search-highlight">${match}</span>`,
-                    );
+            entry.sentenceSegments.forEach((segmento, sIdx) => {
+                queryRegex.lastIndex = 0;
+                if (!queryRegex.test(segmento.original)) return;
+
+                matchFound = true;
+                const pre = document.getElementById(`msgid-pre-${index}-${sIdx}`);
+                if (pre) {
+                    pre.innerHTML = marcadoDelOriginal(segmento.original, {
+                        busqueda: queryRegex,
+                    }).html;
                 }
             });
         }
@@ -778,11 +1320,61 @@ function goToPreviousTranslation(currentEntryIndex, currentSegmentIndex) {
     }
 }
 
+/**
+ * Engancha las etiquetas del original para poder insertarlas con un clic.
+ *
+ * Se usa delegación en el contenedor y no un listener por etiqueta: los
+ * segmentos se vuelven a dibujar cada vez que se busca, se cambia de idioma o se
+ * abre otro archivo, y unos listeners puestos uno a uno se perderían en cada
+ * redibujado (o peor, se acumularían).
+ */
+function initEtiquetas() {
+    if (!translationsContainer) return;
+
+    // El color y la indivisibilidad dentro del cuadro de traducción. Se le pasa
+    // la función y no el perfil porque el formato cambia con el archivo abierto.
+    initEtiquetasEnTraduccion(translationsContainer, perfilActual);
+
+    const insertarDesde = (marca) => {
+        const fila = marca.closest('.segmento-fila');
+        const textarea = fila ? fila.querySelector('textarea.msgstr-textarea') : null;
+        if (textarea) insertarEtiqueta(textarea, marca.dataset.etiqueta);
+    };
+
+    // Se escucha 'mousedown' y no 'click', y se corta el comportamiento normal
+    // del ratón. Dos motivos, y el segundo no es evidente:
+    //
+    // 1. Así el cuadro de traducción no pierde el foco al pulsar, y la etiqueta
+    //    entra donde estaba el cursor en vez de al final.
+    // 2. Al perder el foco, el original se vuelve a dibujar (para quitarle el
+    //    resaltado del glosario). Eso destruye la etiqueta que se estaba
+    //    pulsando entre el botón abajo y el botón arriba, y entonces el
+    //    navegador no llega a generar el 'click': el primer intento se perdía
+    //    entero y había que pulsar dos veces.
+    translationsContainer.addEventListener('mousedown', (evento) => {
+        const marca = evento.target.closest('.etiqueta');
+        if (!marca) return;
+        evento.preventDefault();
+        insertarDesde(marca);
+    });
+
+    // Y con el teclado, para quien no usa el ratón al traducir.
+    translationsContainer.addEventListener('keydown', (evento) => {
+        if (evento.key !== 'Enter' && evento.key !== ' ') return;
+        const marca = evento.target.closest('.etiqueta');
+        if (!marca) return;
+        evento.preventDefault();
+        insertarDesde(marca);
+    });
+}
+
 export {
     filterPOEntries,
     getCurrentFocusedIndex,
     goToNextTranslation,
     goToPreviousTranslation,
+    initEtiquetas,
+    insertarSiguienteEtiquetaQueFalta,
     navigateToTranslation,
     pushToUndoStack,
     renderTranslations,

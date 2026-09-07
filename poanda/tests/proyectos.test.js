@@ -145,6 +145,86 @@ describe('separar y reunir entradas', () => {
         const desordenados = [...segmentos].reverse();
         expect(proyectos.reunirEntradas(meta, desordenados)).toEqual(ENTRADAS);
     });
+
+    it('conserva los datos propios de cada formato', () => {
+        // Cada formato trae lo suyo para saber devolver el texto a su sitio: de
+        // qué línea salía, de qué párrafo, con qué estilo. Si el guardado del
+        // proyecto los filtrara, el archivo se abriría bien y se exportaría mal.
+        const conDatosPropios = [
+            {
+                comments: [],
+                msgid: 'Save',
+                msgctxt: 'boton.guardar',
+                fuzzy: false,
+                isHeader: false,
+                lineaOriginal: 12,
+                lineasOcupadas: 2,
+                structureKind: 'heading',
+                structureLevel: 2,
+                sentenceSegments: [
+                    {
+                        original: 'Save',
+                        translation: 'Guardar',
+                        wordCountOriginal: 1,
+                        wordCountTranslation: 1,
+                        isTranslated: true,
+                    },
+                ],
+            },
+        ];
+
+        const { meta, segmentos } = proyectos.separarEntradas(conDatosPropios);
+        const vueltas = proyectos.reunirEntradas(meta, segmentos);
+
+        expect(vueltas[0].lineaOriginal).toBe(12);
+        expect(vueltas[0].lineasOcupadas).toBe(2);
+        expect(vueltas[0].structureKind).toBe('heading');
+        expect(vueltas[0].structureLevel).toBe(2);
+    });
+
+    it('conserva las entradas con formas de plural', () => {
+        // Guardar el proyecto y volver a abrirlo tiene que devolver también el
+        // original en plural: sin él, el archivo que se genere al guardar ya no
+        // será un archivo con plurales aunque las traducciones sigan ahí.
+        const conPlural = [
+            {
+                comments: [],
+                msgid: 'One file',
+                msgidPlural: '%d files',
+                fuzzy: false,
+                isHeader: false,
+                sentenceSegments: [
+                    {
+                        original: 'One file',
+                        translation: 'Un archivo',
+                        wordCountOriginal: 2,
+                        wordCountTranslation: 2,
+                        isTranslated: true,
+                        formaPlural: 0,
+                    },
+                    {
+                        original: '%d files',
+                        translation: '%d archivos',
+                        wordCountOriginal: 2,
+                        wordCountTranslation: 2,
+                        isTranslated: true,
+                        formaPlural: 1,
+                    },
+                ],
+            },
+        ];
+
+        const { meta, segmentos } = proyectos.separarEntradas(conPlural);
+        const vueltas = proyectos.reunirEntradas(meta, segmentos);
+
+        expect(vueltas[0].msgidPlural).toBe('%d files');
+        expect(vueltas[0].sentenceSegments.map((s) => s.translation)).toEqual([
+            'Un archivo',
+            '%d archivos',
+        ]);
+        // Y sin msgstr suelto, que junto a las formas dejaría el archivo inválido.
+        expect(vueltas[0].msgstr).toBeUndefined();
+    });
 });
 
 describe('crear y abrir un proyecto', () => {
@@ -165,6 +245,30 @@ describe('crear y abrir un proyecto', () => {
     it('conserva el HTML original en los proyectos HTML', async () => {
         const id = await crearEjemplo({ format: 'html', rawHtml: '<html><p>Hi</p></html>' });
         expect((await proyectos.abrirProyecto(id)).rawHtml).toBe('<html><p>Hi</p></html>');
+    });
+
+    it('el comentario que escribe quien traduce sigue ahí al volver a abrir', async () => {
+        // La nota vive con el proyecto, no en el archivo: si no se guardara
+        // aquí, cerrar la pestaña se la llevaría, y una nota que se pierde es
+        // peor que no poder escribirla.
+        const id = await crearEjemplo();
+        const fila = await db.segments
+            .where('projectId')
+            .equals(id)
+            .and((s) => s.entryIndex === 1)
+            .first();
+        await db.segments.update(fila.id, { nota: 'Preguntar al cliente si es "Ajustes"' });
+
+        const abierto = await proyectos.abrirProyecto(id);
+        expect(abierto.entradas[1].sentenceSegments[0].nota).toBe(
+            'Preguntar al cliente si es "Ajustes"',
+        );
+    });
+
+    it('el segmento sin comentario no se inventa uno vacío', async () => {
+        const id = await crearEjemplo();
+        const abierto = await proyectos.abrirProyecto(id);
+        expect(abierto.entradas[1].sentenceSegments[0]).not.toHaveProperty('nota');
     });
 
     it('devuelve null si el proyecto no existe', async () => {
@@ -304,10 +408,12 @@ describe('limpieza de proyectos viejos', () => {
 describe('avance del proyecto', () => {
     it('cuenta los segmentos traducidos sin cargar el proyecto', async () => {
         const id = await crearEjemplo();
-        expect(await proyectos.progresoDe(id)).toEqual({ total: 3, traducidos: 1 });
+        // Son tres entradas, pero la primera es la cabecera del archivo y no
+        // cuenta: quedan dos cadenas traducibles, una ya traducida.
+        expect(await proyectos.progresoDe(id)).toEqual({ total: 2, traducidos: 1 });
 
         await proyectos.guardarTraduccion(id, 2, 0, 'Guardar cambios');
-        expect(await proyectos.progresoDe(id)).toEqual({ total: 3, traducidos: 2 });
+        expect(await proyectos.progresoDe(id)).toEqual({ total: 2, traducidos: 2 });
     });
 });
 

@@ -1,4 +1,4 @@
-import { test, expect, cargarPo } from './apoyo.js';
+import { test, expect, cambiarIdioma, cargarPo } from './apoyo.js';
 
 test.describe('arranque', () => {
     test('la página carga sin errores de JavaScript', async ({ page }) => {
@@ -65,12 +65,14 @@ test.describe('edición de archivos PO', () => {
     test('escribir una traducción actualiza el contador de caracteres', async ({ page }) => {
         await cargarPo(page);
 
+        // El recuento vive dentro de la columna de la traducción y enseña solo
+        // el número: la explicación está en el título emergente.
         const campo = page.locator('textarea[id^="msgstr-"]').nth(1);
         const contador = page.locator('[id^="charCount-"]').nth(1);
-        await expect(contador).toContainText('Translation: 0');
+        await expect(contador).toHaveText('0');
 
         await campo.fill('Guardar cambios');
-        await expect(contador).toContainText('Translation: 15');
+        await expect(contador).toHaveText('15');
     });
 
     test('el panel de estadísticas muestra el recuento del archivo', async ({ page }) => {
@@ -95,11 +97,11 @@ test.describe('edición de archivos PO', () => {
 
 test.describe('idioma e interfaz', () => {
     test('cambia entre español e inglés', async ({ page }) => {
-        await page.locator('#langEsBtn').click();
-        await expect(page.locator('#loadBtnText')).toContainText(/Cargar|archivo/i);
+        await cambiarIdioma(page, 'es');
+        await expect(page.locator('.zona-soltar-titulo')).toContainText(/Suelta|traducir/i);
 
-        await page.locator('#langEnBtn').click();
-        await expect(page.locator('#loadBtnText')).toContainText(/Load|file/i);
+        await cambiarIdioma(page, 'en');
+        await expect(page.locator('.zona-soltar-titulo')).toContainText(/Drop|translating/i);
     });
 
     test('el modo oscuro se activa y se recuerda al recargar', async ({ page }) => {
@@ -119,5 +121,19 @@ test.describe('idioma e interfaz', () => {
         await expect(page.locator('#changelogContent')).toContainText('Poanda v');
         await page.locator('#changelogCloseBtn').click();
         await expect(page.locator('#changelogModal')).toBeHidden();
+    });
+
+    test('el changelog se ve ordenado, no como un muro de texto', async ({ page }) => {
+        await page.locator('#versionToggle').click();
+        const ventana = page.locator('#changelogContent');
+
+        // Título de versión, fecha aparte, secciones y novedades en lista.
+        await expect(ventana.locator('h3.cl-version').first()).toContainText('Poanda v');
+        await expect(ventana.locator('p.cl-fecha').first()).toContainText(/\d{4}/);
+        await expect(ventana.locator('h4.cl-seccion').first()).toBeVisible();
+        expect(await ventana.locator('li').count()).toBeGreaterThan(5);
+
+        // Y las rayas de iguales del archivo no llegan a verse.
+        await expect(ventana).not.toContainText('=====');
     });
 });

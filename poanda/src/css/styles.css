@@ -10,12 +10,54 @@
         }
         
        /* --- MODO OSCURO FINAL (V4) --- */
+        /* El margen que traen los navegadores por defecto lo quita también
+           Tailwind, pero se fija aquí para no depender de que el CDN cargue:
+           si fallara, la aplicación seguiría ocupando la pantalla entera. */
+        html, body { margin: 0; padding: 0; }
+
+        /* La aplicación ocupa la ventana entera: no hay marco ni fondo alrededor.
+           Se define aquí, y no solo con clases de Tailwind, para que siga siendo
+           cierto aunque el CDN no cargue. */
+        #dropArea { width: 100%; min-height: 100vh; box-sizing: border-box;
+            /* El <body> centra a sus hijos; con esto el panel se estira de
+               borde a borde en lugar de encogerse al ancho de su contenido. */
+            align-self: stretch; flex-shrink: 0;
+            /* Y por dentro es una columna, para que el editor pueda quedarse con
+               todo el alto que no usen la cabecera y el buscador. */
+            display: flex; flex-direction: column; }
+
+        /* Con un archivo abierto, el panel mide exactamente la ventana y lo que
+           se desplaza es la lista de segmentos, no la página. Es la disposición
+           de cualquier herramienta TAO: la barra de botones y el buscador se
+           quedan quietos y solo se mueve el texto.
+
+           Sin archivo abierto se deja en min-height, para que la pantalla de
+           bienvenida (logo, descripción y recuadro de soltar) pueda pasarse de
+           alto en una ventana pequeña sin quedarse cortada. */
+        body.con-proyecto #dropArea { height: 100vh; min-height: 0; }
+
+        /* Las barras de desplazamiento las dibuja el navegador, no esta hoja: la
+           única forma de que salgan oscuras es decirle en la raíz del documento
+           que la página es oscura. Sin esto la aplicación quedaba en negro con
+           una barra blanca a la derecha. De paso también oscurece las casillas
+           de verificación y demás controles del sistema. */
+        html.dark-mode { color-scheme: dark; }
+
         body.dark-mode {
             --color-dark: #f3f4f6;
             --color-light-gray: #111827; /* Fondo muy oscuro */
             --color-white: #1f2937;      /* Gris oscuro para contenedores */
             --color-medium-gray: #374151;
             --color-neutral-gray: #9ca3af;
+            /* Los dos colores de marca se rebajan. El rosa y el amarillo de
+               Poanda están pensados para verse sobre blanco: sobre un fondo
+               oscuro el mismo color tiene mucho más contraste del que hace
+               falta y deslumbra, sobre todo en trazos finos como el borde del
+               segmento activo. Estos son los mismos tonos profundos que ya
+               usaban los botones en oscuro, así que la marca no cambia: cambia
+               cuánto brilla. */
+            --color-primary: #be123c;
+            --color-secondary: #b45309;
             background-color: var(--color-light-gray) !important;
             color: #e5e7eb;
         }
@@ -39,19 +81,20 @@
             color: #e5e7eb !important;
         }
 
-        /* 2. Unidades de Traducción y Editor */
-        body.dark-mode .translation-unit-bg {
-            background-color: #1f2937 !important;
-            border-color: #4b5563 !important;
-        }
+        /* 2. Unidades de Traducción y Editor
+           Las filas del editor no necesitan reglas propias en modo oscuro:
+           usan las variables de color, que ya cambian solas. */
         body.dark-mode .po-display-code {
             background-color: #111827 !important;
             color: #d1d5db !important;
             border-color: #374151 !important;
         }
-        body.dark-mode input, 
-        body.dark-mode select, 
-        body.dark-mode textarea,
+        /* El cuadro de traducción del editor queda fuera: no lleva marco ni
+           fondo propio a propósito, para que la fila se lea como una tabla y no
+           como un formulario. */
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea:not(.segmento-texto),
         body.dark-mode .ai-textarea {
             background-color: #374151 !important;
             color: #f3f4f6 !important;
@@ -135,14 +178,8 @@
             color: #e5e7eb !important;
             border-color: #4b5563 !important;
         }
-        body.dark-mode #versionToggle {
-            background-color: #374151 !important;
-            color: #e5e7eb !important;
-            border-color: #4b5563 !important;
-        }
-        body.dark-mode #versionToggle:hover {
-            background-color: #4b5563 !important;
-        }
+        /* El botón de versión ya se viste con .control-barra, igual que los de
+           idioma y tema; no necesita reglas propias en modo oscuro. */
         body.dark-mode .top-utility-buttons-container button:hover,
         body.dark-mode .top-utility-buttons-container .dropdown-btn:hover {
             background-color: #4b5563 !important;
@@ -226,14 +263,9 @@
             white-space: pre-wrap;
             overflow-wrap: break-word;
         }
-        .check-icon {
-            display: none;
-            margin-left: 8px;
-            vertical-align: middle;
-            width: 20px;
-            height: 20px;
-            color: #22c55e;
-        }
+        /* El visto de validar se define abajo, con el resto del editor: ahora
+           está siempre a la vista (apagado o encendido) en su propia columna,
+           en lugar de aparecer y desaparecer al lado de los botones. */
         /* --- THEMED BUTTONS --- */
         .btn-load, .btn-edit { background-color: var(--color-primary); color: var(--color-dark); }
         .btn-load:hover, .btn-edit:hover { background-color: #e07a82; transform: scale(1.02); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
@@ -255,25 +287,208 @@
         .btn-modal-neutral:hover { background-color: #d1d5db; }
         
         .po-display-code { background-color: var(--color-medium-gray); border: 1px solid #d1d5db; color: var(--color-dark); }
-        .msgstr-textarea { background-color: var(--color-white); color: var(--color-dark); min-height: 80px; }
-        .translation-unit-bg { 
-            background-color: var(--color-white); 
-            border-color: var(--color-medium-gray); 
-            content-visibility: auto; 
-            contain-intrinsic-size: 200px; 
-        }
         .text-on-light-contrast { color: var(--color-dark); }
-        .translation-row { display: flex; flex-direction: column; gap: 1rem; }
-        @media (min-width: 768px) {
-            .translation-row { flex-direction: row; }
-            .original-col, .translation-col { flex: 1; }
+
+        /* ------------------------------------------------------------------
+           EL EDITOR: UNA FILA POR SEGMENTO
+
+           Cada segmento es una sola caja con cuatro partes en horizontal: el
+           número, el original, la traducción y el visto de validar. Todo lo que
+           no es texto (recuentos, iconos, contexto) va en letra pequeña y
+           pegado a una esquina, para que lo que se lea sea la traducción.
+
+           Las medidas son deliberadamente pequeñas y todas iguales: en una
+           pantalla de portátil caben así el doble de segmentos, y el ojo baja
+           por una lista uniforme sin ir tropezando con bloques de distinto
+           tamaño.
+           ------------------------------------------------------------------ */
+        :root {
+            /* Una sola escala de tamaños para toda la herramienta. Tres pasos y
+               ni uno más: el editor, las ventanas, los paneles y la barra de
+               estadísticas usan estos y nada suelto. Antes había once tamaños
+               distintos repartidos por la hoja (0.75, 0.8, 0.8125, 0.85, 0.875,
+               0.9, 0.95, 1, 1.15, 1.2rem y lo que pusiera Tailwind), y el
+               resultado era que abrir una ventana encima del editor parecía
+               cambiar de programa. */
+            --texto-titulo: 1rem;         /* 16px: títulos de ventana y panel */
+            --texto-base: 0.875rem;       /* 14px: texto normal, el del editor */
+            --texto-segmento: 0.875rem;   /* 14px: el texto que se traduce */
+            --texto-meta: 0.75rem;        /* 12px: recuentos, notas, etiquetas */
+            --alto-linea-segmento: 1.55;
+            --fuente-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        /* Un grupo por entrada del archivo: su contexto y sus frases. */
+        .segmento-grupo {
+            margin-bottom: 0.5rem;
+            content-visibility: auto;
+            contain-intrinsic-size: 90px;
+        }
+
+        /* Contexto y referencias, en una línea con una raya que llega al borde */
+        .segmento-contexto { display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0 0.25rem; }
+        .segmento-contexto-etiqueta {
+            font-family: var(--fuente-mono); font-size: var(--texto-meta);
+            color: var(--color-neutral-gray); background-color: var(--color-light-gray);
+            border: 1px solid var(--color-medium-gray); border-radius: 4px;
+            padding: 2px 8px; user-select: all; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; max-width: 60%;
+        }
+        .segmento-contexto-raya { flex: 1; height: 1px; background-color: var(--color-medium-gray); }
+
+        .segmento-fila {
+            display: flex; background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray); border-radius: 6px;
+            overflow: hidden; margin-bottom: 0.375rem;
+        }
+
+        /* Número de segmento */
+        .segmento-numero {
+            width: 34px; flex-shrink: 0; padding-top: 0.5rem;
+            text-align: center; font-family: var(--fuente-mono);
+            font-size: var(--texto-meta); color: var(--color-neutral-gray);
+            border-right: 1px solid var(--color-medium-gray); user-select: none;
+        }
+
+        .segmento-cuerpo { flex: 1; display: flex; min-width: 0; }
+        .segmento-col {
+            flex: 1; min-width: 0; position: relative;
+            padding: 0.5rem 0.625rem 0.25rem;
+            display: flex; flex-direction: column;
+        }
+        .segmento-origen { border-right: 1px solid var(--color-medium-gray); }
+
+        /* Original y traducción se ven exactamente igual: el mismo tamaño, la
+           misma interlínea y ningún marco alrededor del cuadro de escritura. Es
+           lo que hace que la vista parezca una tabla y no un formulario. */
+        .segmento-texto {
+            font-family: inherit; font-size: var(--texto-segmento);
+            line-height: var(--alto-linea-segmento); color: var(--color-dark);
+            background: transparent; border: none; outline: none;
+            margin: 0; padding: 0; width: 100%; resize: none;
+            white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
+            min-height: 1.55em; overflow: hidden;
+        }
+        textarea.segmento-texto { display: block; }
+        .segmento-origen .segmento-texto { color: var(--color-neutral-gray); }
+        body.dark-mode .segmento-origen .segmento-texto { color: #cbd5e1; }
+        .segmento-texto-bloqueado { opacity: 0.65; }
+
+        /* Pie de cada columna: iconos a la izquierda, recuento a la derecha */
+        .segmento-pie { display: flex; align-items: center; justify-content: flex-end; gap: 0.375rem; margin-top: 0.375rem; min-height: 18px; }
+        .segmento-cuenta {
+            font-family: var(--fuente-mono); font-size: var(--texto-meta);
+            color: var(--color-neutral-gray); user-select: none;
+            font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right;
+        }
+        .segmento-icono {
+            background: none; border: none; padding: 2px; border-radius: 4px;
+            color: var(--color-neutral-gray); opacity: 0.55; cursor: pointer;
+            display: flex; align-items: center; transition: opacity 0.15s, color 0.15s;
+        }
+        .segmento-icono:hover { opacity: 1; color: var(--color-primary); }
+        .segmento-icono svg { width: 14px; height: 14px; }
+
+        /* Comentarios del segmento: el icono se queda siempre en su sitio (si
+           apareciera y desapareciera, el pie bailaría de una fila a otra), muy
+           apagado cuando no hay nada que leer y encendido cuando sí. */
+        .segmento-comentario:disabled { opacity: 0.2; cursor: default; }
+        .segmento-comentario:disabled:hover { opacity: 0.2; color: var(--color-neutral-gray); }
+        /* Ámbar oscuro sobre blanco y ámbar claro sobre negro: el amarillo de la
+           marca no se ve sobre blanco y el ámbar oscuro no se ve sobre negro. */
+        .segmento-comentario.con-nota { opacity: 1; color: #b45309; }
+        body.dark-mode .segmento-comentario.con-nota { color: #fbbf24; }
+
+        /* Cajita de comentario: se despliega debajo de la fila del segmento del
+           que habla, no en un cuadro de diálogo que tape el texto. El borde
+           ámbar de la izquierda la ata al icono, que es de ese mismo color. */
+        .comentario-caja {
+            margin: 0 38px 0.5rem 44px; padding: 0.6rem 0.75rem;
+            background-color: #fffbeb; border: 1px solid #fde68a;
+            border-left: 3px solid #f59e0b; border-radius: 4px;
+        }
+        body.dark-mode .comentario-caja {
+            background-color: #26221a; border-color: #57534e; border-left-color: #fbbf24;
+        }
+        .comentario-campo {
+            width: 100%; resize: vertical; padding: 0.4rem 0.5rem;
+            font-family: inherit; font-size: var(--texto-base);
+            border: 1px solid var(--color-medium-gray); border-radius: 4px;
+            background-color: #ffffff; color: #000000;
+        }
+        body.dark-mode .comentario-campo { background-color: #111827; color: #e5e7eb; }
+        .comentario-botones {
+            display: flex; justify-content: flex-end; gap: 0.4rem; margin-top: 0.4rem;
+        }
+        .comentario-boton {
+            font-size: var(--texto-meta); font-weight: 600; cursor: pointer;
+            padding: 0.25rem 0.7rem; border-radius: 4px;
+            border: 1px solid var(--color-medium-gray);
+            background-color: transparent; color: var(--color-dark);
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .comentario-boton:hover { background-color: rgba(0, 0, 0, 0.05); }
+        body.dark-mode .comentario-boton:hover { background-color: rgba(255, 255, 255, 0.08); }
+        .comentario-guardar {
+            background-color: var(--color-primary); border-color: var(--color-primary);
+            color: #ffffff;
+        }
+        .comentario-guardar:hover { filter: brightness(1.1); background-color: var(--color-primary); }
+        body.dark-mode .comentario-guardar { color: #ffffff; }
+        .comentario-eliminar { color: #b91c1c; border-color: #fca5a5; margin-right: auto; }
+        body.dark-mode .comentario-eliminar { color: #fca5a5; border-color: #7f1d1d; }
+
+        /* Lo del archivo, en un recuadro que se distingue de un vistazo del
+           campo donde se escribe lo propio. */
+        .comentario-titulillo {
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-neutral-gray); margin-bottom: 0.25rem;
+        }
+        .comentario-archivo {
+            font-size: var(--texto-base); white-space: pre-wrap;
+            background-color: #f9fafb; border-left: 3px solid var(--color-secondary);
+            padding: 0.5rem 0.75rem; border-radius: 4px; margin-bottom: 1rem;
+            color: var(--color-dark);
+        }
+        body.dark-mode .comentario-archivo { background-color: #1f2937; color: #cbd5e1; }
+        .comentario-caja .comentario-archivo { margin-bottom: 0.5rem; }
+
+        /* Etiqueta del glosario: aparece sobre la traducción al entrar en ella */
+        .segmento-glosario {
+            display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.25rem;
+            font-size: var(--texto-meta); font-weight: 600;
+            color: #78350f; background-color: var(--color-secondary);
+            padding: 1px 6px; border-radius: 4px; align-self: flex-start;
+        }
+        .segmento-glosario.hidden { display: none; }
+
+        /* Columna de validación: un visto que se enciende */
+        .segmento-estado {
+            width: 38px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            border-left: 1px solid var(--color-medium-gray); background-color: var(--color-light-gray);
+        }
+        .segmento-check { background: none; border: none; padding: 0; cursor: pointer; display: flex; }
+        .check-icon { width: 18px; height: 18px; color: var(--color-neutral-gray); opacity: 0.35; transition: opacity 0.15s, color 0.15s; }
+        .segmento-check:hover .check-icon { opacity: 0.7; }
+        .segmento-check.validado .check-icon { color: #16a34a; opacity: 1; }
+
+        .segmento-fuzzy {
+            display: inline-block; margin: 0.25rem 0 0 34px;
+            font-size: var(--texto-meta); font-weight: 600;
+            color: #78350f; background-color: var(--color-secondary);
+            padding: 1px 8px; border-radius: 999px;
         }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background-color: var(--color-white); padding: 2rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 90%; width: 500px;  position: relative; }
+        .modal-content { background-color: var(--color-white); padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 90%; width: 500px;  position: relative; }
  #findReplaceModal .modal-content { width: 650px; max-width: 95%; }
         #shortcutsModal .modal-content { width: 550px; max-width: 95%; }
         .shortcut-icon { display: inline-block; width: 1em; height: 1em; vertical-align: middle; margin: 0 4px; }
-        .main-editor-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
+        .main-editor-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%;
+            /* Ocupa la altura que sobra del panel. min-height: 0 parece de más y
+               no lo es: un elemento flexible no se deja encoger por debajo de su
+               contenido salvo que se le diga, y sin esto la lista de segmentos
+               empujaría el panel hacia abajo en lugar de desplazarse por dentro. */
+            flex: 1; min-height: 0; }
         @media (min-width: 1024px) {
             .main-editor-layout { flex-direction: row; }
             #central-column { flex: 2; }
@@ -282,14 +497,14 @@
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; cursor: move; user-select: none; }
         .sidebar-content { height: calc(100% - 60px); overflow-y: auto; padding-right: 0.5rem; }
         .glossary-input-group label, .tm-input-group label { white-space: nowrap; }
-        .glossary-input-group input, .glossary-input-group select, .tm-input-group input, .tm-input-group select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-top: 4px; color: var(--color-dark); background-color: var(--color-white); }
+        .glossary-input-group input, .glossary-input-group select, .tm-input-group input, .tm-input-group select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: var(--texto-base); margin-top: 4px; color: var(--color-dark); background-color: var(--color-white); }
         .glossary-btn-primary, .tm-btn-primary { background-color: var(--color-primary); color: var(--color-dark); padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
         .glossary-btn-primary:hover, .tm-btn-primary:hover { background-color: #e07a82; }
         .glossary-btn-secondary, .tm-btn-secondary { background-color: #e0e0e0; color: #333; padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
         .glossary-btn-secondary:hover, .tm-btn-secondary:hover { background-color: #d0d0d0; }
-        .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; }
+        .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 5px 10px; border-radius: 4px; font-size: var(--texto-meta); }
         .glossary-delete-btn:hover, .tm-delete-btn:hover { background-color: #da190b; }
-        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 8px 12px; border: 1px solid #e0e0e0; font-size: 0.9rem; }
+        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 6px 10px; border: 1px solid #e0e0e0; font-size: var(--texto-base); }
         .glossary-table th, .tm-table th { background-color: #f0f0f0; font-weight: 600; }
         
         .tm-table {
@@ -297,24 +512,241 @@
             width: 100%;
         }
 
-        .glossary-info-box, .tm-info-box { background-color: #fef3c7; border: 1px solid var(--color-secondary); padding: 10px; border-radius: 6px; font-size: 0.85rem; color: var(--color-dark); }
+        .glossary-info-box, .tm-info-box { background-color: #fef3c7; border: 1px solid var(--color-secondary); padding: 10px; border-radius: 6px; font-size: var(--texto-meta); color: var(--color-dark); }
         .glossary-highlight { background-color: var(--color-secondary); padding: 0 2px; border-radius: 3px; }
         .glossary-row-highlight { background-color: #fde68a !important; transition: background-color 0.3s ease; }
-        .translation-unit-active { border: 2px solid var(--color-primary); box-shadow: 0 0 0 3px rgba(244, 135, 144, 0.25); }
+        /* Segmento activo: una barra del color de Poanda en el canto
+           izquierdo de la fila. Antes era un marco de 2 px alrededor de todo el
+           bloque, que en una lista larga daba un efecto de tablero. */
+        .segmento-fila-activa { border-color: var(--color-primary); box-shadow: inset 3px 0 0 0 var(--color-primary); }
+        /* Cabecera: grande al entrar, reducida mientras se traduce.
+           La clase 'con-proyecto' la pone el editor en el <body> cuando hay un
+           archivo abierto. Así se aprovecha el alto de la pantalla para el
+           texto, que es a lo que se viene, sin perder de vista dónde estás. */
+        /* El logo va a los extremos de la barra, que ya está separada de los
+           bordes del panel: por eso aquí el desplazamiento es 0. */
+        .top-utility-left { position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            height: 52px; width: auto; display: none; }
+
+        /* Los logos llevan el texto en oscuro, pensado para fondo blanco: sobre
+           el fondo negro del modo oscuro se pierden. Una sombra blanca paralela
+           los devuelve, sin tener que mantener una segunda imagen. */
+        body.dark-mode #cabeceraGrande img,
+        body.dark-mode .top-utility-left {
+            filter: drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.9))
+                drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.9))
+                drop-shadow(0 0 3px rgba(255, 255, 255, 0.75));
+        }
+        body.con-proyecto .top-utility-left { display: block; }
+        body.con-proyecto #cabeceraGrande { display: none; }
+        /* La barra de botones está posicionada de forma absoluta, así que no
+           ocupa sitio en el flujo: sin la cabecera grande empujando, el editor
+           se le metería por debajo y los botones dejarían de poder pulsarse.
+           Este hueco lo marca el logo, que es lo más alto de la barra: sobresale
+           por debajo de los botones. */
+        body.con-proyecto #mainEditorLayout { margin-top: 3.5rem; }
+
+        /* Idioma, tema y versión: pegados al borde derecho de la barra. Se
+           posicionan aparte para que los botones de herramientas sigan
+           centrados en el panel, independientemente de lo que ocupe esto. */
+        .top-utility-right { position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+            display: flex; align-items: center; gap: 0.5rem; padding-left: 1.5rem; }
+
+        /* Idioma, tema y changelog: mismo tamaño, mismo borde, mismo relleno.
+           Son tres controles del mismo rango y tienen que verse como tres
+           hermanos; antes cada uno venía de una época distinta de la
+           herramienta (un desplegable, un emoji dentro de un círculo y una
+           etiqueta gris con sombra) y la esquina parecía un cajón de sastre. */
+        .control-barra {
+            font-size: var(--texto-base); font-weight: 500; white-space: nowrap;
+            padding: 0.25rem 0.75rem; border-radius: 0.375rem;
+            background-color: var(--color-white); color: var(--color-dark);
+            border: 1px solid #d1d5db; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            cursor: pointer; transition: background-color 0.3s;
+            display: inline-flex; align-items: center; line-height: 1.5;
+        }
+        .control-barra:hover { background-color: #f9fafb; }
+        body.dark-mode .control-barra {
+            background-color: #374151; color: #e5e7eb; border-color: #4b5563;
+        }
+        body.dark-mode .control-barra:hover { background-color: #4b5563; }
+
+        /* Cuadro de idiomas: los dos desplegables con la flecha en medio, que es
+           lo que dice de un vistazo cuál es cuál. */
+        .idiomas-par {
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: end; gap: 0.5rem;
+        }
+        .idiomas-flecha {
+            padding-bottom: 0.5rem; font-size: 1.25rem;
+            color: var(--color-neutral-gray);
+        }
+        .idiomas-aviso {
+            background-color: #fffbeb; border-left: 3px solid #f59e0b;
+            padding: 0.4rem 0.6rem; border-radius: 4px; margin-bottom: 0.5rem;
+            color: #92400e;
+        }
+        body.dark-mode .idiomas-aviso { background-color: #26221a; color: #fcd34d; }
+        .idiomas-error {
+            min-height: 1.2em; margin-top: 0.4rem;
+            font-size: var(--texto-meta); color: #b91c1c;
+        }
+        body.dark-mode .idiomas-error { color: #fca5a5; }
+
+        /* En el glosario y en la memoria, el par sale con el nombre entero: ahí
+           no hay prisa y se está decidiendo si un término encaja. */
+        .par-del-proyecto {
+            font-size: var(--texto-meta); color: var(--color-neutral-gray);
+        }
+        .par-del-proyecto-enlace {
+            font-weight: 600; color: var(--color-primary);
+            background: none; border: none; padding: 0; cursor: pointer;
+            text-decoration: underline; text-underline-offset: 2px;
+        }
+
+        /* Barra de búsqueda: estrecha y en letra pequeña.
+           El campo llevaba `flex-grow` y se estiraba de lado a lado de la
+           pantalla para escribir dos palabras, con lo que la barra pesaba más
+           que la lista de segmentos que hay debajo. Ahora ocupa lo que necesita
+           y se para; el resto de la fila queda libre. */
+        /* El bloque cruza el panel de lado a lado, como el editor de debajo: es
+           una barra de herramientas, y una barra que se queda a medias parece
+           un recuadro suelto. Lo que no se estira es el campo de escribir. */
+        #poSearchContainer { padding: 0.625rem 0.75rem; }
+        /* El campo ocupa la barra entera menos las flechas y el contador: lo que
+           se redujo fue la letra y el alto, no el sitio para escribir. */
+        /* El campo se queda con todo el ancho que sobra: el par de idiomas
+           reserva lo suyo y nada más, que es lo poco que ocupan dos códigos. */
+        #poSearchInput {
+            flex: 1 1 auto; min-width: 0;
+            padding: 0.3rem 0.6rem; font-size: var(--texto-meta);
+        }
+
+        /* El par de idiomas del proyecto, al final de la barra de búsqueda.
+           Va en letra de máquina y con los códigos, no con los nombres:
+           "en-US → pt-BR" se lee de un vistazo y ocupa lo mismo siempre,
+           mientras que "Inglés (Estados Unidos) → Portugués de Brasil" echaría
+           la barra fuera de la pantalla. Está aquí, donde se traduce, y no
+           entre los menús de arriba, que son otro rango: aquéllos son cosas
+           que se pulsan, esto es un dato del archivo que se mira. */
+        /* Una raya vertical separa la búsqueda del par de idiomas: son dos
+           cosas distintas que comparten fila, y sin nada en medio la segunda se
+           lee como el final de la primera. */
+        .separador-barra {
+            flex: 0 0 auto; width: 1px; height: 1.25rem;
+            background-color: var(--color-medium-gray); margin: 0 0.35rem;
+        }
+
+        .par-idiomas {
+            display: inline-flex; align-items: baseline; gap: 0.4rem;
+            flex: 0 0 auto; white-space: nowrap; cursor: pointer;
+            font-size: var(--texto-meta);
+            /* El negro de los demás textos. Antes llevaba --color-medium-gray,
+               que en modo claro es el gris de los bordes y no el de un texto. */
+            color: var(--color-dark); background: none;
+            /* El borde está siempre, no solo al pasar el ratón: es lo que dice
+               que esto se puede pulsar. Sin él parecía una etiqueta pegada al
+               final de la barra. */
+            border: 1px solid var(--color-medium-gray); border-radius: 4px;
+            padding: 0.2rem 0.45rem; transition: background-color 0.15s, border-color 0.15s;
+        }
+        /* El título, en letra normal y más apagado que el valor: dice de qué es
+           el dato, no es el dato. */
+        .par-idiomas-titulo { font-weight: 500; color: var(--color-neutral-gray); }
+        /* Los códigos, en letra de máquina: se leen de un vistazo y ocupan lo
+           mismo siempre, así que la barra no baila al cambiar de par. */
+        .par-idiomas-valor {
+            font-family: var(--fuente-mono); font-weight: 600;
+            font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
+        }
+        .par-idiomas:hover {
+            background-color: rgba(0, 0, 0, 0.05); border-color: var(--color-neutral-gray);
+        }
+        /* En modo oscuro el color lo pone la regla general de la barra de
+           búsqueda, que va con !important; aquí solo hace falta el fondo. */
+        body.dark-mode .par-idiomas:hover { background-color: rgba(255, 255, 255, 0.08); }
+        #poSearchInput::placeholder { font-size: var(--texto-meta); }
+        #poSearchContainer label,
+        #searchResultCounter { font-size: var(--texto-meta); }
+        #poSearchContainer .w-5 { width: 1rem; height: 1rem; }
+
+        /* Recuadro donde se sueltan los archivos a traducir */
+        .zona-soltar { text-align: center; padding: 3rem 1.5rem; border: 2px dashed #cbd5e0;
+            border-radius: 0.75rem; background-color: #fafbfc; transition: all 0.2s ease; }
+        .zona-soltar.arrastrando { border-color: #E23B5D; background-color: #fdf2f4; transform: scale(1.01); }
+        .zona-soltar-icono { font-size: 2.5rem; line-height: 1; margin-bottom: 0.75rem; opacity: 0.7; }
+        .zona-soltar-titulo { font-size: 1.15rem; font-weight: 600; color: var(--color-on-light-contrast, #2c3e50); margin-bottom: 0.35rem; }
+        .zona-soltar-texto { color: #718096; font-size: 0.95rem; margin-bottom: 1.25rem; }
+        /* Los formatos, por familias: cada fila con su nombre a la izquierda y
+           sus extensiones a la derecha, para poder mirar solo la que interesa
+           en vez de repasar una lista de veintitantas. */
+        .zona-soltar-formatos {
+            display: flex; flex-direction: column; gap: 0.4rem;
+            /* Ancho de sobra para que cada familia quepa en una línea: partida
+               en dos, la fila deja de leerse de un vistazo, que era justo lo
+               que se buscaba al agruparlas. La de documentos es la más larga,
+               con once extensiones. */
+            margin: 0 auto 1.25rem; width: 100%; max-width: 62rem; text-align: left;
+        }
+        .formatos-familia { display: flex; align-items: baseline; gap: 0.6rem; }
+        .formatos-familia-nombre {
+            flex: 0 0 7.5rem; text-align: right; font-size: var(--texto-meta);
+            font-weight: 600; color: #a0aec0; text-transform: uppercase;
+            letter-spacing: 0.04em; white-space: nowrap;
+        }
+        .formatos-familia-lista { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .zona-soltar .formato { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem;
+            padding: 0.2rem 0.5rem; border-radius: 999px; background-color: #edf2f7; color: #4a5568;
+            cursor: help; white-space: nowrap; }
+        .zona-soltar .formato-proyecto { background-color: #fde7ea; color: #b02a45; }
+        body.dark-mode .formatos-familia-nombre { color: #718096; }
+
+        /* En pantalla estrecha, el nombre de la familia se pone encima. */
+        @media (max-width: 640px) {
+            .formatos-familia { flex-direction: column; gap: 0.2rem; }
+            .formatos-familia-nombre { flex: none; text-align: left; }
+        }
+        .zona-soltar-privacidad { font-size: 0.8rem; color: #a0aec0; }
+        .zona-soltar:hover { border-color: #a0aec0; cursor: pointer; }
+        body.dark-mode .zona-soltar { background-color: #2d3748; border-color: #4a5568; }
+        body.dark-mode .zona-soltar.arrastrando { border-color: #E23B5D; background-color: #3b2a30; }
+        body.dark-mode .zona-soltar-titulo { color: #e2e8f0; }
+        body.dark-mode .zona-soltar .formato { background-color: #4a5568; color: #e2e8f0; }
+
+        /* Lista de proyectos recientes */
+        .recent-project { display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+            padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; transition: border-color 0.2s; }
+        .recent-project:hover { border-color: #E23B5D; }
+        .recent-project-info { min-width: 0; }
+        .recent-project-name { font-weight: 600; color: var(--color-on-light-contrast, #2c3e50);
+            overflow-wrap: anywhere; }
+        .recent-project-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: var(--texto-meta); color: #718096; margin-top: 0.25rem; }
+        .recent-project-format { font-weight: 700; letter-spacing: 0.03em; }
+        .recent-project-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .recent-project-actions button { font-size: var(--texto-meta); padding: 0.35rem 0.75rem; border-radius: 0.375rem; transition: all 0.2s; }
+        .recent-project-actions button:disabled { opacity: 0.45; cursor: default; }
+        body.dark-mode .recent-project { border-color: #4a5568; }
+        body.dark-mode .recent-project-name { color: #e2e8f0; }
+
         /* Los diálogos de confirmación y de "escribe un nombre" se lanzan a menudo
            desde otra ventana ya abierta (por ejemplo, borrar la copia de seguridad
            desde el menú de copias). Sin esto quedarían por detrás de ella: se
            verían, pero no se podrían pulsar. */
         #confirmModal, #promptModal { z-index: 1002; }
 
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; font-size: 1.2rem; color: #333; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; font-size: var(--texto-base); color: #333; }
         .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--color-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 70px; text-align: center; }
 .tm-table th:nth-child(2), .tm-table td:nth-child(2) { width: 50%; }
 .tm-table th:nth-child(3), .tm-table td:nth-child(3) { width: 50%; }
         .tm-best-match-highlight { background-color: #fce7f3 !important; border-color: var(--color-primary) !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(244, 135, 144, 0.25); }
-        #dropArea { width: 100%; max-width: 90%; transition: none; }
+        /* El panel no anima nada al arrastrar un archivo encima: el resaltado lo
+           pone la zona de soltar, no el panel. (Aquí había además un
+           `max-width: 90%` de cuando el panel era una tarjeta centrada; se quitó
+           al pasar la aplicación a ocupar la ventana entera, porque dejaba una
+           franja gris a los lados.) */
+        #dropArea { transition: none; }
         .terminology-sidebar, .translation-memory-sidebar { 
             position: fixed; 
             top: 60px; 
@@ -340,34 +772,69 @@
         .translation-memory-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
         
         #central-column { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; }
-        .translations-container-scrolling { max-height: calc(70vh - 50px); overflow-y: auto; } /* Adjusted height */
+        /* La lista de segmentos ocupa todo el alto que queda.
+        
+           Antes tenía un tope fijo de 70vh menos 50 píxeles. Eso dejaba una
+           franja blanca vacía permanente en la parte de abajo —unos 140 px en
+           una pantalla normal— hubiera tres segmentos o tres mil, y hacía que el
+           editor usara dos tercios de la pantalla justo después de haber
+           reducido las filas para que cupieran más. */
+        .translations-container-scrolling {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            /* Hueco al final para que el último segmento se pueda subir por
+               encima de la barra de estadísticas, que va fija abajo del todo. */
+            padding-bottom: 3rem;
+        }
+        #central-column { min-height: 0; }
 
         @media (min-width: 1024px) {
             #central-column.left-sidebar-active { padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); }
             #central-column.right-sidebar-active { padding-right: calc(var(--translation-memory-sidebar-width, 350px) + 2rem); }
         }
-        .po-display-code, .msgstr-textarea { font-size: 1rem; }
-        .top-utility-buttons-container { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 0.75rem; min-width: 400px; }
-        .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn { font-size: 0.875rem; white-space: nowrap; padding-left: 0.75rem; padding-right: 0.75rem; background-color: var(--color-white); color: var(--color-dark); border: 1px solid #d1d5db; }
+        /* La barra va posicionada de forma absoluta, así que no hereda el
+           relleno del panel: hay que separarla de los bordes aquí. Sin esto los
+           controles de los extremos quedaban pegados al filo de la ventana.
+           El valor lateral es el mismo relleno que tiene el panel (2rem), para
+           que todo quede alineado en la misma línea vertical. */
+        .top-utility-buttons-container { position: absolute; top: 1.5rem; left: 2rem; right: 2rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
+        .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn { font-size: var(--texto-base); white-space: nowrap; padding-left: 0.75rem; padding-right: 0.75rem; background-color: var(--color-white); color: var(--color-dark); border: 1px solid #d1d5db; }
         .top-utility-buttons-container button:hover, .top-utility-buttons-container .dropdown-btn:hover { background-color: #f9fafb; }
         .utility-btn-active { background-color: var(--color-dark) !important; color: var(--color-white) !important; border-color: var(--color-dark) !important; }
         .dropdown { position: relative; display: inline-block; }
         .dropdown-content { display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 0.375rem; }
-        .dropdown-content a { color: black; padding: 12px 16px; text-decoration: none; display: block; font-size: 0.875rem; }
+        .dropdown-content a { color: black; padding: 9px 14px; text-decoration: none; display: block; font-size: var(--texto-base); }
         .dropdown-content a:hover { background-color: #f1f1f1; cursor: pointer; }
         .dropdown:hover .dropdown-content { display: block; }
         .dropdown:hover .dropdown-btn { background-color: #f9fafb; }
+        /* Los menús se abren hacia la derecha por defecto. Este va pegado al
+           borde derecho del panel, así que se abre hacia dentro para no salirse
+           de la ventana. */
+        .dropdown-a-la-derecha { right: 0; }
+
+        /* Selector de idioma */
+        .selector-idioma .dropdown-content { min-width: 140px; }
+        /* El idioma activo se marca con una palomita a la derecha, y el hueco se
+           reserva siempre para que las dos opciones queden alineadas. */
+        .selector-idioma .dropdown-content a { display: flex; justify-content: space-between; gap: 1rem; }
+        .selector-idioma .dropdown-content a::after { content: ''; width: 1em; text-align: right; }
+        .selector-idioma .dropdown-content a.active-lang { font-weight: 600; }
+        .selector-idioma .dropdown-content a.active-lang::after { content: '✓'; }
         #statsContainer { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
         #statsContainer.show { transform: translateY(0); }
         .diff-added { background-color: #e6ffed; color: #22863a; padding: 1px 2px; border-radius: 3px; }
         .diff-removed { background-color: #ffebe9; color: #b31d28; text-decoration: line-through; padding: 1px 2px; border-radius: 3px; }
+        /* El punto verde de "hay copia guardada" vive dentro de la entrada
+           Backup del menú Archivo, pegado al borde derecho de la fila. */
+        #backupBtn { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
         #backupIndicator {
             display: none;
             width: 8px;
             height: 8px;
+            flex-shrink: 0;
             background-color: #22c55e;
             border-radius: 50%;
-            margin-left: 8px;
             animation: pulse 2s infinite;
         }
         @keyframes pulse {
@@ -417,15 +884,64 @@
         .ai-message-bot { align-self: flex-start; background-color: var(--color-white); border: 1px solid #e5e7eb; border-bottom-left-radius: 0; color: #374151; }
         
         .ai-input-area { padding: 0.75rem; border-top: 1px solid #e5e7eb; background-color: var(--color-white); }
-        .ai-textarea { width: 100%; resize: none; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.5rem; font-size: 0.9rem; height: 50px; }
+        .ai-textarea { width: 100%; resize: none; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.5rem; font-size: var(--texto-base); height: 50px; }
         .ai-textarea:focus { outline: none; border-color: var(--color-primary); ring: 1px solid var(--color-primary); }
         
         .ai-quick-actions { display: flex; gap: 0.5rem; padding: 0.5rem 1rem; overflow-x: auto; background-color: #fff; border-bottom: 1px solid #eee; }
-        .ai-quick-btn { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 1rem; background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; white-space: nowrap; transition: all 0.2s; }
+        .ai-quick-btn { font-size: var(--texto-meta); padding: 0.25rem 0.75rem; border-radius: 1rem; background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; white-space: nowrap; transition: all 0.2s; }
         .ai-quick-btn:hover { background-color: var(--color-secondary); color: var(--color-dark); border-color: var(--color-secondary); }
         
-        .ai-config-panel { background-color: #fffbeb; padding: 0.75rem; border-bottom: 1px solid #fcd34d; font-size: 0.85rem; }
-        .ai-insert-btn { display: block; margin-top: 5px; font-size: 0.75rem; color: var(--color-primary); font-weight: 600; cursor: pointer; text-decoration: underline; }
+        .ai-config-panel { background-color: #fffbeb; padding: 0.75rem; border-bottom: 1px solid #fcd34d; font-size: var(--texto-meta); max-height: 60vh; overflow-y: auto; }
+        body.dark-mode .ai-config-panel { background-color: #3b3222; border-bottom-color: #78350f; }
+
+        /* Los campos de los ajustes de IA */
+        /* Las etiquetas de los campos van del mismo color que los títulos de su
+           cuadro. Llevaban --color-medium-gray, que en modo claro es #e5e7eb:
+           gris de bordes, casi blanco, ilegible sobre fondo blanco. En oscuro
+           colaba porque esa misma variable ahí vale #374151 y encima había una
+           regla que la tapaba. --color-dark es el negro del resto de los textos
+           y cambia solo con el tema, así que no hace falta la excepción. */
+        .ia-etiqueta { display: block; font-weight: 600; margin: 0.5rem 0 0.15rem; color: var(--color-dark); }
+        .ia-campo {
+            width: 100%; border: 1px solid #d1d5db; border-radius: 4px;
+            padding: 0.25rem 0.4rem; font-size: var(--texto-meta);
+            background-color: #fff; color: #1f2937;
+        }
+        body.dark-mode .ia-campo { background-color: #1f2937; color: #e5e7eb; border-color: #4b5563; }
+        .ia-casilla { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.3rem; }
+        .ia-pista { font-size: var(--texto-meta); color: var(--color-neutral-gray); margin-top: 0.25rem; line-height: 1.35; }
+
+        /* A qué servicio se está conectado: con un punto verde, que es lo que
+           dice de un vistazo que esto ya funciona y no hay nada que tocar. */
+        .ia-conectado {
+            font-weight: 600; font-size: var(--texto-base);
+            color: var(--color-dark); margin-bottom: 0.25rem;
+        }
+        /* El punto es un círculo dibujado, no una letra: así tiene el tamaño
+           que le toca sin salirse de la escala tipográfica. */
+        .ia-conectado-punto {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            background-color: #16a34a; margin-right: 0.35rem;
+            vertical-align: middle;
+        }
+
+        /* Ventana de pretraducir */
+        .ia-motor { display: block; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; cursor: pointer; }
+        .ia-motor:has(input:checked) { border-color: var(--color-primary); background-color: #fff5f7; }
+        body.dark-mode .ia-motor { border-color: #4a5568; }
+        body.dark-mode .ia-motor:has(input:checked) { background-color: #3b2a30; }
+        .ia-motor-nombre { font-weight: 600; }
+        .ia-motor-info { display: block; margin-left: 1.4rem; font-size: var(--texto-meta); color: var(--color-neutral-gray); line-height: 1.35; }
+        .ia-barra { height: 8px; border-radius: 999px; background-color: #e2e8f0; overflow: hidden; margin: 0.75rem 0 0.35rem; }
+        .ia-barra-avance { height: 100%; background-color: var(--color-primary); width: 0; transition: width 0.2s; }
+
+        /* El segmento que ha traducido la IA y nadie ha revisado todavía */
+        .segmento-fila.borrador-ia .segmento-numero { border-left: 3px solid var(--color-secondary); }
+        .segmento-borrador {
+            font-size: var(--texto-meta); color: #b45309; cursor: help; user-select: none;
+        }
+        body.dark-mode .segmento-borrador { color: #fbbf24; }
+        .ai-insert-btn { display: block; margin-top: 5px; font-size: var(--texto-meta); color: var(--color-primary); font-weight: 600; cursor: pointer; text-decoration: underline; }
         
         /* Estilo para enlaces de fuente */
         .ai-source-link {
@@ -483,3 +999,361 @@
         background-color: #f9fafb; /* Prevent hover effect */
     }
 
+
+/* ======================================================================
+   MODO OSCURO: LO QUE SE HABÍA QUEDADO EN CLARO
+
+   El resto de la hoja está escrito con las variables de color, que ya
+   cambian solas al pasar a oscuro. Lo de aquí abajo son los sitios donde
+   había un color fijo pensado para fondo blanco: avisos amarillos, marcas
+   de búsqueda, comparaciones de texto, coincidencias de la memoria... En
+   claro se ven bien; sobre fondo oscuro quedaban como parches de papel
+   pegados a la pantalla, o directamente como texto claro sobre amarillo,
+   que no se lee.
+
+   La regla que se ha seguido en todos: fondo apagado y oscuro, texto claro
+   del mismo color. Así se sigue reconociendo qué es cada cosa (amarillo =
+   glosario, verde = añadido, rojo = quitado) sin que ninguna deslumbre.
+   ====================================================================== */
+
+/* Marcas de la búsqueda dentro del texto. Llevaban `yellow` y `orange` a
+   secas, del color más saturado que existe, y el texto encima lo ponía el
+   tema: en oscuro era texto claro sobre amarillo. Se les fija el color de
+   la letra en los dos modos, que es lo que garantiza que se lean. */
+.search-highlight { background-color: #fde68a; color: #1f2937; border-radius: 2px; }
+.current-search-highlight { background-color: #fb923c; color: #1f2937; border-radius: 2px; }
+body.dark-mode .search-highlight { background-color: #a16207; color: #fef3c7; }
+body.dark-mode .current-search-highlight { background-color: #c2410c; color: #ffedd5; }
+
+/* Etiquetas del glosario y del "fuzzy": el fondo lo da --color-secondary,
+   que en oscuro ya es ámbar apagado, así que solo hay que aclarar la letra
+   (en claro es marrón oscuro sobre amarillo claro; en oscuro, al revés). */
+body.dark-mode .segmento-glosario,
+body.dark-mode .segmento-fuzzy { color: #fde68a; }
+
+/* El visto de validar: el verde de fondo blanco se apaga demasiado sobre
+   gris oscuro y deja de leerse como "hecho". */
+body.dark-mode .segmento-check.validado .check-icon { color: #4ade80; }
+
+/* Comparación de textos (lo que se añadió y lo que se quitó). */
+body.dark-mode .diff-added { background-color: #14532d; color: #bbf7d0; }
+body.dark-mode .diff-removed { background-color: #7f1d1d; color: #fecaca; }
+
+/* Mejor coincidencia de la memoria de traducción: era un rosa pálido de
+   fondo blanco sobre una fila que en oscuro ya es gris marengo. */
+body.dark-mode .tm-best-match-highlight {
+    background-color: #4c1d24 !important;
+    box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.3);
+}
+
+/* Recuadro de soltar archivos: le faltaban los textos secundarios y la
+   etiqueta de .poanda, que se quedaban en rosa pálido sobre gris. */
+body.dark-mode .zona-soltar-texto { color: #a0aec0; }
+body.dark-mode .zona-soltar .formato-proyecto { background-color: #4c1d24; color: #fda4af; }
+
+/* Lista de proyectos recientes: la línea de "3/12 · hace dos días". */
+body.dark-mode .recent-project-meta { color: #a0aec0; }
+
+/* Enlaces y controles sueltos que iban del rosa de marca: sobre oscuro, el
+   rosa profundo no se distingue del texto, así que estos suben de tono en
+   lugar de bajar. Son letra y trazo fino, no manchas de color. */
+body.dark-mode .ai-insert-btn { color: #fb7185; }
+body.dark-mode .segmento-icono:hover { color: #fb7185; }
+
+/* La capa de "cargando" tapaba la pantalla con un velo blanco. */
+body.dark-mode .loading-overlay { background-color: rgba(17, 24, 39, 0.85); color: #e5e7eb; }
+body.dark-mode .loading-spinner { border-color: #374151; border-top-color: var(--color-primary); }
+
+/* Campos de atajos de teclado y entradas del glosario con borde gris claro. */
+body.dark-mode .shortcut-input { background-color: #374151; border-color: #4b5563; color: #e5e7eb; }
+body.dark-mode .ai-source-link { border-color: #4b5563; }
+
+/* Entradas de menú desactivadas: el fondo claro las hacía resaltar más que
+   las que sí se pueden pulsar. */
+body.dark-mode .dropdown-content a.disabled-link,
+body.dark-mode .dropdown-content a.disabled-link:hover {
+    background-color: transparent !important;
+    color: #6b7280 !important;
+}
+
+/* ======================================================================
+   VENTANA DEL CHANGELOG
+
+   El contenido llega ya estructurado desde core/changelog-formato.js. Lo
+   que hace falta aquí es que se note esa estructura de un vistazo: cada
+   versión separada de la anterior, las secciones marcadas y las novedades
+   como puntos de una lista con el nombre en negrita, para poder recorrer
+   la lista leyendo solo los nombres.
+   ====================================================================== */
+.changelog-cuerpo {
+    padding: 1.25rem 1.5rem;
+    font-size: var(--texto-base);
+    line-height: 1.6;
+    color: var(--color-dark);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-medium-gray);
+    border-radius: 0.375rem;
+    min-height: 150px;
+}
+
+/* Título de versión: cada uno abre bloque, con una raya encima que hace de
+   separador con la versión anterior. */
+.changelog-cuerpo .cl-version {
+    font-size: var(--texto-titulo);
+    font-weight: 700;
+    margin: 2rem 0 0.125rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-medium-gray);
+    color: var(--color-dark);
+}
+.changelog-cuerpo .cl-version:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+.changelog-cuerpo .cl-fecha {
+    margin: 0 0 0.75rem;
+    font-size: var(--texto-meta);
+    color: var(--color-neutral-gray);
+}
+
+/* El resumen de la versión, antes de que empiecen las secciones. */
+.changelog-cuerpo .cl-entradilla { margin: 0 0 1rem; }
+
+.changelog-cuerpo .cl-seccion {
+    margin: 1.25rem 0 0.5rem;
+    font-size: var(--texto-meta);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-neutral-gray);
+}
+
+.changelog-cuerpo .cl-lista { margin: 0; padding-left: 1.1rem; list-style: none; }
+.changelog-cuerpo .cl-lista li { position: relative; margin-bottom: 0.6rem; }
+/* El punto va en el color de Poanda: es la marca de la casa y de paso guía
+   la vista al bajar por la lista. */
+.changelog-cuerpo .cl-lista li::before {
+    content: '';
+    position: absolute;
+    left: -1.1rem;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+}
+.changelog-cuerpo .cl-lista strong { font-weight: 700; }
+.changelog-cuerpo code {
+    font-family: var(--fuente-mono);
+    /* En tamaño absoluto y no relativo: dentro de un título heredaría el suyo
+       y aparecerían dos tamaños de código distintos en la misma ventana. */
+    font-size: var(--texto-meta);
+    background-color: var(--color-light-gray);
+    border: 1px solid var(--color-medium-gray);
+    border-radius: 3px;
+    padding: 0 4px;
+}
+
+/* ======================================================================
+   ETIQUETAS Y CÓDIGOS DENTRO DE LOS SEGMENTOS
+
+   Todo lo que no se traduce y tiene que llegar intacto al otro lado: los
+   huecos donde el programa mete datos (%s, {nombre}) y las etiquetas de
+   formato o de enlace (<b>, <a href>). Se pintan aparte por dos motivos:
+   para verlas de un vistazo entre el texto, y para poder pulsarlas y que se
+   copien solas a la traducción.
+
+   El color es el amarillo de Poanda y no el rosa: el rosa ya significa
+   "segmento activo" y "algo va mal", y no conviene que un mismo color diga
+   tres cosas distintas.
+   ====================================================================== */
+.etiqueta {
+    font-family: var(--fuente-mono);
+    font-size: 0.9em;
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    border-radius: 3px;
+    padding: 0 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+.etiqueta:hover,
+.etiqueta:focus-visible { background-color: #fcd34d; border-color: #d97706; outline: none; }
+body.dark-mode .etiqueta { background-color: #422006; color: #fcd34d; border-color: #854d0e; }
+body.dark-mode .etiqueta:hover,
+body.dark-mode .etiqueta:focus-visible { background-color: #713f12; border-color: #ca8a04; }
+
+/* Aviso de que las etiquetas de la traducción no cuadran con las del
+   original. Va en la columna del visto, encima de él: es el sitio donde ya
+   se mira para saber cómo va el segmento. */
+.segmento-aviso {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-bottom: 4px;
+    border-radius: 50%;
+    background-color: #dc2626;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    flex-shrink: 0;
+}
+/* El atributo `hidden` del HTML esconde el elemento con una regla del propio
+   navegador, que pierde contra cualquier clase nuestra: sin esto, el `display:
+   flex` de arriba ganaba y el aviso se veía siempre. */
+.segmento-aviso[hidden] { display: none; }
+.segmento-estado { flex-direction: column; }
+
+/* La fila entera lo dice también, con una línea al canto, para poder
+   localizar los segmentos con problema bajando por la lista sin leerlos. */
+.segmento-fila.etiquetas-mal { border-color: #dc2626; }
+body.dark-mode .segmento-fila.etiquetas-mal { border-color: #b91c1c; }
+
+/* Marca de forma de plural, debajo del número del segmento.
+   Con plurales, una misma cadena ocupa varias filas seguidas y hay que poder
+   distinguirlas: la primera se traduce mirando el singular y las demás
+   mirando el plural. Se usa la notación del propio archivo ([0], [1]) porque
+   es la que se ve en el PO. */
+.segmento-plural {
+    display: block;
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--color-neutral-gray);
+    opacity: 0.85;
+    cursor: help;
+}
+
+/* ======================================================================
+   ETIQUETAS DENTRO DEL CUADRO DE TRADUCCIÓN
+
+   Un <textarea> no admite color por dentro. El truco: una capa debajo que
+   dibuja solo los recuadros amarillos, y las letras de verdad —las del
+   textarea— encima. Las letras de la capa van transparentes; están ahí
+   únicamente para colocar cada recuadro en su sitio.
+
+   Lo delicado es que las dos capas midan EXACTAMENTE igual: mismo tipo de
+   letra, mismo tamaño, misma interlínea, mismo ancho y el mismo criterio de
+   partir palabras. Cualquier diferencia descoloca los recuadros respecto a
+   las palabras. Por eso las dos llevan la clase .segmento-texto y aquí solo
+   se añade lo que las diferencia.
+   ====================================================================== */
+.campo-con-capa { position: relative; }
+
+.capa-etiquetas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Solo se ve el fondo: las letras están para medir, no para leerse. */
+    color: transparent;
+    /* No intercepta clics: quien recibe el ratón es el textarea de encima. */
+    pointer-events: none;
+    user-select: none;
+}
+
+.capa-etiquetas .etiqueta-fondo {
+    background-color: #fef3c7;
+    border-radius: 3px;
+    /* Sin borde ni relleno: cualquiera de los dos movería el texto de la capa
+       respecto al del textarea y los recuadros dejarían de cuadrar. Se usa una
+       sombra, que no ocupa sitio, para dar el mismo perfil que en el original. */
+    box-shadow: 0 0 0 1px #fcd34d;
+}
+body.dark-mode .capa-etiquetas .etiqueta-fondo {
+    background-color: #422006;
+    box-shadow: 0 0 0 1px #854d0e;
+}
+
+/* El textarea va encima, con fondo transparente para que se vea la capa. */
+.campo-con-capa textarea.msgstr-textarea { position: relative; background: transparent; }
+
+/* ======================================================================
+   LA MISMA ESCALA EN LAS VENTANAS, LOS PANELES Y LA BARRA DE ESTADO
+
+   El editor se quedó en 14 px, pero las ventanas seguían con los tamaños
+   que traía Tailwind (20 px los títulos, 16 px el cuerpo): abrir una encima
+   del editor parecía cambiar de programa. Aquí se iguala todo a la misma
+   escala de tres pasos.
+
+   Se hace desde la hoja de estilos y no cambiando las clases del HTML por
+   dos razones: es un solo sitio donde ajustar el tamaño de toda la
+   herramienta, y así los tamaños dejan de depender de que cargue el CDN de
+   Tailwind. Las reglas llevan el contenedor delante precisamente para poder
+   ganarle a esas clases.
+   ====================================================================== */
+.modal-content,
+.terminology-sidebar,
+.translation-memory-sidebar,
+.ai-sidebar {
+    font-size: var(--texto-base);
+    line-height: 1.5;
+}
+
+/* Los campos y botones no heredan el tamaño de letra por su cuenta: hay que
+   decírselo. (Tailwind lo hace en su reinicio, pero eso solo vale si el CDN
+   ha cargado.) */
+.modal-content button,
+.modal-content input,
+.modal-content select,
+.modal-content textarea,
+.terminology-sidebar button,
+.terminology-sidebar input,
+.terminology-sidebar select,
+.translation-memory-sidebar button,
+.translation-memory-sidebar input,
+.translation-memory-sidebar select,
+.ai-sidebar button,
+.ai-sidebar input,
+.ai-sidebar select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* Títulos de ventana y de panel. */
+.modal-content h2,
+.modal-content h3,
+.terminology-sidebar h3,
+.translation-memory-sidebar h3,
+.ai-sidebar h3,
+.modal-content .text-xl,
+.modal-content .text-lg,
+.terminology-sidebar .text-lg,
+.translation-memory-sidebar .text-lg,
+.ai-sidebar .text-lg {
+    font-size: var(--texto-titulo);
+    line-height: 1.4;
+}
+
+/* Y los tamaños sueltos de Tailwind que quedan dentro. */
+.modal-content .text-base,
+.modal-content .text-sm,
+.terminology-sidebar .text-sm,
+.translation-memory-sidebar .text-sm,
+.ai-sidebar .text-sm {
+    font-size: var(--texto-base);
+}
+.modal-content .text-xs,
+.terminology-sidebar .text-xs,
+.translation-memory-sidebar .text-xs,
+.ai-sidebar .text-xs {
+    font-size: var(--texto-meta);
+}
+
+/* La equis de cerrar el changelog era de 30 px, más grande que su propio
+   título. Sigue siendo la más grande de la ventana, pero con mesura. */
+#changelogCloseBtn { font-size: 1.5rem; }
+
+/* Barra de estadísticas: es información de fondo, del mismo rango que los
+   recuentos de cada segmento, así que va en el tamaño de esos. */
+#statsContainer { padding: 0.4rem 0.75rem; }
+#statsContainer .text-sm,
+#statsContainer p,
+#statsContainer span,
+#statsContainer strong {
+    font-size: var(--texto-meta);
+}

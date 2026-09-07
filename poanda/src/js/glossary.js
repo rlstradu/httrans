@@ -1,92 +1,53 @@
-import { isoLanguagesData } from './core/iso-languages.js';
 import { generateTBX } from './core/tbx.js';
 import { hideLoadingOverlay, showLoadingOverlay, showMessage } from './dialogs.js';
 import {
-    configSrcLang,
-    configTgtLang,
-    displaySrcLang,
-    displayTgtLang,
     glossaryTableBody,
-    isoLanguagesDatalist,
     searchTermInput,
     srcTermInput,
     tbxFileInput,
-    terminologyEditorSection,
-    terminologyLanguageConfigSection,
     tgtTermInput,
 } from './dom.js';
+import { pintarParDelProyecto } from './idiomas-proyecto.js';
 import { renderTranslations } from './editor.js';
 import { state } from './state.js';
 import { updateStatsDisplay } from './stats.js';
 import { showTMInternalMessage } from './tm.js';
 import { translations } from './translations.js';
 
-function populateIsoLanguagesDatalist() {
-    isoLanguagesDatalist.innerHTML = '';
-    isoLanguagesData.forEach((lang) => {
-        const option = document.createElement('option');
-        option.value = lang.code;
-        option.textContent = lang.name;
-        isoLanguagesDatalist.appendChild(option);
-    });
-}
-
 function resetGlossary() {
     state.glossary = [];
-    state.glossarySourceLanguage = '';
-    state.glossaryTargetLanguage = '';
-    if (configSrcLang) configSrcLang.value = 'en-US';
-    if (configTgtLang) configTgtLang.value = 'es-ES';
     if (srcTermInput) srcTermInput.value = '';
     if (tgtTermInput) tgtTermInput.value = '';
     if (searchTermInput) searchTermInput.value = '';
-
-    if (terminologyLanguageConfigSection && terminologyEditorSection) {
-        terminologyLanguageConfigSection.style.display = 'block';
-        terminologyEditorSection.style.display = 'none';
-    }
 
     renderGlossary();
     renderTranslations(state.poEntries);
     updateStatsDisplay();
 }
 
-function showLanguageConfigSection() {
-    if (terminologyLanguageConfigSection && terminologyEditorSection) {
-        terminologyLanguageConfigSection.style.display = 'block';
-        terminologyEditorSection.style.display = 'none';
-    }
-}
-
+/**
+ * Deja a la vista el par de idiomas del proyecto y repinta la lista.
+ *
+ * El glosario ya no pregunta idiomas: los toma del proyecto. Preguntarlos aquí
+ * era pedir por segunda vez un dato que el proyecto ya tiene, y abría la puerta
+ * a que el glosario dijera una cosa y la memoria otra.
+ */
 function showGlossaryEditorSection() {
-    if (
-        terminologyLanguageConfigSection &&
-        terminologyEditorSection &&
-        displaySrcLang &&
-        displayTgtLang
-    ) {
-        terminologyLanguageConfigSection.style.display = 'none';
-        terminologyEditorSection.style.display = 'block';
-        displaySrcLang.value = state.glossarySourceLanguage;
-        displayTgtLang.value = state.glossaryTargetLanguage;
-        renderGlossary();
-    }
+    pintarParDelProyecto('glosarioParIdiomas');
+    renderGlossary();
 }
 
-function confirmGlossaryLanguages() {
-    const srcLang = configSrcLang ? configSrcLang.value.trim() : '';
-    const tgtLang = configTgtLang ? configTgtLang.value.trim() : '';
-
-    if (!srcLang || !tgtLang) {
-        showMessage(translations[state.currentLanguage]['lang_config_required']);
-        return;
-    }
-
-    state.glossarySourceLanguage = srcLang;
-    state.glossaryTargetLanguage = tgtLang;
-
-    showGlossaryEditorSection();
-    renderTranslations(state.poEntries);
+/**
+ * Enseña el aviso de "esto está vacío" mientras el glosario no tenga términos.
+ *
+ * Igual que en la memoria: el glosario existe desde que se abre el archivo y lo
+ * único que le pasa es que todavía no tiene nada dentro. Lo que hace falta
+ * decir es por dónde se empieza y que se puede traer uno de fuera.
+ */
+function avisarSiElGlosarioEstaVacio() {
+    const aviso = document.getElementById('glosarioVacio');
+    if (!aviso) return;
+    aviso.classList.toggle('hidden', (state.glossary || []).length > 0);
 }
 
 function addTerm() {
@@ -99,9 +60,9 @@ function addTerm() {
     }
 
     state.glossary.push({
-        srcLang: state.glossarySourceLanguage,
+        srcLang: state.sourceLang,
         srcTerm: srcTerm,
-        tgtLang: state.glossaryTargetLanguage,
+        tgtLang: state.targetLang,
         tgtTerm: tgtTerm,
     });
     if (srcTermInput) srcTermInput.value = '';
@@ -121,6 +82,8 @@ function renderGlossary() {
         console.warn('glossaryTableBody element not found. Cannot render glossary.');
         return;
     }
+    avisarSiElGlosarioEstaVacio();
+
     const search = searchTermInput ? searchTermInput.value.toLowerCase() : '';
     glossaryTableBody.innerHTML = '';
 
@@ -176,10 +139,7 @@ function renderGlossary() {
 }
 
 function downloadTBX() {
-    if (
-        state.glossary.length === 0 &&
-        (!state.glossarySourceLanguage || !state.glossaryTargetLanguage)
-    ) {
+    if (state.glossary.length === 0 && (!state.sourceLang || !state.targetLang)) {
         showMessage(
             translations[state.currentLanguage]['cannot_download_empty_or_unconfigured_glossary'],
         );
@@ -239,15 +199,6 @@ function processTBXContent(content) {
 
         const entries = xmlDoc.getElementsByTagName('termEntry');
         state.glossary = [];
-        let firstEntryLangs = { src: '', tgt: '' };
-
-        if (entries.length > 0) {
-            const firstSets = entries[0].getElementsByTagName('LangSet');
-            if (firstSets.length >= 2) {
-                firstEntryLangs.src = firstSets[0].getAttribute('xml:lang');
-                firstEntryLangs.tgt = firstSets[1].getAttribute('xml:lang');
-            }
-        }
 
         for (let entry of entries) {
             const sets = entry.getElementsByTagName('LangSet');
@@ -269,10 +220,10 @@ function processTBXContent(content) {
             }
         }
 
-        if (state.glossary.length > 0 && firstEntryLangs.src && firstEntryLangs.tgt) {
-            state.glossarySourceLanguage = firstEntryLangs.src;
-            state.glossaryTargetLanguage = firstEntryLangs.tgt;
-        } else if (state.glossary.length === 0) {
+        // Los idiomas que traiga el TBX no cambian los del proyecto: el par lo
+        // manda el proyecto, y un glosario en otra variante sigue sirviendo
+        // (ver mismoIdioma en core/idiomas.js).
+        if (state.glossary.length === 0) {
             showMessage(translations[state.currentLanguage]['error_loading_tbx_file']);
         }
 
@@ -291,13 +242,10 @@ function processTBXContent(content) {
 
 export {
     addTerm,
-    confirmGlossaryLanguages,
     downloadTBX,
     loadTBX,
-    populateIsoLanguagesDatalist,
     processTBXContent,
     renderGlossary,
     resetGlossary,
     showGlossaryEditorSection,
-    showLanguageConfigSection,
 };

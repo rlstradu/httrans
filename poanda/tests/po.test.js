@@ -91,9 +91,153 @@ describe('parsePoContent', () => {
         expect(simple[0].msgstr).toBe('Gato');
     });
 
-    // Pendiente: los plurales (msgid_plural / msgstr[0] / msgstr[1]) no se leen
-    // ni se conservan al guardar. Es un fallo aparte, anterior a este cambio.
-    it.todo('conserva las formas de plural (msgid_plural y msgstr[n])');
+});
+
+/**
+ * Formas de plural.
+ *
+ * Casi cualquier archivo real las lleva: "1 archivo" / "%d archivos". En gettext
+ * se escriben con msgid_plural y una traducción por forma (msgstr[0],
+ * msgstr[1]...), y cuántas formas hay lo dice la cabecera del archivo, porque
+ * depende del idioma: dos en español, tres en polaco, una en japonés, seis en
+ * árabe.
+ *
+ * Hasta ahora Poanda no las entendía, y eso no significaba dejarlas quietas:
+ * significaba borrarlas. Al abrir y guardar, el msgid_plural y las traducciones
+ * ya hechas desaparecían y quedaba un msgstr vacío. Se perdía trabajo sin que
+ * nadie se enterase, que es la peor forma de perderlo.
+ */
+describe('formas de plural', () => {
+    const CON_PLURALES = `msgid ""
+msgstr ""
+"Language: es\\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\\n"
+
+#: app.py:10
+msgid "One file"
+msgid_plural "%d files"
+msgstr[0] "Un archivo"
+msgstr[1] "%d archivos"
+`;
+
+    it('lee el original singular y el plural', () => {
+        const entradas = parsePoContent(CON_PLURALES);
+        expect(entradas[1].msgid).toBe('One file');
+        expect(entradas[1].msgidPlural).toBe('%d files');
+    });
+
+    it('lee una traducción por cada forma', () => {
+        const [, entrada] = parsePoContent(CON_PLURALES);
+        expect(entrada.sentenceSegments).toHaveLength(2);
+        expect(entrada.sentenceSegments[0].translation).toBe('Un archivo');
+        expect(entrada.sentenceSegments[1].translation).toBe('%d archivos');
+    });
+
+    it('cada forma enseña el original que le corresponde', () => {
+        // La primera se traduce mirando el singular y el resto mirando el
+        // plural: es lo que hace falta tener delante para traducir cada una.
+        const [, entrada] = parsePoContent(CON_PLURALES);
+        expect(entrada.sentenceSegments[0].original).toBe('One file');
+        expect(entrada.sentenceSegments[1].original).toBe('%d files');
+    });
+
+    it('marca qué forma de plural es cada segmento', () => {
+        const [, entrada] = parsePoContent(CON_PLURALES);
+        expect(entrada.sentenceSegments.map((s) => s.formaPlural)).toEqual([0, 1]);
+    });
+
+    it('devuelve el archivo igual que estaba', () => {
+        // La prueba de fuego: abrir y guardar sin tocar nada no puede cambiar
+        // ni un byte.
+        expect(reconstructPo(parsePoContent(CON_PLURALES))).toBe(CON_PLURALES);
+    });
+
+    it('guarda lo que se traduce en cada forma', () => {
+        const entradas = parsePoContent(CON_PLURALES);
+        entradas[1].sentenceSegments[0].translation = 'Un fichero';
+        entradas[1].sentenceSegments[1].translation = '%d ficheros';
+
+        const salida = reconstructPo(entradas);
+        expect(salida).toContain('msgstr[0] "Un fichero"');
+        expect(salida).toContain('msgstr[1] "%d ficheros"');
+    });
+
+    it('respeta el orden de los campos que exige el formato', () => {
+        const salida = reconstructPo(parsePoContent(CON_PLURALES));
+        const orden = ['msgid "One file"', 'msgid_plural', 'msgstr[0]', 'msgstr[1]'];
+        const posiciones = orden.map((campo) => salida.indexOf(campo));
+        expect(posiciones).toEqual([...posiciones].sort((a, b) => a - b));
+        expect(Math.min(...posiciones)).toBeGreaterThan(-1);
+    });
+
+    it('no escribe un msgstr suelto en las entradas con plural', () => {
+        // Un msgstr normal junto a los msgstr[n] deja el archivo inválido. Se
+        // mira solo de la entrada con plural en adelante: la cabecera del
+        // archivo sí lleva su msgstr, y ese tiene que seguir ahí.
+        const salida = reconstructPo(parsePoContent(CON_PLURALES));
+        const entradaConPlural = salida.slice(salida.indexOf('msgid "One file"'));
+        expect(entradaConPlural).not.toMatch(/^msgstr "/m);
+    });
+
+    it('abre tantas formas como diga la cabecera, aunque el archivo traiga menos', () => {
+        // Un archivo al que le falta una forma está incompleto para gettext.
+        // Se abre con las tres para poder rellenarla en lugar de heredar el hueco.
+        const tresFormas = `msgid ""
+msgstr ""
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : ((n%10>=2 && n%10<=4) ? 1 : 2);\\n"
+
+msgid "One file"
+msgid_plural "%d files"
+msgstr[0] "Plik"
+msgstr[1] "Pliki"
+`;
+        const [, entrada] = parsePoContent(tresFormas);
+        expect(entrada.sentenceSegments).toHaveLength(3);
+        expect(entrada.sentenceSegments[2].translation).toBe('');
+    });
+
+    it('sin cabecera que lo diga, respeta las formas que traiga el archivo', () => {
+        // Aquí no se inventa nada: añadir una forma de más a un idioma que solo
+        // tiene una (japonés, chino) rompería el archivo.
+        const unaForma = `msgid "One file"
+msgid_plural "%d files"
+msgstr[0] "ファイル"
+`;
+        const [entrada] = parsePoContent(unaForma);
+        expect(entrada.sentenceSegments).toHaveLength(1);
+        expect(reconstructPo([entrada])).toBe(unaForma);
+    });
+
+    it('lee las formas repartidas en varias líneas', () => {
+        const partido = `msgid "One"
+msgid_plural ""
+"%d files, all of them"
+msgstr[0] "Uno"
+msgstr[1] ""
+"%d archivos, todos"
+`;
+        const [entrada] = parsePoContent(partido);
+        expect(entrada.msgidPlural).toBe('%d files, all of them');
+        expect(entrada.sentenceSegments[1].translation).toBe('%d archivos, todos');
+    });
+
+    it('quita la marca de provisional cuando ya hay alguna forma traducida', () => {
+        const provisional = `#, fuzzy
+msgid "One file"
+msgid_plural "%d files"
+msgstr[0] "Un archivo"
+msgstr[1] "%d archivos"
+`;
+        expect(reconstructPo(parsePoContent(provisional))).not.toContain('#, fuzzy');
+    });
+
+    it('las entradas sin plural siguen funcionando igual', () => {
+        const normal = 'msgid "Cat"\nmsgstr "Gato"\n';
+        const [entrada] = parsePoContent(normal);
+        expect(entrada.msgidPlural).toBeUndefined();
+        expect(entrada.sentenceSegments).toHaveLength(1);
+        expect(reconstructPo([entrada])).toBe(normal);
+    });
 });
 
 // Regresiones del lector de PO. Los fallos venían de la v1.0.5 publicada y se

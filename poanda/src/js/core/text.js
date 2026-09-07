@@ -114,4 +114,86 @@ function calculateSimilarity(s1, s2) {
     return ((longerLength - distance) / longerLength) * 100;
 }
 
-export { calculateSimilarity, countWords, levenshteinDistance, splitTextIntoSentences };
+/**
+ * Longitud a partir de la cual se da por hecho que una línea se cortó sola.
+ *
+ * El CHANGELOG.md está escrito a unas 78 columnas. Una línea que llega cerca de
+ * ese ancho se cortó porque no cabía la palabra siguiente, así que el párrafo
+ * continúa. Una línea claramente más corta es un título o el final del párrafo.
+ */
+const ANCHO_LINEA_LLENA = 60;
+
+/** Marcas de lista: nunca se pegan al párrafo anterior. */
+const INICIO_DE_LISTA = /^\s*([*\-•+]|\d+[.)])\s/;
+
+/**
+ * Quita los saltos de línea que solo daban forma al archivo.
+ *
+ * El changelog se escribe con saltos duros para poder leerlo en un editor de
+ * texto. Al enseñarlo en una ventana más estrecha, el navegador vuelve a partir
+ * esas líneas y el resultado son renglones sueltos de una o dos palabras. Aquí
+ * se unen las líneas de cada párrafo y se deja que sea el navegador quien
+ * decida dónde cortar, que para eso sabe lo ancha que es la ventana.
+ *
+ * Se conservan los saltos que sí significan algo: líneas en blanco, líneas de
+ * guiones o iguales, títulos de sección, listas y líneas sangradas.
+ *
+ * @param {string} texto Texto tal cual viene del archivo.
+ * @returns {string} El mismo texto con los párrafos en una sola línea.
+ */
+function desenvolverParrafos(texto) {
+    if (!texto) return '';
+
+    const lineas = texto.split('\n');
+    const salida = [];
+
+    for (const linea of lineas) {
+        const anterior = salida.length > 0 ? salida[salida.length - 1] : null;
+
+        if (anterior !== null && continuaElParrafo(anterior, linea)) {
+            salida[salida.length - 1] = `${anterior.replace(/\s+$/, '')} ${linea.trim()}`;
+        } else {
+            salida.push(linea);
+        }
+    }
+
+    return salida.join('\n');
+}
+
+/**
+ * ¿La segunda línea es continuación de la primera, o empieza algo nuevo?
+ *
+ * @param {string} anterior
+ * @param {string} actual
+ * @returns {boolean}
+ */
+function continuaElParrafo(anterior, actual) {
+    // Nada que unir si alguna de las dos está vacía: ahí hay un párrafo aparte.
+    if (!anterior.trim() || !actual.trim()) return false;
+
+    // Las líneas de guiones o iguales enmarcan los títulos de versión.
+    if (/^[=\-_*]{3,}\s*$/.test(anterior) || /^[=\-_*]{3,}\s*$/.test(actual)) return false;
+
+    // Una línea sangrada o con marca de lista empieza algo por su cuenta.
+    if (/^\s/.test(actual) || INICIO_DE_LISTA.test(actual)) return false;
+    if (INICIO_DE_LISTA.test(anterior)) return false;
+
+    // "New Features:" es un encabezado, no el principio de la frase siguiente.
+    if (/:\s*$/.test(anterior)) return false;
+
+    // Y ahora lo de siempre: si la línea anterior venía llena, se cortó sola.
+    if (anterior.trim().length >= ANCHO_LINEA_LLENA) return true;
+
+    // Si venía corta, todavía puede ser continuación: se nota en que la
+    // siguiente empieza en minúscula o por un signo de puntuación, cosa que no
+    // hace nunca un título.
+    return /^[a-záéíóúüñ(),;:"'»–—-]/.test(actual);
+}
+
+export {
+    calculateSimilarity,
+    countWords,
+    desenvolverParrafos,
+    levenshteinDistance,
+    splitTextIntoSentences,
+};

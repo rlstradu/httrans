@@ -1,10 +1,6 @@
-import {
-    appendAiMessage,
-    callGeminiAI,
-    getContextPrompt,
-    handleAiSend,
-    triggerQuickAI,
-} from './ai.js';
+import { handleAiSend, prepararPanelDeIA, triggerQuickAI } from './ai.js';
+import { initAjustesDeIA, pintarAjustesDeIA } from './ia-ajustes-ui.js';
+import { initPretraducir } from './pretraducir-ui.js';
 import {
     checkForBackup,
     clearBackup,
@@ -32,7 +28,6 @@ import {
     closeAiSidebarBtn,
     closeTerminologySidebarBtn,
     closeTranslationMemorySidebarBtn,
-    convertToMoButton,
     convertToMoModal,
     deleteLocalBackupBtn,
     discardBackupBtn,
@@ -44,7 +39,6 @@ import {
     findReplaceBtn,
     findReplaceCloseBtn,
     findReplaceModal,
-    geminiApiKeyInput,
     importShortcutsBtn,
     importShortcutsInput,
     loadBackupFromFileInput,
@@ -55,7 +49,6 @@ import {
     moConverterCloseBtn,
     newProjectBtn,
     openProjectBtn,
-    poFile,
     poSearchContainer,
     poSearchInput,
     projectFileInput,
@@ -64,9 +57,7 @@ import {
     resetShortcutsBtn,
     restoreBackupBtn,
     restoreBackupModal,
-    saveApiKeyBtn,
     saveBackupToDiskBtn,
-    savePoButton,
     saveProjectBtn,
     saveProjectCancelBtn,
     saveProjectConfirmBtn,
@@ -91,12 +82,14 @@ import {
 import {
     filterPOEntries,
     getCurrentFocusedIndex,
+    initEtiquetas,
     navigateToTranslation,
     renderTranslations,
 } from './editor.js';
 import {
-    loadHtmlFile,
-    loadSingleJsonFile,
+    abrirArchivo,
+    elegirYAbrirArchivo,
+    guardarArchivoActual,
     processFile,
     processPoContent,
     saveHtmlFile,
@@ -105,15 +98,13 @@ import {
 } from './files.js';
 import {
     addTerm,
-    confirmGlossaryLanguages,
     downloadTBX,
     loadTBX,
-    populateIsoLanguagesDatalist,
     renderGlossary,
     resetGlossary,
     showGlossaryEditorSection,
-    showLanguageConfigSection,
 } from './glossary.js';
+import { initIdiomasProyecto } from './idiomas-proyecto.js';
 import { setLanguage, updateMainContentOffset } from './i18n.js';
 import { makeDraggableAndResizable, makeModalDraggable } from './modals.js';
 import { executeSaveProject, newProject, openProject, showSaveProjectModal } from './project.js';
@@ -130,16 +121,18 @@ import {
     renderShortcutsUI,
 } from './shortcuts.js';
 import { initChangelog } from './changelog.js';
+import { initZonaSoltar } from './dropzone.js';
+import { initRecientes } from './recents.js';
+import { sincronizarCambios } from './persistencia.js';
+import { marcadoZonaSoltar } from './dropzone.js';
 import { state } from './state.js';
 import { initTheme } from './theme.js';
 import { updateStatsDisplay, updateUtilityButtonStates } from './stats.js';
 import {
-    confirmTMLanguages,
     downloadTMX,
     processTMXContent,
     resetTM,
     showTMEditorSection,
-    showTMLanguageConfigSection,
     tmSearch,
 } from './tm.js';
 import { translations } from './translations.js';
@@ -156,41 +149,6 @@ document.getElementById('undoBtn').addEventListener('click', () => {
     }
 });
 
-poFile.addEventListener('change', async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        state.currentFileName = file.name;
-        const content = await file.text();
-        processPoContent(content);
-    }
-});
-
-savePoButton.addEventListener('click', async () => {
-    if (state.poEntries.length === 0) {
-        showMessage(translations[state.currentLanguage]['no_translations_to_save']);
-        return;
-    }
-    showLoadingOverlay(translations[state.currentLanguage]['saving_file']);
-    try {
-        const updatedPoContent = reconstructPo(state.poEntries);
-        const blob = new Blob([updatedPoContent], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = state.currentFileName.replace(/\.po$/i, '') + '.po';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showMessage(translations[state.currentLanguage]['file_saved_successfully']);
-    } catch (error) {
-        showMessage(`${translations[state.currentLanguage]['error_saving_file']} ${error.message}`);
-        console.error('Error saving file:', error);
-    } finally {
-        hideLoadingOverlay();
-    }
-});
-
 document.addEventListener('keydown', (event) => {
     // Ignore keydown events if a modal is open or if the event originates from an input field not part of the main translation flow
     const activeElement = document.activeElement;
@@ -200,7 +158,10 @@ document.addEventListener('keydown', (event) => {
         !messageBox.classList.contains('hidden') ||
         !saveProjectModal.classList.contains('hidden') ||
         !backupModal.classList.contains('hidden') ||
-        !restoreBackupModal.classList.contains('hidden');
+        !restoreBackupModal.classList.contains('hidden') ||
+        // El cuadro de idiomas sale nada más soltar un archivo, que es justo
+        // cuando alguien puede tener todavía la mano en el teclado.
+        !document.getElementById('idiomasModal').classList.contains('hidden');
 
     if (isModalOpen && activeElement.id !== 'findInput' && activeElement.id !== 'replaceInput') {
         // Exception for find/replace inputs inside their modal
@@ -338,13 +299,7 @@ terminologyBtn.addEventListener('click', () => {
     }
     updateMainContentOffset();
     updateUtilityButtonStates();
-    if (isHidden) {
-        if (!state.glossarySourceLanguage || !state.glossaryTargetLanguage) {
-            showLanguageConfigSection();
-        } else {
-            showGlossaryEditorSection();
-        }
-    }
+    if (isHidden) showGlossaryEditorSection();
 });
 
 closeTerminologySidebarBtn.addEventListener('click', () => {
@@ -362,14 +317,7 @@ tmBtn.addEventListener('click', () => {
     }
     updateMainContentOffset();
     updateUtilityButtonStates();
-    if (isHidden) {
-        if (!state.tmSourceLanguage || !state.tmTargetLanguage) {
-            showTMLanguageConfigSection();
-        } else {
-            showTMEditorSection();
-            tmSearch();
-        }
-    }
+    if (isHidden) showTMEditorSection();
 });
 
 closeTranslationMemorySidebarBtn.addEventListener('click', () => {
@@ -406,17 +354,9 @@ if (dropArea) {
 
         const files = event.dataTransfer.files;
         if (files.length > 0) {
-            const file = files[0];
-            if (file.name.toLowerCase().endsWith('.po')) {
-                await processFile(file);
-            } else if (
-                file.name.toLowerCase().endsWith('.zip') ||
-                file.name.toLowerCase().endsWith('.poanda')
-            ) {
-                await openProject(file);
-            } else {
-                showMessage('Please drop a valid .po or .poanda project file.');
-            }
+            // Un único camino de entrada para todos los formatos: el mismo que
+            // usa el menú Archivo.
+            await abrirArchivo(files[0]);
         }
     });
 }
@@ -438,7 +378,10 @@ if (addTermHeader && addTermContent && addTermAccordionIcon) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     loadShortcuts(); // Load saved or default shortcuts
-    populateIsoLanguagesDatalist();
+
+    // El par de idiomas del proyecto: el indicador de la barra y los tres
+    // sitios desde los que se puede cambiar.
+    initIdiomasProyecto();
 
     document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
     document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
@@ -530,72 +473,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ADD LISTENERS FOR NEW FILE MENU ITEMS
-    const loadFilePoBtn = document.getElementById('loadFilePoBtn');
-    const saveFilePoBtn = document.getElementById('saveFilePoBtn');
-    const loadFileJsonBtn = document.getElementById('loadFileJsonBtn');
-    const saveFileJsonBtn = document.getElementById('saveFileJsonBtn');
-    const convertFileMoBtn = document.getElementById('convertFileMoBtn');
-    const poFileInput = document.getElementById('poFile'); // Get reference
+    // --- MENÚ ARCHIVO ---
+    // Una sola entrada para cargar (reparte por extensión) y otra para guardar
+    // (en el formato en el que se cargó). Convertir a .mo solo se ve con un PO.
+    const cargarArchivo = document.getElementById('loadFileBtn');
+    const guardarArchivo = document.getElementById('saveFileBtn');
+    const convertirAMo = document.getElementById('convertFileMoBtn');
 
-    if (loadFilePoBtn && poFileInput) {
-        loadFilePoBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            poFileInput.click(); // Trigger the original PO file input
-        });
-    }
-    if (saveFilePoBtn && savePoButton) {
-        saveFilePoBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!saveFilePoBtn.classList.contains('disabled-link')) {
-                savePoButton.click(); // Trigger the original PO save button
-            }
-        });
-    }
-    if (loadFileJsonBtn) {
-        loadFileJsonBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadSingleJsonFile(); // <-- Llama a la NUEVA función
-        });
-    }
-    if (saveFileJsonBtn) {
-        saveFileJsonBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!saveFileJsonBtn.classList.contains('disabled-link')) {
-                saveJsonFile(); // Call the new JSON saving function
-            }
-        });
-    }
+    cargarArchivo?.addEventListener('click', (e) => {
+        e.preventDefault();
+        elegirYAbrirArchivo();
+    });
 
-    // HTML LISTENERS
-    const loadFileHtmlBtn = document.getElementById('loadFileHtmlBtn');
-    const saveFileHtmlBtn = document.getElementById('saveFileHtmlBtn');
+    guardarArchivo?.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!guardarArchivo.classList.contains('disabled-link')) {
+            guardarArchivoActual();
+        }
+    });
 
-    if (loadFileHtmlBtn) {
-        loadFileHtmlBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadHtmlFile();
-        });
-    }
-    if (saveFileHtmlBtn) {
-        saveFileHtmlBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!saveFileHtmlBtn.classList.contains('disabled-link')) {
-                saveHtmlFile();
-            }
-        });
-    }
-
-    if (convertFileMoBtn && convertToMoButton) {
-        convertFileMoBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!convertFileMoBtn.classList.contains('disabled-link')) {
-                convertToMoButton.click(); // Trigger the original MO conversion button
-            }
-        });
-    }
-    // END ADD LISTENERS
-
-    convertToMoButton.addEventListener('click', () => {
+    convertirAMo?.addEventListener('click', (e) => {
+        e.preventDefault();
         if (state.poEntries.length > 0) {
             convertToMoModal.classList.remove('hidden');
         } else {
@@ -655,14 +553,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (translationsContainer) {
-        translationsContainer.innerHTML = `
-                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
-                        ${translations[state.currentLanguage]['no_translations']}
-                    </div>
-                `;
+        translationsContainer.innerHTML = marcadoZonaSoltar();
     }
-    if (savePoButton) savePoButton.disabled = true;
-    if (convertToMoButton) convertToMoButton.disabled = true;
+    updateSaveButtonsState();
     if (poSearchContainer) poSearchContainer.classList.add('hidden');
     if (statsContainer) statsContainer.classList.remove('show');
     updateUtilityButtonStates();
@@ -690,14 +583,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (el) el.addEventListener(evento, accion);
     };
 
-    enganchar('confirmLanguagesBtn', 'click', confirmGlossaryLanguages);
     enganchar('importTbxBtn', 'click', loadTBX);
     enganchar('downloadTbxBtn', 'click', downloadTBX);
     enganchar('newGlossaryBtn', 'click', resetGlossary);
     enganchar('addTermBtn', 'click', addTerm);
     enganchar('searchTerm', 'input', renderGlossary);
 
-    enganchar('tmConfirmLanguagesBtn', 'click', confirmTMLanguages);
     enganchar('newTmBtn', 'click', resetTM);
     enganchar('downloadTmxBtn', 'click', downloadTMX);
     enganchar('tmSearchInput', 'input', tmSearch);
@@ -706,20 +597,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => triggerQuickAI(btn.dataset.aiAction));
     });
 
+    initZonaSoltar(elegirYAbrirArchivo);
+
+    initEtiquetas();
+
+    initRecientes();
+
     initChangelog();
 
     initTheme();
 
-    // Inicializar mensaje de bienvenida del chat en el idioma correcto
-    const chatContainer = document.getElementById('aiChatContainer');
-    if (chatContainer && chatContainer.children.length === 0) {
-        const welcomeDiv = document.createElement('div');
-        welcomeDiv.className = 'ai-message ai-message-bot';
-        welcomeDiv.textContent = translations[state.currentLanguage]['ai_initial_message'];
-        chatContainer.appendChild(welcomeDiv);
-    }
+    // El saludo del asistente, en el idioma que toque y diciendo lo que toca:
+    // si todavía no hay servicio ni clave, el panel de ajustes se abre solo.
+    prepararPanelDeIA();
 
-    setInterval(saveBackup, 10000);
+    // Cada diez segundos se guardan las dos cosas: los segmentos que hayan
+    // cambiado en el proyecto (escritura pequeña) y la copia de seguridad
+    // completa de la sesión. La segunda sigue ahí a propósito mientras el
+    // modelo de proyectos se termina de asentar: es la red por si algo falla.
+    setInterval(() => {
+        sincronizarCambios();
+        saveBackup();
+    }, 10000);
 });
 
 if (aiBtn) {
@@ -731,9 +630,17 @@ if (aiBtn) {
             // Cerrar TM si está abierta
             if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar');
 
+            // Sin servicio ni clave no hay asistente que valga: se abre el panel
+            // de ajustes y se pinta con lo que haya guardado (que puede haber
+            // cambiado desde otra pestaña), en vez de dejar un cuadro de chat
+            // que solo va a contestar con un error.
+            const faltaConfigurar = prepararPanelDeIA();
+            if (faltaConfigurar) pintarAjustesDeIA();
+
             // FOCO AL CHAT (Pequeño retardo para dar tiempo a la animación CSS)
             setTimeout(() => {
-                if (aiUserInput) aiUserInput.focus();
+                if (faltaConfigurar) document.getElementById('aiProveedor')?.focus();
+                else if (aiUserInput) aiUserInput.focus();
             }, 50);
         } else {
             aiSidebar.classList.remove('show-sidebar');
@@ -762,18 +669,18 @@ if (closeAiSidebarBtn) {
 if (aiConfigToggleBtn) {
     aiConfigToggleBtn.addEventListener('click', () => {
         aiConfigPanel.classList.toggle('hidden');
-        geminiApiKeyInput.value = state.aiApiKey;
+        // Se vuelve a pintar cada vez que se abre: la clave y el modelo pueden
+        // haber cambiado desde otra pestaña.
+        pintarAjustesDeIA();
     });
 }
 
-if (saveApiKeyBtn) {
-    saveApiKeyBtn.addEventListener('click', () => {
-        state.aiApiKey = geminiApiKeyInput.value.trim();
-        localStorage.setItem('poanda_gemini_key', state.aiApiKey);
-        aiConfigPanel.classList.add('hidden');
-        appendAiMessage('bot', 'API Key guardada correctamente. ✅');
-    });
-}
+// El panel de ajustes (servicio, clave, modelo y probar la conexión) se
+// gobierna desde su propio módulo; ver ia-ajustes-ui.js.
+initAjustesDeIA();
+
+// Pretraducir el archivo entero, desde el menú Herramientas.
+initPretraducir();
 
 if (aiSendBtn) aiSendBtn.addEventListener('click', handleAiSend);
 

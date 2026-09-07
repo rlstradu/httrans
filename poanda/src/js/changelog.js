@@ -5,7 +5,14 @@
  * cambios, que se descarga en vivo del CHANGELOG.md de esta misma carpeta.
  * Así el historial vive junto al código de la herramienta, igual que en
  * PandaTerm y Pandoria.
+ *
+ * El archivo es texto plano pensado para leerse en un editor, y puesto tal cual
+ * en una ventana pequeña es un muro de texto: cada línea se parte dos veces y no
+ * se distingue el título de una versión del cuerpo, ni una novedad de la
+ * siguiente. Antes de enseñarlo se le da forma (ver core/changelog-formato.js):
+ * títulos de versión, secciones y una lista de puntos.
  */
+import { formatearChangelog } from './core/changelog-formato.js';
 
 /** Engancha el botón de versión y el cierre del modal. */
 export function initChangelog() {
@@ -24,7 +31,9 @@ export function initChangelog() {
                 const response = await fetch(`CHANGELOG.md?t=${new Date().getTime()}`);
                 if (response.ok) {
                     const text = await response.text();
-                    changelogContent.textContent = text;
+                    // formatearChangelog escapa lo que venga del archivo, así
+                    // que es seguro meterlo como HTML.
+                    changelogContent.innerHTML = formatearChangelog(text);
                 } else {
                     changelogContent.textContent =
                         'Error al cargar el changelog (HTTP ' + response.status + ').';

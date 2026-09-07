@@ -1,294 +1,362 @@
+/**
+ * El asistente de IA: la parte que se ve.
+ *
+ * Lo de hablar con los servicios, proteger las etiquetas y montar los encargos
+ * está en core/ia/, que no sabe nada de pantallas y por eso se puede probar sin
+ * gastar una llamada. Aquí solo queda recoger lo que hay en el editor, pintar la
+ * conversación y meter la traducción en su sitio.
+ *
+ * Dos usos distintos, y los dos importan:
+ *
+ * - **Traducir o mejorar el segmento en el que estás**, con su contexto: el
+ *   glosario que aplique, lo que diga la memoria y los segmentos de alrededor.
+ * - **Preguntar sin más**: una duda de terminología, documentarse sobre el tema
+ *   del archivo, pedir alternativas. Esto funciona con un archivo abierto o sin
+ *   él; antes hacía falta estar dentro de un segmento para poder preguntar
+ *   nada, que es una limitación que no tenía razón de ser.
+ */
 import { showMessage } from './dialogs.js';
-import {
-    aiChatContainer,
-    aiConfigPanel,
-    aiSidebar,
-    aiUserInput,
-    configSrcLang,
-    configTgtLang,
-} from './dom.js';
+import { aiChatContainer, aiConfigPanel, aiSidebar, aiUserInput } from './dom.js';
 import { getCurrentFocusedIndex, pushToUndoStack } from './editor.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
+import { leerConfiguracion } from './core/ia/ajustes.js';
+import { proveedorPorId } from './core/ia/proveedores.js';
+import { preguntar, traducirUno } from './core/ia/traducir.js';
 
-async function callGeminiAI(prompt) {
-    // Limpiamos la clave de posibles espacios en blanco al principio/final
-    const cleanApiKey = state.aiApiKey ? state.aiApiKey.trim() : '';
+const t = (clave) => translations[state.currentLanguage][clave] || '';
 
-    if (!cleanApiKey) {
-        appendAiMessage('bot', translations[state.currentLanguage]['ai_no_api_key']);
-        aiConfigPanel.classList.remove('hidden');
-        return;
-    }
+/** Lo hablado hasta ahora, para poder repreguntar ("¿y en Latinoamérica?"). */
+let conversacion = [];
 
-    const loadingId = appendAiMessage('bot', translations[state.currentLanguage]['ai_thinking']);
+/** Cuántos turnos de conversación se mandan. Más es pagar por ruido. */
+const MEMORIA_DE_LA_CHARLA = 6;
 
-    // Función auxiliar para intentar conectar con un modelo específico
-    const tryFetch = async (modelName) => {
-        const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${cleanApiKey}`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-            }),
-        });
-        return await response.json();
+/**
+ * La configuración de IA lista para usar, o null si falta algo.
+ *
+ * @returns {Object|null}
+ */
+function configuracionUsable() {
+    const proveedor = proveedorPorId(leerConfiguracion().proveedor);
+    if (!proveedor) return null;
+
+    const config = leerConfiguracion({
+        modelo: proveedor.modeloPorDefecto,
+        baseUrl: proveedor.urlPorDefecto,
+    });
+
+    if (proveedor.necesitaClave && !config.clave) return null;
+    if (!config.modelo) return null;
+
+    return config;
+}
+
+/**
+ * Recoge lo que rodea al segmento en el que se está: glosario, memoria y
+ * vecinos. Es lo que convierte una traducción automática en una traducción con
+ * el vocabulario del proyecto.
+ *
+ * @returns {{segmento: Object|null, contexto: Object, idiomas: Object}}
+ */
+function loQueHayAlrededor() {
+    const foco = getCurrentFocusedIndex() || state.lastFocusedSegment;
+    const contexto = { instrucciones: leerConfiguracion().instrucciones };
+
+    const idiomas = {
+        origen: state.sourceLang || '',
+        destino: state.targetLang || '',
     };
 
-    try {
-        // INTENTO 1: Gemini 2.5 Flash (Rápido, eficiente y soporta "thinking")
-        // NOTA: Usamos solo el nombre final, sin 'models/' delante
-        let data = await tryFetch('gemini-2.5-flash');
+    if (!foco) return { segmento: null, contexto, idiomas };
 
-        // Si falla, probamos el Plan B
-        if (data.error) {
-            console.warn('Intento 1 fallido con 2.5 Flash, probando 2.5 Pro...', data.error);
+    const entrada = state.poEntries[foco.entryIndex];
+    const trozo = entrada?.sentenceSegments?.[foco.segmentIndex];
+    if (!trozo) return { segmento: null, contexto, idiomas };
 
-            // INTENTO 2: Gemini 2.5 Pro (Más potente)
-            data = await tryFetch('gemini-2.5-pro');
-        }
-
-        // Eliminamos mensaje de "pensando"
-        const loadingMsg = document.getElementById(loadingId);
-        if (loadingMsg) loadingMsg.remove();
-
-        // Procesamos la respuesta final
-        if (data.error) {
-            // Si fallan los dos, mostramos el error
-            let errorMsg = data.error.message;
-            if (errorMsg.includes('API key not valid'))
-                errorMsg = 'La API Key es incorrecta. Revisa espacios en blanco.';
-            appendAiMessage('bot', `❌ Error: ${errorMsg}`);
-        } else if (data.candidates && data.candidates.length > 0) {
-            const aiResponse = data.candidates[0].content.parts[0].text;
-            appendAiMessage('bot', aiResponse, true);
-        } else {
-            appendAiMessage('bot', 'La IA no devolvió respuesta.');
-        }
-    } catch (error) {
-        const loadingMsg = document.getElementById(loadingId);
-        if (loadingMsg) loadingMsg.remove();
-        console.error('Error de red:', error);
-        appendAiMessage('bot', `❌ Error de conexión: ${error.message}`);
-    }
-}
-
-function appendAiMessage(sender, text, allowInsert = false) {
-    // 1. Guardar última respuesta para el atajo
-    if (sender === 'bot') state.lastAiResponseText = text;
-
-    const msgDiv = document.createElement('div');
-    const msgId = 'msg-' + Date.now();
-    msgDiv.id = msgId;
-    msgDiv.className = `ai-message ai-message-${sender}`;
-
-    // 2. Renderizado con enlaces personalizados
-    if (sender === 'bot' && typeof marked !== 'undefined') {
-        // Configurar renderer para que los links sean botones
-        const renderer = new marked.Renderer();
-        renderer.link = ({ href }) => {
-            // Obtenemos el texto "Source" o "Fuente" según idioma actual
-            const label = translations[state.currentLanguage]['ai_link_source'] || 'Source';
-            // Devolvemos el HTML del botón, forzando nueva pestaña y title con la URL
-            return `<a href="${href}" target="_blank" title="${href}" class="ai-source-link">${label}</a>`;
-        };
-
-        // Parsear usando nuestro renderer
-        msgDiv.innerHTML = marked.parse(text, { renderer: renderer });
-    } else {
-        msgDiv.textContent = text;
+    // Glosario: solo los términos que salen en este segmento.
+    if (state.termsFoundInActiveSegment?.size > 0) {
+        contexto.glosario = [...state.termsFoundInActiveSegment]
+            .map((termino) => state.glossary.find((g) => g.srcTerm === termino))
+            .filter(Boolean)
+            .map((g) => ({ termino: g.srcTerm, traduccion: g.tgtTerm }));
     }
 
-    // Add Insert Button if it's a bot translation/suggestion
-    if (allowInsert && sender === 'bot') {
-        const insertBtn = document.createElement('span');
-        insertBtn.className = 'ai-insert-btn';
-        insertBtn.textContent = '📋 Insertar / Copiar';
-        insertBtn.onclick = () => insertAiResponse(text);
-        msgDiv.appendChild(insertBtn);
-    }
-
-    aiChatContainer.appendChild(msgDiv);
-    aiChatContainer.scrollTop = aiChatContainer.scrollHeight;
-    return msgId;
-}
-
-function insertAiResponse(text) {
-    const focused = getCurrentFocusedIndex() || state.lastFocusedSegment;
-    if (focused) {
-        const textarea = document.getElementById(
-            `msgstr-${focused.entryIndex}-${focused.segmentIndex}`,
-        );
-        if (textarea && !textarea.readOnly) {
-            pushToUndoStack();
-            // Limpiar texto de markdown simple si la IA lo devolvió
-            const cleanText = text.replace(/\*\*/g, '').replace(/```/g, '').trim();
-            textarea.value = cleanText;
-            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            textarea.focus();
-
-            // Visual feedback on button
-            showMessage(translations[state.currentLanguage]['ai_inserted']);
-        }
-    } else {
-        showMessage(translations[state.currentLanguage]['ai_no_segment']);
-    }
-}
-
-function getContextPrompt(userQuery) {
-    // 1. Obtener segmento activo
-    const focused = getCurrentFocusedIndex() || state.lastFocusedSegment;
-    if (!focused) return null;
-
-    const entryIndex = focused.entryIndex;
-    const segmentIndex = focused.segmentIndex;
-    const entry = state.poEntries[entryIndex];
-    const segment = entry.sentenceSegments[segmentIndex];
-
-    // 2. Configuración de idiomas
-    const srcLang = state.glossarySourceLanguage || configSrcLang?.value || 'Unknown';
-    const tgtLang = state.glossaryTargetLanguage || configTgtLang?.value || 'Unknown';
-
-    // 3. RECUPERAR GLOSARIO (Contexto Terminológico)
-    let glossaryContext = 'No relevant glossary terms found.';
-    if (state.termsFoundInActiveSegment && state.termsFoundInActiveSegment.size > 0) {
-        const foundTermsList = [];
-        state.termsFoundInActiveSegment.forEach((srcTerm) => {
-            // Buscamos la traducción en el array global 'glossary'
-            const match = state.glossary.find((g) => g.srcTerm === srcTerm);
-            if (match) {
-                foundTermsList.push(`"${match.srcTerm}" -> "${match.tgtTerm}"`);
-            }
-        });
-        if (foundTermsList.length > 0) {
-            glossaryContext =
-                'STRICTLY USE these glossary terms:\n- ' + foundTermsList.join('\n- ');
-        }
-    }
-
-    // 4. RECUPERAR MEMORIA DE TRADUCCIÓN (Contexto Histórico)
-    let tmContext = 'No TM match available.';
-    // Usamos la variable global tmBestMatchForActiveSegment que ya calcula Poanda
+    // Memoria: la mejor coincidencia, si la hay.
     if (state.tmBestMatchForActiveSegment) {
-        tmContext =
-            `Found a similar translation in TM (${state.tmBestMatchForActiveSegment.score}% match):\n` +
-            `- Original: "${state.tmBestMatchForActiveSegment.srcText}"\n` +
-            `- Translation: "${state.tmBestMatchForActiveSegment.tgtText}"\n` +
-            `Use this as a reference style or base.`;
+        const acierto = state.tmBestMatchForActiveSegment;
+        contexto.memoria = [
+            {
+                original: acierto.srcText,
+                traduccion: acierto.tgtText,
+                parecido: acierto.score,
+            },
+        ];
     }
 
-    // 5. RECUPERAR CONTEXTO VECINO (Flujo del texto)
-    // Intentamos coger el segmento anterior y el posterior para dar contexto
-    let prevSegmentText = 'N/A (Start of file)';
-    let nextSegmentText = 'N/A (End of file)';
+    contexto.vecinos = vecinosDe(foco.entryIndex, foco.segmentIndex);
 
-    // Lógica simple para previo
-    if (segmentIndex > 0) {
-        prevSegmentText =
-            entry.sentenceSegments[segmentIndex - 1].translation || '(Not translated yet)';
-    } else if (entryIndex > 0) {
-        // Si es el primer segmento de una entrada, miramos la entrada anterior (simplificado)
-        const prevEntry = state.poEntries[entryIndex - 1];
-        if (prevEntry && prevEntry.sentenceSegments.length > 0) {
-            const lastSeg = prevEntry.sentenceSegments[prevEntry.sentenceSegments.length - 1];
-            prevSegmentText = lastSeg.translation || '(Not translated yet)';
-        }
-    }
-
-    // Lógica simple para siguiente
-    if (segmentIndex < entry.sentenceSegments.length - 1) {
-        nextSegmentText = entry.sentenceSegments[segmentIndex + 1].original;
-    } else if (entryIndex < state.poEntries.length - 1) {
-        const nextEntry = state.poEntries[entryIndex + 1];
-        if (nextEntry && !nextEntry.isHeader && nextEntry.sentenceSegments.length > 0) {
-            nextSegmentText = nextEntry.sentenceSegments[0].original;
-        }
-    }
-
-    // 6. CONSTRUCCIÓN DEL PROMPT MAESTRO
-    return `
-                ACT AS: Professional Translator & Localization Expert (PandaBot).
-                
-                --- PROJECT CONTEXT ---
-                Source Language: ${srcLang}
-                Target Language: ${tgtLang}
-                
-                --- TERMINOLOGY & MEMORY (PRIORITY HIGH) ---
-                ${glossaryContext}
-                
-                ${tmContext}
-                
-                --- TEXT FLOW CONTEXT ---
-                Previous Sentence (Context): "...${prevSegmentText}"
-                Current Sentence (TARGET): "${segment.original}"
-                Next Sentence (Context): "${nextSegmentText}..."
-                
-                --- CURRENT STATUS ---
-                Current Draft Translation: "${document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`)?.value || ''}"
-                Context ID (msgctxt): ${entry.msgctxt || 'N/A'}
-                
-                --- USER REQUEST ---
-                ${userQuery}
-                
-                OUTPUT GUIDELINES:
-                1. Be concise.
-                2. If the user asks to translate, prioritize Glossary terms and TM style.
-                3. Provide the result directly.
-            `;
+    return {
+        segmento: {
+            original: trozo.original,
+            traduccion:
+                document.getElementById(`msgstr-${foco.entryIndex}-${foco.segmentIndex}`)?.value ||
+                '',
+            entryIndex: foco.entryIndex,
+            segmentIndex: foco.segmentIndex,
+        },
+        contexto,
+        idiomas,
+    };
 }
 
-function handleAiSend() {
-    const text = aiUserInput.value.trim();
-    if (!text) return;
+/**
+ * El segmento de antes y el de después, para que la traducción encaje con lo
+ * que la rodea (el tuteo, si viene de una lista, si es la respuesta a algo).
+ *
+ * @param {number} entryIndex
+ * @param {number} segmentIndex
+ * @returns {Array<{original: string, traduccion: string}>}
+ */
+function vecinosDe(entryIndex, segmentIndex) {
+    const planos = [];
+    state.poEntries.forEach((entrada, i) => {
+        if (entrada.isHeader) return;
+        (entrada.sentenceSegments || []).forEach((trozo, j) => {
+            planos.push({ i, j, original: trozo.original, traduccion: trozo.translation || '' });
+        });
+    });
 
-    const prompt = getContextPrompt(text);
-    if (!prompt) {
-        appendAiMessage('bot', translations[state.currentLanguage]['ai_no_segment']);
+    const donde = planos.findIndex((p) => p.i === entryIndex && p.j === segmentIndex);
+    if (donde === -1) return [];
+
+    return [planos[donde - 1], planos[donde + 1]]
+        .filter(Boolean)
+        .map((p) => ({ original: p.original, traduccion: p.traduccion }));
+}
+
+/**
+ * Escribe un mensaje en la conversación.
+ *
+ * @param {'user'|'bot'} quien
+ * @param {string} texto
+ * @param {boolean} [conBotonDeInsertar]
+ * @returns {string} El id del mensaje, para poder quitarlo luego.
+ */
+function appendAiMessage(quien, texto, conBotonDeInsertar = false) {
+    if (quien === 'bot') state.lastAiResponseText = texto;
+
+    const div = document.createElement('div');
+    const id = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    div.id = id;
+    div.className = `ai-message ai-message-${quien}`;
+
+    if (quien === 'bot' && typeof marked !== 'undefined') {
+        const pintor = new marked.Renderer();
+        pintor.link = ({ href }) =>
+            `<a href="${href}" target="_blank" title="${href}" class="ai-source-link">${
+                t('ai_link_source') || 'Source'
+            }</a>`;
+        div.innerHTML = marked.parse(texto, { renderer: pintor });
+    } else {
+        div.textContent = texto;
+    }
+
+    if (conBotonDeInsertar && quien === 'bot') {
+        const boton = document.createElement('span');
+        boton.className = 'ai-insert-btn';
+        boton.textContent = t('ai_insert_btn') || '📋 Insertar';
+        boton.onclick = () => insertAiResponse(texto);
+        div.appendChild(boton);
+    }
+
+    aiChatContainer.appendChild(div);
+    aiChatContainer.scrollTop = aiChatContainer.scrollHeight;
+    return id;
+}
+
+/**
+ * Mete un texto en el segmento en el que se está.
+ *
+ * @param {string} texto
+ */
+function insertAiResponse(texto) {
+    const foco = getCurrentFocusedIndex() || state.lastFocusedSegment;
+    if (!foco) {
+        showMessage(t('ai_no_segment'));
         return;
     }
 
-    appendAiMessage('user', text);
-    aiUserInput.value = '';
-    callGeminiAI(prompt);
+    const campo = document.getElementById(`msgstr-${foco.entryIndex}-${foco.segmentIndex}`);
+    if (!campo || campo.readOnly) {
+        showMessage(t('ai_no_segment'));
+        return;
+    }
+
+    pushToUndoStack();
+    campo.value = String(texto || '')
+        .replace(/```/g, '')
+        .trim();
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+    campo.focus();
+    showMessage(t('ai_inserted'));
 }
 
-function triggerQuickAI(actionType) {
-    let query = '';
-    switch (actionType) {
-        case 'translate':
-            query = translations[state.currentLanguage]['ai_prompt_translate'];
-            break;
-        case 'improve':
-            query = translations[state.currentLanguage]['ai_prompt_improve'];
-            break;
-        case 'explain':
-            query = translations[state.currentLanguage]['ai_prompt_explain'];
-            break;
-        case 'fix':
-            query = translations[state.currentLanguage]['ai_prompt_fix'];
-            break;
+/**
+ * Deja el panel del asistente listo para lo que toque.
+ *
+ * Sin servicio elegido ni clave, el asistente no puede hacer nada: lo primero
+ * que hay que ver al abrirlo es dónde se configura, no un saludo que invita a
+ * escribir en un cuadro que va a contestar con un error. Así que si falta algo,
+ * se abre directamente el panel de ajustes y el saludo dice qué hacer.
+ *
+ * @returns {boolean} true si falta configurar algo (y se ha abierto el panel).
+ */
+function prepararPanelDeIA() {
+    const config = configuracionUsable();
+
+    if (aiChatContainer && aiChatContainer.children.length === 0) {
+        appendAiMessage('bot', config ? t('ai_initial_message') : t('ai_initial_sin_configurar'));
     }
 
-    if (query) {
-        const prompt = getContextPrompt(query);
-        if (!prompt) {
-            appendAiMessage('bot', translations[state.currentLanguage]['ai_no_segment']);
-            // Open sidebar if closed so user sees the error
-            if (!aiSidebar.classList.contains('show-sidebar'))
-                aiSidebar.classList.add('show-sidebar');
+    if (!config) aiConfigPanel?.classList.remove('hidden');
+
+    return !config;
+}
+
+/**
+ * Avisa de que falta configurar la IA y abre el panel de ajustes.
+ */
+function pedirConfiguracion() {
+    appendAiMessage('bot', t('ai_falta_configurar'));
+    aiConfigPanel?.classList.remove('hidden');
+}
+
+/**
+ * Manda lo que se haya escrito en el cuadro.
+ */
+async function handleAiSend() {
+    const texto = aiUserInput.value.trim();
+    if (!texto) return;
+
+    aiUserInput.value = '';
+    appendAiMessage('user', texto);
+    await responder(texto);
+}
+
+/**
+ * Contesta una consulta con el contexto que haya.
+ *
+ * @param {string} pregunta
+ */
+async function responder(pregunta) {
+    const config = configuracionUsable();
+    if (!config) return pedirConfiguracion();
+
+    const { segmento, contexto } = loQueHayAlrededor();
+    const pensando = appendAiMessage('bot', t('ai_thinking'));
+
+    try {
+        const respuesta = await preguntar({
+            pregunta,
+            config,
+            conversacion: conversacion.slice(-MEMORIA_DE_LA_CHARLA),
+            segmento,
+            contexto,
+        });
+
+        document.getElementById(pensando)?.remove();
+        appendAiMessage('bot', respuesta, Boolean(segmento));
+
+        conversacion.push({ papel: 'persona', texto: pregunta });
+        conversacion.push({ papel: 'ia', texto: respuesta });
+    } catch (error) {
+        document.getElementById(pensando)?.remove();
+        appendAiMessage('bot', `❌ ${error.message}`);
+        if (error.codigo === 'clave') aiConfigPanel?.classList.remove('hidden');
+    }
+}
+
+/**
+ * Traduce el segmento en el que se está y ofrece el resultado.
+ *
+ * Va por su propio camino y no por el de la conversación porque aquí sí se
+ * protegen las etiquetas y se comprueba la respuesta: una sugerencia que se
+ * carga un %s no se ofrece.
+ */
+async function sugerirTraduccion() {
+    const config = configuracionUsable();
+    if (!config) return pedirConfiguracion();
+
+    const { segmento, contexto, idiomas } = loQueHayAlrededor();
+    if (!segmento) {
+        appendAiMessage('bot', t('ai_no_segment'));
+        return;
+    }
+
+    abrirPanel();
+    appendAiMessage('user', `⚡ ${t('ai_prompt_translate')}`);
+    const pensando = appendAiMessage('bot', t('ai_thinking'));
+
+    try {
+        const resultado = await traducirUno({
+            original: segmento.original,
+            config,
+            formato: state.currentFileType,
+            idiomaOrigen: idiomas.origen,
+            idiomaDestino: idiomas.destino,
+            contexto,
+        });
+
+        document.getElementById(pensando)?.remove();
+
+        if (!resultado.vale) {
+            // Ofrecer una traducción que se ha cargado una etiqueta sería
+            // ofrecer un archivo roto con buena letra.
+            appendAiMessage('bot', `⚠️ ${t('ai_sugerencia_descartada')} (${resultado.motivo})`);
             return;
         }
-        appendAiMessage('user', `⚡ ${query}`);
-        callGeminiAI(prompt);
+
+        appendAiMessage('bot', resultado.traduccion, true);
+    } catch (error) {
+        document.getElementById(pensando)?.remove();
+        appendAiMessage('bot', `❌ ${error.message}`);
+        if (error.codigo === 'clave') aiConfigPanel?.classList.remove('hidden');
     }
+}
+
+/** Abre el panel si estaba cerrado. */
+function abrirPanel() {
+    if (!aiSidebar.classList.contains('show-sidebar')) aiSidebar.classList.add('show-sidebar');
+}
+
+/**
+ * Los botones de acción rápida del panel.
+ *
+ * @param {string} accion
+ */
+function triggerQuickAI(accion) {
+    if (accion === 'translate') return sugerirTraduccion();
+
+    const pregunta = t(`ai_prompt_${accion}`);
+    if (!pregunta) return;
+
+    abrirPanel();
+    appendAiMessage('user', `⚡ ${pregunta}`);
+    return responder(pregunta);
+}
+
+/** Empieza una conversación nueva, sin lo hablado antes. */
+function olvidarConversacion() {
+    conversacion = [];
 }
 
 export {
     appendAiMessage,
-    callGeminiAI,
-    getContextPrompt,
     handleAiSend,
     insertAiResponse,
+    olvidarConversacion,
+    prepararPanelDeIA,
+    sugerirTraduccion,
     triggerQuickAI,
 };

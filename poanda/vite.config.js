@@ -25,26 +25,69 @@ const AVISO_ARCHIVO_GENERADO = `
 -->
 `;
 
+/** Tipos de archivo que el servidor de desarrollo sabe servir desde el sitio. */
+const TIPOS = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.webp': 'image/webp',
+    '.ico': 'image/x-icon',
+    '.txt': 'text/plain; charset=utf-8',
+    '.md': 'text/markdown; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+};
+
 /**
- * Durante el desarrollo, sirve las imágenes comunes del sitio.
+ * Durante el desarrollo, sirve los archivos comunes del sitio.
  *
- * En producción, Poanda vive en httrans.org/poanda/ y las imágenes en
- * httrans.org/images/, así que el HTML las pide como `/images/...`. El servidor
- * de desarrollo solo conoce la carpeta `src/`, de modo que sin esto el logo y el
- * favicon saldrían rotos al trabajar en local. Esto las sirve desde la carpeta
- * `images/` del repositorio, igual que hará httrans.org.
+ * En producción Poanda vive en httrans.org/poanda/, y comparte con el resto de
+ * la web el logo (`/poanda-logo-final.png`) y los iconos (`/images/...`). El
+ * servidor de desarrollo de Vite solo conoce la carpeta `src/`, así que sin esto
+ * esas rutas no existirían al trabajar en local.
+ *
+ * Y no fallarían de forma evidente: cuando Vite no encuentra algo, responde con
+ * el index.html y un 200. O sea, la petición del logo devolvía una página web en
+ * lugar de una imagen, y el navegador simplemente no pintaba nada. Por eso este
+ * middleware se registra ANTES que los de Vite, y solo responde cuando el
+ * archivo existe de verdad en la raíz del sitio y no lo tiene ya `src/`.
  */
-function servirImagenesDelSitio() {
+function servirArchivosDelSitio() {
     return {
-        name: 'servir-imagenes-del-sitio',
+        name: 'servir-archivos-del-sitio',
         configureServer(server) {
-            server.middlewares.use('/images', (req, res, next) => {
-                const nombre = decodeURIComponent((req.url || '').split('?')[0]).replace(/^\//, '');
-                const archivo = path.join(RAIZ_DEL_SITIO, 'images', nombre);
-                // No salir de la carpeta images/ aunque la petición lleve "..".
-                if (!archivo.startsWith(path.join(RAIZ_DEL_SITIO, 'images'))) return next();
-                if (!fs.existsSync(archivo)) return next();
-                res.end(fs.readFileSync(archivo));
+            server.middlewares.use((req, res, next) => {
+                if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+                const ruta = decodeURIComponent((req.url || '').split('?')[0]);
+                if (ruta.startsWith('/@') || ruta.includes('node_modules')) return next();
+
+                const extension = path.extname(ruta).toLowerCase();
+                if (!TIPOS[extension]) return next();
+
+                // Si el archivo lo tiene src/, que lo sirva Vite.
+                if (fs.existsSync(path.join(AQUI, 'src', ruta))) return next();
+
+                // Se busca en el mismo orden en el que resolvería el navegador
+                // en producción, donde la página vive en httrans.org/poanda/:
+                // primero la carpeta de la herramienta (ahí está CHANGELOG.md),
+                // después la raíz del sitio (ahí están el logo y los iconos).
+                for (const base of [AQUI, RAIZ_DEL_SITIO]) {
+                    const archivo = path.join(base, ruta);
+                    // No salir de la carpeta aunque la petición lleve "..".
+                    if (!archivo.startsWith(base + path.sep)) continue;
+                    if (!fs.existsSync(archivo) || !fs.statSync(archivo).isFile()) continue;
+
+                    res.setHeader('Content-Type', TIPOS[extension]);
+                    res.end(fs.readFileSync(archivo));
+                    return;
+                }
+
+                return next();
             });
         },
     };
@@ -69,7 +112,7 @@ export default defineConfig({
     // httrans.org/poanda/, no desde la raíz del dominio.
     base: './',
 
-    plugins: [servirImagenesDelSitio(), avisarArchivoGenerado()],
+    plugins: [servirArchivosDelSitio(), avisarArchivoGenerado()],
 
     build: {
         // Se compila a una carpeta propia y desechable. Después, el script

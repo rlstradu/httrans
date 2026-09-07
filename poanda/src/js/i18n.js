@@ -2,33 +2,32 @@ import { aiSidebar, centralColumn, terminologySidebar, translationMemorySidebar 
 import { renderTranslations } from './editor.js';
 import { renderGlossary } from './glossary.js';
 import { state } from './state.js';
+import { actualizarBotonTema } from './theme.js';
 import { translations } from './translations.js';
 
 function setLanguage(lang) {
     state.currentLanguage = lang;
     document.documentElement.lang = lang;
 
+    // El selector es un desplegable: en el botón se lee el idioma que está
+    // puesto, y dentro se marca con una palomita la opción activa. El nombre de
+    // cada idioma se escribe en ese mismo idioma (English, Español), como es
+    // costumbre en los selectores de idioma: así lo reconoce quien no entiende
+    // el idioma en el que está la página ahora mismo.
+    const NOMBRES = { en: 'English', es: 'Español' };
+
     const langEnBtn = document.getElementById('langEnBtn');
     const langEsBtn = document.getElementById('langEsBtn');
+    const langActual = document.getElementById('langActual');
 
-    langEnBtn.classList.remove('active-lang');
-    langEsBtn.classList.remove('active-lang');
-    langEnBtn.style.backgroundColor = 'var(--color-medium-gray)';
-    langEnBtn.style.color = 'var(--color-dark)';
-    langEsBtn.style.backgroundColor = 'var(--color-medium-gray)';
-    langEsBtn.style.color = 'var(--color-dark)';
-
-    if (lang === 'en') {
-        langEnBtn.classList.add('active-lang');
-        langEnBtn.style.backgroundColor = 'var(--color-dark)';
-        langEnBtn.style.color = 'var(--color-white)';
-    } else {
-        langEsBtn.classList.add('active-lang');
-        langEsBtn.style.backgroundColor = 'var(--color-dark)';
-        langEsBtn.style.color = 'var(--color-white)';
-    }
+    langEnBtn.classList.toggle('active-lang', lang === 'en');
+    langEsBtn.classList.toggle('active-lang', lang !== 'en');
+    if (langActual) langActual.textContent = NOMBRES[lang] || NOMBRES.en;
 
     updateTextContent();
+    // El botón del tema no se puede traducir con data-i18n: su texto depende
+    // también de si estás en claro o en oscuro.
+    actualizarBotonTema();
     renderTranslations(state.poEntries);
     renderGlossary();
 }

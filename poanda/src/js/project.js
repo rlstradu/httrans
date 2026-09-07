@@ -15,18 +15,25 @@ import { renderTranslations } from './editor.js';
 import { processPoContent, updateSaveButtonsState } from './files.js';
 import { processTBXContent, resetGlossary } from './glossary.js';
 import { updateMainContentOffset } from './i18n.js';
+import { olvidarProyecto } from './persistencia.js';
+import { fijarIdiomas, pintarParDeIdiomas } from './idiomas-proyecto.js';
+import { normalizarIdioma } from './core/idiomas.js';
 import { state } from './state.js';
 import { updateStatsDisplay, updateUtilityButtonStates } from './stats.js';
 import { processTMXContent, resetTM } from './tm.js';
 import { translations } from './translations.js';
 
 function resetProjectState() {
+    olvidarProyecto();
     state.poEntries = [];
     state.currentFileName = 'translations.po';
 
     state.currentFileType = null;
     state.currentJsonSourceFileName = null;
     state.currentJsonTargetFileName = null;
+    state.sourceLang = '';
+    state.targetLang = '';
+    pintarParDeIdiomas();
 
     renderTranslations([]);
     updateStatsDisplay();
@@ -83,6 +90,14 @@ async function executeSaveProject() {
             zip.file('glossary.tbx', tbxContent);
         }
 
+        // El par de idiomas del proyecto. Un .poanda que no lo lleve se abre
+        // sin dirección y hay que volver a decirla, cuando es justo el dato que
+        // define de qué va el encargo.
+        zip.file(
+            'poanda.json',
+            JSON.stringify({ sourceLang: state.sourceLang, targetLang: state.targetLang }, null, 2),
+        );
+
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
@@ -114,6 +129,25 @@ async function openProject(file) {
 
         const zip = await JSZip.loadAsync(file);
         let poFileFound = false;
+
+        // El par de idiomas se lee antes que nada: processPoContent crea el
+        // proyecto y ahí ya tiene que estar puesto.
+        const datos = zip.file('poanda.json');
+        if (datos) {
+            try {
+                const guardado = JSON.parse(await datos.async('string'));
+                await fijarIdiomas(
+                    {
+                        origen: normalizarIdioma(guardado.sourceLang || ''),
+                        destino: normalizarIdioma(guardado.targetLang || ''),
+                    },
+                    { guardar: false },
+                );
+            } catch {
+                // Un poanda.json roto no impide abrir el proyecto: se pregunta
+                // el par desde el indicador de la barra y listo.
+            }
+        }
 
         const promises = [];
         zip.forEach((relativePath, zipEntry) => {

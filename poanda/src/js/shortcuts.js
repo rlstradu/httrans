@@ -5,6 +5,7 @@ import {
     getCurrentFocusedIndex,
     goToNextTranslation,
     goToPreviousTranslation,
+    insertarSiguienteEtiquetaQueFalta,
     pushToUndoStack,
     setTranslationEditableState,
 } from './editor.js';
@@ -28,6 +29,10 @@ const defaultShortcutConfig = {
     toggleAI: { ctrlKey: true, altKey: false, shiftKey: true, key: 'A' },
     insertLastAI: { ctrlKey: false, altKey: true, shiftKey: true, key: 'I' },
     copyOriginal: { ctrlKey: true, altKey: false, shiftKey: true, key: 'C' },
+    // Insertar la siguiente etiqueta que falte. En Trados y en memoQ esto es F8,
+    // pero F8 lo tienen cogido algunos navegadores, así que aquí lleva
+    // modificadores como el resto de atajos de Poanda.
+    insertNextTag: { ctrlKey: true, altKey: false, shiftKey: true, key: 'T' },
 };
 
 function loadShortcuts() {
@@ -124,6 +129,16 @@ function handleShortcutAction(action, pressedKey) {
         case 'prevSegment':
             if (currentFocused) {
                 goToPreviousTranslation(currentFocused.entryIndex, currentFocused.segmentIndex);
+            }
+            break;
+
+        case 'insertNextTag':
+            if (currentFocused) {
+                const puesta = insertarSiguienteEtiquetaQueFalta(
+                    currentFocused.entryIndex,
+                    currentFocused.segmentIndex,
+                );
+                if (!puesta) showMessage(translations[state.currentLanguage]['tag_none_left']);
             }
             break;
 

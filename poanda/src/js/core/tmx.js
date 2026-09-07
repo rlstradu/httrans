@@ -16,10 +16,10 @@ function generateTMX() {
 <tmx version="1.4">
   <header creationtool="Poanda" creationtoolversion="1.0"
           datatype="unknown" segtype="sentence" changeid="PoandaUser"
-          srclang="${state.tmSourceLanguage || 'en-US'}" o-tmf="Poanda"
+          srclang="${state.sourceLang || 'en-US'}" o-tmf="Poanda"
           adminlang="en-US" `;
 
-    const targetLangAttr = state.tmTargetLanguage ? `targetlang="${state.tmTargetLanguage}"` : '';
+    const targetLangAttr = state.targetLang ? `targetlang="${state.targetLang}"` : '';
 
     const xml = [
         header +

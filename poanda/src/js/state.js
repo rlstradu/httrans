@@ -8,6 +8,10 @@
  */
 
 export const state = {
+    // Identificador del proyecto abierto en la base de datos. null mientras no
+    // se haya abierto ningún archivo.
+    projectId: null,
+
     poEntries: [],
     undoStack: [],
     currentFileName: 'translations.po',
@@ -27,20 +31,30 @@ export const state = {
     currentHtmlDoc: null,
     htmlNodeMap: [],
     currentRawHtml: '',
+    // Contenido con el que se abrió el archivo. Los formatos que reconstruyen
+    // sobre el original lo necesitan para devolver intacto lo que no se traduce:
+    // comentarios, líneas en blanco y todo lo que no era un segmento.
+    contenidoOriginal: '',
+    // El par de idiomas del proyecto: de qué idioma a qué idioma se traduce
+    // este archivo. Se elige al abrirlo y se guarda con el proyecto.
+    //
+    // Antes había dos pares, uno del glosario y otro de la memoria, y cada uno
+    // se configuraba por su lado. Eran el mismo dato escrito dos veces, se
+    // podían contradecir, y el asistente de IA no tenía a cuál hacer caso. Un
+    // archivo se traduce en una dirección: esa dirección es del proyecto.
+    sourceLang: '',
+    targetLang: '',
     termsFoundInActiveSegment: new Set(),
     glossary: [],
-    glossarySourceLanguage: '',
-    glossaryTargetLanguage: '',
     currentGlossaryLatestResults: [],
     translationMemory: [],
-    tmSourceLanguage: '',
-    tmTargetLanguage: '',
     tmBestMatchForActiveSegment: null,
     currentTMLatestSearchResults: [],
     lastFocusedSegment: null,
     // Se comprueba que localStorage exista para que los módulos de lógica pura
     // se puedan cargar también fuera del navegador (los tests corren en Node).
-    aiApiKey: typeof localStorage !== 'undefined' ? localStorage.getItem('poanda_gemini_key') || '' : '',
+    aiApiKey:
+        typeof localStorage !== 'undefined' ? localStorage.getItem('poanda_gemini_key') || '' : '',
     lastAiResponseText: '',
     shortcutConfig: {},
     tempShortcutConfig: {},

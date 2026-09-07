@@ -1,4 +1,3 @@
-import { parseHtmlProject } from './core/html-doc.js';
 import { db, ID_SESION } from './db.js';
 import { hideLoadingOverlay, showLoadingOverlay, showMessage } from './dialogs.js';
 import {
@@ -11,9 +10,11 @@ import {
 } from './dom.js';
 import { renderTranslations } from './editor.js';
 import { updateSaveButtonsState } from './files.js';
-import { showGlossaryEditorSection, showLanguageConfigSection } from './glossary.js';
+import { showGlossaryEditorSection } from './glossary.js';
+import { normalizarIdioma } from './core/idiomas.js';
+import { pintarParDeIdiomas } from './idiomas-proyecto.js';
 import { state } from './state.js';
-import { showTMEditorSection, showTMLanguageConfigSection } from './tm.js';
+import { showTMEditorSection } from './tm.js';
 import { translations } from './translations.js';
 
 /**
@@ -35,12 +36,19 @@ async function saveBackup() {
         currentFileName: state.currentFileName,
         // El HTML original hace falta para reconstruir el documento al restaurar.
         currentRawHtml: state.currentRawHtml || '',
+        // Y, en general, el contenido con el que se abriera el archivo, sea del
+        // formato que sea: es lo que necesita el escritor para devolver intacto
+        // lo que no se ha traducido. Los archivos comprimidos (Word, Excel) no
+        // caben aquí y se quedan fuera a propósito; su copia de seguridad es el
+        // proyecto, no esta sesión.
+        contenidoOriginal:
+            typeof state.contenidoOriginal === 'string' ? state.contenidoOriginal : '',
         glossary: state.glossary || [],
-        glossarySourceLanguage: state.glossarySourceLanguage || '',
-        glossaryTargetLanguage: state.glossaryTargetLanguage || '',
         translationMemory: state.translationMemory || [],
-        tmSourceLanguage: state.tmSourceLanguage || '',
-        tmTargetLanguage: state.tmTargetLanguage || '',
+        // El par de idiomas del proyecto. Antes había dos, uno del glosario y
+        // otro de la memoria, y se guardaban por separado.
+        sourceLang: state.sourceLang || '',
+        targetLang: state.targetLang || '',
         timestamp: new Date(),
     };
 
@@ -108,37 +116,33 @@ async function restoreSession(backupData = null) {
             state.currentFileName = backup.currentFileName || 'translations.po';
             state.currentRawHtml = backup.currentRawHtml || ''; // Recuperar el HTML crudo
 
-            // 2. LÓGICA ESPECIAL PARA HTML
-            if (state.currentFileType === 'html' && state.currentRawHtml) {
-                // Volvemos a parsear el HTML original para reconstruir htmlNodeMap y currentHtmlDoc
-                // Esto llena htmlNodeMap pero crea poEntries vacíos
-                parseHtmlProject(state.currentRawHtml);
-            }
+            // 2. El contenido con el que se abrió el archivo, que es lo que
+            // necesitan los escritores para devolver intacto lo que no se ha
+            // traducido. Antes aquí se volvía a analizar el HTML para rehacer
+            // un mapa de nodos que vivía en memoria; ya no hace falta, porque
+            // cada segmento sabe en qué posición del archivo estaba.
+            state.contenidoOriginal = backup.contenidoOriginal || state.currentRawHtml || '';
 
-            // 3. Sobrescribir con las traducciones guardadas
-            // Al hacer esto, mantenemos el mapa creado en el paso 2, pero inyectamos los textos del backup
+            // 3. Las traducciones guardadas.
             state.poEntries = backup.poEntries || [];
 
             state.glossary = backup.glossary || [];
-            state.glossarySourceLanguage = backup.glossarySourceLanguage || '';
-            state.glossaryTargetLanguage = backup.glossaryTargetLanguage || '';
             state.translationMemory = backup.translationMemory || [];
-            state.tmSourceLanguage = backup.tmSourceLanguage || '';
-            state.tmTargetLanguage = backup.tmTargetLanguage || '';
+
+            // El par del proyecto. Las copias hechas antes de que existiera
+            // traen los dos pares de entonces; se toma el del glosario, que era
+            // el que se guardaba en el proyecto.
+            state.sourceLang = normalizarIdioma(
+                backup.sourceLang || backup.glossarySourceLanguage || backup.tmSourceLanguage || '',
+            );
+            state.targetLang = normalizarIdioma(
+                backup.targetLang || backup.glossaryTargetLanguage || backup.tmTargetLanguage || '',
+            );
+            pintarParDeIdiomas();
 
             renderTranslations(state.poEntries);
-
-            if (state.glossarySourceLanguage && state.glossaryTargetLanguage) {
-                showGlossaryEditorSection();
-            } else {
-                showLanguageConfigSection();
-            }
-
-            if (state.tmSourceLanguage && state.tmTargetLanguage) {
-                showTMEditorSection();
-            } else {
-                showTMLanguageConfigSection();
-            }
+            showGlossaryEditorSection();
+            showTMEditorSection();
 
             updateSaveButtonsState();
         }

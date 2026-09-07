@@ -6,40 +6,108 @@ import { generateTMX } from '../src/js/core/tmx.js';
 import { state } from '../src/js/state.js';
 
 describe('archivos JSON', () => {
-    const JSON_EJEMPLO = JSON.stringify({
-        greeting: 'Hello',
-        farewell: 'Goodbye',
-        empty: '',
-    });
+    const JSON_EJEMPLO = `{
+  "greeting": "Hello",
+  "farewell": "Goodbye",
+  "empty": ""
+}`;
+
+    /** Un archivo agrupado por pantallas, que es como vienen casi todos. */
+    const JSON_ANIDADO = `{
+  "menu": {
+    "guardar": "Save",
+    "cancelar": "Cancel"
+  },
+  "errores": {
+    "vacio": "This field is required"
+  },
+  "version": 3,
+  "activo": true,
+  "dias": ["Monday", "Tuesday"]
+}`;
 
     it('convierte cada clave en contexto y cada valor en texto original', () => {
         const entradas = parseJsonProject(JSON_EJEMPLO);
-        expect(entradas.length).toBe(3);
+        expect(entradas.length).toBe(2);
         const saludo = entradas.find((e) => e.msgctxt === 'greeting');
         expect(saludo.msgid).toBe('Hello');
         expect(saludo.msgstr).toBe('');
     });
 
-    it('ordena las claves alfabéticamente', () => {
-        const entradas = parseJsonProject(JSON_EJEMPLO);
-        expect(entradas.map((e) => e.msgctxt)).toEqual(['empty', 'farewell', 'greeting']);
+    it('conserva el orden del archivo', () => {
+        // Antes se ordenaban alfabéticamente. Eso rompe la única pista de
+        // contexto que tiene quien traduce: las claves seguidas suelen ser la
+        // misma pantalla, y en el archivo van en el orden en que se usan.
+        expect(parseJsonProject(JSON_EJEMPLO).map((e) => e.msgctxt)).toEqual([
+            'greeting',
+            'farewell',
+        ]);
+    });
+
+    it('entra en las claves agrupadas y las nombra por su ruta', () => {
+        const entradas = parseJsonProject(JSON_ANIDADO);
+        expect(entradas.map((e) => e.msgctxt)).toEqual([
+            'menu.guardar',
+            'menu.cancelar',
+            'errores.vacio',
+            'dias.0',
+            'dias.1',
+        ]);
+    });
+
+    it('lo que no es texto se queda fuera', () => {
+        // Un número o un verdadero/falso no son cadenas que nadie traduzca.
+        const textos = parseJsonProject(JSON_ANIDADO).map((e) => e.msgid);
+        expect(textos).not.toContain('3');
+        expect(textos).not.toContain('true');
     });
 
     it('cuenta las palabras del texto original', () => {
-        const entradas = parseJsonProject(JSON.stringify({ k: 'dos palabras' }));
+        const entradas = parseJsonProject('{"k": "dos palabras"}');
         expect(entradas[0].sentenceSegments[0].wordCountOriginal).toBe(2);
     });
 
-    it('reconstruye el JSON con las traducciones', () => {
-        const entradas = parseJsonProject(JSON_EJEMPLO);
-        entradas.find((e) => e.msgctxt === 'greeting').sentenceSegments[0].translation = 'Hola';
-        const salida = JSON.parse(reconstructJson(entradas));
-        expect(salida.greeting).toBe('Hola');
-        expect(salida.farewell).toBe('');
+    it('abrir y guardar sin traducir devuelve el archivo igual', () => {
+        expect(reconstructJson(parseJsonProject(JSON_ANIDADO), JSON_ANIDADO)).toBe(JSON_ANIDADO);
     });
 
-    it('falla de forma clara si el JSON está mal formado', () => {
-        expect(() => parseJsonProject('{esto no es json}')).toThrow();
+    it('los grupos siguen ahí después de traducir', () => {
+        // Guardar el archivo con las claves sueltas y ordenadas daba un archivo
+        // que la aplicación de la que salió ya no sabe leer, y no se nota hasta
+        // que alguien lo instala.
+        const entradas = parseJsonProject(JSON_ANIDADO);
+        entradas.find((e) => e.msgctxt === 'menu.guardar').sentenceSegments[0].translation =
+            'Guardar';
+
+        const salida = reconstructJson(entradas, JSON_ANIDADO);
+        const objeto = JSON.parse(salida);
+        expect(objeto.menu.guardar).toBe('Guardar');
+        expect(objeto.menu.cancelar).toBe('Cancel');
+        expect(objeto.version).toBe(3);
+        expect(objeto.dias).toEqual(['Monday', 'Tuesday']);
+        // Y la sangría del archivo se mantiene.
+        expect(salida).toContain('  "menu": {');
+    });
+
+    it('lo que no se traduce se queda como estaba, no vacío', () => {
+        const entradas = parseJsonProject(JSON_EJEMPLO);
+        entradas.find((e) => e.msgctxt === 'greeting').sentenceSegments[0].translation = 'Hola';
+
+        const salida = JSON.parse(reconstructJson(entradas, JSON_EJEMPLO));
+        expect(salida.greeting).toBe('Hola');
+        // Antes salía vacío, que es tirar el original de las cadenas a medio
+        // traducir: quien abriera el archivo se encontraba con huecos.
+        expect(salida.farewell).toBe('Goodbye');
+    });
+
+    it('una traducción con comillas no rompe el archivo', () => {
+        const entradas = parseJsonProject(JSON_EJEMPLO);
+        entradas[0].sentenceSegments[0].translation = 'Pulsa "Guardar"';
+        expect(() => JSON.parse(reconstructJson(entradas, JSON_EJEMPLO))).not.toThrow();
+    });
+
+    it('un archivo que no es JSON no da segmentos', () => {
+        expect(parseJsonProject('{esto no es json}')).toEqual([]);
     });
 });
 
@@ -98,8 +166,8 @@ msgstr "Adiós"
 
 describe('exportación de glosario (TBX)', () => {
     beforeEach(() => {
-        state.glossarySourceLanguage = 'en';
-        state.glossaryTargetLanguage = 'es';
+        state.sourceLang = 'en';
+        state.targetLang = 'es';
         state.glossary = [
             { srcLang: 'en', srcTerm: 'string', tgtLang: 'es', tgtTerm: 'cadena' },
             { srcLang: 'en', srcTerm: 'file', tgtLang: 'es', tgtTerm: 'archivo' },
@@ -135,8 +203,8 @@ describe('exportación de glosario (TBX)', () => {
 
 describe('exportación de memoria de traducción (TMX)', () => {
     beforeEach(() => {
-        state.tmSourceLanguage = 'en';
-        state.tmTargetLanguage = 'es';
+        state.sourceLang = 'en';
+        state.targetLang = 'es';
         state.translationMemory = [
             { srcLang: 'en', srcText: 'Hello', tgtLang: 'es', tgtText: 'Hola' },
         ];

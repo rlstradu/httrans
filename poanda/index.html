@@ -23,20 +23,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/index-BNaROqvd.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DE6OM_wY.css">
+  <script type="module" crossorigin src="./assets/index-D7c2Q2_f.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Ta-HVqyW.css">
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen">
     
-    <!-- Language Switcher -->
-    <div class="absolute top-4 right-4 space-x-2 z-10 flex items-center">
-        <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
-        <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
-        <button id="darkModeToggle" class="ml-2 p-1 rounded-full hover:bg-gray-200 transition duration-300" title="Dark Mode">🌙</button>
-        <span id="versionToggle" class="ml-3 text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 border border-gray-300 px-2 py-1 rounded shadow-md cursor-pointer transition duration-300" title="Ver Changelog">v1.2.0</span>
-    </div>
-
-    <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
+    <div class="bg-white p-8 w-full relative min-h-screen" id="dropArea">
         <!-- Top Utility Buttons -->
         <div class="top-utility-buttons-container">
             <div class="dropdown">
@@ -46,19 +38,27 @@
                 <div class="dropdown-content">
                     <a id="newProjectBtn" data-i18n="new_project_btn">New Project</a>
                     <a id="openProjectBtn" data-i18n="open_project_btn">Open Project</a>
+                    <a id="recentProjectsBtn" data-i18n="recent_projects_menu">Recent Projects</a>
+                    <hr class="my-1 border-gray-200">
                     <a id="saveProjectBtn" data-i18n="save_project_btn">Save Project</a>
                 </div>
             </div>
             <div class="dropdown">
             <button id="fileBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="file_menu_btn">File</span> </button>
-            <div class="dropdown-content">
-                <a id="loadFilePoBtn" data-i18n="load_po_menu">Load .po File</a> <a id="saveFilePoBtn" data-i18n="save_po_menu" class="disabled-link">Save .po File</a> <hr class="my-1 border-gray-200"> <a id="loadFileJsonBtn" data-i18n="load_json_menu">Load JSON Project</a> <a id="saveFileJsonBtn" data-i18n="save_json_menu" class="disabled-link">Save JSON File</a> <hr class="my-1 border-gray-200"><a id="loadFileHtmlBtn">Load .html File</a> <a id="saveFileHtmlBtn" class="disabled-link">Save .html File</a> <hr class="my-1 border-gray-200"> <a id="convertFileMoBtn" data-i18n="convert_mo_menu" class="disabled-link">Convert to .mo</a> </div>
-        </div>
-            <button id="backupBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
-                <span data-i18n="backup_btn">Backup</span>
-                <span id="backupIndicator"></span>
+                <span data-i18n="file_menu_btn">File</span>
             </button>
+            <div class="dropdown-content">
+
+                <a id="loadFileBtn" data-i18n="load_file_menu">Load file</a>
+                <a id="saveFileBtn" data-i18n="save_file_menu" class="disabled-link">Save file</a>
+                <hr class="my-1 border-gray-200" id="convertMoSeparator">
+                <a id="convertFileMoBtn" data-i18n="convert_mo_menu">Convert to .mo</a>
+                <hr class="my-1 border-gray-200">
+                <!-- El punto verde avisa de que hay copia guardada; va en la
+                     propia entrada del menú, y se ve al desplegarlo. -->
+                <a id="backupBtn"><span data-i18n="backup_btn">Backup</span><span id="backupIndicator"></span></a>
+            </div>
+        </div>
             <div class="dropdown">
                 <button id="toolsBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                     <span data-i18n="tools_menu_btn">Tools</span>
@@ -66,7 +66,9 @@
                 <div class="dropdown-content">
                     <a id="undoBtn" data-i18n="undo_btn">Undo</a>
                     <hr class="my-1 border-gray-200">
-                    <a id="findReplaceBtn" data-i18n="find_replace_btn">Find & Replace</a>
+                    <a id="pretraducirBtn" data-i18n="ai_pretraducir_btn">Pre-translate with AI</a>
+                    <hr class="my-1 border-gray-200">
+                    <a id="findReplaceBtn" data-i18n="find_replace_btn">Find &amp; Replace</a>
                     <a id="shortcutsBtn" data-i18n="shortcuts_btn">Shortcuts</a>
                     <a id="statsBtn" data-i18n="statistics_btn">Statistics</a>
                 </div>
@@ -81,38 +83,52 @@
             <button id="aiBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center gap-1">
                 <span>🐼</span> <span data-i18n="ai_btn">AI Assistant</span>
             </button>
+
+            <!-- Logo reducido: solo se ve cuando hay un archivo abierto, para
+                 no ocupar pantalla con la cabecera grande mientras se traduce -->
+            <img id="logoPequeno" class="top-utility-left" src="/poanda-logo-final-v1.png" alt="Poanda">
+
+            <!-- Idioma, tema y versión: separados del resto y pegados a la
+                 derecha. Los tres llevan la misma clase y se ven iguales: son
+                 tres controles del mismo rango y antes cada uno tenía su forma
+                 (un menú, un emoji redondo y una etiqueta gris). -->
+            <div class="top-utility-right">
+                <div class="dropdown selector-idioma">
+                    <button id="langBtn" class="dropdown-btn control-barra">
+                        <span id="langActual">English</span>
+                    </button>
+                    <div class="dropdown-content dropdown-a-la-derecha">
+                        <a id="langEnBtn" lang="en">English</a>
+                        <a id="langEsBtn" lang="es">Español</a>
+                    </div>
+                </div>
+                <!-- El texto del botón de tema lo pone theme.js: depende del
+                     modo activo, no solo del idioma. -->
+                <button id="darkModeToggle" class="control-barra">Dark mode</button>
+                <button id="versionToggle" class="control-barra" data-i18n-title="changelog_btn_title">v2.0.0</button>
+            </div>
         </div>
 
-        <div class="flex flex-col items-center mb-6 mt-12">
+        <div id="cabeceraGrande" class="flex flex-col items-center mb-6 mt-12">
             <img src="/poanda-logo-final-v1.png" alt="Poanda Logo" class="max-w-xs h-auto mb-2">
             <div data-i18n="tool_description" id="toolDescription" class="text-lg text-center text-on-light-contrast"></div>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-            <label for="poFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
-                <span data-i18n="load_file" id="loadBtnText"></span>
-                <input type="file" id="poFile" accept=".po" class="hidden">
-                <input type="file" id="projectFile" accept=".zip,.poanda" class="hidden">
-                <input type="file" id="backupFile" accept=".json,.poanda-backup" class="hidden">
-                <input type="file" id="jsonSourceFile" accept=".json" class="hidden">
-                <input type="file" id="jsonTargetFile" accept=".json" class="hidden">
-                <input type="file" id="htmlSourceFile" accept=".html,.htm" class="hidden">
-            </label>
-            <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
-                <span data-i18n="save_file" id="saveBtnText"></span>
-            </button>
-            <button id="convertToMoButton" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-convert-mo" disabled>
-                <span data-i18n="convert_to_mo_btn"></span>
-            </button>
-        </div>
+        <!-- Campos de archivo ocultos: los usan el menú y el recuadro de arrastrar -->
+        <input type="file" id="anyFile" accept=".po,.json,.html,.htm" class="hidden">
+        <input type="file" id="projectFile" accept=".zip,.poanda" class="hidden">
+        <input type="file" id="backupFile" accept=".json,.poanda-backup" class="hidden">
+        <input type="file" id="jsonSourceFile" accept=".json" class="hidden">
+        <input type="file" id="jsonTargetFile" accept=".json" class="hidden">
+        <input type="file" id="htmlSourceFile" accept=".html,.htm" class="hidden">
 
         <div class="main-editor-layout" id="mainEditorLayout">
             <!-- Central Column Wrapper -->
             <div id="central-column" class="flex-1 flex flex-col min-w-0">
                 <!-- PO Editor Search Bar -->
-                <div id="poSearchContainer" class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
+                <div id="poSearchContainer" class="mb-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
                     <div class="flex items-center gap-2">
-                        <input type="text" id="poSearchInput" data-i18n-placeholder="po_search_placeholder" class="flex-grow p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white">
+                        <input type="text" id="poSearchInput" data-i18n-placeholder="po_search_placeholder" class="border border-gray-300 rounded-md shadow-sm text-black bg-white">
                         <button id="searchPrevBtn" class="p-1 rounded-md hover:bg-gray-200 disabled:opacity-50" disabled>
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                         </button>
@@ -120,6 +136,16 @@
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
                         </button>
                         <span id="searchResultCounter" class="text-sm text-gray-600 whitespace-nowrap">0 / 0</span>
+
+                        <!-- El par de idiomas del proyecto, al final de la barra
+                             de búsqueda. Aquí está donde se traduce y no entre
+                             los menús, que es otro rango: aquéllos son cosas que
+                             se pulsan, esto es un dato del archivo que se mira.
+                             Va detrás de una raya y con su propio título, para
+                             que se lea como algo aparte de la búsqueda y no como
+                             el final de ella. Al pulsarlo se cambia. -->
+                        <span class="separador-barra" aria-hidden="true"></span>
+                        <button id="parIdiomasBtn" class="par-idiomas" data-i18n-title="lang_pair_title"><span class="par-idiomas-titulo" data-i18n="lang_pair_label"></span><span id="parIdiomasValor" class="par-idiomas-valor">— → —</span></button>
                     </div>
                     
                     <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-2">
@@ -143,7 +169,18 @@
                 <!-- Scrolling Content Area -->
                 <div class="translations-container-scrolling pr-2">
                     <div id="translationsContainer" class="space-y-4">
-                        <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md"></div>
+                        <div id="initialMessage" class="zona-soltar">
+                            <div class="zona-soltar-icono">📄</div>
+                            <p class="zona-soltar-titulo" data-i18n="drop_zone_title"></p>
+                            <p class="zona-soltar-texto" data-i18n="drop_zone_subtitle"></p>
+                            <div class="zona-soltar-formatos">
+                                <span class="formato">.po</span>
+                                <span class="formato">.json</span>
+                                <span class="formato">.html</span>
+                                <span class="formato formato-proyecto">.poanda</span>
+                            </div>
+                            <p class="zona-soltar-privacidad" data-i18n="drop_zone_privacy"></p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -164,27 +201,17 @@
                     </div>
                 </div>
                 <div class="sidebar-content">
-                    <div id="terminologyLanguageConfigSection" class="space-y-4">
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="config_lang_title" id="configLangTitle"></h4>
-                        <div class="glossary-info-box mb-4"><p data-i18n="config_lang_info" id="configLangInfo"></p></div>
-                        <div class="flex flex-col space-y-2 mb-4">
-                            <div class="glossary-input-group"><label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel"></label><input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full" /></div>
-                            <div class="glossary-input-group"><label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel"></label><input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full" /></div>
-                            <button data-i18n="confirm_languages" id="confirmLanguagesBtn" class="glossary-btn-primary w-full"></button>
-                        </div>
-                    </div>
-                    <div id="terminologyEditorSection" style="display:none;">
+                    <div id="terminologyEditorSection">
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
                             <button data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
                             <button data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <button data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
                         </div>
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_lang_title" id="currentLangTitle"></h4>
-                        <div class="flex space-x-2 mb-4">
-                            <div class="glossary-input-group flex-1"><label data-i18n="source_language" id="displaySourceLanguageLabel"></label><input id="displaySrcLang" disabled class="block w-full" /></div>
-                            <div class="glossary-input-group flex-1"><label data-i18n="target_language" id="displayTargetLanguageLabel"></label><input id="displayTgtLang" disabled class="block w-full" /></div>
-                        </div>
+                        <p class="par-del-proyecto mb-4"><span data-i18n="lang_pair_of_project"></span> <button id="glosarioParIdiomas" class="par-del-proyecto-enlace" type="button"></button></p>
+                        <!-- Solo mientras esté vacío: dice qué es esto y por
+                             dónde se empieza, y desaparece en cuanto hay algo. -->
+                        <div id="glosarioVacio" class="glossary-info-box mb-4 hidden"><p data-i18n="glossary_vacio"></p></div>
                         <div class="accordion-item">
                             <div class="accordion-header flex justify-between items-center" id="addTermHeader">
                                 <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion"></h4>
@@ -204,7 +231,6 @@
                         <div class="overflow-x-auto"><table class="glossary-table w-full"><thead><tr><th data-i18n="source_term_col" id="sourceTermCol"></th><th data-i18n="target_term_col" id="targetTermCol"></th><th data-i18n="actions_col" id="actionsCol"></th></tr></thead><tbody id="glossaryTableBody"></tbody></table></div>
                     </div>
                 </div>
-                <datalist id="isoLanguages"></datalist>
             </div>
             <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
                 <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
@@ -222,16 +248,7 @@
                 </div>
                 <div class="sidebar-content">
                     <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
-                    <div id="tmLanguageConfigSection" class="space-y-4">
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="tm_config_lang_title" id="tmConfigLangTitle"></h4>
-                        <div class="tm-info-box mb-4"><p data-i18n="tm_config_lang_info" id="tmConfigLangInfo"></p></div>
-                        <div class="flex flex-col space-y-2 mb-4">
-                            <div class="tm-input-group"><label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel"></label><input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full" /></div>
-                            <div class="tm-input-group"><label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel"></label><input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full" /></div>
-                            <button data-i18n="confirm_languages" id="tmConfirmLanguagesBtn" class="tm-btn-primary w-full"></button>
-                        </div>
-                    </div>
-                    <div id="tmEditorSection" style="display:none;">
+                    <div id="tmEditorSection">
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
                             <button data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
                             <label for="tmFileInput" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 tm-btn-secondary flex-1 text-sm text-center">
@@ -239,11 +256,8 @@
                             </label>
                             <button data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
                         </div>
-                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_tm_lang_title" id="currentTmLangTitle"></h4>
-                        <div class="flex space-x-2 mb-4">
-                            <div class="tm-input-group flex-1"><label data-i18n="source_language" id="displayTmSourceLanguageLabel"></label><input id="displayTmSrcLang" disabled class="block w-full" /></div>
-                            <div class="tm-input-group flex-1"><label data-i18n="target_language" id="displayTmTargetLanguageLabel"></label><input id="displayTmTgtLang" disabled class="block w-full" /></div>
-                        </div>
+                        <p class="par-del-proyecto mb-4"><span data-i18n="lang_pair_of_project"></span> <button id="memoriaParIdiomas" class="par-del-proyecto-enlace" type="button"></button></p>
+                        <div id="memoriaVacia" class="tm-info-box mb-4 hidden"><p data-i18n="tm_vacia"></p></div>
                         <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle"></h4>
                         <div class="mb-4"><input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" /></div>
                         <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle"></h4>
@@ -265,17 +279,61 @@
                     </div>
                 </div>
 
+                <!-- Ajustes de la IA: qué servicio, con qué modelo y con qué clave.
+                     El campo de la dirección solo aparece con "compatible con OpenAI",
+                     que es por donde entran Ollama, LM Studio y llama-server. -->
                 <div id="aiConfigPanel" class="ai-config-panel hidden">
-                    <label class="block mb-1 font-bold" data-i18n="ai_api_key_label">Google Gemini API Key:</label>
-                    <input type="password" id="geminiApiKeyInput" class="w-full border rounded p-1 mb-2" data-i18n-placeholder="ai_api_key_placeholder" placeholder="Pegar API Key aquí...">
-                    <div class="flex justify-end gap-2">
-                        <button id="saveApiKeyBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600" data-i18n="save_button">Guardar</button>
+                    <!-- Estado "conectado": lo primero que se ve cuando ya hay
+                         servicio y clave. Enseña a qué está conectado, deja
+                         cambiar de modelo sin volver a conectar y lleva a
+                         cambiar de servicio con un botón. -->
+                    <div id="aiConectado" class="hidden">
+                        <p class="ia-conectado"><span class="ia-conectado-punto" aria-hidden="true"></span><span id="aiConectadoServicio"></span></p>
+
+                        <label class="ia-etiqueta" data-i18n="ai_modelo_label">Modelo</label>
+                        <select id="aiModelo" class="ia-campo"></select>
+                        <p class="ia-pista" data-i18n="ai_modelo_pista"></p>
+
+                        <label class="ia-etiqueta" data-i18n="ai_instrucciones_label">Instrucciones para este proyecto</label>
+                        <textarea id="aiInstrucciones" class="ia-campo" rows="2" data-i18n-placeholder="ai_instrucciones_pista"></textarea>
+
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button id="aiCambiarBtn" class="px-2 py-1 rounded text-xs btn-modal-neutral" data-i18n="ai_cambiar_servicio">Cambiar de servicio</button>
+                            <button id="aiGuardarModeloBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600" data-i18n="save_button">Guardar</button>
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1" data-i18n="ai_api_key_info">La clave se guarda localmente en tu navegador.</p>
+
+                    <!-- Estado "sin conectar": elegir servicio y pegar la clave.
+                         El campo de la dirección solo aparece con "compatible con
+                         OpenAI", que es por donde entran Ollama, LM Studio y
+                         llama-server; y ahí no se pide clave, porque no la hay. -->
+                    <div id="aiSinConectar">
+                        <label class="ia-etiqueta" data-i18n="ai_proveedor_label">Servicio de IA</label>
+                        <select id="aiProveedor" class="ia-campo"></select>
+
+                        <div id="aiUrlBloque" class="hidden">
+                            <label class="ia-etiqueta" data-i18n="ai_url_label">Dirección del servicio</label>
+                            <input type="text" id="aiBaseUrl" class="ia-campo" placeholder="http://127.0.0.1:11434/v1">
+                            <p class="ia-pista" data-i18n="ai_url_pista"></p>
+                        </div>
+
+                        <div id="aiClaveBloque">
+                            <label class="ia-etiqueta" data-i18n="ai_api_key_label">Clave de API</label>
+                            <input type="password" id="aiClave" class="ia-campo" data-i18n-placeholder="ai_api_key_placeholder" placeholder="Pegar la clave aquí…">
+                            <label class="ia-casilla"><input type="checkbox" id="aiRecordarClave"> <span data-i18n="ai_recordar_clave">Recordar en este ordenador</span></label>
+                            <p class="ia-pista" data-i18n="ai_api_key_info"></p>
+                        </div>
+
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button id="aiConectarBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600" data-i18n="ai_conectar">Conectar y guardar</button>
+                        </div>
+                    </div>
+
+                    <p id="aiEstadoConexion" class="ia-pista"></p>
                 </div>
 
                 <div class="ai-quick-actions">
-                    <button class="ai-quick-btn" data-ai-action="translate" data-i18n="ai_quick_translate">Traducir</button>
+                    <button id="aiQuickTranslate" class="ai-quick-btn" data-ai-action="translate" data-i18n="ai_quick_translate">Traducir</button>
                     <button class="ai-quick-btn" data-ai-action="improve" data-i18n="ai_quick_improve">Mejorar</button>
                     <button class="ai-quick-btn" data-ai-action="explain" data-i18n="ai_quick_explain">Explicar</button>
                     <button class="ai-quick-btn" data-ai-action="fix" data-i18n="ai_quick_fix">Corregir</button>
@@ -294,12 +352,29 @@
         </div>
 
 
+
+        <div id="recentProjectsModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="recent_projects_title" class="text-xl font-bold mb-2 text-on-light-contrast"></h2><p data-i18n="recent_projects_info" class="text-sm text-gray-600 mb-4"></p><div id="recentProjectsList" class="space-y-2 max-h-96 overflow-y-auto"></div><p id="recentProjectsEmpty" class="text-gray-500 text-sm hidden" data-i18n="recent_projects_empty"></p><div class="flex justify-end mt-6"><button id="recentProjectsCloseBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="close_btn"></span></button></div></div></div>
+
         <!-- Diálogos propios que sustituyen a confirm() y prompt() del navegador (AGENTS.md §5) -->
         <div id="confirmModal" class="modal hidden"><div class="modal-content"><p id="confirmModalText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><div class="flex justify-end space-x-2 mt-6"><button id="confirmModalCancelBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="confirmModalOkBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok"></span></button></div></div></div>
 
         <div id="promptModal" class="modal hidden"><div class="modal-content"><p id="promptModalText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><input type="text" id="promptModalInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"><div class="flex justify-end space-x-2 mt-6"><button id="promptModalCancelBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="promptModalOkBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok"></span></button></div></div></div>
 
         <div id="messageBox" class="modal hidden"><div class="modal-content"><p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><button id="messageClose" class="py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok" id="okBtnText"></span></button></div></div>
+
+        <!-- Pretraducir el archivo entero. Los dos motores se explican en el
+             propio cuadro, porque la diferencia entre ellos (rápido y sin
+             criterio, o lento y con tu glosario) es justo lo que hay que
+             decidir aquí. -->
+        <!-- El par de idiomas del proyecto. Sale al abrir un archivo, ya
+             relleno con lo que el archivo declare, y se puede volver a abrir
+             desde el indicador de la barra. -->
+        <div id="idiomasModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="lang_pair_dialog_title" class="text-xl font-bold mb-2 text-on-light-contrast"></h2><p data-i18n="lang_pair_dialog_info" class="ia-pista mb-3"></p><p id="idiomasAviso" class="ia-pista idiomas-aviso hidden"></p><div class="idiomas-par"><div><label class="ia-etiqueta" for="idiomaOrigen" data-i18n="source_language"></label><select id="idiomaOrigen" class="ia-campo"></select></div><div class="idiomas-flecha" aria-hidden="true">&rarr;</div><div><label class="ia-etiqueta" for="idiomaDestino" data-i18n="target_language"></label><select id="idiomaDestino" class="ia-campo"></select></div></div><p id="idiomasError" class="idiomas-error"></p><div class="flex justify-end space-x-2 mt-4"><button id="idiomasCancelarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="idiomasAceptarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="accept_button"></span></button></div></div></div>
+        <div id="pretraducirModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="ai_pretraducir_titulo" class="text-xl font-bold mb-2 text-on-light-contrast"></h2><p data-i18n="ai_pretraducir_alcance" class="ia-pista mb-3"></p><div id="pretraducirMotores"><label class="ia-motor"><input type="radio" name="motorIA" value="rapido" checked> <span class="ia-motor-nombre" data-i18n="ai_motor_rapido"></span><span class="ia-motor-info" data-i18n="ai_motor_rapido_info"></span></label><label class="ia-motor"><input type="radio" name="motorIA" value="contexto"> <span class="ia-motor-nombre" data-i18n="ai_motor_contexto"></span><span class="ia-motor-info" data-i18n="ai_motor_contexto_info"></span></label></div><div id="pretraducirAvance" class="hidden"><div class="ia-barra"><div id="pretraducirBarra" class="ia-barra-avance"></div></div><p id="pretraducirEstado" class="ia-pista"></p></div><div class="flex justify-end space-x-2 mt-6"><button id="pretraducirCancelarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="pretraducirEmpezarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ai_pretraducir_empezar"></span></button></div></div></div>
+
+        <!-- Comentarios del segmento: arriba las notas que trae el archivo (no se
+             tocan, son de quien lo escribió) y abajo la tuya, que se guarda en el
+             proyecto y no se escribe en el archivo. -->
         
         <div id="shortcutsModal" class="modal hidden">
             <div class="modal-content">
@@ -360,7 +435,11 @@
                     <button id="changelogCloseBtn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold leading-none cursor-pointer">&times;</button>
                 </div>
                 <div class="overflow-y-auto rounded-md" style="max-height: 60vh;">
-                    <pre id="changelogContent" class="po-display-code whitespace-pre-wrap text-sm p-4 m-0 min-h-[150px]">Cargando...</pre>
+                    <!-- Antes era un <pre> con el archivo tal cual. Ahora el
+                         contenido llega ya con su estructura (títulos,
+                         secciones y listas), así que necesita un contenedor
+                         normal donde el texto pueda fluir. -->
+                    <div id="changelogContent" class="changelog-cuerpo">Cargando...</div>
                 </div>
             </div>
         </div>

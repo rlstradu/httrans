@@ -30,12 +30,22 @@ export function separarEntradas(entradas) {
     const segmentos = [];
 
     (entradas || []).forEach((entrada, entryIndex) => {
+        // Todo lo que no sean los segmentos se guarda tal cual, sin filtrar por
+        // una lista de campos conocidos.
+        //
+        // Antes había esa lista, y era una trampa: cada formato nuevo trae sus
+        // propios datos para saber devolver el texto a su sitio (de qué línea
+        // salía, de qué párrafo, con qué estilo), y esos campos se perdían al
+        // guardar el proyecto. El archivo se abría bien y luego se exportaba mal,
+        // que es el peor momento para enterarse.
+        const { sentenceSegments, ...datos } = entrada;
         meta.push({
+            ...datos,
             comments: entrada.comments || [],
-            msgctxt: entrada.msgctxt,
-            msgid: entrada.msgid,
             fuzzy: Boolean(entrada.fuzzy),
             isHeader: Boolean(entrada.isHeader),
+            // El msgstr suelto solo se guarda en la cabecera del archivo; en el
+            // resto se reconstruye uniendo los segmentos.
             msgstr: entrada.isHeader ? entrada.msgstr || '' : undefined,
         });
 
@@ -49,6 +59,14 @@ export function separarEntradas(entradas) {
                 wordCountOriginal: segmento.wordCountOriginal || 0,
                 wordCountTranslation: segmento.wordCountTranslation || 0,
                 isTranslated: segmento.isTranslated ? 1 : 0,
+                // La nota que escribe quien traduce. Se guarda con el proyecto
+                // y nunca se escribe en el archivo: el archivo vuelve a quien lo
+                // mandó exactamente como llegó.
+                nota: segmento.nota || '',
+                // La cabecera del archivo no es una cadena que nadie traduzca:
+                // se marca para poder dejarla fuera del recuento de avance,
+                // igual que hace el panel de estadísticas del editor.
+                isHeader: entrada.isHeader ? 1 : 0,
             });
         });
     });
@@ -76,22 +94,47 @@ export function reunirEntradas(meta, segmentos) {
         const trozos = (porEntrada.get(entryIndex) || [])
             .slice()
             .sort((a, b) => a.sentenceIndex - b.sentenceIndex)
-            .map((s) => ({
-                original: s.original,
-                translation: s.translation,
-                wordCountOriginal: s.wordCountOriginal,
-                wordCountTranslation: s.wordCountTranslation,
-                isTranslated: Boolean(s.isTranslated),
-            }));
+            .map((s) => {
+                const trozo = {
+                    original: s.original,
+                    translation: s.translation,
+                    wordCountOriginal: s.wordCountOriginal,
+                    wordCountTranslation: s.wordCountTranslation,
+                    isTranslated: Boolean(s.isTranslated),
+                };
+                // La nota solo vuelve si se escribió alguna: un campo vacío de
+                // más haría que un segmento guardado y recuperado ya no fuera
+                // igual al que salió, y de eso vive la comprobación de ida y
+                // vuelta.
+                if (s.nota) trozo.nota = s.nota;
+                return trozo;
+            });
 
         const entrada = {
+            ...datos,
             comments: datos.comments || [],
-            msgid: datos.msgid,
             fuzzy: datos.fuzzy,
             isHeader: datos.isHeader,
             sentenceSegments: trozos,
         };
-        if (datos.msgctxt !== undefined) entrada.msgctxt = datos.msgctxt;
+        // Dexie devuelve los campos ausentes como undefined; se quitan para que
+        // la entrada quede igual que salió y las comparaciones no fallen por un
+        // campo de más que en realidad no existe.
+        for (const clave of Object.keys(entrada)) {
+            if (entrada[clave] === undefined) delete entrada[clave];
+        }
+
+        if (datos.msgidPlural !== undefined) {
+            // Con plurales, cada segmento es una forma y no hay msgstr suelto:
+            // el número de forma se deduce del orden, así que no hace falta
+            // guardarlo aparte.
+            entrada.msgidPlural = datos.msgidPlural;
+            trozos.forEach((trozo, i) => {
+                trozo.formaPlural = i;
+            });
+            return entrada;
+        }
+
         // En la cabecera, msgstr se guarda tal cual; en el resto se reconstruye
         // uniendo los segmentos.
         entrada.msgstr = datos.isHeader
@@ -121,6 +164,7 @@ export async function crearProyecto({
     sourceLang = '',
     targetLang = '',
     rawHtml = '',
+    contenidoOriginal = '',
 }) {
     const { meta, segmentos } = separarEntradas(entradas);
     const ahora = Date.now();
@@ -132,6 +176,7 @@ export async function crearProyecto({
             sourceLang,
             targetLang,
             rawHtml,
+            contenidoOriginal,
             entriesMeta: meta,
             createdAt: ahora,
             lastModified: ahora,
@@ -197,6 +242,9 @@ export async function abrirProyecto(projectId) {
         sourceLang: proyecto.sourceLang,
         targetLang: proyecto.targetLang,
         rawHtml: proyecto.rawHtml || '',
+        // Los proyectos HTML anteriores a este campo guardaban su original en
+        // rawHtml; se acepta como respaldo para que sigan abriéndose.
+        contenidoOriginal: proyecto.contenidoOriginal || proyecto.rawHtml || '',
         lastModified: proyecto.lastModified,
         entradas: reunirEntradas(proyecto.entriesMeta, segmentos),
     };
@@ -231,14 +279,13 @@ export async function listarRecientes(maximo = MAXIMO_RECIENTES) {
  * @returns {Promise<{total: number, traducidos: number}>}
  */
 export async function progresoDe(projectId) {
-    const total = await db.segments.where('projectId').equals(projectId).count();
-    const traducidos = await db.segments
-        .where('projectId')
-        .equals(projectId)
-        .filter((s) => s.isTranslated === 1)
-        .count();
+    const filas = await db.segments.where('projectId').equals(projectId).toArray();
+    const traducibles = filas.filter((s) => s.isHeader !== 1);
 
-    return { total, traducidos };
+    return {
+        total: traducibles.length,
+        traducidos: traducibles.filter((s) => s.isTranslated === 1).length,
+    };
 }
 
 /**

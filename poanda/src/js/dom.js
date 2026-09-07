@@ -2,10 +2,6 @@ const aiSidebar = document.getElementById('aiSidebar');
 
 const aiChatContainer = document.getElementById('aiChatContainer');
 
-const poFile = document.getElementById('poFile');
-
-const savePoButton = document.getElementById('savePo');
-
 const translationsContainer = document.getElementById('translationsContainer');
 
 const messageBox = document.getElementById('messageBox');
@@ -138,19 +134,7 @@ const terminologySidebar = document.getElementById('terminologySidebar');
 
 const closeTerminologySidebarBtn = document.getElementById('closeTerminologySidebarBtn');
 
-const terminologyLanguageConfigSection = document.getElementById(
-    'terminologyLanguageConfigSection',
-);
-
 const terminologyEditorSection = document.getElementById('terminologyEditorSection');
-
-const configSrcLang = document.getElementById('configSrcLang');
-
-const configTgtLang = document.getElementById('configTgtLang');
-
-const displaySrcLang = document.getElementById('displaySrcLang');
-
-const displayTgtLang = document.getElementById('displayTgtLang');
 
 const srcTermInput = document.getElementById('srcTerm');
 
@@ -161,8 +145,6 @@ const searchTermInput = document.getElementById('searchTerm');
 const glossaryTableBody = document.getElementById('glossaryTableBody');
 
 const tbxFileInput = document.getElementById('tbxFileInput');
-
-const isoLanguagesDatalist = document.getElementById('isoLanguages');
 
 const importTbxBtn = document.getElementById('importTbxBtn');
 
@@ -190,23 +172,11 @@ const tmSearchResultsTableBody = document.getElementById('tmSearchResultsTableBo
 
 const tmNoMatchFoundMessage = document.getElementById('tmNoMatchFoundMessage');
 
-const tmLanguageConfigSection = document.getElementById('tmLanguageConfigSection');
-
 const tmEditorSection = document.getElementById('tmEditorSection');
-
-const tmConfigSrcLang = document.getElementById('tmConfigSrcLang');
-
-const tmConfigTgtLang = document.getElementById('tmConfigTgtLang');
-
-const displayTmSrcLang = document.getElementById('displayTmSrcLang');
-
-const displayTmTgtLang = document.getElementById('displayTmTgtLang');
 
 const tmInternalMessage = document.getElementById('tmInternalMessage');
 
 const centralColumn = document.getElementById('central-column');
-
-const convertToMoButton = document.getElementById('convertToMoButton');
 
 const convertToMoModal = document.getElementById('convertToMoModal');
 
@@ -222,9 +192,6 @@ const aiConfigToggleBtn = document.getElementById('aiConfigToggleBtn');
 
 const aiConfigPanel = document.getElementById('aiConfigPanel');
 
-const geminiApiKeyInput = document.getElementById('geminiApiKeyInput');
-
-const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
 
 const aiUserInput = document.getElementById('aiUserInput');
 
@@ -250,16 +217,9 @@ export {
     closeAiSidebarBtn,
     closeTerminologySidebarBtn,
     closeTranslationMemorySidebarBtn,
-    configSrcLang,
-    configTgtLang,
-    convertToMoButton,
     convertToMoModal,
     deleteLocalBackupBtn,
     discardBackupBtn,
-    displaySrcLang,
-    displayTgtLang,
-    displayTmSrcLang,
-    displayTmTgtLang,
     dropArea,
     exportShortcutsBtn,
     findInput,
@@ -268,11 +228,9 @@ export {
     findReplaceBtn,
     findReplaceCloseBtn,
     findReplaceModal,
-    geminiApiKeyInput,
     glossaryTableBody,
     importShortcutsBtn,
     importShortcutsInput,
-    isoLanguagesDatalist,
     lastBackupTime,
     loadBackupFromFileInput,
     loadLocalBackupBtn,
@@ -285,7 +243,6 @@ export {
     moConverterCloseBtn,
     newProjectBtn,
     openProjectBtn,
-    poFile,
     poSearchContainer,
     poSearchInput,
     projectFileInput,
@@ -297,9 +254,7 @@ export {
     resetShortcutsBtn,
     restoreBackupBtn,
     restoreBackupModal,
-    saveApiKeyBtn,
     saveBackupToDiskBtn,
-    savePoButton,
     saveProjectBtn,
     saveProjectCancelBtn,
     saveProjectConfirmBtn,
@@ -322,16 +277,12 @@ export {
     tbxFileInput,
     terminologyBtn,
     terminologyEditorSection,
-    terminologyLanguageConfigSection,
     terminologySidebar,
     tgtTermInput,
     tmBtn,
-    tmConfigSrcLang,
-    tmConfigTgtLang,
     tmEditorSection,
     tmFileInput,
     tmInternalMessage,
-    tmLanguageConfigSection,
     tmNoMatchFoundMessage,
     tmSearchInput,
     tmSearchResultsTableBody,

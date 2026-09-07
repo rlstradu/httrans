@@ -11,7 +11,7 @@ import { state } from '../state.js';
 function generateTBX() {
     const xml = [
         `<?xml version="1.0" encoding="UTF-8"?>`,
-        `<martif type="TBX" xml:lang="${state.glossarySourceLanguage}">`,
+        `<martif type="TBX" xml:lang="${state.sourceLang}">`,
         `  <text>`,
         `    <body>`,
     ];

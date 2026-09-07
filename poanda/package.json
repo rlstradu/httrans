@@ -1,8 +1,8 @@
 {
   "name": "poanda",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Poanda \u2014 editor de archivos PO, JSON y HTML con glosario TBX, memoria de traducci\u00f3n TMX y compilaci\u00f3n a MO. Parte de PandaTools by HTTrans.",
+  "description": "Poanda — editor de traducción para más de veinte formatos (PO, Word, Excel, XLIFF, Markdown y demás), con glosario TBX y memoria de traducción TMX. Parte de PandaTools by HTTrans.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
-    "dexie": "^4.4.5"
+    "dexie": "^4.4.5",
+    "fflate": "^0.8.3"
   }
 }
