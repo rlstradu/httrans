@@ -1,0 +1,786 @@
+import {
+    appendAiMessage,
+    callGeminiAI,
+    getContextPrompt,
+    handleAiSend,
+    triggerQuickAI,
+} from './ai.js';
+import {
+    checkForBackup,
+    clearBackup,
+    loadBackup,
+    restoreSession,
+    saveBackup,
+    updateBackupStatusUI,
+} from './backup.js';
+import { compileMo, parsePoForMo } from './core/mo.js';
+import { reconstructPo } from './core/po.js';
+import { hideLoadingOverlay, showConfirm, showLoadingOverlay, showMessage } from './dialogs.js';
+import {
+    addTermAccordionIcon,
+    addTermContent,
+    addTermHeader,
+    aiBtn,
+    aiConfigPanel,
+    aiConfigToggleBtn,
+    aiSendBtn,
+    aiSidebar,
+    aiUserInput,
+    backupBtn,
+    backupCloseBtn,
+    backupModal,
+    closeAiSidebarBtn,
+    closeTerminologySidebarBtn,
+    closeTranslationMemorySidebarBtn,
+    convertToMoButton,
+    convertToMoModal,
+    deleteLocalBackupBtn,
+    discardBackupBtn,
+    dropArea,
+    exportShortcutsBtn,
+    findInput,
+    findNextBtn,
+    findPrevBtn,
+    findReplaceBtn,
+    findReplaceCloseBtn,
+    findReplaceModal,
+    geminiApiKeyInput,
+    importShortcutsBtn,
+    importShortcutsInput,
+    loadBackupFromFileInput,
+    loadLocalBackupBtn,
+    messageBox,
+    messageClose,
+    moConverterActionBtn,
+    moConverterCloseBtn,
+    newProjectBtn,
+    openProjectBtn,
+    poFile,
+    poSearchContainer,
+    poSearchInput,
+    projectFileInput,
+    replaceAllBtn,
+    replaceBtn,
+    resetShortcutsBtn,
+    restoreBackupBtn,
+    restoreBackupModal,
+    saveApiKeyBtn,
+    saveBackupToDiskBtn,
+    savePoButton,
+    saveProjectBtn,
+    saveProjectCancelBtn,
+    saveProjectConfirmBtn,
+    saveProjectModal,
+    saveShortcutsBtn,
+    searchInOriginalCheckbox,
+    searchInTranslationCheckbox,
+    searchNextBtn,
+    searchPrevBtn,
+    shortcutsBtn,
+    shortcutsCloseBtn,
+    shortcutsModal,
+    statsBtn,
+    statsContainer,
+    terminologyBtn,
+    terminologySidebar,
+    tmBtn,
+    tmFileInput,
+    translationMemorySidebar,
+    translationsContainer,
+} from './dom.js';
+import {
+    filterPOEntries,
+    getCurrentFocusedIndex,
+    navigateToTranslation,
+    renderTranslations,
+} from './editor.js';
+import {
+    loadHtmlFile,
+    loadSingleJsonFile,
+    processFile,
+    processPoContent,
+    saveHtmlFile,
+    saveJsonFile,
+    updateSaveButtonsState,
+} from './files.js';
+import {
+    addTerm,
+    confirmGlossaryLanguages,
+    downloadTBX,
+    loadTBX,
+    populateIsoLanguagesDatalist,
+    renderGlossary,
+    resetGlossary,
+    showGlossaryEditorSection,
+    showLanguageConfigSection,
+} from './glossary.js';
+import { setLanguage, updateMainContentOffset } from './i18n.js';
+import { makeDraggableAndResizable, makeModalDraggable } from './modals.js';
+import { executeSaveProject, newProject, openProject, showSaveProjectModal } from './project.js';
+import {
+    findAndNavigate,
+    navigateToSearchResult,
+    replaceAllMatches,
+    replaceCurrentMatch,
+} from './search.js';
+import {
+    defaultShortcutConfig,
+    handleShortcutAction,
+    loadShortcuts,
+    renderShortcutsUI,
+} from './shortcuts.js';
+import { initChangelog } from './changelog.js';
+import { state } from './state.js';
+import { initTheme } from './theme.js';
+import { updateStatsDisplay, updateUtilityButtonStates } from './stats.js';
+import {
+    confirmTMLanguages,
+    downloadTMX,
+    processTMXContent,
+    resetTM,
+    showTMEditorSection,
+    showTMLanguageConfigSection,
+    tmSearch,
+} from './tm.js';
+import { translations } from './translations.js';
+
+document.getElementById('undoBtn').addEventListener('click', () => {
+    if (state.undoStack.length > 0) {
+        state.poEntries = state.undoStack.pop();
+        renderTranslations(state.poEntries);
+        updateStatsDisplay();
+        updateSaveButtonsState();
+        showMessage(translations[state.currentLanguage]['undo_success']);
+    } else {
+        showMessage(translations[state.currentLanguage]['undo_empty']);
+    }
+});
+
+poFile.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        state.currentFileName = file.name;
+        const content = await file.text();
+        processPoContent(content);
+    }
+});
+
+savePoButton.addEventListener('click', async () => {
+    if (state.poEntries.length === 0) {
+        showMessage(translations[state.currentLanguage]['no_translations_to_save']);
+        return;
+    }
+    showLoadingOverlay(translations[state.currentLanguage]['saving_file']);
+    try {
+        const updatedPoContent = reconstructPo(state.poEntries);
+        const blob = new Blob([updatedPoContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = state.currentFileName.replace(/\.po$/i, '') + '.po';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showMessage(translations[state.currentLanguage]['file_saved_successfully']);
+    } catch (error) {
+        showMessage(`${translations[state.currentLanguage]['error_saving_file']} ${error.message}`);
+        console.error('Error saving file:', error);
+    } finally {
+        hideLoadingOverlay();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    // Ignore keydown events if a modal is open or if the event originates from an input field not part of the main translation flow
+    const activeElement = document.activeElement;
+    const isModalOpen =
+        !shortcutsModal.classList.contains('hidden') ||
+        !findReplaceModal.classList.contains('hidden') ||
+        !messageBox.classList.contains('hidden') ||
+        !saveProjectModal.classList.contains('hidden') ||
+        !backupModal.classList.contains('hidden') ||
+        !restoreBackupModal.classList.contains('hidden');
+
+    if (isModalOpen && activeElement.id !== 'findInput' && activeElement.id !== 'replaceInput') {
+        // Exception for find/replace inputs inside their modal
+        if (
+            activeElement.closest('.modal') &&
+            !activeElement.classList.contains('shortcut-input')
+        ) {
+            return;
+        }
+    }
+
+    // Check if the event matches any configured shortcut
+    for (const action in state.shortcutConfig) {
+        const config = state.shortcutConfig[action];
+
+        if (
+            event.ctrlKey === config.ctrlKey &&
+            event.altKey === config.altKey &&
+            event.shiftKey === config.shiftKey &&
+            event.key.toLowerCase() === config.key.toLowerCase()
+        ) {
+            event.preventDefault();
+            handleShortcutAction(action, event.key);
+            return;
+        }
+    }
+});
+
+messageClose.addEventListener('click', () => {
+    messageBox.classList.add('hidden');
+});
+
+shortcutsBtn.addEventListener('click', () => {
+    state.tempShortcutConfig = JSON.parse(JSON.stringify(state.shortcutConfig)); // Create a deep copy for editing
+    renderShortcutsUI();
+    shortcutsModal.classList.remove('hidden');
+});
+
+shortcutsCloseBtn.addEventListener('click', () => {
+    shortcutsModal.classList.add('hidden');
+});
+
+findReplaceBtn.addEventListener('click', () => {
+    findReplaceModal.classList.remove('hidden');
+    findInput.focus();
+});
+
+findReplaceCloseBtn.addEventListener('click', () => {
+    findReplaceModal.classList.add('hidden');
+    state.findState.lastFound = null;
+    const currentFocused = getCurrentFocusedIndex();
+    if (currentFocused) {
+        const targetTextarea = document.getElementById(
+            `msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`,
+        );
+        if (targetTextarea) {
+            targetTextarea.setSelectionRange(
+                targetTextarea.value.length,
+                targetTextarea.value.length,
+            );
+        }
+    }
+});
+
+findNextBtn.addEventListener('click', () => findAndNavigate(true));
+
+findPrevBtn.addEventListener('click', () => findAndNavigate(false));
+
+replaceBtn.addEventListener('click', replaceCurrentMatch);
+
+replaceAllBtn.addEventListener('click', replaceAllMatches);
+
+saveShortcutsBtn.addEventListener('click', () => {
+    state.shortcutConfig = JSON.parse(JSON.stringify(state.tempShortcutConfig));
+    localStorage.setItem('poandaShortcutConfig', JSON.stringify(state.shortcutConfig));
+    showMessage(translations[state.currentLanguage]['shortcuts_saved']);
+    shortcutsModal.classList.add('hidden');
+});
+
+resetShortcutsBtn.addEventListener('click', () => {
+    state.tempShortcutConfig = JSON.parse(JSON.stringify(defaultShortcutConfig));
+    renderShortcutsUI();
+    showMessage(translations[state.currentLanguage]['shortcuts_reset']);
+});
+
+exportShortcutsBtn.addEventListener('click', () => {
+    const jsonString = JSON.stringify(state.shortcutConfig, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'poanda_shortcuts.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+importShortcutsBtn.addEventListener('click', () => {
+    importShortcutsInput.click();
+});
+
+importShortcutsInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const importedConfig = JSON.parse(e.target.result);
+            // Basic validation
+            if (typeof importedConfig === 'object' && importedConfig.validateAndNext) {
+                state.tempShortcutConfig = { ...defaultShortcutConfig, ...importedConfig };
+                renderShortcutsUI();
+                showMessage(translations[state.currentLanguage]['shortcuts_loaded']);
+            } else {
+                throw new Error('Invalid format');
+            }
+        } catch (error) {
+            showMessage(translations[state.currentLanguage]['error_loading_shortcuts']);
+            console.error('Error importing shortcuts:', error);
+        } finally {
+            importShortcutsInput.value = ''; // Reset file input
+        }
+    };
+    reader.readAsText(file);
+});
+
+terminologyBtn.addEventListener('click', () => {
+    const isHidden = !terminologySidebar.classList.contains('show-sidebar');
+    if (isHidden) {
+        terminologySidebar.classList.add('show-sidebar');
+    } else {
+        terminologySidebar.classList.remove('show-sidebar');
+    }
+    updateMainContentOffset();
+    updateUtilityButtonStates();
+    if (isHidden) {
+        if (!state.glossarySourceLanguage || !state.glossaryTargetLanguage) {
+            showLanguageConfigSection();
+        } else {
+            showGlossaryEditorSection();
+        }
+    }
+});
+
+closeTerminologySidebarBtn.addEventListener('click', () => {
+    terminologySidebar.classList.remove('show-sidebar');
+    updateMainContentOffset();
+    updateUtilityButtonStates();
+});
+
+tmBtn.addEventListener('click', () => {
+    const isHidden = !translationMemorySidebar.classList.contains('show-sidebar');
+    if (isHidden) {
+        translationMemorySidebar.classList.add('show-sidebar');
+    } else {
+        translationMemorySidebar.classList.remove('show-sidebar');
+    }
+    updateMainContentOffset();
+    updateUtilityButtonStates();
+    if (isHidden) {
+        if (!state.tmSourceLanguage || !state.tmTargetLanguage) {
+            showTMLanguageConfigSection();
+        } else {
+            showTMEditorSection();
+            tmSearch();
+        }
+    }
+});
+
+closeTranslationMemorySidebarBtn.addEventListener('click', () => {
+    translationMemorySidebar.classList.remove('show-sidebar');
+    updateMainContentOffset();
+    updateUtilityButtonStates();
+});
+
+tmFileInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        const content = await file.text();
+        processTMXContent(content);
+    }
+});
+
+if (dropArea) {
+    dropArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropArea.classList.add('border-red-500');
+    });
+
+    dropArea.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropArea.classList.remove('border-red-500');
+    });
+
+    dropArea.addEventListener('drop', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropArea.classList.remove('border-red-500');
+
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.name.toLowerCase().endsWith('.po')) {
+                await processFile(file);
+            } else if (
+                file.name.toLowerCase().endsWith('.zip') ||
+                file.name.toLowerCase().endsWith('.poanda')
+            ) {
+                await openProject(file);
+            } else {
+                showMessage('Please drop a valid .po or .poanda project file.');
+            }
+        }
+    });
+}
+
+if (addTermHeader && addTermContent && addTermAccordionIcon) {
+    addTermHeader.addEventListener('click', () => {
+        const isCollapsed = addTermContent.classList.contains('collapsed');
+        if (isCollapsed) {
+            addTermContent.classList.remove('collapsed');
+            addTermContent.classList.add('expanded');
+            addTermAccordionIcon.classList.remove('rotated');
+        } else {
+            addTermContent.classList.remove('expanded');
+            addTermContent.classList.add('collapsed');
+            addTermAccordionIcon.classList.add('rotated');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    loadShortcuts(); // Load saved or default shortcuts
+    populateIsoLanguagesDatalist();
+
+    document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
+    document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
+
+    newProjectBtn.addEventListener('click', newProject);
+    saveProjectBtn.addEventListener('click', showSaveProjectModal);
+    openProjectBtn.addEventListener('click', () => projectFileInput.click());
+    projectFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        openProject(file);
+    });
+
+    saveProjectConfirmBtn.addEventListener('click', executeSaveProject);
+    saveProjectCancelBtn.addEventListener('click', () => {
+        saveProjectModal.classList.add('hidden');
+    });
+
+    restoreBackupBtn.addEventListener('click', () => restoreSession());
+    discardBackupBtn.addEventListener('click', () => {
+        clearBackup();
+        restoreBackupModal.classList.add('hidden');
+    });
+
+    backupBtn.addEventListener('click', () => {
+        updateBackupStatusUI();
+        backupModal.classList.remove('hidden');
+    });
+
+    backupCloseBtn.addEventListener('click', () => {
+        backupModal.classList.add('hidden');
+    });
+
+    loadLocalBackupBtn.addEventListener('click', () => {
+        restoreSession();
+        backupModal.classList.add('hidden');
+    });
+
+    deleteLocalBackupBtn.addEventListener('click', async () => {
+        if (
+            await showConfirm(
+                translations[state.currentLanguage]['delete_local_backup_btn_confirm'],
+            )
+        ) {
+            await clearBackup();
+            showMessage(translations[state.currentLanguage]['backup_deleted']);
+        }
+    });
+
+    saveBackupToDiskBtn.addEventListener('click', async () => {
+        const backup = await loadBackup();
+        if (backup) {
+            const jsonString = JSON.stringify(backup, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `poanda_backup_${new Date().toISOString().slice(0, 10)}.poanda-backup`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    });
+
+    loadBackupFromFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.id === 'currentSession' && data.poEntries) {
+                    await restoreSession(data);
+                    await saveBackup();
+                    showMessage(translations[state.currentLanguage]['backup_loaded_from_file']);
+                    backupModal.classList.add('hidden');
+                } else {
+                    throw new Error('Invalid backup file format.');
+                }
+            } catch (error) {
+                showMessage(translations[state.currentLanguage]['error_loading_backup_file']);
+                console.error('Error processing backup file:', error);
+            } finally {
+                loadBackupFromFileInput.value = '';
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // ADD LISTENERS FOR NEW FILE MENU ITEMS
+    const loadFilePoBtn = document.getElementById('loadFilePoBtn');
+    const saveFilePoBtn = document.getElementById('saveFilePoBtn');
+    const loadFileJsonBtn = document.getElementById('loadFileJsonBtn');
+    const saveFileJsonBtn = document.getElementById('saveFileJsonBtn');
+    const convertFileMoBtn = document.getElementById('convertFileMoBtn');
+    const poFileInput = document.getElementById('poFile'); // Get reference
+
+    if (loadFilePoBtn && poFileInput) {
+        loadFilePoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            poFileInput.click(); // Trigger the original PO file input
+        });
+    }
+    if (saveFilePoBtn && savePoButton) {
+        saveFilePoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!saveFilePoBtn.classList.contains('disabled-link')) {
+                savePoButton.click(); // Trigger the original PO save button
+            }
+        });
+    }
+    if (loadFileJsonBtn) {
+        loadFileJsonBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadSingleJsonFile(); // <-- Llama a la NUEVA función
+        });
+    }
+    if (saveFileJsonBtn) {
+        saveFileJsonBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!saveFileJsonBtn.classList.contains('disabled-link')) {
+                saveJsonFile(); // Call the new JSON saving function
+            }
+        });
+    }
+
+    // HTML LISTENERS
+    const loadFileHtmlBtn = document.getElementById('loadFileHtmlBtn');
+    const saveFileHtmlBtn = document.getElementById('saveFileHtmlBtn');
+
+    if (loadFileHtmlBtn) {
+        loadFileHtmlBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadHtmlFile();
+        });
+    }
+    if (saveFileHtmlBtn) {
+        saveFileHtmlBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!saveFileHtmlBtn.classList.contains('disabled-link')) {
+                saveHtmlFile();
+            }
+        });
+    }
+
+    if (convertFileMoBtn && convertToMoButton) {
+        convertFileMoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!convertFileMoBtn.classList.contains('disabled-link')) {
+                convertToMoButton.click(); // Trigger the original MO conversion button
+            }
+        });
+    }
+    // END ADD LISTENERS
+
+    convertToMoButton.addEventListener('click', () => {
+        if (state.poEntries.length > 0) {
+            convertToMoModal.classList.remove('hidden');
+        } else {
+            showMessage(translations[state.currentLanguage]['no_file_to_convert']);
+        }
+    });
+
+    moConverterCloseBtn.addEventListener('click', () => {
+        convertToMoModal.classList.add('hidden');
+    });
+
+    moConverterActionBtn.addEventListener('click', () => {
+        try {
+            const poContent = reconstructPo(state.poEntries);
+            const messages = parsePoForMo(poContent);
+            const moArrayBuffer = compileMo(messages);
+
+            const blob = new Blob([moArrayBuffer], { type: 'application/octet-stream' });
+            const outputFileName = state.currentFileName.replace(/\.po$/, '.mo');
+            const link = document.createElement('a');
+
+            link.href = URL.createObjectURL(blob);
+            link.download = outputFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            showMessage(translations[state.currentLanguage]['mo_conversion_success']);
+        } catch (error) {
+            showMessage(translations[state.currentLanguage]['mo_conversion_error']);
+            console.error('Error converting PO to MO:', error);
+        } finally {
+            convertToMoModal.classList.add('hidden');
+        }
+    });
+
+    makeDraggableAndResizable(document.getElementById('terminologySidebar'));
+    makeDraggableAndResizable(document.getElementById('translationMemorySidebar'));
+    makeDraggableAndResizable(document.getElementById('aiSidebar'));
+
+    // Add event listeners for the new PO search bar
+    poSearchInput.addEventListener('input', filterPOEntries);
+    searchInOriginalCheckbox.addEventListener('change', filterPOEntries);
+    searchInTranslationCheckbox.addEventListener('change', filterPOEntries);
+    searchNextBtn.addEventListener('click', () => navigateToSearchResult(1));
+    searchPrevBtn.addEventListener('click', () => navigateToSearchResult(-1));
+
+    setLanguage(state.currentLanguage);
+
+    resetGlossary();
+    resetTM();
+
+    statsBtn.addEventListener('click', () => {
+        statsContainer.classList.toggle('show');
+        updateUtilityButtonStates();
+    });
+
+    if (translationsContainer) {
+        translationsContainer.innerHTML = `
+                    <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md">
+                        ${translations[state.currentLanguage]['no_translations']}
+                    </div>
+                `;
+    }
+    if (savePoButton) savePoButton.disabled = true;
+    if (convertToMoButton) convertToMoButton.disabled = true;
+    if (poSearchContainer) poSearchContainer.classList.add('hidden');
+    if (statsContainer) statsContainer.classList.remove('show');
+    updateUtilityButtonStates();
+
+    if (addTermContent && addTermAccordionIcon) {
+        addTermContent.classList.add('collapsed');
+        addTermContent.classList.remove('expanded');
+        addTermAccordionIcon.classList.remove('rotated');
+    }
+
+    if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar');
+
+    updateMainContentOffset();
+    updateSaveButtonsState();
+    await checkForBackup();
+
+    makeModalDraggable(document.getElementById('findReplaceModal'));
+    makeModalDraggable(document.getElementById('changelogModal'));
+
+    // --- BOTONES QUE ANTES USABAN onclick EN EL HTML ---
+    // Con módulos ES las funciones ya no son globales, así que el HTML no
+    // puede llamarlas por su nombre: hay que engancharlas desde aquí.
+    const enganchar = (id, evento, accion) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(evento, accion);
+    };
+
+    enganchar('confirmLanguagesBtn', 'click', confirmGlossaryLanguages);
+    enganchar('importTbxBtn', 'click', loadTBX);
+    enganchar('downloadTbxBtn', 'click', downloadTBX);
+    enganchar('newGlossaryBtn', 'click', resetGlossary);
+    enganchar('addTermBtn', 'click', addTerm);
+    enganchar('searchTerm', 'input', renderGlossary);
+
+    enganchar('tmConfirmLanguagesBtn', 'click', confirmTMLanguages);
+    enganchar('newTmBtn', 'click', resetTM);
+    enganchar('downloadTmxBtn', 'click', downloadTMX);
+    enganchar('tmSearchInput', 'input', tmSearch);
+
+    document.querySelectorAll('.ai-quick-btn[data-ai-action]').forEach((btn) => {
+        btn.addEventListener('click', () => triggerQuickAI(btn.dataset.aiAction));
+    });
+
+    initChangelog();
+
+    initTheme();
+
+    // Inicializar mensaje de bienvenida del chat en el idioma correcto
+    const chatContainer = document.getElementById('aiChatContainer');
+    if (chatContainer && chatContainer.children.length === 0) {
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'ai-message ai-message-bot';
+        welcomeDiv.textContent = translations[state.currentLanguage]['ai_initial_message'];
+        chatContainer.appendChild(welcomeDiv);
+    }
+
+    setInterval(saveBackup, 10000);
+});
+
+if (aiBtn) {
+    aiBtn.addEventListener('click', () => {
+        const isOpening = !aiSidebar.classList.contains('show-sidebar');
+
+        if (isOpening) {
+            aiSidebar.classList.add('show-sidebar');
+            // Cerrar TM si está abierta
+            if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar');
+
+            // FOCO AL CHAT (Pequeño retardo para dar tiempo a la animación CSS)
+            setTimeout(() => {
+                if (aiUserInput) aiUserInput.focus();
+            }, 50);
+        } else {
+            aiSidebar.classList.remove('show-sidebar');
+
+            // FOCO DE VUELTA AL SEGMENTO
+            if (state.lastFocusedSegment) {
+                navigateToTranslation(
+                    state.lastFocusedSegment.entryIndex,
+                    state.lastFocusedSegment.segmentIndex,
+                );
+            }
+        }
+        updateMainContentOffset();
+        updateUtilityButtonStates();
+    });
+}
+
+if (closeAiSidebarBtn) {
+    closeAiSidebarBtn.addEventListener('click', () => {
+        aiSidebar.classList.remove('show-sidebar');
+        updateMainContentOffset();
+        updateUtilityButtonStates();
+    });
+}
+
+if (aiConfigToggleBtn) {
+    aiConfigToggleBtn.addEventListener('click', () => {
+        aiConfigPanel.classList.toggle('hidden');
+        geminiApiKeyInput.value = state.aiApiKey;
+    });
+}
+
+if (saveApiKeyBtn) {
+    saveApiKeyBtn.addEventListener('click', () => {
+        state.aiApiKey = geminiApiKeyInput.value.trim();
+        localStorage.setItem('poanda_gemini_key', state.aiApiKey);
+        aiConfigPanel.classList.add('hidden');
+        appendAiMessage('bot', 'API Key guardada correctamente. ✅');
+    });
+}
+
+if (aiSendBtn) aiSendBtn.addEventListener('click', handleAiSend);
+
+if (aiUserInput)
+    aiUserInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleAiSend();
+        }
+    });

@@ -1,0 +1,11 @@
+# Carpeta donde la app de escritorio de Claude guarda los archivos que envía.
+# No forma parte del proyecto.
+Claude outputs/
+
+# Dependencias y resultados de tests de las herramientas que tienen package.json
+node_modules/
+test-results/
+playwright-report/
+
+# Archivos del sistema
+.DS_Store

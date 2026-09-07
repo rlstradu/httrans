@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">Poanda</title>
+    <meta name="description" content="Poanda — editor de archivos PO, JSON y HTML con glosario TBX, memoria de traducción TMX y compilación a MO. Una herramienta de PandaTools by HTTrans.">
+    <link rel="icon" type="image/png" href="../images/favicon-poanda.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/main.js"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+    
+    <!-- Language Switcher -->
+    <div class="absolute top-4 right-4 space-x-2 z-10 flex items-center">
+        <button id="langEnBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">EN</button>
+        <button id="langEsBtn" class="px-3 py-1 text-sm font-medium rounded-md transition duration-300">ES</button>
+        <button id="darkModeToggle" class="ml-2 p-1 rounded-full hover:bg-gray-200 transition duration-300" title="Dark Mode">🌙</button>
+        <span id="versionToggle" class="ml-3 text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 border border-gray-300 px-2 py-1 rounded shadow-md cursor-pointer transition duration-300" title="Ver Changelog">v1.1.0</span>
+    </div>
+
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full relative mb-4" id="dropArea">
+        <!-- Top Utility Buttons -->
+        <div class="top-utility-buttons-container">
+            <div class="dropdown">
+                <button id="projectBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                    <span data-i18n="project_btn">Project</span>
+                </button>
+                <div class="dropdown-content">
+                    <a id="newProjectBtn" data-i18n="new_project_btn">New Project</a>
+                    <a id="openProjectBtn" data-i18n="open_project_btn">Open Project</a>
+                    <a id="saveProjectBtn" data-i18n="save_project_btn">Save Project</a>
+                </div>
+            </div>
+            <div class="dropdown">
+            <button id="fileBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="file_menu_btn">File</span> </button>
+            <div class="dropdown-content">
+                <a id="loadFilePoBtn" data-i18n="load_po_menu">Load .po File</a> <a id="saveFilePoBtn" data-i18n="save_po_menu" class="disabled-link">Save .po File</a> <hr class="my-1 border-gray-200"> <a id="loadFileJsonBtn" data-i18n="load_json_menu">Load JSON Project</a> <a id="saveFileJsonBtn" data-i18n="save_json_menu" class="disabled-link">Save JSON File</a> <hr class="my-1 border-gray-200"><a id="loadFileHtmlBtn">Load .html File</a> <a id="saveFileHtmlBtn" class="disabled-link">Save .html File</a> <hr class="my-1 border-gray-200"> <a id="convertFileMoBtn" data-i18n="convert_mo_menu" class="disabled-link">Convert to .mo</a> </div>
+        </div>
+            <button id="backupBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center">
+                <span data-i18n="backup_btn">Backup</span>
+                <span id="backupIndicator"></span>
+            </button>
+            <div class="dropdown">
+                <button id="toolsBtn" class="dropdown-btn font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                    <span data-i18n="tools_menu_btn">Tools</span>
+                </button>
+                <div class="dropdown-content">
+                    <a id="undoBtn" data-i18n="undo_btn">Undo</a>
+                    <hr class="my-1 border-gray-200">
+                    <a id="findReplaceBtn" data-i18n="find_replace_btn">Find & Replace</a>
+                    <a id="shortcutsBtn" data-i18n="shortcuts_btn">Shortcuts</a>
+                    <a id="statsBtn" data-i18n="statistics_btn">Statistics</a>
+                </div>
+            </div>
+
+            <button id="terminologyBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="terminology_btn"></span>
+            </button>
+            <button id="tmBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="tm_btn"></span>
+            </button>
+            <button id="aiBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center gap-1">
+                <span>🐼</span> <span data-i18n="ai_btn">AI Assistant</span>
+            </button>
+        </div>
+
+        <div class="flex flex-col items-center mb-6 mt-12">
+            <img src="../images/poanda-logo-final.png" alt="Poanda Logo" class="max-w-xs h-auto mb-2">
+            <div data-i18n="tool_description" id="toolDescription" class="text-lg text-center text-on-light-contrast"></div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            <label for="poFile" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 btn-load">
+                <span data-i18n="load_file" id="loadBtnText"></span>
+                <input type="file" id="poFile" accept=".po" class="hidden">
+                <input type="file" id="projectFile" accept=".zip,.poanda" class="hidden">
+                <input type="file" id="backupFile" accept=".json,.poanda-backup" class="hidden">
+                <input type="file" id="jsonSourceFile" accept=".json" class="hidden">
+                <input type="file" id="jsonTargetFile" accept=".json" class="hidden">
+                <input type="file" id="htmlSourceFile" accept=".html,.htm" class="hidden">
+            </label>
+            <button id="savePo" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-save" disabled>
+                <span data-i18n="save_file" id="saveBtnText"></span>
+            </button>
+            <button id="convertToMoButton" class="font-medium py-2 px-4 rounded-md shadow-sm transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed btn-convert-mo" disabled>
+                <span data-i18n="convert_to_mo_btn"></span>
+            </button>
+        </div>
+
+        <div class="main-editor-layout" id="mainEditorLayout">
+            <!-- Central Column Wrapper -->
+            <div id="central-column" class="flex-1 flex flex-col min-w-0">
+                <!-- PO Editor Search Bar -->
+                <div id="poSearchContainer" class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="poSearchInput" data-i18n-placeholder="po_search_placeholder" class="flex-grow p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white">
+                        <button id="searchPrevBtn" class="p-1 rounded-md hover:bg-gray-200 disabled:opacity-50" disabled>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <button id="searchNextBtn" class="p-1 rounded-md hover:bg-gray-200 disabled:opacity-50" disabled>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <span id="searchResultCounter" class="text-sm text-gray-600 whitespace-nowrap">0 / 0</span>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="searchInOriginalCheckbox" checked class="mr-2">
+                            <span data-i18n="search_in_original">Search in original</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="searchInTranslationCheckbox" checked class="mr-2">
+                            <span data-i18n="search_in_translation">Search in translation</span>
+                        </label>
+                        
+                        <div class="hidden sm:block w-px h-4 bg-gray-300 mx-2"></div>
+                        
+                        <label class="flex items-center cursor-pointer select-none" title="Automatically translate identical segments">
+                            <input type="checkbox" id="autoPropagateCheckbox" class="mr-2">
+                            <span data-i18n="auto_propagate_label">Auto-propagate translations</span>
+                        </label>
+                    </div>
+                </div>
+                <!-- Scrolling Content Area -->
+                <div class="translations-container-scrolling pr-2">
+                    <div id="translationsContainer" class="space-y-4">
+                        <div data-i18n="no_translations" id="initialMessage" class="text-center text-on-light-contrast p-4 border border-gray-300 rounded-md"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebars -->
+            <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
+                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
+                <div class="sidebar-header">
+                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle"></h3>
+                    <div class="flex items-center gap-2">
+                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 8.812A9.024 9.024 0 0112 4.5c4.97 0 9 4.03 9 9s-4.03 9-9 9a9.006 9.006 0 01-8.35-5.786"></path></svg>
+                        </button>
+                        <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="sidebar-content">
+                    <div id="terminologyLanguageConfigSection" class="space-y-4">
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="config_lang_title" id="configLangTitle"></h4>
+                        <div class="glossary-info-box mb-4"><p data-i18n="config_lang_info" id="configLangInfo"></p></div>
+                        <div class="flex flex-col space-y-2 mb-4">
+                            <div class="glossary-input-group"><label for="configSrcLang" data-i18n="source_language" id="sourceLanguageLabel"></label><input id="configSrcLang" list="isoLanguages" value="en-US" class="block w-full" /></div>
+                            <div class="glossary-input-group"><label for="configTgtLang" data-i18n="target_language" id="targetLanguageLabel"></label><input id="configTgtLang" list="isoLanguages" value="es-ES" class="block w-full" /></div>
+                            <button data-i18n="confirm_languages" id="confirmLanguagesBtn" class="glossary-btn-primary w-full"></button>
+                        </div>
+                    </div>
+                    <div id="terminologyEditorSection" style="display:none;">
+                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                            <button data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
+                            <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
+                            <button data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
+                            <button data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
+                        </div>
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_lang_title" id="currentLangTitle"></h4>
+                        <div class="flex space-x-2 mb-4">
+                            <div class="glossary-input-group flex-1"><label data-i18n="source_language" id="displaySourceLanguageLabel"></label><input id="displaySrcLang" disabled class="block w-full" /></div>
+                            <div class="glossary-input-group flex-1"><label data-i18n="target_language" id="displayTargetLanguageLabel"></label><input id="displayTgtLang" disabled class="block w-full" /></div>
+                        </div>
+                        <div class="accordion-item">
+                            <div class="accordion-header flex justify-between items-center" id="addTermHeader">
+                                <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion"></h4>
+                                <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="accordion-content collapsed" id="addTermContent">
+                                <div class="flex flex-col space-y-2 mb-4">
+                                    <div class="glossary-input-group"><label for="srcTerm" data-i18n="term" id="termLabel"></label><input id="srcTerm" class="block w-full" /></div>
+                                    <div class="glossary-input-group"><label for="tgtTerm" data-i18n="translation" id="translationLabel"></label><input id="tgtTerm" class="block w-full" /></div>
+                                    <button data-i18n="add_button" id="addTermBtn" class="glossary-btn-primary w-full"></button>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="search_title" id="searchTitle"></h4>
+                        <div class="mb-4"><input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full" /></div>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle"></h4>
+                        <div class="overflow-x-auto"><table class="glossary-table w-full"><thead><tr><th data-i18n="source_term_col" id="sourceTermCol"></th><th data-i18n="target_term_col" id="targetTermCol"></th><th data-i18n="actions_col" id="actionsCol"></th></tr></thead><tbody id="glossaryTableBody"></tbody></table></div>
+                    </div>
+                </div>
+                <datalist id="isoLanguages"></datalist>
+            </div>
+            <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
+                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
+                <div class="sidebar-header">
+                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle"></h3>
+                    <div class="flex items-center gap-2">
+                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 8.812A9.024 9.024 0 0112 4.5c4.97 0 9 4.03 9 9s-4.03 9-9 9a9.006 9.006 0 01-8.35-5.786"></path></svg>
+                        </button>
+                        <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="sidebar-content">
+                    <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
+                    <div id="tmLanguageConfigSection" class="space-y-4">
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="tm_config_lang_title" id="tmConfigLangTitle"></h4>
+                        <div class="tm-info-box mb-4"><p data-i18n="tm_config_lang_info" id="tmConfigLangInfo"></p></div>
+                        <div class="flex flex-col space-y-2 mb-4">
+                            <div class="tm-input-group"><label for="tmConfigSrcLang" data-i18n="source_language" id="tmSourceLanguageLabel"></label><input id="tmConfigSrcLang" list="isoLanguages" value="en-US" class="block w-full" /></div>
+                            <div class="tm-input-group"><label for="tmConfigTgtLang" data-i18n="target_language" id="tmTargetLanguageLabel"></label><input id="tmConfigTgtLang" list="isoLanguages" value="es-ES" class="block w-full" /></div>
+                            <button data-i18n="confirm_languages" id="tmConfirmLanguagesBtn" class="tm-btn-primary w-full"></button>
+                        </div>
+                    </div>
+                    <div id="tmEditorSection" style="display:none;">
+                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                            <button data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
+                            <label for="tmFileInput" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 tm-btn-secondary flex-1 text-sm text-center">
+                                <span data-i18n="import_tmx" id="importTmxBtnText"></span><input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
+                            </label>
+                            <button data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
+                        </div>
+                        <h4 class="text-md font-semibold text-on-light-contrast mb-2" data-i18n="current_tm_lang_title" id="currentTmLangTitle"></h4>
+                        <div class="flex space-x-2 mb-4">
+                            <div class="tm-input-group flex-1"><label data-i18n="source_language" id="displayTmSourceLanguageLabel"></label><input id="displayTmSrcLang" disabled class="block w-full" /></div>
+                            <div class="tm-input-group flex-1"><label data-i18n="target_language" id="displayTmTargetLanguageLabel"></label><input id="displayTmTgtLang" disabled class="block w-full" /></div>
+                        </div>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle"></h4>
+                        <div class="mb-4"><input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" /></div>
+                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle"></h4>
+                        <div class="overflow-x-auto mb-4"><table class="tm-table w-full"><thead><tr><th data-i18n="tm_score_col" id="tmScoreCol"></th><th data-i18n="tm_original_col" id="tmOriginalCol"></th><th data-i18n="tm_translation_col" id="tmTranslationCol"></th></tr></thead><tbody id="tmSearchResultsTableBody"></tbody></table></div>
+                        <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="aiSidebar" class="ai-sidebar shadow-xl">
+                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
+                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
+                
+                <div class="sidebar-header p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center cursor-move">
+                    <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">🤖 PandaBot AI</h3>
+                    <div class="flex items-center gap-2">
+                        <button id="aiConfigToggleBtn" class="text-gray-500 hover:text-gray-700" data-i18n-title="ai_config_title" title="Configurar API">⚙️</button>
+                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">↺</button>
+                        <button id="closeAiSidebarBtn" class="text-gray-500 hover:text-gray-700">✕</button>
+                    </div>
+                </div>
+
+                <div id="aiConfigPanel" class="ai-config-panel hidden">
+                    <label class="block mb-1 font-bold" data-i18n="ai_api_key_label">Google Gemini API Key:</label>
+                    <input type="password" id="geminiApiKeyInput" class="w-full border rounded p-1 mb-2" data-i18n-placeholder="ai_api_key_placeholder" placeholder="Pegar API Key aquí...">
+                    <div class="flex justify-end gap-2">
+                        <button id="saveApiKeyBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600" data-i18n="save_button">Guardar</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="ai_api_key_info">La clave se guarda localmente en tu navegador.</p>
+                </div>
+
+                <div class="ai-quick-actions">
+                    <button class="ai-quick-btn" data-ai-action="translate" data-i18n="ai_quick_translate">Traducir</button>
+                    <button class="ai-quick-btn" data-ai-action="improve" data-i18n="ai_quick_improve">Mejorar</button>
+                    <button class="ai-quick-btn" data-ai-action="explain" data-i18n="ai_quick_explain">Explicar</button>
+                    <button class="ai-quick-btn" data-ai-action="fix" data-i18n="ai_quick_fix">Corregir</button>
+                </div>
+
+                <div id="aiChatContainer" class="ai-chat-container">
+                    </div>
+
+                <div class="ai-input-area">
+                    <div class="flex gap-2">
+                        <textarea id="aiUserInput" class="ai-textarea" data-i18n-placeholder="ai_input_placeholder" placeholder="Escribe tu consulta... (Enter para enviar)"></textarea>
+                        <button id="aiSendBtn" class="bg-red-400 text-white px-3 rounded hover:bg-red-500">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Diálogos propios que sustituyen a confirm() y prompt() del navegador (AGENTS.md §5) -->
+        <div id="confirmModal" class="modal hidden"><div class="modal-content"><p id="confirmModalText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><div class="flex justify-end space-x-2 mt-6"><button id="confirmModalCancelBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="confirmModalOkBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok"></span></button></div></div></div>
+
+        <div id="promptModal" class="modal hidden"><div class="modal-content"><p id="promptModalText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><input type="text" id="promptModalInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"><div class="flex justify-end space-x-2 mt-6"><button id="promptModalCancelBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="promptModalOkBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok"></span></button></div></div></div>
+
+        <div id="messageBox" class="modal hidden"><div class="modal-content"><p id="messageText" class="text-lg font-semibold text-on-light-contrast mb-4"></p><button id="messageClose" class="py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ok" id="okBtnText"></span></button></div></div>
+        
+        <div id="shortcutsModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 data-i18n="shortcuts_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
+                <div id="shortcutsEditor" class="space-y-4">
+                    <!-- Shortcut editor content will be generated here by JS -->
+                </div>
+                <div class="flex flex-wrap justify-end gap-2 mt-6">
+                    <button id="importShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-secondary"><span data-i18n="import_shortcuts_btn"></span></button>
+                    <input type="file" id="importShortcutsInput" class="hidden" accept=".json">
+                    <button id="exportShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-secondary"><span data-i18n="export_shortcuts_btn"></span></button>
+                    <button id="resetShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-dark"><span data-i18n="reset_defaults_btn"></span></button>
+                </div>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button id="shortcutsCloseBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button>
+                    <button id="saveShortcutsBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="save_button"></span></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="findReplaceModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="find_replace_title" id="findReplaceTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="findInput" data-i18n="find_label" id="findLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div><label for="replaceInput" data-i18n="replace_label" id="replaceLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div><div class="flex items-center space-x-4"><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="caseSensitiveCheckbox" class="mr-2"><span data-i18n="case_sensitive" id="caseSensitiveText"></span></label><label class="flex items-center text-on-light-contrast"><input type="checkbox" id="regexCheckbox" class="mr-2"><span data-i18n="regular_expression" id="regexText"></span></label></div><div class="flex justify-end space-x-2"><button data-i18n="find_prev" id="findPrevBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span id="findPrevText"></span></button><button data-i18n="find_next" id="findNextBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span id="findNextText"></span></button><button data-i18n="replace" id="replaceBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-secondary"><span id="replaceText"></span></button><button data-i18n="replace_all" id="replaceAllBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span id="replaceAllText"></span></button></div></div><button data-i18n="close_btn" id="findReplaceCloseBtn" class="mt-6 py-2 px-4 rounded-md transition duration-300 w-full btn-modal-dark"><span id="findReplaceCloseBtnText"></span></button></div></div>
+        <div id="saveProjectModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="save_project_title" id="saveProjectTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><div class="space-y-4"><div><label for="projectFilenameInput" data-i18n="filename_label" id="filenameLabel" class="block text-sm font-medium text-on-light-contrast mb-1"></label><input type="text" id="projectFilenameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white"></div></div><div class="flex justify-end space-x-2 mt-6"><button id="saveProjectCancelBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="saveProjectConfirmBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="save_button"></span></button></div></div></div>
+        
+        <div id="backupModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 data-i18n="backup_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
+                <p data-i18n="backup_info_text" class="text-on-light-contrast mb-4"></p>
+                <div class="bg-gray-100 p-3 rounded-md mb-6">
+                    <p class="text-sm text-gray-700"><strong data-i18n="last_backup_label"></strong> <span id="lastBackupTime"></span></p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="loadLocalBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50 btn-modal-primary" disabled><span data-i18n="load_local_backup_btn"></span></button>
+                    <button id="saveBackupToDiskBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50 btn-modal-secondary" disabled><span data-i18n="save_backup_to_disk_btn"></span></button>
+                    <label class="font-medium py-2 px-4 rounded-md transition duration-300 cursor-pointer text-center btn-modal-secondary"><span data-i18n="load_backup_from_disk_btn"></span><input type="file" id="loadBackupFromFileInput" class="hidden" accept=".json,.poanda-backup"/></label>
+                    <button id="deleteLocalBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 disabled:opacity-50 btn-modal-dark" disabled><span data-i18n="delete_local_backup_btn"></span></button>
+                </div>
+                 <button id="backupCloseBtn" class="mt-6 py-2 px-4 rounded-md transition duration-300 w-full btn-modal-neutral"><span data-i18n="close_btn"></span></button>
+            </div>
+        </div>
+
+        <div id="restoreBackupModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="restore_backup_title" id="restoreBackupTitle" class="text-xl font-bold mb-4 text-on-light-contrast"></h2><p data-i18n="restore_backup_info" id="restoreBackupInfo" class="text-on-light-contrast mb-6"></p><div class="flex justify-end space-x-2"><button id="discardBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="discard_button"></span></button><button id="restoreBackupBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="restore_button"></span></button></div></div></div>
+
+        <div id="convertToMoModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 data-i18n="mo_converter_title" class="text-xl font-bold mb-4 text-on-light-contrast"></h2>
+                <p data-i18n="mo_converter_info" class="text-on-light-contrast mb-6"></p>
+                <div class="flex justify-end space-x-2">
+                    <button id="moConverterCloseBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="close_btn"></span></button>
+                    <button id="moConverterActionBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="mo_converter_action_btn"></span></button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="changelogModal" class="modal hidden">
+            <div class="modal-content" style="width: 750px; max-width: 95%;">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-on-light-contrast m-0">Changelog</h2>
+                    <button id="changelogCloseBtn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold leading-none cursor-pointer">&times;</button>
+                </div>
+                <div class="overflow-y-auto rounded-md" style="max-height: 60vh;">
+                    <pre id="changelogContent" class="po-display-code whitespace-pre-wrap text-sm p-4 m-0 min-h-[150px]">Cargando...</pre>
+                </div>
+            </div>
+        </div>
+        </div>
+
+    <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]"><div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2"><p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p><p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p><p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p></div></div>
+    <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"></div><p id="loadingMessage"></p></div>
+</body>
+</html>

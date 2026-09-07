@@ -1,0 +1,17 @@
+{
+  "name": "poanda",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Poanda — editor de archivos PO, JSON y HTML con glosario TBX, memoria de traducción TMX y compilación a MO. Parte de PandaTools by HTTrans.",
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes serve . -l 5173",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "vitest": "^2.1.8"
+  }
+}
