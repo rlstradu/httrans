@@ -1,4 +1,31 @@
 =======================================
+Poanda v1.2.0 - Sturdier Local Storage
+Release Date: September 7, 2026
+=======================================
+
+Poanda's automatic backup now runs on Dexie, a well-tested library for browser
+storage, instead of hand-written code. Your sessions are still saved only in
+your own browser and never leave your computer. Nothing changes in how you use
+the tool.
+
+Why this matters
+The previous code fired off save operations without waiting for them to finish,
+so a failed save was reported only to the browser console and never surfaced.
+Saves are now awaited properly, which means failures can be detected instead of
+passing unnoticed.
+
+Existing sessions are kept
+If you had a translation in progress when this update arrived, it is still
+there. The storage keeps exactly the same name, version and layout it had
+before, and there are automated tests that write a session the old way and check
+the new code reads it back intact.
+
+Bug Fix
+Dialogs Opening Behind Windows: A confirmation dialog launched from another
+window (for example, deleting the local backup from the backup menu) appeared
+behind it. It was visible but could not be clicked. It now opens on top.
+
+=======================================
 Poanda v1.1.0 - PO File Fixes & Modular Codebase
 Release Date: September 6, 2026
 =======================================

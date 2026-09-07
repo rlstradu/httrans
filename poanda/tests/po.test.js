@@ -4,7 +4,7 @@ import {
     reconstructPo,
     escapePoString,
     unescapePoString,
-} from '../js/core/po.js';
+} from '../src/js/core/po.js';
 
 const PO_EJEMPLO = `msgid ""
 msgstr ""

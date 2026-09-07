@@ -1,17 +1,24 @@
 {
   "name": "poanda",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
-  "description": "Poanda — editor de archivos PO, JSON y HTML con glosario TBX, memoria de traducción TMX y compilación a MO. Parte de PandaTools by HTTrans.",
+  "description": "Poanda \u2014 editor de archivos PO, JSON y HTML con glosario TBX, memoria de traducci\u00f3n TMX y compilaci\u00f3n a MO. Parte de PandaTools by HTTrans.",
   "type": "module",
   "scripts": {
-    "dev": "npx --yes serve . -l 5173",
+    "dev": "vite",
+    "build": "vite build && node scripts/publicar-compilado.mjs",
+    "preview": "npm run build && npx --yes serve .. -l 5173",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
+    "fake-indexeddb": "^6.2.5",
+    "vite": "^5.4.21",
     "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "dexie": "^4.4.5"
   }
 }

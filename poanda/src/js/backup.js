@@ -1,4 +1,5 @@
 import { parseHtmlProject } from './core/html-doc.js';
+import { db, ID_SESION } from './db.js';
 import { hideLoadingOverlay, showLoadingOverlay, showMessage } from './dialogs.js';
 import {
     backupIndicator,
@@ -15,53 +16,25 @@ import { state } from './state.js';
 import { showTMEditorSection, showTMLanguageConfigSection } from './tm.js';
 import { translations } from './translations.js';
 
-const DB_NAME = 'PoandaBackup';
-
-const DB_VERSION = 1;
-
-const STORE_NAME = 'session';
-
-let db;
-
-function openDb() {
-    return new Promise((resolve, reject) => {
-        if (db) {
-            resolve(db);
-            return;
-        }
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onerror = () => reject('Error opening IndexedDB.');
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve(db);
-        };
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-            }
-        };
-    });
-}
-
+/**
+ * Guarda la sesión completa en el navegador.
+ *
+ * Se llama sola cada diez segundos y también al guardar una copia en disco.
+ * Si no hay nada cargado no hace nada: no tiene sentido machacar una copia
+ * buena con una sesión vacía.
+ *
+ * @returns {Promise<void>}
+ */
 async function saveBackup() {
-    // 1. Comprobación de seguridad: Si no hay base de datos o entradas, salimos.
-    if (!db || typeof state.poEntries === 'undefined' || state.poEntries.length === 0) return;
-
-    // 2. Preparar el HTML Crudo de forma segura
-    // Nos aseguramos de que currentRawHtml exista, si no, guardamos cadena vacía.
-    let htmlToSave = '';
-    if (typeof state.currentRawHtml !== 'undefined' && state.currentRawHtml) {
-        htmlToSave = state.currentRawHtml;
-    }
+    if (!state.poEntries || state.poEntries.length === 0) return;
 
     const sessionData = {
-        id: 'currentSession',
-        poEntries: state.poEntries, // Tus traducciones
-        currentFileType:
-            typeof state.currentFileType !== 'undefined' ? state.currentFileType : 'po',
+        id: ID_SESION,
+        poEntries: state.poEntries,
+        currentFileType: state.currentFileType || 'po',
         currentFileName: state.currentFileName,
-        currentRawHtml: htmlToSave, // <--- AQUÍ GUARDAMOS EL HTML ORIGINAL
+        // El HTML original hace falta para reconstruir el documento al restaurar.
+        currentRawHtml: state.currentRawHtml || '',
         glossary: state.glossary || [],
         glossarySourceLanguage: state.glossarySourceLanguage || '',
         glossaryTargetLanguage: state.glossaryTargetLanguage || '',
@@ -71,57 +44,57 @@ async function saveBackup() {
         timestamp: new Date(),
     };
 
-    // 3. Intentar guardar en la Base de Datos
     try {
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.put(sessionData);
-
-        request.onsuccess = () => {
-            updateBackupStatusUI();
-            // Si abres la consola (F12), verás este mensaje cada 10s si funciona:
-            console.log(
-                '✅ Backup guardado correctamente a las ' + new Date().toLocaleTimeString(),
-            );
-        };
-
-        request.onerror = (e) => {
-            console.error('❌ Error al escribir en IndexedDB:', e.target.error);
-        };
-    } catch (err) {
-        console.error('❌ Error fatal dentro de saveBackup:', err);
+        await db.session.put(sessionData);
+        await updateBackupStatusUI();
+        console.log('✅ Copia de seguridad guardada a las ' + new Date().toLocaleTimeString());
+    } catch (error) {
+        console.error('❌ No se ha podido guardar la copia de seguridad:', error);
     }
 }
 
+/**
+ * Recupera la sesión guardada, si la hay.
+ *
+ * @returns {Promise<Object|undefined>} La sesión, o undefined si no hay ninguna.
+ */
 async function loadBackup() {
-    if (!db) return null;
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get('currentSession');
-        request.onerror = () => reject('Error loading backup from DB.');
-        request.onsuccess = () => resolve(request.result);
-    });
+    try {
+        return await db.session.get(ID_SESION);
+    } catch (error) {
+        console.error('No se ha podido leer la copia de seguridad:', error);
+        return undefined;
+    }
 }
 
+/**
+ * Borra la sesión guardada en el navegador.
+ *
+ * @returns {Promise<void>}
+ */
 async function clearBackup() {
-    if (!db) return;
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    store.clear();
-    updateBackupStatusUI();
+    try {
+        await db.session.clear();
+    } catch (error) {
+        console.error('No se ha podido borrar la copia de seguridad:', error);
+    }
+    await updateBackupStatusUI();
 }
 
+/**
+ * Al abrir Poanda, mira si quedó una sesión sin terminar y ofrece recuperarla.
+ *
+ * @returns {Promise<void>}
+ */
 async function checkForBackup() {
     try {
-        await openDb();
         const backup = await loadBackup();
         if (backup && backup.poEntries && backup.poEntries.length > 0) {
             restoreBackupModal.classList.remove('hidden');
         }
-        updateBackupStatusUI();
+        await updateBackupStatusUI();
     } catch (error) {
-        console.error('Backup check failed:', error);
+        console.error('No se ha podido comprobar si hay copia de seguridad:', error);
     }
 }
 

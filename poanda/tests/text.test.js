@@ -4,7 +4,7 @@ import {
     splitTextIntoSentences,
     levenshteinDistance,
     calculateSimilarity,
-} from '../js/core/text.js';
+} from '../src/js/core/text.js';
 
 describe('countWords', () => {
     it('cuenta las palabras separadas por espacios', () => {

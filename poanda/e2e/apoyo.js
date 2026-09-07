@@ -60,7 +60,7 @@ export const test = base.extend({
         // en lo que comprueban estos tests.
         await page.route(/^https:\/\/(fonts\.|cdn\.jsdelivr|cdnjs\.)/, (ruta) => ruta.abort());
 
-        await page.goto('/');
+        await page.goto('./');
         await use(page);
     },
 });

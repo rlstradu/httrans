@@ -12,8 +12,11 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     reporter: process.env.CI ? 'line' : 'list',
+    // Los tests se ejecutan contra el resultado compilado y servido desde la
+    // raíz del sitio, igual que en httrans.org: así se comprueba de paso que las
+    // rutas del logo (/images/...) y del changelog funcionan de verdad.
     use: {
-        baseURL: 'http://127.0.0.1:5173',
+        baseURL: 'http://127.0.0.1:5173/poanda/',
         trace: 'on-first-retry',
     },
     projects: [
@@ -45,9 +48,9 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: 'npx --yes serve . -l 5173',
-        url: 'http://127.0.0.1:5173',
+        command: 'npm run build && npx --yes serve .. -l 5173',
+        url: 'http://127.0.0.1:5173/poanda/',
         reuseExistingServer: !process.env.CI,
-        timeout: 60_000,
+        timeout: 120_000,
     },
 });

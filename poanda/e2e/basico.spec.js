@@ -14,6 +14,32 @@ test.describe('arranque', () => {
         await expect(page.locator('#versionToggle')).toHaveText(/^v\d+\.\d+\.\d+$/);
     });
 
+    test('el logo y el favicon se cargan de verdad', async ({ page }) => {
+        // Al compilar con Vite, el HTML pide las imágenes como /images/... desde
+        // la raíz del sitio. Si esa ruta se rompiera, la página seguiría
+        // funcionando pero saldría sin logo, así que conviene comprobarlo.
+        const logo = page.locator('img[alt="Poanda Logo"]');
+        await expect(logo).toBeVisible();
+        await expect
+            .poll(() => logo.evaluate((img) => img.naturalWidth))
+            .toBeGreaterThan(0);
+
+        const favicon = await page.locator('link[rel="icon"]').getAttribute('href');
+        const respuesta = await page.request.get(new URL(favicon, page.url()).href);
+        expect(respuesta.status()).toBe(200);
+    });
+
+    test('la página compilada no pide nada que no exista', async ({ page }) => {
+        const fallos = [];
+        page.on('response', (r) => {
+            if (r.status() >= 400 && !r.url().startsWith('https://')) fallos.push(`${r.status()} ${r.url()}`);
+        });
+        await page.reload();
+        await page.locator('#versionToggle').click();
+        await expect(page.locator('#changelogContent')).toContainText('Poanda v');
+        expect(fallos).toEqual([]);
+    });
+
     test('los módulos ES se cargan (main.js ha enganchado los botones)', async ({ page }) => {
         // Si los módulos no cargaran, este botón no abriría nada.
         await page.locator('#toolsBtn').click(); // los atajos están en el menú "Herramientas"

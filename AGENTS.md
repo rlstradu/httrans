@@ -29,13 +29,26 @@ Cuando se cita "el patrón pandaterm/pandoria" en este documento, nos referimos 
 
 ## 3. Stack técnico
 
-Sin framework de frontend (nada de React/Vue) y, hoy por hoy, sin bundler ni paso de build obligatorio para desplegar — cada herramienta se sirve tal cual. Se apoya en:
+Sin framework de frontend (nada de React/Vue). La mayoría de herramientas se sirven tal cual, sin paso de compilación. **Poanda es la excepción desde septiembre de 2026**: usa Vite, y eso cambia cómo se trabaja con ella (ver §3.1). Se apoya en:
 
 - HTML + CSS + JavaScript.
 - Tailwind CSS: la portada lo carga por CDN (`cdn.tailwindcss.com`); Pandoria lo compila localmente (ver `docs/design-system.md`); PandaTerm usa CSS propio sin Tailwind. Esto es una inconsistencia heredada — ver §7.
 - Phosphor Icons (`ph-duotone`) en la portada, vía CDN.
 - Google Fonts.
 - MailerLite para el boletín (ver §10).
+
+
+### 3.1 Herramientas con paso de compilación (Poanda)
+
+En `poanda/` lo que se edita está en `poanda/src/`; lo que publica httrans.org es `poanda/index.html` + `poanda/assets/`, que **genera `npm run build`**. Las tres reglas que se derivan de esto:
+
+1. **Nunca editar `poanda/index.html` ni `poanda/assets/`**: son archivos generados y la siguiente compilación los reescribe. Llevan un aviso en la cabecera.
+2. **Compilar antes de publicar.** Un cambio en `src/` no llega a httrans.org hasta que se ejecuta `npm run build` y se sube el resultado. Es el fallo fácil de cometer: subir solo el código fuente y que la web siga igual.
+3. **El resultado compilado se sube al repositorio**, igual que Pandoria sube su CSS de Tailwind ya compilado. No hay compilación automática en GitHub: el sitio se publica directamente desde la rama `main`.
+
+Vite compila primero a `poanda/.build/` (carpeta temporal, excluida del repositorio) y después un script mueve el resultado a su sitio. Se hace en dos pasos para que la herramienta de compilación nunca mande sobre la carpeta que contiene el código fuente.
+
+Las rutas a imágenes comunes del sitio se escriben desde la raíz del dominio (`/poanda-logo-final.png`, `/images/favicon-poanda.png`), no en relativo: al compilar, el HTML cambia de sitio y las rutas relativas dejarían de apuntar donde deben.
 
 No hay backend propio. Los "datos" de cada herramienta viven en el navegador de quien la usa (localStorage/backup local), no en un servidor.
 

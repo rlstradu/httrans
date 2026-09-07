@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { parseJsonProject, reconstructJson } from '../js/core/json.js';
-import { parsePoForMo, compileMo } from '../js/core/mo.js';
-import { generateTBX } from '../js/core/tbx.js';
-import { generateTMX } from '../js/core/tmx.js';
-import { state } from '../js/state.js';
+import { parseJsonProject, reconstructJson } from '../src/js/core/json.js';
+import { parsePoForMo, compileMo } from '../src/js/core/mo.js';
+import { generateTBX } from '../src/js/core/tbx.js';
+import { generateTMX } from '../src/js/core/tmx.js';
+import { state } from '../src/js/state.js';
 
 describe('archivos JSON', () => {
     const JSON_EJEMPLO = JSON.stringify({

@@ -26,6 +26,8 @@ y abrir `http://localhost:8000` (o el puerto que toque). Esto es imprescindible 
 
 **Poanda ya está en ese caso**: usa módulos ES, así que por doble clic no arranca. Desde `poanda/`, `npm run dev` levanta el servidor en `http://localhost:5173`.
 
+Poanda además se compila con Vite (ver `AGENTS.md` §3.1). Lo que se edita está en `poanda/src/`; lo que se publica lo genera `npm run build`. Si tocas algo en `src/` y no compilas, la web no cambia.
+
 ## 3. Cómo funciona la traducción ES/EN
 
 Dos patrones distintos conviven hoy (ver `AGENTS.md` §7 para el porqué):
