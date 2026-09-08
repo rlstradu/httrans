@@ -6,37 +6,37 @@
  *
  * Son los que más valor tienen: si el refactor rompiera algo, sería aquí.
  */
-import { test, expect, cargarPo, PO_EJEMPLO } from './apoyo.js';
+import { test, expect, anadirTermino, cargarPo, PO_EJEMPLO } from './apoyo.js';
 
 test.describe('glosario (botones que antes eran onclick)', () => {
     test.beforeEach(async ({ page }) => {
-        // El glosario ya no pregunta idiomas: los toma del proyecto, así que se
-        // abre directamente el editor. Antes había que pasar por una pantalla
-        // de configuración que pedía por segunda vez un dato que el proyecto ya
-        // tiene.
-        await page.locator('#terminologyBtn').click();
+        // El glosario está a la vista en cuanto hay un archivo abierto: ni se
+        // abre con un botón ni pregunta idiomas, que los toma del proyecto.
+        await cargarPo(page, PO_EJEMPLO);
         await expect(page.locator('#terminologySidebar')).toBeVisible();
         await expect(page.locator('#terminologyEditorSection')).toBeVisible();
     });
 
     test('añadir un término lo muestra en la tabla', async ({ page }) => {
-        await page.locator('#srcTerm').fill('file');
-        await page.locator('#tgtTerm').fill('archivo');
-        await page.locator('#addTermBtn').click();
+        await anadirTermino(page, 'file', 'archivo');
 
         await expect(page.locator('#glossaryTableBody')).toContainText('file');
         await expect(page.locator('#glossaryTableBody')).toContainText('archivo');
     });
 
     test('borrar un término lo quita de la tabla', async ({ page }) => {
-        await page.locator('#srcTerm').fill('file');
-        await page.locator('#tgtTerm').fill('archivo');
-        await page.locator('#addTermBtn').click();
+        await anadirTermino(page, 'file', 'archivo');
         await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
 
         // Este botón se crea desde JavaScript: antes llevaba onclick incrustado
         // y ahora se engancha con addEventListener al pintar la tabla.
-        await page.locator('.glossary-delete-btn').first().click();
+        //
+        // Hay que bajar hasta él a propósito: el panel ya no ocupa la pantalla
+        // entera, comparte columna con la memoria, y su contenido se desplaza
+        // por dentro. Es lo que haría cualquiera con el ratón.
+        const borrar = page.locator('.glossary-delete-btn').first();
+        await borrar.scrollIntoViewIfNeeded();
+        await borrar.click();
         await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
     });
 
@@ -45,90 +45,53 @@ test.describe('glosario (botones que antes eran onclick)', () => {
             ['file', 'archivo'],
             ['string', 'cadena'],
         ]) {
-            await page.locator('#srcTerm').fill(src);
-            await page.locator('#tgtTerm').fill(tgt);
-            await page.locator('#addTermBtn').click();
+            await anadirTermino(page, src, tgt);
         }
         await expect(page.locator('#glossaryTableBody tr')).toHaveCount(2);
 
-        // El campo de búsqueda usaba oninput="renderGlossary()"
-        await page.locator('#searchTerm').fill('string');
+        // El campo de búsqueda usaba oninput="renderGlossary()"; ahora es el
+        // buscador único de la columna, que filtra las dos cosas a la vez.
+        await page.locator('#buscarPaneles').fill('string');
         await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
         await expect(page.locator('#glossaryTableBody')).toContainText('cadena');
     });
 });
 
-test.describe('lo que dicen los paneles cuando están vacíos', () => {
-    test('la memoria dice que está vacía y que se puede importar una', async ({ page }) => {
-        // Antes decía "crea una memoria nueva o importa un TMX", que mandaba a
-        // buscar un botón que no hace falta pulsar: la memoria existe desde que
-        // se abre el archivo.
+test.describe('los paneles responden al primer clic', () => {
+    test('borrar un término funciona con un segmento en el foco', async ({ page }) => {
+        // Con el foco dentro de un segmento —el estado normal mientras se
+        // traduce—, pulsar un botón del glosario lo blanqueaba: al salir del
+        // segmento se repintaba la lista entera, el botón desaparecía entre el
+        // mousedown y el mouseup, y el navegador no llegaba a emitir el clic.
+        // Se pulsaba y no pasaba nada; había que pulsar dos veces.
         await cargarPo(page, PO_EJEMPLO);
-        await page.locator('#tmBtn').click();
 
-        const aviso = page.locator('#memoriaVacia');
-        await expect(aviso).toBeVisible();
-        await expect(aviso).toContainText(/empty/i);
-        await expect(aviso).toContainText(/\.tmx/);
-        await expect(aviso).not.toContainText(/create a new/i);
+        await anadirTermino(page, 'file', 'archivo');
+        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
 
-        // Y no se repite el "no se encontraron coincidencias": es el mismo
-        // hecho contado dos veces.
-        await expect(page.locator('#tmNoMatchFoundMessage')).toBeHidden();
-    });
+        // El foco, dentro de un segmento, como cuando se está traduciendo.
+        await page.locator('#msgstr-1-0').click();
 
-    test('el aviso de la memoria se va al validar el primer segmento', async ({ page }) => {
-        await cargarPo(page, PO_EJEMPLO);
-        await page.locator('#tmBtn').click();
-        await expect(page.locator('#memoriaVacia')).toBeVisible();
+        const borrar = page.locator('.glossary-delete-btn').first();
+        await borrar.scrollIntoViewIfNeeded();
+        await borrar.click();
 
-        // Validar un segmento traducido es lo que mete la unidad en la memoria.
-        await page.locator('#msgstr-2-0').fill('Guardar cambios');
-        await page.locator('#validateBtn-2-0').click();
-
-        await expect(page.locator('#memoriaVacia')).toBeHidden();
-    });
-
-    test('el glosario dice lo mismo, a su manera', async ({ page }) => {
-        await cargarPo(page, PO_EJEMPLO);
-        await page.locator('#terminologyBtn').click();
-
-        const aviso = page.locator('#glosarioVacio');
-        await expect(aviso).toBeVisible();
-        await expect(aviso).toContainText(/empty/i);
-        await expect(aviso).toContainText(/\.tbx/);
-    });
-
-    test('el aviso del glosario se va al añadir el primer término', async ({ page }) => {
-        await cargarPo(page, PO_EJEMPLO);
-        await page.locator('#terminologyBtn').click();
-        await expect(page.locator('#glosarioVacio')).toBeVisible();
-
-        await page.locator('#srcTerm').fill('file');
-        await page.locator('#tgtTerm').fill('archivo');
-        await page.locator('#addTermBtn').click();
-
-        await expect(page.locator('#glosarioVacio')).toBeHidden();
+        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
     });
 });
 
 test.describe('el par de idiomas manda en el glosario y en la memoria', () => {
     test('los dos paneles enseñan el par del proyecto, sin preguntarlo', async ({ page }) => {
         await cargarPo(page, PO_EJEMPLO, { origen: 'en-US', destino: 'es-ES' });
-
-        await page.locator('#terminologyBtn').click();
         await expect(page.locator('#glosarioParIdiomas')).toHaveText(
             'American English → European Spanish'
         );
-
-        await page.locator('#tmBtn').click();
         await expect(page.locator('#memoriaParIdiomas')).toContainText('American English');
     });
 
     test('cambiarlo desde la barra lo cambia en los dos paneles a la vez', async ({ page }) => {
         // Eran el mismo dato escrito en dos sitios que se podían contradecir.
         await cargarPo(page, PO_EJEMPLO, { origen: 'en', destino: 'es' });
-        await page.locator('#terminologyBtn').click();
 
         await page.locator('#parIdiomasBtn').click();
         await page.locator('#idiomaDestino').selectOption('pt-BR');
@@ -140,8 +103,8 @@ test.describe('el par de idiomas manda en el glosario y en la memoria', () => {
 });
 
 test.describe('memoria de traducción (botones que antes eran onclick)', () => {
-    test('la memoria se abre directamente, sin pedir idiomas', async ({ page }) => {
-        await page.locator('#tmBtn').click();
+    test('la memoria está a la vista, sin pedir idiomas ni abrirse', async ({ page }) => {
+        await cargarPo(page, PO_EJEMPLO);
         await expect(page.locator('#translationMemorySidebar')).toBeVisible();
         await expect(page.locator('#tmEditorSection')).toBeVisible();
     });
@@ -152,13 +115,12 @@ test.describe('memoria de traducción (botones que antes eran onclick)', () => {
         await cargarPo(page, PO_EJEMPLO);
         await page.locator('#msgstr-2-0').fill('Guardar cambios');
         await page.locator('#validateBtn-2-0').click();
-        await page.locator('#tmBtn').click();
 
         // Usaba oninput="tmSearch()": si no estuviera enganchado, esto lanzaría
         // un error de JavaScript en vez de mostrar el mensaje de "sin resultados".
         const errores = [];
         page.on('pageerror', (e) => errores.push(e.message));
-        await page.locator('#tmSearchInput').fill('algo que no está');
+        await page.locator('#buscarPaneles').fill('algo que no está');
         await expect(page.locator('#tmNoMatchFoundMessage')).toBeVisible();
         expect(errores).toEqual([]);
     });

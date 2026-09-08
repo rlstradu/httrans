@@ -127,15 +127,17 @@ export function pintarParDeIdiomas() {
  * @param {string} id
  */
 export function pintarParDelProyecto(id) {
-    const boton = document.getElementById(id);
-    if (!boton) return;
+    // El texto va en su propio span: al lado hay un globo terráqueo que hace de
+    // etiqueta, y reescribir el botón entero se lo llevaría por delante.
+    const texto = document.getElementById(`${id}Texto`);
+    if (!texto) return;
 
     const idioma = state.currentLanguage;
     if (!state.sourceLang || !state.targetLang) {
-        boton.textContent = t('lang_pair_unset') || '— → —';
+        texto.textContent = t('lang_pair_unset') || '— → —';
         return;
     }
-    boton.textContent = `${nombreDeIdioma(state.sourceLang, idioma)} → ${nombreDeIdioma(
+    texto.textContent = `${nombreDeIdioma(state.sourceLang, idioma)} → ${nombreDeIdioma(
         state.targetLang,
         idioma,
     )}`;

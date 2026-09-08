@@ -1,6 +1,6 @@
 {
   "name": "poanda",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "Poanda — editor de traducción para más de veinte formatos (PO, Word, Excel, XLIFF, Markdown y demás), con glosario TBX y memoria de traducción TMX. Parte de PandaTools by HTTrans.",
   "type": "module",

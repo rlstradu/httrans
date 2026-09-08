@@ -78,6 +78,19 @@ function traductorDeMentira(cuerpo) {
     );
 }
 
+/**
+ * Simula un navegador de los que NO traen traductor propio (Safari, Firefox).
+ *
+ * El Chromium de los tests sí lo trae, así que sin esto no se puede probar el
+ * caso en el que no queda ningún motor disponible.
+ */
+async function sinTraductorDelNavegador(page) {
+    await page.addInitScript(() => {
+        delete globalThis.Translator;
+    });
+    await page.reload();
+}
+
 /** Abre el panel del asistente. */
 async function abrirAsistente(page) {
     await page.locator('#aiBtn').click();
@@ -316,11 +329,123 @@ test.describe('sugerir la traducción de un segmento', () => {
 });
 
 test.describe('pretraducir el archivo', () => {
+    test('vive en el panel del asistente, no en el menú de herramientas', async ({ page }) => {
+        // Estaba en Herramientas, un menú donde no hay nada más de IA y que no
+        // dice nada del servicio del que depende. Su sitio es el panel donde se
+        // configura ese servicio y está el resto de lo que hace la IA.
+        await cargarPo(page, PO);
+
+        await page.locator('#toolsBtn').click();
+        await expect(page.locator('.dropdown-content #pretraducirBtn')).toHaveCount(0);
+        await page.keyboard.press('Escape');
+
+        await abrirAsistente(page);
+        await expect(page.locator('#aiSidebar #pretraducirBtn')).toBeVisible();
+    });
+
+    test('está debajo de los botones que tocan un solo segmento', async ({ page }) => {
+        // Los cuatro de arriba trabajan sobre el segmento en el que estás y
+        // éste recorre el archivo entero: no es lo mismo y no debe parecerlo.
+        await cargarPo(page, PO);
+        await abrirAsistente(page);
+
+        const [rapidos, archivo] = await Promise.all([
+            page.locator('.ai-quick-actions').boundingBox(),
+            page.locator('#pretraducirBtn').boundingBox(),
+        ]);
+        expect(archivo.y).toBeGreaterThanOrEqual(rapidos.y + rapidos.height - 1);
+        // Y ocupa la fila entera, que es lo que dice que no es una pastilla más.
+        expect(archivo.width).toBeGreaterThan(rapidos.width * 0.8);
+    });
+
+    test('sin ningún motor disponible no se abre siquiera el cuadro', async ({ page }) => {
+        // Pretraducir manda el archivo ENTERO al servicio. Sin clave, eso son
+        // cientos de llamadas que fallan una por una, con la barra avanzando
+        // como si algo estuviera pasando. Mejor decirlo antes de empezar.
+        await sinTraductorDelNavegador(page);
+        await cargarPo(page, PO);
+        await abrirAsistente(page);
+        await page.locator('#pretraducirBtn').click();
+
+        await expect(page.locator('#pretraducirModal')).toBeHidden();
+        // Y se abre donde se arregla: los ajustes del asistente.
+        await expect(page.locator('#messageBox')).toBeVisible();
+        await page.locator('#messageClose').click();
+        await expect(page.locator('#aiConfigPanel')).toBeVisible();
+    });
+
+    test('con servicio conectado, el cuadro se abre y el motor de IA está vivo', async ({
+        page,
+    }) => {
+        await conIaDeMentira(page, traductorDeMentira);
+        await cargarPo(page, PO);
+        await abrirAsistente(page);
+        await page.locator('#pretraducirBtn').click();
+
+        await expect(page.locator('#pretraducirModal')).toBeVisible();
+        await expect(page.locator('input[name="motorIA"][value="contexto"]')).toBeEnabled();
+        await expect(page.locator('.ia-motor:has(input[value="contexto"])')).not.toHaveClass(
+            /ia-motor-apagado/,
+        );
+    });
+
+    test('sin servicio, el motor de IA se queda apagado y con el motivo escrito', async ({
+        page,
+    }) => {
+        // Con traductor en el navegador sí hay cuadro, porque el otro motor
+        // sirve. El de IA se queda a la vista, apagado: esconderlo dejaría a
+        // alguien preguntándose dónde está el que usó la última vez.
+        await cargarPo(page, PO);
+        await abrirAsistente(page);
+        await page.locator('#pretraducirBtn').click();
+
+        await expect(page.locator('#pretraducirModal')).toBeVisible();
+
+        const deIA = page.locator('input[name="motorIA"][value="contexto"]');
+        await expect(deIA).toBeDisabled();
+        await expect(page.locator('.ia-motor:has(input[value="contexto"])')).toContainText(
+            /connect an ai service/i,
+        );
+        // Y queda elegido el que sí se puede usar.
+        await expect(page.locator('input[name="motorIA"][value="rapido"]')).toBeChecked();
+    });
+
+    test('forzar la casilla del motor de IA no lo arranca', async ({ page }) => {
+        // El cuadro ya no deja elegirlo, pero esto es lo que se comprueba de
+        // verdad: la puerta por la que se gasta la clave de alguien no se
+        // guarda solo con lo que se ve en pantalla.
+        await cargarPo(page, PO);
+        await abrirAsistente(page);
+        await page.locator('#pretraducirBtn').click();
+
+        await page
+            .locator('input[name="motorIA"][value="contexto"]')
+            .evaluate((el) => {
+                el.disabled = false;
+                el.checked = true;
+            });
+        await page.locator('#pretraducirEmpezarBtn').click();
+
+        await expect(page.locator('#pretraducirEstado')).toContainText(
+            /connect an ai service/i,
+        );
+        // Y no ha tocado el archivo.
+        await expect(page.locator('#msgstr-1-0')).toHaveValue('');
+    });
+
+    test('el encabezado del asistente lleva un panda, no un robot', async ({ page }) => {
+        await abrirAsistente(page);
+
+        const titulo = page.locator('#aiSidebar .sidebar-header h3');
+        await expect(titulo).toContainText('🐼');
+        await expect(titulo).not.toContainText('🤖');
+    });
+
     test('traduce los segmentos vacíos y los marca como borrador', async ({ page }) => {
         await conIaDeMentira(page, traductorDeMentira);
         await cargarPo(page, PO);
 
-        await page.locator('#toolsBtn').click();
+        await abrirAsistente(page);
         await page.locator('#pretraducirBtn').click();
         await page.locator('input[name="motorIA"][value="contexto"]').check();
         await page.locator('#pretraducirEmpezarBtn').click();
@@ -343,7 +468,7 @@ test.describe('pretraducir el archivo', () => {
         await page.locator('#msgstr-1-0').fill('Mi traducción');
         await page.locator('#msgstr-1-0').blur();
 
-        await page.locator('#toolsBtn').click();
+        await abrirAsistente(page);
         await page.locator('#pretraducirBtn').click();
         await page.locator('input[name="motorIA"][value="contexto"]').check();
         await page.locator('#pretraducirEmpezarBtn').click();
@@ -360,7 +485,7 @@ test.describe('pretraducir el archivo', () => {
         await conIaDeMentira(page, traductorDeMentira);
         await cargarPo(page, PO);
 
-        await page.locator('#toolsBtn').click();
+        await abrirAsistente(page);
         await page.locator('#pretraducirBtn').click();
         await page.locator('input[name="motorIA"][value="contexto"]').check();
         await page.locator('#pretraducirEmpezarBtn').click();
@@ -375,7 +500,7 @@ test.describe('pretraducir el archivo', () => {
     test('sin nada que traducir, lo dice en vez de abrir el cuadro', async ({ page }) => {
         await cargarPo(page, 'msgid "Save"\nmsgstr "Guardar"\n');
 
-        await page.locator('#toolsBtn').click();
+        await abrirAsistente(page);
         await page.locator('#pretraducirBtn').click();
 
         await expect(page.locator('#messageText')).toContainText(/nothing left to translate/i);

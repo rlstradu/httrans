@@ -19,6 +19,7 @@
  */
 import {
     guardarConfiguracion,
+    hayServicioConectado,
     leerConfiguracion,
     recordarLaClave,
     seRecuerdaLaClave,
@@ -38,21 +39,8 @@ const $ = (id) => document.getElementById(id);
  */
 let modelosDelServicio = [];
 
-/**
- * ¿Hay una configuración con la que se pueda llamar al servicio?
- *
- * No comprueba que funcione —eso solo lo sabe el servicio—, sino que no falte
- * nada: servicio elegido, clave si la pide, y modelo.
- *
- * @returns {boolean}
- */
-function estaConectado() {
-    const config = leerConfiguracion();
-    const proveedor = proveedorPorId(config.proveedor);
-    if (!proveedor) return false;
-    if (proveedor.necesitaClave && !config.clave) return false;
-    return Boolean(config.modelo || proveedor.modeloPorDefecto);
-}
+/** @returns {boolean} Si hay servicio, clave y modelo con los que llamar. */
+const estaConectado = () => hayServicioConectado({ proveedorPorId });
 
 /**
  * Pinta el panel con lo que haya guardado, enseñando la cara que toque.

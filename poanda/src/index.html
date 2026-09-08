@@ -56,19 +56,21 @@
                 <div class="dropdown-content">
                     <a id="undoBtn" data-i18n="undo_btn">Undo</a>
                     <hr class="my-1 border-gray-200">
-                    <a id="pretraducirBtn" data-i18n="ai_pretraducir_btn">Pre-translate with AI</a>
-                    <hr class="my-1 border-gray-200">
+                    <!-- Pretraducir con IA se fue al panel del asistente, que es
+                         donde está todo lo demás de la IA (y donde se configura
+                         el servicio del que depende). -->
                     <a id="findReplaceBtn" data-i18n="find_replace_btn">Find &amp; Replace</a>
                     <a id="shortcutsBtn" data-i18n="shortcuts_btn">Shortcuts</a>
                     <a id="statsBtn" data-i18n="statistics_btn">Statistics</a>
                 </div>
             </div>
 
-            <button id="terminologyBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="terminology_btn"></span>
-            </button>
-            <button id="tmBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
-                <span data-i18n="tm_btn"></span>
+            <!-- La memoria y el glosario ya no se abren y se cierran cada uno
+                 por su lado: están siempre a la vista en la columna de la
+                 derecha. Lo único que queda aquí es esconder esa columna cuando
+                 hace falta ancho para traducir. -->
+            <button id="panelesBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="panels_btn"></span>
             </button>
             <button id="aiBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center gap-1">
                 <span>🐼</span> <span data-i18n="ai_btn">AI Assistant</span>
@@ -95,7 +97,7 @@
                 <!-- El texto del botón de tema lo pone theme.js: depende del
                      modo activo, no solo del idioma. -->
                 <button id="darkModeToggle" class="control-barra">Dark mode</button>
-                <button id="versionToggle" class="control-barra" data-i18n-title="changelog_btn_title">v2.0.0</button>
+                <button id="versionToggle" class="control-barra" data-i18n-title="changelog_btn_title">v2.0.1</button>
             </div>
         </div>
 
@@ -175,96 +177,14 @@
                 </div>
             </div>
             
-            <!-- Sidebars -->
-            <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
-                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
-                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
-                <div class="sidebar-header">
-                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle"></h3>
-                    <div class="flex items-center gap-2">
-                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 8.812A9.024 9.024 0 0112 4.5c4.97 0 9 4.03 9 9s-4.03 9-9 9a9.006 9.006 0 01-8.35-5.786"></path></svg>
-                        </button>
-                        <button id="closeTerminologySidebarBtn" class="text-gray-500 hover:text-gray-700">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="sidebar-content">
-                    <div id="terminologyEditorSection">
-                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                            <button data-i18n="import_tbx" id="importTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
-                            <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
-                            <button data-i18n="download_tbx" id="downloadTbxBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
-                            <button data-i18n="new_glossary" id="newGlossaryBtn" class="glossary-btn-secondary flex-1 text-sm py-2 px-2"></button>
-                        </div>
-                        <p class="par-del-proyecto mb-4"><span data-i18n="lang_pair_of_project"></span> <button id="glosarioParIdiomas" class="par-del-proyecto-enlace" type="button"></button></p>
-                        <!-- Solo mientras esté vacío: dice qué es esto y por
-                             dónde se empieza, y desaparece en cuanto hay algo. -->
-                        <div id="glosarioVacio" class="glossary-info-box mb-4 hidden"><p data-i18n="glossary_vacio"></p></div>
-                        <div class="accordion-item">
-                            <div class="accordion-header flex justify-between items-center" id="addTermHeader">
-                                <h4 class="text-md font-semibold text-on-light-contrast m-0" data-i18n="add_term_title" id="addTermTitleAccordion"></h4>
-                                <svg class="w-5 h-5 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="accordion-content collapsed" id="addTermContent">
-                                <div class="flex flex-col space-y-2 mb-4">
-                                    <div class="glossary-input-group"><label for="srcTerm" data-i18n="term" id="termLabel"></label><input id="srcTerm" class="block w-full" /></div>
-                                    <div class="glossary-input-group"><label for="tgtTerm" data-i18n="translation" id="translationLabel"></label><input id="tgtTerm" class="block w-full" /></div>
-                                    <button data-i18n="add_button" id="addTermBtn" class="glossary-btn-primary w-full"></button>
-                                </div>
-                            </div>
-                        </div>
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="search_title" id="searchTitle"></h4>
-                        <div class="mb-4"><input id="searchTerm" data-i18n-placeholder="search_placeholder" class="block w-full" /></div>
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle"></h4>
-                        <div class="overflow-x-auto"><table class="glossary-table w-full"><thead><tr><th data-i18n="source_term_col" id="sourceTermCol"></th><th data-i18n="target_term_col" id="targetTermCol"></th><th data-i18n="actions_col" id="actionsCol"></th></tr></thead><tbody id="glossaryTableBody"></tbody></table></div>
-                    </div>
-                </div>
-            </div>
-            <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
-                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
-                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
-                <div class="sidebar-header">
-                    <h3 class="text-lg font-bold text-on-light-contrast" data-i18n="tm_sidebar_title" id="tmSidebarTitle"></h3>
-                    <div class="flex items-center gap-2">
-                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">
-                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 8.812A9.024 9.024 0 0112 4.5c4.97 0 9 4.03 9 9s-4.03 9-9 9a9.006 9.006 0 01-8.35-5.786"></path></svg>
-                        </button>
-                        <button id="closeTranslationMemorySidebarBtn" class="text-gray-500 hover:text-gray-700">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="sidebar-content">
-                    <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
-                    <div id="tmEditorSection">
-                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                            <button data-i18n="new_tm" id="newTmBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
-                            <label for="tmFileInput" class="block font-medium cursor-pointer py-2 px-4 rounded-md shadow-sm transition duration-300 tm-btn-secondary flex-1 text-sm text-center">
-                                <span data-i18n="import_tmx" id="importTmxBtnText"></span><input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" />
-                            </label>
-                            <button data-i18n="download_tmx" id="downloadTmxBtn" class="tm-btn-secondary flex-1 text-sm py-2 px-2"></button>
-                        </div>
-                        <p class="par-del-proyecto mb-4"><span data-i18n="lang_pair_of_project"></span> <button id="memoriaParIdiomas" class="par-del-proyecto-enlace" type="button"></button></p>
-                        <div id="memoriaVacia" class="tm-info-box mb-4 hidden"><p data-i18n="tm_vacia"></p></div>
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_title" id="tmSearchTitle"></h4>
-                        <div class="mb-4"><input id="tmSearchInput" data-i18n-placeholder="tm_search_placeholder" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm text-black bg-white" /></div>
-                        <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle"></h4>
-                        <div class="overflow-x-auto mb-4"><table class="tm-table w-full"><thead><tr><th data-i18n="tm_score_col" id="tmScoreCol"></th><th data-i18n="tm_original_col" id="tmOriginalCol"></th><th data-i18n="tm_translation_col" id="tmTranslationCol"></th></tr></thead><tbody id="tmSearchResultsTableBody"></tbody></table></div>
-                        <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden"></div>
-                    </div>
-                </div>
-            </div>
+            <!-- El asistente: una columna más, entre el editor y los paneles
+                 de consulta. Antes flotaba por encima del texto, que es lo
+                 último que uno quiere tapar mientras traduce. -->
             <div id="aiSidebar" class="ai-sidebar shadow-xl">
-                <div class="resizer resizer-t"></div><div class="resizer resizer-r"></div><div class="resizer resizer-b"></div><div class="resizer resizer-l"></div>
-                <div class="resizer resizer-tl"></div><div class="resizer resizer-tr"></div><div class="resizer resizer-bl"></div><div class="resizer resizer-br"></div>
-                
-                <div class="sidebar-header p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center cursor-move">
-                    <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">🤖 PandaBot AI</h3>
+                <div class="sidebar-header p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">🐼 PandaBot AI</h3>
                     <div class="flex items-center gap-2">
                         <button id="aiConfigToggleBtn" class="text-gray-500 hover:text-gray-700" data-i18n-title="ai_config_title" title="Configurar API">⚙️</button>
-                        <button class="reset-panel-btn text-gray-500 hover:text-gray-700">↺</button>
                         <button id="closeAiSidebarBtn" class="text-gray-500 hover:text-gray-700">✕</button>
                     </div>
                 </div>
@@ -329,6 +249,13 @@
                     <button class="ai-quick-btn" data-ai-action="fix" data-i18n="ai_quick_fix">Corregir</button>
                 </div>
 
+                <!-- Pretraducir el archivo entero. Va aparte de los cuatro de
+                     arriba a propósito: aquéllos tocan el segmento en el que
+                     estás, y éste recorre todo el archivo. -->
+                <div class="ai-accion-archivo">
+                    <button id="pretraducirBtn" class="ai-btn-archivo" type="button" data-i18n="ai_pretraducir_btn">Pre-translate with AI</button>
+                </div>
+
                 <div id="aiChatContainer" class="ai-chat-container">
                     </div>
 
@@ -339,6 +266,88 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Los paneles de consulta, en una columna a la derecha: la
+                 memoria arriba y el glosario abajo. Flotando tapaban justo el
+                 texto que hay que mirar para decidir si una coincidencia sirve,
+                 y había que apartarlos a mano cada vez. -->
+            <div id="panelesDerecha" class="paneles-derecha">
+                <div id="tiradorAncho" class="tirador-ancho" role="separator" aria-orientation="vertical" data-i18n-title="panel_resize_width"></div>
+
+                <!-- Un solo buscador para los dos paneles. Antes había uno en
+                     cada uno, buscando lo mismo con dos campos y dos títulos:
+                     dos franjas de una columna donde el sitio escasea. -->
+                <div class="paneles-buscador">
+                    <span class="paneles-buscador-lupa" aria-hidden="true"></span>
+                    <input type="text" id="buscarPaneles" data-i18n-placeholder="panels_search_placeholder" class="ia-campo">
+                </div>
+
+                <div id="translationMemorySidebar" class="translation-memory-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                    <!-- Título, acciones y plegado en una sola fila: en media
+                         columna, una cabecera de dos renglones es una fila de
+                         coincidencias menos. -->
+                    <div class="sidebar-header">
+                        <h3 class="panel-titulo" data-i18n="tm_sidebar_title" id="tmSidebarTitle"></h3>
+                        <div class="panel-acciones">
+                            <label id="importTmxBtn" for="tmFileInput" class="panel-icono" data-i18n-title="import_tmx"><input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" /></label>
+                            <button id="downloadTmxBtn" class="panel-icono" data-i18n-title="download_tmx" type="button"></button>
+                            <button id="closeTranslationMemorySidebarBtn" class="panel-icono panel-plegar" data-i18n-title="panel_collapse" type="button"></button>
+                        </div>
+                    </div>
+                    <div class="sidebar-content">
+                        <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
+                        <div id="tmEditorSection">
+                            <button id="memoriaParIdiomas" class="par-del-proyecto" type="button" data-i18n-title="lang_pair_title"><span class="par-del-proyecto-icono" aria-hidden="true"></span><span class="par-del-proyecto-texto" id="memoriaParIdiomasTexto"></span></button>
+                            <div id="tmResultados" class="hidden">
+                                <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle"></h4>
+                                <div class="overflow-x-auto mb-4"><table class="tm-table w-full"><thead><tr><th data-i18n="tm_score_col" id="tmScoreCol"></th><th data-i18n="tm_original_col" id="tmOriginalCol"></th><th data-i18n="tm_translation_col" id="tmTranslationCol"></th></tr></thead><tbody id="tmSearchResultsTableBody"></tbody></table></div>
+                            </div>
+                            <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden"></div>
+                        </div>
+                    </div>
+            </div>
+                <div id="tiradorReparto" class="tirador-reparto" role="separator" aria-orientation="horizontal" data-i18n-title="panel_resize_split"></div>
+            <div id="terminologySidebar" class="terminology-sidebar p-4 border border-gray-300 rounded-lg shadow-md">
+                <div class="sidebar-header">
+                    <h3 class="panel-titulo" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle"></h3>
+                    <div class="panel-acciones">
+                        <button id="addTermToggleBtn" class="panel-icono" data-i18n-title="add_term_title" type="button"></button>
+                        <button id="importTbxBtn" class="panel-icono" data-i18n-title="import_tbx" type="button"></button>
+                        <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
+                        <button id="downloadTbxBtn" class="panel-icono" data-i18n-title="download_tbx" type="button"></button>
+                        <button id="closeTerminologySidebarBtn" class="panel-icono panel-plegar" data-i18n-title="panel_collapse" type="button"></button>
+                    </div>
+                </div>
+                <div class="sidebar-content">
+                    <div id="terminologyEditorSection">
+                        <button id="glosarioParIdiomas" class="par-del-proyecto" type="button" data-i18n-title="lang_pair_title"><span class="par-del-proyecto-icono" aria-hidden="true"></span><span class="par-del-proyecto-texto" id="glosarioParIdiomasTexto"></span></button>
+                        <!-- La ficha de un término se rellena en su propio cuadro
+                             (#terminoModal, más abajo): son cinco campos, y en media
+                             columna no caben sin comerse la lista de términos. -->
+                        <div id="glosarioResultados" class="hidden">
+                            <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle"></h4>
+                            <div class="overflow-x-auto"><table class="glossary-table w-full"><thead><tr><th data-i18n="source_term_col" id="sourceTermCol"></th><th data-i18n="target_term_col" id="targetTermCol"></th><th data-i18n="actions_col" id="actionsCol"></th></tr></thead><tbody id="glossaryTableBody"></tbody></table></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                <!-- El aviso de que la memoria y el glosario están vacíos: va
+                     debajo de los dos paneles, no dentro de ninguno, y lo dice
+                     el panda en un bocadillo. Estaba arriba, en un recuadro
+                     gris, entre el buscador y la memoria —justo donde uno mira
+                     para trabajar—, y con una letra que encima no se leía. El
+                     que ya sabe cómo va esto lo cierra con su equis y no
+                     vuelve. -->
+                <div id="panelesAviso" class="paneles-aviso hidden">
+                    <img class="paneles-aviso-panda" src="/images/panda-glasses.png" alt="" aria-hidden="true">
+                    <div class="paneles-aviso-bocadillo">
+                        <p data-i18n="panels_vacios"></p>
+                        <button id="panelesAvisoCerrar" class="paneles-aviso-cerrar" type="button" data-i18n-title="panels_notice_dismiss">&times;</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
 
@@ -360,6 +369,40 @@
              relleno con lo que el archivo declare, y se puede volver a abrir
              desde el indicador de la barra. -->
         <div id="idiomasModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="lang_pair_dialog_title" class="text-xl font-bold mb-2 text-on-light-contrast"></h2><p data-i18n="lang_pair_dialog_info" class="ia-pista mb-3"></p><p id="idiomasAviso" class="ia-pista idiomas-aviso hidden"></p><div class="idiomas-par"><div><label class="ia-etiqueta" for="idiomaOrigen" data-i18n="source_language"></label><select id="idiomaOrigen" class="ia-campo"></select></div><div class="idiomas-flecha" aria-hidden="true">&rarr;</div><div><label class="ia-etiqueta" for="idiomaDestino" data-i18n="target_language"></label><select id="idiomaDestino" class="ia-campo"></select></div></div><p id="idiomasError" class="idiomas-error"></p><div class="flex justify-end space-x-2 mt-4"><button id="idiomasCancelarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="idiomasAceptarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="accept_button"></span></button></div></div></div>
+        <!-- La ficha de un término del glosario. El mismo cuadro sirve para
+             crear y para corregir: pulsar una fila de la lista lo abre con los
+             datos dentro y con el botón de borrar a la vista. Los campos son
+             los de PandaTerm, para que un glosario pase de una herramienta a
+             otra sin dejarse nada por el camino. -->
+        <div id="terminoModal" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="terminoModalTitulo" class="text-xl font-bold mb-3 text-on-light-contrast"></h2>
+                <div class="termino-par">
+                    <div>
+                        <label class="ia-etiqueta" for="terminoOrigen"><span data-i18n="term"></span><span class="required-asterisk">*</span></label>
+                        <input type="text" id="terminoOrigen" class="ia-campo" autocomplete="off">
+                    </div>
+                    <div>
+                        <label class="ia-etiqueta" for="terminoDestino"><span data-i18n="translation"></span><span class="required-asterisk">*</span></label>
+                        <input type="text" id="terminoDestino" class="ia-campo" autocomplete="off">
+                    </div>
+                </div>
+                <label class="ia-etiqueta" for="terminoCategoria" data-i18n="part_of_speech"></label>
+                <select id="terminoCategoria" class="ia-campo"></select>
+                <label class="ia-etiqueta" for="terminoDefinicion" data-i18n="definition"></label>
+                <textarea id="terminoDefinicion" class="ia-campo" rows="2"></textarea>
+                <label class="ia-etiqueta" for="terminoNotas" data-i18n="notes"></label>
+                <textarea id="terminoNotas" class="ia-campo" rows="2"></textarea>
+                <p id="terminoError" class="idiomas-error"></p>
+                <div class="termino-botones">
+                    <button id="terminoBorrarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-dark hidden"><span data-i18n="delete_button"></span></button>
+                    <span class="termino-botones-hueco"></span>
+                    <button id="terminoCancelarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button>
+                    <button id="terminoGuardarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="save_button"></span></button>
+                </div>
+            </div>
+        </div>
+
         <div id="pretraducirModal" class="modal hidden"><div class="modal-content"><h2 data-i18n="ai_pretraducir_titulo" class="text-xl font-bold mb-2 text-on-light-contrast"></h2><p data-i18n="ai_pretraducir_alcance" class="ia-pista mb-3"></p><div id="pretraducirMotores"><label class="ia-motor"><input type="radio" name="motorIA" value="rapido" checked> <span class="ia-motor-nombre" data-i18n="ai_motor_rapido"></span><span class="ia-motor-info" data-i18n="ai_motor_rapido_info"></span></label><label class="ia-motor"><input type="radio" name="motorIA" value="contexto"> <span class="ia-motor-nombre" data-i18n="ai_motor_contexto"></span><span class="ia-motor-info" data-i18n="ai_motor_contexto_info"></span></label></div><div id="pretraducirAvance" class="hidden"><div class="ia-barra"><div id="pretraducirBarra" class="ia-barra-avance"></div></div><p id="pretraducirEstado" class="ia-pista"></p></div><div class="flex justify-end space-x-2 mt-6"><button id="pretraducirCancelarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-neutral"><span data-i18n="cancel_button"></span></button><button id="pretraducirEmpezarBtn" class="font-medium py-2 px-4 rounded-md transition duration-300 btn-modal-primary"><span data-i18n="ai_pretraducir_empezar"></span></button></div></div></div>
 
         <!-- Comentarios del segmento: arriba las notas que trae el archivo (no se
@@ -437,5 +480,10 @@
 
     <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]"><div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2"><p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p><p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p><p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p></div></div>
     <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"></div><p id="loadingMessage"></p></div>
+
+    <!-- La tarjeta que sale al pasar el ratón por un término resaltado. Vive
+         suelta al final de la página, no dentro del segmento: dentro se la
+         comería el recorte del texto original en cuanto asomara por el borde. -->
+    <div id="terminoTarjeta" class="termino-tarjeta hidden" role="tooltip" aria-hidden="true"></div>
 </body>
 </html>

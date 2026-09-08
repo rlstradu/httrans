@@ -156,6 +156,31 @@ export function guardarConfiguracion(config) {
     if (config.clave !== undefined) guardarClave(proveedor, config.clave);
 }
 
+/**
+ * ¿Hay un servicio de IA con el que se pueda llamar de verdad?
+ *
+ * No comprueba que el servicio responda —eso solo lo sabe el servicio—, sino
+ * que no falte nada de lo que hace falta para llamarlo: servicio elegido,
+ * clave si la pide, y modelo.
+ *
+ * Esta comprobación estaba escrita dos veces, una en el panel de ajustes y
+ * otra en el asistente, y ahora hace falta una tercera para pretraducir. Tres
+ * copias de la misma regla es una regla que va a dejar de ser la misma, así
+ * que vive aquí, que es donde está la configuración que mira.
+ *
+ * @param {{proveedorPorId: function}} proveedores Cómo buscar un proveedor por
+ *   su id. Se pasa desde fuera para que este módulo siga sin depender de la
+ *   lista de servicios, que es la que cambia cada vez que sale uno nuevo.
+ * @returns {boolean}
+ */
+export function hayServicioConectado({ proveedorPorId }) {
+    const config = leerConfiguracion();
+    const proveedor = proveedorPorId(config.proveedor);
+    if (!proveedor) return false;
+    if (proveedor.necesitaClave && !config.clave) return false;
+    return Boolean(config.modelo || proveedor.modeloPorDefecto);
+}
+
 /** @returns {string} 'rapido' o 'contexto'. */
 export function leerMotorDePretraducir() {
     return leer('localStorage', CLAVES.motorPretraducir) || 'rapido';

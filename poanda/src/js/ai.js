@@ -20,7 +20,7 @@ import { aiChatContainer, aiConfigPanel, aiSidebar, aiUserInput } from './dom.js
 import { getCurrentFocusedIndex, pushToUndoStack } from './editor.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
-import { leerConfiguracion } from './core/ia/ajustes.js';
+import { hayServicioConectado, leerConfiguracion } from './core/ia/ajustes.js';
 import { proveedorPorId } from './core/ia/proveedores.js';
 import { preguntar, traducirUno } from './core/ia/traducir.js';
 
@@ -38,18 +38,13 @@ const MEMORIA_DE_LA_CHARLA = 6;
  * @returns {Object|null}
  */
 function configuracionUsable() {
-    const proveedor = proveedorPorId(leerConfiguracion().proveedor);
-    if (!proveedor) return null;
+    if (!hayServicioConectado({ proveedorPorId })) return null;
 
-    const config = leerConfiguracion({
+    const proveedor = proveedorPorId(leerConfiguracion().proveedor);
+    return leerConfiguracion({
         modelo: proveedor.modeloPorDefecto,
         baseUrl: proveedor.urlPorDefecto,
     });
-
-    if (proveedor.necesitaClave && !config.clave) return null;
-    if (!config.modelo) return null;
-
-    return config;
 }
 
 /**
@@ -79,7 +74,14 @@ function loQueHayAlrededor() {
         contexto.glosario = [...state.termsFoundInActiveSegment]
             .map((termino) => state.glossary.find((g) => g.srcTerm === termino))
             .filter(Boolean)
-            .map((g) => ({ termino: g.srcTerm, traduccion: g.tgtTerm }));
+            .map((g) => ({
+                termino: g.srcTerm,
+                traduccion: g.tgtTerm,
+                // Las notas dicen qué NO hacer, que es la mitad del valor de un
+                // glosario; la definición desambigua cuando la palabra tiene
+                // varios sentidos.
+                nota: [g.notes, g.definition].filter(Boolean).join(' — '),
+            }));
     }
 
     // Memoria: la mejor coincidencia, si la hay.

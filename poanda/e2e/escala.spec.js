@@ -99,13 +99,14 @@ test.describe('las ventanas usan la escala del editor', () => {
 
 test.describe('los paneles usan la escala del editor', () => {
     test('el de terminología', async ({ page }) => {
-        await page.locator('#terminologyBtn').click();
+        // La columna de consulta solo existe con un archivo abierto.
+        await cargarPo(page);
         await expect(page.locator('.terminology-sidebar')).toBeVisible();
         await todoEnLaEscala(page, '.terminology-sidebar');
     });
 
     test('el de memoria de traducción', async ({ page }) => {
-        await page.locator('#tmBtn').click();
+        await cargarPo(page);
         await expect(page.locator('.translation-memory-sidebar')).toBeVisible();
         await todoEnLaEscala(page, '.translation-memory-sidebar');
     });

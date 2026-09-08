@@ -76,37 +76,14 @@ function updateTextContent() {
     if (findReplaceCloseBtnText) findReplaceCloseBtnText.textContent = lang['close_btn'];
 }
 
-function updateMainContentOffset() {
-    const isTerminologyOpen = terminologySidebar.classList.contains('show-sidebar');
-    const isTranslationMemoryOpen = translationMemorySidebar.classList.contains('show-sidebar');
-
-    if (centralColumn) {
-        centralColumn.classList.remove('left-sidebar-active', 'right-sidebar-active');
-
-        if (isTerminologyOpen) {
-            centralColumn.classList.add('left-sidebar-active');
-            document.documentElement.style.setProperty(
-                '--terminology-sidebar-width',
-                terminologySidebar.offsetWidth + 'px',
-            );
-        }
-        if (
-            isTranslationMemoryOpen ||
-            (aiSidebar && aiSidebar.classList.contains('show-sidebar'))
-        ) {
-            centralColumn.classList.add('right-sidebar-active');
-            // Prefer TM width if open, otherwise AI width
-            const width = isTranslationMemoryOpen
-                ? translationMemorySidebar.offsetWidth
-                : aiSidebar.offsetWidth;
-            document.documentElement.style.setProperty(
-                '--translation-memory-sidebar-width',
-                width + 'px',
-            );
-        }
-    } else {
-        console.warn('central-column element not found for offset update.');
-    }
-}
+/**
+ * Ya no hay nada que desplazar.
+ *
+ * Los paneles eran ventanas flotantes y el editor tenía que apartarse con
+ * relleno para que no lo taparan. Ahora son columnas: el editor se queda con lo
+ * que sobra y el navegador reparte solo. Se mantiene el nombre porque lo llaman
+ * media docena de sitios, y quitarlo de todos ellos no cambiaría nada.
+ */
+function updateMainContentOffset() {}
 
 export { setLanguage, updateMainContentOffset };

@@ -13,9 +13,6 @@ import { compileMo, parsePoForMo } from './core/mo.js';
 import { reconstructPo } from './core/po.js';
 import { hideLoadingOverlay, showConfirm, showLoadingOverlay, showMessage } from './dialogs.js';
 import {
-    addTermAccordionIcon,
-    addTermContent,
-    addTermHeader,
     aiBtn,
     aiConfigPanel,
     aiConfigToggleBtn,
@@ -72,9 +69,8 @@ import {
     shortcutsModal,
     statsBtn,
     statsContainer,
-    terminologyBtn,
+    panelesBtn,
     terminologySidebar,
-    tmBtn,
     tmFileInput,
     translationMemorySidebar,
     translationsContainer,
@@ -83,6 +79,7 @@ import {
     filterPOEntries,
     getCurrentFocusedIndex,
     initEtiquetas,
+    insertarEnLaTraduccionActiva,
     navigateToTranslation,
     renderTranslations,
 } from './editor.js';
@@ -97,7 +94,7 @@ import {
     updateSaveButtonsState,
 } from './files.js';
 import {
-    addTerm,
+    alCambiarElGlosario,
     downloadTBX,
     loadTBX,
     renderGlossary,
@@ -105,8 +102,16 @@ import {
     showGlossaryEditorSection,
 } from './glossary.js';
 import { initIdiomasProyecto } from './idiomas-proyecto.js';
+import { alBuscarEnLosPaneles, alternarPaneles, initPaneles } from './paneles.js';
+import {
+    abrirFichaDeTermino,
+    alGuardarUnTermino,
+    fichaDeTerminoAbierta,
+    initTerminoModal,
+} from './termino-modal.js';
+import { alInsertarTraduccion, initTerminoTarjeta } from './termino-tarjeta.js';
 import { setLanguage, updateMainContentOffset } from './i18n.js';
-import { makeDraggableAndResizable, makeModalDraggable } from './modals.js';
+import { makeModalDraggable } from './modals.js';
 import { executeSaveProject, newProject, openProject, showSaveProjectModal } from './project.js';
 import {
     findAndNavigate,
@@ -161,7 +166,10 @@ document.addEventListener('keydown', (event) => {
         !restoreBackupModal.classList.contains('hidden') ||
         // El cuadro de idiomas sale nada más soltar un archivo, que es justo
         // cuando alguien puede tener todavía la mano en el teclado.
-        !document.getElementById('idiomasModal').classList.contains('hidden');
+        !document.getElementById('idiomasModal').classList.contains('hidden') ||
+        // La ficha de un término: se escribe dentro, así que los atajos del
+        // editor no pueden estar escuchando.
+        fichaDeTerminoAbierta();
 
     if (isModalOpen && activeElement.id !== 'findInput' && activeElement.id !== 'replaceInput') {
         // Exception for find/replace inputs inside their modal
@@ -290,39 +298,12 @@ importShortcutsInput.addEventListener('change', (event) => {
     reader.readAsText(file);
 });
 
-terminologyBtn.addEventListener('click', () => {
-    const isHidden = !terminologySidebar.classList.contains('show-sidebar');
-    if (isHidden) {
-        terminologySidebar.classList.add('show-sidebar');
-    } else {
-        terminologySidebar.classList.remove('show-sidebar');
-    }
-    updateMainContentOffset();
-    updateUtilityButtonStates();
-    if (isHidden) showGlossaryEditorSection();
-});
-
-closeTerminologySidebarBtn.addEventListener('click', () => {
-    terminologySidebar.classList.remove('show-sidebar');
-    updateMainContentOffset();
-    updateUtilityButtonStates();
-});
-
-tmBtn.addEventListener('click', () => {
-    const isHidden = !translationMemorySidebar.classList.contains('show-sidebar');
-    if (isHidden) {
-        translationMemorySidebar.classList.add('show-sidebar');
-    } else {
-        translationMemorySidebar.classList.remove('show-sidebar');
-    }
-    updateMainContentOffset();
-    updateUtilityButtonStates();
-    if (isHidden) showTMEditorSection();
-});
-
-closeTranslationMemorySidebarBtn.addEventListener('click', () => {
-    translationMemorySidebar.classList.remove('show-sidebar');
-    updateMainContentOffset();
+// La memoria y el glosario ya no se abren y se cierran cada uno por su lado:
+// viven en la columna de la derecha, siempre a la vista mientras haya un archivo
+// abierto. Lo único que queda en la barra es esconder la columna entera cuando
+// hace falta ancho para traducir.
+panelesBtn?.addEventListener('click', () => {
+    alternarPaneles();
     updateUtilityButtonStates();
 });
 
@@ -361,20 +342,12 @@ if (dropArea) {
     });
 }
 
-if (addTermHeader && addTermContent && addTermAccordionIcon) {
-    addTermHeader.addEventListener('click', () => {
-        const isCollapsed = addTermContent.classList.contains('collapsed');
-        if (isCollapsed) {
-            addTermContent.classList.remove('collapsed');
-            addTermContent.classList.add('expanded');
-            addTermAccordionIcon.classList.remove('rotated');
-        } else {
-            addTermContent.classList.remove('expanded');
-            addTermContent.classList.add('collapsed');
-            addTermAccordionIcon.classList.add('rotated');
-        }
-    });
-}
+// Añadir un término abre su ficha, un cuadro propio con los cinco campos.
+// Antes era un formulario metido en el panel: dos campos donde ahora hay cinco,
+// y esos cinco no caben en media columna sin comerse la lista de términos.
+document.getElementById('addTermToggleBtn')?.addEventListener('click', () => {
+    abrirFichaDeTermino(null);
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
     loadShortcuts(); // Load saved or default shortcuts
@@ -382,6 +355,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // El par de idiomas del proyecto: el indicador de la barra y los tres
     // sitios desde los que se puede cambiar.
     initIdiomasProyecto();
+
+    // La columna de consulta: tiradores, plegado y los iconos de sus paneles.
+    // El buscador es uno solo y filtra las dos cosas a la vez.
+    alBuscarEnLosPaneles(() => {
+        tmSearch();
+        renderGlossary();
+    });
+    initPaneles();
+
+    // La ficha de un término y la tarjeta que la enseña al pasar el ratón por
+    // una palabra resaltada del original.
+    alGuardarUnTermino(alCambiarElGlosario);
+    initTerminoModal();
+    alInsertarTraduccion(insertarEnLaTraduccionActiva);
+    initTerminoTarjeta();
 
     document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
     document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
@@ -531,9 +519,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    makeDraggableAndResizable(document.getElementById('terminologySidebar'));
-    makeDraggableAndResizable(document.getElementById('translationMemorySidebar'));
-    makeDraggableAndResizable(document.getElementById('aiSidebar'));
 
     // Add event listeners for the new PO search bar
     poSearchInput.addEventListener('input', filterPOEntries);
@@ -560,12 +545,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statsContainer) statsContainer.classList.remove('show');
     updateUtilityButtonStates();
 
-    if (addTermContent && addTermAccordionIcon) {
-        addTermContent.classList.add('collapsed');
-        addTermContent.classList.remove('expanded');
-        addTermAccordionIcon.classList.remove('rotated');
-    }
-
     if (translationMemorySidebar) translationMemorySidebar.classList.remove('show-sidebar');
 
     updateMainContentOffset();
@@ -585,13 +564,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     enganchar('importTbxBtn', 'click', loadTBX);
     enganchar('downloadTbxBtn', 'click', downloadTBX);
-    enganchar('newGlossaryBtn', 'click', resetGlossary);
-    enganchar('addTermBtn', 'click', addTerm);
-    enganchar('searchTerm', 'input', renderGlossary);
 
-    enganchar('newTmBtn', 'click', resetTM);
     enganchar('downloadTmxBtn', 'click', downloadTMX);
-    enganchar('tmSearchInput', 'input', tmSearch);
 
     document.querySelectorAll('.ai-quick-btn[data-ai-action]').forEach((btn) => {
         btn.addEventListener('click', () => triggerQuickAI(btn.dataset.aiAction));

@@ -1,4 +1,145 @@
 =======================================
+Poanda v2.0.1 - A Real Glossary, and Room to Use It
+Release Date: September 8, 2026
+=======================================
+
+v2.0.0 turned Poanda from a PO editor into a CAT tool. This release is about
+the two panels you consult while you translate — the memory and the glossary
+— and about the glossary finally being a glossary rather than a list of word
+pairs.
+
+New
+The Consultation Column: the memory and the glossary used to be floating
+windows that opened on top of the editor. They covered exactly the text you
+need to look at to decide whether a match is any use, they could overlap
+each other, and you had to push them out of the way by hand every time. They
+are now two boxes in a column down the right-hand side, both in view from
+the moment you open a file, with nothing to click first. The column pushes
+the editor rather than covering it.
+
+The assistant is a column of its own too, between the editor and the other
+two. Opening PandaBot narrows the editor instead of hiding it.
+
+Drag the line between memory and glossary to give one of them more height,
+and the column's left edge to make the whole thing wider or narrower. Both
+are remembered: there are days of a lot of glossary and days of a lot of
+memory, and setting it up again every morning gets old. The X in a panel's
+header folds it away and leaves its title showing, so the other one takes
+the full height.
+
+The Term Record: a term now holds its part of speech, a definition and your
+notes, on top of the pair of words. Those are the fields PandaTerm has, so a
+glossary moves between the two tools without losing what you wrote. You fill
+them in a dialog of its own, opened with the Add Term button in the
+terminology panel's header.
+
+Click any term in the list to open its record, filled in, with a Delete
+button. Fixing a typo used to mean deleting the term and typing the whole
+thing again. A small dot next to a term means it has a record behind it, so
+you can see at a glance which ones are documented.
+
+Term Cards: hover a highlighted word in the source and a small card appears
+with the translation, the part of speech, the definition and your notes —
+plus a button that drops the translation where your cursor is. If a word is
+in the glossary twice with two different translations, the card shows both.
+
+Changed
+Glossary Terms Are Highlighted Throughout the File, not only in the segment
+you are typing in, so you can see which parts have terminology already
+decided before you get to them. Adding, editing or deleting a term repaints
+the file immediately, without disturbing what you are writing.
+
+One Search Box for Both Panels, above the two of them, filtering the memory
+and the glossary at once — which is what you want when you look up a word.
+It carries a small magnifier inside it, and it looks inside definitions and
+notes too: if you wrote "do not translate as fichero", searching "fichero"
+finds the term, which is what that note was for.
+
+Panels Furnished for Their Size: the two panels went from being furnished
+like the floating windows they replaced to fitting the column they now live
+in. Their headings share a row with their buttons instead of having one to
+themselves; Import, Export and Add Term are small bordered icons with the
+name in the tooltip; the language pair is a globe rather than the sentence
+"Languages of this project:"; and everything in the two panels is set one
+step smaller than the rest of Poanda, which is three or four more rows of
+matches and terms per panel at the same width.
+
+Tables That Only Appear When They Have Something to Show: the memory's
+results table is there when there are matches or when you have typed in its
+search box, and not before. The glossary's list, likewise, once it has a
+term.
+
+The Empty-Panels Notice Is a Panda: it explains how each panel fills, in a
+speech bubble at the foot of the column, and it can be dismissed for good
+with its X. It used to be a grey box between the search field and the memory
+— the exact strip you look at while you work — with its text in the light
+grey Poanda uses for borders, which on a pale background is barely there.
+
+The toolbar button is called TM and Glossary rather than Panels, which said
+nothing about what was inside. The Terminology and TM buttons are gone,
+since there is nothing left to open, and so are New TM and New glossary:
+both existed from the moment you opened a file, and what those buttons did
+was empty them, under a name that said they created them.
+
+Pre-translate with AI Moved to the AI Assistant, out of the Tools menu,
+which holds nothing else to do with AI and says nothing about the service it
+depends on. It now sits right below the settings where you choose that
+service, and it requires a connected one: each engine is offered only if it
+can actually run, and one that cannot stays visible but switched off with
+what is missing written underneath. Choosing the AI engine without a key
+used to send the whole file anyway — hundreds of calls failing one by one,
+with the progress bar moving as though something were happening.
+
+The assistant is told a term's notes along with the term. It used to receive
+only the pair of words, so it could repeat the exact mistake the note was
+written to prevent.
+
+Comments Unfold Instead of Appearing: clicking the speech bubble slides the
+box open under its segment, so the eye follows the movement and reads the
+box as belonging to the row above it. The amber background is gone; it is a
+plain light grey box now, quieter next to text you are reading.
+
+Fixed
+TBX Files Now Open in Other Tools: Poanda wrote <LangSet> with a capital L.
+The standard, PandaTerm and every other tool use lowercase <langSet>, and
+XML is case-sensitive, so a glossary exported from Poanda imported as
+completely empty elsewhere — with no error at all, which is the worst way
+for this to fail. The same bug ran the other way: a glossary exported from
+PandaTerm imported as empty into Poanda. Both directions work now, and files
+exported by the old version still open here.
+
+Exported files also escape their contents, so a term containing "&" or "<"
+no longer produces a broken file; they carry the header the format expects;
+and their notes are written before their definitions, an ordering rule the
+format requires and that strict importers such as Trados enforce. A glossary
+whose entries run the other way round is straightened out on import, so
+every term is looked for in the source text instead of half of them never
+matching.
+
+A word listed twice in the glossary used to corrupt the highlighting: each
+term was applied on top of the previous one's markup, so the second one
+found itself inside the first one's tag. Highlighting is now done in a
+single pass.
+
+Clicking a panel button while a segment was focused did nothing. Leaving a
+segment repaints the glossary list, and the repaint rebuilt the whole table
+— so the button you were pressing was replaced between the press and the
+release, and the browser never issued the click. With the panels permanently
+in view, that was one click in two.
+
+The divider between the panels follows the pointer. It was measuring your
+drag against the height of the whole column, and the column also holds the
+search box and the notice, which are not part of what gets shared: dragging
+140 pixels moved the divider about 40.
+
+The statistics bar is fixed to the bottom of the window and paints over
+whatever is under it, so the last strip of the new column was visible but
+could not be clicked. Both columns now stop above it.
+
+The panels had two X's each — one written into the page and another added on
+top when the tool started.
+
+=======================================
 Poanda v2.0.0 - From PO Editor to CAT Tool
 Release Date: September 7, 2026
 =======================================

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { parseJsonProject, reconstructJson } from '../src/js/core/json.js';
 import { parsePoForMo, compileMo } from '../src/js/core/mo.js';
-import { generateTBX } from '../src/js/core/tbx.js';
 import { generateTMX } from '../src/js/core/tmx.js';
 import { state } from '../src/js/state.js';
 
@@ -164,42 +163,9 @@ msgstr "Adiós"
     });
 });
 
-describe('exportación de glosario (TBX)', () => {
-    beforeEach(() => {
-        state.sourceLang = 'en';
-        state.targetLang = 'es';
-        state.glossary = [
-            { srcLang: 'en', srcTerm: 'string', tgtLang: 'es', tgtTerm: 'cadena' },
-            { srcLang: 'en', srcTerm: 'file', tgtLang: 'es', tgtTerm: 'archivo' },
-        ];
-    });
-
-    it('genera XML bien formado con todos los términos', () => {
-        const tbx = generateTBX();
-        expect(tbx.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
-        expect(tbx).toContain('<term>string</term>');
-        expect(tbx).toContain('<term>cadena</term>');
-        expect(tbx).toContain('<term>archivo</term>');
-        expect(tbx.match(/<termEntry>/g).length).toBe(2);
-    });
-
-    it('declara el idioma de origen del glosario', () => {
-        expect(generateTBX()).toContain('xml:lang="en"');
-    });
-
-    it('genera un archivo válido aunque el glosario esté vacío', () => {
-        state.glossary = [];
-        const tbx = generateTBX();
-        expect(tbx).toContain('</martif>');
-        expect(tbx).not.toContain('<termEntry>');
-    });
-
-    // PENDIENTE (ver informe del refactor): dos fallos heredados que PandaTerm ya
-    // corrigió en su v1.2.0 y que aquí siguen presentes. No se tocan en este
-    // refactor porque cambiar el formato de salida es una decisión de producto.
-    it.todo('escapa &, < y > en los términos para no romper el XML');
-    it.todo('usa langSet en minúscula, como exige el estándar TBX');
-});
+// El TBX se prueba entero en tests/tbx.test.js, donde ahora vive: escribirlo,
+// leerlo, la ida y vuelta con PandaTerm y los dos fallos que quedaban
+// pendientes aquí (el escapado y el langSet en minúscula), ya corregidos.
 
 describe('exportación de memoria de traducción (TMX)', () => {
     beforeEach(() => {

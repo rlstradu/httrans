@@ -32,6 +32,20 @@ export function escaparXml(texto) {
 }
 
 /**
+ * Prepara un texto para meterlo dentro del HTML de la página.
+ *
+ * Es lo mismo que escaparXml más las comillas, que en HTML hacen falta porque
+ * este texto acaba también dentro de atributos (el título de una etiqueta, el
+ * término al que apunta un resaltado).
+ *
+ * @param {string} texto
+ * @returns {string}
+ */
+export function escaparHtml(texto) {
+    return escaparXml(texto).replace(/"/g, '&quot;');
+}
+
+/**
  * Deshace las entidades de un texto XML, incluidas las numéricas (&#39;).
  *
  * @param {string} texto

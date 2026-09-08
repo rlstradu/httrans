@@ -4,11 +4,12 @@ import { hideLoadingOverlay, showLoadingOverlay } from './dialogs.js';
 import {
     tmInternalMessage,
     tmNoMatchFoundMessage,
-    tmSearchInput,
+    buscarPaneles,
     tmSearchResultsTableBody,
 } from './dom.js';
 import { mismoIdioma } from './core/idiomas.js';
 import { pintarParDelProyecto } from './idiomas-proyecto.js';
+import { avisarSiEstanVacios } from './paneles.js';
 import { getCurrentFocusedIndex } from './editor.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
@@ -45,25 +46,9 @@ function hideTMInternalMessage() {
 
 function resetTM() {
     state.translationMemory = [];
-    if (tmSearchInput) tmSearchInput.value = '';
     renderTMSearchResults([]);
     hideTMInternalMessage();
     showTMEditorSection();
-}
-
-/**
- * Enseña el aviso de "esto está vacío" mientras la memoria no tenga nada.
- *
- * Antes salía un mensaje que decía "crea una memoria nueva o importa un TMX",
- * y mandaba a buscar un botón que no hace falta pulsar: la memoria existe desde
- * que se abre el archivo, lo que pasa es que está vacía y se llena sola al
- * validar segmentos. Lo que sí conviene decir es que se puede traer una de
- * fuera, porque eso no se adivina.
- */
-function avisarSiLaMemoriaEstaVacia() {
-    const aviso = document.getElementById('memoriaVacia');
-    if (!aviso) return;
-    aviso.classList.toggle('hidden', (state.translationMemory || []).length > 0);
 }
 
 /**
@@ -74,7 +59,7 @@ function avisarSiLaMemoriaEstaVacia() {
  */
 function showTMEditorSection() {
     pintarParDelProyecto('memoriaParIdiomas');
-    avisarSiLaMemoriaEstaVacia();
+    avisarSiEstanVacios();
     tmSearch();
 }
 
@@ -124,7 +109,7 @@ function processTMXContent(content) {
         }
 
         state.translationMemory = newTM;
-        avisarSiLaMemoriaEstaVacia();
+        avisarSiEstanVacios();
 
         showTMInternalMessage(
             `TMX loaded with ${state.translationMemory.length} translation units.`,
@@ -205,7 +190,7 @@ function addOrUpdateTMEntry(original, translation) {
             tgtWordCount: countWords(translation),
         });
     }
-    avisarSiLaMemoriaEstaVacia();
+    avisarSiEstanVacios();
     tmSearch();
 }
 
@@ -245,7 +230,7 @@ function findBestTMMatch(sourceSegmentText) {
 }
 
 function tmSearch() {
-    const query = tmSearchInput ? tmSearchInput.value.toLowerCase().trim() : '';
+    const query = buscarPaneles ? buscarPaneles.value.toLowerCase().trim() : '';
     let resultsToRender = [];
 
     const currentFocused = getCurrentFocusedIndex();
@@ -322,12 +307,24 @@ function renderTMSearchResults(results, activeSegmentOriginalText) {
         return;
     }
     tmSearchResultsTableBody.innerHTML = '';
+
+    // La tabla solo sale cuando tiene algo que enseñar: o hay coincidencias, o
+    // se ha escrito algo en el buscador y merece decirse que no hay ninguna. Una
+    // tabla con dos cabeceras y ninguna fila, permanente, es un hueco vacío
+    // ocupando la mitad de un panel que ahora comparte columna con otro.
+    const buscando = Boolean(buscarPaneles?.value.trim());
+    document
+        .getElementById('tmResultados')
+        ?.classList.toggle('hidden', results.length === 0 && !buscando);
+
     if (results.length === 0) {
         // Con la memoria vacía, "no se encontraron coincidencias" no dice nada
         // que no diga ya el aviso de arriba, y dos mensajes seguidos para el
         // mismo hecho se leen como si fueran dos problemas distintos.
         const vacia = (state.translationMemory || []).length === 0;
-        if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.toggle('hidden', vacia);
+        if (tmNoMatchFoundMessage) {
+            tmNoMatchFoundMessage.classList.toggle('hidden', vacia || !buscando);
+        }
         return;
     } else {
         if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');

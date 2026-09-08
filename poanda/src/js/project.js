@@ -1,6 +1,6 @@
 import { clearBackup } from './backup.js';
 import { reconstructPo } from './core/po.js';
-import { generateTBX } from './core/tbx.js';
+import { generarTBX } from './core/tbx.js';
 import { generateTMX } from './core/tmx.js';
 import { hideLoadingOverlay, showConfirm, showLoadingOverlay, showMessage } from './dialogs.js';
 import {
@@ -86,7 +86,10 @@ async function executeSaveProject() {
         }
 
         if (state.glossary.length > 0) {
-            const tbxContent = generateTBX();
+            const tbxContent = generarTBX(state.glossary, {
+                origen: state.sourceLang,
+                destino: state.targetLang,
+            });
             zip.file('glossary.tbx', tbxContent);
         }
 

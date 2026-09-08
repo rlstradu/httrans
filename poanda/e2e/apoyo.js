@@ -174,4 +174,29 @@ export async function cargarPo(page, contenido = PO_EJEMPLO, idiomas) {
     await expect(page.locator('[id^="translation-unit-"]').first()).toBeVisible();
 }
 
+/**
+ * Añade un término al glosario, con su ficha si se le pasa.
+ *
+ * La ficha se rellena en su propio cuadro, que se abre con el botón de añadir
+ * del panel de terminología.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} origen
+ * @param {string} destino
+ * @param {{categoria?: string, definicion?: string, notas?: string}} [ficha]
+ */
+export async function anadirTermino(page, origen, destino, ficha = {}) {
+    await page.locator('#addTermToggleBtn').click();
+    await expect(page.locator('#terminoModal')).toBeVisible();
+
+    await page.locator('#terminoOrigen').fill(origen);
+    await page.locator('#terminoDestino').fill(destino);
+    if (ficha.categoria) await page.locator('#terminoCategoria').selectOption(ficha.categoria);
+    if (ficha.definicion) await page.locator('#terminoDefinicion').fill(ficha.definicion);
+    if (ficha.notas) await page.locator('#terminoNotas').fill(ficha.notas);
+
+    await page.locator('#terminoGuardarBtn').click();
+    await expect(page.locator('#terminoModal')).toBeHidden();
+}
+
 export { expect };

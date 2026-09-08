@@ -404,11 +404,30 @@
            ámbar de la izquierda la ata al icono, que es de ese mismo color. */
         .comentario-caja {
             margin: 0 38px 0.5rem 44px; padding: 0.6rem 0.75rem;
-            background-color: #fffbeb; border: 1px solid #fde68a;
-            border-left: 3px solid #f59e0b; border-radius: 4px;
+            background-color: #f9fafb; border: 1px solid var(--color-medium-gray);
+            border-radius: 4px;
+            /* Se despliega hacia abajo en vez de aparecer de golpe: el ojo
+               sigue el movimiento y entiende que la cajita pertenece a la fila
+               de encima. Se anima el alto máximo porque el alto de verdad
+               depende de si el segmento trae nota del archivo o no, y no se
+               puede saber de antemano. */
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-0.25rem);
+            transition: max-height 0.18s ease-out, opacity 0.18s ease-out,
+                transform 0.18s ease-out;
         }
+        .comentario-caja.abierta {
+            max-height: 24rem;
+            opacity: 1;
+            transform: none;
+        }
+        /* Al terminar de abrirse se suelta el tope: una nota larga del archivo
+           puede pasar de esas 24rem, y quedaría cortada. */
+        .comentario-caja.abierta-del-todo { max-height: none; overflow: visible; }
         body.dark-mode .comentario-caja {
-            background-color: #26221a; border-color: #57534e; border-left-color: #fbbf24;
+            background-color: #1f2937; border-color: var(--color-medium-gray);
         }
         .comentario-campo {
             width: 100%; resize: vertical; padding: 0.4rem 0.5rem;
@@ -491,20 +510,144 @@
             flex: 1; min-height: 0; }
         @media (min-width: 1024px) {
             .main-editor-layout { flex-direction: row; }
-            #central-column { flex: 2; }
-            .terminology-sidebar, .translation-memory-sidebar { min-width: 300px; max-width: 400px; }
+            /* El editor se queda con lo que sobre: las columnas de la derecha
+               tienen su ancho y él ocupa el resto. */
+            #central-column { flex: 1 1 auto; }
         }
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; cursor: move; user-select: none; }
-        .sidebar-content { height: calc(100% - 60px); overflow-y: auto; padding-right: 0.5rem; }
+        /* La cabecera ya no es un asa de arrastrar: los paneles no se mueven. */
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; user-select: none; }
+        /* El cuerpo se desplaza por dentro y el panel no crece: en una columna
+           compartida, un panel que crece con su contenido se come al de al lado. */
+        .sidebar-content { flex: 1; min-height: 0; overflow-y: auto; padding-right: 0.5rem; }
+
+        /* Cabecera y cuerpo llevan el relleno; el panel en sí no, para que la
+           franja de desplazamiento quede pegada al borde. */
+        .terminology-sidebar, .translation-memory-sidebar { padding: 0.75rem !important; }
+
+        /* El título del panel, en la misma fila que sus botones. Era un titular
+           de 18 px en negrita ocupando un renglón entero para sí: en media
+           columna, eso es una fila de coincidencias que no se ve. */
+        /* Baja del tamaño de "título de ventana" (16 px) al del texto normal.
+           La escala reserva los 16 px para títulos de ventana, y estos dos
+           dejaron de serlo: ya no son ventanas flotantes sino dos secciones de
+           una misma columna, y ahí un titular grande se come una fila de
+           coincidencias. El selector lleva la cabecera delante para ganarle a
+           la regla general de la escala, que apunta a los h3 del panel. */
+        .sidebar-header .panel-titulo {
+            font-size: var(--texto-meta); font-weight: 700; line-height: 1.4;
+            color: var(--color-dark); margin: 0; white-space: nowrap;
+        }
+
+        /* Importar, exportar y plegar: iconos a la derecha del título, con el
+           nombre en el tooltip. Llevan el mismo borde que los botones de la
+           barra de arriba, que es lo que dice que se pueden pulsar. */
+        .panel-acciones { display: flex; align-items: center; gap: 0.25rem; }
+        .panel-icono {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 26px; height: 26px; border-radius: 0.375rem; cursor: pointer;
+            color: var(--color-neutral-gray); background-color: var(--color-white);
+            border: 1px solid #d1d5db; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .panel-icono:hover { color: var(--color-primary); background-color: #f9fafb; }
+        body.dark-mode .panel-icono {
+            background-color: #374151; color: #e5e7eb; border-color: #4b5563;
+        }
+        body.dark-mode .panel-icono:hover { background-color: #4b5563; }
+        .panel-icono svg { width: 14px; height: 14px; }
+
+        /* La equis pliega el panel y deja su título a la vista; volver a
+           pulsarla lo abre. Cerrarlo del todo no tendría sentido: la columna
+           está siempre ahí. */
+        .panel-plegado .panel-plegar svg { transform: rotate(45deg); }
+        .panel-plegar svg { transition: transform 0.15s; }
+
+        /* Un buscador para los dos paneles, encima de los dos. Antes había uno
+           en cada uno, con su título encima, buscando lo mismo. */
+        .paneles-buscador { flex: 0 0 auto; margin-bottom: 0.5rem; position: relative; }
+        /* La lupa va dentro del campo, no al lado: dice qué se hace ahí sin
+           gastar una palabra de las pocas que caben en media columna. Es un
+           adorno, no un botón, así que no responde al ratón. */
+        .paneles-buscador-lupa {
+            position: absolute; left: 0.45rem; top: 50%; transform: translateY(-50%);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--color-neutral-gray); pointer-events: none;
+        }
+        .paneles-buscador-lupa svg { width: 13px; height: 13px; display: block; }
+        body.dark-mode .paneles-buscador-lupa { color: #9ca3af; }
+        .paneles-buscador .ia-campo { margin: 0; padding-left: 1.6rem; }
+
+        /* El aviso de que la memoria y el glosario están vacíos: lo dice el
+           panda en un bocadillo, debajo de los dos paneles.
+
+           Antes era un recuadro gris entre el buscador y la memoria, o sea
+           justo donde se mira para trabajar, y encima el texto salía en
+           --color-medium-gray, que en modo claro es un gris de bordes casi
+           blanco: sobre fondo claro no se leía. Aquí abajo no le quita el sitio
+           a nada, y quien ya sabe cómo funciona esto lo cierra con su equis.
+
+           El panda va a la izquierda y el bocadillo a su derecha, no uno encima
+           del otro: en una columna estrecha, apilarlos costaba el doble de alto
+           para decir lo mismo. */
+        .paneles-aviso {
+            flex: 0 0 auto;
+            display: flex; align-items: center; gap: 0.45rem;
+            padding-top: 0.6rem;
+        }
+        .paneles-aviso-panda {
+            flex: 0 0 auto; width: 54px; height: auto; display: block;
+        }
+        /* El panda lleva mucho negro: en modo oscuro se le pierde el contorno y
+           solo quedan las gafas flotando. La misma sombra clara que los logos. */
+        body.dark-mode .paneles-aviso-panda {
+            filter: drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.7))
+                drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.7));
+        }
+
+        .paneles-aviso-bocadillo {
+            flex: 1 1 auto; min-width: 0; position: relative;
+            font-size: var(--texto-meta); line-height: 1.4;
+            color: var(--color-dark);
+            background-color: #fffbeb;
+            border: 1px solid var(--color-secondary);
+            border-radius: 10px;
+            padding: 0.5rem 1.6rem 0.5rem 0.6rem;
+        }
+        body.dark-mode .paneles-aviso-bocadillo {
+            background-color: #26221a; border-color: #b45309; color: #f3f4f6;
+        }
+        /* El pico, apuntando a la izquierda hacia el panda. Son dos triángulos,
+           uno encima del otro: el de abajo hace de borde y el de arriba tapa su
+           interior, que es como se dibuja un pico con marco sin recortar nada. */
+        .paneles-aviso-bocadillo::before,
+        .paneles-aviso-bocadillo::after {
+            content: ''; position: absolute; top: 50%; right: 100%;
+            margin-top: -8px;
+            width: 0; height: 0; border: 8px solid transparent;
+            border-right-color: var(--color-secondary);
+        }
+        .paneles-aviso-bocadillo::after {
+            margin-top: -7px; margin-right: -1px; border-width: 7px;
+            border-right-color: #fffbeb;
+        }
+        body.dark-mode .paneles-aviso-bocadillo::before { border-right-color: #b45309; }
+        body.dark-mode .paneles-aviso-bocadillo::after { border-right-color: #26221a; }
+
+        .paneles-aviso-cerrar {
+            position: absolute; top: 0.15rem; right: 0.3rem;
+            border: none; background: none; cursor: pointer; line-height: 1;
+            font-size: 1.1rem; color: var(--color-neutral-gray); padding: 0.1rem 0.25rem;
+        }
+        .paneles-aviso-cerrar:hover { color: var(--color-primary); }
         .glossary-input-group label, .tm-input-group label { white-space: nowrap; }
         .glossary-input-group input, .glossary-input-group select, .tm-input-group input, .tm-input-group select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: var(--texto-base); margin-top: 4px; color: var(--color-dark); background-color: var(--color-white); }
         .glossary-btn-primary, .tm-btn-primary { background-color: var(--color-primary); color: var(--color-dark); padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
         .glossary-btn-primary:hover, .tm-btn-primary:hover { background-color: #e07a82; }
         .glossary-btn-secondary, .tm-btn-secondary { background-color: #e0e0e0; color: #333; padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
         .glossary-btn-secondary:hover, .tm-btn-secondary:hover { background-color: #d0d0d0; }
-        .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 5px 10px; border-radius: 4px; font-size: var(--texto-meta); }
+        .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 2px 7px; border-radius: 4px; font-size: var(--texto-meta); }
         .glossary-delete-btn:hover, .tm-delete-btn:hover { background-color: #da190b; }
-        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 6px 10px; border: 1px solid #e0e0e0; font-size: var(--texto-base); }
+        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 4px 7px; border: 1px solid #e0e0e0; font-size: var(--texto-meta); }
         .glossary-table th, .tm-table th { background-color: #f0f0f0; font-weight: 600; }
         
         .tm-table {
@@ -513,7 +656,19 @@
         }
 
         .glossary-info-box, .tm-info-box { background-color: #fef3c7; border: 1px solid var(--color-secondary); padding: 10px; border-radius: 6px; font-size: var(--texto-meta); color: var(--color-dark); }
-        .glossary-highlight { background-color: var(--color-secondary); padding: 0 2px; border-radius: 3px; }
+        /* El amarillo del glosario. Está en todo el archivo, no solo en el
+           segmento en el que se escribe: de un vistazo se ve qué partes del
+           texto tienen terminología decidida. Al pasar el ratón sale la ficha
+           (.termino-tarjeta), así que se marca como algo que responde. */
+        .glossary-highlight {
+            background-color: var(--color-secondary); padding: 0 2px;
+            border-radius: 3px; cursor: help;
+            border-bottom: 1px dotted rgba(120, 53, 15, 0.55);
+        }
+        .glossary-highlight:hover, .glossary-highlight:focus-visible {
+            box-shadow: 0 0 0 2px rgba(247, 207, 126, 0.9);
+            outline: none;
+        }
         .glossary-row-highlight { background-color: #fde68a !important; transition: background-color 0.3s ease; }
         /* Segmento activo: una barra del color de Poanda en el canto
            izquierdo de la fila. Antes era un marco de 2 px alrededor de todo el
@@ -594,15 +749,98 @@
         body.dark-mode .idiomas-error { color: #fca5a5; }
 
         /* En el glosario y en la memoria, el par sale con el nombre entero: ahí
-           no hay prisa y se está decidiendo si un término encaja. */
+           no hay prisa y se está decidiendo si un término encaja. Delante lleva
+           un globo terráqueo que hace de etiqueta: antes decía "Idiomas de este
+           proyecto:" y el rótulo ocupaba más que el dato. El botón entero abre
+           el cuadro de idiomas. */
         .par-del-proyecto {
-            font-size: var(--texto-meta); color: var(--color-neutral-gray);
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            max-width: 100%; margin-bottom: 0.4rem;
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-dark); background: none;
+            border: none; padding: 0.1rem 0; cursor: pointer;
         }
-        .par-del-proyecto-enlace {
-            font-weight: 600; color: var(--color-primary);
-            background: none; border: none; padding: 0; cursor: pointer;
-            text-decoration: underline; text-underline-offset: 2px;
+        .par-del-proyecto:hover { color: var(--color-primary); }
+        .par-del-proyecto-icono {
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto; color: var(--color-neutral-gray);
         }
+        .par-del-proyecto:hover .par-del-proyecto-icono { color: var(--color-primary); }
+        .par-del-proyecto-icono svg { width: 14px; height: 14px; display: block; }
+        .par-del-proyecto-texto { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        body.dark-mode .par-del-proyecto-icono { color: #9ca3af; }
+
+        /* Un icono del panel que está haciendo algo ahora mismo. */
+        .panel-icono-activo {
+            color: var(--color-primary); background-color: #fef2f2;
+            border-color: var(--color-primary);
+        }
+        body.dark-mode .panel-icono-activo {
+            background-color: #4b5563; border-color: var(--color-primary);
+        }
+
+        /* La ficha de un término: los dos campos obligatorios uno al lado del
+           otro, y debajo lo que se rellena cuando hay algo que documentar. */
+        .termino-par { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        #terminoModal .ia-etiqueta { margin-top: 0.6rem; }
+        #terminoModal textarea.ia-campo { resize: vertical; min-height: 2.5rem; }
+        .required-asterisk { color: var(--color-primary); margin-left: 2px; }
+        .termino-botones { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+        /* Borrar se va al otro extremo: es el que no tiene vuelta atrás, y no
+           debe caer bajo el dedo que venía a guardar. */
+        .termino-botones-hueco { flex: 1 1 auto; }
+
+        /* Una fila del glosario abre su ficha, así que tiene que parecer
+           pulsable; el botón de borrar de dentro se queda como estaba. */
+        .glosario-fila { cursor: pointer; }
+        .glosario-fila:hover td { background-color: #fff7ed; }
+        body.dark-mode .glosario-fila:hover td { background-color: #374151; }
+        .glosario-fila:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+        /* El punto que dice que ese término lleva ficha (definición, notas o
+           categoría). Sin él había que abrirlos uno a uno para saberlo. */
+        .glosario-ficha {
+            display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+            margin-left: 5px; vertical-align: middle;
+            background-color: var(--color-primary);
+        }
+
+        /* La tarjeta que sale al pasar el ratón por un término resaltado.
+           Flota sobre todo lo demás porque nace pegada a una palabra que está
+           dentro de un bloque con recorte: dentro de él se vería a medias. */
+        .termino-tarjeta {
+            position: fixed; z-index: 1200; max-width: 22rem; min-width: 12rem;
+            padding: 0.5rem 0.6rem; border-radius: 6px;
+            background-color: var(--color-white); color: var(--color-dark);
+            border: 1px solid #d1d5db; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+            font-size: var(--texto-meta); line-height: 1.4;
+        }
+        body.dark-mode .termino-tarjeta {
+            background-color: #1f2937; color: #f3f4f6; border-color: #4b5563;
+        }
+        /* Una palabra puede estar dos veces en el glosario con traducciones
+           distintas; entonces la tarjeta trae las dos, separadas. */
+        .termino-tarjeta-ficha + .termino-tarjeta-ficha {
+            margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb;
+        }
+        body.dark-mode .termino-tarjeta-ficha + .termino-tarjeta-ficha { border-top-color: #4b5563; }
+        .termino-tarjeta-traduccion {
+            font-weight: 600; font-size: var(--texto-base);
+            display: flex; align-items: baseline; gap: 0.4rem;
+        }
+        .termino-tarjeta-categoria {
+            font-weight: 400; font-style: italic; color: var(--color-neutral-gray);
+            font-size: var(--texto-meta);
+        }
+        body.dark-mode .termino-tarjeta-categoria { color: #9ca3af; }
+        .termino-tarjeta-dato { margin-top: 0.25rem; }
+        .termino-tarjeta-dato span { font-weight: 600; }
+        .termino-tarjeta-insertar {
+            margin-top: 0.45rem; padding: 0.2rem 0.5rem; border-radius: 4px;
+            font-size: var(--texto-meta); cursor: pointer;
+            background-color: var(--color-primary); color: var(--color-dark);
+            border: 1px solid transparent;
+        }
+        .termino-tarjeta-insertar:hover { background-color: #e07a82; }
 
         /* Barra de búsqueda: estrecha y en letra pequeña.
            El campo llevaba `flex-grow` y se estiraba de lado a lado de la
@@ -747,31 +985,80 @@
            al pasar la aplicación a ocupar la ventana entera, porque dejaba una
            franja gris a los lados.) */
         #dropArea { transition: none; }
-        .terminology-sidebar, .translation-memory-sidebar { 
-            position: fixed; 
-            top: 60px; 
-            bottom: 20px; 
-            width: 350px; 
-            z-index: 500; 
-            background-color: var(--color-white); 
-            border: 1px solid var(--color-medium-gray); 
-            border-radius: 0.5rem; 
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
-            transition: opacity 0.3s ease-in-out; 
-            opacity: 0; 
-            pointer-events: none; 
-            overflow: hidden;
-            min-width: 300px; 
-            max-width: 80vw;
-            min-height: 200px;
-            max-height: 90vh;
-        }
-        .terminology-sidebar { left: 1rem; transform: translateX(-110%); }
-        .terminology-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
-        .translation-memory-sidebar { right: 1rem; transform: translateX(110%); }
-        .translation-memory-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
+        /* LA COLUMNA DE CONSULTA
         
-        #central-column { padding-left: 1rem; padding-right: 1rem; transition: padding-left 0.3s ease-in-out, padding-right 0.3s ease-in-out; }
+           La memoria y el glosario eran dos ventanas flotantes que se abrían
+           encima del editor. Tapaban justo el texto que hay que mirar para
+           decidir si una coincidencia sirve, y había que apartarlas a mano cada
+           vez; además se podían solapar entre ellas. Ahora son dos recuadros en
+           una columna a la derecha: la memoria arriba, el glosario abajo, los
+           dos a la vista mientras se traduce y sin taparse nada. */
+        .paneles-derecha {
+            display: none;
+            position: relative;
+            flex: 0 0 auto;
+            width: var(--ancho-paneles, 340px);
+            min-width: 260px;
+            flex-direction: column;
+            gap: 0;
+            min-height: 0;
+            /* Hueco al final para la barra de estadísticas, que va fija abajo
+               del todo y se pone por encima de lo que tenga debajo. Sin esto,
+               la última franja de los paneles quedaba tapada: se veía, pero no
+               se podía pulsar, que es la peor clase de fallo. Es el mismo hueco
+               que se reserva la lista de segmentos. */
+            padding-bottom: 3rem;
+        }
+        /* Solo con un archivo abierto: sin nada que traducir no hay nada que
+           consultar, y la columna vacía se comería el ancho de la portada. */
+        body.con-proyecto .paneles-derecha { display: flex; }
+        body.paneles-ocultos .paneles-derecha { display: none; }
+
+        .terminology-sidebar, .translation-memory-sidebar {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        /* El reparto entre los dos: la memoria se lleva la fracción que se haya
+           dejado con la raya y el glosario el resto. */
+        .translation-memory-sidebar { flex: var(--reparto-paneles, 1) 1 0; }
+        .terminology-sidebar { flex: calc(2 - var(--reparto-paneles, 1)) 1 0; }
+        /* Plegado: se queda la cabecera, para poder volver a abrirlo. */
+        .terminology-sidebar.panel-plegado,
+        .translation-memory-sidebar.panel-plegado {
+            flex: 0 0 auto;
+        }
+        .panel-plegado .sidebar-content { display: none; }
+
+        /* Los dos tiradores. El de en medio reparte el alto entre memoria y
+           glosario; el de la izquierda, el ancho de la columna entera. Hay días
+           de mucho glosario y días de mucha memoria. */
+        .tirador-reparto {
+            flex: 0 0 auto; height: 10px; cursor: row-resize;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .tirador-reparto::before {
+            content: ''; width: 2.5rem; height: 3px; border-radius: 3px;
+            background-color: var(--color-medium-gray);
+            transition: background-color 0.15s;
+        }
+        .tirador-reparto:hover::before { background-color: var(--color-primary); }
+        .tirador-ancho {
+            position: absolute; left: -0.6rem; top: 0; bottom: 0; width: 0.6rem;
+            cursor: col-resize; z-index: 5;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .tirador-ancho::before {
+            content: ''; width: 3px; height: 2.5rem; border-radius: 3px;
+            background-color: transparent; transition: background-color 0.15s;
+        }
+        .tirador-ancho:hover::before { background-color: var(--color-primary); }
+
+        #central-column { min-width: 0; }
         /* La lista de segmentos ocupa todo el alto que queda.
         
            Antes tenía un tope fijo de 70vh menos 50 píxeles. Eso dejaba una
@@ -789,10 +1076,6 @@
         }
         #central-column { min-height: 0; }
 
-        @media (min-width: 1024px) {
-            #central-column.left-sidebar-active { padding-left: calc(var(--terminology-sidebar-width, 350px) + 2rem); }
-            #central-column.right-sidebar-active { padding-right: calc(var(--translation-memory-sidebar-width, 350px) + 2rem); }
-        }
         /* La barra va posicionada de forma absoluta, así que no hereda el
            relleno del panel: hay que separarla de los bordes aquí. Sin esto los
            controles de los extremos quedaban pegados al filo de la ventana.
@@ -863,15 +1146,21 @@
         .resizer-br { bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
 
         /* --- AI ASSISTANT STYLES --- */
+        /* El asistente es otra columna, entre el editor y la de consulta. Se
+           abre y se cierra —una conversación no se tiene todo el rato— pero
+           mientras está abierta empuja al editor en vez de taparlo. */
         .ai-sidebar {
-            position: fixed; top: 60px; right: 1rem; width: 350px; bottom: 20px;
-            z-index: 500; background-color: var(--color-white); border: 1px solid var(--color-medium-gray);
-            border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: opacity 0.3s ease-in-out; opacity: 0; pointer-events: none; overflow: hidden;
-            display: flex; flex-direction: column;
-            transform: translateX(110%); /* Start hidden off-screen */
+            display: none;
+            flex: 0 0 auto; width: 340px; min-width: 0;
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem; overflow: hidden;
+            flex-direction: column; min-height: 0;
+            /* Mismo hueco que la otra columna: el cuadro de escribir del chat
+               va abajo del todo y quedaba debajo de la barra de estadísticas. */
+            margin-bottom: 3rem;
         }
-        .ai-sidebar.show-sidebar { transform: translateX(0); opacity: 1; pointer-events: all; }
+        .ai-sidebar.show-sidebar { display: flex; }
         
         .ai-chat-container { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background-color: #f9fafb; }
         /* Estilos para el contenido Markdown de la IA */
@@ -891,6 +1180,26 @@
         .ai-quick-btn { font-size: var(--texto-meta); padding: 0.25rem 0.75rem; border-radius: 1rem; background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; white-space: nowrap; transition: all 0.2s; }
         .ai-quick-btn:hover { background-color: var(--color-secondary); color: var(--color-dark); border-color: var(--color-secondary); }
         
+        /* Pretraducir el archivo entero: debajo de los cuatro botones rápidos
+           y separado de ellos. Los de arriba son pastillas pequeñas porque
+           tocan el segmento en el que estás; éste ocupa la fila entera porque
+           se lleva por delante todo el archivo, y eso hay que verlo venir. */
+        .ai-accion-archivo {
+            padding: 0.5rem 1rem; background-color: #fff;
+            border-bottom: 1px solid #eee;
+        }
+        body.dark-mode .ai-accion-archivo {
+            background-color: #1f2937; border-bottom-color: #374151;
+        }
+        .ai-btn-archivo {
+            width: 100%; font-size: var(--texto-meta); font-weight: 600;
+            padding: 0.35rem 0.75rem; border-radius: 0.375rem;
+            background-color: var(--color-primary); color: var(--color-dark);
+            border: 1px solid transparent; cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .ai-btn-archivo:hover { background-color: #e07a82; }
+
         .ai-config-panel { background-color: #fffbeb; padding: 0.75rem; border-bottom: 1px solid #fcd34d; font-size: var(--texto-meta); max-height: 60vh; overflow-y: auto; }
         body.dark-mode .ai-config-panel { background-color: #3b3222; border-bottom-color: #78350f; }
 
@@ -930,6 +1239,17 @@
         .ia-motor:has(input:checked) { border-color: var(--color-primary); background-color: #fff5f7; }
         body.dark-mode .ia-motor { border-color: #4a5568; }
         body.dark-mode .ia-motor:has(input:checked) { background-color: #3b2a30; }
+        /* Un motor que no se puede usar: se queda a la vista, apagado, con lo
+           que falta escrito debajo. Esconderlo dejaría a alguien preguntándose
+           dónde está el que usó la última vez. */
+        .ia-motor-apagado { opacity: 0.55; cursor: not-allowed; }
+        .ia-motor-apagado .ia-motor-nombre { text-decoration: line-through; }
+        .ia-motor-falta {
+            display: block; margin-left: 1.4rem; margin-top: 0.25rem;
+            font-size: var(--texto-meta); font-weight: 600; line-height: 1.35;
+            color: #b45309;
+        }
+        body.dark-mode .ia-motor-falta { color: #fcd34d; }
         .ia-motor-nombre { font-weight: 600; }
         .ia-motor-info { display: block; margin-left: 1.4rem; font-size: var(--texto-meta); color: var(--color-neutral-gray); line-height: 1.35; }
         .ia-barra { height: 8px; border-radius: 999px; background-color: #e2e8f0; overflow: hidden; margin: 0.75rem 0 0.35rem; }
@@ -1287,11 +1607,19 @@ body.dark-mode .capa-etiquetas .etiqueta-fondo {
    ganarle a esas clases.
    ====================================================================== */
 .modal-content,
-.terminology-sidebar,
-.translation-memory-sidebar,
 .ai-sidebar {
     font-size: var(--texto-base);
     line-height: 1.5;
+}
+
+/* La memoria y el glosario van un paso por debajo del resto: son la columna
+   de consulta, no el sitio donde se escribe, y ahí lo que se quiere es ver
+   cuantas más coincidencias y más términos mejor. A 12 px caben tres o cuatro
+   filas más por panel sin tocar el ancho. */
+.terminology-sidebar,
+.translation-memory-sidebar {
+    font-size: var(--texto-meta);
+    line-height: 1.45;
 }
 
 /* Los campos y botones no heredan el tamaño de letra por su cuenta: hay que
@@ -1317,13 +1645,9 @@ body.dark-mode .capa-etiquetas .etiqueta-fondo {
 /* Títulos de ventana y de panel. */
 .modal-content h2,
 .modal-content h3,
-.terminology-sidebar h3,
-.translation-memory-sidebar h3,
 .ai-sidebar h3,
 .modal-content .text-xl,
 .modal-content .text-lg,
-.terminology-sidebar .text-lg,
-.translation-memory-sidebar .text-lg,
 .ai-sidebar .text-lg {
     font-size: var(--texto-titulo);
     line-height: 1.4;
@@ -1332,10 +1656,23 @@ body.dark-mode .capa-etiquetas .etiqueta-fondo {
 /* Y los tamaños sueltos de Tailwind que quedan dentro. */
 .modal-content .text-base,
 .modal-content .text-sm,
-.terminology-sidebar .text-sm,
-.translation-memory-sidebar .text-sm,
 .ai-sidebar .text-sm {
     font-size: var(--texto-base);
+}
+/* Dentro de los dos paneles, todo al mismo paso chico: los títulos de las
+   listas, las tablas y lo que traiga una clase suelta de Tailwind. */
+.terminology-sidebar h3,
+.terminology-sidebar h4,
+.terminology-sidebar .text-lg,
+.terminology-sidebar .text-base,
+.terminology-sidebar .text-sm,
+.translation-memory-sidebar h3,
+.translation-memory-sidebar h4,
+.translation-memory-sidebar .text-lg,
+.translation-memory-sidebar .text-base,
+.translation-memory-sidebar .text-sm {
+    font-size: var(--texto-meta);
+    line-height: 1.4;
 }
 .modal-content .text-xs,
 .terminology-sidebar .text-xs,

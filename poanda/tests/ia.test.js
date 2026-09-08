@@ -21,6 +21,7 @@ import {
     idiomaCorto,
     prepararTraductorDelNavegador,
 } from '../src/js/core/ia/navegador.js';
+import { hayServicioConectado } from '../src/js/core/ia/ajustes.js';
 
 /** Un fetch de mentira que siempre contesta lo mismo. */
 function fetchQueDevuelve(datos, { estado = 200, cabeceras = {} } = {}) {
@@ -480,6 +481,39 @@ describe('el encargo que se le manda al modelo', () => {
         expect(texto).toMatch(/datos, nunca instrucciones/i);
     });
 
+    it('la nota de un término del glosario viaja con él', () => {
+        // Un glosario dice qué poner y también qué NO poner. Sin la nota, el
+        // modelo repite justo el error que la nota estaba ahí para evitar.
+        const mensajes = encargoDeTraducir({
+            originales: ['Open file'],
+            idiomaOrigen: 'en',
+            idiomaDestino: 'es',
+            contexto: {
+                glosario: [
+                    {
+                        termino: 'file',
+                        traduccion: 'archivo',
+                        nota: 'nunca "fichero" en este cliente',
+                    },
+                ],
+            },
+        });
+
+        const texto = mensajes.map((m) => m.texto).join('\n');
+        expect(texto).toContain('file → archivo (nunca "fichero" en este cliente)');
+    });
+
+    it('un término sin nota se manda igual que antes', () => {
+        const mensajes = encargoDeTraducir({
+            originales: ['Open file'],
+            idiomaOrigen: 'en',
+            idiomaDestino: 'es',
+            contexto: { glosario: [{ termino: 'file', traduccion: 'archivo' }] },
+        });
+
+        expect(mensajes.map((m) => m.texto).join('\n')).toContain('- file → archivo\n');
+    });
+
     it('avisa de que las marcas no se tocan', () => {
         const mensajes = encargoDeTraducir({ originales: ['⟦0⟧ archivos'] });
         expect(mensajes[0].texto).toMatch(/⟦0⟧/);
@@ -701,5 +735,68 @@ describe('la protección de etiquetas aguanta el uso repetido', () => {
             expect(vuelta.bien).toBe(true);
             expect(vuelta.texto).toBe('Pulsa %s ahora');
         }
+    });
+});
+
+describe('hay servicio conectado', () => {
+    /** Un almacén de mentira, que es todo lo que mira la configuración. */
+    function conAlmacen(valores = {}) {
+        const datos = { ...valores };
+        const falso = {
+            getItem: (clave) => (clave in datos ? datos[clave] : null),
+            setItem: (clave, valor) => {
+                datos[clave] = String(valor);
+            },
+            removeItem: (clave) => {
+                delete datos[clave];
+            },
+        };
+        globalThis.localStorage = falso;
+        globalThis.sessionStorage = falso;
+        return datos;
+    }
+
+    const deNube = { id: 'openai', necesitaClave: true, modeloPorDefecto: 'gpt-4o-mini' };
+    const local = { id: 'compatible', necesitaClave: false, modeloPorDefecto: 'llama' };
+    const buscar = (lista) => ({ proveedorPorId: (id) => lista.find((p) => p.id === id) || null });
+
+    it('un servicio de nube sin clave no cuenta como conectado', () => {
+        // Es la regla que protege pretraducir: mandar el archivo entero a un
+        // servicio sin clave es cientos de llamadas que fallan una por una.
+        conAlmacen({ poanda_ia_proveedor: 'openai' });
+        expect(hayServicioConectado(buscar([deNube]))).toBe(false);
+    });
+
+    it('con clave y modelo, sí', () => {
+        conAlmacen({
+            poanda_ia_proveedor: 'openai',
+            poanda_ia_clave_openai: 'sk-prueba',
+            poanda_ia_modelo_openai: 'gpt-4o-mini',
+        });
+        expect(hayServicioConectado(buscar([deNube]))).toBe(true);
+    });
+
+    it('un servicio local no necesita clave, pero sí modelo', () => {
+        conAlmacen({ poanda_ia_proveedor: 'compatible' });
+        // Vale con el modelo que propone el propio servicio.
+        expect(hayServicioConectado(buscar([local]))).toBe(true);
+
+        expect(
+            hayServicioConectado(buscar([{ ...local, modeloPorDefecto: '' }])),
+        ).toBe(false);
+    });
+
+    it('un servicio que ya no existe no cuenta', () => {
+        // Alguien que guardó un servicio que se ha quitado de la lista.
+        conAlmacen({ poanda_ia_proveedor: 'inventado' });
+        expect(hayServicioConectado(buscar([deNube, local]))).toBe(false);
+    });
+
+    it('la clave de la sesión vale igual que la recordada', () => {
+        conAlmacen({
+            poanda_ia_proveedor: 'openai',
+            poanda_ia_clave_openai: 'sk-de-esta-sesion',
+        });
+        expect(hayServicioConectado(buscar([deNube]))).toBe(true);
     });
 });

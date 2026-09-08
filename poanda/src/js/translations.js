@@ -77,6 +77,14 @@ const translations = {
         loading_file: 'Loading file...',
         saving_file: 'Saving file...',
         terminology_btn: 'Terminology',
+        panels_btn: 'TM and Glossary',
+        panels_search_placeholder: 'Search the memory and the glossary',
+        panels_notice_dismiss: 'Dismiss',
+        panels_vacios:
+            'Both start empty and fill as you work: every segment you validate goes into the memory, and terms go into the glossary as you add them. You can also import a .tmx or a .tbx.',
+        panel_collapse: 'Collapse this panel',
+        panel_resize_width: 'Drag to make the column wider or narrower',
+        panel_resize_split: 'Drag to share the height between memory and glossary',
         terminology_sidebar_title: 'Terminology',
         source_language: 'Source Language:',
         target_language: 'Target Language:',
@@ -93,13 +101,23 @@ const translations = {
         lang_pair_missing: 'This project was saved before Poanda recorded languages. Set them once and they stay.',
         lang_pair_required: 'Choose both languages.',
         lang_pair_same: 'Source and target cannot be the same language.',
-        lang_pair_of_project: 'Languages of this project:',
         add_term_title: 'Add Term',
+        edit_term_title: 'Edit Term',
         term: 'Term:',
         translation: 'Translation:',
         add_button: 'Add',
-        search_title: 'Search',
-        search_placeholder: 'Search term...',
+        part_of_speech: 'Part of speech:',
+        pos_none: '(not set)',
+        pos_noun: 'noun',
+        pos_verb: 'verb',
+        pos_adj: 'adjective',
+        pos_adv: 'adverb',
+        definition: 'Definition:',
+        notes: 'Notes:',
+        edit_term_hint: 'Click a term to edit it.',
+        term_card_insert: 'Insert translation',
+        term_card_insert_hint: 'Puts the translation where your cursor is.',
+        term_card_no_segment: 'Place the cursor in a segment first.',
         import_tbx: 'Import TBX',
         download_tbx: 'Download TBX',
         new_glossary: 'New Glossary',
@@ -132,8 +150,6 @@ const translations = {
         error_loading_tmx_file: 'Error loading TMX file. Make sure it is a valid XML/TMX.',
         cannot_download_empty_tm: 'Cannot download an empty translation memory.',
         tm_best_match: 'Best TM match:',
-        tm_search_title: 'Search in TM',
-        tm_search_placeholder: 'Search in memory...',
         tm_search_results_title: 'TM Search Results',
         tm_score_col: '%',
         tm_original_col: 'Original',
@@ -141,10 +157,6 @@ const translations = {
         // La memoria ya existe desde que se abre el archivo; lo que pasa es que
         // está vacía. Decir "crea una memoria" mandaba a buscar un botón que no
         // hace falta pulsar.
-        tm_vacia:
-            'This memory is empty. It fills itself as you work: every segment you validate goes into it. You can also import a .tmx you already have.',
-        glossary_vacio:
-            'This glossary is empty. Add terms below as they come up, or import a .tbx you already have.',
         tmx_file_expected_tbx_found:
             'This file appears to be a glossary (TBX). Please use the "Import TBX" option in the Terminology panel.',
         tbx_file_expected_tmx_found:
@@ -325,6 +337,11 @@ const translations = {
         ai_motor_contexto: 'With context (your AI)',
         ai_motor_contexto_info:
             'Uses your glossary, your translation memory and your instructions. Slower, and it costs money if the service is a paid one.',
+        ai_motor_rapido_falta: 'Your browser does not have a built-in translator.',
+        ai_motor_contexto_falta:
+            'Connect an AI service first, in the assistant\'s settings (the cog above).',
+        ai_pretraducir_sin_motor:
+            'To pre-translate you need either a browser with a built-in translator or an AI service connected. Connect one in the assistant\'s settings.',
         ai_pretraducir_alcance: 'Only untranslated segments are translated. Validated ones are left alone.',
         ai_pretraducir_empezar: 'Pre-translate',
         ai_pretraducir_avance: 'Translated {hechos} of {total}',
@@ -454,6 +471,14 @@ const translations = {
         loading_file: 'Cargando archivo...',
         saving_file: 'Guardando archivo...',
         terminology_btn: 'Terminología',
+        panels_btn: 'Memoria y glosario',
+        panels_search_placeholder: 'Buscar en la memoria y en el glosario',
+        panels_notice_dismiss: 'Cerrar el aviso',
+        panels_vacios:
+            'Los dos empiezan vacíos y se llenan según trabajas: cada segmento que validas entra en la memoria, y los términos entran en el glosario según los añades. También puedes importar un .tmx o un .tbx.',
+        panel_collapse: 'Plegar este panel',
+        panel_resize_width: 'Arrastra para ensanchar o estrechar la columna',
+        panel_resize_split: 'Arrastra para repartir el alto entre memoria y glosario',
         terminology_sidebar_title: 'Terminología',
         source_language: 'Idioma de origen:',
         target_language: 'Idioma de destino:',
@@ -468,13 +493,23 @@ const translations = {
         lang_pair_missing: 'Este proyecto se guardó antes de que Poanda anotara los idiomas. Dilos una vez y se quedan.',
         lang_pair_required: 'Elige los dos idiomas.',
         lang_pair_same: 'El idioma de origen y el de destino no pueden ser el mismo.',
-        lang_pair_of_project: 'Idiomas de este proyecto:',
         add_term_title: 'Añadir término',
+        edit_term_title: 'Editar término',
         term: 'Término:',
         translation: 'Traducción:',
         add_button: 'Añadir',
-        search_title: 'Buscar',
-        search_placeholder: 'Buscar término...',
+        part_of_speech: 'Categoría gramatical:',
+        pos_none: '(sin especificar)',
+        pos_noun: 'sustantivo',
+        pos_verb: 'verbo',
+        pos_adj: 'adjetivo',
+        pos_adv: 'adverbio',
+        definition: 'Definición:',
+        notes: 'Notas:',
+        edit_term_hint: 'Pulsa un término para editarlo.',
+        term_card_insert: 'Insertar traducción',
+        term_card_insert_hint: 'Pone la traducción donde tengas el cursor.',
+        term_card_no_segment: 'Pon antes el cursor en un segmento.',
         import_tbx: 'Importar TBX',
         download_tbx: 'Descargar TBX',
         new_glossary: 'Nuevo glosario',
@@ -509,16 +544,10 @@ const translations = {
             'Error al cargar el archivo TMX. Asegúrate de que sea un XML/TMX válido.',
         cannot_download_empty_tm: 'No se puede descargar una memoria de traducción vacía.',
         tm_best_match: 'Mejor coincidencia de TM:',
-        tm_search_title: 'Buscar en TM',
-        tm_search_placeholder: 'Buscar en la memoria...',
         tm_search_results_title: 'Resultados de búsqueda en TM',
         tm_score_col: '%',
         tm_original_col: 'Original',
         tm_translation_col: 'Traducción',
-        tm_vacia:
-            'Esta memoria está vacía. Se llena sola según trabajas: cada segmento que validas entra en ella. También puedes importar un .tmx que ya tengas.',
-        glossary_vacio:
-            'Este glosario está vacío. Añade abajo los términos según vayan saliendo, o importa un .tbx que ya tengas.',
         tmx_file_expected_tbx_found:
             'Este archivo parece ser un glosario (TBX). Por favor, usa la opción "Importar TBX" en el panel de Terminología.',
         tbx_file_expected_tmx_found:
@@ -694,6 +723,11 @@ const translations = {
         ai_motor_contexto: 'Con contexto (tu IA)',
         ai_motor_contexto_info:
             'Usa tu glosario, tu memoria de traducción y tus instrucciones. Más lento, y cuesta dinero si el servicio es de pago.',
+        ai_motor_rapido_falta: 'Tu navegador no trae traductor.',
+        ai_motor_contexto_falta:
+            'Conecta antes un servicio de IA, en los ajustes del asistente (la rueda de arriba).',
+        ai_pretraducir_sin_motor:
+            'Para pretraducir hace falta un navegador con traductor o un servicio de IA conectado. Conecta uno en los ajustes del asistente.',
         ai_pretraducir_alcance:
             'Solo se traducen los segmentos vacíos. Los validados no se tocan.',
         ai_pretraducir_empezar: 'Pretraducir',

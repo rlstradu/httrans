@@ -1,14 +1,11 @@
-import { generateTBX } from './core/tbx.js';
+import { enderezarGlosario, generarTBX, leerTBX, tieneFicha } from './core/tbx.js';
+import { escaparHtml } from './core/xml.js';
 import { hideLoadingOverlay, showLoadingOverlay, showMessage } from './dialogs.js';
-import {
-    glossaryTableBody,
-    searchTermInput,
-    srcTermInput,
-    tbxFileInput,
-    tgtTermInput,
-} from './dom.js';
+import { glossaryTableBody, buscarPaneles, tbxFileInput } from './dom.js';
+import { abrirFichaDeTermino } from './termino-modal.js';
 import { pintarParDelProyecto } from './idiomas-proyecto.js';
-import { renderTranslations } from './editor.js';
+import { avisarSiEstanVacios } from './paneles.js';
+import { renderTranslations, repintarTodosLosOriginales } from './editor.js';
 import { state } from './state.js';
 import { updateStatsDisplay } from './stats.js';
 import { showTMInternalMessage } from './tm.js';
@@ -16,10 +13,6 @@ import { translations } from './translations.js';
 
 function resetGlossary() {
     state.glossary = [];
-    if (srcTermInput) srcTermInput.value = '';
-    if (tgtTermInput) tgtTermInput.value = '';
-    if (searchTermInput) searchTermInput.value = '';
-
     renderGlossary();
     renderTranslations(state.poEntries);
     updateStatsDisplay();
@@ -38,43 +31,20 @@ function showGlossaryEditorSection() {
 }
 
 /**
- * Enseña el aviso de "esto está vacío" mientras el glosario no tenga términos.
+ * Repinta lo que depende del glosario.
  *
- * Igual que en la memoria: el glosario existe desde que se abre el archivo y lo
- * único que le pasa es que todavía no tiene nada dentro. Lo que hace falta
- * decir es por dónde se empieza y que se puede traer uno de fuera.
+ * El original de TODOS los segmentos se vuelve a pintar, no solo el activo: el
+ * amarillo del glosario está en todo el archivo, así que añadir o quitar un
+ * término cambia lo que se ve de arriba abajo.
  */
-function avisarSiElGlosarioEstaVacio() {
-    const aviso = document.getElementById('glosarioVacio');
-    if (!aviso) return;
-    aviso.classList.toggle('hidden', (state.glossary || []).length > 0);
-}
-
-function addTerm() {
-    const srcTerm = srcTermInput ? srcTermInput.value.trim() : '';
-    const tgtTerm = tgtTermInput ? tgtTermInput.value.trim() : '';
-
-    if (!srcTerm || !tgtTerm) {
-        showMessage(translations[state.currentLanguage]['both_terms_required']);
-        return;
-    }
-
-    state.glossary.push({
-        srcLang: state.sourceLang,
-        srcTerm: srcTerm,
-        tgtLang: state.targetLang,
-        tgtTerm: tgtTerm,
-    });
-    if (srcTermInput) srcTermInput.value = '';
-    if (tgtTermInput) tgtTermInput.value = '';
+function alCambiarElGlosario() {
     renderGlossary();
-    renderTranslations(state.poEntries);
+    repintarTodosLosOriginales();
 }
 
 function deleteTerm(index) {
     state.glossary.splice(index, 1);
-    renderGlossary();
-    renderTranslations(state.poEntries);
+    alCambiarElGlosario();
 }
 
 function renderGlossary() {
@@ -82,15 +52,18 @@ function renderGlossary() {
         console.warn('glossaryTableBody element not found. Cannot render glossary.');
         return;
     }
-    avisarSiElGlosarioEstaVacio();
+    avisarSiEstanVacios();
 
-    const search = searchTermInput ? searchTermInput.value.toLowerCase() : '';
+    const search = buscarPaneles ? buscarPaneles.value.toLowerCase().trim() : '';
     glossaryTableBody.innerHTML = '';
 
-    const filteredGlossary = state.glossary.filter(
-        (entry) =>
-            (entry.srcTerm && entry.srcTerm.toLowerCase().includes(search)) ||
-            (entry.tgtTerm && entry.tgtTerm.toLowerCase().includes(search)),
+    // Se busca también en la definición y en las notas: si alguien apuntó
+    // "no traducir como fichero", buscar "fichero" tiene que llevar hasta ese
+    // término, que es justo para lo que se escribió la nota.
+    const filteredGlossary = state.glossary.filter((entry) =>
+        ['srcTerm', 'tgtTerm', 'definition', 'notes'].some((campo) =>
+            (entry[campo] || '').toLowerCase().includes(search),
+        ),
     );
 
     const highlightedTerms = [];
@@ -109,32 +82,63 @@ function renderGlossary() {
         ...otherTerms.sort((a, b) => a.srcTerm.localeCompare(b.srcTerm)),
     ];
 
-    highlightedTerms.forEach((entry, i) => {
-        const row = document.createElement('tr');
-        row.classList.add('glossary-row-highlight');
-        row.innerHTML = `
-                    <td>${entry.srcTerm}</td>
-                    <td>${entry.tgtTerm}</td>
-                    <td><button class="glossary-delete-btn" data-glossary-index="${state.glossary.indexOf(entry)}">${translations[state.currentLanguage]['delete_button']}</button></td>
-                `;
-        glossaryTableBody.appendChild(row);
-    });
+    const t = translations[state.currentLanguage];
 
-    otherTerms.forEach((entry, i) => {
+    /**
+     * Una fila de la lista.
+     *
+     * La fila entera abre la ficha del término: corregir una errata ya no
+     * obliga a borrar el término y volver a escribirlo. El botón de borrar
+     * sigue donde estaba, y corta el clic para no abrir la ficha de algo que se
+     * está quitando.
+     */
+    const pintarFila = (entry, resaltada) => {
+        const indice = state.glossary.indexOf(entry);
         const row = document.createElement('tr');
+        row.className = `glosario-fila${resaltada ? ' glossary-row-highlight' : ''}`;
+        row.dataset.glossaryIndex = String(indice);
+        row.tabIndex = 0;
+        row.title = t['edit_term_hint'] || '';
+        // La marca de que el término tiene ficha: sin abrirlo no había manera
+        // de saber cuáles están documentados y cuáles son un par de palabras.
+        const marca = tieneFicha(entry) ? '<span class="glosario-ficha" aria-hidden="true"></span>' : '';
         row.innerHTML = `
-                    <td>${entry.srcTerm}</td>
-                    <td>${entry.tgtTerm}</td>
-                    <td><button class="glossary-delete-btn" data-glossary-index="${state.glossary.indexOf(entry)}">${translations[state.currentLanguage]['delete_button']}</button></td>
+                    <td>${escaparHtml(entry.srcTerm || '')}${marca}</td>
+                    <td>${escaparHtml(entry.tgtTerm || '')}</td>
+                    <td><button class="glossary-delete-btn" data-glossary-index="${indice}">${t['delete_button']}</button></td>
                 `;
         glossaryTableBody.appendChild(row);
-    });
+    };
+
+    highlightedTerms.forEach((entry) => pintarFila(entry, true));
+    otherTerms.forEach((entry) => pintarFila(entry, false));
+
+    // La lista solo sale cuando tiene algo que enseñar, igual que la de la
+    // memoria: con el glosario vacío ya lo explica el aviso de arriba, y una
+    // tabla de cabeceras sueltas solo ocupa sitio.
+    document
+        .getElementById('glosarioResultados')
+        ?.classList.toggle('hidden', filteredGlossary.length === 0);
 
     // Los botones de borrar se crean aquí, así que hay que engancharlos aquí.
     // Antes usaban onclick="deleteTerm(...)" en el HTML, que dejó de funcionar
     // al pasar a módulos ES (las funciones ya no son globales).
     glossaryTableBody.querySelectorAll('.glossary-delete-btn').forEach((btn) => {
-        btn.addEventListener('click', () => deleteTerm(Number(btn.dataset.glossaryIndex)));
+        btn.addEventListener('click', (evento) => {
+            evento.stopPropagation();
+            deleteTerm(Number(btn.dataset.glossaryIndex));
+        });
+    });
+
+    glossaryTableBody.querySelectorAll('.glosario-fila').forEach((fila) => {
+        const abrir = () => abrirFichaDeTermino(Number(fila.dataset.glossaryIndex));
+        fila.addEventListener('click', abrir);
+        fila.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Enter' || evento.key === ' ') {
+                evento.preventDefault();
+                abrir();
+            }
+        });
     });
 }
 
@@ -147,7 +151,11 @@ function downloadTBX() {
     }
     showLoadingOverlay(translations[state.currentLanguage]['saving_file']);
     try {
-        const blob = new Blob([generateTBX()], { type: 'application/xml' });
+        const tbx = generarTBX(state.glossary, {
+            origen: state.sourceLang,
+            destino: state.targetLang,
+        });
+        const blob = new Blob([tbx], { type: 'application/xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -181,15 +189,9 @@ function loadTBX() {
 function processTBXContent(content) {
     showLoadingOverlay(translations[state.currentLanguage]['loading_file']);
     try {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(content, 'application/xml');
-
-        if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
-            const errorText = xmlDoc.getElementsByTagName('parsererror')[0].textContent;
-            throw new Error('Invalid XML/TBX format: ' + errorText);
-        }
-
-        if (xmlDoc.getElementsByTagName('tu').length > 0) {
+        // Una memoria no es un glosario, y confundirse de botón es lo más fácil
+        // del mundo con los dos paneles a la vista.
+        if (/<tu[\s>]/.test(content) && !/<termEntry[\s>]|<conceptEntry[\s>]/.test(content)) {
             showTMInternalMessage(
                 translations[state.currentLanguage]['tbx_file_expected_tmx_found'],
                 true,
@@ -197,32 +199,14 @@ function processTBXContent(content) {
             throw new Error('Attempted to load TMX into Glossary.');
         }
 
-        const entries = xmlDoc.getElementsByTagName('termEntry');
-        state.glossary = [];
-
-        for (let entry of entries) {
-            const sets = entry.getElementsByTagName('LangSet');
-            if (sets.length >= 2) {
-                const lang1 = sets[0].getAttribute('xml:lang');
-                const term1 =
-                    sets[0].getElementsByTagName('tig')[0]?.getElementsByTagName('term')[0]
-                        ?.textContent || '';
-                const lang2 = sets[1].getAttribute('xml:lang');
-                const term2 =
-                    sets[1].getElementsByTagName('tig')[0]?.getElementsByTagName('term')[0]
-                        ?.textContent || '';
-                state.glossary.push({
-                    srcLang: lang1,
-                    srcTerm: term1,
-                    tgtLang: lang2,
-                    tgtTerm: term2,
-                });
-            }
-        }
-
+        const { terminos } = leerTBX(content);
         // Los idiomas que traiga el TBX no cambian los del proyecto: el par lo
         // manda el proyecto, y un glosario en otra variante sigue sirviendo
-        // (ver mismoIdioma en core/idiomas.js).
+        // (ver mismoIdioma en core/idiomas.js). Lo que sí se hace es enderezar
+        // las entradas que vengan del revés, para que todas se busquen en el
+        // texto original y no la mitad al aire.
+        state.glossary = enderezarGlosario(terminos);
+
         if (state.glossary.length === 0) {
             showMessage(translations[state.currentLanguage]['error_loading_tbx_file']);
         }
@@ -241,7 +225,7 @@ function processTBXContent(content) {
 }
 
 export {
-    addTerm,
+    alCambiarElGlosario,
     downloadTBX,
     loadTBX,
     processTBXContent,

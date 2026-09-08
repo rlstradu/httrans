@@ -20,7 +20,12 @@ import { renderTranslations } from './editor.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
 import { updateStatsDisplay } from './stats.js';
-import { leerConfiguracion, guardarMotorDePretraducir, leerMotorDePretraducir } from './core/ia/ajustes.js';
+import {
+    guardarMotorDePretraducir,
+    hayServicioConectado,
+    leerConfiguracion,
+    leerMotorDePretraducir,
+} from './core/ia/ajustes.js';
 import { proveedorPorId } from './core/ia/proveedores.js';
 import { pretraducir } from './core/ia/pretraducir.js';
 import { traducirLote, POR_LOTE, A_LA_VEZ } from './core/ia/traducir.js';
@@ -162,6 +167,39 @@ function motorDeIA(idiomas) {
 /**
  * Abre el cuadro de pretraducir.
  */
+/**
+ * Enciende o apaga un motor en el cuadro.
+ *
+ * Apagado no quiere decir escondido: sigue a la vista, en gris, con el motivo
+ * escrito debajo. Un motor que desaparece no explica nada; uno apagado con su
+ * porqué dice qué hay que hacer para tenerlo.
+ *
+ * @param {HTMLElement} modal
+ * @param {string} valor 'rapido' o 'contexto'
+ * @param {boolean} disponible
+ * @param {string} [motivo] Qué falta, si falta algo.
+ */
+function ofrecerMotor(modal, valor, disponible, motivo = '') {
+    const radio = modal.querySelector(`input[value="${valor}"]`);
+    if (!radio) return;
+
+    const caja = radio.closest('.ia-motor');
+    radio.disabled = !disponible;
+    caja.classList.toggle('ia-motor-apagado', !disponible);
+
+    let aviso = caja.querySelector('.ia-motor-falta');
+    if (!disponible && motivo) {
+        if (!aviso) {
+            aviso = document.createElement('span');
+            aviso.className = 'ia-motor-falta';
+            caja.appendChild(aviso);
+        }
+        aviso.textContent = motivo;
+    } else if (aviso) {
+        aviso.remove();
+    }
+}
+
 export function abrirPretraducir() {
     const modal = $('pretraducirModal');
     if (!modal) return;
@@ -173,17 +211,35 @@ export function abrirPretraducir() {
         return;
     }
 
-    // Si el navegador no trae traductor, el motor rápido no existe: se dice y
-    // se deja elegido el otro, en vez de ofrecer algo que va a fallar.
-    const rapido = modal.querySelector('input[value="rapido"]');
-    if (!hayTraductorEnElNavegador()) {
-        rapido.disabled = true;
-        rapido.closest('.ia-motor').style.opacity = '0.5';
-        modal.querySelector('input[value="contexto"]').checked = true;
-    } else {
-        const guardado = leerMotorDePretraducir();
-        modal.querySelector(`input[value="${guardado}"]`).checked = true;
+    // Cada motor se ofrece solo si de verdad se puede usar. El rápido necesita
+    // que el navegador traiga traductor; el de contexto, un servicio de IA
+    // conectado —elegido, con su clave y su modelo—. Ofrecer uno que no está
+    // listo es prometer algo que va a fallar a mitad del archivo.
+    const conNavegador = hayTraductorEnElNavegador();
+    const conIA = hayServicioConectado({ proveedorPorId });
+
+    ofrecerMotor(modal, 'rapido', conNavegador, t('ai_motor_rapido_falta'));
+    ofrecerMotor(modal, 'contexto', conIA, t('ai_motor_contexto_falta'));
+
+    // Sin ninguno de los dos no hay cuadro que enseñar: se dice qué falta y se
+    // abre donde se arregla, que es el panel de ajustes del asistente.
+    if (!conNavegador && !conIA) {
+        showMessage(t('ai_pretraducir_sin_motor'));
+        $('aiSidebar')?.classList.add('show-sidebar');
+        $('aiConfigPanel')?.classList.remove('hidden');
+        return;
     }
+
+    // Se recupera el motor de la última vez, siempre que siga estando
+    // disponible; si no, el que quede.
+    const guardado = leerMotorDePretraducir();
+    const elegido =
+        (guardado === 'contexto' && conIA) || (guardado === 'rapido' && conNavegador)
+            ? guardado
+            : conIA
+              ? 'contexto'
+              : 'rapido';
+    modal.querySelector(`input[value="${elegido}"]`).checked = true;
 
     $('pretraducirAvance').classList.add('hidden');
     $('pretraducirEmpezarBtn').disabled = false;
@@ -205,6 +261,16 @@ async function empezar() {
 
     const elegido =
         document.querySelector('input[name="motorIA"]:checked')?.value || 'rapido';
+
+    // El cuadro ya no deja elegir un motor que no está listo, pero esto se
+    // comprueba igual aquí: es la puerta por la que se gasta dinero de la clave
+    // de alguien, y una puerta así no se guarda solo con lo que se ve.
+    if (elegido === 'contexto' && !hayServicioConectado({ proveedorPorId })) {
+        $('pretraducirEstado').textContent = `❌ ${t('ai_motor_contexto_falta')}`;
+        $('pretraducirAvance').classList.remove('hidden');
+        return;
+    }
+
     guardarMotorDePretraducir(elegido);
 
     const idiomas = {

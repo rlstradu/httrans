@@ -5,6 +5,7 @@ import {
     perfilDeFormato,
 } from './core/etiquetas.js';
 import { countWords } from './core/text.js';
+import { escaparHtml } from './core/xml.js';
 import { initEtiquetasEnTraduccion, marcadoDeCapa } from './etiquetas-campo.js';
 import { showMessage } from './dialogs.js';
 import { guardarNota } from './persistencia.js';
@@ -39,15 +40,6 @@ function perfilActual() {
     return perfilDeFormato(state.currentFileType || 'po');
 }
 
-/** Escapa el texto que va a salir como HTML. */
-function escaparHtml(texto) {
-    return String(texto)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
 /**
  * Construye el marcado del texto original: etiquetas en color y, si toca,
  * términos del glosario y resultados de la búsqueda resaltados.
@@ -67,7 +59,7 @@ function escaparHtml(texto) {
  * @param {{glosario?: boolean, busqueda?: RegExp|null}} opciones
  * @returns {{html: string, terminos: Set<string>}}
  */
-function marcadoDelOriginal(texto, { glosario = false, busqueda = null } = {}) {
+function marcadoDelOriginal(texto, { glosario = true, busqueda = null } = {}) {
     const terminos = new Set();
     const perfil = perfilActual();
 
@@ -117,7 +109,14 @@ function repintarOriginal(entryIndex, segmentIndex, texto) {
     if (pre) pre.innerHTML = marcadoDelOriginal(texto).html;
 }
 
-/** Deja todos los textos originales en reposo, sin glosario ni búsqueda. */
+/**
+ * Deja todos los textos originales en reposo: con su glosario, sin búsqueda.
+ *
+ * El amarillo del glosario está en todo el archivo, no solo en el segmento en
+ * el que se escribe, así que tocar el glosario cambia lo que se ve de arriba
+ * abajo. Se repintan los originales, no el editor entero: reconstruirlo perdía
+ * el foco, la posición de la pantalla y lo escrito a medias.
+ */
 function repintarTodosLosOriginales() {
     state.poEntries.forEach((entry, entryIndex) => {
         if (entry.isHeader) return;
@@ -251,6 +250,33 @@ function insertarEtiqueta(textarea, etiqueta) {
     // Se avisa como si se hubiera tecleado: así se enteran el recuento, las
     // estadísticas, el guardado y la revisión de etiquetas.
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/**
+ * Mete un texto en la traducción del segmento en el que se está trabajando.
+ *
+ * Lo usa la tarjeta del glosario para poner la traducción de un término de un
+ * clic. Si el cuadro está enfocado, entra donde tenga el cursor; si no, en el
+ * último en el que se estuvo, que es al que se va a volver.
+ *
+ * @param {string} texto
+ * @returns {boolean} Si había dónde ponerlo.
+ */
+function insertarEnLaTraduccionActiva(texto) {
+    if (!texto) return false;
+
+    const enfocado = document.activeElement;
+    let textarea =
+        enfocado && enfocado.classList?.contains('msgstr-textarea') ? enfocado : null;
+
+    if (!textarea && state.lastFocusedSegment) {
+        const { entryIndex, segmentIndex } = state.lastFocusedSegment;
+        textarea = document.getElementById(`msgstr-${entryIndex}-${segmentIndex}`);
+    }
+    if (!textarea || textarea.readOnly) return false;
+
+    insertarEtiqueta(textarea, texto);
+    return true;
 }
 
 /**
@@ -475,6 +501,18 @@ function abrirComentario(entryIndex, segmentIndex, notasDelArchivo) {
     caja.appendChild(botones);
 
     fila.insertAdjacentElement('afterend', caja);
+
+    // La animación de abrir necesita dos pasos: primero la cajita entra en la
+    // página cerrada, y en el fotograma siguiente se le pone la clase que la
+    // abre. Puestas las dos cosas a la vez, el navegador no ve ningún cambio
+    // que animar y la cajita aparecería de golpe.
+    requestAnimationFrame(() => {
+        caja.classList.add('abierta');
+    });
+    caja.addEventListener('transitionend', (evento) => {
+        if (evento.propertyName === 'max-height') caja.classList.add('abierta-del-todo');
+    });
+
     campo.focus();
     // El cursor al final: lo normal al volver a una nota es añadirle algo, no
     // reescribirla desde el principio.
@@ -617,43 +655,63 @@ function performAutoPropagation(
     // if (propagatedCount > 0) console.log(`Propagated to ${propagatedCount} segments.`);
 }
 
+/**
+ * Marca en el texto original las palabras que están en el glosario.
+ *
+ * Se hace en UNA sola pasada, con todos los términos metidos en la misma
+ * expresión de búsqueda. Antes se recorría el glosario término a término,
+ * reemplazando cada vez sobre el resultado del anterior, y eso tiene un fallo
+ * que no se ve venir: a partir del segundo término ya no se busca en el texto,
+ * se busca en el marcado que se acababa de escribir. Un glosario con la misma
+ * palabra dos veces (dos traducciones posibles) se encontraba a sí mismo dentro
+ * del `data-termino="…"` de la marca anterior y dejaba el HTML hecho un lío.
+ * Con una sola pasada eso no puede pasar: lo que ya se ha marcado no se vuelve
+ * a mirar.
+ *
+ * El texto llega ya escapado, así que los términos se escapan igual antes de
+ * buscarlos. De paso, un término con "&" o "<" dentro (AT&T) ahora sí se
+ * encuentra: antes se buscaba "AT&T" en un texto donde ponía "AT&amp;T".
+ *
+ * @param {string} text Trozo de texto original, ya escapado como HTML.
+ * @returns {{html: string, foundTerms: Set<string>}}
+ */
 function applyGlossaryHighlightToText(text) {
-    let highlightedHtml = text;
-    const currentFoundTerms = new Set(); // Terms found in *this specific* segment
+    const currentFoundTerms = new Set();
 
     // Sin saber de qué idioma se traduce no hay nada que resaltar.
-    if (!state.sourceLang) {
-        return { html: text, foundTerms: currentFoundTerms }; // Cannot highlight without source language
+    if (!state.sourceLang) return { html: text, foundTerms: currentFoundTerms };
+
+    // De más largo a más corto: así "file name" gana a "file" y se marca la
+    // expresión entera, que es la que está en el glosario.
+    const terminos = state.glossary
+        .map((entrada) => entrada.srcTerm)
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+    if (terminos.length === 0) return { html: text, foundTerms: currentFoundTerms };
+
+    // Con qué texto escapado se corresponde cada término del glosario.
+    const porTextoBuscado = new Map();
+    const alternativas = [];
+    for (const termino of terminos) {
+        const buscado = escaparHtml(termino);
+        if (porTextoBuscado.has(buscado.toLowerCase())) continue;
+        porTextoBuscado.set(buscado.toLowerCase(), termino);
+        alternativas.push(buscado.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     }
 
-    // Sort glossary terms by length in descending order to match longer terms first
-    const sortedGlossary = [...state.glossary].sort((a, b) => b.srcTerm.length - a.srcTerm.length);
-
-    sortedGlossary.forEach((glossaryEntry) => {
-        // Only highlight if the glossary entry's source language matches the current editor's source language
-        // Assuming poEntries are implicitly in poanda's current source language.
-        // For a more robust solution, each poEntry might need a source language field.
-        // For now, we assume the glossary source language is the relevant source for highlighting.
-        // Also, ensure the glossary entry has a source term.
-        if (state.sourceLang && glossaryEntry.srcTerm) {
-            const term = glossaryEntry.srcTerm;
-            // Use word boundaries \b to avoid partial word matches
-            // Escape special regex characters in the term
-            const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // 'g' for global, 'i' for case-insensitive
-            const regex = new RegExp(`\\b(${escapedTerm})\\b`, 'gi'); // Added word boundaries
-
-            // Only replace if the term is found (to avoid unnecessary string manipulations)
-            if (highlightedHtml.match(regex)) {
-                highlightedHtml = highlightedHtml.replace(regex, (match, p1) => {
-                    // p1 is the captured group, which is the actual matched term (case-preserved)
-                    currentFoundTerms.add(term); // Add the actual term from the glossary (case-preserved)
-                    return `<span class="glossary-highlight">${p1}</span>`; // Highlight the matched part
-                });
-            }
-        }
+    const busca = new RegExp(`\\b(${alternativas.join('|')})\\b`, 'gi');
+    const html = text.replace(busca, (encontrado) => {
+        const termino = porTextoBuscado.get(encontrado.toLowerCase());
+        if (!termino) return encontrado;
+        currentFoundTerms.add(termino);
+        // El término del glosario viaja en el propio resaltado: al pasar el
+        // ratón por encima hay que poder ir de esta palabra del texto a su
+        // ficha, y lo que se ve escrito puede no coincidir (mayúsculas, o una
+        // forma distinta).
+        return `<span class="glossary-highlight" data-termino="${escaparHtml(termino)}" tabindex="0">${encontrado}</span>`;
     });
-    return { html: highlightedHtml, foundTerms: currentFoundTerms };
+
+    return { html, foundTerms: currentFoundTerms };
 }
 
 function updateGlossaryTableHighlights() {
@@ -1071,11 +1129,26 @@ function renderTranslations(entries) {
                     `msgid-pre-${entryIndex}-${segmentIndex}`,
                 );
                 if (originalSegmentPre) {
-                    // Se quita el glosario, pero las etiquetas se quedan.
+                    // El glosario se queda: está en todo el archivo, se esté o
+                    // no escribiendo en este segmento. Lo que se apaga al salir
+                    // es la lista de términos de ESTE segmento, que es lo que
+                    // ordena el panel y lo que ve el asistente.
                     originalSegmentPre.innerHTML = marcadoDelOriginal(segment.original).html;
                 }
                 state.termsFoundInActiveSegment.clear();
-                updateGlossaryTableHighlights();
+                // Repintar la lista del glosario la reconstruye entera. Si el
+                // foco se está yendo justo a un botón de esa lista —el de
+                // borrar un término, sin ir más lejos—, el botón desaparece
+                // entre el mousedown y el mouseup y el navegador no llega a
+                // emitir el clic: se pulsa y no pasa nada. Con los paneles
+                // siempre a la vista eso es un clic perdido de cada dos.
+                //
+                // El repintado no urge: lo único que hace es apagar el
+                // resaltado del segmento que se acaba de dejar, y se vuelve a
+                // hacer en cuanto se entra en otro.
+                if (!event.relatedTarget?.closest('#panelesDerecha')) {
+                    updateGlossaryTableHighlights();
+                }
                 state.tmBestMatchForActiveSegment = null;
                 tmSearch();
             });
@@ -1374,9 +1447,11 @@ export {
     goToNextTranslation,
     goToPreviousTranslation,
     initEtiquetas,
+    insertarEnLaTraduccionActiva,
     insertarSiguienteEtiquetaQueFalta,
     navigateToTranslation,
     pushToUndoStack,
     renderTranslations,
+    repintarTodosLosOriginales,
     setTranslationEditableState,
 };

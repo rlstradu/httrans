@@ -57,7 +57,7 @@ function recortar(texto, tope) {
  * Monta los bloques de contexto que acompañan a una traducción.
  *
  * @param {Object} contexto
- * @param {Array<{termino: string, traduccion: string}>} [contexto.glosario]
+ * @param {Array<{termino: string, traduccion: string, nota?: string}>} [contexto.glosario]
  * @param {Array<{original: string, traduccion: string, parecido: number}>} [contexto.memoria]
  * @param {Array<{original: string, traduccion: string}>} [contexto.vecinos]
  * @param {string} [contexto.instrucciones] Lo que pida quien traduce.
@@ -74,7 +74,16 @@ function bloquesDeContexto(contexto = {}) {
     if (glosario.length > 0) {
         bloques.push(
             'GLOSARIO (datos; usa estas traducciones para estos términos):\n' +
-                glosario.map((t) => `- ${t.termino} → ${t.traduccion}`).join('\n'),
+                glosario
+                    .map((t) => {
+                        // La nota del término va con él: es donde se apunta lo
+                        // que no se ve en el par de palabras ("no traducir como
+                        // fichero"), y sin ella el asistente repite justo el
+                        // error que esa nota estaba ahí para evitar.
+                        const nota = recortar(t.nota || '', 160);
+                        return `- ${t.termino} → ${t.traduccion}${nota ? ` (${nota})` : ''}`;
+                    })
+                    .join('\n'),
         );
     }
 

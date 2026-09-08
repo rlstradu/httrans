@@ -128,7 +128,7 @@ const exportShortcutsBtn = document.getElementById('exportShortcutsBtn');
 
 const resetShortcutsBtn = document.getElementById('resetShortcutsBtn');
 
-const terminologyBtn = document.getElementById('terminologyBtn');
+const panelesBtn = document.getElementById('panelesBtn');
 
 const terminologySidebar = document.getElementById('terminologySidebar');
 
@@ -136,27 +136,20 @@ const closeTerminologySidebarBtn = document.getElementById('closeTerminologySide
 
 const terminologyEditorSection = document.getElementById('terminologyEditorSection');
 
-const srcTermInput = document.getElementById('srcTerm');
 
-const tgtTermInput = document.getElementById('tgtTerm');
 
-const searchTermInput = document.getElementById('searchTerm');
+/**
+ * El buscador de la columna de consulta: uno solo para la memoria y el
+ * glosario. Antes había uno en cada panel, buscando lo mismo con dos campos y
+ * dos títulos, que en media columna son dos franjas de sitio.
+ */
+const buscarPaneles = document.getElementById('buscarPaneles');
 
 const glossaryTableBody = document.getElementById('glossaryTableBody');
 
 const tbxFileInput = document.getElementById('tbxFileInput');
 
 const importTbxBtn = document.getElementById('importTbxBtn');
-
-const newGlossaryBtn = document.getElementById('newGlossaryBtn');
-
-const addTermHeader = document.getElementById('addTermHeader');
-
-const addTermContent = addTermHeader ? addTermHeader.nextElementSibling : null;
-
-const addTermAccordionIcon = addTermHeader ? addTermHeader.querySelector('.accordion-icon') : null;
-
-const tmBtn = document.getElementById('tmBtn');
 
 const translationMemorySidebar = document.getElementById('translationMemorySidebar');
 
@@ -165,8 +158,6 @@ const closeTranslationMemorySidebarBtn = document.getElementById(
 );
 
 const tmFileInput = document.getElementById('tmFileInput');
-
-const tmSearchInput = document.getElementById('tmSearchInput');
 
 const tmSearchResultsTableBody = document.getElementById('tmSearchResultsTableBody');
 
@@ -198,9 +189,6 @@ const aiUserInput = document.getElementById('aiUserInput');
 const aiSendBtn = document.getElementById('aiSendBtn');
 
 export {
-    addTermAccordionIcon,
-    addTermContent,
-    addTermHeader,
     aiBtn,
     aiChatContainer,
     aiConfigPanel,
@@ -265,26 +253,22 @@ export {
     searchNextBtn,
     searchPrevBtn,
     searchResultCounter,
-    searchTermInput,
+    buscarPaneles,
     segmentsProgress,
     shortcutsBtn,
     shortcutsCloseBtn,
     shortcutsEditor,
     shortcutsModal,
-    srcTermInput,
     statsBtn,
     statsContainer,
     tbxFileInput,
-    terminologyBtn,
+    panelesBtn,
     terminologyEditorSection,
     terminologySidebar,
-    tgtTermInput,
-    tmBtn,
     tmEditorSection,
     tmFileInput,
     tmInternalMessage,
     tmNoMatchFoundMessage,
-    tmSearchInput,
     tmSearchResultsTableBody,
     translationMemorySidebar,
     translationsContainer,

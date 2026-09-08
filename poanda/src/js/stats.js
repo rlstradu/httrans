@@ -3,10 +3,7 @@ import {
     segmentsProgress,
     statsBtn,
     statsContainer,
-    terminologyBtn,
-    terminologySidebar,
-    tmBtn,
-    translationMemorySidebar,
+    panelesBtn,
     wordsRemaining,
     wordsTotal,
     wordsTranslated,
@@ -53,16 +50,13 @@ function updateStatsDisplay() {
 }
 
 function updateUtilityButtonStates() {
-    if (terminologySidebar.classList.contains('show-sidebar')) {
-        terminologyBtn.classList.add('utility-btn-active');
-    } else {
-        terminologyBtn.classList.remove('utility-btn-active');
-    }
-
-    if (translationMemorySidebar.classList.contains('show-sidebar')) {
-        tmBtn.classList.add('utility-btn-active');
-    } else {
-        tmBtn.classList.remove('utility-btn-active');
+    // El botón se enciende cuando la columna de consulta está a la vista, que
+    // es su estado normal: apagado significa que se ha escondido a propósito.
+    if (panelesBtn) {
+        panelesBtn.classList.toggle(
+            'utility-btn-active',
+            !document.body.classList.contains('paneles-ocultos'),
+        );
     }
 
     if (statsContainer.classList.contains('show')) {
