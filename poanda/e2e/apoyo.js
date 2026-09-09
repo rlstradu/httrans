@@ -1,4 +1,13 @@
 import { test as base, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/** La misma jsdiff que carga la página, pero de node_modules y no del CDN. */
+const JSDIFF = readFileSync(
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../node_modules/diff/dist/diff.js'),
+    'utf8'
+);
 
 /**
  * Sustituto de Tailwind para los tests.
@@ -69,9 +78,22 @@ export const test = base.extend({
                 body: TAILWIND_MINIMO,
             })
         );
-        // El resto de recursos externos (fuentes y librerías del CDN) no influyen
-        // en lo que comprueban estos tests.
+        // Los recursos externos (fuentes y librerías del CDN) no influyen en lo
+        // que comprueban estos tests, salvo el que se sirve justo debajo.
         await page.route(/^https:\/\/(fonts\.|cdn\.jsdelivr|cdnjs\.)/, (ruta) => ruta.abort());
+        // jsdiff sí influye: es la librería que compara el original guardado en
+        // la memoria con el que se está traduciendo, y sin ella las tarjetas de
+        // coincidencia salen sin marcar las diferencias. Se sirve la misma
+        // versión desde node_modules en vez de ir al CDN. Va DESPUÉS del corte
+        // de arriba a propósito: Playwright da prioridad a la última ruta que se
+        // registra, así que esta gana sobre el abort.
+        await page.route(/^https:\/\/cdn\.jsdelivr\.net\/npm\/diff@/, (ruta) =>
+            ruta.fulfill({
+                status: 200,
+                contentType: 'application/javascript',
+                body: JSDIFF,
+            })
+        );
 
         await page.goto('./');
         await use(page);

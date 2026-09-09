@@ -87,6 +87,7 @@ import {
     abrirArchivo,
     elegirYAbrirArchivo,
     guardarArchivoActual,
+    hayUnPoAbierto,
     processFile,
     processPoContent,
     saveHtmlFile,
@@ -482,8 +483,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     convertirAMo?.addEventListener('click', (e) => {
         e.preventDefault();
-        if (state.poEntries.length > 0) {
+        // La misma pregunta que decide si la entrada se ve. Aquí se vuelve a
+        // hacer porque esconder algo no es impedirlo: compilar un .txt como si
+        // fuera un PO produce un .mo con basura dentro.
+        if (hayUnPoAbierto()) {
             convertToMoModal.classList.remove('hidden');
+        } else if (state.poEntries.length > 0) {
+            showMessage(translations[state.currentLanguage]['convert_mo_solo_po']);
         } else {
             showMessage(translations[state.currentLanguage]['no_file_to_convert']);
         }

@@ -13,6 +13,11 @@
  * títulos de versión, secciones y una lista de puntos.
  */
 import { formatearChangelog } from './core/changelog-formato.js';
+import { state } from './state.js';
+import { translations } from './translations.js';
+
+/** El texto que toque en el idioma que esté puesto. */
+const t = (clave) => translations[state.currentLanguage]?.[clave] || translations.en[clave] || '';
 
 /** Engancha el botón de versión y el cierre del modal. */
 export function initChangelog() {
@@ -24,7 +29,7 @@ export function initChangelog() {
 
     if (versionToggle && changelogModal) {
         versionToggle.addEventListener('click', async () => {
-            changelogContent.textContent = 'Cargando changelog...';
+            changelogContent.textContent = t('changelog_cargando');
             changelogModal.classList.remove('hidden');
             try {
                 // Se añade el timestamp a la URL para evitar que el navegador guarde el txt en caché
@@ -35,11 +40,13 @@ export function initChangelog() {
                     // que es seguro meterlo como HTML.
                     changelogContent.innerHTML = formatearChangelog(text);
                 } else {
-                    changelogContent.textContent =
-                        'Error al cargar el changelog (HTTP ' + response.status + ').';
+                    changelogContent.textContent = t('changelog_error_http').replace(
+                        '{codigo}',
+                        response.status,
+                    );
                 }
             } catch (error) {
-                changelogContent.textContent = 'Error de red al cargar el changelog.';
+                changelogContent.textContent = t('changelog_error_red');
                 console.error('Error al obtener el changelog:', error);
             }
         });

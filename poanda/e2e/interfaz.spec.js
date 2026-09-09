@@ -7,6 +7,7 @@ import {
     expect,
     abrirCopiasDeSeguridad,
     cambiarIdioma,
+    cargarArchivo,
     cargarPo,
     responderIdiomas,
 } from './apoyo.js';
@@ -420,5 +421,153 @@ test.describe('cabecera que se reduce al abrir un archivo', () => {
 
         await expect(page.locator('#cabeceraGrande')).toBeVisible();
         await expect(page.locator('#logoPequeno')).toBeHidden();
+    });
+});
+
+test.describe('la barra de arriba manda sobre las columnas', () => {
+    test('el menú de idioma se puede pulsar con los paneles abiertos', async ({ page }) => {
+        // Los menús se pintaban DEBAJO de la columna de memoria y glosario: se
+        // veían, pero el clic se lo quedaba la columna. Con un archivo abierto
+        // no había manera de cambiar de idioma sin esconder los paneles.
+        await cargarPo(page);
+        await expect(page.locator('#panelesDerecha')).toBeVisible();
+
+        await page.locator('#langBtn').click();
+        const encima = await page.evaluate(() => {
+            const menu = document.querySelector('.selector-idioma .dropdown-content');
+            const r = menu.getBoundingClientRect();
+            const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return el ? el.id || el.tagName : null;
+        });
+        expect(encima).not.toBe('panelesDerecha');
+
+        await page.locator('#langEsBtn').click();
+        await expect(page.locator('#langActual')).toHaveText('Español');
+    });
+
+    test('los demás menús de la barra tampoco quedan tapados', async ({ page }) => {
+        await cargarPo(page);
+
+        for (const [boton, entrada] of [
+            ['#fileBtn', '#loadFileBtn'],
+            ['#toolsBtn', '#shortcutsBtn'],
+            ['#projectBtn', '#recentProjectsBtn'],
+        ]) {
+            await page.locator(boton).click();
+            const tapado = await page.locator(entrada).evaluate((el) => {
+                const r = el.getBoundingClientRect();
+                const encima = document.elementFromPoint(
+                    r.left + r.width / 2,
+                    r.top + r.height / 2,
+                );
+                return !el.contains(encima) && encima !== el;
+            });
+            expect(tapado, `${entrada} queda tapado`).toBe(false);
+            await page.keyboard.press('Escape');
+        }
+    });
+});
+
+test.describe('convertir a .mo solo con un PO', () => {
+    const entradaVisible = (page) =>
+        page.locator('#convertFileMoBtn').evaluate((el) => !el.classList.contains('hidden'));
+
+    test('sin archivo abierto no está', async ({ page }) => {
+        expect(await entradaVisible(page)).toBe(false);
+    });
+
+    test('con un PO está, y con cualquier otro formato no', async ({ page }) => {
+        await cargarPo(page);
+        expect(await entradaVisible(page)).toBe(true);
+
+        await cargarArchivo(page, { nombre: 'notas.txt', contenido: 'Una linea\nOtra linea' });
+        await expect(page.locator('[id^="translation-unit-"]').first()).toBeVisible();
+        expect(await entradaVisible(page)).toBe(false);
+    });
+
+    test('el botón se niega aunque se llegue a él por otro camino', async ({ page }) => {
+        // Esconder algo no es impedirlo: el botón solo miraba si había
+        // segmentos, así que compilaba un .txt como si fuera un PO y salía un
+        // .mo con basura dentro.
+        await cargarArchivo(page, { nombre: 'notas.txt', contenido: 'Una linea\nOtra linea' });
+        await expect(page.locator('[id^="translation-unit-"]').first()).toBeVisible();
+
+        await page.locator('#convertFileMoBtn').evaluate((el) => {
+            el.classList.remove('hidden');
+            el.click();
+        });
+
+        await expect(page.locator('#convertToMoModal')).toBeHidden();
+        await expect(page.locator('#messageBox')).toBeVisible();
+        await expect(page.locator('#messageText')).toContainText(/only po files/i);
+    });
+});
+
+test.describe('la interfaz en español está en español', () => {
+    test('no queda ni una palabra suelta en inglés a la vista', async ({ page }) => {
+        // La clase de fallo que esto caza no rompe nada y por eso se queda
+        // meses: un "segments" en la barra de estado, un saludo del asistente
+        // que se escribió al arrancar y no se rehace al cambiar de idioma.
+        // Solo se mira la interfaz: el texto del archivo que se traduce está en
+        // el idioma que esté, y ahí no manda Poanda.
+        await cambiarIdioma(page, 'es');
+        await cargarPo(page);
+        await page.locator('#toolsBtn').click();
+        await page.locator('#statsBtn').click();
+        await page.locator('#aiBtn').click();
+        await expect(page.locator('#statsContainer')).toBeVisible();
+
+        const enIngles = await page.evaluate(() => {
+            // Palabras que en español no se dicen así. No es una lista de todo
+            // el inglés: son las que aparecerían si algo se quedara sin pasar
+            // por el diccionario.
+            const DELATORAS =
+                /\b(segments?|words?|remaining|progress|loading|failed|settings|glossary|memory|delete|cancel|close|search in|start out empty|paste your key|choose an ai)\b/i;
+
+            const encontrados = [];
+            const anda = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let nodo;
+            while ((nodo = anda.nextNode())) {
+                const texto = nodo.textContent.trim();
+                if (texto.length < 3) continue;
+
+                const el = nodo.parentElement;
+                if (!el) continue;
+                const estilo = getComputedStyle(el);
+                if (estilo.display === 'none' || estilo.visibility === 'hidden') continue;
+                if (el.closest('.hidden')) continue;
+                // El contenido del archivo que se traduce, y el selector de
+                // idioma, que escribe cada idioma en su propio idioma.
+                if (el.closest('.segmento-origen, textarea, .capa-etiquetas')) continue;
+                if (el.closest('.selector-idioma')) continue;
+
+                if (DELATORAS.test(texto)) {
+                    encontrados.push(`${el.id || el.tagName}: ${texto.slice(0, 60)}`);
+                }
+            }
+            return encontrados;
+        });
+
+        expect(enIngles).toEqual([]);
+    });
+
+    test('el saludo del asistente cambia de idioma con la interfaz', async ({ page }) => {
+        await page.locator('#aiBtn').click();
+        const saludo = page.locator('#aiChatContainer .ai-message-bot').first();
+        await expect(saludo).toContainText(/PandaBot/);
+        await expect(saludo).toContainText(/Choose an AI service/i);
+
+        await cambiarIdioma(page, 'es');
+        await expect(saludo).toContainText(/Elige aquí arriba/i);
+    });
+
+    test('la barra de estado dice "segmentos" en español', async ({ page }) => {
+        await cambiarIdioma(page, 'es');
+        await cargarPo(page);
+        await page.locator('#toolsBtn').click();
+        await page.locator('#statsBtn').click();
+
+        await expect(page.locator('#segmentsProgress')).toContainText(/segmentos/);
+        await expect(page.locator('#segmentsProgress')).not.toContainText(/segments/);
     });
 });

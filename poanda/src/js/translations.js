@@ -74,6 +74,7 @@ const translations = {
         no_match_found: 'No match found.',
         replaced_all: 'All occurrences replaced.',
         no_find_query: 'Please enter text to find.',
+        regex_invalida: 'That search is not a valid regular expression: {detalle}',
         loading_file: 'Loading file...',
         saving_file: 'Saving file...',
         terminology_btn: 'Terminology',
@@ -81,7 +82,7 @@ const translations = {
         panels_search_placeholder: 'Search the memory and the glossary',
         panels_notice_dismiss: 'Dismiss',
         panels_vacios:
-            'Both start empty and fill as you work: every segment you validate goes into the memory, and terms go into the glossary as you add them. You can also import a .tmx or a .tbx.',
+            'The translation memory and the glossary above start out empty, and they fill up as you work. Every segment you validate is saved in the translation memory. Every term you add is saved in the glossary. If you already have a memory or a glossary from another job, you can bring it in with the import buttons.',
         panel_collapse: 'Collapse this panel',
         panel_resize_width: 'Drag to make the column wider or narrower',
         panel_resize_split: 'Drag to share the height between memory and glossary',
@@ -130,6 +131,8 @@ const translations = {
         cannot_download_empty_or_unconfigured_glossary:
             'Cannot download an empty or unconfigured glossary.',
         error_loading_tbx_file: 'Error loading TBX file. Make sure it is a valid XML/TBX.',
+        convert_mo_solo_po:
+            'Only PO files can be compiled to .mo. Open a .po file to use this.',
         no_valid_language_pairs_found_in_tbx:
             'No valid language pairs were found in the TBX file. Default values (en-US, es-ES) will be used.',
         statistics_btn: 'Statistics',
@@ -146,7 +149,13 @@ const translations = {
         tm_target_segment: 'Translation:',
         tm_match_score: 'Match:',
         tm_no_match_found: 'No matches found in the TM.',
-        tm_insert_match: 'Insert match',
+        tm_insert_match: 'Insert',
+        tm_banda_exacta: 'Exact match: the source is identical.',
+        tm_banda_alta: 'Very close: one detail changes.',
+        tm_banda_media: 'Similar, but it needs work.',
+        tm_banda_baja: 'Distant: useful to see how something like this was solved.',
+        tm_insignia_busqueda: 'Concordance',
+        tm_banda_busqueda: 'This unit contains what you searched for. There is no percentage here: it is a search, not a comparison with the segment you are on.',
         error_loading_tmx_file: 'Error loading TMX file. Make sure it is a valid XML/TMX.',
         cannot_download_empty_tm: 'Cannot download an empty translation memory.',
         tm_best_match: 'Best TM match:',
@@ -169,6 +178,14 @@ const translations = {
         error_saving_project: 'Error saving project.',
         no_project_to_save: 'There is no active .po file to save as a project.',
         loading_project: 'Loading project...',
+        error_loading_project: 'The project could not be opened. Make sure the file is a valid .poanda.',
+        html_saved_successfully: 'HTML file saved successfully.',
+        error_restoring_session: 'The saved session could not be restored.',
+        changelog_cargando: 'Loading the changelog…',
+        changelog_error_red: 'The changelog could not be loaded. Check your connection.',
+        changelog_error_http: 'The changelog could not be loaded (error {codigo}).',
+        stats_segments_unit: 'segments',
+        glossary_match_title: 'Glossary:',
         project_loaded: 'Project loaded successfully.',
         error_opening_project: 'Error opening project file.',
         invalid_project_file: 'Invalid project file. The zip must contain a .po file.',
@@ -366,7 +383,7 @@ const translations = {
         ai_initial_message:
             "Hi, I'm PandaBot 🐼. Ask me anything — terminology, background on what you are translating — or click Translate for a suggestion on the segment you are in.",
         ai_initial_sin_configurar:
-            "Hi, I'm PandaBot 🐼. Choose an AI service below and paste your key. If you would rather nothing left your computer, pick the local option: no key and no cost.",
+            "Hi, I'm PandaBot 🐼. Choose an AI service above and paste your key. If you would rather nothing left your computer, pick the local option: no key and no cost.",
         ai_link_source: 'Source',
         shortcut_insertLastAI: 'Insert Last AI Response',
         no_ai_response_yet: 'No AI response to insert yet.',
@@ -389,7 +406,7 @@ const translations = {
         ai_initial_message:
             "Hi, I'm PandaBot 🐼. Ask me anything — terminology, background on what you are translating — or click Translate for a suggestion on the segment you are in.",
         ai_initial_sin_configurar:
-            "Hi, I'm PandaBot 🐼. Choose an AI service below and paste your key. If you would rather nothing left your computer, pick the local option: no key and no cost.",
+            "Hi, I'm PandaBot 🐼. Choose an AI service above and paste your key. If you would rather nothing left your computer, pick the local option: no key and no cost.",
         ai_link_source: 'Source',
         shortcut_insertLastAI: 'Insert Last AI Response',
         no_ai_response_yet: 'No AI response to insert yet.',
@@ -468,6 +485,7 @@ const translations = {
         no_match_found: 'No se encontró ninguna coincidencia.',
         replaced_all: 'Todas las ocurrencias reemplazadas.',
         no_find_query: 'Por favor, introduce el texto a buscar.',
+        regex_invalida: 'Esa búsqueda no es una expresión regular válida: {detalle}',
         loading_file: 'Cargando archivo...',
         saving_file: 'Guardando archivo...',
         terminology_btn: 'Terminología',
@@ -475,7 +493,7 @@ const translations = {
         panels_search_placeholder: 'Buscar en la memoria y en el glosario',
         panels_notice_dismiss: 'Cerrar el aviso',
         panels_vacios:
-            'Los dos empiezan vacíos y se llenan según trabajas: cada segmento que validas entra en la memoria, y los términos entran en el glosario según los añades. También puedes importar un .tmx o un .tbx.',
+            'La memoria de traducción y el glosario de aquí arriba empiezan vacíos y se van llenando según trabajas. Cada segmento que validas se guarda en la memoria de traducción. Cada término que añades se guarda en el glosario. Si ya tienes una memoria o un glosario de otro encargo, puedes traerlos con los botones de importar.',
         panel_collapse: 'Plegar este panel',
         panel_resize_width: 'Arrastra para ensanchar o estrechar la columna',
         panel_resize_split: 'Arrastra para repartir el alto entre memoria y glosario',
@@ -523,6 +541,10 @@ const translations = {
             'No se puede descargar un glosario vacío o sin configurar.',
         error_loading_tbx_file:
             'Error al cargar el archivo TBX. Asegúrate de que sea un XML/TBX válido.',
+        convert_mo_solo_po:
+            'Only PO files can be compiled to .mo. Open a .po file to use this.',
+        convert_mo_solo_po:
+            'Solo se pueden compilar a .mo los archivos PO. Abre un .po para usar esto.',
         no_valid_language_pairs_found_in_tbx:
             'No se encontraron pares de idiomas válidos en el archivo TBX. Se usarán los valores por defecto (en-US, es-ES).',
         statistics_btn: 'Estadísticas',
@@ -539,7 +561,13 @@ const translations = {
         tm_target_segment: 'Traducción:',
         tm_match_score: 'Coincidencia:',
         tm_no_match_found: 'No se encontraron coincidencias en la TM.',
-        tm_insert_match: 'Insertar coincidencia',
+        tm_insert_match: 'Insertar',
+        tm_banda_exacta: 'Coincidencia exacta: el original es idéntico.',
+        tm_banda_alta: 'Casi igual: cambia un detalle.',
+        tm_banda_media: 'Se parece, pero hay que trabajarla.',
+        tm_banda_baja: 'Lejana: sirve para ver cómo se resolvió algo parecido.',
+        tm_insignia_busqueda: 'Concordancia',
+        tm_banda_busqueda: 'Esta unidad contiene lo que has buscado. Aquí no hay porcentaje: es una búsqueda, no una comparación con el segmento en el que estás.',
         error_loading_tmx_file:
             'Error al cargar el archivo TMX. Asegúrate de que sea un XML/TMX válido.',
         cannot_download_empty_tm: 'No se puede descargar una memoria de traducción vacía.',
@@ -560,6 +588,14 @@ const translations = {
         error_saving_project: 'Error al guardar el proyecto.',
         no_project_to_save: 'No hay ningún archivo .po activo para guardar como proyecto.',
         loading_project: 'Cargando proyecto...',
+        error_loading_project: 'No se ha podido abrir el proyecto. Comprueba que el archivo sea un .poanda válido.',
+        html_saved_successfully: 'Archivo HTML guardado correctamente.',
+        error_restoring_session: 'No se ha podido recuperar la sesión guardada.',
+        changelog_cargando: 'Cargando el changelog…',
+        changelog_error_red: 'No se ha podido cargar el changelog. Comprueba tu conexión.',
+        changelog_error_http: 'No se ha podido cargar el changelog (error {codigo}).',
+        stats_segments_unit: 'segmentos',
+        glossary_match_title: 'Glosario:',
         project_loaded: 'Proyecto cargado con éxito.',
         error_opening_project: 'Error al abrir el archivo del proyecto.',
         invalid_project_file: 'Archivo de proyecto no válido. El zip debe contener un archivo .po.',
@@ -754,7 +790,7 @@ const translations = {
         ai_initial_message:
             'Hola, soy PandaBot 🐼. Pregúntame lo que quieras —terminología, documentarte sobre lo que estás traduciendo— o pulsa Traducir para una sugerencia del segmento en el que estés.',
         ai_initial_sin_configurar:
-            'Hola, soy PandaBot 🐼. Elige aquí abajo un servicio de IA y pega tu clave. Si prefieres que nada salga de tu ordenador, elige la opción local: sin clave y sin coste.',
+            'Hola, soy PandaBot 🐼. Elige aquí arriba un servicio de IA y pega tu clave. Si prefieres que nada salga de tu ordenador, elige la opción local: sin clave y sin coste.',
         ai_link_source: 'Fuente',
         shortcut_insertLastAI: 'Insertar última respuesta de IA',
         no_ai_response_yet: 'Aún no hay respuesta de la IA para insertar.',
@@ -777,7 +813,7 @@ const translations = {
         ai_initial_message:
             'Hola, soy PandaBot 🐼. Pregúntame lo que quieras —terminología, documentarte sobre lo que estás traduciendo— o pulsa Traducir para una sugerencia del segmento en el que estés.',
         ai_initial_sin_configurar:
-            'Hola, soy PandaBot 🐼. Elige aquí abajo un servicio de IA y pega tu clave. Si prefieres que nada salga de tu ordenador, elige la opción local: sin clave y sin coste.',
+            'Hola, soy PandaBot 🐼. Elige aquí arriba un servicio de IA y pega tu clave. Si prefieres que nada salga de tu ordenador, elige la opción local: sin clave y sin coste.',
         ai_link_source: 'Fuente',
         shortcut_insertLastAI: 'Insertar última respuesta de IA',
         no_ai_response_yet: 'Aún no hay respuesta de la IA para insertar.',

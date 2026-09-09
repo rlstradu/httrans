@@ -1,5 +1,5 @@
 =======================================
-Poanda v2.0.1 - A Real Glossary, and Room to Use It
+Poanda v2.1.0 - A Real Glossary, and Room to Use It
 Release Date: September 8, 2026
 =======================================
 
@@ -64,8 +64,31 @@ name in the tooltip; the language pair is a globe rather than the sentence
 step smaller than the rest of Poanda, which is three or four more rows of
 matches and terms per panel at the same width.
 
+Memory Matches Are Cards, Not Table Rows: a match used to be a row of a
+three-column table — score, source, translation — inside a panel about 300
+pixels wide, which left each cell around a hundred: not enough for a
+sentence, so every one broke every two words. Each match is now a card the
+full width of the panel, laid out the way you read one: the percentage and
+an Insert button on top, the source underneath, the translation last. The
+percentage carries the colour of its band, and what the band means in words
+is in its tooltip rather than taking a line of its own.
+
+Only Matches Worth Reading: the memory returns a similarity for every unit
+it holds, and Poanda showed all of them. With a memory you had actually
+worked with, that meant matches of 12% — two sentences with nothing in
+common — burying the one that was any use, which is always the first.
+Anything below 50% is now left out, and at most five are shown. The
+threshold and the limit are the same as Locversia's.
+
+Differences are marked word by word instead of letter by letter: splitting
+"translation" into "trans|la|tion" told you nothing you could act on, and on
+a distant match it filled the panel with red and green confetti. Searching
+the memory marks what you searched for instead, and the badge says
+Concordance rather than inventing a percentage: comparing a word you typed
+against a whole sentence gives a number that means nothing.
+
 Tables That Only Appear When They Have Something to Show: the memory's
-results table is there when there are matches or when you have typed in its
+results are there when there are matches or when you have typed in its
 search box, and not before. The glossary's list, likewise, once it has a
 term.
 
@@ -138,6 +161,38 @@ could not be clicked. Both columns now stop above it.
 
 The panels had two X's each — one written into the page and another added on
 top when the tool started.
+
+Inserting a match with the mouse works. Pressing the button took the cursor
+out of the segment before the click arrived, and with no cursor there was
+nowhere to insert: the button did nothing at all unless you used its
+keyboard shortcut.
+
+The menus in the top bar open above the consultation column. They were being
+painted underneath it, so with the panels open the language menu could be
+seen but not clicked, and there was no way to switch language without hiding
+the panels first.
+
+The Spanish interface is fully in Spanish. The status bar counted your
+progress in "segments" with the word written into the code in English, so it
+stayed English whatever language you were in. PandaBot's greeting was
+written once when Poanda started and never rewritten, so switching language
+left the assistant talking English inside a Spanish interface. The changelog
+window spoke Spanish whatever language you were in, and four messages —
+saving an HTML file, restoring a saved session, opening a project, an
+invalid search pattern — existed in one language only. One of them asked for
+a phrase that was not in the dictionary at all, which showed the user a bare
+"Error".
+
+There is now a test that fails if the two languages stop having the same
+keys, if anything asks for a key that does not exist, if a placeholder like
+{count} is lost in translation, or if a visible phrase is written into the
+code instead of the dictionary. This is the kind of fault that breaks
+nothing and therefore survives for months.
+
+Convert to .mo refuses anything that is not a PO. The menu entry already
+appeared only with a PO open, but the button behind it checked merely that
+some file was loaded: reaching it any other way compiled a .txt or a .json as
+though it were a PO, and produced a .mo with rubbish inside.
 
 =======================================
 Poanda v2.0.0 - From PO Editor to CAT Tool

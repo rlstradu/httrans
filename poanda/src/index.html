@@ -97,7 +97,7 @@
                 <!-- El texto del botón de tema lo pone theme.js: depende del
                      modo activo, no solo del idioma. -->
                 <button id="darkModeToggle" class="control-barra">Dark mode</button>
-                <button id="versionToggle" class="control-barra" data-i18n-title="changelog_btn_title">v2.0.1</button>
+                <button id="versionToggle" class="control-barra" data-i18n-title="changelog_btn_title">v2.1.0</button>
             </div>
         </div>
 
@@ -300,7 +300,11 @@
                             <button id="memoriaParIdiomas" class="par-del-proyecto" type="button" data-i18n-title="lang_pair_title"><span class="par-del-proyecto-icono" aria-hidden="true"></span><span class="par-del-proyecto-texto" id="memoriaParIdiomasTexto"></span></button>
                             <div id="tmResultados" class="hidden">
                                 <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="tm_search_results_title" id="tmSearchResultsTitle"></h4>
-                                <div class="overflow-x-auto mb-4"><table class="tm-table w-full"><thead><tr><th data-i18n="tm_score_col" id="tmScoreCol"></th><th data-i18n="tm_original_col" id="tmOriginalCol"></th><th data-i18n="tm_translation_col" id="tmTranslationCol"></th></tr></thead><tbody id="tmSearchResultsTableBody"></tbody></table></div>
+                                <!-- Una tarjeta por coincidencia, no una tabla de
+                                     tres columnas: en media columna, cada celda
+                                     medía cien píxeles y el texto salía cortado
+                                     cada dos palabras. -->
+                                <div id="tmResultadosLista" class="tm-lista"></div>
                             </div>
                             <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="text-center text-gray-500 p-4 border border-gray-300 rounded-md hidden"></div>
                         </div>
@@ -472,13 +476,13 @@
                          contenido llega ya con su estructura (títulos,
                          secciones y listas), así que necesita un contenedor
                          normal donde el texto pueda fluir. -->
-                    <div id="changelogContent" class="changelog-cuerpo">Cargando...</div>
+                    <div id="changelogContent" class="changelog-cuerpo"></div>
                 </div>
             </div>
         </div>
         </div>
 
-    <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]"><div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2"><p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress">0/0 segments (0%)</span></p><p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p><p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p></div></div>
+    <div id="statsContainer" class="fixed bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200 shadow-lg z-[900]"><div class="max-w-7xl mx-auto text-sm text-center text-gray-700 flex flex-wrap justify-center md:justify-around items-center gap-x-6 gap-y-2"><p><strong class="font-semibold" data-i18n="stats_progress_label"></strong> <span id="segmentsProgress"></span></p><p><strong class="font-semibold" data-i18n="stats_words_label"></strong> <span id="wordsTranslated">0</span> / <span id="wordsTotal">0</span></p><p><strong class="font-semibold" data-i18n="stats_remaining_label"></strong> <span id="wordsRemaining">0</span></p></div></div>
     <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"></div><p id="loadingMessage"></p></div>
 
     <!-- La tarjeta que sale al pasar el ratón por un término resaltado. Vive

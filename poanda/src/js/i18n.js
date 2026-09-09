@@ -1,6 +1,8 @@
 import { aiSidebar, centralColumn, terminologySidebar, translationMemorySidebar } from './dom.js';
 import { renderTranslations } from './editor.js';
+import { retraducirSaludoDeIA } from './ai.js';
 import { renderGlossary } from './glossary.js';
+import { updateStatsDisplay } from './stats.js';
 import { state } from './state.js';
 import { actualizarBotonTema } from './theme.js';
 import { translations } from './translations.js';
@@ -30,6 +32,13 @@ function setLanguage(lang) {
     actualizarBotonTema();
     renderTranslations(state.poEntries);
     renderGlossary();
+    // La barra de estadísticas lleva dentro la palabra "segmentos", así que hay
+    // que rehacerla: si no, se queda en el idioma anterior hasta que cambie
+    // alguna cuenta.
+    updateStatsDisplay();
+    // El saludo de PandaBot se escribió una vez al arrancar y se quedaba en el
+    // idioma de entonces, con toda la interfaz alrededor ya cambiada.
+    retraducirSaludoDeIA();
 }
 
 function updateTextContent() {

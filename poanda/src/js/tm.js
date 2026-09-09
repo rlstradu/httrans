@@ -5,8 +5,10 @@ import {
     tmInternalMessage,
     tmNoMatchFoundMessage,
     buscarPaneles,
-    tmSearchResultsTableBody,
+    tmResultadosLista,
 } from './dom.js';
+import { escaparHtml } from './core/xml.js';
+import { bandaDeCoincidencia, coincidenciasQueValen } from './core/tm-coincidencias.js';
 import { mismoIdioma } from './core/idiomas.js';
 import { pintarParDelProyecto } from './idiomas-proyecto.js';
 import { avisarSiEstanVacios } from './paneles.js';
@@ -275,43 +277,164 @@ function tmSearch() {
         return true;
     });
 
-    filteredTM.forEach((entry) => {
+    const puntuadas = filteredTM.map((entry) => {
         let score = 0;
         if (query) {
             score = calculateSimilarity(query, entry.srcText);
         } else if (activeSegmentOriginalText) {
             score = calculateSimilarity(activeSegmentOriginalText, entry.srcText);
         }
-        resultsToRender.push({ ...entry, score: score.toFixed(0) });
+        return { ...entry, score: Number(score.toFixed(0)) };
     });
 
-    resultsToRender.sort((a, b) => {
-        if (a.isBestMatch) return -1;
-        if (b.isBestMatch) return 1;
+    // Buscando, vale cualquier unidad que contenga lo buscado: el parecido con
+    // la frase entera no dice nada cuando lo que se busca es una palabra.
+    // Sin buscar, se comparan con el segmento en el que se está, y ahí sí hay
+    // que poner un mínimo: la memoria devuelve un parecido para CADA unidad que
+    // tiene dentro, así que sin filtro salían coincidencias del 12 % —dos
+    // frases sin nada en común— empujando hacia abajo la que servía.
+    const utiles = query
+        ? puntuadas.sort((a, b) => a.srcText.localeCompare(b.srcText))
+        : coincidenciasQueValen(puntuadas);
 
-        if (b.score !== a.score) {
-            return b.score - a.score;
-        }
-        return a.srcText.localeCompare(b.srcText);
-    });
-
+    resultsToRender.push(...utiles);
     state.currentTMLatestSearchResults = resultsToRender;
     renderTMSearchResults(resultsToRender, activeSegmentOriginalText);
 }
 
+/**
+ * Marca en el original de la memoria lo que cambia respecto al segmento actual.
+ *
+ * Lo que se ve tachado sobra en el segmento de ahora; lo subrayado falta. Es lo
+ * que hay que mirar para decidir si una coincidencia sirve tal cual o hay que
+ * retocarla, y por eso va en el original y no en la traducción.
+ *
+ * @param {string} original El de la memoria.
+ * @param {string} actual El del segmento en el que se está.
+ * @returns {string} HTML ya escapado.
+ */
+function marcarDiferencias(original, actual) {
+    if (!actual || typeof Diff === 'undefined') return escaparHtml(original);
+
+    return Diff.diffWords(original, actual)
+        .map((trozo) => {
+            const texto = escaparHtml(trozo.value);
+            if (trozo.added) return `<ins class="tm-diff-mas">${texto}</ins>`;
+            if (trozo.removed) return `<del class="tm-diff-menos">${texto}</del>`;
+            return texto;
+        })
+        .join('');
+}
+
+/**
+ * Resalta lo buscado dentro de un texto.
+ *
+ * Cuando se busca en la memoria, un diff no tiene sentido: no se compara con
+ * ningún segmento, se busca una palabra. Lo que ayuda es ver dónde está.
+ *
+ * @param {string} texto
+ * @param {string} buscado
+ * @returns {string} HTML ya escapado.
+ */
+function resaltarLoBuscado(texto, buscado) {
+    const cadena = String(texto ?? '');
+    const aguja = String(buscado ?? '').trim();
+    if (!aguja) return escaparHtml(cadena);
+
+    const busca = new RegExp(aguja.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    let html = '';
+    let ultimo = 0;
+    let encontrado;
+    while ((encontrado = busca.exec(cadena)) !== null) {
+        html += escaparHtml(cadena.slice(ultimo, encontrado.index));
+        html += `<mark class="tm-encontrado">${escaparHtml(encontrado[0])}</mark>`;
+        ultimo = encontrado.index + encontrado[0].length;
+        if (encontrado[0] === '') break;
+    }
+    return html + escaparHtml(cadena.slice(ultimo));
+}
+
+/**
+ * Una tarjeta de coincidencia.
+ *
+ * La forma viene de Locversia, que resuelve el mismo problema en el mismo
+ * sitio: una columna estrecha. Arriba la insignia con el porcentaje y el botón
+ * de insertar; debajo el original a todo lo ancho, y debajo la traducción. La
+ * tabla de tres columnas que había antes dejaba cada celda en unos cien
+ * píxeles, y ahí no cabe una frase: salía cortada cada dos palabras, y el diff
+ * entre ellas era confeti.
+ *
+ * @param {Object} entrada Unidad de la memoria, con su puntuación.
+ * @param {string} original Texto del segmento en el que se está.
+ * @param {string} buscado Lo que se haya escrito en el buscador.
+ * @returns {HTMLElement}
+ */
+function tarjetaDeCoincidencia(entrada, original, buscado) {
+    const t = translations[state.currentLanguage];
+    const puntuacion = Math.round(Number(entrada.score) || 0);
+    // Buscando, el porcentaje no significa nada: se compara lo escrito en el
+    // buscador con la unidad entera, así que buscar "archivo" en una frase
+    // larga da un 12 % que parece una coincidencia malísima cuando en realidad
+    // es justo lo que se pedía. En ese modo la insignia dice "concordancia".
+    const banda = buscado ? 'busqueda' : bandaDeCoincidencia(puntuacion);
+    const insignia = buscado ? escaparHtml(t['tm_insignia_busqueda'] || '') : `${puntuacion}%`;
+
+    const tarjeta = document.createElement('div');
+    tarjeta.className = `tm-tarjeta tm-banda-${banda}`;
+    if (entrada.isBestMatch) tarjeta.classList.add('tm-tarjeta-mejor');
+
+    // Buscando se resalta lo buscado; sin buscar, se marca lo que cambia
+    // respecto al segmento en el que se está.
+    const origenHtml = buscado
+        ? resaltarLoBuscado(entrada.srcText, buscado)
+        : marcarDiferencias(entrada.srcText, original);
+
+    tarjeta.innerHTML = `
+        <div class="tm-tarjeta-cabecera">
+            <span class="tm-insignia" title="${escaparHtml(t[`tm_banda_${banda}`] || '')}">${insignia}</span>
+            <button type="button" class="tm-insertar">${escaparHtml(t['tm_insert_match'] || '')}</button>
+        </div>
+        <p class="tm-tarjeta-origen">${origenHtml}</p>
+        <p class="tm-tarjeta-destino">${escaparHtml(entrada.tgtText || '')}</p>`;
+
+    const boton = tarjeta.querySelector('.tm-insertar');
+    // Pulsar un botón saca el cursor del segmento antes de que llegue el clic, y
+    // sin cursor no hay dónde insertar: con el ratón el botón no hacía nada.
+    // Cancelando el mousedown, el foco no se mueve y el texto va a su sitio.
+    boton.addEventListener('mousedown', (evento) => evento.preventDefault());
+    boton.addEventListener('click', () => {
+        insertarCoincidencia(entrada.tgtText);
+    });
+
+    return tarjeta;
+}
+
+/**
+ * Mete la traducción de una coincidencia en el segmento en el que se está.
+ *
+ * @param {string} traduccion
+ */
+function insertarCoincidencia(traduccion) {
+    const donde = getCurrentFocusedIndex() || state.lastFocusedSegment;
+    if (!donde) return;
+
+    const campo = document.getElementById(`msgstr-${donde.entryIndex}-${donde.segmentIndex}`);
+    if (!campo || campo.readOnly) return;
+
+    campo.value = traduccion;
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+    campo.focus();
+}
+
 function renderTMSearchResults(results, activeSegmentOriginalText) {
-    if (!tmSearchResultsTableBody) {
-        console.warn(
-            'tmSearchResultsTableBody element not found. Cannot render TM search results.',
-        );
+    if (!tmResultadosLista) {
+        console.warn('tmResultadosLista element not found. Cannot render TM search results.');
         return;
     }
-    tmSearchResultsTableBody.innerHTML = '';
+    tmResultadosLista.innerHTML = '';
 
-    // La tabla solo sale cuando tiene algo que enseñar: o hay coincidencias, o
-    // se ha escrito algo en el buscador y merece decirse que no hay ninguna. Una
-    // tabla con dos cabeceras y ninguna fila, permanente, es un hueco vacío
-    // ocupando la mitad de un panel que ahora comparte columna con otro.
+    // La lista solo sale cuando tiene algo que enseñar: o hay coincidencias, o
+    // se ha escrito algo en el buscador y merece decirse que no hay ninguna.
     const buscando = Boolean(buscarPaneles?.value.trim());
     document
         .getElementById('tmResultados')
@@ -326,53 +449,16 @@ function renderTMSearchResults(results, activeSegmentOriginalText) {
             tmNoMatchFoundMessage.classList.toggle('hidden', vacia || !buscando);
         }
         return;
-    } else {
-        if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');
     }
+
+    if (tmNoMatchFoundMessage) tmNoMatchFoundMessage.classList.add('hidden');
     hideTMInternalMessage();
 
-    results.forEach((entry) => {
-        const row = document.createElement('tr');
-        if (entry.isBestMatch) {
-            row.classList.add('tm-best-match-highlight');
-        }
-
-        let originalCellHtml = '';
-        if (activeSegmentOriginalText) {
-            const differences = Diff.diffChars(entry.srcText, activeSegmentOriginalText);
-            originalCellHtml = differences
-                .map((part) => {
-                    const className = part.added
-                        ? 'diff-added'
-                        : part.removed
-                          ? 'diff-removed'
-                          : 'diff-common';
-                    return `<span class="${className}">${part.value}</span>`;
-                })
-                .join('');
-        } else {
-            originalCellHtml = entry.srcText;
-        }
-
-        row.innerHTML = `
-                    <td>${entry.score}%</td>
-                    <td><pre class="whitespace-pre-wrap">${originalCellHtml}</pre></td>
-                    <td><pre class="whitespace-pre-wrap">${entry.tgtText}</pre></td>
-                `;
-        row.addEventListener('click', () => {
-            const currentFocused = getCurrentFocusedIndex();
-            if (currentFocused) {
-                const targetTextarea = document.getElementById(
-                    `msgstr-${currentFocused.entryIndex}-${currentFocused.segmentIndex}`,
-                );
-                if (targetTextarea && !targetTextarea.readOnly) {
-                    targetTextarea.value = entry.tgtText;
-                    const event = new Event('input', { bubbles: true });
-                    targetTextarea.dispatchEvent(event);
-                }
-            }
-        });
-        tmSearchResultsTableBody.appendChild(row);
+    const buscado = buscando ? buscarPaneles.value.trim() : '';
+    results.forEach((entrada) => {
+        tmResultadosLista.appendChild(
+            tarjetaDeCoincidencia(entrada, activeSegmentOriginalText, buscado),
+        );
     });
 }
 

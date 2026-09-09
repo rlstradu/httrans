@@ -73,9 +73,9 @@ async function saveHtmlFile() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showMessage('HTML saved successfully.');
+        showMessage(translations[state.currentLanguage]['html_saved_successfully']);
     } catch (error) {
-        showMessage('Error saving HTML: ' + error.message);
+        showMessage(`${translations[state.currentLanguage]['error_saving_file']} ${error.message}`);
     } finally {
         hideLoadingOverlay();
     }
@@ -356,6 +356,22 @@ async function guardarArchivoActual() {
  * a .mo" solo aparece con un archivo PO, que es el único formato que gettext
  * sabe compilar.
  */
+/**
+ * ¿Lo que hay abierto es un PO?
+ *
+ * Compilar a .mo solo tiene sentido con un PO: es lo único que compila
+ * gettext. Esta pregunta la hacen dos sitios —el menú, para enseñar o esconder
+ * la entrada, y el propio botón, antes de abrir el conversor— y tiene que dar
+ * la misma respuesta en los dos. El botón solo miraba si había segmentos, así
+ * que un .txt o un .json abierto se dejaba "compilar": salía un .mo con
+ * basura dentro, que es peor que no salir.
+ *
+ * @returns {boolean}
+ */
+function hayUnPoAbierto() {
+    return state.poEntries.length > 0 && (state.currentFileType || 'po') === 'po';
+}
+
 function updateSaveButtonsState() {
     const hayContenido = state.poEntries.length > 0;
 
@@ -363,9 +379,7 @@ function updateSaveButtonsState() {
     // reduce a la esquina y la descripción de la herramienta desaparece.
     document.body.classList.toggle('con-proyecto', hayContenido);
 
-    // Convertir a .mo solo tiene sentido con un PO: es lo único que compila
-    // gettext. Sin archivo abierto, Poanda parte de PO por defecto.
-    const esPo = hayContenido && (state.currentFileType || 'po') === 'po';
+    const esPo = hayUnPoAbierto();
 
     const guardar = document.getElementById('saveFileBtn');
     const convertir = document.getElementById('convertFileMoBtn');
@@ -495,6 +509,7 @@ export {
     abrirArchivo,
     elegirYAbrirArchivo,
     guardarArchivoActual,
+    hayUnPoAbierto,
     processFile,
     processPoContent,
     saveHtmlFile,

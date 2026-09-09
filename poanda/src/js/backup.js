@@ -147,7 +147,7 @@ async function restoreSession(backupData = null) {
             updateSaveButtonsState();
         }
     } catch (error) {
-        showMessage('Failed to restore session.');
+        showMessage(translations[state.currentLanguage]['error_restoring_session']);
         console.error(error);
     } finally {
         restoreBackupModal.classList.add('hidden');

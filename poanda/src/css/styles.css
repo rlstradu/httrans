@@ -156,15 +156,12 @@
 
         /* 4. TABLAS */
         body.dark-mode .glossary-table th,
-        body.dark-mode .glossary-table td,
-        body.dark-mode .tm-table th,
-        body.dark-mode .tm-table td {
+        body.dark-mode .glossary-table td {
             background-color: #1f2937 !important;
             border-color: #374151 !important;
             color: #d1d5db !important;
         }
-        body.dark-mode .glossary-table th,
-        body.dark-mode .tm-table th {
+        body.dark-mode .glossary-table th {
             background-color: #111827 !important;
         }
         body.dark-mode .glossary-row-highlight {
@@ -647,13 +644,93 @@
         .glossary-btn-secondary:hover, .tm-btn-secondary:hover { background-color: #d0d0d0; }
         .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 2px 7px; border-radius: 4px; font-size: var(--texto-meta); }
         .glossary-delete-btn:hover, .tm-delete-btn:hover { background-color: #da190b; }
-        .glossary-table th, .glossary-table td, .tm-table th, .tm-table td { padding: 4px 7px; border: 1px solid #e0e0e0; font-size: var(--texto-meta); }
-        .glossary-table th, .tm-table th { background-color: #f0f0f0; font-weight: 600; }
-        
-        .tm-table {
-            table-layout: fixed;
-            width: 100%;
+        .glossary-table th, .glossary-table td { padding: 4px 7px; border: 1px solid #e0e0e0; font-size: var(--texto-meta); }
+        .glossary-table th { background-color: #f0f0f0; font-weight: 600; }
+
+        /* LAS COINCIDENCIAS DE LA MEMORIA
+           ================================
+
+           Antes era una tabla de tres columnas (porcentaje, original,
+           traducción) dentro de un panel estrecho. Con ese ancho, cada celda
+           partía el texto en cinco o seis líneas de dos palabras, y el original
+           venía marcado carácter a carácter, así que una coincidencia mala se
+           veía como confeti rojo y verde entre letras sueltas.
+
+           Ahora cada coincidencia es una tarjeta, como en Locversia: el
+           porcentaje y el botón de insertar arriba, el original debajo y la
+           traducción al final, cada cosa en su línea y a todo el ancho. Se lee
+           de arriba abajo, que es como se mira una coincidencia: primero cuánto
+           se parece, luego en qué se diferencia, luego qué se puso. */
+        .tm-lista { display: flex; flex-direction: column; gap: 8px; }
+
+        .tm-tarjeta {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            /* El canto izquierdo lleva el color de la banda: en una lista de
+               cinco, dice de un vistazo cuáles valen sin leer el porcentaje. */
+            border-left: 3px solid var(--color-neutral-gray);
+            border-radius: 6px;
+            padding: 8px 10px;
         }
+
+        .tm-tarjeta-cabecera {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; margin-bottom: 6px;
+        }
+
+        /* El porcentaje. La etiqueta en palabras ("coincidencia exacta") va en
+           el title y no en la tarjeta: en una columna estrecha ocuparía la
+           línea entera y dejaría al botón de insertar sin sitio. */
+        .tm-insignia {
+            font-size: var(--texto-meta); font-weight: 700; line-height: 1;
+            padding: 3px 7px; border-radius: 4px;
+            border: 1px solid currentColor; background-color: transparent;
+            color: var(--color-neutral-gray);
+            cursor: help; flex-shrink: 0;
+        }
+
+        .tm-insertar {
+            font-size: var(--texto-meta); font-weight: 600;
+            padding: 3px 9px; border-radius: 4px;
+            background-color: var(--color-primary); color: var(--color-dark);
+            flex-shrink: 0; transition: background-color 0.2s;
+        }
+        .tm-insertar:hover { background-color: #e07a82; }
+
+        .tm-tarjeta-origen, .tm-tarjeta-destino {
+            font-size: var(--texto-meta); line-height: 1.45;
+            margin: 0; overflow-wrap: anywhere;
+        }
+        /* El original es la referencia; la traducción es lo que se va a copiar,
+           así que va en el color del texto normal y con algo más de peso. */
+        .tm-tarjeta-origen { color: var(--color-neutral-gray); margin-bottom: 4px; }
+        .tm-tarjeta-destino { color: var(--color-dark); font-weight: 500; }
+
+        /* Las cuatro bandas. Los colores no son nuevos: el verde es el de
+           .diff-added, el rosa es el de la marca, el ámbar es el del glosario y
+           el gris es el de los textos secundarios. */
+        .tm-banda-exacta { border-left-color: #22863a; }
+        .tm-banda-exacta .tm-insignia { color: #22863a; }
+        .tm-banda-alta { border-left-color: var(--color-primary); }
+        .tm-banda-alta .tm-insignia { color: #E23B5D; }
+        .tm-banda-media { border-left-color: var(--color-secondary); }
+        .tm-banda-media .tm-insignia { color: #92400e; }
+        .tm-banda-baja { border-left-color: var(--color-neutral-gray); }
+        /* Resultados de una búsqueda: no hay banda que valga, porque no hay
+           parecido que medir. Gris, como lo "bajo". */
+        .tm-banda-busqueda { border-left-color: var(--color-neutral-gray); }
+
+        /* La coincidencia que la memoria propone para el segmento actual. */
+        .tm-tarjeta-mejor { box-shadow: 0 0 0 2px rgba(244, 135, 144, 0.35); }
+
+        /* En qué se diferencia el original guardado del que se está
+           traduciendo. Se marca por palabras, no por letras: partir "traducción"
+           en "tra|duc|ción" no dice nada que sirva para decidir. */
+        .tm-diff-mas { background-color: #e6ffed; color: #22863a; border-radius: 3px; padding: 0 2px; }
+        .tm-diff-menos { background-color: #ffebe9; color: #b31d28; text-decoration: line-through; border-radius: 3px; padding: 0 2px; }
+        /* Buscando en la memoria no hay con qué comparar, así que en vez del
+           diff se resalta lo que se ha escrito en el buscador. */
+        .tm-encontrado { background-color: var(--color-secondary); color: var(--color-dark); border-radius: 3px; padding: 0 2px; }
 
         .glossary-info-box, .tm-info-box { background-color: #fef3c7; border: 1px solid var(--color-secondary); padding: 10px; border-radius: 6px; font-size: var(--texto-meta); color: var(--color-dark); }
         /* El amarillo del glosario. Está en todo el archivo, no solo en el
@@ -975,10 +1052,6 @@
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; font-size: var(--texto-base); color: #333; }
         .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--color-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 70px; text-align: center; }
-.tm-table th:nth-child(2), .tm-table td:nth-child(2) { width: 50%; }
-.tm-table th:nth-child(3), .tm-table td:nth-child(3) { width: 50%; }
-        .tm-best-match-highlight { background-color: #fce7f3 !important; border-color: var(--color-primary) !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(244, 135, 144, 0.25); }
         /* El panel no anima nada al arrastrar un archivo encima: el resaltado lo
            pone la zona de soltar, no el panel. (Aquí había además un
            `max-width: 90%` de cuando el panel era una tarjeta centrada; se quitó
@@ -1081,7 +1154,14 @@
            controles de los extremos quedaban pegados al filo de la ventana.
            El valor lateral es el mismo relleno que tiene el panel (2rem), para
            que todo quede alineado en la misma línea vertical. */
-        .top-utility-buttons-container { position: absolute; top: 1.5rem; left: 2rem; right: 2rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
+        /* La barra de arriba, por encima de las columnas del editor.
+           Sin esta línea, los menús que se despliegan desde ella (idioma,
+           Archivo, Herramientas, Proyecto) salen pintados DEBAJO de la columna
+           de memoria y glosario: se ven, pero el clic se lo queda la columna y
+           no hay manera de cambiar de idioma con los paneles abiertos. La
+           columna se pinta después en la página y está posicionada, así que
+           sin un z-index que lo diga, gana ella. */
+        .top-utility-buttons-container { position: absolute; z-index: 20; top: 1.5rem; left: 2rem; right: 2rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
         .top-utility-buttons-container button, .top-utility-buttons-container .dropdown-btn { font-size: var(--texto-base); white-space: nowrap; padding-left: 0.75rem; padding-right: 0.75rem; background-color: var(--color-white); color: var(--color-dark); border: 1px solid #d1d5db; }
         .top-utility-buttons-container button:hover, .top-utility-buttons-container .dropdown-btn:hover { background-color: #f9fafb; }
         .utility-btn-active { background-color: var(--color-dark) !important; color: var(--color-white) !important; border-color: var(--color-dark) !important; }
@@ -1106,8 +1186,6 @@
         .selector-idioma .dropdown-content a.active-lang::after { content: '✓'; }
         #statsContainer { transform: translateY(100%); transition: transform 0.3s ease-in-out; }
         #statsContainer.show { transform: translateY(0); }
-        .diff-added { background-color: #e6ffed; color: #22863a; padding: 1px 2px; border-radius: 3px; }
-        .diff-removed { background-color: #ffebe9; color: #b31d28; text-decoration: line-through; padding: 1px 2px; border-radius: 3px; }
         /* El punto verde de "hay copia guardada" vive dentro de la entrada
            Backup del menú Archivo, pegado al borde derecho de la fila. */
         #backupBtn { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -1355,16 +1433,24 @@ body.dark-mode .segmento-fuzzy { color: #fde68a; }
    gris oscuro y deja de leerse como "hecho". */
 body.dark-mode .segmento-check.validado .check-icon { color: #4ade80; }
 
-/* Comparación de textos (lo que se añadió y lo que se quitó). */
-body.dark-mode .diff-added { background-color: #14532d; color: #bbf7d0; }
-body.dark-mode .diff-removed { background-color: #7f1d1d; color: #fecaca; }
-
-/* Mejor coincidencia de la memoria de traducción: era un rosa pálido de
-   fondo blanco sobre una fila que en oscuro ya es gris marengo. */
-body.dark-mode .tm-best-match-highlight {
-    background-color: #4c1d24 !important;
-    box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.3);
-}
+/* TARJETAS DE LA MEMORIA EN OSCURO
+   El fondo, el borde y los dos colores de texto salen de las variables, que
+   ya cambian solas con el modo. Lo que hay que repasar aquí son los colores
+   fijos: los de las bandas y los del diff, que están pensados para verse
+   sobre blanco y sobre gris marengo o deslumbran o desaparecen. */
+body.dark-mode .tm-tarjeta { background-color: #1f2937; }
+body.dark-mode .tm-banda-exacta,
+body.dark-mode .tm-banda-exacta .tm-insignia { border-left-color: #4ade80; color: #4ade80; }
+body.dark-mode .tm-banda-alta .tm-insignia { color: #fb7185; }
+body.dark-mode .tm-banda-media,
+body.dark-mode .tm-banda-media .tm-insignia { border-left-color: #fcd34d; color: #fcd34d; }
+body.dark-mode .tm-tarjeta-mejor { box-shadow: 0 0 0 2px rgba(190, 18, 60, 0.55); }
+/* El botón de insertar usa el rosa de marca, que en oscuro es granate: sobre
+   él la letra tiene que ser clara, no el gris oscuro de siempre. */
+body.dark-mode .tm-insertar { color: #f3f4f6; }
+body.dark-mode .tm-diff-mas { background-color: #14532d; color: #bbf7d0; }
+body.dark-mode .tm-diff-menos { background-color: #7f1d1d; color: #fecaca; }
+body.dark-mode .tm-encontrado { background-color: #b45309; color: #fef3c7; }
 
 /* Recuadro de soltar archivos: le faltaban los textos secundarios y la
    etiqueta de .poanda, que se quedaban en rosa pálido sobre gris. */

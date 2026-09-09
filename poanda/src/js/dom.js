@@ -159,7 +159,7 @@ const closeTranslationMemorySidebarBtn = document.getElementById(
 
 const tmFileInput = document.getElementById('tmFileInput');
 
-const tmSearchResultsTableBody = document.getElementById('tmSearchResultsTableBody');
+const tmResultadosLista = document.getElementById('tmResultadosLista');
 
 const tmNoMatchFoundMessage = document.getElementById('tmNoMatchFoundMessage');
 
@@ -269,7 +269,7 @@ export {
     tmFileInput,
     tmInternalMessage,
     tmNoMatchFoundMessage,
-    tmSearchResultsTableBody,
+    tmResultadosLista,
     translationMemorySidebar,
     translationsContainer,
     wordsRemaining,

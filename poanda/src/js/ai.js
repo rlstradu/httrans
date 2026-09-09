@@ -218,12 +218,36 @@ function prepararPanelDeIA() {
     const config = configuracionUsable();
 
     if (aiChatContainer && aiChatContainer.children.length === 0) {
-        appendAiMessage('bot', config ? t('ai_initial_message') : t('ai_initial_sin_configurar'));
+        const clave = config ? 'ai_initial_message' : 'ai_initial_sin_configurar';
+        const saludo = document.getElementById(appendAiMessage('bot', t(clave)));
+        // El saludo se escribe una vez, al arrancar, y se queda ahí. Al cambiar
+        // de idioma, todo lo demás se repinta y él no: la interfaz entera en
+        // español con PandaBot saludando en inglés. Se anota de qué texto salió
+        // para poder rehacerlo (ver retraducirSaludoDeIA).
+        if (saludo) saludo.dataset.i18nSaludo = clave;
     }
 
     if (!config) aiConfigPanel?.classList.remove('hidden');
 
     return !config;
+}
+
+/**
+ * Vuelve a escribir el saludo del asistente en el idioma que esté puesto.
+ *
+ * Solo el saludo: lo que se haya hablado con el modelo se queda como está.
+ * Retraducir una conversación sería inventarse lo que dijo el otro.
+ */
+function retraducirSaludoDeIA() {
+    const saludo = aiChatContainer?.querySelector('[data-i18n-saludo]');
+    if (!saludo) return;
+
+    const clave = saludo.dataset.i18nSaludo;
+    // Si ya se ha hablado con el modelo, el saludo no es lo último que se ve y
+    // cambiarlo por debajo sería raro; se cambia igual porque sigue siendo un
+    // texto de la interfaz, no algo que haya dicho nadie.
+    saludo.textContent = t(clave);
+    state.lastAiResponseText = t(clave);
 }
 
 /**
@@ -359,6 +383,7 @@ export {
     insertAiResponse,
     olvidarConversacion,
     prepararPanelDeIA,
+    retraducirSaludoDeIA,
     sugerirTraduccion,
     triggerQuickAI,
 };

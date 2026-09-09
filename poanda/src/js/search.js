@@ -71,7 +71,7 @@ function findAndNavigate(forward = true) {
             ? new RegExp(state.findState.query, state.findState.caseSensitive ? '' : 'i')
             : null;
     } catch (e) {
-        showMessage(`Regular expression error: ${e.message}`);
+        showMessage(translations[state.currentLanguage]['regex_invalida'].replace('{detalle}', e.message));
         return;
     }
 
@@ -284,7 +284,7 @@ function replaceAllMatches() {
             (caseSensitiveCheckbox.checked ? '' : 'i') + 'g' + (regexCheckbox.checked ? '' : ''),
         );
     } catch (e) {
-        showMessage(`Regular expression error: ${e.message}`);
+        showMessage(translations[state.currentLanguage]['regex_invalida'].replace('{detalle}', e.message));
         return;
     }
 

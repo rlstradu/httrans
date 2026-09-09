@@ -272,7 +272,7 @@ test.describe('un solo buscador para los dos paneles', () => {
         // Una palabra que no está en ninguno de los dos.
         await page.locator('#buscarPaneles').fill('zzzz');
         await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
-        await expect(page.locator('#tmSearchResultsTableBody tr')).toHaveCount(0);
+        await expect(page.locator('#tmResultadosLista .tm-tarjeta')).toHaveCount(0);
 
         // Y una que está en el glosario.
         await page.locator('#buscarPaneles').fill('file');
@@ -289,13 +289,19 @@ test.describe('un solo buscador para los dos paneles', () => {
 });
 
 test.describe('el aviso de que están vacíos', () => {
-    test('es uno solo para las dos cosas, no uno por panel', async ({ page }) => {
+    test('es uno solo para las dos cosas, y las nombra a las dos', async ({ page }) => {
+        // Decía "los dos empiezan vacíos", y para saber de qué dos hablaba
+        // había que deducirlo. Nombra la memoria y el glosario, y dice de cada
+        // uno con qué se llena: quien abre Poanda por primera vez no tiene por
+        // qué saber qué es una memoria de traducción.
         await cargarPo(page, PO_EJEMPLO);
 
         const aviso = page.locator('#panelesAviso');
         await expect(aviso).toBeVisible();
-        await expect(aviso).toContainText(/\.tmx/);
-        await expect(aviso).toContainText(/\.tbx/);
+        await expect(aviso).toContainText(/translation memory/i);
+        await expect(aviso).toContainText(/glossary/i);
+        await expect(aviso).toContainText(/validate/i);
+        await expect(aviso).not.toContainText(/^both/i);
 
         // Y los dos de antes, uno por panel, ya no están.
         await expect(page.locator('#memoriaVacia')).toHaveCount(0);

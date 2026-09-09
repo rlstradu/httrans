@@ -10,6 +10,7 @@ import {
 } from './dom.js';
 import { updateSaveButtonsState } from './files.js';
 import { state } from './state.js';
+import { translations } from './translations.js';
 
 function updateStatsDisplay() {
     let totalSegments = 0;
@@ -39,7 +40,10 @@ function updateStatsDisplay() {
 
     const percentage =
         totalSegments > 0 ? ((translatedSegments / totalSegments) * 100).toFixed(0) : 0;
-    segmentsProgress.textContent = `${translatedSegments} / ${totalSegments} segments (${percentage}%)`;
+    // La palabra "segmentos" estaba escrita a mano en inglés, así que la barra
+    // se quedaba a medio traducir con la interfaz en español.
+    const unidad = translations[state.currentLanguage]?.stats_segments_unit || 'segments';
+    segmentsProgress.textContent = `${translatedSegments} / ${totalSegments} ${unidad} (${percentage}%)`;
     wordsTranslated.textContent = `${totalWordsTranslated}`;
     wordsTotal.textContent = `${totalWordsOriginal}`;
 
