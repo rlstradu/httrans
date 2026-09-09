@@ -154,20 +154,6 @@
             background-color: #4b5563 !important;
         }
 
-        /* 4. TABLAS */
-        body.dark-mode .glossary-table th,
-        body.dark-mode .glossary-table td {
-            background-color: #1f2937 !important;
-            border-color: #374151 !important;
-            color: #d1d5db !important;
-        }
-        body.dark-mode .glossary-table th {
-            background-color: #111827 !important;
-        }
-        body.dark-mode .glossary-row-highlight {
-            background-color: #3f2c22 !important;
-        }
-
         /* 5. MENÚS SUPERIORES Y DROPDOWNS */
         body.dark-mode .top-utility-buttons-container button,
         body.dark-mode .top-utility-buttons-container .dropdown-btn {
@@ -642,10 +628,23 @@
         .glossary-btn-primary:hover, .tm-btn-primary:hover { background-color: #e07a82; }
         .glossary-btn-secondary, .tm-btn-secondary { background-color: #e0e0e0; color: #333; padding: 8px 15px; border-radius: 5px; transition: background-color 0.2s; }
         .glossary-btn-secondary:hover, .tm-btn-secondary:hover { background-color: #d0d0d0; }
-        .glossary-delete-btn, .tm-delete-btn { background-color: #f44336; color: white; padding: 2px 7px; border-radius: 4px; font-size: var(--texto-meta); }
-        .glossary-delete-btn:hover, .tm-delete-btn:hover { background-color: #da190b; }
-        .glossary-table th, .glossary-table td { padding: 4px 7px; border: 1px solid #e0e0e0; font-size: var(--texto-meta); }
-        .glossary-table th { background-color: #f0f0f0; font-weight: 600; }
+        /* Borrar un término: una equis discreta que solo se pone roja al ir a
+           pulsarla. Era un botón rojo con la palabra "Eliminar" en cada fila, y
+           en una lista de veinte términos eran veinte manchas rojas pidiendo
+           atención para la única acción sin vuelta atrás. */
+        .glossary-delete-btn {
+            padding: 2px 6px; border: none; border-radius: 4px; line-height: 1;
+            font-size: var(--texto-base);
+            color: var(--color-neutral-gray); background-color: transparent;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .glossary-delete-btn:hover, .glossary-delete-btn:focus-visible {
+            background-color: #fee2e2; color: #b91c1c;
+        }
+        body.dark-mode .glossary-delete-btn:hover,
+        body.dark-mode .glossary-delete-btn:focus-visible {
+            background-color: #7f1d1d; color: #fecaca;
+        }
 
         /* LAS COINCIDENCIAS DE LA MEMORIA
            ================================
@@ -691,7 +690,7 @@
 
         .tm-insertar {
             font-size: var(--texto-meta); font-weight: 600;
-            padding: 3px 9px; border-radius: 4px;
+            padding: 3px 9px; border: none; border-radius: 4px;
             background-color: var(--color-primary); color: var(--color-dark);
             flex-shrink: 0; transition: background-color 0.2s;
         }
@@ -746,7 +745,6 @@
             box-shadow: 0 0 0 2px rgba(247, 207, 126, 0.9);
             outline: none;
         }
-        .glossary-row-highlight { background-color: #fde68a !important; transition: background-color 0.3s ease; }
         /* Segmento activo: una barra del color de Poanda en el canto
            izquierdo de la fila. Antes era un marco de 2 px alrededor de todo el
            bloque, que en una lista larga daba un efecto de tablero. */
@@ -867,12 +865,100 @@
            debe caer bajo el dedo que venía a guardar. */
         .termino-botones-hueco { flex: 1 1 auto; }
 
-        /* Una fila del glosario abre su ficha, así que tiene que parecer
-           pulsable; el botón de borrar de dentro se queda como estaba. */
-        .glosario-fila { cursor: pointer; }
-        .glosario-fila:hover td { background-color: #fff7ed; }
-        body.dark-mode .glosario-fila:hover td { background-color: #374151; }
-        .glosario-fila:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+        /* LOS TÉRMINOS DEL GLOSARIO
+           =========================
+
+           Eran filas de una tabla de tres columnas —origen, destino, borrar—
+           dentro de un panel de unos 300 píxeles. La definición y las notas,
+           que son lo que explica por qué esa traducción y no otra, no salían
+           en ninguna parte: había que abrir la ficha de cada término para
+           verlas.
+
+           Ahora cada término es una tarjeta, como en Locversia: el término y
+           su categoría arriba con el botón de insertar, la traducción
+           destacada debajo, y al final la definición y las notas. Las que
+           están en el segmento que se tiene delante van primero, marcadas. */
+        .glosario-lista { display: flex; flex-direction: column; gap: 8px; }
+        .glosario-lista-titulo {
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-dark); margin: 12px 0 6px;
+        }
+        /* El rótulo que separa las coincidencias del resto. Solo sale cuando
+           hay las dos cosas: con un único grupo no separa nada. */
+        .glosario-grupo {
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-neutral-gray); text-transform: uppercase;
+            letter-spacing: 0.04em; margin: 2px 0 0;
+        }
+        .glosario-grupo + .glosario-tarjeta { margin-top: 0; }
+
+        /* La tarjeta entera abre la ficha del término, así que tiene que
+           parecer pulsable. */
+        .glosario-tarjeta {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-left: 3px solid var(--color-medium-gray);
+            border-radius: 6px; padding: 8px 10px; cursor: pointer;
+        }
+        .glosario-tarjeta:hover { background-color: #fff7ed; }
+        body.dark-mode .glosario-tarjeta { background-color: #1f2937; }
+        body.dark-mode .glosario-tarjeta:hover { background-color: #374151; }
+        .glosario-tarjeta:focus-visible {
+            outline: 2px solid var(--color-primary); outline-offset: -2px;
+        }
+        /* La que está en el segmento de ahora lleva el amarillo del glosario en
+           el canto, el mismo con el que sale marcada la palabra en el texto:
+           así se ata lo de la columna con lo del segmento. */
+        .glosario-tarjeta-coincidencia { border-left-color: var(--color-secondary); }
+
+        .glosario-tarjeta-cabecera {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 8px; margin-bottom: 4px;
+        }
+        .glosario-tarjeta-origen {
+            font-size: var(--texto-meta); font-weight: 700;
+            color: var(--color-neutral-gray); margin: 0;
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+            overflow-wrap: anywhere;
+        }
+        /* Sustantivo, verbo, adjetivo... En letra pequeña y en su recuadro,
+           para que no se lea como parte del término. */
+        .glosario-categoria {
+            font-size: 0.625rem; font-weight: 400; text-transform: lowercase;
+            padding: 1px 5px; border-radius: 4px;
+            border: 1px solid var(--color-medium-gray);
+            color: var(--color-neutral-gray);
+        }
+        .glosario-tarjeta-botones {
+            display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+        }
+        .glosario-insertar {
+            font-size: var(--texto-meta); font-weight: 600;
+            padding: 3px 9px; border: none; border-radius: 4px;
+            background-color: var(--color-primary); color: var(--color-dark);
+            transition: background-color 0.2s;
+        }
+        .glosario-insertar:hover { background-color: #e07a82; }
+        body.dark-mode .glosario-insertar { color: #f3f4f6; }
+
+        /* La traducción es lo que se va a escribir: va en el color del texto
+           normal y con peso, y el término de origen queda de referencia. */
+        .glosario-tarjeta-destino {
+            font-size: var(--texto-base); font-weight: 600;
+            color: var(--color-dark); margin: 0; overflow-wrap: anywhere;
+        }
+        .glosario-tarjeta-definicion, .glosario-tarjeta-notas {
+            font-size: var(--texto-meta); line-height: 1.45;
+            color: var(--color-neutral-gray); margin: 4px 0 0;
+            overflow-wrap: anywhere;
+        }
+        /* La definición dice qué es; la nota, qué hacer con ella. Se separan
+           con una raya para que no se lean como un párrafo seguido. */
+        .glosario-tarjeta-definicion {
+            font-style: italic;
+            border-top: 1px dashed var(--color-medium-gray); padding-top: 4px;
+        }
+
         /* El punto que dice que ese término lleva ficha (definición, notas o
            categoría). Sin él había que abrirlos uno a uno para saberlo. */
         .glosario-ficha {
@@ -900,6 +986,13 @@
             margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb;
         }
         body.dark-mode .termino-tarjeta-ficha + .termino-tarjeta-ficha { border-top-color: #4b5563; }
+        /* La palabra que se ha encontrado en el texto, encabezando la ficha:
+           con dos términos marcados seguidos, dice de cuál habla la tarjeta. */
+        .termino-tarjeta-encontrado {
+            font-weight: 600; font-size: var(--texto-meta);
+            color: var(--color-neutral-gray); margin-bottom: 0.15rem;
+            display: flex; align-items: baseline; gap: 0.4rem;
+        }
         .termino-tarjeta-traduccion {
             font-weight: 600; font-size: var(--texto-base);
             display: flex; align-items: baseline; gap: 0.4rem;

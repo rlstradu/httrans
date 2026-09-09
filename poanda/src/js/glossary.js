@@ -1,15 +1,34 @@
 import { enderezarGlosario, generarTBX, leerTBX, tieneFicha } from './core/tbx.js';
 import { escaparHtml } from './core/xml.js';
 import { hideLoadingOverlay, showLoadingOverlay, showMessage } from './dialogs.js';
-import { glossaryTableBody, buscarPaneles, tbxFileInput } from './dom.js';
+import { glosarioLista, buscarPaneles, tbxFileInput } from './dom.js';
+import { terminosQueResponden } from './core/glosario-coincidencias.js';
 import { abrirFichaDeTermino } from './termino-modal.js';
 import { pintarParDelProyecto } from './idiomas-proyecto.js';
 import { avisarSiEstanVacios } from './paneles.js';
-import { renderTranslations, repintarTodosLosOriginales } from './editor.js';
+import {
+    recalcularTerminosDelSegmentoActivo,
+    renderTranslations,
+    repintarTodosLosOriginales,
+} from './editor.js';
 import { state } from './state.js';
 import { updateStatsDisplay } from './stats.js';
 import { showTMInternalMessage } from './tm.js';
 import { translations } from './translations.js';
+
+/**
+ * Qué hacer al pulsar "Insertar" en una tarjeta (lo pone main.js).
+ *
+ * Este módulo no sabe dónde está el cursor ni cómo se escribe en un segmento, y
+ * no tiene por qué: es la misma función que usa la tarjeta del hover.
+ * @type {(texto: string) => boolean}
+ */
+let alInsertar = () => false;
+
+/** @param {(texto: string) => boolean} funcion */
+function alInsertarDesdeElGlosario(funcion) {
+    alInsertar = funcion;
+}
 
 function resetGlossary() {
     state.glossary = [];
@@ -38,6 +57,11 @@ function showGlossaryEditorSection() {
  * término cambia lo que se ve de arriba abajo.
  */
 function alCambiarElGlosario() {
+    // Primero se vuelve a mirar qué hay en el segmento en el que se está: el
+    // panel señala las coincidencias a partir de esa lista, y si no se rehace,
+    // un término recién guardado no sale marcado hasta salir del segmento y
+    // volver a entrar.
+    recalcularTerminosDelSegmentoActivo();
     renderGlossary();
     repintarTodosLosOriginales();
 }
@@ -47,99 +71,148 @@ function deleteTerm(index) {
     alCambiarElGlosario();
 }
 
+/**
+ * Una tarjeta de término.
+ *
+ * La forma viene de Locversia: arriba el término con su categoría y el botón de
+ * insertar; debajo la traducción, destacada, porque es lo que se va a escribir;
+ * y al final la definición y las notas, que son lo que explica por qué esa
+ * traducción y no otra. Antes era una fila de una tabla de tres columnas: en
+ * media columna, cada celda daba para cuatro palabras, y la definición y las
+ * notas no salían en ningún sitio.
+ *
+ * La tarjeta entera abre la ficha del término, así que corregir una errata no
+ * obliga a borrarlo y volver a escribirlo.
+ *
+ * @param {object} entrada
+ * @param {boolean} enElSegmento Si la palabra está en el segmento de ahora.
+ * @returns {HTMLElement}
+ */
+function tarjetaDeTermino(entrada, enElSegmento) {
+    const t = translations[state.currentLanguage] || {};
+    const indice = state.glossary.indexOf(entrada);
+
+    const tarjeta = document.createElement('div');
+    tarjeta.className = `glosario-tarjeta${enElSegmento ? ' glosario-tarjeta-coincidencia' : ''}`;
+    tarjeta.dataset.glossaryIndex = String(indice);
+    tarjeta.tabIndex = 0;
+    tarjeta.title = t['edit_term_hint'] || '';
+
+    const categoria = entrada.srcPartOfSpeech
+        ? `<span class="glosario-categoria">${escaparHtml(
+              t[`pos_${entrada.srcPartOfSpeech}`] || entrada.srcPartOfSpeech,
+          )}</span>`
+        : '';
+    // La marca de que el término tiene ficha: sin abrirlo no había manera de
+    // saber cuáles están documentados y cuáles son un par de palabras.
+    const marca = tieneFicha(entrada)
+        ? '<span class="glosario-ficha" aria-hidden="true"></span>'
+        : '';
+    const linea = (clase, valor) =>
+        valor ? `<p class="${clase}">${escaparHtml(valor)}</p>` : '';
+
+    tarjeta.innerHTML = `
+        <div class="glosario-tarjeta-cabecera">
+            <p class="glosario-tarjeta-origen">${escaparHtml(entrada.srcTerm || '')}${categoria}${marca}</p>
+            <span class="glosario-tarjeta-botones">
+                <button type="button" class="glosario-insertar" title="${escaparHtml(t['term_card_insert_hint'] || '')}">${escaparHtml(t['glossary_insert_term'] || '')}</button>
+                <button type="button" class="glossary-delete-btn" data-glossary-index="${indice}" title="${escaparHtml(t['delete_button'] || '')}" aria-label="${escaparHtml(t['delete_button'] || '')}">&times;</button>
+            </span>
+        </div>
+        <p class="glosario-tarjeta-destino">${escaparHtml(entrada.tgtTerm || '')}</p>
+        ${linea('glosario-tarjeta-definicion', entrada.definition)}
+        ${linea('glosario-tarjeta-notas', entrada.notes)}`;
+
+    const abrir = () => abrirFichaDeTermino(Number(tarjeta.dataset.glossaryIndex));
+    tarjeta.addEventListener('click', abrir);
+    tarjeta.addEventListener('keydown', (evento) => {
+        if (evento.key === 'Enter' || evento.key === ' ') {
+            evento.preventDefault();
+            abrir();
+        }
+    });
+
+    const insertar = tarjeta.querySelector('.glosario-insertar');
+    // Pulsar un botón saca el cursor del segmento antes de que llegue el clic, y
+    // sin cursor no hay dónde insertar. Cancelando el mousedown, el foco no se
+    // mueve. (Y el clic no puede subir hasta la tarjeta: abriría la ficha.)
+    insertar.addEventListener('mousedown', (evento) => evento.preventDefault());
+    insertar.addEventListener('click', (evento) => {
+        evento.stopPropagation();
+        alInsertar(entrada.tgtTerm || '');
+    });
+
+    // El botón de borrar corta el clic para no abrir la ficha de algo que se
+    // está quitando.
+    tarjeta.querySelector('.glossary-delete-btn').addEventListener('click', (evento) => {
+        evento.stopPropagation();
+        deleteTerm(Number(evento.currentTarget.dataset.glossaryIndex));
+    });
+
+    return tarjeta;
+}
+
+/** Un rótulo que separa las coincidencias del resto del glosario. */
+function grupoDeTarjetas(texto) {
+    const rotulo = document.createElement('p');
+    rotulo.className = 'glosario-grupo';
+    rotulo.textContent = texto;
+    return rotulo;
+}
+
 function renderGlossary() {
-    if (!glossaryTableBody) {
-        console.warn('glossaryTableBody element not found. Cannot render glossary.');
+    if (!glosarioLista) {
+        console.warn('glosarioLista element not found. Cannot render glossary.');
         return;
     }
     avisarSiEstanVacios();
 
-    const search = buscarPaneles ? buscarPaneles.value.toLowerCase().trim() : '';
-    glossaryTableBody.innerHTML = '';
+    const t = translations[state.currentLanguage] || {};
+    const buscado = buscarPaneles ? buscarPaneles.value.trim() : '';
+    glosarioLista.innerHTML = '';
 
-    // Se busca también en la definición y en las notas: si alguien apuntó
-    // "no traducir como fichero", buscar "fichero" tiene que llevar hasta ese
-    // término, que es justo para lo que se escribió la nota.
-    const filteredGlossary = state.glossary.filter((entry) =>
-        ['srcTerm', 'tgtTerm', 'definition', 'notes'].some((campo) =>
-            (entry[campo] || '').toLowerCase().includes(search),
-        ),
-    );
+    // Buscando se enseña lo que responde a la búsqueda, y nada más. Sin buscar,
+    // primero lo que está en el segmento que se tiene delante —que es lo que
+    // hace falta ahora mismo— y debajo el resto del glosario, por si se quiere
+    // repasar o corregir algo.
+    const visibles = buscado
+        ? terminosQueResponden(state.glossary, buscado)
+        : state.glossary;
 
-    const highlightedTerms = [];
-    const otherTerms = [];
-
-    filteredGlossary.forEach((entry) => {
-        if (entry.srcTerm && state.termsFoundInActiveSegment.has(entry.srcTerm)) {
-            highlightedTerms.push(entry);
+    const enElSegmento = [];
+    const losDemas = [];
+    for (const entrada of visibles) {
+        if (entrada.srcTerm && state.termsFoundInActiveSegment.has(entrada.srcTerm)) {
+            enElSegmento.push(entrada);
         } else {
-            otherTerms.push(entry);
+            losDemas.push(entrada);
         }
-    });
+    }
+    // Las coincidencias, de la expresión más larga a la más corta: la de varias
+    // palabras dice más que la palabra suelta.
+    enElSegmento.sort((a, b) => (b.srcTerm?.length || 0) - (a.srcTerm?.length || 0));
+    losDemas.sort((a, b) => (a.srcTerm || '').localeCompare(b.srcTerm || ''));
 
-    state.currentGlossaryLatestResults = [
-        ...highlightedTerms,
-        ...otherTerms.sort((a, b) => a.srcTerm.localeCompare(b.srcTerm)),
-    ];
+    state.currentGlossaryLatestResults = [...enElSegmento, ...losDemas];
 
-    const t = translations[state.currentLanguage];
+    // Los rótulos solo tienen sentido si hay dos grupos que separar.
+    const hayDosGrupos = enElSegmento.length > 0 && losDemas.length > 0;
 
-    /**
-     * Una fila de la lista.
-     *
-     * La fila entera abre la ficha del término: corregir una errata ya no
-     * obliga a borrar el término y volver a escribirlo. El botón de borrar
-     * sigue donde estaba, y corta el clic para no abrir la ficha de algo que se
-     * está quitando.
-     */
-    const pintarFila = (entry, resaltada) => {
-        const indice = state.glossary.indexOf(entry);
-        const row = document.createElement('tr');
-        row.className = `glosario-fila${resaltada ? ' glossary-row-highlight' : ''}`;
-        row.dataset.glossaryIndex = String(indice);
-        row.tabIndex = 0;
-        row.title = t['edit_term_hint'] || '';
-        // La marca de que el término tiene ficha: sin abrirlo no había manera
-        // de saber cuáles están documentados y cuáles son un par de palabras.
-        const marca = tieneFicha(entry) ? '<span class="glosario-ficha" aria-hidden="true"></span>' : '';
-        row.innerHTML = `
-                    <td>${escaparHtml(entry.srcTerm || '')}${marca}</td>
-                    <td>${escaparHtml(entry.tgtTerm || '')}</td>
-                    <td><button class="glossary-delete-btn" data-glossary-index="${indice}">${t['delete_button']}</button></td>
-                `;
-        glossaryTableBody.appendChild(row);
-    };
+    if (enElSegmento.length > 0 && hayDosGrupos) {
+        glosarioLista.appendChild(grupoDeTarjetas(t['glossary_in_segment'] || ''));
+    }
+    enElSegmento.forEach((entrada) => glosarioLista.appendChild(tarjetaDeTermino(entrada, true)));
 
-    highlightedTerms.forEach((entry) => pintarFila(entry, true));
-    otherTerms.forEach((entry) => pintarFila(entry, false));
+    if (hayDosGrupos) {
+        glosarioLista.appendChild(grupoDeTarjetas(t['glossary_all_terms'] || ''));
+    }
+    losDemas.forEach((entrada) => glosarioLista.appendChild(tarjetaDeTermino(entrada, false)));
 
     // La lista solo sale cuando tiene algo que enseñar, igual que la de la
-    // memoria: con el glosario vacío ya lo explica el aviso de arriba, y una
-    // tabla de cabeceras sueltas solo ocupa sitio.
+    // memoria: con el glosario vacío ya lo explica el aviso de arriba.
     document
         .getElementById('glosarioResultados')
-        ?.classList.toggle('hidden', filteredGlossary.length === 0);
-
-    // Los botones de borrar se crean aquí, así que hay que engancharlos aquí.
-    // Antes usaban onclick="deleteTerm(...)" en el HTML, que dejó de funcionar
-    // al pasar a módulos ES (las funciones ya no son globales).
-    glossaryTableBody.querySelectorAll('.glossary-delete-btn').forEach((btn) => {
-        btn.addEventListener('click', (evento) => {
-            evento.stopPropagation();
-            deleteTerm(Number(btn.dataset.glossaryIndex));
-        });
-    });
-
-    glossaryTableBody.querySelectorAll('.glosario-fila').forEach((fila) => {
-        const abrir = () => abrirFichaDeTermino(Number(fila.dataset.glossaryIndex));
-        fila.addEventListener('click', abrir);
-        fila.addEventListener('keydown', (evento) => {
-            if (evento.key === 'Enter' || evento.key === ' ') {
-                evento.preventDefault();
-                abrir();
-            }
-        });
-    });
+        ?.classList.toggle('hidden', visibles.length === 0);
 }
 
 function downloadTBX() {
@@ -226,6 +299,7 @@ function processTBXContent(content) {
 
 export {
     alCambiarElGlosario,
+    alInsertarDesdeElGlosario,
     downloadTBX,
     loadTBX,
     processTBXContent,

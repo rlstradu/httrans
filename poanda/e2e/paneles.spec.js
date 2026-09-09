@@ -271,12 +271,12 @@ test.describe('un solo buscador para los dos paneles', () => {
 
         // Una palabra que no está en ninguno de los dos.
         await page.locator('#buscarPaneles').fill('zzzz');
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(0);
         await expect(page.locator('#tmResultadosLista .tm-tarjeta')).toHaveCount(0);
 
         // Y una que está en el glosario.
         await page.locator('#buscarPaneles').fill('file');
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(1);
     });
 
     test('el buscador va encima de los dos paneles', async ({ page }) => {
@@ -402,7 +402,7 @@ test.describe('el aviso de que están vacíos', () => {
     });
 });
 
-test.describe('las tablas solo salen cuando tienen algo que enseñar', () => {
+test.describe('las listas solo salen cuando tienen algo que enseñar', () => {
     test('la de la memoria está fuera hasta que hay coincidencias o se busca', async ({ page }) => {
         await cargarPo(page, PO_EJEMPLO);
         await expect(page.locator('#tmResultados')).toBeHidden();

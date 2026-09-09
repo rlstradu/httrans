@@ -328,9 +328,15 @@
                         <!-- La ficha de un término se rellena en su propio cuadro
                              (#terminoModal, más abajo): son cinco campos, y en media
                              columna no caben sin comerse la lista de términos. -->
+                        <!-- Los términos salen en tarjetas, no en una tabla: en
+                             media columna, tres columnas dejan cada celda en
+                             cuatro palabras. Y lo que sale son las
+                             coincidencias del segmento en el que se está, no el
+                             glosario entero; para ver el resto está el buscador
+                             de arriba. -->
                         <div id="glosarioResultados" class="hidden">
-                            <h4 class="text-md font-semibold text-on-light-contrast mt-4 mb-2" data-i18n="glossary_list_title" id="glossaryListTitle"></h4>
-                            <div class="overflow-x-auto"><table class="glossary-table w-full"><thead><tr><th data-i18n="source_term_col" id="sourceTermCol"></th><th data-i18n="target_term_col" id="targetTermCol"></th><th data-i18n="actions_col" id="actionsCol"></th></tr></thead><tbody id="glossaryTableBody"></tbody></table></div>
+                            <h4 class="glosario-lista-titulo" data-i18n="glossary_list_title" id="glossaryListTitle"></h4>
+                            <div id="glosarioLista" class="glosario-lista"></div>
                         </div>
                     </div>
                 </div>

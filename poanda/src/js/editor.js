@@ -126,6 +126,30 @@ function repintarTodosLosOriginales() {
     });
 }
 
+/**
+ * Vuelve a mirar qué términos del glosario hay en el segmento en el que se está.
+ *
+ * Esta lista se hacía solo al entrar en un segmento. Añadir un término mientras
+ * se está dentro de uno no la tocaba, así que el panel no señalaba la palabra
+ * recién guardada como coincidencia: había que salir del segmento y volver a
+ * entrar para que apareciera. Justo después de guardar un término es cuando uno
+ * mira si ha funcionado.
+ */
+function recalcularTerminosDelSegmentoActivo() {
+    state.termsFoundInActiveSegment.clear();
+
+    const donde = state.lastFocusedSegment;
+    if (!donde || !state.sourceLang || state.glossary.length === 0) return;
+
+    const segmento =
+        state.poEntries[donde.entryIndex]?.sentenceSegments?.[donde.segmentIndex];
+    if (!segmento) return;
+
+    marcadoDelOriginal(segmento.original, { glosario: true }).terminos.forEach((termino) =>
+        state.termsFoundInActiveSegment.add(termino),
+    );
+}
+
 function pushToUndoStack() {
     // Guardamos un máximo de 15 estados para no saturar la memoria del navegador
     state.undoStack.push(JSON.parse(JSON.stringify(state.poEntries)));
@@ -1452,6 +1476,7 @@ export {
     navigateToTranslation,
     pushToUndoStack,
     renderTranslations,
+    recalcularTerminosDelSegmentoActivo,
     repintarTodosLosOriginales,
     setTranslationEditableState,
 };

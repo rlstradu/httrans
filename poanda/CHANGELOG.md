@@ -64,6 +64,19 @@ name in the tooltip; the language pair is a globe rather than the sentence
 step smaller than the rest of Poanda, which is three or four more rows of
 matches and terms per panel at the same width.
 
+Glossary Terms Are Cards Too, and the ones that are in the segment you are
+on come first, with the glossary's own amber down their edge — the same
+colour the word carries in the source, so the panel and the text point at
+each other. The rest of the glossary follows underneath. A card holds the
+term with its part of speech, the translation in full size, and then the
+definition and the notes: those two used to exist only inside a term's
+record, so the reason a term is translated that way was one click away from
+wherever you needed it. Insert puts the translation where your cursor is,
+the card itself opens the record, and the red Delete button in every row is
+now a quiet × that only turns red under the pointer — twenty terms meant
+twenty red buttons competing for attention on behalf of the one action with
+no way back.
+
 Memory Matches Are Cards, Not Table Rows: a match used to be a row of a
 three-column table — score, source, translation — inside a panel about 300
 pixels wide, which left each cell around a hundred: not enough for a
@@ -166,6 +179,24 @@ Inserting a match with the mouse works. Pressing the button took the cursor
 out of the segment before the click arrived, and with no cursor there was
 nowhere to insert: the button did nothing at all unless you used its
 keyboard shortcut.
+
+A term added while you were inside a segment was not marked as a match for
+it. The list of the segment's glossary hits was built once, on entering the
+segment, and nothing rebuilt it afterwards: you had to leave the segment and
+come back for the term you had just saved to show up as a hit — and the
+moment right after saving a term is exactly when you look to see whether it
+worked.
+
+The hover card now leads with the word it found in the text. With two
+highlighted terms next to each other, a card showing only a translation did
+not say which of the two it was talking about.
+
+New Project puts the side columns away. The assistant stayed open over the
+welcome screen, narrowing the drop area and offering to work on a project
+that no longer existed. The TM and Glossary button also stayed lit with its
+column gone — it only exists while a file is open — so the toolbar pointed
+at something that was not on the screen. Opening the next file brings its
+panels back as usual.
 
 The menus in the top bar open above the consultation column. They were being
 painted underneath it, so with the panels open the language menu could be

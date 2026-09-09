@@ -17,19 +17,19 @@ test.describe('glosario (botones que antes eran onclick)', () => {
         await expect(page.locator('#terminologyEditorSection')).toBeVisible();
     });
 
-    test('añadir un término lo muestra en la tabla', async ({ page }) => {
+    test('añadir un término lo muestra en la lista', async ({ page }) => {
         await anadirTermino(page, 'file', 'archivo');
 
-        await expect(page.locator('#glossaryTableBody')).toContainText('file');
-        await expect(page.locator('#glossaryTableBody')).toContainText('archivo');
+        await expect(page.locator('#glosarioLista')).toContainText('file');
+        await expect(page.locator('#glosarioLista')).toContainText('archivo');
     });
 
-    test('borrar un término lo quita de la tabla', async ({ page }) => {
+    test('borrar un término lo quita de la lista', async ({ page }) => {
         await anadirTermino(page, 'file', 'archivo');
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(1);
 
         // Este botón se crea desde JavaScript: antes llevaba onclick incrustado
-        // y ahora se engancha con addEventListener al pintar la tabla.
+        // y ahora se engancha con addEventListener al pintar la lista.
         //
         // Hay que bajar hasta él a propósito: el panel ya no ocupa la pantalla
         // entera, comparte columna con la memoria, y su contenido se desplaza
@@ -37,7 +37,7 @@ test.describe('glosario (botones que antes eran onclick)', () => {
         const borrar = page.locator('.glossary-delete-btn').first();
         await borrar.scrollIntoViewIfNeeded();
         await borrar.click();
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(0);
     });
 
     test('el buscador del glosario filtra los términos', async ({ page }) => {
@@ -47,13 +47,13 @@ test.describe('glosario (botones que antes eran onclick)', () => {
         ]) {
             await anadirTermino(page, src, tgt);
         }
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(2);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(2);
 
         // El campo de búsqueda usaba oninput="renderGlossary()"; ahora es el
         // buscador único de la columna, que filtra las dos cosas a la vez.
         await page.locator('#buscarPaneles').fill('string');
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
-        await expect(page.locator('#glossaryTableBody')).toContainText('cadena');
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(1);
+        await expect(page.locator('#glosarioLista')).toContainText('cadena');
     });
 });
 
@@ -67,7 +67,7 @@ test.describe('los paneles responden al primer clic', () => {
         await cargarPo(page, PO_EJEMPLO);
 
         await anadirTermino(page, 'file', 'archivo');
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(1);
 
         // El foco, dentro de un segmento, como cuando se está traduciendo.
         await page.locator('#msgstr-1-0').click();
@@ -76,7 +76,7 @@ test.describe('los paneles responden al primer clic', () => {
         await borrar.scrollIntoViewIfNeeded();
         await borrar.click();
 
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(0);
     });
 });
 

@@ -5,7 +5,7 @@
  * esté donde se traduce**. Un glosario sirve para no volver a pensar lo mismo
  * dos veces, y eso solo funciona si al llegar a la palabra se ve lo que se
  * decidió: la traducción, por qué es esa y qué no hay que hacer. Antes el
- * glosario era un par de palabras en una tabla lateral; ahora cada término
+ * glosario era un par de palabras en una lista lateral; ahora cada término
  * lleva su ficha, el original se marca en amarillo de arriba abajo, y la ficha
  * sale al pasar el ratón por encima.
  */
@@ -83,7 +83,7 @@ test.describe('la ficha de un término', () => {
         await page.locator('#terminoCancelarBtn').click();
 
         await expect(page.locator('#terminoModal')).toBeHidden();
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(0);
     });
 
     test('lo escrito en la ficha se guarda entero', async ({ page }) => {
@@ -94,7 +94,7 @@ test.describe('la ficha de un término', () => {
             notas: 'No traducir como "fichero".',
         });
 
-        await page.locator('#glossaryTableBody tr').first().click();
+        await page.locator('#glosarioLista .glosario-tarjeta').first().click();
         await expect(page.locator('#terminoOrigen')).toHaveValue('file');
         await expect(page.locator('#terminoDestino')).toHaveValue('archivo');
         await expect(page.locator('#terminoCategoria')).toHaveValue('noun');
@@ -110,7 +110,7 @@ test.describe('corregir un término ya guardado', () => {
         await cargarPo(page, PO_EJEMPLO);
         await anadirTermino(page, 'file', 'archivo', { notas: 'ojo con esto' });
 
-        await page.locator('#glossaryTableBody tr').first().click();
+        await page.locator('#glosarioLista .glosario-tarjeta').first().click();
 
         await expect(page.locator('#terminoModal')).toBeVisible();
         await expect(page.locator('#terminoOrigen')).toHaveValue('file');
@@ -124,24 +124,24 @@ test.describe('corregir un término ya guardado', () => {
         await cargarPo(page, PO_EJEMPLO);
         await anadirTermino(page, 'fiel', 'archivo');
 
-        await page.locator('#glossaryTableBody tr').first().click();
+        await page.locator('#glosarioLista .glosario-tarjeta').first().click();
         await page.locator('#terminoOrigen').fill('file');
         await page.locator('#terminoGuardarBtn').click();
 
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
-        await expect(page.locator('#glossaryTableBody')).toContainText('file');
-        await expect(page.locator('#glossaryTableBody')).not.toContainText('fiel');
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(1);
+        await expect(page.locator('#glosarioLista')).toContainText('file');
+        await expect(page.locator('#glosarioLista')).not.toContainText('fiel');
     });
 
     test('se puede borrar desde la propia ficha', async ({ page }) => {
         await cargarPo(page, PO_EJEMPLO);
         await anadirTermino(page, 'file', 'archivo');
 
-        await page.locator('#glossaryTableBody tr').first().click();
+        await page.locator('#glosarioLista .glosario-tarjeta').first().click();
         await page.locator('#terminoBorrarBtn').click();
 
         await expect(page.locator('#terminoModal')).toBeHidden();
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(0);
     });
 
     test('el botón de borrar de la fila no abre la ficha', async ({ page }) => {
@@ -151,7 +151,7 @@ test.describe('corregir un término ya guardado', () => {
         await page.locator('.glossary-delete-btn').first().click();
 
         await expect(page.locator('#terminoModal')).toBeHidden();
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(0);
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(0);
     });
 
     test('un punto marca los términos que llevan ficha', async ({ page }) => {
@@ -159,7 +159,7 @@ test.describe('corregir un término ya guardado', () => {
         await anadirTermino(page, 'file', 'archivo', { definicion: 'algo' });
         await anadirTermino(page, 'save', 'guardar');
 
-        await expect(page.locator('#glossaryTableBody .glosario-ficha')).toHaveCount(1);
+        await expect(page.locator('#glosarioLista .glosario-ficha')).toHaveCount(1);
     });
 });
 
@@ -309,11 +309,11 @@ test.describe('ida y vuelta con PandaTerm', () => {
             buffer: Buffer.from(tbx, 'utf8'),
         });
 
-        await expect(page.locator('#glossaryTableBody tr')).toHaveCount(1);
-        await expect(page.locator('#glossaryTableBody')).toContainText('archivo');
+        await expect(page.locator('#glosarioLista .glosario-tarjeta')).toHaveCount(1);
+        await expect(page.locator('#glosarioLista')).toContainText('archivo');
 
         // Y la ficha llegó entera, no solo el par de palabras.
-        await page.locator('#glossaryTableBody tr').first().click();
+        await page.locator('#glosarioLista .glosario-tarjeta').first().click();
         await expect(page.locator('#terminoCategoria')).toHaveValue('noun');
         await expect(page.locator('#terminoDefinicion')).toHaveValue(
             'Definicion que viene de PandaTerm.',

@@ -145,7 +145,7 @@ const terminologyEditorSection = document.getElementById('terminologyEditorSecti
  */
 const buscarPaneles = document.getElementById('buscarPaneles');
 
-const glossaryTableBody = document.getElementById('glossaryTableBody');
+const glosarioLista = document.getElementById('glosarioLista');
 
 const tbxFileInput = document.getElementById('tbxFileInput');
 
@@ -216,7 +216,7 @@ export {
     findReplaceBtn,
     findReplaceCloseBtn,
     findReplaceModal,
-    glossaryTableBody,
+    glosarioLista,
     importShortcutsBtn,
     importShortcutsInput,
     lastBackupTime,

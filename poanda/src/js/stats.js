@@ -55,12 +55,15 @@ function updateStatsDisplay() {
 
 function updateUtilityButtonStates() {
     // El botón se enciende cuando la columna de consulta está a la vista, que
-    // es su estado normal: apagado significa que se ha escondido a propósito.
+    // es su estado normal con un archivo abierto: apagado significa que se ha
+    // escondido a propósito, o que no hay proyecto. Sin proyecto no hay columna
+    // —solo existe con 'con-proyecto'— y el botón se quedaba encendido después
+    // de Nuevo proyecto, señalando algo que ya no estaba en la pantalla.
     if (panelesBtn) {
-        panelesBtn.classList.toggle(
-            'utility-btn-active',
-            !document.body.classList.contains('paneles-ocultos'),
-        );
+        const alaVista =
+            document.body.classList.contains('con-proyecto') &&
+            !document.body.classList.contains('paneles-ocultos');
+        panelesBtn.classList.toggle('utility-btn-active', alaVista);
     }
 
     if (statsContainer.classList.contains('show')) {

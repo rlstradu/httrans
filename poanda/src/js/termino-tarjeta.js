@@ -34,7 +34,7 @@ function fichasDe(termino) {
     return state.glossary.filter((e) => (e.srcTerm || '').toLowerCase() === buscado);
 }
 
-function pintar(fichas) {
+function pintar(fichas, encontrado = '') {
     const t = translations[state.currentLanguage] || {};
     const linea = (etiqueta, valor) =>
         valor
@@ -48,10 +48,17 @@ function pintar(fichas) {
                       t[`pos_${ficha.srcPartOfSpeech}`] || ficha.srcPartOfSpeech,
                   )}</span>`
                 : '';
+            // Arriba, la palabra que se ha encontrado en el texto, como en
+            // Locversia. Sin ella, con dos términos seguidos marcados en la
+            // misma frase, la tarjeta no dice de cuál de los dos habla.
+            const cabecera = encontrado
+                ? `<p class="termino-tarjeta-encontrado">${escaparHtml(encontrado)}${categoria}</p>`
+                : '';
             return `
                 <div class="termino-tarjeta-ficha">
+                    ${cabecera}
                     <p class="termino-tarjeta-traduccion">
-                        <span>${escaparHtml(ficha.tgtTerm || '')}</span>${categoria}
+                        <span>${escaparHtml(ficha.tgtTerm || '')}</span>${cabecera ? '' : categoria}
                     </p>
                     ${linea(t.definition || 'Definition:', ficha.definition)}
                     ${linea(t.notes || 'Notes:', ficha.notes)}
@@ -98,7 +105,9 @@ export function mostrarTarjeta(marca) {
 
     clearTimeout(temporizador);
     terminoALaVista = termino;
-    tarjeta.innerHTML = pintar(fichas);
+    // Lo que se lee en el texto puede no ser lo que está guardado (mayúsculas,
+    // u otra forma de la palabra): en la cabecera va lo que se ve marcado.
+    tarjeta.innerHTML = pintar(fichas, marca.textContent?.trim() || termino);
     tarjeta.classList.remove('hidden');
     tarjeta.setAttribute('aria-hidden', 'false');
     colocar(marca);

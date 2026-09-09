@@ -4,6 +4,7 @@ import { generarTBX } from './core/tbx.js';
 import { generateTMX } from './core/tmx.js';
 import { hideLoadingOverlay, showConfirm, showLoadingOverlay, showMessage } from './dialogs.js';
 import {
+    aiSidebar,
     projectFileInput,
     projectFilenameInput,
     saveProjectModal,
@@ -43,6 +44,12 @@ function resetProjectState() {
 
     terminologySidebar.classList.remove('show-sidebar');
     translationMemorySidebar.classList.remove('show-sidebar');
+    // El asistente se recoge con el proyecto. La columna de consulta se va sola
+    // (solo existe mientras hay un archivo abierto), pero el asistente no está
+    // atado a eso: se quedaba abierto encima de la pantalla de bienvenida,
+    // estrechando el recuadro de soltar archivos y hablando de un proyecto que
+    // ya no existe.
+    aiSidebar?.classList.remove('show-sidebar');
     statsContainer.classList.remove('show');
     updateMainContentOffset();
     updateUtilityButtonStates();

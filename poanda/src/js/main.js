@@ -96,6 +96,7 @@ import {
 } from './files.js';
 import {
     alCambiarElGlosario,
+    alInsertarDesdeElGlosario,
     downloadTBX,
     loadTBX,
     renderGlossary,
@@ -370,6 +371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     alGuardarUnTermino(alCambiarElGlosario);
     initTerminoModal();
     alInsertarTraduccion(insertarEnLaTraduccionActiva);
+    alInsertarDesdeElGlosario(insertarEnLaTraduccionActiva);
     initTerminoTarjeta();
 
     document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
