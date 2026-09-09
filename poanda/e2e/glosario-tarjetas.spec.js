@@ -172,6 +172,23 @@ test.describe('las tarjetas del glosario', () => {
         }
     });
 
+    test('no hay una etiqueta de aviso encima de la traducción', async ({ page }) => {
+        // Sobre el cuadro de traducción salía una etiqueta amarilla del tipo
+        // "drive-in -> autocine". Decía lo mismo que la tarjeta del panel y que
+        // el amarillo del original, y lo decía empujando el texto hacia abajo
+        // en el único sitio donde uno está escribiendo.
+        await cargarPo(page, PO_GLOSARIO);
+        await anadirTermino(page, 'file', 'archivo');
+        await page.locator('#msgstr-1-0').click();
+
+        await expect(page.locator('.segmento-glosario')).toHaveCount(0);
+        await expect(page.locator('[id^="glossary-match-"]')).toHaveCount(0);
+
+        // Y lo que decía sigue estando: en la palabra marcada y en el panel.
+        await expect(page.locator('#msgid-pre-1-0 .glossary-highlight')).toHaveText('file');
+        await expect(tarjetas(page).first()).toHaveClass(/glosario-tarjeta-coincidencia/);
+    });
+
     test('la tarjeta del ratón dice a qué palabra corresponde', async ({ page }) => {
         // Con dos términos marcados seguidos en la misma frase, una tarjeta que
         // solo enseña la traducción no dice de cuál de los dos habla.

@@ -855,12 +855,6 @@ function renderTranslations(entries) {
             const translationCol = document.createElement('div');
             translationCol.className = 'segmento-col segmento-destino';
 
-            // La etiqueta amarilla del glosario (oculta por defecto)
-            const glossaryBadge = document.createElement('span');
-            glossaryBadge.id = `glossary-match-${entryIndex}-${segmentIndex}`;
-            glossaryBadge.className = 'hidden segmento-glosario';
-            translationCol.appendChild(glossaryBadge);
-
             // El cuadro de traducción va sobre una capa que dibuja los recuadros
             // amarillos de las etiquetas: un textarea no admite color por dentro,
             // así que el color lo pone la capa de abajo y las letras el textarea
@@ -1079,41 +1073,11 @@ function renderTranslations(entries) {
                     marcado.terminos.forEach((term) => state.termsFoundInActiveSegment.add(term));
                 }
 
-                // --- NUEVO: Mostrar etiqueta de glosario ---
-                const glossaryMatchContainer = document.getElementById(
-                    `glossary-match-${entryIndex}-${segmentIndex}`,
-                );
-                if (glossaryMatchContainer) {
-                    glossaryMatchContainer.innerHTML = '';
-                    glossaryMatchContainer.title = '';
-                    glossaryMatchContainer.classList.add('hidden');
-
-                    if (state.termsFoundInActiveSegment.size > 0) {
-                        let hintText = '';
-                        let fullHintText = '';
-
-                        state.termsFoundInActiveSegment.forEach((foundTerm) => {
-                            const glossaryEntry = state.glossary.find(
-                                (g) => g.srcTerm === foundTerm,
-                            );
-                            if (glossaryEntry) {
-                                const part = `${glossaryEntry.srcTerm} -> ${glossaryEntry.tgtTerm}`;
-                                hintText += part + ' | ';
-                                fullHintText += part + ' | ';
-                            }
-                        });
-
-                        if (hintText) {
-                            glossaryMatchContainer.innerHTML = `
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                                        <span>${hintText.slice(0, -3)}</span>
-                                    `;
-                            glossaryMatchContainer.title = `${translations[state.currentLanguage]['glossary_match_title']} ${fullHintText.slice(0, -3)}`;
-                            glossaryMatchContainer.classList.remove('hidden');
-                        }
-                    }
-                }
-                // --- FIN NUEVO BLOQUE ---
+                // Aquí había una etiqueta amarilla encima del cuadro de
+                // traducción ("drive-in -> autocine"). Decía lo mismo que ya
+                // dicen la palabra marcada en el original y la tarjeta del
+                // panel, y lo decía empujando el texto hacia abajo justo donde
+                // se está escribiendo.
 
                 updateGlossaryTableHighlights();
                 autoResizeTextarea(event.target, originalCol.querySelector('pre'));
@@ -1139,16 +1103,6 @@ function renderTranslations(entries) {
                     currentEntryIndex,
                     currentSegmentIndex,
                 );
-                // --- NUEVO: Ocultar etiqueta ---
-                const glossaryMatchContainer = document.getElementById(
-                    `glossary-match-${entryIndex}-${segmentIndex}`,
-                );
-                if (glossaryMatchContainer) {
-                    glossaryMatchContainer.classList.add('hidden');
-                    glossaryMatchContainer.innerHTML = '';
-                }
-                // --- FIN NUEVO BLOQUE ---
-
                 const originalSegmentPre = document.getElementById(
                     `msgid-pre-${entryIndex}-${segmentIndex}`,
                 );

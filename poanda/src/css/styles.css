@@ -455,15 +455,6 @@
         body.dark-mode .comentario-archivo { background-color: #1f2937; color: #cbd5e1; }
         .comentario-caja .comentario-archivo { margin-bottom: 0.5rem; }
 
-        /* Etiqueta del glosario: aparece sobre la traducción al entrar en ella */
-        .segmento-glosario {
-            display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.25rem;
-            font-size: var(--texto-meta); font-weight: 600;
-            color: #78350f; background-color: var(--color-secondary);
-            padding: 1px 6px; border-radius: 4px; align-self: flex-start;
-        }
-        .segmento-glosario.hidden { display: none; }
-
         /* Columna de validación: un visto que se enciende */
         .segmento-estado {
             width: 38px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
@@ -1516,10 +1507,9 @@
 body.dark-mode .search-highlight { background-color: #a16207; color: #fef3c7; }
 body.dark-mode .current-search-highlight { background-color: #c2410c; color: #ffedd5; }
 
-/* Etiquetas del glosario y del "fuzzy": el fondo lo da --color-secondary,
-   que en oscuro ya es ámbar apagado, así que solo hay que aclarar la letra
-   (en claro es marrón oscuro sobre amarillo claro; en oscuro, al revés). */
-body.dark-mode .segmento-glosario,
+/* La etiqueta del "fuzzy": el fondo lo da --color-secondary, que en oscuro ya
+   es ámbar apagado, así que solo hay que aclarar la letra (en claro es marrón
+   oscuro sobre amarillo claro; en oscuro, al revés). */
 body.dark-mode .segmento-fuzzy { color: #fde68a; }
 
 /* El visto de validar: el verde de fondo blanco se apaga demasiado sobre

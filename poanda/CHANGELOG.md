@@ -77,6 +77,12 @@ now a quiet × that only turns red under the pointer — twenty terms meant
 twenty red buttons competing for attention on behalf of the one action with
 no way back.
 
+The Glossary Hint Above the Translation Box Is Gone. Entering a segment put
+a yellow "drive-in -> autocine" label over the box you were about to type
+in, pushing the text down. It said what the highlighted word in the source
+already says and what the panel's card now says in full, in the one place
+where nothing should move.
+
 Memory Matches Are Cards, Not Table Rows: a match used to be a row of a
 three-column table — score, source, translation — inside a panel about 300
 pixels wide, which left each cell around a hundred: not enough for a
