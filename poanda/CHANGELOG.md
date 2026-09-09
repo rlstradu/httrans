@@ -1,4 +1,129 @@
 =======================================
+Poanda v2.2.0 - Built for Real Work
+Release Date: September 9, 2026
+=======================================
+
+An honest look at Poanda found several things that were fine on a toy file
+and not fine on a real job: there was no quality check at all, the memory did
+not scale, one client's memory followed you into another client's project,
+the tab could be closed without warning, and old projects quietly became
+unreachable. This release is about those.
+
+New
+Quality Check, with its own QA button in the toolbar next to TM and Glossary
+and the assistant — it belongs beside them and not inside a menu, because it
+is one of the three things you open while working, not a one-off command.
+Those two panels are what you consult while translating; this is what you
+look at when you finish. Poanda checked tags, and only in the segment you
+were standing on. Everything else — a number changed by
+accident, a segment left empty, the same sentence translated two different
+ways in the same file — depended on somebody spotting it while re-reading.
+Those things are not spotted while re-reading. They are spotted by the
+client.
+
+It is a panel, not a window, and that is the decision everything else
+follows from: the pass before delivery is not done by reading a list once,
+it is done with the list beside you while you fix the segments and watch the
+warnings go. A window has to be closed to touch the file, and by the time
+you reopen it you have lost your place.
+
+So: checks run when you ask, not when the panel opens, because going over a
+large file costs something. The warnings appear in the panel and also as a
+small triangle beside each affected segment, carrying what was found in its
+tooltip — the list says how many there are, the triangle says which one this
+is. And one checkbox leaves only the segments with warnings on screen, which
+turns the list into a batch of work: filter, fix from the top down, and it
+empties. Fixing a segment clears its warning on its own a moment later,
+without pressing anything.
+
+Eight checks: untranslated segments, tags, numbers that did not make it into
+the translation, glossary terms whose agreed translation is not used, the
+same source translated two ways, double spaces, spaces at the edges of a
+segment, and final punctuation. Counts per check sit at the top as chips
+that jump to their group.
+
+Every one of them is a warning, never an error. Each check has a reasonable
+false positive — a number written out in words, a repeated sentence that
+genuinely takes two translations depending on where it appears — so the tool
+points and the translator decides. A quality check that starts blocking
+deliveries is one that gets turned off. For the same reason each check can
+be disabled and stays disabled: warning about the final full stop on every
+button while translating an interface is noise, while in a manual it is
+exactly what to look at.
+
+The consistency check is the one with no equivalent in Locversia either: it
+finds the same source sentence translated differently elsewhere in the file,
+and flags every occurrence rather than only the second, so you can go and
+compare them. It is the kind of thing that happens across two working days
+and jumps out at anyone reading the result end to end.
+
+Changed
+The Translation Memory Scales. Poanda compared the segment you are on
+against every single unit in the memory, one by one, with the full
+character-by-character calculation, on the same thread that draws the
+screen. Measured on a real browser: with 20,000 units, moving to the next
+segment froze the window for 5.3 seconds. A professional memory starts where
+Poanda stopped.
+
+Three things changed, none of which alters a single result:
+
+The calculation now knows when to stop. To reach a 50% match, two sentences
+cannot be further apart than half the longer one, and the difference in
+their lengths is already a floor on that distance. So most units are
+discarded by comparing two numbers, and of those that survive, the
+calculation is abandoned the moment it cannot reach the bar. The bar also
+rises as it goes: once an 88% match is found, anything that cannot beat 88%
+is of no use, and rejecting it gets cheaper the higher the bar.
+
+Above 3,000 units, the memory is indexed. Poanda now notes which units each
+piece of a word appears in, and only compares the ones that share something
+with the sentence in front of you. It is what every professional tool does,
+and what any search engine does. Below 3,000 units nothing is indexed and
+nothing changes: a project memory, the one that fills up as you translate,
+rarely gets that big, and an index there would only be a new way to be
+wrong.
+
+The scan stops copying the whole memory. Building the list of matches
+created a new object for every unit stored, five times a minute.
+
+The result, measured the same way: 20,000 units went from 5,300 ms to 56 ms
+per segment. 5,000 went from 1,400 to 73. A test builds an 8,000-unit memory,
+works out the five best matches the old exhaustive way, and fails if the
+index leaves any of them out — because a memory that runs fast and proposes
+different matches is worse than a slow one.
+
+Searching the memory now shows the first 20 hits rather than all of them.
+Searching "the" in a real memory is tens of thousands of cards, and drawing
+them locks up the browser.
+
+The Recent Projects List Holds 25, Not 5. Those five were not a list, they
+were a peephole: the sixth project was not deleted, it stayed whole in the
+database and simply stopped being reachable. Going back to last month's job
+was impossible even though it was right there. Past 50 projects the oldest
+are now actually deleted, which nothing was doing before — the pruning
+function existed and no part of the program ever called it, so the database
+grew without limit until the browser refused to write, and that failure was
+swallowed in silence.
+
+Each Project Has Its Own Memory and Glossary. There was one memory and one
+glossary for everything — not badly stored, but stored nowhere of their own:
+the database tables had existed from the start, with their project column
+and all, and nothing ever wrote to them. What you saw from the outside was
+that opening another client's job brought the previous client's memory with
+it. With two clients who translate "file" differently, the tool proposes the
+other one's term with complete confidence, and on review it looks like a
+decision you made. To carry work from one job to the next, export to TMX or
+TBX and import it, which is the usual route and works with other tools.
+
+Fixed
+Closing the Tab Asks First. Poanda saves every ten seconds, so closing the
+window by accident took the last thing you typed with it and said nothing at
+all — the worst way to lose work, because you do not find out until you open
+the file again. The browser now asks, and only when there is something to
+lose: a warning that appears every time is one you learn to dismiss in two
+days.
+
+=======================================
 Poanda v2.1.0 - A Real Glossary, and Room to Use It
 Release Date: September 8, 2026
 =======================================

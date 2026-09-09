@@ -13,8 +13,8 @@
  * hasta reemplazar en todo el archivo. Bastaría olvidarse de uno para perder
  * cambios en silencio. Comparando, da igual quién haya tocado qué.
  */
-import { crearProyecto, separarEntradas } from './projects.js';
-import { db } from './db.js';
+import { crearProyecto, podarProyectosViejos, separarEntradas } from './projects.js';
+import { MAXIMO_GUARDADOS, db } from './db.js';
 import { state } from './state.js';
 
 /**
@@ -58,6 +58,14 @@ export async function registrarProyectoAbierto({
 
         state.projectId = projectId;
         tomarFoto();
+
+        // Se poda al abrir, que es el único momento en que la base crece de
+        // golpe. Va sin await a propósito: borrar proyectos viejos no puede
+        // hacer esperar a quien acaba de abrir un archivo.
+        podarProyectosViejos(MAXIMO_GUARDADOS).catch((error) => {
+            console.error('No se han podido borrar los proyectos más antiguos:', error);
+        });
+
         return projectId;
     } catch (error) {
         // Que no se pueda guardar no debe impedir traducir: el trabajo sigue en
@@ -128,6 +136,29 @@ export async function sincronizarCambios() {
         console.error('No se han podido guardar los cambios del proyecto:', error);
         return 0;
     }
+}
+
+/**
+ * ¿Hay algo escrito que todavía no esté en la base de datos?
+ *
+ * Se responde con la misma foto que usa sincronizarCambios, así que no hace
+ * falta tocar la base para saberlo: es una comparación en memoria y se puede
+ * llamar desde el aviso de cerrar la pestaña, donde el navegador no da tiempo
+ * a esperar nada.
+ *
+ * Sin proyecto registrado la foto está vacía, así que cualquier traducción
+ * cuenta como pendiente. Es lo correcto: si el proyecto no llegó a crearse,
+ * en la base no hay nada.
+ *
+ * @returns {boolean}
+ */
+export function haySinGuardar() {
+    if (!state.poEntries || state.poEntries.length === 0) return false;
+
+    const { segmentos } = separarEntradas(state.poEntries);
+    return segmentos.some(
+        (s) => ultimoGuardado.get(clave(s.entryIndex, s.sentenceIndex)) !== s.translation,
+    );
 }
 
 /**

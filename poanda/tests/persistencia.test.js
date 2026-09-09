@@ -301,3 +301,65 @@ describe('el comentario de un segmento', () => {
         vi.restoreAllMocks();
     });
 });
+
+describe('saber si queda algo sin guardar', () => {
+    // Es lo que decide si el navegador pregunta al cerrar la pestaña. Tiene que
+    // responder sin tocar la base de datos: en ese momento no hay tiempo para
+    // una escritura ni para una lectura asíncrona.
+
+    it('sin archivo abierto no hay nada que perder', () => {
+        state.poEntries = [];
+        expect(persistencia.haySinGuardar()).toBe(false);
+    });
+
+    it('recién abierto no hay nada pendiente', async () => {
+        await persistencia.registrarProyectoAbierto({ fileName: 'plugin.po', format: 'po' });
+        expect(persistencia.haySinGuardar()).toBe(false);
+    });
+
+    it('escribir una traducción deja algo pendiente', async () => {
+        await persistencia.registrarProyectoAbierto({ fileName: 'plugin.po', format: 'po' });
+
+        state.poEntries[1].sentenceSegments[0].translation = 'Guardar';
+
+        expect(persistencia.haySinGuardar()).toBe(true);
+    });
+
+    it('después de sincronizar ya no queda nada', async () => {
+        await persistencia.registrarProyectoAbierto({ fileName: 'plugin.po', format: 'po' });
+        state.poEntries[1].sentenceSegments[0].translation = 'Guardar';
+
+        await persistencia.sincronizarCambios();
+
+        expect(persistencia.haySinGuardar()).toBe(false);
+    });
+
+    it('sin proyecto en la base, lo traducido cuenta como pendiente', () => {
+        // Si el proyecto no llegó a crearse (la base falló, o el navegador no
+        // deja escribir), en disco no hay nada: avisar es lo correcto.
+        state.projectId = null;
+        state.poEntries[1].sentenceSegments[0].translation = 'Guardar';
+
+        expect(persistencia.haySinGuardar()).toBe(true);
+    });
+
+    it('borrar una traducción también cuenta como cambio', async () => {
+        // Quitar texto es un cambio como otro cualquiera, y perderlo al cerrar
+        // devolvería una traducción que se había decidido borrar.
+        await persistencia.registrarProyectoAbierto({ fileName: 'plugin.po', format: 'po' });
+
+        state.poEntries[0].sentenceSegments[0].translation = '';
+
+        expect(persistencia.haySinGuardar()).toBe(true);
+    });
+
+    it('empezar un proyecto nuevo deja de avisar', async () => {
+        await persistencia.registrarProyectoAbierto({ fileName: 'plugin.po', format: 'po' });
+        state.poEntries[1].sentenceSegments[0].translation = 'Guardar';
+
+        persistencia.olvidarProyecto();
+        state.poEntries = [];
+
+        expect(persistencia.haySinGuardar()).toBe(false);
+    });
+});

@@ -24,6 +24,14 @@ import { copyIconSVG, commentIconSVG } from './icons.js';
 import { repartirComentarios } from './core/comentarios.js';
 import { updateSearchCounter } from './search.js';
 import { marcadoZonaSoltar } from './dropzone.js';
+import { repasarSiEstaAbierto } from './qa-ui.js';
+import {
+    avisosDelSegmento,
+    comprobacionesActivas,
+    idsConAvisos,
+    soloSegmentosConAvisos,
+    textoDelAviso,
+} from './qa-estado.js';
 import { state } from './state.js';
 import { updateStatsDisplay, updateUtilityButtonStates } from './stats.js';
 import { addOrUpdateTMEntry, findBestTMMatch, tmSearch } from './tm.js';
@@ -928,6 +936,20 @@ function renderTranslations(entries) {
             const estadoCol = document.createElement('div');
             estadoCol.className = 'segmento-estado';
 
+            // Aviso del control de calidad: un triángulo que sale en los
+            // segmentos que tienen algo raro, con lo encontrado en su tooltip.
+            // La lista del panel dice cuántos hay; esto dice cuál es este.
+            const avisoCalidad = document.createElement('button');
+            avisoCalidad.type = 'button';
+            avisoCalidad.id = `avisoCalidad-${entryIndex}-${segmentIndex}`;
+            avisoCalidad.className = 'segmento-aviso-calidad';
+            avisoCalidad.textContent = '\u26A0';
+            avisoCalidad.hidden = true;
+            avisoCalidad.addEventListener('click', () =>
+                navigateToTranslation(entryIndex, segmentIndex),
+            );
+            estadoCol.appendChild(avisoCalidad);
+
             // Aviso de etiquetas: encima del visto, oculto mientras todo cuadre.
             const avisoEtiquetas = document.createElement('span');
             avisoEtiquetas.id = `avisoEtiquetas-${entryIndex}-${segmentIndex}`;
@@ -1024,6 +1046,12 @@ function renderTranslations(entries) {
                     const currentSegmentIndex = parseInt(event.target.dataset.segmentIndex);
                     const segment =
                         state.poEntries[currentEntryIndex].sentenceSegments[currentSegmentIndex];
+
+                    // Con el panel de calidad abierto, se vuelve a revisar poco
+                    // después de escribir: así los avisos desaparecen según se
+                    // corrigen, en vez de quedarse hasta que uno se acuerda de
+                    // pulsar el botón.
+                    repasarSiEstaAbierto();
 
                     // 1. Guardar estado ANTERIOR
                     const oldWordCount = segment.wordCountTranslation;
@@ -1213,6 +1241,22 @@ function filterPOEntries() {
     state.currentSearchIndex = -1;
     repintarTodosLosOriginales();
 
+    // El filtro del control de calidad manda sobre la búsqueda: es una tanda
+    // de trabajo (corregir lo que está mal), no una consulta.
+    if (soloSegmentosConAvisos()) {
+        const conAvisos = idsConAvisos();
+        state.poEntries.forEach((entry, index) => {
+            const unit = document.getElementById(`translation-unit-${index}`);
+            if (!unit) return;
+            const alguno = (entry.sentenceSegments || []).some((_, sIdx) =>
+                conAvisos.has(`${index}-${sIdx}`),
+            );
+            unit.style.display = alguno ? 'block' : 'none';
+        });
+        updateSearchCounter();
+        return;
+    }
+
     if (!query) {
         state.poEntries.forEach((entry, index) => {
             const unit = document.getElementById(`translation-unit-${index}`);
@@ -1260,6 +1304,25 @@ function filterPOEntries() {
     // Populate searchResults array with all new highlights
     state.searchResults = document.querySelectorAll('.search-highlight');
     updateSearchCounter();
+}
+
+/**
+ * Pone o quita el triángulo de calidad en cada segmento.
+ *
+ * Se llama después de revisar y cada vez que cambia qué comprobaciones están
+ * encendidas. Recorre solo los triángulos que existen, que son los del archivo
+ * pintado, así que no depende de cuántos segmentos tenga el proyecto.
+ */
+function pintarAvisosDeCalidad() {
+    const cuales = comprobacionesActivas();
+
+    document.querySelectorAll('.segmento-aviso-calidad').forEach((triangulo) => {
+        const id = triangulo.id.replace('avisoCalidad-', '');
+        const avisos = avisosDelSegmento(id, cuales);
+
+        triangulo.hidden = avisos.length === 0;
+        triangulo.title = avisos.map(textoDelAviso).join('\n');
+    });
 }
 
 function getCurrentFocusedIndex() {
@@ -1430,6 +1493,7 @@ export {
     navigateToTranslation,
     pushToUndoStack,
     renderTranslations,
+    pintarAvisosDeCalidad,
     recalcularTerminosDelSegmentoActivo,
     repintarTodosLosOriginales,
     setTranslationEditableState,

@@ -14,6 +14,7 @@ import { updateSaveButtonsState } from './files.js';
 import { showGlossaryEditorSection } from './glossary.js';
 import { adoptarProyecto, sincronizarCambios } from './persistencia.js';
 import { abrirProyecto, borrarProyecto, listarRecientes, progresoDe } from './projects.js';
+import { guardarRecursos, ponerRecursosDelProyecto } from './recursos.js';
 import { recuperarIdiomasDelProyecto } from './idiomas-proyecto.js';
 import { state } from './state.js';
 import { updateStatsDisplay } from './stats.js';
@@ -101,6 +102,7 @@ export async function abrirDesdeRecientes(projectId) {
     if (state.projectId && state.projectId !== projectId) {
         if (!(await showConfirm(t('recent_projects_switch_confirm')))) return;
         await sincronizarCambios();
+        await guardarRecursos();
     }
 
     showLoadingOverlay(t('loading_project'));
@@ -118,6 +120,8 @@ export async function abrirDesdeRecientes(projectId) {
 
         state.poEntries = proyecto.entradas;
         adoptarProyecto(projectId);
+        // La memoria y el glosario de ESTE proyecto, no los del anterior.
+        await ponerRecursosDelProyecto(projectId);
 
         renderTranslations(state.poEntries);
         updateStatsDisplay();
@@ -169,8 +173,11 @@ export function initRecientes() {
     abrir.addEventListener('click', async (evento) => {
         evento.preventDefault();
         // Se guarda lo pendiente antes de mirar la lista, para que el avance
-        // que se muestra sea el de verdad y no el de hace diez segundos.
+        // que se muestra sea el de verdad y no el de hace diez segundos. Y con
+        // él la memoria y el glosario: desde esta ventana se cambia de
+        // proyecto, y lo que no esté escrito al salir ya no vuelve.
         await sincronizarCambios();
+        await guardarRecursos();
         await renderRecientes();
         modal.classList.remove('hidden');
     });

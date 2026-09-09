@@ -72,6 +72,13 @@
             <button id="panelesBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
                 <span data-i18n="panels_btn"></span>
             </button>
+            <!-- El control de calidad es su propio panel y su propio botón: no
+                 tiene nada que ver con la memoria ni con el glosario, que son
+                 lo que se consulta mientras se traduce. Esto es lo que se mira
+                 al terminar. -->
+            <button id="qaBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300">
+                <span data-i18n="qa_btn_corto">QA</span>
+            </button>
             <button id="aiBtn" class="font-medium py-1 px-3 rounded-md shadow-sm transition duration-300 flex items-center gap-1">
                 <span>🐼</span> <span data-i18n="ai_btn">AI Assistant</span>
             </button>
@@ -97,7 +104,7 @@
                 <!-- El texto del botón de tema lo pone theme.js: depende del
                      modo activo, no solo del idioma. -->
                 <button id="darkModeToggle" class="control-barra">Dark mode</button>
-                <button id="versionToggle" class="control-barra" data-i18n-title="changelog_btn_title">v2.1.0</button>
+                <button id="versionToggle" class="control-barra" data-i18n-title="changelog_btn_title">v2.2.0</button>
             </div>
         </div>
 
@@ -180,6 +187,39 @@
             <!-- El asistente: una columna más, entre el editor y los paneles
                  de consulta. Antes flotaba por encima del texto, que es lo
                  último que uno quiere tapar mientras traduce. -->
+            <!-- CONTROL DE CALIDAD
+                 Es un panel y no una ventana a propósito: el repaso no se hace
+                 leyendo una lista de una vez, se hace con la lista al lado
+                 mientras se corrigen los segmentos y se ve cómo van
+                 desapareciendo los avisos. Una ventana obliga a cerrarla para
+                 tocar el archivo, y entonces ya no se sabe por dónde ibas. -->
+            <div id="qaPanel" class="qa-panel shadow-xl">
+                <div class="sidebar-header p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="text-md font-bold text-gray-700" data-i18n="qa_titulo"></h3>
+                    <button id="qaCloseBtn" class="text-gray-500 hover:text-gray-700">✕</button>
+                </div>
+
+                <div class="qa-panel-cuerpo">
+                    <div class="qa-acciones">
+                        <button id="qaRevisarBtn" class="qa-revisar"><span data-i18n="qa_revisar"></span></button>
+                        <!-- Deja en pantalla solo los segmentos con avisos: es
+                             lo que convierte la lista en una tanda de trabajo. -->
+                        <label id="qaSoloConAvisos" class="qa-solo hidden">
+                            <input type="checkbox" id="qaSoloConAvisosCheck">
+                            <span data-i18n="qa_solo_con_avisos"></span>
+                        </label>
+                    </div>
+
+                    <button id="qaComprobacionesToggle" class="qa-plegar" type="button" aria-expanded="true">
+                        <span id="qaComprobacionesTitulo"></span>
+                    </button>
+                    <div id="qaInterruptores" class="qa-interruptores"></div>
+
+                    <div id="qaResumen" class="qa-resumen"></div>
+                    <div id="qaLista" class="qa-lista"></div>
+                </div>
+            </div>
+
             <div id="aiSidebar" class="ai-sidebar shadow-xl">
                 <div class="sidebar-header p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                     <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">🐼 PandaBot AI</h3>

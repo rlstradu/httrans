@@ -6,6 +6,8 @@ import { parsePoContent, reconstructPo } from './core/po.js';
 import { esTraduccionDeQt } from './core/qtts.js';
 import { hideLoadingOverlay, showLoadingOverlay, showMessage, showPrompt } from './dialogs.js';
 import { registrarProyectoAbierto } from './persistencia.js';
+import { vaciarRecursos } from './recursos.js';
+import { olvidarControlDeCalidad } from './qa-ui.js';
 import { preguntarIdiomasAlAbrir } from './idiomas-proyecto.js';
 import { poSearchContainer, poSearchInput, statsContainer, translationsContainer } from './dom.js';
 import { filterPOEntries, renderTranslations } from './editor.js';
@@ -201,6 +203,14 @@ async function abrirArchivo(file) {
         );
         return false;
     }
+
+    // Cada proyecto tiene su memoria y su glosario, así que un archivo nuevo
+    // empieza sin nada. Antes se quedaban puestos los del archivo anterior, y
+    // con dos clientes que traducen "file" de maneras distintas la herramienta
+    // proponía la del otro con toda su confianza.
+    vaciarRecursos();
+    // La revisión de calidad es del archivo que había, no del que viene.
+    olvidarControlDeCalidad();
 
     const formato = formatoPorExtension(extension);
     // Los .mo no son texto: son el catálogo compilado, y leerlos como texto

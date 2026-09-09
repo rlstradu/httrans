@@ -20,6 +20,16 @@ export const MINIMO_PARA_ENSENAR = 50;
 export const MAXIMO_RESULTADOS = 5;
 
 /**
+ * Cuántas se enseñan al buscar una palabra en la memoria.
+ *
+ * Buscando no hay parecido que ordene: valen todas las que contengan lo
+ * escrito. Sobre una memoria de verdad, buscar "the" son decenas de miles de
+ * unidades, y pintarlas cuelga el navegador. Veinte es lo que se mira de una
+ * vez antes de afinar la búsqueda.
+ */
+export const MAXIMO_CONCORDANCIAS = 20;
+
+/**
  * La categoría de una coincidencia según lo que se parece.
  *
  * Los nombres son los de siempre en las herramientas de traducción, y cada uno

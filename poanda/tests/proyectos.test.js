@@ -446,3 +446,50 @@ describe('actualización desde la versión anterior', () => {
         expect(db.verno).toBe(2);
     });
 });
+
+describe('cuántos proyectos se conservan', () => {
+    // Antes esto no lo comprobaba nadie porque no lo hacía nadie: la función de
+    // podar existía y no la llamaba ningún sitio. La base crecía sin fin, y la
+    // lista solo enseñaba cinco, así que el sexto proyecto seguía guardado pero
+    // era imposible llegar a él.
+
+    it('la lista enseña bastantes más de cinco', async () => {
+        const { MAXIMO_RECIENTES } = await import('../src/js/db.js');
+        expect(MAXIMO_RECIENTES).toBeGreaterThanOrEqual(20);
+    });
+
+    it('se conservan más de los que se enseñan', async () => {
+        // Podar nunca puede llevarse por delante algo que estaba a la vista.
+        const { MAXIMO_RECIENTES, MAXIMO_GUARDADOS } = await import('../src/js/db.js');
+        expect(MAXIMO_GUARDADOS).toBeGreaterThan(MAXIMO_RECIENTES);
+    });
+
+    it('abrir un archivo borra los proyectos que sobran', async () => {
+        const persistencia = await import('../src/js/persistencia.js');
+        const state = (await import('../src/js/state.js')).state;
+        const { MAXIMO_GUARDADOS } = await import('../src/js/db.js');
+        state.poEntries = ENTRADAS;
+
+        // Se llena la base por encima del límite, con fechas crecientes para
+        // que se sepa cuáles son los viejos.
+        for (let i = 0; i < MAXIMO_GUARDADOS + 3; i++) {
+            const id = await proyectos.crearProyecto({
+                fileName: `viejo-${i}.po`,
+                format: 'po',
+                entradas: state.poEntries,
+            });
+            await db.projects.update(id, { lastModified: 1000 + i });
+        }
+        expect(await db.projects.count()).toBe(MAXIMO_GUARDADOS + 3);
+
+        await persistencia.registrarProyectoAbierto({ fileName: 'nuevo.po', format: 'po' });
+        // La poda va en segundo plano para no hacer esperar a quien abre.
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        expect(await db.projects.count()).toBeLessThanOrEqual(MAXIMO_GUARDADOS);
+        // Y lo que se ha ido son los más antiguos, no el que se acaba de abrir.
+        const quedan = await db.projects.toArray();
+        expect(quedan.some((p) => p.fileName === 'nuevo.po')).toBe(true);
+        expect(quedan.some((p) => p.fileName === 'viejo-0.po')).toBe(false);
+    });
+});

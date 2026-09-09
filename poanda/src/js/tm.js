@@ -1,4 +1,4 @@
-import { calculateSimilarity, countWords } from './core/text.js';
+import { countWords, parecidoAlMenos } from './core/text.js';
 import { generateTMX } from './core/tmx.js';
 import { hideLoadingOverlay, showLoadingOverlay } from './dialogs.js';
 import {
@@ -8,7 +8,15 @@ import {
     tmResultadosLista,
 } from './dom.js';
 import { escaparHtml } from './core/xml.js';
-import { bandaDeCoincidencia, coincidenciasQueValen } from './core/tm-coincidencias.js';
+import {
+    MAXIMO_CONCORDANCIAS,
+    MAXIMO_RESULTADOS,
+    MINIMO_PARA_ENSENAR,
+    bandaDeCoincidencia,
+    coincidenciasQueValen,
+} from './core/tm-coincidencias.js';
+import { DESDE_CUANTAS_UNIDADES, candidatas, construirIndice } from './core/tm-indice.js';
+import { marcarRecursosCambiados } from './recursos.js';
 import { mismoIdioma } from './core/idiomas.js';
 import { pintarParDelProyecto } from './idiomas-proyecto.js';
 import { avisarSiEstanVacios } from './paneles.js';
@@ -48,6 +56,7 @@ function hideTMInternalMessage() {
 
 function resetTM() {
     state.translationMemory = [];
+    olvidarIndiceDeLaMemoria();
     renderTMSearchResults([]);
     hideTMInternalMessage();
     showTMEditorSection();
@@ -111,6 +120,8 @@ function processTMXContent(content) {
         }
 
         state.translationMemory = newTM;
+        olvidarIndiceDeLaMemoria();
+        marcarRecursosCambiados();
         avisarSiEstanVacios();
 
         showTMInternalMessage(
@@ -192,8 +203,52 @@ function addOrUpdateTMEntry(original, translation) {
             tgtWordCount: countWords(translation),
         });
     }
+    marcarRecursosCambiados();
     avisarSiEstanVacios();
     tmSearch();
+}
+
+/**
+ * El índice de la memoria, construido a la primera y guardado hasta que cambia.
+ *
+ * Se guarda junto a la memoria que lo produjo: si esa memoria ya no es la que
+ * hay, el índice no vale y se rehace. Comparar las referencias basta, porque
+ * cargar un TMX o empezar un proyecto reemplazan el array entero, y añadir una
+ * unidad al validar sube el número de unidades.
+ */
+let indiceGuardado = null;
+let memoriaDelIndice = null;
+let cuantasAlIndexar = 0;
+
+/**
+ * Las unidades de la memoria que merece la pena comparar con un texto.
+ *
+ * Con una memoria pequeña se devuelven todas, y entonces esto no cambia
+ * absolutamente nada respecto a como funcionaba antes: se comparan una a una,
+ * igual que siempre. El índice solo entra cuando la memoria es lo bastante
+ * grande como para que recorrerla entera se note en la pantalla.
+ *
+ * @param {string} texto
+ * @returns {Array<object>} Unidades candidatas.
+ */
+function unidadesQueMirar(texto) {
+    const memoria = state.translationMemory;
+    if (memoria.length < DESDE_CUANTAS_UNIDADES) return memoria;
+
+    if (indiceGuardado === null || memoriaDelIndice !== memoria || cuantasAlIndexar !== memoria.length) {
+        indiceGuardado = construirIndice(memoria);
+        memoriaDelIndice = memoria;
+        cuantasAlIndexar = memoria.length;
+    }
+
+    return candidatas(indiceGuardado, texto).map((posicion) => memoria[posicion]);
+}
+
+/** Obliga a rehacer el índice. Se llama al vaciar o reemplazar la memoria. */
+function olvidarIndiceDeLaMemoria() {
+    indiceGuardado = null;
+    memoriaDelIndice = null;
+    cuantasAlIndexar = 0;
 }
 
 function findBestTMMatch(sourceSegmentText) {
@@ -210,7 +265,7 @@ function findBestTMMatch(sourceSegmentText) {
     let highestScore = 0;
     const MIN_FUZZY_THRESHOLD = 70;
 
-    state.translationMemory.forEach((entry) => {
+    unidadesQueMirar(sourceSegmentText).forEach((entry) => {
         // Se compara por lengua y no por etiqueta entera: una memoria exportada
         // de otra herramienta viene marcada "en-US" y el proyecto puede estar
         // en "en". Exigir que coincidan letra por letra dejaría sin usar la
@@ -220,7 +275,13 @@ function findBestTMMatch(sourceSegmentText) {
             mismoIdioma(entry.tgtLang, state.targetLang) &&
             entry.srcText.trim()
         ) {
-            const score = calculateSimilarity(sourceSegmentText, entry.srcText);
+            // El listón sube con cada hallazgo: encontrada una del 88 %, las
+            // que no pasen de ahí ya no sirven de nada, y descartarlas cuesta
+            // menos cuanto más alto está. Sobre una memoria grande esto quita
+            // casi todo el trabajo: la primera coincidencia buena hace que el
+            // resto se resuelvan comparando dos longitudes.
+            const liston = Math.max(MIN_FUZZY_THRESHOLD, highestScore);
+            const score = parecidoAlMenos(sourceSegmentText, entry.srcText, liston);
             if (score >= MIN_FUZZY_THRESHOLD && score > highestScore) {
                 highestScore = score;
                 bestMatch = { ...entry, score: score.toFixed(0) };
@@ -260,42 +321,69 @@ function tmSearch() {
         resultsToRender.push({ ...state.tmBestMatchForActiveSegment, isBestMatch: true });
     }
 
-    const filteredTM = state.translationMemory.filter((entry) => {
-        if (
-            state.tmBestMatchForActiveSegment &&
-            entry.srcText === state.tmBestMatchForActiveSegment.srcText &&
-            entry.tgtText === state.tmBestMatchForActiveSegment.tgtText
-        ) {
-            return false;
-        }
+    // UN SOLO RECORRIDO, Y SIN COPIAR NADA QUE NO SE VAYA A ENSEÑAR
+    //
+    // Aquí antes se hacía un filter, un map con `{...entry, score}` y un sort,
+    // los tres sobre la memoria ENTERA. Con 100.000 unidades eso son 100.000
+    // objetos nuevos en cada cambio de segmento, y ese era el gasto de verdad:
+    // más que la comparación de textos, que ya se abandona en cuanto se sabe
+    // que una unidad no llega.
+    //
+    // Ahora se recorre una vez y solo se copia lo que va a salir en pantalla,
+    // que son cinco tarjetas.
+    const mejor = state.tmBestMatchForActiveSegment;
+    const esLaMejor = (entry) =>
+        mejor && entry.srcText === mejor.srcText && entry.tgtText === mejor.tgtText;
+
+    const utiles = [];
+    /** El mínimo que hay que superar ahora mismo. Sube según se encuentran. */
+    let suelo = MINIMO_PARA_ENSENAR;
+
+    // Buscando se mira la memoria entera —hay que encontrar la palabra esté
+    // donde esté—; sin buscar, solo las que el índice propone.
+    const aMirar = query ? state.translationMemory : unidadesQueMirar(activeSegmentOriginalText || '');
+
+    for (const entry of aMirar) {
+        if (esLaMejor(entry)) continue;
+
         if (query) {
-            return (
+            // Buscando, vale cualquier unidad que contenga lo escrito: el
+            // parecido con la frase entera no dice nada cuando lo que se busca
+            // es una palabra, y por eso la tarjeta no enseña porcentaje.
+            const dentro =
                 (entry.srcText && entry.srcText.toLowerCase().includes(query)) ||
-                (entry.tgtText && entry.tgtText.toLowerCase().includes(query))
-            );
+                (entry.tgtText && entry.tgtText.toLowerCase().includes(query));
+            if (!dentro) continue;
+            utiles.push({ ...entry, score: 0 });
+            // Una búsqueda de "the" sobre una memoria grande daría decenas de
+            // miles de tarjetas, y pintarlas dejaría el navegador colgado. Se
+            // enseña un puñado, que es lo que cabe mirar de una vez.
+            if (utiles.length >= MAXIMO_CONCORDANCIAS) break;
+            continue;
         }
-        return true;
-    });
 
-    const puntuadas = filteredTM.map((entry) => {
-        let score = 0;
-        if (query) {
-            score = calculateSimilarity(query, entry.srcText);
-        } else if (activeSegmentOriginalText) {
-            score = calculateSimilarity(activeSegmentOriginalText, entry.srcText);
+        if (!activeSegmentOriginalText) continue;
+
+        // Solo interesan las que se van a enseñar, y solo caben cinco. Así que
+        // en cuanto hay cinco, el listón deja de ser el mínimo general y pasa a
+        // ser la peor de las cinco: cualquier unidad que no la mejore sobra, y
+        // descartarla es más barato cuanto más alto esté el listón. Sobre una
+        // memoria repetitiva —un manual con miles de frases casi iguales, que
+        // es justo cuando la memoria más vale— esto es la diferencia entre un
+        // segundo de espera y ninguna.
+        const score = parecidoAlMenos(activeSegmentOriginalText, entry.srcText, suelo);
+        if (score < suelo) continue;
+
+        utiles.push({ ...entry, score: Math.round(score), parecidoExacto: score });
+        if (utiles.length > MAXIMO_RESULTADOS) {
+            utiles.sort((a, b) => b.parecidoExacto - a.parecidoExacto);
+            utiles.length = MAXIMO_RESULTADOS;
+            suelo = Math.max(MINIMO_PARA_ENSENAR, utiles[MAXIMO_RESULTADOS - 1].parecidoExacto);
         }
-        return { ...entry, score: Number(score.toFixed(0)) };
-    });
+    }
 
-    // Buscando, vale cualquier unidad que contenga lo buscado: el parecido con
-    // la frase entera no dice nada cuando lo que se busca es una palabra.
-    // Sin buscar, se comparan con el segmento en el que se está, y ahí sí hay
-    // que poner un mínimo: la memoria devuelve un parecido para CADA unidad que
-    // tiene dentro, así que sin filtro salían coincidencias del 12 % —dos
-    // frases sin nada en común— empujando hacia abajo la que servía.
-    const utiles = query
-        ? puntuadas.sort((a, b) => a.srcText.localeCompare(b.srcText))
-        : coincidenciasQueValen(puntuadas);
+    if (query) utiles.sort((a, b) => a.srcText.localeCompare(b.srcText));
+    else utiles.splice(0, utiles.length, ...coincidenciasQueValen(utiles));
 
     resultsToRender.push(...utiles);
     state.currentTMLatestSearchResults = resultsToRender;

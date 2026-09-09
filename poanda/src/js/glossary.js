@@ -6,6 +6,7 @@ import { terminosQueResponden } from './core/glosario-coincidencias.js';
 import { abrirFichaDeTermino } from './termino-modal.js';
 import { pintarParDelProyecto } from './idiomas-proyecto.js';
 import { avisarSiEstanVacios } from './paneles.js';
+import { marcarRecursosCambiados } from './recursos.js';
 import {
     recalcularTerminosDelSegmentoActivo,
     renderTranslations,
@@ -57,6 +58,7 @@ function showGlossaryEditorSection() {
  * término cambia lo que se ve de arriba abajo.
  */
 function alCambiarElGlosario() {
+    marcarRecursosCambiados();
     // Primero se vuelve a mirar qué hay en el segmento en el que se está: el
     // panel señala las coincidencias a partir de esa lista, y si no se rehace,
     // un término recién guardado no sale marcado hasta salir del segmento y
@@ -279,6 +281,7 @@ function processTBXContent(content) {
         // las entradas que vengan del revés, para que todas se busquen en el
         // texto original y no la mitad al aire.
         state.glossary = enderezarGlosario(terminos);
+        marcarRecursosCambiados();
 
         if (state.glossary.length === 0) {
             showMessage(translations[state.currentLanguage]['error_loading_tbx_file']);

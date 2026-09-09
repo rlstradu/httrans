@@ -455,6 +455,230 @@
         body.dark-mode .comentario-archivo { background-color: #1f2937; color: #cbd5e1; }
         .comentario-caja .comentario-archivo { margin-bottom: 0.5rem; }
 
+
+        /* CONTROL DE CALIDAD
+           ==================
+
+           El repaso de antes de entregar. La ventana es alta y estrecha de
+           contenido: se lee de arriba abajo, un grupo por comprobación, y cada
+           renglón lleva al segmento. */
+        .qa-resumen {
+            font-size: var(--texto-base); color: var(--color-neutral-gray);
+            margin-bottom: 0.75rem;
+        }
+        /* Cuando no hay nada que decir, se dice en verde y se acabó: es la
+           única vez que esta ventana da una buena noticia. */
+        .qa-resumen-limpio { color: #15803d; font-weight: 600; }
+        body.dark-mode .qa-resumen-limpio { color: #4ade80; }
+
+        /* Las casillas de encender y apagar. Van arriba y en una sola franja:
+           son ajustes, no la lista. */
+        .qa-interruptores {
+            display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem;
+            padding: 0.6rem 0.75rem; margin-bottom: 1rem;
+            border: 1px solid var(--color-medium-gray); border-radius: 6px;
+            background-color: var(--color-light-gray);
+        }
+        .qa-interruptor {
+            display: flex; align-items: center; gap: 0.35rem;
+            font-size: var(--texto-meta); color: var(--color-dark);
+            cursor: pointer;
+        }
+        .qa-interruptor-cuantos {
+            font-weight: 700; color: var(--color-neutral-gray);
+            min-width: 1.2em; text-align: right;
+        }
+
+        .qa-grupo + .qa-grupo { margin-top: 1.25rem; }
+        .qa-grupo-titulo {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: var(--texto-base); font-weight: 700;
+            color: var(--color-dark); margin-bottom: 0.15rem;
+        }
+        .qa-grupo-cuantos {
+            font-size: var(--texto-meta); font-weight: 700;
+            padding: 1px 7px; border-radius: 4px;
+            background-color: var(--color-secondary); color: #78350f;
+        }
+        body.dark-mode .qa-grupo-cuantos { color: #fde68a; }
+        /* Qué significa cada comprobación, en su sitio. Sin esto, "Espacios en
+           los extremos" no le dice nada a nadie la primera vez. */
+        .qa-grupo-explicacion {
+            font-size: var(--texto-meta); color: var(--color-neutral-gray);
+            margin-bottom: 0.5rem; line-height: 1.45;
+        }
+
+        /* Un aviso es un botón: lleva a su segmento. */
+        .qa-aviso {
+            display: flex; align-items: baseline; gap: 0.6rem; width: 100%;
+            text-align: left; padding: 6px 8px; border: none; border-radius: 5px;
+            background-color: transparent; cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .qa-aviso:hover { background-color: var(--color-light-gray); }
+        body.dark-mode .qa-aviso:hover { background-color: #374151; }
+        .qa-aviso:focus-visible {
+            outline: 2px solid var(--color-primary); outline-offset: -2px;
+        }
+        .qa-aviso-numero {
+            font-size: var(--texto-meta); font-weight: 700;
+            color: var(--color-neutral-gray); min-width: 2.5em; flex-shrink: 0;
+        }
+        .qa-aviso-texto { display: flex; flex-direction: column; min-width: 0; }
+        .qa-aviso-origen {
+            font-size: var(--texto-meta); color: var(--color-dark);
+            overflow-wrap: anywhere;
+        }
+        /* El dato concreto: el número que falta, el término que no se usó, las
+           dos traducciones que no coinciden. */
+        .qa-aviso-dato {
+            font-size: var(--texto-meta); color: var(--color-neutral-gray);
+            font-style: italic; overflow-wrap: anywhere;
+        }
+
+
+        /* El panel: otra columna, como la del asistente. Se queda abierto
+           mientras se corrige, que es la razón de que sea un panel. */
+        .qa-panel {
+            display: none;
+            flex: 0 0 auto; width: 360px; min-width: 300px;
+            flex-direction: column; min-height: 0;
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem; overflow: hidden;
+            /* Mismo hueco que las otras columnas: la barra de estadísticas va
+               fija abajo del todo y se pone por encima de lo que tenga debajo,
+               así que la última franja del panel se veía pero no se podía
+               pulsar. */
+            margin-bottom: 3rem;
+        }
+        .qa-panel.show-sidebar { display: flex; }
+        body.dark-mode .qa-panel {
+            background-color: #1f2937; border-left-color: #374151;
+        }
+        .qa-panel-cuerpo {
+            display: flex; flex-direction: column; min-height: 0;
+            padding: 0.75rem; gap: 0.6rem; overflow: hidden;
+        }
+
+        .qa-acciones { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+        .qa-revisar {
+            font-size: var(--texto-meta); font-weight: 600;
+            padding: 5px 14px; border: none; border-radius: 5px;
+            background-color: var(--color-primary); color: var(--color-dark);
+            transition: background-color 0.2s;
+        }
+        .qa-revisar:hover { background-color: #e07a82; }
+        body.dark-mode .qa-revisar { color: #f3f4f6; }
+        /* El filtro que deja solo lo que tiene avisos: es lo que convierte la
+           lista en una tanda de trabajo, así que va junto al botón. */
+        .qa-solo {
+            display: flex; align-items: center; gap: 0.35rem;
+            font-size: var(--texto-meta); color: var(--color-dark); cursor: pointer;
+        }
+
+        /* Las comprobaciones se pliegan: se miran una vez para ajustarlas y a
+           partir de ahí lo que interesa es la lista. */
+        .qa-plegar {
+            display: flex; align-items: center; gap: 0.35rem; width: 100%;
+            text-align: left; padding: 3px 0; border: none;
+            background-color: transparent; cursor: pointer;
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-neutral-gray);
+        }
+        .qa-plegar::before { content: '\25B8'; transition: transform 0.15s; }
+        .qa-plegar-abierto::before { transform: rotate(90deg); }
+
+        .qa-interruptores {
+            display: flex; flex-direction: column; gap: 0.2rem;
+            padding: 0.5rem 0.6rem;
+            border: 1px solid var(--color-medium-gray); border-radius: 6px;
+            background-color: var(--color-light-gray);
+        }
+        .qa-interruptor {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: var(--texto-meta); color: var(--color-dark); cursor: pointer;
+        }
+
+        .qa-resumen { font-size: var(--texto-meta); color: var(--color-neutral-gray); }
+        /* Antes de revisar: el panda lo explica, igual que en los paneles vacíos. */
+        .qa-resumen-espera {
+            display: flex; align-items: center; gap: 0.6rem; line-height: 1.45;
+        }
+        .qa-panda { width: 44px; height: auto; flex-shrink: 0; }
+        /* Cuando no hay nada que decir se dice en verde: es la única vez que
+           este panel da una buena noticia. */
+        .qa-resumen-limpio { color: #15803d; font-weight: 600; }
+        body.dark-mode .qa-resumen-limpio { color: #4ade80; }
+        .qa-resumen-total { font-weight: 600; color: var(--color-dark); margin-bottom: 0.4rem; }
+
+        /* Cuántos hay de cada cosa. Pulsando una se va a su grupo: en un archivo
+           con ochenta avisos, bajar buscando el que interesa es lo que hace que
+           no se mire. */
+        .qa-pastillas { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .qa-pastilla {
+            font-size: var(--texto-meta); font-weight: 600;
+            padding: 2px 8px; border-radius: 999px; cursor: pointer;
+            border: 1px solid var(--color-secondary);
+            background-color: transparent; color: var(--color-dark);
+        }
+        .qa-pastilla:hover { background-color: var(--color-secondary); }
+
+        .qa-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+        .qa-grupo + .qa-grupo { margin-top: 1rem; }
+        .qa-grupo-destello { animation: qa-destello 1.4s ease-out; }
+        @keyframes qa-destello {
+            0%, 40% { background-color: rgba(247, 207, 126, 0.45); }
+            100% { background-color: transparent; }
+        }
+        .qa-grupo-titulo {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: var(--texto-meta); font-weight: 700;
+            color: var(--color-dark); margin-bottom: 0.1rem;
+        }
+        .qa-grupo-cuantos {
+            font-size: 0.625rem; font-weight: 700;
+            padding: 1px 6px; border-radius: 4px;
+            background-color: var(--color-secondary); color: #78350f;
+        }
+        body.dark-mode .qa-grupo-cuantos { color: #fde68a; }
+        .qa-grupo-explicacion {
+            font-size: 0.6875rem; color: var(--color-neutral-gray);
+            margin-bottom: 0.35rem; line-height: 1.4;
+        }
+
+        .qa-aviso {
+            display: flex; align-items: baseline; gap: 0.5rem; width: 100%;
+            text-align: left; padding: 4px 6px; border: none; border-radius: 5px;
+            background-color: transparent; cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .qa-aviso:hover { background-color: var(--color-light-gray); }
+        body.dark-mode .qa-aviso:hover { background-color: #374151; }
+        .qa-aviso-numero {
+            font-size: 0.6875rem; font-weight: 700;
+            color: var(--color-neutral-gray); min-width: 2em; flex-shrink: 0;
+        }
+        .qa-aviso-texto { display: flex; flex-direction: column; min-width: 0; }
+        .qa-aviso-origen {
+            font-size: var(--texto-meta); color: var(--color-dark);
+            overflow-wrap: anywhere;
+        }
+        .qa-aviso-dato {
+            font-size: 0.6875rem; color: var(--color-neutral-gray);
+            font-style: italic; overflow-wrap: anywhere;
+        }
+
+        /* El triángulo junto al segmento. La lista dice cuántos avisos hay; esto
+           dice cuál es este, y sale donde se está trabajando. */
+        .segmento-aviso-calidad {
+            border: none; background-color: transparent; cursor: pointer;
+            font-size: var(--texto-meta); line-height: 1;
+            color: #b45309; padding: 1px 2px;
+        }
+        .segmento-aviso-calidad:hover { color: #92400e; }
+        body.dark-mode .segmento-aviso-calidad { color: #fcd34d; }
+
         /* Columna de validación: un visto que se enciende */
         .segmento-estado {
             width: 38px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;

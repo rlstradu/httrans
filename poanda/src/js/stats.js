@@ -71,6 +71,16 @@ function updateUtilityButtonStates() {
     } else {
         statsBtn.classList.remove('utility-btn-active');
     }
+    // El control de calidad, igual que los otros dos paneles: encendido
+    // significa que está en pantalla.
+    const qaBtn = document.getElementById('qaBtn');
+    if (qaBtn) {
+        qaBtn.classList.toggle(
+            'utility-btn-active',
+            Boolean(document.getElementById('qaPanel')?.classList.contains('show-sidebar')),
+        );
+    }
+
     if (aiSidebar && aiSidebar.classList.contains('show-sidebar')) {
         document.getElementById('aiBtn').classList.add('utility-btn-active');
     } else {

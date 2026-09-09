@@ -3,6 +3,7 @@ import { renderTranslations } from './editor.js';
 import { retraducirSaludoDeIA } from './ai.js';
 import { renderGlossary } from './glossary.js';
 import { updateStatsDisplay } from './stats.js';
+import { repintarControlDeCalidad } from './qa-ui.js';
 import { state } from './state.js';
 import { actualizarBotonTema } from './theme.js';
 import { translations } from './translations.js';
@@ -39,6 +40,10 @@ function setLanguage(lang) {
     // El saludo de PandaBot se escribió una vez al arrancar y se quedaba en el
     // idioma de entonces, con toda la interfaz alrededor ya cambiada.
     retraducirSaludoDeIA();
+    // El panel de calidad se pinta desde JavaScript entero —los nombres de las
+    // comprobaciones, sus explicaciones y los avisos—, así que ninguno de esos
+    // textos lo alcanza el recorrido de data-i18n.
+    repintarControlDeCalidad();
 }
 
 function updateTextContent() {

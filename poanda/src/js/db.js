@@ -55,5 +55,25 @@ db.version(2).stores({
 /** Identificador del único registro de sesión del formato antiguo. */
 export const ID_SESION = 'currentSession';
 
-/** Cuántos proyectos recientes se conservan. Los más viejos se van borrando. */
-export const MAXIMO_RECIENTES = 5;
+/**
+ * Cuántos proyectos se enseñan en la lista de recientes.
+ *
+ * Eran cinco, y eso no era una lista de recientes: era una ventana de cinco.
+ * El sexto proyecto no se borraba —seguía entero en la base de datos— sino que
+ * dejaba de aparecer, y sin manera de llegar a él. Volver a un encargo del mes
+ * pasado era imposible aunque estuviera guardado.
+ */
+export const MAXIMO_RECIENTES = 25;
+
+/**
+ * Cuántos se conservan de verdad. Pasado ese número, los más viejos se borran.
+ *
+ * Esto antes no lo hacía nadie: la función de podar existía y no la llamaba
+ * ningún sitio, así que la base de datos crecía sin fin hasta que el navegador
+ * se negaba a escribir —y ese fallo se tragaba en silencio, con lo que el
+ * trabajo dejaba de guardarse sin decir nada.
+ *
+ * El número es holgado a propósito: se borra bastante más allá de lo que se
+ * enseña, para que podar nunca se lleve por delante algo que estaba a la vista.
+ */
+export const MAXIMO_GUARDADOS = 50;

@@ -128,9 +128,11 @@ import {
     renderShortcutsUI,
 } from './shortcuts.js';
 import { initChangelog } from './changelog.js';
+import { initQa, olvidarControlDeCalidad, repasarSiEstaAbierto } from './qa-ui.js';
 import { initZonaSoltar } from './dropzone.js';
 import { initRecientes } from './recents.js';
-import { sincronizarCambios } from './persistencia.js';
+import { haySinGuardar, sincronizarCambios } from './persistencia.js';
+import { guardarRecursos, hayRecursosSinGuardar } from './recursos.js';
 import { marcadoZonaSoltar } from './dropzone.js';
 import { state } from './state.js';
 import { initTheme } from './theme.js';
@@ -373,6 +375,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     alInsertarTraduccion(insertarEnLaTraduccionActiva);
     alInsertarDesdeElGlosario(insertarEnLaTraduccionActiva);
     initTerminoTarjeta();
+    initQa();
 
     document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
     document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
@@ -599,8 +602,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     // modelo de proyectos se termina de asentar: es la red por si algo falla.
     setInterval(() => {
         sincronizarCambios();
+        guardarRecursos();
         saveBackup();
     }, 10000);
+
+    // AVISO AL CERRAR
+    //
+    // El guardado va cada diez segundos, así que cerrar la pestaña sin querer
+    // se llevaba por delante lo último escrito sin decir absolutamente nada.
+    // Ahora el navegador pregunta, y solo cuando hay algo que perder de verdad.
+    //
+    // Dos cuidados: aquí no se puede esperar a nada (el navegador no da tiempo
+    // a una escritura asíncrona), por eso haySinGuardar() compara en memoria; y
+    // el texto del aviso lo pone el navegador, no nosotros — desde 2016 ninguno
+    // enseña el mensaje de la página, así que basta con decir que sí hay algo.
+    window.addEventListener('beforeunload', (evento) => {
+        if (!haySinGuardar() && !hayRecursosSinGuardar()) return;
+        // Se intenta guardar igualmente: en la mayoría de los casos da tiempo,
+        // y si el usuario decide salir, al menos queda escrito.
+        sincronizarCambios();
+        guardarRecursos();
+        saveBackup();
+        evento.preventDefault();
+        // Firefox y los navegadores antiguos piden esto además de preventDefault.
+        evento.returnValue = '';
+        return '';
+    });
 });
 
 if (aiBtn) {

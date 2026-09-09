@@ -22,6 +22,8 @@ import { normalizarIdioma } from './core/idiomas.js';
 import { state } from './state.js';
 import { updateStatsDisplay, updateUtilityButtonStates } from './stats.js';
 import { processTMXContent, resetTM } from './tm.js';
+import { vaciarRecursos } from './recursos.js';
+import { cerrarControlDeCalidad, olvidarControlDeCalidad } from './qa-ui.js';
 import { translations } from './translations.js';
 
 function resetProjectState() {
@@ -41,6 +43,11 @@ function resetProjectState() {
 
     resetGlossary();
     resetTM();
+    vaciarRecursos();
+    // El control de calidad se recoge con el proyecto, igual que el asistente:
+    // una revisión del archivo que ya no está no dice nada.
+    cerrarControlDeCalidad();
+    olvidarControlDeCalidad();
 
     terminologySidebar.classList.remove('show-sidebar');
     translationMemorySidebar.classList.remove('show-sidebar');
