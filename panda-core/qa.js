@@ -228,7 +228,12 @@ export const REGLAS = [
     {
         id: 'sin_traducir',
         gravedad: 'aviso',
-        deFabrica: true,
+        // Apagada de fábrica. Recién abierto un archivo no hay ni una línea
+        // traducida, así que esta regla salta en todos los subtítulos a la vez
+        // y la herramienta recibe con un muro de avisos que no dicen nada que
+        // no se vea. Sirve al final, para cazar los que se quedaron atrás, y
+        // ahí es donde se enciende.
+        deFabrica: false,
         comprueba: ({ entrada }) => {
             // Solo si el original tenía algo que traducir: un subtítulo vacío
             // en los dos lados está vacío a propósito.

@@ -1,5 +1,5 @@
 import { diffWords } from 'diff';
-import { countWords, parecidoAlMenos } from './core/text.js';
+import { countWords, parecidoAlMenos } from '@core/text.js';
 import { generateTMX } from './core/tmx.js';
 import { hideLoadingOverlay, showLoadingOverlay } from './dialogs.js';
 import {
@@ -8,7 +8,7 @@ import {
     buscarPaneles,
     tmResultadosLista,
 } from './dom.js';
-import { escaparHtml } from './core/xml.js';
+import { escaparHtml } from '@core/xml.js';
 import {
     MAXIMO_CONCORDANCIAS,
     MAXIMO_RESULTADOS,
@@ -18,7 +18,7 @@ import {
 } from './core/tm-coincidencias.js';
 import { DESDE_CUANTAS_UNIDADES, candidatas, construirIndice } from './core/tm-indice.js';
 import { marcarRecursosCambiados } from './recursos.js';
-import { mismoIdioma } from './core/idiomas.js';
+import { mismoIdioma } from '@core/idiomas.js';
 import { pintarParDelProyecto } from './idiomas-proyecto.js';
 import { avisarSiEstanVacios } from './paneles.js';
 import { getCurrentFocusedIndex, insertarEnElSegmento } from './editor-puente.js';

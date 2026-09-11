@@ -18,9 +18,9 @@ const AVISO_ARCHIVO_GENERADO = `
   ============================================================================
   ARCHIVO GENERADO — NO EDITAR A MANO
   ============================================================================
-  Este archivo lo crea "npm run build" a partir de subpandatm/src/.
+  Este archivo lo crea "npm run build" a partir de subpandass/src/.
   Cualquier cambio que escribas aquí se perderá en la siguiente compilación.
-  Edita subpandatm/src/index.html y vuelve a compilar.
+  Edita subpandass/src/index.html y vuelve a compilar.
   ============================================================================
 -->
 `;
@@ -45,7 +45,7 @@ const TIPOS = {
 /**
  * Durante el desarrollo, sirve los archivos comunes del sitio.
  *
- * En producción subpandaTM vive en httrans.org/subpandatm/ y comparte con el
+ * En producción subpandaTM vive en httrans.org/subpandass/ y comparte con el
  * resto de la web el logotipo y los iconos. El servidor de desarrollo de Vite
  * solo conoce la carpeta `src/`, así que sin esto esas rutas no existirían al
  * trabajar en local, y encima no fallarían de forma evidente: cuando Vite no
@@ -107,15 +107,15 @@ export default defineConfig({
     },
     build: {
         // Se compila a una carpeta temporal y después el script de publicación
-        // mueve el resultado a subpandatm/. Si Vite compilara directamente
-        // sobre subpandatm/, esa carpeta sería padre del código fuente.
+        // mueve el resultado a subpandass/. Si Vite compilara directamente
+        // sobre subpandass/, esa carpeta sería padre del código fuente.
         outDir: '../.build',
         assetsDir: 'assets',
         emptyOutDir: true,
         sourcemap: false,
     },
     server: {
-        port: 5174,
+        port: 5175,
         strictPort: true,
         // Sin esto el servidor de desarrollo se niega a servir `panda-core/`,
         // que está por encima de la raíz que Vite tiene configurada.

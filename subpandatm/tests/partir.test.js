@@ -7,7 +7,7 @@
  * abre.
  */
 import { describe, expect, it } from 'vitest';
-import { cuantoSeVe, partirEnDos } from '../src/js/core/partir.js';
+import { cuantoSeVe, partirEnDos } from '@core/partir.js';
 
 describe('contar lo que se ve', () => {
     it('no cuenta las etiquetas', () => {

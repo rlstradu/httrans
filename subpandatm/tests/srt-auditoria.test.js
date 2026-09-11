@@ -22,7 +22,7 @@ import {
     parseTime,
     reconstructOriginalSrt,
     reconstructSrt,
-} from '../src/js/core/srt.js';
+} from '@core/srt.js';
 
 describe('lo que llega de fuera', () => {
     it('lee un archivo normal', () => {

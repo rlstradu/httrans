@@ -20,7 +20,7 @@
  * No se usa el analizador del navegador: así esto se puede probar sin abrir un
  * navegador, y el resto de formatos del proyecto ya se leen igual (core/xml.js).
  */
-import { atributo, buscarElementos, desescaparXml, escaparXml } from './xml.js';
+import { atributo, buscarElementos, desescaparXml, escaparXml } from '@core/xml.js';
 
 /** Categorías gramaticales que ofrece la ficha, las mismas que PandaTerm. */
 export const CATEGORIAS = ['noun', 'verb', 'adj', 'adv'];

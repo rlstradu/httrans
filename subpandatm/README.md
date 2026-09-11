@@ -36,13 +36,18 @@ dirección de siempre sigue funcionando.
 - `src/css/styles.css` — los estilos, con los colores en variables al principio.
 - `src/js/app.js` — el cuerpo de la herramienta. Es lo que queda del archivo
   único de antes, y se va troceando por temas.
-- `src/js/core/` — la lógica que no toca la pantalla y se puede probar sin
-  navegador. Los formatos de subtítulos (`formatos.js` es la tabla que los
-  gobierna, y `srt.js`, `vtt.js`, `ttml.js` y `ass.js` son cada uno el suyo),
-  el color (`color.js`), el formato del texto (`etiquetas.js`, `partir.js`,
-  `tramos.js`), las comprobaciones de calidad (`qa.js`), la codificación del
-  archivo, el TBX y el TMX, el parecido entre textos, el índice de la memoria y
-  las coincidencias del glosario.
+- `panda-core/`, en la raíz del repositorio — la lógica que no es de esta
+  herramienta ni de ninguna otra, y que se importa con el atajo `@core`: los
+  formatos de subtítulos (`srt.js`, `vtt.js`, `ttml.js`, `ass.js`), el color
+  (`color.js`), el formato del texto (`etiquetas.js`, `partir.js`,
+  `tramos.js`), las comprobaciones de calidad (`qa.js`) y la codificación del
+  archivo. **Al tocar algo de ahí hay que pasar las pruebas de todas las
+  herramientas que la usan**, no solo las de esta: lo explica
+  `panda-core/README.md`.
+- `src/js/core/` — lo que sí es de esta herramienta y tampoco toca la pantalla:
+  `formatos.js` (la tabla que gobierna qué puede hacer cada formato), el TBX y
+  el TMX, el parecido entre textos, el índice de la memoria y las coincidencias
+  del glosario.
 - `src/js/core/ia/` — la traducción con IA: los proveedores de pago, la que se
   descarga al navegador (`local.js`), los encargos que se le mandan
   (`prompt.js`) y la pretraducción por tandas.

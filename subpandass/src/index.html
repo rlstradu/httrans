@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>SubpandaASS | Editor de subtítulos avanzado</title>
+    <meta name="description" content="SubpandaASS es una herramienta web profesional y gratuita para editar, traducir y sincronizar subtítulos (SRT y ASS) creado por Rafael López Sánchez para el proyecto httrans.org.">
+    <meta name="keywords" content="editor de subtítulos, subtitle editor, srt, ass, crear subtítulos, sincronizar subtítulos, traducción audiovisual, spotting, subpanda, subpandaass">
+    <meta name="author" content="Subpanda">
+    <meta name="theme-color" content="#075BA2">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="SubpandaASS | Editor de Subtítulos Avanzado">
+    <meta property="og:description" content="Edita, traduce y sincroniza subtítulos directamente desde tu navegador.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-ass-logo-v1.png">
+    <meta property="og:site_name" content="SubpandaASS">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SubpandaASS | Editor de Subtítulos Avanzado">
+    <meta name="twitter:description" content="Edita, traduce y sincroniza subtítulos directamente desde tu navegador.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-ass-logo-v1.png">
+
+ <!-- Metaetiquetas para ffmpe -->
+<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin" />
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- WaveSurfer.js y los plugins de Regiones y Minimapa -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/wavesurfer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/plugins/regions.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.5/plugins/minimap.min.js"></script>
+
+
+
+    <!-- Llamamos a ffmpeg para resolver los cambios de plano -->
+
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.min.js"></script>
+
+    
+
+    <!-- jsPDF para generar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!--
+      El CSS y el JavaScript de esta herramienta ya no viven aquí dentro: están
+      en ./css/styles.css y en ./js/main.js. Lo que se publica en httrans.org es
+      el resultado de compilar esta carpeta, no este archivo.
+    -->
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="flex flex-col h-screen p-3 md:p-4 gap-4">
+
+    <header class="relative w-full flex justify-center items-center bg-transparent flex-shrink-0 z-50">
+
+        <div class="flex items-center gap-2">
+            
+            <div class="menu-wrapper">
+                <button class="header-menu-btn" data-i18n="menu_file">Archivo</button>
+                <div class="menu-dropdown">
+                    <div class="menu-item-container">
+                        <div id="new-project-btn" class="menu-item"><span data-i18n="new_project">Nuevo proyecto</span></div>
+                        <div id="open-load-project-modal-btn" class="menu-item"><span data-i18n="load_project">Cargar proyecto...</span></div>
+                        
+                        <div id="export-project" class="menu-item"><span data-i18n="save_project">Guardar proyecto...</span></div>
+                        <div class="context-menu-divider"></div>
+                        <label for="srt-loader" class="menu-item"><span data-i18n="open_srt">Abrir .srt</span></label>
+                        <label for="ass-loader" class="menu-item"><span data-i18n="open_ass">Abrir .ass</span></label>
+                        <label for="translation-loader" class="menu-item"><span data-i18n="translate_subs">Traducir subtítulos...</span></label>
+
+                        <div class="context-menu-divider"></div>
+                        <div id="export-srt" class="menu-item"><span data-i18n="save_srt">Guardar .srt</span></div>
+                        <div id="export-ass" class="menu-item"><span data-i18n="save_ass">Guardar .ass</span></div>
+                        <div class="context-menu-divider"></div>
+                        <div id="open-backup-modal-btn" class="menu-item"><span data-i18n="backup">Copia de seguridad</span></div>
+                        <div class="context-menu-divider"></div>
+                        <label for="sync-text-loader" class="menu-item"><span data-i18n="import_text_sync">Importar texto para sincronizar...</span></label>
+                        <div class="context-menu-divider"></div>
+                        <label for="video-loader" class="menu-item"><span data-i18n="load_video">Cargar vídeo</span></label>
+                        <div class="context-menu-divider"></div>
+                        <label for="shot-change-loader" class="menu-item"><span data-i18n="import_shot_changes">Importar cambios de plano (.txt)</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <button class="header-menu-btn" data-i18n="menu_edit">Editar</button>
+                <div class="menu-dropdown">
+                    <div class="menu-item-container">
+                        <button id="undo-btn" class="menu-item w-full" disabled><span data-i18n="undo">Deshacer (Ctrl+Z)</span></button>
+                        <button id="redo-btn" class="menu-item w-full" disabled><span data-i18n="redo">Rehacer (Ctrl+Y)</span></button>
+                        <div class="context-menu-divider"></div>
+                        <button id="edit-menu-bold-btn" class="menu-item w-full"><span data-i18n="bold">Negrita (Ctrl+B)</span></button>
+                        <button id="edit-menu-italic-btn" class="menu-item w-full"><span data-i18n="italic">Cursiva (Ctrl+I)</span></button>
+                        <div class="context-menu-divider"></div>
+                        <button id="open-symbol-modal-btn" class="menu-item w-full"><span data-i18n="add_symbol">Añadir símbolo</span></button>
+                        <div class="context-menu-divider"></div>
+                        <button id="open-find-replace-modal-btn" class="menu-item w-full"><span data-i18n="find_replace">Buscar y reemplazar</span></button>
+                        <div class="context-menu-divider"></div>
+                        <button id="open-ass-style-editor-btn" class="menu-item w-full"><span data-i18n="ass_style_editor">Editor de estilos ASS</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <button class="header-menu-btn" data-i18n="menu_tools">Herramientas</button>
+                <div class="menu-dropdown">
+                    <div class="menu-item-container">
+                        <div id="tool-shot-change-btn" class="menu-item">
+                            <span data-i18n="tool_shot_changes">Detector de cambios de plano</span>
+                        </div>
+                        <div class="context-menu-divider"></div>
+                        <div id="tool-auto-transcription-btn" class="menu-item">
+                            <span data-i18n="tool_auto_transcription">Subtítulos automáticos con transcripción</span>
+                        </div>
+                        <div id="tool-auto-spotting-btn" class="menu-item">
+                            <span data-i18n="tool_auto_spotting">Prepautado (spotting)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <button class="header-menu-btn" data-i18n="menu_mode">Modo de trabajo</button>
+                <div class="menu-dropdown">
+                    <div class="menu-item-container">
+                        <button id="mode-edit-btn" class="menu-item w-full"><span data-i18n="mode_edit">Modo Edición</span></button>
+                        <button id="mode-sync-btn" class="menu-item w-full"><span data-i18n="mode_sync">Modo Sincronización</span></button>
+                        <button id="mode-preview-btn" class="menu-item w-full"><span data-i18n="mode_preview">Modo Vista Previa</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <input type="file" id="video-loader" class="hidden" accept="video/*">
+            <input type="file" id="srt-loader" class="hidden" accept=".srt">
+            <input type="file" id="ass-loader" class="hidden" accept=".ass">
+            <input type="file" id="translation-loader" class="hidden" accept=".srt,.ass">
+            <input type="file" id="txt-loader" class="hidden" accept=".txt,text/plain">
+            <input type="file" id="project-loader" class="hidden" accept=".json,application/json">
+            <input type="file" id="shortcuts-loader" class="hidden" accept=".json,application/json">
+            <input type="file" id="qa-profile-loader" class="hidden" accept=".json,application/json">
+            <input type="file" id="shot-change-loader" class="hidden" accept=".txt,text/plain">
+            <input type="file" id="sync-text-loader" class="hidden" accept=".txt,text/plain">
+
+            <button id="qa-review-modal-btn" class="header-menu-btn" data-i18n="qa_review">Revisión de QA</button>
+            <button id="qa-settings-modal-btn" class="header-menu-btn" data-i18n="qa_settings">Ajustes de QA</button>
+            <button id="open-shortcuts-modal" class="header-menu-btn" data-i18n="shortcuts">Atajos</button>
+        </div>
+
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <div class="menu-wrapper">
+                <button id="lang-selector-btn" class="header-menu-btn">
+                    <span class="text-lg mr-1">🌐</span> <span id="current-lang-label">ES</span>
+                </button>
+                <div class="menu-dropdown">
+                    <div class="menu-item-container">
+                        <div class="menu-item" onclick="changeLanguage('es')"><span>ES - Español</span></div>
+                        <div class="menu-item" onclick="changeLanguage('en')"><span>EN - English</span></div>
+                    </div>
+                </div>
+            </div>
+            <button id="changelog-btn" class="header-menu-btn font-mono" title="Ver Changelog">v 1.0.2</button>
+        </div>
+
+    </header>
+
+    <div class="flex-grow flex flex-col md:flex-row gap-4 min-h-0">
+        <main id="left-panel" class="w-full md:w-1/2 lg:w-1/2 flex flex-col gap-4">
+            <div id="video-wrapper" class="flex-grow min-h-0 relative">
+                <div id="video-container" class="w-full h-full bg-black rounded-lg overflow-hidden shadow-lg">
+                    <video id="video-player" class="w-full h-full" crossOrigin="anonymous"></video>
+                    <div id="subtitle-preview"></div>
+                    <div id="in-video-editor-container" class="absolute bottom-[8%] left-[10%] right-[10%] z-30 pointer-events-none hidden items-center justify-center gap-2">
+                        <div id="in-video-stats-left" class="flex flex-col gap-1 items-start pointer-events-auto"></div>
+                        
+                        <div class="flex flex-col items-center w-full">
+                            <div id="in-video-original-text-preview" class="text-sm text-yellow-300 bg-black/50 px-2 py-1 rounded-md mb-1 hidden"></div>
+                            <div id="in-video-editor" contenteditable="true" spellcheck="false"></div>
+                        </div>
+
+                        <div id="in-video-stats-right" class="flex flex-col gap-1 items-end pointer-events-auto"></div>
+                    </div>                </div>
+            </div>
+
+            <div id="custom-progress-bar-container" class="flex items-center gap-3 w-full px-1 flex-shrink-0">
+                <span id="progress-time-current" class="font-mono text-sm text-gray-400">00:00:00,000</span>
+                <div id="progress-bar" class="relative w-full h-2 cursor-pointer">
+                    <div id="progress-bar-background" class="absolute w-full h-full bg-light-gray rounded-full top-0 left-0"></div>
+                    <div id="progress-hover-line"></div><div id="progress-bar-played" class="absolute h-full bg-primary-blue rounded-full top-0 left-0"></div>
+                    <div id="progress-bar-handle" class="absolute w-4 h-4 bg-white rounded-full top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity"></div>
+                </div>
+                <span id="progress-time-duration" class="font-mono text-sm text-gray-400">00:00:00,000</span>
+            </div>
+            <div id="waveform-minimap" class="w-full h-20 bg-medium-gray rounded-lg shadow-inner mt-2"></div>
+
+            <div id="waveform-wrapper" class="w-full h-40 bg-medium-gray rounded-lg p-2 shadow-inner relative flex-shrink-0">
+                <div id="waveform" class="h-full onda-progreso-azul-principal"></div>
+                <div id="loading-indicator" class="absolute inset-0 flex flex-col items-center justify-center h-full text-gray-300 bg-medium-gray/80 rounded-lg gap-4">
+                    <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-ass-logo-v1.png" alt="SubpandaASS Logo" class="h-20 opacity-100" style="filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));">
+                    <label for="video-loader" class="bg-black/70 px-4 py-2 rounded-lg cursor-pointer hover:bg-black/90 transition-colors"><span data-i18n="load_video">Cargar vídeo</span></label>
+                </div>
+            </div>
+
+
+            
+             <div id="secondary-controls" class="flex items-center justify-between gap-4 bg-medium-gray p-2 rounded-lg flex-shrink-0">
+                <div class="slider-control w-1/4">
+                    <label for="volume-slider-h" data-i18n="slider_vol">Volumen</label>
+                    <input type="range" id="volume-slider-h" class="horizontal-slider" min="0" max="1" step="0.01" value="1">
+                    <span id="volume-value" class="w-12 text-center text-xs">100%</span>
+                </div>
+                <div class="slider-control w-1/4">
+                    <label for="zoom-slider-h" data-i18n="slider_zoom">Zoom</label>
+                    <input type="range" id="zoom-slider-h" class="horizontal-slider" min="10" max="500" step="1" value="50">
+                    <span id="zoom-value" class="w-12 text-center text-xs">50</span>
+                </div>
+                <div class="slider-control w-1/4">
+                    <label for="speed-slider-h" data-i18n="slider_speed">Velocidad</label>
+                    <input type="range" id="speed-slider-h" class="horizontal-slider" min="0" max="5" step="1" value="2">
+                    <span id="speed-value" class="w-12 text-center text-xs">1x</span>
+                </div>
+ 
+                <div id="work-mode-display" class="text-xs text-gray-400 font-semibold w-1/4 text-center" data-i18n="mode_edit">Modo Edición</div>
+        </div> 
+             <div id="controls-bar" class="flex items-center justify-between gap-4 bg-medium-gray p-2 rounded-lg flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <button id="play-pause-btn" class="icon-btn" data-tooltip="Reproducir/Pausa (Alt+P)" data-i18n-tooltip="btn_play_pause">
+                        <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.648c1.295.742 1.295 2.545 0 3.286L7.279 20.99c-1.25.717-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
+                        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 hidden"><path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button id="set-in-btn" class="icon-btn" data-tooltip="Marcar Inicio (Alt+Q)" data-i18n-tooltip="btn_set_in">
+                        <span class="font-bold text-lg -mt-0.5">[</span>
+                    </button>
+                    <button id="set-out-btn" class="icon-btn" data-tooltip="Marcar Fin (Alt+W)" data-i18n-tooltip="btn_set_out">
+                        <span class="font-bold text-lg -mt-0.5">]</span>
+                    </button>
+                    <button id="press-and-hold-btn" class="icon-btn" data-tooltip="Crea un subtítulo al pulsar, ciérralo al soltar" data-i18n-tooltip="sc_desc_createAndHold">
+                        <span class="text-2xl">🐼</span>
+                    </button>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="flex items-center gap-2">
+                <button id="detect-shots-btn" class="text-btn disabled:opacity-50" disabled data-i18n="btn_detect_shots">Cambios de plano</button>
+                    <div id="timecode-display" class="text-lg font-mono bg-dark-gray px-3 py-1 rounded-md">00:00:00,000</div>
+                    <button id="time-format-toggle" class="icon-btn" data-tooltip="Cambiar formato de tiempo" data-i18n-tooltip="btn_toggle_time">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </button>
+                    <label for="fps-input" class="text-xs font-semibold text-gray-400" data-i18n="label_fps">FPS</label>
+                    <select id="fps-input" class="bg-dark-gray w-20 text-center rounded-md p-1 h-11 qa-input dark-text">
+                        <option value="23.976">23.976</option>
+                        <option value="24">24</option>
+                        <option value="25" selected>25</option>
+                        <option value="29.97">29.97</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                        <option value="59.94">59.94</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+
+        <div id="resizer"></div>
+
+        <aside id="right-panel" class="w-full md:w-1/2 lg:w-1/2 flex flex-col gap-2">
+            <div class="flex justify-between items-center flex-shrink-0">
+                <h2 class="text-lg font-semibold" data-i18n="header_subs">Subtítulos</h2>
+                
+                <div class="menu-wrapper">
+                    <button id="toggle-columns-btn" class="icon-btn compact-icon-btn" data-tooltip="Mostrar/Ocultar Columnas" data-i18n-tooltip="tooltip_toggle_cols">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.438 1.001v.192c0 .387.145.76.438 1.001l1.003.827c.48.398.664 1.03.26 1.431l-1.296 2.247a1.125 1.125 0 0 1-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 0 1-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 0 1-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 0 1-1.37-.49l-1.296-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.437-1.001v-.192c0-.387-.145-.76-.437-1.001l-1.004-.827a1.125 1.125 0 0 1-.26-1.431l1.296-2.247a1.125 1.125 0 0 1 1.37-.49l1.217.456c.355.133.75.072 1.075-.124.072-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                        </svg>
+                    </button>
+                    <div class="menu-dropdown">
+                        <div id="columns-menu-container" class="menu-item-container">
+                            </div>
+                    </div>
+                </div>
+            </div>
+            <div id="subtitle-grid-container" class="min-h-0">
+                <table id="subtitle-grid" class="w-full text-left text-sm">
+                    <thead class="text-xs text-gray-400 uppercase">
+                        <tr>
+                            <th id="qa-header" class="p-2 relative text-center col-qa" style="width: 4ch;" data-i18n="col_qa">!</th>
+                            <th id="id-header" class="p-2 relative col-id" style="width: 4ch;" data-i18n="col_id">#</th>
+                            <th id="times-header" class="p-2 relative col-times" style="width: 15ch;" data-i18n="col_times">Tiempos</th>
+                            <th id="original-text-header" class="p-2 relative col-original-text" style="width: 26%;" data-i18n="col_original">Original</th>
+                            <th id="text-header" class="p-2 relative col-text" style="width: 26%;" data-i18n="col_translation">Traducción</th>
+                            <th id="cps-header" class="p-2 relative text-center col-cps" style="width: 6ch;">CPS</th>
+                            <th id="wpm-header" class="p-2 relative text-center col-wpm" style="width: 10%;">PPM</th>
+                            <th id="lines-header" class="p-2 relative col-lines" style="width: 8ch;" data-i18n="col_lines">Líneas</th>
+                            <th id="style-header" class="p-2 relative col-style" style="width: 8ch;" data-i18n="col_style">Estilo ASS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subtitle-body"></tbody>
+                </table>
+                <div id="find-replace-toolbar" class="sticky bottom-0 left-0 w-full p-2 border-t border-light-gray bg-medium-gray flex items-center gap-2 text-sm">
+                    <input type="text" id="fr-bar-find-input" placeholder="Buscar..." data-i18n-placeholder="fr_find_ph" class="ass-style-input flex-grow">
+                    <button id="fr-bar-prev-btn" class="icon-btn compact-icon-btn" data-tooltip="Anterior">◀</button>
+                    <span id="fr-bar-search-count" class="font-mono text-xs w-16 text-center">0 / 0</span>
+                    <button id="fr-bar-next-btn" class="icon-btn compact-icon-btn" data-tooltip="Siguiente">▶</button>
+                    <div class="border-l h-6 border-light-gray mx-2"></div>
+                    <input type="text" id="fr-bar-replace-input" placeholder="Reemplazar con..." data-i18n-placeholder="fr_replace_ph" class="ass-style-input flex-grow">
+                    <button id="fr-bar-replace-btn" data-i18n="fr_btn_replace" class="text-btn compact-btn">Reemplazar</button>
+                    <button id="fr-bar-replace-all-btn" data-i18n="fr_btn_replace_all" class="text-btn compact-btn">Todo</button>
+                    <div class="border-l h-6 border-light-gray mx-2"></div>
+                    <button id="fr-bar-close-btn" class="icon-btn compact-icon-btn" data-tooltip="Cerrar" data-i18n-tooltip="btn_close">&times;</button>
+                </div>
+            </div>
+
+            <div id="notepad-toggle-bar" class="flex justify-center bg-dark-gray border-t border-light-gray p-1 flex-shrink-0">
+                <button id="open-notepad-bottom-btn" class="text-xs text-gray-400 hover:text-white transition-colors" data-i18n="open_notepad">Abrir bloc de notas</button>
+            </div>
+            
+            <div id="sync-notepad-resizer"></div>
+
+            <div id="sync-notepad-container" class="hidden flex-col bg-medium-gray border border-light-gray rounded-lg p-2 flex-shrink-0" style="height: 180px; min-height: 80px;">
+                <div class="flex justify-between items-center mb-2 flex-shrink-0">
+                    <span class="text-sm font-semibold text-gray-400" data-i18n="import_text_sync">Importar texto para sincronizar...</span>
+                    <div class="flex gap-2">
+                        <button id="export-notepad-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_export_notepad" data-i18n-tooltip="tooltip_export_notepad" data-tooltip="Guardar texto del bloc de notas">Guardar texto</button>
+                        <button id="toggle-notepad-translation-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_notepad_translation_mode" data-i18n-tooltip="tooltip_notepad_translation_mode" data-tooltip="Activa doble columna para traducir">Modo Traducción</button>
+                        <button id="create-sub-from-notepad-btn" class="text-btn compact-btn transition-colors hover:text-blue-400" data-i18n="btn_create_sub_from_text" data-i18n-tooltip="tooltip_create_sub_from_text" data-tooltip="Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido">Crear subtítulo</button>
+                        <button id="panda-notepad-btn" class="icon-btn compact-icon-btn transition-colors" data-tooltip="Crear subtítulo con la primera línea al pulsar y soltar (Insert)">🐼</button>
+                        <button id="close-notepad-btn" class="icon-btn compact-icon-btn hover:text-red-500">&times;</button>
+                    </div>
+                </div>
+                <div class="flex flex-row flex-grow min-h-0 gap-2 w-full">
+                    <div class="flex flex-row flex-grow min-h-0 w-1/2 border rounded overflow-hidden focus-within:ring-1 focus-within:ring-blue-500" style="border-color: var(--light-gray); background-color: var(--dark-gray);">
+                        <textarea id="sync-notepad-textarea" wrap="off" style="background-color: transparent; color: var(--text-primary); line-height: 1.25rem; outline: none; border: none;" class="w-full flex-grow p-2 text-sm resize-none whitespace-pre overflow-auto" placeholder="El texto importado aparecerá aquí..." data-i18n-placeholder="txt_ph_sync_notepad"></textarea>
+                        <div class="w-8 relative h-full flex-shrink-0 overflow-hidden pointer-events-none border-l z-10" style="border-color: var(--light-gray); background-color: var(--medium-gray);">
+                            <div id="sync-notepad-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pr-1" style="line-height: 1.25rem;"></div>
+                        </div>
+                    </div>
+                    <div id="sync-notepad-trans-col" class="flex flex-row flex-grow min-h-0 w-1/2 hidden border rounded overflow-hidden focus-within:ring-1 focus-within:ring-blue-500" style="border-color: var(--light-gray); background-color: var(--dark-gray);">
+                        <textarea id="sync-notepad-trans-textarea" wrap="off" style="background-color: transparent; color: var(--text-primary); line-height: 1.25rem; outline: none; border: none;" class="w-full flex-grow p-2 text-sm resize-none whitespace-pre overflow-auto" placeholder="Escribe aquí la traducción..." data-i18n-placeholder="txt_ph_sync_notepad_trans"></textarea>
+                        <div class="w-8 relative h-full flex-shrink-0 overflow-hidden pointer-events-none border-l z-10" style="border-color: var(--light-gray); background-color: var(--medium-gray);">
+                            <div id="sync-notepad-trans-stats" class="absolute top-0 right-0 w-full flex flex-col text-xs font-mono text-gray-400 text-right pt-2 pr-1" style="line-height: 1.25rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+    <div id="region-context-menu" class="hidden" style="position: absolute; z-index: 1000; width: 250px; background-color: var(--medium-gray); border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); padding: 8px; border: 1px solid var(--light-gray);">
+        <div id="ctx-region-play" class="context-menu-item" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.648c1.295.742 1.295 2.545 0 3.286L7.279 20.99c-1.25.717-2.779-.217-2.779-1.643V5.653Z" /></svg>
+            <span data-i18n="ctx_region_play">Reproducir fragmento</span>
+        </div>
+        <div id="ctx-region-create" class="context-menu-item" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            <span data-i18n="sc_name_createFromSelection">Crear desde selección</span>
+        </div>
+        <div id="ctx-region-clear" class="context-menu-item danger" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            <span data-i18n="ctx_region_clear">Anular selección</span>
+        </div>
+
+        <div id="ctx-sub-play" class="context-menu-item" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.648c1.295.742 1.295 2.545 0 3.286L7.279 20.99c-1.25.717-2.779-.217-2.779-1.643V5.653Z" /></svg>
+            <span data-i18n="sc_name_playSelectedSub">Reproducir subtítulo seleccionado</span>
+        </div>
+        <div id="ctx-sub-delete" class="context-menu-item danger" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+            <span data-i18n="ctx_delete">Eliminar subtítulo</span>
+        </div>
+    </div>
+
+    <div id="context-menu" class="hidden">
+        <div id="ctx-menu-split" class="context-menu-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75 16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0 0 20.25 18V5.75A2.25 2.25 0 0 0 18 3.5H6A2.25 2.25 0 0 0 3.75 5.75v12.25A2.25 2.25 0 0 0 6 20.25Z" /></svg>
+            <span data-i18n="ctx_split">Dividir Subtítulo</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div id="ctx-menu-merge-prev" class="context-menu-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" /></svg>
+            <span data-i18n="ctx_merge_prev">Unir con anterior</span>
+        </div>
+        <div id="ctx-menu-merge-next" class="context-menu-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" /></svg>
+            <span data-i18n="ctx_merge_next">Unir con siguiente</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div id="ctx-menu-change-style" class="context-menu-item">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.475 2.118A2.25 2.25 0 0 1 1.5 18.5v-1.128a2.25 2.25 0 0 1 2.475-2.118A3 3 0 0 0 9.53 16.122ZM12.25 18.75a4.5 4.5 0 0 0 4.5-4.5v-1.5a3.75 3.75 0 0 0-3.75-3.75h-1.5a.75.75 0 1 1 0-1.5h1.5a5.25 5.25 0 0 1 5.25 5.25v1.5a2.25 2.25 0 0 1-2.25 2.25a2.25 2.25 0 0 1-2.25-2.25V17.25a.75.75 0 0 0-1.5 0v1.5a4.5 4.5 0 0 0 4.5 4.5Z" /></svg>
+            <span data-i18n="ctx_change_style">Cambiar estilo</span>
+            <div class="menu-dropdown" id="ctx-style-submenu" style="position: absolute; left: 100%; top: 0; display: none;">
+                <div class="menu-item-container"></div>
+            </div>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div id="ctx-menu-delete" class="context-menu-item danger">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+            <span data-i18n="ctx_delete">Eliminar Subtítulo</span>
+        </div>
+    </div>
+
+    <div id="changelog-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Changelog</h2>
+                <button class="close-changelog-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <pre id="changelog-content" class="text-sm text-gray-300 overflow-y-auto whitespace-pre-wrap p-4 bg-dark-gray rounded-lg border border-light-gray" style="max-height: 60vh; font-family: monospace;">Cargando...</pre>
+        </div>
+    </div>
+    <div id="shortcuts-modal" class="modal"><div class="modal-content"></div></div>
+    <div id="alert-modal" class="modal"><div class="modal-content"></div></div>
+    <div id="confirmation-modal" class="modal"><div class="modal-content"></div></div>
+    <div id="pdf-name-modal" class="modal"><div class="modal-content"></div></div>
+    <div id="progress-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4" data-i18n="msg_analyzing">Analizando...</h2>
+            <div class="w-full bg-gray-600 rounded-full h-4 mb-2">
+                <div id="shot-detection-progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div id="shot-detection-progress-text" class="text-center text-sm mb-4">0%</div>
+            <button id="cancel-detection-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg" data-i18n="btn_cancel">Cancelar</button>
+        </div>
+    </div>
+    <div id="qa-settings-modal" class="modal"><div class="modal-content"></div></div>
+    <div id="qa-review-panel" class="floating-pane hidden"></div>
+    <div id="backup-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="backup">Copia de seguridad</h2>
+                <button class="close-backup-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p id="last-backup-time" data-i18n="backup_empty" class="text-sm text-center text-gray-400 mb-4">Aún no hay copias de seguridad.</p>
+                <button id="restore-backup-btn" data-i18n="backup_restore_btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Restaurar copia de seguridad</button>
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="export-backup-json-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg" data-i18n="btn_export">Exportar .json</button>
+                    <button id="export-backup-srt-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg" data-i18n="save_srt">Exportar .srt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="find-replace-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="find_replace">Buscar y reemplazar</h2>
+                <button class="close-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-end gap-2">
+                    <div class="flex-grow">
+                        <label for="fr-find-input" class="text-sm font-medium text-gray-300">Buscar</label>
+                        <input type="text" id="fr-find-input" class="text-import-input w-full mt-1 p-2 rounded-lg" style="width: 250px;">
+                    </div>
+                    <button id="fr-search-btn" class="text-btn compact-btn">Buscar</button>
+                </div>
+                <div class="flex items-end gap-2">
+                    <div class="flex-grow">
+                        <label for="fr-replace-input" class="text-sm font-medium text-gray-300">Reemplazar con</label>
+                        <input type="text" id="fr-replace-input" class="text-import-input w-full mt-1 p-2 rounded-lg" style="width: 250px;">
+                    </div>
+                    <button id="fr-replace-btn" class="text-btn compact-btn">Reemplazar</button>
+                    <button id="fr-replace-all-btn" class="text-btn compact-btn">Reemplazar todo</button>
+                </div>
+
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center">
+                            <input id="fr-case-sensitive" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded">
+                            <label for="fr-case-sensitive" data-i18n="fr_chk_case" class="ml-2 text-sm font-medium text-gray-300">Distinguir mayúsculas</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="fr-use-regex" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded">
+                            <label for="fr-use-regex" data-i18n="fr_chk_regex" class="ml-2 text-sm font-medium text-gray-300">Usar expresiones regulares</label>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="fr-prev-btn" class="icon-btn compact-icon-btn">◀</button>
+                        <span id="fr-search-count" class="text-sm px-2">0 / 0</span>
+                        <button id="fr-next-btn" class="icon-btn compact-icon-btn">▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="ass-style-editor-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="ass_style_editor">Editor de estilos ASS</h2>
+                <button class="close-ass-style-editor-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            
+            <div class="style-editor-layout">
+                <div id="style-list-container">
+                    <ul id="style-list"></ul>
+                    <div class="mt-4 flex gap-2">
+                        <button id="add-new-style-btn" class="w-full text-btn compact-btn" data-i18n="ass_btn_new">Nuevo</button>
+                        <button id="delete-style-btn" class="w-full text-btn compact-btn bg-red-800 hover:bg-red-700" data-i18n="ass_btn_delete">Borrar</button>
+                    </div>
+                </div>
+                
+                <div id="style-form-container">
+                    
+                    <div id="style-preview-wrapper">
+                        <div id="style-preview-text">Texto de ejemplo<br>Segunda línea</div>
+                    </div>
+
+                    <div id="style-options-scroller">
+                        
+                        <div class="style-group">
+                            <h3 class="style-group-title" data-i18n="ass_title_main">Principal</h3>
+                            <div class="style-group-grid two-cols">
+                                <div><label for="style-name" data-i18n="ass_lbl_name">Nombre</label><input type="text" id="style-name" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                                <div>
+                                    <label for="style-fontname" data-i18n="ass_lbl_font">Fuente</label>
+                                    <select id="style-fontname" class="ass-style-input w-full p-2 rounded-lg mt-1">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Arial Black">Arial Black</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Tahoma">Tahoma</option>
+                                        <option value="Trebuchet MS">Trebuchet MS</option>
+                                        <option value="Impact">Impact</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Courier New">Courier New</option>
+                                        <option value="Comic Sans MS">Comic Sans MS</option>
+                                        </select>
+                                </div>
+                                <div><label for="style-fontsize" data-i18n="ass_lbl_size">Tamaño</label><input type="number" id="style-fontsize" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                            </div>
+                        </div>
+
+                        <div class="style-group">
+                            <h3 class="style-group-title" data-i18n="ass_title_colors">Colores</h3>
+                            <div class="style-group-grid two-cols">
+                                <div><label for="style-primarycolour" data-i18n="ass_lbl_primary">Primario</label><div class="color-input-wrapper"><input type="text" id="style-primarycolour" class="ass-style-input w-full p-2 rounded-lg mt-1"><input type="color" id="style-primarycolour-picker"></div></div>
+                                <div><label for="style-secondarycolour" data-i18n="ass_lbl_secondary">Secundario (Karaoke)</label><div class="color-input-wrapper"><input type="text" id="style-secondarycolour" class="ass-style-input w-full p-2 rounded-lg mt-1"><input type="color" id="style-secondarycolour-picker"></div></div>
+                                <div><label for="style-outlinecolour" data-i18n="ass_lbl_outline_color">Contorno</label><div class="color-input-wrapper"><input type="text" id="style-outlinecolour" class="ass-style-input w-full p-2 rounded-lg mt-1"><input type="color" id="style-outlinecolour-picker"></div></div>
+                                <div><label for="style-backcolour" data-i18n="ass_lbl_shadow_color">Sombra</label><div class="color-input-wrapper"><input type="text" id="style-backcolour" class="ass-style-input w-full p-2 rounded-lg mt-1"><input type="color" id="style-backcolour-picker"></div></div>
+                            </div>
+                        </div>
+
+                        <div class="style-group">
+                            <h3 class="style-group-title" data-i18n="ass_title_border">Borde y Estilo</h3>
+                            <div class="style-group-grid three-cols">
+                                <div><label for="style-outline" data-i18n="ass_lbl_outline_width">Grosor Contorno</label><input type="number" id="style-outline" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                                <div><label for="style-shadow" data-i18n="ass_lbl_shadow_width">Grosor Sombra</label><input type="number" id="style-shadow" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                                <div><label for="style-borderstyle" data-i18n="ass_lbl_border_style">Estilo Borde</label><select id="style-borderstyle" class="ass-style-input w-full p-2 rounded-lg mt-1"><option value="1" data-i18n="ass_opt_outline_shadow">Contorno + Sombra</option><option value="3" data-i18n="ass_opt_opaque_box">Caja Opaca</option></select></div>
+                            </div>
+                            <div class="style-group-grid three-cols mt-4">
+                                <div><label for="style-bold" data-i18n="ass_lbl_bold">Negrita</label><select id="style-bold" class="ass-style-input w-full p-2 rounded-lg mt-1"><option value="0" data-i18n="ass_opt_no">No</option><option value="-1" data-i18n="ass_opt_yes">Sí</option></select></div>
+                                <div><label for="style-italic" data-i18n="ass_lbl_italic">Cursiva</label><select id="style-italic" class="ass-style-input w-full p-2 rounded-lg mt-1"><option value="0" data-i18n="ass_opt_no">No</option><option value="-1" data-i18n="ass_opt_yes">Sí</option></select></div>
+                                <div><label for="style-underline" data-i18n="ass_lbl_underline">Subrayado</label><select id="style-underline" class="ass-style-input w-full p-2 rounded-lg mt-1"><option value="0" data-i18n="ass_opt_no">No</option><option value="-1" data-i18n="ass_opt_yes">Sí</option></select></div>
+                            </div>
+                        </div>
+
+                        <div class="style-group">
+                            <h3 class="style-group-title" data-i18n="ass_title_pos">Posicionamiento</h3>
+                            <div class="flex gap-6">
+                                <div class="alignment-grid-wrapper">
+                                    <label data-i18n="ass_lbl_align">Alineación (Numpad)</label>
+                                    <div class="alignment-grid">
+                                        <button data-align="7"></button><button data-align="8"></button><button data-align="9"></button>
+                                        <button data-align="4"></button><button data-align="5"></button><button data-align="6"></button>
+                                        <button data-align="1"></button><button data-align="2" class="active"></button><button data-align="3"></button>
+                                    </div>
+                                    <input type="hidden" id="style-alignment" value="2">
+                                </div>
+                                <div class="flex-grow">
+                                    <label data-i18n="ass_lbl_margins">Márgenes</label>
+                                    <div class="grid grid-cols-3 gap-2 mt-2">
+                                        <div>
+                                            <label for="style-marginl" class="text-xs" data-i18n="ass_lbl_margin_l">Izquierda</label>
+                                            <input type="number" id="style-marginl" class="ass-style-input w-full p-2 rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label for="style-marginr" class="text-xs" data-i18n="ass_lbl_margin_r">Derecha</label>
+                                            <input type="number" id="style-marginr" class="ass-style-input w-full p-2 rounded-lg">
+                                        </div>
+                                        <div>
+                                            <label for="style-marginv" class="text-xs" data-i18n="ass_lbl_margin_v">Vertical</label>
+                                            <input type="number" id="style-marginv" class="ass-style-input w-full p-2 rounded-lg">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <details class="style-group">
+                            <summary class="style-group-title cursor-pointer" data-i18n="ass_title_adv">Avanzado</summary>
+                            <div class="style-group-grid three-cols mt-2">
+                                <div><label for="style-scalex" data-i18n="ass_lbl_scale_x">Escala X (%)</label><input type="number" id="style-scalex" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                                <div><label for="style-scaley" data-i18n="ass_lbl_scale_y">Escala Y (%)</label><input type="number" id="style-scaley" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                                <div><label for="style-spacing" data-i18n="ass_lbl_spacing">Espaciado</label><input type="number" id="style-spacing" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                                <div><label for="style-angle" data-i18n="ass_lbl_angle">Ángulo</label><input type="number" id="style-angle" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                                <div><label for="style-strikeout" data-i18n="ass_lbl_strikeout">Tachado</label><select id="style-strikeout" class="ass-style-input w-full p-2 rounded-lg mt-1"><option value="0" data-i18n="ass_opt_no">No</option><option value="-1" data-i18n="ass_opt_yes">Sí</option></select></div>
+                                <div><label for="style-encoding" data-i18n="ass_lbl_encoding">Codificación</label><input type="number" id="style-encoding" class="ass-style-input w-full p-2 rounded-lg mt-1"></div>
+                            </div>
+                        </details>
+                    </div> 
+                    
+                    <div class="mt-4 pt-4 border-t border-light-gray flex justify-between items-center flex-shrink-0">
+                        <div>
+                            <button id="update-preview-btn" class="text-btn compact-btn" data-i18n="ass_btn_update_preview">Actualizar vista</button>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <span id="apply-style-feedback" data-i18n="msg_applied" class="text-xs text-green-400 opacity-0 transition-opacity duration-300">¡Aplicado!</span>
+                            <button id="apply-style-to-all-btn" class="text-btn" data-i18n="ass_btn_apply">Aplicar a todos</button>
+
+                            <span id="save-style-feedback" data-i18n="msg_saved" class="text-xs text-green-400 opacity-0 transition-opacity duration-300">¡Guardado!</span>
+                            <button id="save-style-changes-btn" class="text-btn bg-blue-600 hover:bg-blue-700" data-i18n="ass_btn_save">Guardar cambios</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-qa-report-modal" class="modal"></div>
+    <div id="symbol-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="add_symbol">Añadir símbolo</h2>
+                <button class="close-symbol-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="flex gap-4 items-start" style="min-height: 50vh;">
+                <div id="symbol-categories" class="flex-shrink-0 w-56 border-r border-light-gray pr-4 overflow-y-auto">
+                </div>
+                <div id="symbol-grid" class="grid grid-cols-10 gap-x-2 gap-y-1 text-center overflow-y-auto flex-grow">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="load-project-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="load_project">Cargar Proyecto</h2>
+                <button class="close-load-project-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-gray-400 border-b border-light-gray pb-2">Proyectos Recientes</h3>
+                <div id="modal-recent-projects-list" class="space-y-2">
+                </div>
+                <div class="border-t border-light-gray pt-4">
+                    <label for="project-loader" class="w-full text-btn bg-blue-600 hover:bg-blue-700 cursor-pointer text-center">
+                        Cargar desde archivo...
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-notepad-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="modal_title_export_notepad">Guardar Bloc de Notas</h2>
+                <button class="close-export-notepad-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-sm text-gray-300" data-i18n="msg_choose_export_notepad">Elige qué texto quieres descargar como archivo .txt:</p>
+                <div class="flex justify-around mt-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="export-notepad-choice" value="original" checked class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600">
+                        <span data-i18n="lbl_export_original">Texto Original</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="export-notepad-choice" value="translation" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600">
+                        <span data-i18n="lbl_export_translation">Traducción</span>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-4 mt-6 pt-4 border-t border-light-gray">
+                    <button id="cancel-export-notepad-btn" class="text-btn" data-i18n="btn_cancel">Cancelar</button>
+                    <button id="confirm-export-notepad-btn" class="text-btn bg-blue-600 hover:bg-blue-700" data-i18n="btn_export">Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="save-project-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" data-i18n="save_project">Guardar proyecto</h2>
+                <button class="close-save-project-modal text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <label for="save-project-filename-input" class="text-sm font-medium text-gray-300" data-i18n="lbl_filename">Nombre del archivo</label>
+                <input type="text" id="save-project-filename-input" class="text-import-input w-full mt-1 p-2 rounded-lg">
+                <div class="flex justify-end gap-4 mt-4 pt-4 border-t border-light-gray">
+                    <button id="cancel-save-project-btn" class="text-btn" data-i18n="btn_cancel">Cancelar</button>
+                    <button id="confirm-save-project-btn" class="text-btn bg-blue-600 hover:bg-blue-700" data-i18n="btn_save">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="tooltip"></div>
+
+    <div id="drag-overlay">
+        <h2 data-i18n="drag_overlay_text" class="text-3xl font-bold text-white text-center">Suelta el vídeo para cargarlo</h2>
+    </div>
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>
+

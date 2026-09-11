@@ -1,0 +1,876 @@
+        :root {
+            --primary-blue: #075BA2;
+            --dark-gray: #1E1E1E;
+            --medium-gray: #2D2D2D;
+            --light-gray: #373737;
+            --text-primary: #EAEAEA;
+            --text-secondary: #A0A0A0;
+            --subtitle-font-size: 2.5vh; /* Tamaño de fuente adaptable */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-gray);
+            color: var(--text-primary);
+            overflow: hidden; /* Evitar scroll en el body */
+            user-select: none;
+        }
+
+        /* Estilos de WaveSurfer */
+        #waveform-wrapper ::-webkit-scrollbar { height: 6px; }
+        #waveform-wrapper ::-webkit-scrollbar-track { background: var(--medium-gray); }
+        #waveform-wrapper ::-webkit-scrollbar-thumb { background: var(--light-gray); border-radius: 3px; }
+        #waveform-wrapper ::-webkit-scrollbar-thumb:hover { background: #4F4F4F; }
+
+        ::part(region) { 
+            z-index: 20; 
+            overflow: visible !important;
+        }
+
+::part(region)[data-id="temp-selection"] {
+    z-index: 999 !important;
+}
+
+        ::part(region-handle-left), ::part(region-handle-right) { 
+            background-color: rgba(255, 255, 255, 0.4); 
+            width: 8px;
+        }
+        
+        .region-content {
+            position: absolute;
+            top: -60px;
+            left: 5px;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 5px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            max-width: 200px;
+        }
+        .region-content .region-text-line {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .region-content .region-id { font-weight: bold; color: #a4cafe; }
+       .region-content .region-stats { color: #facc15; }
+
+::part(region)[data-shot-change] { z-index: 22 !important; cursor: default !important; box-shadow: none !important; }
+        
+        #tooltip {
+            position: absolute; display: none; background-color: #111; color: white; padding: 6px 12px;
+            border-radius: 6px; font-size: 0.875rem; z-index: 1000; pointer-events: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            white-space: pre-wrap;
+        }
+
+        .modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+        }
+        #pdf-name-modal { z-index: 101; } /* Z-index más alto para que aparezca encima */
+#alert-modal { z-index: 102; }
+        .modal-content {
+            background-color: var(--medium-gray); margin: auto; padding: 24px; border: 1px solid var(--light-gray);
+            width: 90%; max-width: 600px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh; display: flex; flex-direction: column;
+        }
+        
+        /* Estilos para la tabla de subtítulos */
+        #subtitle-grid-container { flex-grow: 1; overflow: auto; background-color: var(--medium-gray); border-radius: 8px; }
+        #subtitle-grid { table-layout: fixed; }
+        #subtitle-grid th { 
+            background-color: var(--light-gray); 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            overflow: visible; /* <--- ESTO ES CLAVE para que se vea el borde */
+}
+        #subtitle-grid td { border-bottom: 1px solid var(--light-gray); word-break: break-word; }
+        #subtitle-grid tr:last-child td { border-bottom: none; }
+        .subtitle-row.active { background-color: rgba(7, 91, 162, 0.3); }
+        .subtitle-row.selected { background-color: rgba(164, 202, 254, 0.2); border-left: 3px solid #A4CAFE; }
+        .table-text-preview {
+            white-space: pre; /* Respeta los saltos de línea y evita el auto-ajuste */
+            min-width: 45ch;  /* Ancho mínimo de aprox. 45 caracteres */
+}
+        .style-select {
+            background-color: var(--dark-gray);
+            border: 1px solid var(--light-gray);
+            border-radius: 4px;
+            padding: 2px 4px;
+            width: 100%;
+            font-size: 12px;
+        }
+        
+        .subtitle-row.has-error {
+            background-color: rgba(185, 28, 28, 0.1);
+            border-left: 3px solid #ef4444;
+        }
+
+        .subtitle-row.has-error.active {
+    background-color: rgba(7, 91, 162, 0.3); /* Fuerza el fondo azul de "activo" */
+}
+
+        .qa-alert-icon {
+            color: #f87171; /* red-400 */
+            cursor: help;
+        }
+
+      /* --- CSS MEJORADO (V2) PARA REDIMENSIONAR COLUMNAS --- */
+.th-resizer {
+    position: absolute;
+    right: -5px; /* Centramos el área de agarre (10px) justo en el borde derecho */
+    top: 0;
+    height: 100%;
+    width: 10px; 
+    cursor: col-resize;
+    z-index: 20;
+    display: flex;
+    justify-content: center; /* Centra la línea visual dentro del área invisible */
+}
+
+/* Esta es la línea visual real */
+.th-resizer::after {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 100%;
+    background-color: #9ca3af; /* Gris claro (más visible que el #666 anterior) */
+    transition: all 0.2s;
+}
+
+/* Efecto al pasar el ratón */
+.th-resizer:hover::after {
+    background-color: var(--primary-blue);
+    width: 2px; /* Se engrosa ligeramente */
+    box-shadow: 0 0 4px rgba(164, 202, 254, 0.6); /* Añade un brillo sutil */
+}
+        
+        .time-col-item { display: flex; align-items: center; gap: 8px; }
+        .time-col-item .icon { width: 16px; text-align: center; }
+
+        #video-container { position: relative; }
+        
+        /* --- IN-VIDEO EDITOR & PREVIEW STYLES --- */
+     #subtitle-preview {
+    position: absolute;
+    bottom: 8%;
+    left: 10%;
+    right: 10%;
+    width: 80%;
+    z-index: 25;
+    text-align: center;
+    line-height: 1.4;
+    padding: 0.2em 0.4em;
+    pointer-events: none;
+}
+
+#in-video-editor {
+    width: fit-content;      /* El ancho se adapta al contenido */
+    max-width: 80%;          /* Pero nunca será más ancho que el 80% del vídeo */
+    white-space: pre;        /* Respeta los saltos de línea y no auto-ajusta el texto */
+min-width: 25ch;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 2px solid transparent; 
+    border-radius: 6px;
+    resize: none;
+    overflow: hidden;
+    pointer-events: auto;
+    min-height: 1.5em;
+}
+        
+        #in-video-editor {
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 2px solid transparent; /* El borde se coloreará con JS */
+            border-radius: 6px;
+            resize: none;
+            overflow: hidden;
+            pointer-events: auto;
+            min-height: 1.5em; /* Asegura una altura mínima */
+        }
+        #in-video-editor:focus {
+            outline: none;
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+
+        #in-video-editor-container { position: absolute; bottom: 8%; left: 10%; right: 10%; z-index: 30; pointer-events: none; }
+        
+        
+        .stats-label { background-color: rgba(0,0,0,0.7); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .stats-label.warning { background-color: #B91C1C; }
+        
+        #resizer { background-color: var(--light-gray); width: 6px; cursor: col-resize; flex-shrink: 0; transition: background-color 0.2s ease; }
+        #resizer:hover { background-color: var(--primary-blue); }
+
+#in-video-original-text-preview {
+    white-space: pre-wrap; /* Esta es la propiedad mágica */
+    text-align: center;
+    line-height: 1.3;
+}
+   
+        #context-menu {
+            position: absolute; z-index: 1000; width: 220px; background-color: var(--medium-gray);
+            border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); padding: 8px;
+            border: 1px solid var(--light-gray);
+        }
+        .context-menu-item {
+            display: flex; align-items: center; gap: 8px; padding: 8px 12px; color: var(--text-primary);
+            border-radius: 6px; cursor: pointer; font-size: 14px;
+        }
+        .context-menu-item:hover { background-color: var(--primary-blue); }
+        .context-menu-item.danger:hover { background-color: #B91C1C; }
+        .context-menu-divider { height: 1px; background-color: var(--light-gray); margin: 6px 0; }
+        .qa-input.dark-text, .text-import-input, .ass-style-input { color: #373737 !important; background-color: #EAEAEA !important; }
+        .table-stats { color: var(--text-primary); }
+
+        /* Dropdown Menu */
+        .menu-wrapper { position: relative; }
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            padding-top: 8px;
+            z-index: 50;
+        }
+        .menu-dropdown .menu-item-container {
+            padding: 8px;
+            background-color: var(--medium-gray);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--light-gray);
+            min-width: 220px;
+        }
+        .menu-wrapper:hover .menu-dropdown { display: block; }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .menu-item:hover { background-color: var(--primary-blue); }
+        .menu-item:disabled { opacity: 0.5; cursor: not-allowed; background-color: transparent; }
+        
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .slider-control label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            width: 80px;
+        }
+        .horizontal-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--dark-gray);
+            outline: none;
+            border-radius: 3px;
+        }
+        .horizontal-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #A4CAFE;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .horizontal-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #A4CAFE;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        #sync-notepad-resizer {
+            background-color: var(--light-gray);
+            height: 6px;
+            cursor: row-resize;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease;
+            border-radius: 3px;
+            margin: 2px 0;
+            display: none; /* Oculto por defecto */
+        }
+        #sync-notepad-resizer:hover { background-color: var(--primary-blue); }
+        
+        /* Drag and Drop Overlay */
+        #drag-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(7, 91, 162, 0.7); z-index: 9999;
+            display: none; align-items: center; justify-content: center;
+            border: 4px dashed #A4CAFE;
+            pointer-events: none;
+        }
+        #drag-overlay.visible { display: flex; }
+        
+        /* QA Modal Styling */
+        .qa-input-group { display: flex; align-items: center; gap: 8px; }
+        .qa-input-group input { max-width: 80px; }
+        .qa-unit-select { background-color: var(--dark-gray); border: 1px solid var(--light-gray); border-radius: 6px; padding: 4px; font-size: 12px; }
+        .qa-group { border: 1px solid var(--light-gray); border-radius: 8px; padding: 12px; margin-top: 16px; }
+        .qa-group-title { font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; font-size: 0.9rem; }
+        .qa-rule-description { font-size: 12px; color: var(--text-secondary); margin-top: 4px; padding-left: 4px; }
+
+        /* Toggle Switch Styles */
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--light-gray); transition: .4s; border-radius: 22px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-blue); }
+        input:checked + .slider:before { transform: translateX(18px); }
+        
+        /* Shortcut Input Style */
+        .shortcut-input { background-color: var(--dark-gray); border: 1px solid var(--light-gray); color: var(--text-primary); padding: 6px 10px; border-radius: 6px; text-align: center; cursor: pointer; width: 150px; }
+        .shortcut-input:focus { outline: 2px solid var(--primary-blue); border-color: var(--primary-blue); }
+        .compact-btn { padding: 0.25rem 0.75rem !important; height: 36px !important; font-size: 0.875rem !important; }
+        .compact-icon-btn { padding: 0 !important; width: 36px !important; height: 36px !important; }
+        
+       /* --- INICIO: ESTILOS CORREGIDOS DEL EDITOR ASS --- */
+
+/* --- Estilos base del modal y layout --- */
+#ass-style-editor-modal .modal-content { max-width: 1000px; }
+.style-editor-layout { display: grid; grid-template-columns: 200px 1fr; gap: 20px; }
+
+/* --- Columna Izquierda (Lista de estilos) --- */
+#style-list-container { 
+    border-right: 1px solid var(--light-gray); 
+    padding-right: 20px; 
+}
+#style-list { 
+    list-style: none; padding: 0; margin: 0; 
+    max-height: 75vh; /* Aumentado para coincidir con el form */
+    overflow-y: auto; 
+}
+#style-list li { 
+    padding: 8px 12px; border-radius: 6px; 
+    cursor: pointer; margin-bottom: 4px; 
+}
+#style-list li:hover { background-color: var(--light-gray); }
+#style-list li.active { background-color: var(--primary-blue); font-weight: bold; }
+
+/* --- Columna Derecha (Formulario) --- */
+#style-form-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 75vh; /* Altura máxima para el contenedor del form */
+}
+
+/* 1. Vista Previa (Arriba) */
+#style-preview-wrapper {
+    flex-shrink: 0; /* Evita que se encoja */
+    position: relative;
+    background-color: #1a1a1a;
+    border: 1px solid var(--light-gray);
+    min-height: 140px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow: hidden; 
+}
+#style-preview-text {
+    font-size: 28px;
+    color: white;
+    text-align: center;
+    line-height: 1.3;
+    position: relative; 
+}
+
+/* 2. Opciones (Centro, con scroll) */
+#style-options-scroller {
+    flex-grow: 1; /* Ocupa el espacio restante */
+    overflow-y: auto;
+    min-height: 0; /* Clave para que flex-grow funcione */
+    padding-right: 8px; /* Espacio para la barra de scroll */
+}
+
+/* 3. Botones (Abajo) */
+/* (El div de botones ya tiene 'flex-shrink-0' en el HTML, lo que es correcto) */
+
+/* --- Grupos de Opciones Internos --- */
+.style-group {
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+.style-group-title {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+details.style-group { padding: 0; }
+details.style-group summary { padding: 12px 16px; cursor: pointer; }
+details.style-group .style-group-grid { padding: 0 16px 12px 16px; }
+
+/* --- Rejillas de Campos --- */
+.style-group-grid {
+    display: grid;
+    gap: 12px 16px;
+}
+/* Esto reemplaza al viejo .style-form-grid */
+.style-group-grid.two-cols { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.style-group-grid.three-cols { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+
+/* --- Componentes Específicos --- */
+
+/* Pickers de Color */
+.color-input-wrapper { display: flex; align-items: center; gap: 8px; }
+.color-input-wrapper input[type="color"] {
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    width: 32px; height: 32px; padding: 0; border: none; 
+    background: none; border-radius: 6px; cursor: pointer;
+}
+.color-input-wrapper input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-input-wrapper input[type="color"]::-webkit-color-swatch { 
+    border: 1px solid var(--light-gray); border-radius: 6px; 
+}
+
+/* Grid de Alineación (Numpad) */
+.alignment-grid-wrapper { flex-shrink: 0; } /* Evita que se encoja */
+.alignment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    max-width: 120px;
+}
+.alignment-grid button {
+    width: 36px;
+    height: 36px;
+    background-color: var(--dark-gray);
+    border: 1px solid var(--light-gray);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.alignment-grid button:hover { background-color: var(--light-gray); }
+.alignment-grid button.active {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 8px rgba(164, 202, 254, 0.5);
+}
+/* --- FIN: ESTILOS CORREGIDOS DEL EDITOR ASS --- */
+
+/* --- ESTILOS PARA LA NUEVA BARRA DE PROGRESO --- */
+#custom-progress-bar-container {
+    position: relative; /* Necesario para la línea de apoyo */
+    height: 30px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+#progress-bar {
+    padding: 8px 0; /* Aumenta el área clicable */
+}
+#progress-bar-background, #progress-bar-played {
+    height: 6px;
+    transition: height 0.2s ease;
+}
+#progress-bar-handle {
+    background-color: var(--light-gray); /* Color discreto por defecto */
+    transition: all 0.2s ease;
+    opacity: 1; /* Siempre visible */
+}
+#progress-hover-line {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    left: 0; right: 0;
+    height: 1px;
+    background-color: var(--light-gray); /* Color discreto por defecto */
+    pointer-events: none;
+    transition: background-color 0.2s ease;
+    z-index: 1;
+}
+/* Efecto de "encendido" al pasar el ratón */
+#custom-progress-bar-container:hover #progress-bar-background,
+#custom-progress-bar-container:hover #progress-bar-played {
+    height: 8px;
+}
+#custom-progress-bar-container:hover #progress-bar-handle,
+#custom-progress-bar-container:hover #progress-hover-line {
+    background-color: var(--primary-blue); /* Se ilumina con el color del logo */
+}
+#custom-progress-bar-container:hover #progress-bar-handle {
+     transform: translate(-50%, -50%) scale(1.1);
+}
+
+#find-replace-toolbar input[type="text"] {
+    height: 36px;           /* Misma altura que los botones compactos */
+    border-radius: 8px;     /* Mismas esquinas redondeadas (rounded-lg) */
+    border: none;           /* Quitamos el borde por defecto */
+    padding-left: 0.75rem;   /* Añadimos un poco de padding interno */
+    padding-right: 0.75rem;
+}
+
+#waveform-wrapper {
+    background-color: #2A2A2A;
+}
+
+.onda-progreso-azul-principal ::part(progress) {
+    background-color: #202020;
+}
+
+        .icon-btn {
+            background-color: var(--light-gray); color: var(--text-primary); border: none; border-radius: 8px;
+            padding: 0; width: 44px; height: 44px; cursor: pointer; transition: all 0.2s ease-in-out;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .text-btn {
+            background-color: var(--light-gray); color: var(--text-primary); border: none; border-radius: 8px;
+            padding: 0.5rem 1rem; height: 44px; cursor: pointer; transition: all 0.2s ease-in-out;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 600;
+        }
+        .text-btn:hover, .icon-btn:hover { background-color: #4F4F4F; transform: translateY(-1px); }
+        .text-btn:disabled, .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: translateY(0); }
+        #waveform ::part(wave) {
+            background: linear-gradient(to right, #A4CAFE, #CDB4DB);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+       
+
+/* --- NUEVO ESTILO PARA EL MENÚ DEL HEADER --- */
+        .header-menu-btn {
+            background-color: var(--light-gray); 
+            color: var(--text-primary); 
+            border: none; 
+            border-radius: 6px; /* Un poco más pequeño que 8px */
+            padding: 0.25rem 0.75rem; /* 4px vertical, 12px horizontal */
+            height: auto; /* La altura la define el padding */
+            cursor: pointer; 
+            transition: all 0.2s ease-in-out;
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            font-weight: 500; /* Un poco más fino que 600 */
+            font-size: 14px; /* Texto más pequeño */
+        }
+        .header-menu-btn:hover { background-color: #4F4F4F; transform: translateY(-1px); }
+        .header-menu-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: translateY(0); }
+        /* --- FIN DEL NUEVO ESTILO --- */
+.compact-icon-btn { padding: 0 !important; width: 32px !important; height: 32px !important; }
+
+ #waveform-minimap ::part(minimap-overlay) {
+            background-color: rgba(7, 91, 162, 0.25);
+            border: 1px solid var(--primary-blue);
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(164, 202, 254, 0.5);
+        }
+
+/* --- ESTILOS PARA LA BARRA DE BUSCAR Y REEMPLAZAR --- */
+#find-replace-toolbar {
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index: 20; /* Para que esté por encima de la tabla */
+background-color: #202020;
+}
+#find-replace-toolbar.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+#find-replace-toolbar input {
+    width: 150px; /* Ancho base para los inputs */
+    flex-grow: 1; /* Permite que crezcan */
+}
+#fr-bar-close-btn {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.symbol-button {
+    /* NOTA: Nuevos estilos para hacer los botones pequeños y cuadrados */
+    width: 36px;
+    height: 36px;
+    font-size: 14px; /* Tamaño de fuente similar a 10pt */
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: var(--dark-gray);
+    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.symbol-button:hover {
+    background-color: var(--primary-blue);
+}
+
+.category-button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.category-button:hover {
+    background-color: var(--light-gray);
+}
+.category-button.active {
+    background-color: var(--primary-blue);
+    font-weight: bold;
+}
+
+/* NOTA: Estilo para los elementos de la lista en la ventana de Cargar Proyecto */
+.recent-project-item {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    background-color: var(--dark-gray);
+    transition: background-color 0.2s ease;
+    border: 1px solid var(--light-gray);
+}
+.recent-project-item:hover {
+    background-color: var(--primary-blue);
+}
+.recent-project-item-name {
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.no-recent-projects {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 16px;
+}
+
+/* --- Estilos para el Panel de QA Flotante (V2) --- */
+.floating-pane {
+    position: absolute;
+    top: 100px;
+    right: 20px;
+    width: 450px;
+    min-width: 350px;
+    min-height: 200px;
+    max-height: 80vh;
+    background-color: #252525;
+    border: 1px solid #4a4a4a;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 101;
+    display: flex; /* Clave para la estructura */
+    flex-direction: column; /* Organiza header y content verticalmente */
+}
+
+.hidden {
+    display: none !important;
+}
+
+.floating-pane-header {
+    display: flex; /* ¡NUEVO! Activa Flexbox */
+    justify-content: space-between; /* ¡NUEVO! Empuja título y botones a los extremos */
+    align-items: center; /* ¡NUEVO! Centra verticalmente los elementos */
+    padding: 8px 12px; /* ¡NUEVO! Añade espaciado interno */
+    background-color: #333333;
+    border-bottom: 1px solid #4a4a4a; /* Añade un separador sutil */
+    cursor: move;
+}
+
+.floating-pane-header h2 {
+    color: var(--text-primary);
+    margin: 0; /* Quita márgenes por defecto del h2 */
+    font-size: 1.1rem; /* Ajusta el tamaño de la fuente */
+}
+
+.floating-pane-content {
+    flex-grow: 1; /* ¡NUEVO! Hace que el contenido ocupe el espacio disponible */
+    overflow-y: auto; /* ¡NUEVO! AÑADE EL SCROLL VERTICAL AUTOMÁTICO */
+    padding: 8px 12px;
+    min-height: 0; /* Necesario para que flex-grow funcione correctamente */
+}
+
+
+.qa-review-item {
+    background-color: #3D3D3D;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+.qa-review-item:hover {
+    border-color: #4a4a4a;
+}
+
+/* ¡NUEVO! Este es el estilo para el error "encendido" o activo */
+.qa-review-item.active {
+    background-color: #1e1e1e;
+    border-color: #4f4f4f;
+    box-shadow: 0 0 8px rgba(7, 91, 162, 0.5);
+}
+
+/* También cambiamos el color del texto del header para que sea legible */
+.qa-review-item.active .qa-review-item-header {
+    color: white;
+    font-weight: bold;
+}
+
+.qa-review-item-header {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: #111;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    text-align: left;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+
+.qa-review-item-errors {
+    color: #cccccc;
+    font-size: 14px;
+margin: 10px;
+}
+
+
+.qa-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 12px 10px 12px;
+}
+
+.qa-action-btn {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #4a4a4a;
+    cursor: pointer;
+    background-color: var(--light-gray);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.qa-action-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--primary-blue);
+    background-color: var(--primary-blue);
+}
+
+
+.resizer {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: transparent;
+    z-index: 102;
+}
+
+.resizer.top-left { top: -5px; left: -5px; cursor: nwse-resize; }
+.resizer.top-right { top: -5px; right: -5px; cursor: nesw-resize; }
+.resizer.bottom-left { bottom: -5px; left: -5px; cursor: nesw-resize; }
+.resizer.bottom-right { bottom: -5px; right: -5px; cursor: nwse-resize; }
+.resizer.top { top: -5px; left: 5px; right: 5px; height: 10px; cursor: ns-resize; }
+.resizer.bottom { bottom: -5px; left: 5px; right: 5px; height: 10px; cursor: ns-resize; }
+.resizer.left { top: 5px; bottom: 5px; left: -5px; width: 10px; cursor: ew-resize; }
+.resizer.right { top: 5px; bottom: 5px; right: -5px; width: 10px; cursor: ew-resize; }
+
+.qa-panel-tabs {
+    display: flex;
+    padding: 8px 12px 0 12px;
+    background-color: #252525;
+    gap: 4px;
+}
+
+.qa-tab-btn {
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-bottom: 1px solid #4a4a4a;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px 6px 0 0;
+}
+
+.qa-tab-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--light-gray);
+}
+
+.qa-tab-btn.active {
+    color: var(--text-primary);
+    background-color: var(--medium-gray);
+    border-color: #4a4a4a;
+    border-bottom-color: var(--medium-gray);
+}
+
+/* --- Estilos para los nuevos botones del header --- */
+
+.header-button-group {
+    display: flex;
+    gap: 6px;
+}
+
+.header-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--dark-gray);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--light-gray);
+    transition: all 0.2s;
+}
+
+.header-icon-btn:hover {
+    background-color: var(--primary-blue);
+    color: var(--text-primary);
+    border-color: var(--primary-blue);
+}
+
+.header-icon-btn.close-btn {
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.header-icon-btn.close-btn:hover {
+    color: #ef4444; /* Rojo para el botón de cerrar */
+    background: none;
+}
+
+#export-qa-report-modal {
+    z-index: 102; /* Más alto que el z-index: 101 del panel flotante */
+}
+
+.resizer.top { top: -5px; left: 5px; right: 5px; height: 10px; cursor: ns-resize; }
+.resizer.bottom { bottom: -5px; left: 5px; right: 5px; height: 10px; cursor: ns-resize; }
+.resizer.left { top: 5px; bottom: 5px; left: -5px; width: 10px; cursor: ew-resize; }
+.resizer.right { top: 5px; bottom: 5px; right: -5px; width: 10px; cursor: ew-resize; }

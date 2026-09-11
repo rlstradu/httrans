@@ -17,7 +17,7 @@ import {
     parseTime,
     reconstructOriginalSrt,
     reconstructSrt,
-} from '../src/js/core/srt.js';
+} from '@core/srt.js';
 
 const EJEMPLO = `1
 00:00:01,000 --> 00:00:03,000

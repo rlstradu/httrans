@@ -248,9 +248,6 @@ export const translations = {
 'translation_mismatch_warning': 'Aviso: El archivo traducido tiene {0} subtítulos, pero el original tiene {1}. Se han fusionado hasta donde ha sido posible.',
 'translation_times_warning': 'Cuidado: los tiempos del archivo traducido no coinciden con los del original (solo cuadra el {0} %). Los subtítulos se emparejan por orden, así que puede que la traducción haya entrado corrida. Repásalo antes de seguir.',
 'srt_codificacion_aviso': '«{0}» no venía en UTF-8, sino en {1}. Se ha leído bien y los acentos están en su sitio, pero al exportarlo saldrá en UTF-8, que es lo que entienden hoy todos los reproductores.',
-'notes_sidebar_title': 'Notas del subtítulo',
-'notes_info': 'Estas notas se guardan con el proyecto y están asociadas a este subtítulo específico.',
-'notes_placeholder': 'Escribe aquí tus notas...',
 
     },
     'en': {
@@ -501,9 +498,6 @@ export const translations = {
 'translation_mismatch_warning': 'Warning: The translated file has {0} subtitles, but the original has {1}. Merged as much as possible.',
 'translation_times_warning': 'Careful: the times in the translated file do not match the original ones (only {0} % line up). Subtitles are paired in order, so the translation may have gone in shifted. Check it before carrying on.',
 'srt_codificacion_aviso': '"{0}" did not come in UTF-8 but in {1}. It has been read correctly and the accents are where they should be, but on export it will come out as UTF-8, which is what every player understands today.',
-'notes_sidebar_title': 'Subtitle Notes',
-'notes_info': 'These notes are saved with the project and linked to this specific subtitle.',
-'notes_placeholder': 'Type your notes here...',
     }
 };
 

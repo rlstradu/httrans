@@ -15,15 +15,25 @@ httrans (actualmente en transición de marca a **PandaTools by HTTrans**, ver §
 | Ruta | Qué es | Estado |
 |---|---|---|
 | `index.html` (raíz) | Portada / lanzador. Un solo archivo HTML con CSS y JS inline. | Activo, mantenido |
+| `panda-core/` | Piezas compartidas entre herramientas: lectores y escritores de formatos de subtítulos, motor de control de calidad, etiquetas, colores, codificación. Módulos ES puros, sin interfaz. Ver `panda-core/README.md`. | **Activo desde septiembre de 2026** |
 | `pandaterm/` | Editor de glosarios TBX. `index.html` + `css/styles.css` + `js/*.js` (scripts clásicos) + `README.md` + `CHANGELOG.md`. | **Refactorizado** (patrón de referencia) |
 | `pandoria/` | Editor de memorias TMX. Misma estructura que pandaterm/. | **Refactorizado** (patrón de referencia) |
 | `poanda/` | Editor de PO/JSON/HTML. `index.html` + `css/` + `js/` (**módulos ES**) + `README.md` + `CHANGELOG.md` + tests. | **Refactorizado** (referencia para el resto: es el primero con módulos ES y con Vitest + Playwright) |
 | `poanda.html` | Página mínima que redirige a `poanda/`, para no romper los enlaces antiguos. | No tocar salvo que se retire la redirección |
 | `subpandatm.html`, `subpandaqa.html`, `pandascript.html`, `diffpanda.html`, `pandatimer.html`, `charpanda.html`, `calpanda.html` | Un único archivo HTML con CSS y JS inline cada uno. | **Pendientes de refactorizar** al patrón de pandaterm/pandoria |
-| `subpandass.html` | Igual que las anteriores, pero servida desde httrans.org en vez de GitHub Pages. | **Pendiente de refactorizar** |
+| `subpandass.html` | Igual que las anteriores, pero servida desde httrans.org en vez de GitHub Pages. | **Refactor en curso (sept. 2026)**: sigue siendo lo que se publica y lo que se toca; la carpeta `subpandass/` es el refactor a medias. |
+| `subpandass/` | El refactor de subpandaASS: Vite, `src/`, pruebas. **Todavía no se publica** — ver `subpandass/README.md`. | En curso |
 | `subpandaAUTO/` | Tiene carpeta propia, pero **no** sigue el patrón: es `index.html` + `wp-main.js` + `wp-worker.js` + imágenes, sin `css/`, sin `README.md` y sin `CHANGELOG.md`. | **Auditada (sept. 2026)**: es un archivo único al que se le sacaron dos scripts. Pendiente de refactorizar como el resto. |
 | `charpanda/`, `pandatimer/` | Carpetas que **solo** contienen archivos de idiomas (`es.json`, `en.json`); la herramienta sigue estando en el HTML suelto de la raíz. | Documentado para que no se confundan con herramientas ya refactorizadas |
 | `pandatrainer/` | Carpeta con `index.html` y `media/`, no listada antes en este documento. | **Sin auditar** |
+
+### 2.1 La carpeta compartida (`panda-core/`)
+
+Lo que no es de ninguna herramienta en concreto vive en `panda-core/`: leer y escribir ASS, SRT, WebVTT y TTML, el motor de control de calidad, el manejo de etiquetas y colores, la detección de codificación. Son funciones puras — ni `document`, ni `window`, ni `localStorage`, ni textos que vea nadie — y por eso se pueden compartir y probar sin navegador.
+
+Cada herramienta que la usa declara el atajo `@core` en su `vite.config.js` y en su `vitest.config.js` apuntando a esa carpeta, y añade `server.fs.allow` para que el servidor de desarrollo pueda servir algo que está por encima de su raíz. Entre sí, los archivos de `panda-core/` se importan en relativo.
+
+**La regla que hace que compartir salga a cuenta en vez de a caro: un cambio en `panda-core/` se prueba en todas las herramientas que la importan, no solo en la que lo motivó.** Y si una herramienta necesita que una pieza se comporte distinto, la pieza no se bifurca: se le añade un parámetro con el valor de siempre por defecto.
 
 Cuando se cita "el patrón pandaterm/pandoria" en este documento, nos referimos a: carpeta propia, `index.html` + `css/` + `js/` + `README.md` + `CHANGELOG.md`, botón de versión que abre un modal de changelog, selector de idioma ES/EN.
 

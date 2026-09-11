@@ -7,7 +7,7 @@
  * faltaba ya no se puede recuperar.
  */
 import { describe, expect, it } from 'vitest';
-import { guardarSubtitulos, leerSubtitulos } from '../src/js/core/codificacion.js';
+import { guardarSubtitulos, leerSubtitulos } from '@core/codificacion.js';
 
 /** Escribe un texto en Windows-1252, como haría un programa antiguo. */
 function enWindows1252(texto) {

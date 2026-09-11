@@ -13,7 +13,7 @@
  * y queda guardado con el proyecto. Se puede cambiar después desde la barra.
  */
 import { db } from './db.js';
-import { listaDeIdiomas, nombreDeIdioma, normalizarIdioma } from './core/idiomas.js';
+import { listaDeIdiomas, nombreDeIdioma, normalizarIdioma } from '@core/idiomas.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
 

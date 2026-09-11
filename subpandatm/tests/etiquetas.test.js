@@ -8,7 +8,7 @@
  * cursiva desaparece sin que nada avise.
  */
 import { describe, expect, it } from 'vitest';
-import { compararEtiquetas, estilosDe } from '../src/js/core/etiquetas.js';
+import { compararEtiquetas, estilosDe } from '@core/etiquetas.js';
 
 describe('qué formato lleva un texto', () => {
     it('lo lee de las etiquetas de siempre', () => {

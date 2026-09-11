@@ -7,7 +7,7 @@
  * cliente.
  */
 import { describe, expect, it } from 'vitest';
-import { aComponentes, aHex, comoLoEntiendeUnArchivo } from '../src/js/core/color.js';
+import { aComponentes, aHex, comoLoEntiendeUnArchivo } from '@core/color.js';
 
 describe('aHex', () => {
     it('deja en paz un color que ya viene en hexadecimal', () => {

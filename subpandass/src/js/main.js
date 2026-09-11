@@ -1,0 +1,5158 @@
+/**
+ * subpandaASS — el cuerpo de la herramienta.
+ *
+ * Esto es, tal cual, el <script> que vivía dentro de subpandass.html. Se ha
+ * sacado a un archivo aparte sin tocar una línea: primero se separa, y los
+ * módulos se van extrayendo de aquí uno a uno, cada uno con sus pruebas. Un
+ * refactor que además cambia comportamiento no hay quien lo revise.
+ */
+    document.addEventListener('DOMContentLoaded', () => {
+
+// ==========================================
+// --- SISTEMA DE TRADUCCIÓN (i18n) ---
+// ==========================================
+
+    let currentLang = 'es'; // Idioma por defecto
+
+    const translations = {
+        es: {
+            // --- SEO Y METADATOS ---
+            seo_title: "SubpandaASS | Editor de subtítulos avanzado",
+            seo_desc: "SubpandaASS es una herramienta web profesional y gratuita para editar, traducir y sincronizar subtítulos (SRT y ASS) creado por Rafael López Sánchez para el proyecto httrans.org.",
+            seo_og_desc: "Edita, traduce y sincroniza subtítulos directamente desde tu navegador.",
+
+            // --- MENÚ PRINCIPAL ---
+            menu_file: "Archivo",
+            menu_edit: "Editar",
+            menu_mode: "Modo de trabajo",
+            qa_review: "Revisión de QA",
+            qa_settings: "Ajustes de QA",
+            shortcuts: "Atajos",
+
+            // --- SUBMENÚ ARCHIVO ---
+            new_project: "Nuevo proyecto",
+            load_project: "Cargar proyecto...",
+            save_project: "Guardar proyecto...",
+            open_srt: "Abrir .srt",
+            open_ass: "Abrir .ass",
+            translate_subs: "Traducir subtítulos...",
+            save_srt: "Guardar .srt",
+            save_ass: "Guardar .ass",
+            backup: "Copia de seguridad",
+            import_text_sync: "Importar texto para sincronizar...",
+            btn_create_sub_from_text: "Crear subtítulo",
+            open_notepad: "Abrir bloc de notas",
+            tooltip_create_sub_from_text: "Crea un subtítulo a partir del texto seleccionado en un fragmento de onda de sonido",
+            txt_ph_sync_notepad: "El texto importado aparecerá aquí...",
+            txt_ph_sync_notepad_trans: "Escribe aquí la traducción...",
+            btn_notepad_translation_mode: "Modo traducción",
+            tooltip_notepad_translation_mode: "Activa doble columna para traducir",
+            btn_export_notepad: "Guardar texto",
+            tooltip_export_notepad: "Guardar texto del bloc de notas en un archivo",
+            modal_title_export_notepad: "Guardar bloc de notas",
+            msg_choose_export_notepad: "Elige qué texto quieres descargar como archivo .txt:",
+            lbl_export_original: "Texto original",
+            lbl_export_translation: "Traducción",
+            sc_name_createSubFromNotepad: "Crear desde bloc de notas",
+            sc_desc_createSubFromNotepad: "Crea un subtítulo con el texto seleccionado en el bloc.",
+            sc_name_notepadPandaHold: "Crear con bloc de notas al pulsar",
+            sc_desc_notepadPandaHold: "Crea un subtítulo con la primera línea del bloc al pulsar y cierra al soltar.",
+            load_video: "Cargar vídeo",
+            import_shot_changes: "Importar cambios de plano (.txt)",
+
+            // --- SUBMENÚ EDITAR ---
+            undo: "Deshacer (Ctrl+Z)",
+            redo: "Rehacer (Ctrl+Y)",
+            bold: "Negrita (Ctrl+B)",
+            italic: "Cursiva (Ctrl+I)",
+            add_symbol: "Añadir símbolo",
+            find_replace: "Buscar y reemplazar",
+            ass_style_editor: "Editor de estilos ASS",
+
+            // --- SUBMENÚ MODO ---
+            mode_edit: "Modo Edición",
+            mode_sync: "Modo Sincronización",
+            mode_preview: "Modo Vista Previa",
+
+            // --- COLUMNAS TABLA ---
+            col_qa: "!",
+            col_id: "#",
+            col_times: "Tiempos",
+            col_original: "Original",
+            col_translation: "Traducción",
+            col_lines: "Líneas",
+            col_style: "Estilo ASS",
+
+            // --- INTERFAZ GENERAL ---
+            btn_play_pause: "Reproducir/Pausa (Alt+P)",
+            btn_set_in: "Marcar Inicio (Alt+Q)",
+            btn_set_out: "Marcar Fin (Alt+W)",
+            btn_detect_shots: "Cambios de plano",
+            label_fps: "FPS",
+            header_subs: "Subtítulos",
+            
+            // --- MODALES Y ALERTAS (JS) ---
+            msg_new_project: "Nuevo proyecto creado.",
+            msg_load_video_first: "Primero carga un vídeo desde tu equipo.",
+            msg_nothing_save: "No hay nada que guardar.",
+            msg_saved: "¡Guardado!",
+            msg_applied: "¡Aplicado!",
+            msg_backup_restored: "Copia de seguridad restaurada.",
+            msg_confirm_new: "Estás a punto de crear un nuevo proyecto y perderás todo el progreso no guardado. ¿Deseas continuar?",
+            msg_confirm_load: "Estás a punto de cargar un proyecto. Perderás el progreso no guardado.",
+            modal_title_shortcuts: "Atajos de teclado",
+            modal_title_qa: "Ajustes de QA",
+            msg_shortcuts_saved: "Atajos guardados correctamente.",
+            msg_shortcuts_imported: "Atajos importados correctamente.",
+            msg_shortcuts_error: "Error al leer el archivo de atajos.",
+            msg_json_error: "El nombre del archivo debe terminar en .json",
+            msg_style_delete_error: "No se puede eliminar el estilo 'Default' o no hay selección.",
+            msg_style_exists: "¡Ese nombre ya existe!",
+            msg_shot_analysis: "Analizando...",
+            msg_ready: "Listo",
+            msg_processing: "Procesando...",
+            label_change_video: "Cambiar vídeo",
+            label_load_video: "Cargar vídeo",
+
+            // --- HERRAMIENTA BUSCAR Y REEMPLAZAR ---
+        fr_find_ph: "Buscar...",
+        fr_replace_ph: "Reemplazar con...",
+        fr_btn_find: "Buscar",
+        fr_btn_replace: "Reemplazar",
+        fr_btn_replace_all: "Todo", // O "Reemplazar todo"
+        fr_chk_case: "Distinguir mayúsculas",
+        fr_chk_regex: "Usar expresiones regulares",
+        msg_replacements_count: "reemplazos realizados.",
+
+        // --- EDITOR DE ESTILOS ASS ---
+        ass_title_main: "Principal",
+        ass_lbl_name: "Nombre",
+        ass_lbl_font: "Fuente",
+        ass_lbl_size: "Tamaño",
+        ass_title_colors: "Colores",
+        ass_lbl_primary: "Primario",
+        ass_lbl_secondary: "Secundario (Karaoke)",
+        ass_lbl_outline_color: "Contorno",
+        ass_lbl_shadow_color: "Sombra",
+        ass_title_border: "Borde y Estilo",
+        ass_lbl_outline_width: "Grosor Contorno",
+        ass_lbl_shadow_width: "Grosor Sombra",
+        ass_lbl_border_style: "Estilo Borde",
+        ass_opt_outline_shadow: "Contorno + Sombra",
+        ass_opt_opaque_box: "Caja Opaca",
+        ass_lbl_bold: "Negrita",
+        ass_lbl_italic: "Cursiva",
+        ass_lbl_underline: "Subrayado",
+        ass_opt_no: "No",
+        ass_opt_yes: "Sí",
+        ass_title_pos: "Posicionamiento",
+        ass_lbl_align: "Alineación (Numpad)",
+        ass_lbl_margins: "Márgenes",
+        ass_lbl_margin_l: "Izquierda",
+        ass_lbl_margin_r: "Derecha",
+        ass_lbl_margin_v: "Vertical",
+        ass_title_adv: "Avanzado",
+        ass_lbl_scale_x: "Escala X (%)",
+        ass_lbl_scale_y: "Escala Y (%)",
+        ass_lbl_spacing: "Espaciado",
+        ass_lbl_angle: "Ángulo",
+        ass_lbl_strikeout: "Tachado",
+        ass_lbl_encoding: "Codificación",
+        ass_btn_new: "Nuevo",
+        ass_btn_delete: "Borrar",
+        ass_btn_update_preview: "Actualizar vista",
+        ass_btn_apply: "Aplicar a todos",
+        ass_btn_save: "Guardar cambios",
+        
+        // --- MENSAJES DE ERROR QA (GENERADOS POR JS) ---
+        qa_err_cps: "Error de CPS",
+        qa_err_wpm: "Error de PPM",
+        qa_err_cpl: "Error de CPL",
+        qa_err_lines: "Demasiadas líneas",
+        qa_err_empty: "Subtítulo vacío",
+        qa_err_min_dur: "Duración demasiado corta",
+        qa_err_max_dur: "Duración demasiado larga",
+        qa_err_overlap_prev: "Solapamiento con anterior",
+        qa_err_overlap_next: "Solapamiento con siguiente",
+        qa_err_gap: "Gap demasiado corto",
+        qa_limit: "límite",
+        qa_min: "mín.",
+        qa_max: "máx.",
+        
+        // --- INFORMES Y OTROS ---
+        rep_title: "Informe de Quality Assurance",
+        rep_summary: "RESUMEN",
+        rep_pending: "Errores Pendientes",
+        rep_reviewed: "Errores Revisados",
+        rep_ignored: "Errores Ignorados",
+        rep_no_errors: "No hay errores en esta categoría.",
+        rep_generated: "Generado el",
+        drag_overlay_text: "Suelta el vídeo para cargarlo",
+        backup_empty: "Aún no hay copias de seguridad.",
+        backup_restore_btn: "Restaurar copia de seguridad",
+        
+        // --- SÍMBOLOS ---
+        sym_cat_common: "Más comunes",
+        sym_cat_currency: "Moneda y legal",
+        sym_cat_punct: "Puntuación y diacríticos",
+        sym_cat_accents_1: "Letras con acento (A-G)",
+        sym_cat_accents_2: "Letras con acento (H-Z)",
+        sym_cat_math: "Matemáticas y fracciones",
+
+// --- ESTADÍSTICAS EN VÍDEO ---
+        stats_orig: "Orig",
+        
+        // --- ONDA DE AUDIO ---
+        wfm_generating: "Generando onda...",
+
+        // --- COPIA DE SEGURIDAD (JS) ---
+        backup_saved_at: "Última copia guardada a las",
+
+        // --- ATAJOS (NOMBRES Y DESCRIPCIONES) ---
+        // Grupo: Reproducción
+        sc_name_playPause: "Reproducir / pausar",
+        sc_desc_playPause: "Inicia o detiene la reproducción del vídeo.",
+        sc_name_playSelectedSub: "Reproducir subtítulo seleccionado",
+        sc_desc_playSelectedSub: "Reproduce el rango del subtítulo activo.",
+        sc_name_spottingSetIn: "Sincro: marcar entrada",
+        sc_desc_spottingSetIn: "Establece el tiempo de entrada del subtítulo actual.",
+        sc_name_spottingSetOutAndNext: "Sincro: marcar salida y siguiente",
+        sc_desc_spottingSetOutAndNext: "Establece salida y salta al próximo sin sincronizar.",
+        sc_name_spottingHold: "Sincro rápida",
+        sc_desc_spottingHold: "Marca entrada al pulsar y salida al soltar.",
+        
+        // Grupo: Creación
+        sc_name_setInTime: "Creación: marcar inicio",
+        sc_desc_setInTime: "Crea un nuevo subtítulo en la posición actual.",
+        sc_name_setOutTime: "Creación: marcar fin",
+        sc_desc_setOutTime: "Cierra el subtítulo que se está creando.",
+        sc_name_createAndHold: "Crear al pulsar, cerrar al soltar",
+        sc_desc_createAndHold: "Crea al pulsar la tecla y cierra al soltarla.",
+        sc_name_createFromSelection: "Crear desde selección",
+        sc_desc_createFromSelection: "Convierte la selección de la onda en subtítulo.",
+        sc_name_splitSub: "Edición: dividir subtítulo",
+        sc_desc_splitSub: "Divide el subtítulo actual en dos.",
+        sc_name_mergePrev: "Edición: unir con anterior",
+        sc_desc_mergePrev: "Combina con el subtítulo anterior.",
+        sc_name_mergeNext: "Edición: unir con siguiente",
+        sc_desc_mergeNext: "Combina con el subtítulo siguiente.",
+
+        // Grupo: Navegación
+        sc_name_goToNextSub: "Navegación: siguiente",
+        sc_desc_goToNextSub: "Selecciona el siguiente subtítulo.",
+        sc_name_goToPrevSub: "Navegación: anterior",
+        sc_desc_goToPrevSub: "Selecciona el subtítulo anterior.",
+        sc_name_goToNextUntimed: "Navegación: siguiente sin sincro",
+        sc_desc_goToNextUntimed: "Busca el próximo subtítulo sin tiempos.",
+        sc_name_goToLastTimed: "Navegación: último sincronizado",
+        sc_desc_goToLastTimed: "Salta al último subtítulo con tiempos.",
+        sc_name_seekForwardMedium: "Avanzar medio segundo",
+        sc_desc_seekForwardMedium: "Mueve el cabezal 0.5s adelante.",
+        sc_name_seekBackwardMedium: "Retroceder medio segundo",
+        sc_desc_seekBackwardMedium: "Mueve el cabezal 0.5s atrás.",
+        sc_name_seekForwardFrame: "Avanzar un fotograma",
+        sc_desc_seekForwardFrame: "Mueve el cabezal 1 frame adelante.",
+        sc_name_seekBackwardFrame: "Retroceder un fotograma",
+        sc_desc_seekBackwardFrame: "Mueve el cabezal 1 frame atrás.",
+        sc_name_nudgeForward: "Ajuste: ampliar cierre",
+        sc_desc_nudgeForward: "Extiende el cierre un fotograma.",
+        sc_name_nudgeBackward: "Ajuste: reducir cierre",
+        sc_desc_nudgeBackward: "Reduce el cierre un fotograma.",
+        sc_name_nudgeStartBackward: "Ajuste: mover inicio atrás",
+        sc_desc_nudgeStartBackward: "Mueve el inicio un fotograma antes.",
+        sc_name_nudgeStartForward: "Ajuste: mover inicio adelante",
+        sc_desc_nudgeStartForward: "Mueve el inicio un fotograma después.",
+        sc_name_correctInTime: "Ajuste: corregir entrada",
+        sc_desc_correctInTime: "Ajusta la entrada a la posición actual.",
+        sc_name_correctOutTime: "Ajuste: corregir salida",
+        sc_desc_correctOutTime: "Ajusta la salida a la posición actual.",
+
+                // Grupo: Otros
+        msg_colab_instructions: `<p class="mb-4">Vas a abrir una ventana nueva para generar los cambios de plano. Sigue estos pasos:</p><ol class="list-decimal list-inside space-y-2"><li>En la ventana nueva, pulsa el botón de <b>Play (▶️)</b>.</li><li>Sube tu vídeo cuando te lo pida.</li><li>Espera a que termine el análisis (puede tardar minutos).</li><li>Se descargará un archivo llamado <b>codigos_de_tiempo.txt</b>.</li><li>Cierra la ventana de Colab y vuelve aquí.</li><li>Usa <b>Archivo > Importar cambios de plano (.txt)</b> para cargar ese archivo.</li></ol>`,
+
+        ctx_split: "Dividir subtítulo",
+        ctx_merge_prev: "Unir con anterior",
+        ctx_merge_next: "Unir con siguiente",
+        ctx_change_style: "Cambiar estilo",
+        ctx_delete: "Eliminar subtítulo",
+        ctx_region_play: "Reproducir fragmento",
+        ctx_region_clear: "Anular selección",
+        sc_name_playSelectionRegion: "Reproducir selección de la onda",
+        sc_desc_playSelectionRegion: "Reproduce el fragmento verde seleccionado.",
+        nav_auto_play: "Auto-reproducir al navegar",
+        nav_loops: "veces",
+
+// --- NUEVAS CLAVES (FIX) ---
+        btn_export: "Exportar",
+        btn_close: "Cerrar",
+        btn_toggle_time: "Cambiar formato de tiempo",
+        
+        // Sliders
+        slider_vol: "Volumen",
+        slider_zoom: "Zoom",
+        slider_speed: "Velocidad",
+        
+        // QA Settings (Categorías)
+        qa_cat_timing: "Tiempos y sincronización",
+        qa_cat_speed: "Velocidad y longitud",
+        qa_cat_format: "Formato y puntuación",
+        qa_cat_style: "Estilo y redacción",
+        
+        // QA Report (Botones flotantes)
+        qa_tip_restore: "Restablecer errores",
+        qa_tip_export: "Exportar informe",
+        qa_tip_reset: "Restablecer posición",
+        
+        // Load Project
+        lbl_recent_projects: "Proyectos Recientes",
+        msg_no_recent: "No hay proyectos recientes.",
+        btn_load_file: "Cargar desde archivo...",
+        
+        // Save Project & Text Import
+        lbl_filename: "Nombre del archivo",
+        lbl_find_replace_group: "Buscar y reemplazar",
+        
+        // Notificaciones
+        modal_title_notification: "Notificación",
+        
+        // Columnas (Nombres para el menú desplegable)
+        col_name_qa: "Alertas QA",
+        col_name_id: "ID #",
+        col_name_times: "Tiempos",
+        col_name_text: "Texto",
+        col_name_cps: "CPS",
+        col_name_wpm: "PPM",
+        col_name_lines: "Líneas/CPL",
+        col_name_style: "Estilo ASS",
+
+        // Stats en video (Corrección)
+        lbl_wpm: "PPM", // Para evitar que salga col_wpm
+
+        btn_cancel: "Cancelar",
+        btn_confirm: "Confirmar",
+        btn_save: "Guardar",
+        btn_export: "Exportar",
+        btn_restore: "Restaurar",
+        btn_back: "Volver",
+        msg_loading_video: "Cargando vídeo...",
+        msg_import_video_prompt: "Importa un vídeo para empezar (o arrástralo aquí)",
+        msg_preparing_file: "Preparando archivo...",
+        msg_analyzing: "Análisis en curso...",
+        alert_select_area: "Primero, haz clic y arrastra sobre la onda para crear una selección.",
+        alert_ffmpeg_error: "Error al detectar cambios de plano. Consulta la consola.",
+        alert_shots_detected: "cambios de plano detectados.",
+        alert_no_subs_export: "No hay subtítulos para exportar.",
+        alert_project_imported: "Proyecto importado.",
+        alert_project_error: "Error al cargar el proyecto.",
+        alert_head_inside_sub: "El cabezal debe estar dentro del subtítulo para dividirlo.",
+        alert_no_more_untimed: "No hay más subtítulos sin sincronizar.",
+        alert_drag_valid_video: "Por favor, arrastra un archivo de vídeo válido.",
+        lbl_no_recent: "No hay proyectos recientes.",
+        modal_title_qa_export: "Exportar Informe de QA",
+        lbl_format: "Formato",
+        qa_lbl_min_dur: "Duración mínima", qa_desc_min_dur: "Mínimo (ms/frames)",
+        qa_lbl_max_dur: "Duración máxima", qa_desc_max_dur: "Máximo (ms/frames)",
+        qa_lbl_min_gap: "Gap mínimo (frames)", qa_desc_min_gap: "Mínimo espacio entre subs",
+        qa_lbl_overlap: "Solapamientos", qa_desc_overlap: "Detectar solapamientos de tiempo",
+        qa_lbl_max_cps: "Límite CPS", qa_desc_max_cps: "Caracteres por segundo",
+        qa_lbl_max_wpm: "Límite PPM", qa_desc_max_wpm: "Palabras por minuto",
+        qa_lbl_max_cpl: "Límite CPL", qa_desc_max_cpl: "Caracteres por línea",
+        qa_lbl_max_lines: "Líneas máx", qa_desc_max_lines: "Líneas máximas permitidas",
+        input_press_key: "Presiona una tecla...",
+        msg_shortcuts_invalid: "El archivo de atajos no es válido.",
+        modal_title_confirmation: "Confirmación",
+        qa_btn_ignore: "Ignorar",
+        qa_btn_mark_reviewed: "Marcar Revisado",
+        rep_errors_label: "Errores:",
+        lbl_subtitle_num: "Subtítulo #",
+        col_name_qa: "Alertas QA",
+        col_name_id: "ID #",
+        col_name_times: "Tiempos",
+        col_name_text: "Texto",
+        col_name_cps: "CPS",
+        col_name_wpm: "PPM", // Clave específica para el nombre de columna
+        col_name_lines: "Líneas/CPL",
+        col_name_style: "Estilo ASS",
+        btn_export_shortcuts: "Exportar",
+        btn_import_shortcuts: "Importar",
+        tooltip_qa_restore: "Restablecer errores",
+        tooltip_qa_export: "Exportar informe",
+        tooltip_qa_reset_pos: "Restablecer posición",
+        tooltip_toggle_cols: "Mostrar/Ocultar Columnas",
+        btn_restore_defaults: "Restaurar",
+        msg_confirm_restore: "¿Estás seguro de que quieres restaurar los atajos por defecto?",
+        qa_lbl_tag_errors: "Errores de etiquetas", qa_desc_tag_errors: "Detecta etiquetas sin cerrar o mal anidadas.",
+        qa_lbl_double_spaces: "Dobles espacios", qa_desc_double_spaces: "Avisa si hay dos o más espacios seguidos.",
+        qa_lbl_space_dash: "Espacio tras guion", qa_desc_space_dash: "Detecta diálogos sin espacio tras guion.",
+        qa_lbl_punct_pairs: "Signos ¿¡!?", qa_desc_punct_pairs: "Avisa si falta apertura (¿¡) o cierre (?!)",
+        qa_lbl_low_period: "Minúscula tras punto", qa_desc_low_period: "Detecta frase que empieza por minúscula tras punto.",
+        qa_lbl_space_period: "Espacio tras punto", qa_desc_space_period: "Detecta si falta un espacio tras un punto.",
+        qa_lbl_quote_period: "Punto y comillas", qa_desc_quote_period: "Avisa si el punto queda dentro de las comillas.",
+        qa_lbl_ellipsis: "Carácter elipsis (...)", qa_desc_ellipsis: "Avisa si se usan 3 puntos en vez del carácter …",
+        qa_lbl_ellipsis_link: "Elipsis de enlace", qa_desc_ellipsis_link: "Marca subtítulos que terminan en ... para revisar.",
+        qa_lbl_dash_cons: "Coherencia guiones", qa_desc_dash_cons: "Avisa incoherencia en guiones de diálogo.",
+        qa_lbl_cardinals: "Números (1-10)", qa_desc_cardinals: "Avisa si los números 1-10 están en cifras.",
+        qa_lbl_semicolon: "Uso punto y coma", qa_desc_semicolon: "Marca el uso de ; para revisión.",
+        qa_lbl_brackets: "Uso corchetes", qa_desc_brackets: "Marca el uso de [ ] para revisión.",
+        qa_lbl_empty_subs: "Subtítulos vacíos", qa_desc_empty_subs: "Detecta subtítulos sin texto.",
+        // --- MENÚ HERRAMIENTAS ---
+            menu_tools: "Herramientas",
+            tool_shot_changes: "Detector de cambios de plano",
+            tool_auto_transcription: "Subtítulos automáticos",
+            tool_auto_spotting: "Prepautado (Spotting vacío)",
+
+            // --- INSTRUCCIONES COLAB ---
+            msg_colab_shots: `<p class="mb-4">Se abrirá una ventana nueva para detectar los cambios de plano.</p><ol class="list-decimal list-inside space-y-2 text-sm"><li>Pulsa el botón <b>Play (▶️)</b>.</li><li>Sube tu vídeo cuando se solicite.</li><li>Espera al análisis.</li><li>Se descargará <b>codigos_de_tiempo.txt</b>.</li><li>Cierra la ventana y usa <b>Archivo > Importar cambios de plano</b>.</li></ol>`,
+            
+            msg_colab_transcription: `<p class="mb-4">Se abrirá una ventana nueva para transcribir el audio automáticamente.</p><ol class="list-decimal list-inside space-y-2 text-sm"><li>Pulsa el botón <b>Play (▶️)</b>.</li><li>Sube tu vídeo.</li><li>Whisper generará los subtítulos.</li><li>Se descargará un archivo <b>.srt</b>.</li><li>Cierra la ventana y usa <b>Archivo > Abrir .srt</b> para cargarlo.</li></ol>`,
+            
+            msg_colab_spotting: `<p class="mb-4">Se abrirá una ventana nueva para crear la estructura de tiempos (vacía).</p><ol class="list-decimal list-inside space-y-2 text-sm"><li>Pulsa el botón <b>Play (▶️)</b>.</li><li>Sube tu vídeo.</li><li>El sistema calculará los tiempos óptimos.</li><li>Se descargará <b>_spotting.srt</b>.</li><li>Cierra la ventana y usa <b>Archivo > Abrir .srt</b>.</li></ol>`,
+
+        },
+
+        en: {
+            // --- SEO Y METADATOS ---
+            seo_title: "SubpandaASS | Advanced Subtitle Editor",
+            seo_desc: "SubpandaASS is a free, professional web tool to edit, translate, and sync subtitles (SRT and ASS) created by Rafael López Sánchez for the httrans.org project.",
+            seo_og_desc: "Edit, translate, and sync subtitles directly from your browser.",
+
+            // --- MAIN MENU ---
+            menu_file: "File",
+            menu_edit: "Edit",
+            menu_mode: "Work Mode",
+            qa_review: "QA Review",
+            qa_settings: "QA Settings",
+            shortcuts: "Shortcuts",
+
+            // --- FILE SUBMENU ---
+            new_project: "New Project",
+            load_project: "Load Project...",
+            save_project: "Save Project...",
+            open_srt: "Open .srt",
+            open_ass: "Open .ass",
+            translate_subs: "Translate Subtitles...",
+            save_srt: "Save .srt",
+            save_ass: "Save .ass",
+            backup: "Backup",
+            import_text_sync: "Import text for syncing...",
+            btn_create_sub_from_text: "Create subtitle",
+            open_notepad: "Open notepad",
+            tooltip_create_sub_from_text: "Creates a subtitle from the selected text in a selected waveform fragment",
+            txt_ph_sync_notepad: "Imported text will appear here...",
+            txt_ph_sync_notepad_trans: "Write the translation here...",
+            btn_notepad_translation_mode: "Translation Mode",
+            tooltip_notepad_translation_mode: "Toggle double column for translation",
+            btn_export_notepad: "Save Text",
+            tooltip_export_notepad: "Save notepad text to a file",
+            modal_title_export_notepad: "Save Notepad",
+            msg_choose_export_notepad: "Choose which text to download as a .txt file:",
+            lbl_export_original: "Original text",
+            lbl_export_translation: "Translation",
+            sc_name_createSubFromNotepad: "Create from notepad",
+            sc_desc_createSubFromNotepad: "Creates subtitle using selected text in the notepad.",
+            sc_name_notepadPandaHold: "Create from notepad on hold",
+            sc_desc_notepadPandaHold: "Hold to create a subtitle using the first line of the notepad, release to close.",
+            load_video: "Load Video",
+            import_shot_changes: "Import shot changes (.txt)",
+
+            // --- EDIT SUBMENU ---
+            undo: "Undo (Ctrl+Z)",
+            redo: "Redo (Ctrl+Y)",
+            bold: "Bold (Ctrl+B)",
+            italic: "Italic (Ctrl+I)",
+            add_symbol: "Add Symbol",
+            find_replace: "Find and Replace",
+            ass_style_editor: "ASS Style Editor",
+
+            // --- MODE SUBMENU ---
+            mode_edit: "Edit Mode",
+            mode_sync: "Timing Mode",
+            mode_preview: "Preview Mode",
+
+            // --- TABLE COLUMNS ---
+            col_qa: "!",
+            col_id: "#",
+            col_times: "Times",
+            col_original: "Original",
+            col_translation: "Translation",
+            col_lines: "Lines",
+            col_style: "ASS Style",
+
+            // --- GENERAL INTERFACE ---
+            btn_play_pause: "Play/Pause (Alt+P)",
+            btn_set_in: "Set Start (Alt+Q)",
+            btn_set_out: "Set End (Alt+W)",
+            btn_detect_shots: "Shot Changes",
+            label_fps: "FPS",
+            header_subs: "Subtitles",
+
+            // --- MODALS & ALERTS (JS) ---
+            msg_new_project: "New project created.",
+            msg_load_video_first: "Please load a video file first.",
+            msg_nothing_save: "Nothing to save.",
+            msg_saved: "Saved!",
+            msg_applied: "Applied!",
+            msg_backup_restored: "Backup restored.",
+            msg_confirm_new: "You are about to create a new project and will lose unsaved progress. Continue?",
+            msg_confirm_load: "You are about to load a project. Unsaved progress will be lost.",
+            modal_title_shortcuts: "Keyboard Shortcuts",
+            modal_title_qa: "QA Settings",
+            msg_shortcuts_saved: "Shortcuts saved successfully.",
+            msg_shortcuts_imported: "Shortcuts imported successfully.",
+            msg_shortcuts_error: "Error reading shortcuts file.",
+            msg_json_error: "Filename must end with .json",
+            msg_style_delete_error: "Cannot delete 'Default' style or no selection.",
+            msg_style_exists: "That name already exists!",
+            msg_shot_analysis: "Analyzing...",
+            msg_ready: "Ready",
+            msg_processing: "Processing...",
+            label_change_video: "Change Video",
+            label_load_video: "Load Video",
+            // --- FIND AND REPLACE TOOL ---
+        fr_find_ph: "Find...",
+        fr_replace_ph: "Replace with...",
+        fr_btn_find: "Find",
+        fr_btn_replace: "Replace",
+        fr_btn_replace_all: "All",
+        fr_chk_case: "Match case",
+        fr_chk_regex: "Use regular expressions",
+        msg_replacements_count: "replacements made.",
+
+        // --- ASS STYLE EDITOR ---
+        ass_title_main: "Main",
+        ass_lbl_name: "Name",
+        ass_lbl_font: "Font",
+        ass_lbl_size: "Size",
+        ass_title_colors: "Colors",
+        ass_lbl_primary: "Primary",
+        ass_lbl_secondary: "Secondary (Karaoke)",
+        ass_lbl_outline_color: "Outline",
+        ass_lbl_shadow_color: "Shadow",
+        ass_title_border: "Border & Style",
+        ass_lbl_outline_width: "Outline Width",
+        ass_lbl_shadow_width: "Shadow Depth",
+        ass_lbl_border_style: "Border Style",
+        ass_opt_outline_shadow: "Outline + Shadow",
+        ass_opt_opaque_box: "Opaque Box",
+        ass_lbl_bold: "Bold",
+        ass_lbl_italic: "Italic",
+        ass_lbl_underline: "Underline",
+        ass_opt_no: "No",
+        ass_opt_yes: "Yes",
+        ass_title_pos: "Positioning",
+        ass_lbl_align: "Alignment (Numpad)",
+        ass_lbl_margins: "Margins",
+        ass_lbl_margin_l: "Left",
+        ass_lbl_margin_r: "Right",
+        ass_lbl_margin_v: "Vertical",
+        ass_title_adv: "Advanced",
+        ass_lbl_scale_x: "Scale X (%)",
+        ass_lbl_scale_y: "Scale Y (%)",
+        ass_lbl_spacing: "Spacing",
+        ass_lbl_angle: "Angle",
+        ass_lbl_strikeout: "Strikeout",
+        ass_lbl_encoding: "Encoding",
+        ass_btn_new: "New",
+        ass_btn_delete: "Delete",
+        ass_btn_update_preview: "Update Preview",
+        ass_btn_apply: "Apply to All",
+        ass_btn_save: "Save Changes",
+        
+        // --- QA ERROR MESSAGES (JS GENERATED) ---
+        qa_err_cps: "CPS Error",
+        qa_err_wpm: "WPM Error",
+        qa_err_cpl: "CPL Error",
+        qa_err_lines: "Too many lines",
+        qa_err_empty: "Empty subtitle",
+        qa_err_min_dur: "Duration too short",
+        qa_err_max_dur: "Duration too long",
+        qa_err_overlap_prev: "Overlap with previous",
+        qa_err_overlap_next: "Overlap with next",
+        qa_err_gap: "Gap too short",
+        qa_limit: "limit",
+        qa_min: "min",
+        qa_max: "max",
+
+        // --- REPORTS & OTHERS ---
+        rep_title: "Quality Assurance Report",
+        rep_summary: "SUMMARY",
+        rep_pending: "Pending Errors",
+        rep_reviewed: "Reviewed Errors",
+        rep_ignored: "Ignored Errors",
+        rep_no_errors: "No errors in this category.",
+        rep_generated: "Generated on",
+        drag_overlay_text: "Drop video here to load",
+        backup_empty: "No backups found.",
+        backup_restore_btn: "Restore Backup",
+        
+        // --- SYMBOLS ---
+        sym_cat_common: "Most Common",
+        sym_cat_currency: "Currency & Legal",
+        sym_cat_punct: "Punctuation & Diacritics",
+        sym_cat_accents_1: "Accented Letters (A-G)",
+        sym_cat_accents_2: "Accented Letters (H-Z)",
+        sym_cat_math: "Math & Fractions",
+
+        // --- VIDEO STATS ---
+        stats_orig: "Orig",
+
+        // --- WAVEFORM ---
+        wfm_generating: "Generating waveform...",
+
+        // --- BACKUP (JS) ---
+        backup_saved_at: "Last backup saved at",
+
+        // --- SHORTCUTS (NAMES & DESCS) ---
+        // Group: Playback
+        sc_name_playPause: "Play / Pause",
+        sc_desc_playPause: "Starts or stops video playback.",
+        sc_name_playSelectedSub: "Play selected subtitle",
+        sc_desc_playSelectedSub: "Plays the range of the active subtitle.",
+        sc_name_spottingSetIn: "Sync: set start",
+        sc_desc_spottingSetIn: "Sets the start time of the current subtitle.",
+        sc_name_spottingSetOutAndNext: "Sync: set end & next",
+        sc_desc_spottingSetOutAndNext: "Sets end time and jumps to next unsynced.",
+        sc_name_spottingHold: "Quick sync",
+        sc_desc_spottingHold: "Set start on press, end on release.",
+        
+        // Group: Creation
+        sc_name_setInTime: "Creation: set start",
+        sc_desc_setInTime: "Creates a new subtitle at current position.",
+        sc_name_setOutTime: "Creation: set end",
+        sc_desc_setOutTime: "Closes the subtitle currently being created.",
+        sc_name_createAndHold: "Create on press, close on release",
+        sc_desc_createAndHold: "Creates on key press, closes on release.",
+        sc_name_createFromSelection: "Create from selection",
+        sc_desc_createFromSelection: "Converts waveform selection to subtitle.",
+        sc_name_splitSub: "Edit: split subtitle",
+        sc_desc_splitSub: "Splits current subtitle at cursor position.",
+        sc_name_mergePrev: "Edit: merge with previous",
+        sc_desc_mergePrev: "Combines with the previous subtitle.",
+        sc_name_mergeNext: "Edit: merge with next",
+        sc_desc_mergeNext: "Combines with the next subtitle.",
+
+        // Group: Navigation
+        sc_name_goToNextSub: "Nav: next subtitle",
+        sc_desc_goToNextSub: "Selects the next subtitle.",
+        sc_name_goToPrevSub: "Nav: previous subtitle",
+        sc_desc_goToPrevSub: "Selects the previous subtitle.",
+        sc_name_goToNextUntimed: "Nav: next unsynced",
+        sc_desc_goToNextUntimed: "Jumps to the next subtitle without timing.",
+        sc_name_goToLastTimed: "Nav: last synced",
+        sc_desc_goToLastTimed: "Jumps to the last subtitle with timing.",
+        sc_name_seekForwardMedium: "Seek forward 0.5s",
+        sc_desc_seekForwardMedium: "Moves playhead 500ms forward.",
+        sc_name_seekBackwardMedium: "Seek backward 0.5s",
+        sc_desc_seekBackwardMedium: "Moves playhead 500ms backward.",
+        sc_name_seekForwardFrame: "Seek forward 1 frame",
+        sc_desc_seekForwardFrame: "Moves playhead 1 frame forward.",
+        sc_name_seekBackwardFrame: "Seek backward 1 frame",
+        sc_desc_seekBackwardFrame: "Moves playhead 1 frame backward.",
+        sc_name_nudgeForward: "Nudge: extend end",
+        sc_desc_nudgeForward: "Extends end time by 1 frame.",
+        sc_name_nudgeBackward: "Nudge: reduce end",
+        sc_desc_nudgeBackward: "Reduces end time by 1 frame.",
+        sc_name_nudgeStartBackward: "Nudge: move start back",
+        sc_desc_nudgeStartBackward: "Moves start time 1 frame back.",
+        sc_name_nudgeStartForward: "Nudge: move start forward",
+        sc_desc_nudgeStartForward: "Moves start time 1 frame forward.",
+        sc_name_correctInTime: "Nudge: snap start",
+        sc_desc_correctInTime: "Sets start time to current playhead.",
+        sc_name_correctOutTime: "Nudge: snap end",
+        sc_desc_correctOutTime: "Sets end time to current playhead.",
+
+        // Group: Others
+        msg_colab_instructions: `<p class="mb-4">A new window will open to generate shot changes. Follow these steps:</p><ol class="list-decimal list-inside space-y-2"><li>In the new window, press the <b>Play (▶️)</b> button.</li><li>Upload your video when asked.</li><li>Wait for the analysis to finish (it may take minutes).</li><li>A file named <b>codigos_de_tiempo.txt</b> will be downloaded.</li><li>Close the Colab window and come back here.</li><li>Use <b>File > Import shot changes (.txt)</b> to load that file.</li></ol>`,
+        ctx_split: "Split Subtitle",
+        ctx_merge_prev: "Merge with Previous",
+        ctx_merge_next: "Merge with Next",
+        ctx_change_style: "Change Style",
+        ctx_delete: "Delete Subtitle",
+        ctx_region_play: "Play region",
+        ctx_region_clear: "Clear selection",
+        sc_name_playSelectionRegion: "Play waveform selection",
+        sc_desc_playSelectionRegion: "Plays the currently selected green waveform fragment.",
+        nav_auto_play: "Auto-play on navigation",
+        nav_loops: "times",
+
+       // --- NEW KEYS (FIX) ---
+        btn_export: "Export",
+        btn_close: "Close",
+        btn_toggle_time: "Change time format",
+        
+        // Sliders
+        slider_vol: "Volume",
+        slider_zoom: "Zoom",
+        slider_speed: "Speed",
+        
+        // QA Settings (Categories)
+        qa_cat_timing: "Timing & Sync",
+        qa_cat_speed: "Speed & Length",
+        qa_cat_format: "Format & Punctuation",
+        qa_cat_style: "Style & Phrasing",
+        
+        // QA Report (Floating buttons)
+        qa_tip_restore: "Restore errors",
+        qa_tip_export: "Export report",
+        qa_tip_reset: "Reset position",
+        
+        // Load Project
+        lbl_recent_projects: "Recent Projects",
+        msg_no_recent: "No recent projects.",
+        btn_load_file: "Load from file...",
+        
+        // Save Project & Text Import
+        lbl_filename: "Filename",
+        lbl_find_replace_group: "Find and replace",
+        
+        // Notifications
+        modal_title_notification: "Notification",
+
+        // Column Names (Dropdown)
+        col_name_qa: "QA Alerts",
+        col_name_id: "ID #",
+        col_name_times: "Times",
+        col_name_text: "Text",
+        col_name_cps: "CPS",
+        col_name_wpm: "WPM",
+        col_name_lines: "Lines/CPL",
+        col_name_style: "ASS Style",
+
+        // Stats in video
+        lbl_wpm: "WPM",
+
+        btn_cancel: "Cancel",
+        btn_confirm: "Confirm",
+        btn_save: "Save",
+        btn_export: "Export",
+        btn_restore: "Restore",
+        btn_back: "Back",
+        msg_loading_video: "Loading video...",
+        msg_import_video_prompt: "Import a video to start (or drop it here)",
+        msg_preparing_file: "Preparing file...",
+        msg_analyzing: "Analysis in progress...",
+        alert_select_area: "First, click and drag on the waveform to create a selection.",
+        alert_ffmpeg_error: "Error detecting shot changes. Check console.",
+        alert_shots_detected: "shot changes detected.",
+        alert_no_subs_export: "No subtitles to export.",
+        alert_project_imported: "Project imported.",
+        alert_project_error: "Error loading project.",
+        alert_head_inside_sub: "Playhead must be inside the subtitle to split it.",
+        alert_no_more_untimed: "No more unsynced subtitles.",
+        alert_drag_valid_video: "Please drag a valid video file.",
+        lbl_no_recent: "No recent projects.",
+        modal_title_qa_export: "Export QA Report",
+        lbl_format: "Format",
+        qa_lbl_min_dur: "Min Duration", qa_desc_min_dur: "Minimum (ms/frames)",
+        qa_lbl_max_dur: "Max Duration", qa_desc_max_dur: "Maximum (ms/frames)",
+        qa_lbl_min_gap: "Min Gap (frames)", qa_desc_min_gap: "Minimum space between subs",
+        qa_lbl_overlap: "Overlaps", qa_desc_overlap: "Detect timing overlaps",
+        qa_lbl_max_cps: "CPS Limit", qa_desc_max_cps: "Characters per second",
+        qa_lbl_max_wpm: "WPM Limit", qa_desc_max_wpm: "Words per minute",
+        qa_lbl_max_cpl: "CPL Limit", qa_desc_max_cpl: "Characters per line",
+        qa_lbl_max_lines: "Max Lines", qa_desc_max_lines: "Maximum lines allowed",
+        input_press_key: "Press a key...",
+        msg_shortcuts_invalid: "Shortcuts file is invalid.",
+        modal_title_confirmation: "Confirmation",
+        qa_btn_ignore: "Ignore",
+        qa_btn_mark_reviewed: "Mark Reviewed",
+        rep_errors_label: "Errors:",
+        lbl_subtitle_num: "Subtitle #",
+        col_name_qa: "QA Alerts",
+        col_name_id: "ID #",
+        col_name_times: "Times",
+        col_name_text: "Text",
+        col_name_cps: "CPS",
+        col_name_wpm: "WPM", // Specific key for column name
+        col_name_lines: "Lines/CPL",
+        col_name_style: "ASS Style",
+        btn_export_shortcuts: "Export",
+        btn_import_shortcuts: "Import",
+        tooltip_qa_restore: "Restore errors",
+        tooltip_qa_export: "Export report",
+        tooltip_qa_reset_pos: "Reset position",
+        tooltip_toggle_cols: "Show/Hide Columns",
+        btn_restore_defaults: "Restore Defaults",
+        msg_confirm_restore: "Are you sure you want to restore default shortcuts?",
+        qa_lbl_tag_errors: "Tag Errors", qa_desc_tag_errors: "Detects unclosed or nested tags.",
+        qa_lbl_double_spaces: "Double Spaces", qa_desc_double_spaces: "Warns if two or more spaces are found.",
+        qa_lbl_space_dash: "Space after dash", qa_desc_space_dash: "Detects dialogues missing space after dash.",
+        qa_lbl_punct_pairs: "Punctuation pairs", qa_desc_punct_pairs: "Warns if opening (¿¡) or closing (?!) is missing.",
+        qa_lbl_low_period: "Lowercase after dot", qa_desc_low_period: "Detects lowercase start after a period.",
+        qa_lbl_space_period: "Space after dot", qa_desc_space_period: "Detects missing space after a period.",
+        qa_lbl_quote_period: "Dot and quotes", qa_desc_quote_period: "Warns if dot is inside quotes.",
+        qa_lbl_ellipsis: "Ellipsis char (...)", qa_desc_ellipsis: "Warns if 3 dots are used instead of … char.",
+        qa_lbl_ellipsis_link: "Linking ellipsis", qa_desc_ellipsis_link: "Marks subtitles ending in ... for review.",
+        qa_lbl_dash_cons: "Dash consistency", qa_desc_dash_cons: "Warns inconsistency in dialogue dashes.",
+        qa_lbl_cardinals: "Numbers (1-10)", qa_desc_cardinals: "Warns if numbers 1-10 are digits.",
+        qa_lbl_semicolon: "Semicolon use", qa_desc_semicolon: "Marks ; usage for review.",
+        qa_lbl_brackets: "Brackets use", qa_desc_brackets: "Marks [ ] usage for review.",
+        qa_lbl_empty_subs: "Empty subtitles", qa_desc_empty_subs: "Detects subtitles with no text.",
+        // --- TOOLS MENU ---
+            menu_tools: "Tools",
+            tool_shot_changes: "Shot Change Detector",
+            tool_auto_transcription: "Auto Subtitles (Transcription)",
+            tool_auto_spotting: "Auto Spotting (Empty)",
+
+            // --- COLAB INSTRUCTIONS ---
+            msg_colab_shots: `<p class="mb-4">A new window will open to detect shot changes.</p><ol class="list-decimal list-inside space-y-2 text-sm"><li>Press the <b>Play (▶️)</b> button.</li><li>Upload your video.</li><li>Wait for analysis.</li><li>A file named <b>codigos_de_tiempo.txt</b> will download.</li><li>Close window and use <b>File > Import shot changes</b>.</li></ol>`,
+            
+            msg_colab_transcription: `<p class="mb-4">A new window will open to transcribe audio automatically.</p><ol class="list-decimal list-inside space-y-2 text-sm"><li>Press the <b>Play (▶️)</b> button.</li><li>Upload your video.</li><li>Whisper will generate subtitles.</li><li>An <b>.srt</b> file will download.</li><li>Close window and use <b>File > Open .srt</b>.</li></ol>`,
+            
+            msg_colab_spotting: `<p class="mb-4">A new window will open to create timing structure (empty).</p><ol class="list-decimal list-inside space-y-2 text-sm"><li>Press the <b>Play (▶️)</b> button.</li><li>Upload your video.</li><li>System will calculate optimal timing.</li><li>A <b>_spotting.srt</b> file will download.</li><li>Close window and use <b>File > Open .srt</b>.</li></ol>`,
+
+        }
+    };
+
+    // Función global para traducir cadenas en JS (alertas, etc.)
+    // Uso: t('msg_saved') -> Devuelve "¡Guardado!" o "Saved!"
+    window.t = function(key) {
+        return translations[currentLang][key] || key;
+    };
+
+    // Función principal para cambiar el idioma
+    window.changeLanguage = function(lang) {
+        if (!translations[lang]) return;
+        currentLang = lang;
+        
+        // 1. Actualizar etiqueta del botón del menú
+        const langLabel = document.getElementById('current-lang-label');
+        if(langLabel) langLabel.textContent = lang.toUpperCase();
+
+        // 2. Actualizar textos simples (data-i18n)
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (translations[lang][key]) {
+                // Si es un input button, cambiamos value, si no, textContent
+                if (el.tagName === 'INPUT' && el.type === 'button') {
+                    el.value = translations[lang][key];
+                } else {
+                    el.textContent = translations[lang][key];
+                }
+            }
+        });
+
+        // 3. Actualizar Tooltips (data-i18n-tooltip)
+        document.querySelectorAll('[data-i18n-tooltip]').forEach(el => {
+            const key = el.dataset.i18nTooltip; // Nota: dataset convierte camelCase
+            if (translations[lang][key]) {
+                el.dataset.tooltip = translations[lang][key];
+            }
+        });
+
+        // 4. Actualizar Placeholders (data-i18n-placeholder)
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.dataset.i18nPlaceholder;
+            if (translations[lang][key]) {
+                el.placeholder = translations[lang][key];
+            }
+        });
+        
+        // 5. Actualizar Metadatos (Pestaña, Google y Redes Sociales)
+        if (translations[lang]['seo_title']) {
+            document.title = translations[lang]['seo_title'];
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) ogTitle.content = translations[lang]['seo_title'];
+            const twTitle = document.querySelector('meta[name="twitter:title"]');
+            if (twTitle) twTitle.content = translations[lang]['seo_title'];
+        }
+        if (translations[lang]['seo_desc']) {
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) metaDesc.content = translations[lang]['seo_desc'];
+        }
+        if (translations[lang]['seo_og_desc']) {
+            const ogDesc = document.querySelector('meta[property="og:description"]');
+            if (ogDesc) ogDesc.content = translations[lang]['seo_og_desc'];
+            const twDesc = document.querySelector('meta[name="twitter:description"]');
+            if (twDesc) twDesc.content = translations[lang]['seo_og_desc'];
+        }
+        
+        console.log("Idioma cambiado a:", lang);
+    };
+
+// ==========================================        
+
+let ffmpeg = null;
+        // --- ELEMENTOS DEL DOM ---
+        const videoPlayer = document.getElementById('video-player');
+        const videoLoader = document.getElementById('video-loader');
+        const srtLoader = document.getElementById('srt-loader');
+        const assLoader = document.getElementById('ass-loader');
+        const txtLoader = document.getElementById('txt-loader');
+        const projectLoader = document.getElementById('project-loader');
+        const shortcutsLoader = document.getElementById('shortcuts-loader');
+        const waveformContainer = document.getElementById('waveform');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const subtitleBody = document.getElementById('subtitle-body');
+        const exportSrtBtn = document.getElementById('export-srt');
+        const exportAssBtn = document.getElementById('export-ass');
+        const exportProjectBtn = document.getElementById('export-project');
+        const subtitlePreview = document.getElementById('subtitle-preview');
+        const inVideoEditorContainer = document.getElementById('in-video-editor-container');
+        const inVideoEditor = document.getElementById('in-video-editor');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const setInBtn = document.getElementById('set-in-btn');
+        const setOutBtn = document.getElementById('set-out-btn');
+        const pressAndHoldBtn = document.getElementById('press-and-hold-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        const fpsInput = document.getElementById('fps-input');
+        const timeFormatToggle = document.getElementById('time-format-toggle');
+        const timecodeDisplay = document.getElementById('timecode-display');
+        const detectShotsBtn = document.getElementById('detect-shots-btn');
+        const tooltip = document.getElementById('tooltip');
+        const resizer = document.getElementById('resizer');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        const contextMenu = document.getElementById('context-menu');
+        const dragOverlay = document.getElementById('drag-overlay');
+        const volumeSliderH = document.getElementById('volume-slider-h');
+        const volumeValue = document.getElementById('volume-value');
+        const zoomSliderH = document.getElementById('zoom-slider-h');
+        const zoomValue = document.getElementById('zoom-value');
+        const speedSliderH = document.getElementById('speed-slider-h');
+        const speedValue = document.getElementById('speed-value');
+        const newProjectBtn = document.getElementById('new-project-btn');
+const toggleColumnsBtn = document.getElementById('toggle-columns-btn');
+const modePreviewBtn = document.getElementById('mode-preview-btn');
+const customProgressBarContainer = document.getElementById('custom-progress-bar-container');
+const progressBar = document.getElementById('progress-bar'); // NOTA: Esta es la línea que añadimos
+const shotDetectionProgressBar = document.getElementById('shot-detection-progress-bar');
+const progressBarPlayed = document.getElementById('progress-bar-played');
+const progressBarHandle = document.getElementById('progress-bar-handle');
+const progressTimeCurrent = document.getElementById('progress-time-current');
+const progressTimeDuration = document.getElementById('progress-time-duration');
+const shotChangeLoader = document.getElementById('shot-change-loader');
+
+        // Modales
+        const shortcutsModal = document.getElementById('shortcuts-modal');
+        const alertModal = document.getElementById('alert-modal');
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const pdfNameModal = document.getElementById('pdf-name-modal');
+        const progressModal = document.getElementById('progress-modal');     
+const shotDetectionProgressText = document.getElementById('shot-detection-progress-text');
+        const cancelDetectionBtn = document.getElementById('cancel-detection-btn');
+        const qaSettingsModal = document.getElementById('qa-settings-modal');
+const qaSettingsModalBtn = document.getElementById('qa-settings-modal-btn');
+// CAMBIO: Ahora apunta al nuevo ID 'qa-review-panel'
+const qaReviewPanel = document.getElementById('qa-review-panel');
+const qaReviewModalBtn = document.getElementById('qa-review-modal-btn');
+
+// CAMBIO: La lógica ahora abre o cierra el panel
+qaReviewModalBtn.addEventListener('click', () => {
+    if (qaReviewPanel.classList.contains('hidden')) {
+        openQaReviewModal(); // La función ahora mostrará el panel y refrescará su contenido
+    } else {
+        qaReviewPanel.classList.add('hidden');
+    }
+});        
+        const openShortcutsModal = document.getElementById('open-shortcuts-modal');
+        const backupModal = document.getElementById('backup-modal');
+        const openBackupModalBtn = document.getElementById('open-backup-modal-btn');
+        const lastBackupTimeEl = document.getElementById('last-backup-time');
+        const restoreBackupBtn = document.getElementById('restore-backup-btn');
+        const exportBackupJsonBtn = document.getElementById('export-backup-json-btn');
+        const exportBackupSrtBtn = document.getElementById('export-backup-srt-btn');
+        
+        // Work Mode Elements
+        const modeEditBtn = document.getElementById('mode-edit-btn');
+        const modeSyncBtn = document.getElementById('mode-sync-btn');
+        const workModeDisplay = document.getElementById('work-mode-display');
+        // Find and Replace Modal Elements
+        const findReplaceModal = document.getElementById('find-replace-modal');
+        const openFindReplaceModalBtn = document.getElementById('open-find-replace-modal-btn');
+        // ASS Style Editor Elements
+        const assStyleEditorModal = document.getElementById('ass-style-editor-modal');
+        const openAssStyleEditorBtn = document.getElementById('open-ass-style-editor-btn');
+        const styleList = document.getElementById('style-list');
+
+// --- INICIO: Variables para visibilidad de columnas ---
+const columnConfig = [
+    { id: 'qa', headerId: 'qa-header', colClass: 'qa-col', name: 'Alertas QA' },
+    { id: 'id', headerId: 'id-header', colClass: 'id-col', name: 'ID #' },
+    { id: 'times', headerId: 'times-header', colClass: 'times-col', name: 'Tiempos' },
+    { id: 'text', headerId: 'text-header', colClass: 'text-col', name: 'Texto' },
+    { id: 'cps', headerId: 'cps-header', colClass: 'cps-col', name: 'CPS' },
+    { id: 'wpm', headerId: 'wpm-header', colClass: 'wpm-col', name: 'PPM' },
+    { id: 'lines', headerId: 'lines-header', colClass: 'lines-col', name: 'Líneas/CPL' },
+    { id: 'style', headerId: 'style-header', colClass: 'style-col', name: 'Estilo ASS' }, 
+];
+
+let columnVisibility = {};
+// --- FIN: Variables para visibilidad de columnas ---        
+
+const updateProgressBar = (currentTime, duration) => {
+    if (isNaN(currentTime) || isNaN(duration) || duration <= 0) return;
+    
+    const progressPercent = (currentTime / duration) * 100;
+    progressBarPlayed.style.width = `${progressPercent}%`;
+    progressBarHandle.style.left = `${progressPercent}%`;
+    progressTimeCurrent.textContent = formatSrtTime(currentTime);
+};
+
+const focusContentEditable = (element, putCursorAtEnd) => {
+    element.focus();
+    if (putCursorAtEnd && window.getSelection && document.createRange) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        range.collapse(false); // false para ir al final
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+};
+
+const showFeedbackMessage = (elementId, duration = 2000) => {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.style.opacity = '1';
+    setTimeout(() => {
+        el.style.opacity = '0';
+    }, duration);
+};
+
+// --- ESTADO DE LA APLICACIÓN ---
+
+        // CAMBIO: Función movida al principio para evitar errores de referencia
+        const createDefaultAssStyle = () => ({
+            "Name": "Default", "Fontname": "Arial", "Fontsize": "28",
+            "PrimaryColour": "&H00FFFFFF", "SecondaryColour": "&H000000FF", "OutlineColour": "&H00000000", "BackColour": "&H00000000",
+            "Bold": "0", "Italic": "0", "Underline": "0", "StrikeOut": "0",
+            "ScaleX": "100", "ScaleY": "100", "Spacing": "0", "Angle": "0",
+            "BorderStyle": "1", "Outline": "2", "Shadow": "2",
+            "Alignment": "2", "MarginL": "10", "MarginR": "10", "MarginV": "10", "Encoding": "1"
+        });
+
+        let wavesurfer = null;
+        let wsRegions = null;
+        let subtitles = [];
+ let isTranslationMode = false;
+        let selectedSubtitleIndices = new Set();
+        // CAMBIO: Inicialización de estilos con el valor por defecto
+        let assStyles = [createDefaultAssStyle()];
+        let shotChanges = [];
+        let historyStack = [];
+        let redoStack = [];
+        let activeSubtitleIndex = -1;
+        let contextMenuIndex = -1;
+        let timeFormat = 'ms';
+        let frameRate = 25;
+        let isPressAndHoldCreating = false;
+        let isDetectionCancelled = false;
+        let isUserEditing = false;
+        let isSpottingHoldActive = false;
+let isCreatingSubtitle = false;
+let isNotepadPandaCreating = false;
+let lastActiveSubtitleIndex = -1;
+        let workMode = 'edit'; // 'edit' or 'sync'
+let selectionRegion = null; // Guardará la región creada al arrastrar
+let regionJustCreated = false; // Bandera para evitar el conflicto de seek al crear región
+       let currentQaIssues = []; // Guardará los errores para poder exportarlos
+
+let activeQaStatus = 'visible'; // 'visible' son los pendientes. 
+let autoPlayNavEnabled = true;
+let autoPlayNavLoops = 1; 
+
+
+        let qaSettings = { 
+            maxCps: 20, maxCpsEnabled: true, maxWpm: 180, maxWpmEnabled: false,
+            maxCpl: 42, maxCplEnabled: true, maxLines: 2, maxLinesEnabled: true,
+            minDuration: 1000, minDurationEnabled: true, maxDuration: 7000, maxDurationEnabled: true,
+            minDurationUnit: 'ms', maxDurationUnit: 'ms',
+            minGapFrames: 2, minGapFramesEnabled: true, minGapMs: 100, minGapMsEnabled: false,
+            tagErrorsEnabled: true, spaceAfterDashEnabled: true, doubleSpacesEnabled: true,
+            emptySubsEnabled: false, punctuationPairsEnabled: true, lowercaseAfterPeriodEnabled: true,
+            spaceAfterPeriodEnabled: true, quotesAndPeriodEnabled: true, ellipsisLinkEnabled: true,
+            ellipsisCharEnabled: true, dialogueDashConsistencyEnabled: true, cardinalNumbersEnabled: true,
+            semicolonEnabled: true, bracketsEnabled: true, overlapEnabled: true
+        };
+        const speedLevels = [0.5, 0.75, 1, 1.25, 1.5, 2];
+        const snapThreshold = 0.1; 
+        
+        // --- Lógica de Atajos Personalizables ---
+        let shortcuts = {}; 
+        let tempShortcuts = {}; 
+        
+        const defaultShortcuts = {
+            playPause: { code: 'KeyP', altKey: true, ctrlKey: false, shiftKey: false },
+            setInTime: { code: 'KeyQ', altKey: true, ctrlKey: false, shiftKey: false },
+            setOutTime: { code: 'KeyW', altKey: true, ctrlKey: false, shiftKey: false },
+            createAndHold: { code: 'IntlBackslash', altKey: false, ctrlKey: false, shiftKey: false },
+            seekBackwardMedium: { code: 'ArrowLeft', altKey: true, ctrlKey: false, shiftKey: false },
+            seekForwardMedium: { code: 'ArrowRight', altKey: true, ctrlKey: false, shiftKey: false },
+            seekBackwardFrame: { code: 'ArrowLeft', altKey: false, ctrlKey: false, shiftKey: true },
+            seekForwardFrame: { code: 'ArrowRight', altKey: false, ctrlKey: false, shiftKey: true },
+            spottingSetIn: { code: 'KeyZ', altKey: true, ctrlKey: false, shiftKey: false },
+            spottingSetOutAndNext: { code: 'KeyX', altKey: true, ctrlKey: false, shiftKey: false },
+            spottingHold: { code: 'Backquote', altKey: false, ctrlKey: false, shiftKey: false },
+ spottingHold: { code: 'Backquote', altKey: false, ctrlKey: false, shiftKey: false },
+            createFromSelection: { code: 'KeyN', altKey: true, ctrlKey: false, shiftKey: false },
+            createSubFromNotepad: { code: 'KeyM', altKey: true, ctrlKey: false, shiftKey: false },
+            notepadPandaHold: { code: 'Insert', altKey: false, ctrlKey: false, shiftKey: false },
+            nudgeForward: { code: 'KeyV', altKey: true, ctrlKey: false, shiftKey: false },
+            nudgeBackward: { code: 'KeyC', altKey: true, ctrlKey: false, shiftKey: false },
+ nudgeStartBackward: { code: 'KeyZ', altKey: true, ctrlKey: false, shiftKey: false },
+            nudgeStartForward: { code: 'KeyX', altKey: true, ctrlKey: false, shiftKey: false },
+            goToNextSub: { code: 'ArrowDown', altKey: true, ctrlKey: false, shiftKey: false },
+            goToPrevSub: { code: 'ArrowUp', altKey: true, ctrlKey: false, shiftKey: false },
+            goToNextUntimed: { code: 'ArrowDown', altKey: false, ctrlKey: false, shiftKey: true },
+            goToLastTimed: { code: 'ArrowUp', altKey: false, ctrlKey: false, shiftKey: true },
+            correctInTime: { code: 'KeyD', altKey: true, ctrlKey: false, shiftKey: false },
+            correctOutTime: { code: 'KeyF', altKey: true, ctrlKey: false, shiftKey: false },
+            playSelectedSub: { code: 'KeyO', altKey: true, ctrlKey: false, shiftKey: false },
+            playSelectionRegion: { code: 'KeyR', altKey: true, ctrlKey: false, shiftKey: false },
+            splitSub: { code: 'KeyX', altKey: false, ctrlKey: true, shiftKey: true },
+            mergePrev: { code: 'ArrowUp', altKey: false, ctrlKey: true, shiftKey: true },
+            mergeNext: { code: 'ArrowDown', altKey: false, ctrlKey: true, shiftKey: true },
+        };
+
+        const shortcutGroups = {
+            'Reproducción y sincronización': {
+                playPause: { name: 'Reproducir / pausar', desc: 'Inicia o detiene la reproducción del vídeo.' },
+                playSelectedSub: { name: 'Reproducir subtítulo seleccionado', desc: 'Reproduce el rango del subtítulo activo.' },
+                playSelectionRegion: { name: 'Reproducir selección de la onda', desc: 'Reproduce el fragmento verde seleccionado.' },
+                spottingSetIn: { name: 'Sincro: marcar entrada', desc: 'Establece el tiempo de entrada del subtítulo actual.' },
+                spottingSetOutAndNext: { name: 'Sincro: marcar salida y siguiente', desc: 'Establece el tiempo de salida y salta al próximo subtítulo sin sincronizar.' },
+                spottingHold: { name: 'Sincro rápida', desc: 'Marca la entrada al pulsar y la salida al soltar.' },
+            },
+            'Creación y edición': {
+                setInTime: { name: 'Creación: marcar inicio', desc: 'Crea un nuevo subtítulo en la posición actual.' },
+                setOutTime: { name: 'Creación: marcar fin', desc: 'Cierra el subtítulo que se está creando.' },
+                createAndHold: { name: 'Crear al pulsar, cerrar al soltar', desc: 'Crea un subtítulo al pulsar la tecla y cierra al soltarla.' },
+                createFromSelection: { name: 'Crear desde selección', desc: 'Convierte la selección actual de la onda en un subtítulo.' },
+                createSubFromNotepad: { name: 'Crear desde bloc de notas', desc: 'Crea un subtítulo con el texto seleccionado en el bloc.' },
+                notepadPandaHold: { name: 'Crear con bloc de notas al pulsar (Panda)', desc: 'Crea subtítulo con la primera línea del bloc al pulsar y cierra al soltar.' },
+                splitSub: { name: 'Edición: dividir subtítulo', desc: 'Divide el subtítulo actual en dos en la posición del cursor.' },
+                mergePrev: { name: 'Edición: unir con anterior', desc: 'Combina el subtítulo actual con el anterior.' },
+                mergeNext: { name: 'Edición: unir con siguiente', desc: 'Combina el subtítulo actual con el siguiente.' },
+            },
+            'Navegación y ajuste fino': {
+                goToNextSub: { name: 'Navegación: subtítulo siguiente', desc: 'Selecciona el siguiente subtítulo de la lista.' },
+                goToPrevSub: { name: 'Navegación: subtítulo anterior', desc: 'Selecciona el subtítulo anterior de la lista.' },
+                goToNextUntimed: { name: 'Navegación: siguiente sin sincronizar', desc: 'Busca y selecciona el próximo subtítulo sin tiempos asignados.' },
+                goToLastTimed: { name: 'Navegación: último sincronizado', desc: 'Salta al último subtítulo que tiene tiempos asignados.' },
+                seekForwardMedium: { name: 'Avanzar medio segundo', desc: 'Mueve el cabezal de reproducción 500 milisegundos hacia adelante.' },
+                seekBackwardMedium: { name: 'Retroceder medio segundo', desc: 'Mueve el cabezal de reproducción 500 milisegundos hacia atrás.' },
+                seekForwardFrame: { name: 'Avanzar un fotograma', desc: 'Mueve el cabezal de reproducción un fotograma hacia adelante.' },
+                seekBackwardFrame: { name: 'Retroceder un fotograma', desc: 'Mueve el cabezal de reproducción un fotograma hacia atrás.' },
+                nudgeForward: { name: 'Ajuste: ampliar cierre un fotograma', desc: 'Extiende el cierre del subtítulo un fotograma.' },
+                nudgeBackward: { name: 'Ajuste: reducir final un fotograma', desc: 'Reduce el cierre del subtítulo un fotograma.' },
+ nudgeStartBackward: { name: 'Ajuste: mover inicio hacia atrás', desc: 'Mueve el inicio del subtítulo un fotograma antes.' },
+                nudgeStartForward: { name: 'Ajuste: mover inicio hacia adelante', desc: 'Mueve el inicio del subtítulo un fotograma después.' },
+                correctInTime: { name: 'Ajuste: corregir entrada', desc: 'Ajusta el tiempo de entrada a la posición actual del cabezal.' },
+                correctOutTime: { name: 'Ajuste: corregir fin', desc: 'Ajusta el tiempo de salida a la posición actual del cabezal.' },
+            }
+        };
+
+        const loadShortcuts = () => {
+            const savedNav = localStorage.getItem('subpanda-nav-settings');
+            if (savedNav) {
+                const nav = JSON.parse(savedNav);
+                autoPlayNavEnabled = nav.enabled !== undefined ? nav.enabled : true;
+                autoPlayNavLoops = nav.loops || 1;
+            }
+            try {
+                const savedShortcuts = localStorage.getItem('subpanda-shortcuts');
+                if (savedShortcuts) {
+                    shortcuts = JSON.parse(savedShortcuts);
+                    for (const key in defaultShortcuts) {
+                        if (!shortcuts[key]) shortcuts[key] = defaultShortcuts[key];
+                    }
+                } else {
+                    shortcuts = { ...defaultShortcuts };
+                }
+            } catch (e) {
+                console.error("Error loading shortcuts, reverting to default.", e);
+                shortcuts = { ...defaultShortcuts };
+            }
+        };
+
+        // --- LÓGICA DE DESHACER/REHACER ---
+        const saveState = () => {
+            const state = {
+                subtitles: JSON.parse(JSON.stringify(subtitles)),
+                assStyles: JSON.parse(JSON.stringify(assStyles)),
+                notepadText: document.getElementById('sync-notepad-textarea') ? document.getElementById('sync-notepad-textarea').value : ''
+            };
+            historyStack.push(JSON.stringify(state));
+            redoStack = []; 
+            if (historyStack.length > 30) historyStack.shift();
+            updateUndoRedoButtons();
+        };
+
+        const restoreState = (stateString) => {
+            const state = JSON.parse(stateString);
+            subtitles = state.subtitles;
+            assStyles = state.assStyles;
+            if (state.notepadText !== undefined) {
+                const textarea = document.getElementById('sync-notepad-textarea');
+                if (textarea) textarea.value = state.notepadText;
+            }
+            renderSubtitles(true);
+            updateUndoRedoButtons();
+        };
+
+        const undo = () => {
+            if (historyStack.length === 0) return;
+            const currentState = {
+                subtitles: JSON.parse(JSON.stringify(subtitles)),
+                assStyles: JSON.parse(JSON.stringify(assStyles)),
+                notepadText: document.getElementById('sync-notepad-textarea') ? document.getElementById('sync-notepad-textarea').value : ''
+            };
+            redoStack.push(JSON.stringify(currentState));
+            restoreState(historyStack.pop());
+        };
+
+        const redo = () => {
+            if (redoStack.length === 0) return;
+            const currentState = {
+                subtitles: JSON.parse(JSON.stringify(subtitles)),
+                assStyles: JSON.parse(JSON.stringify(assStyles)),
+                notepadText: document.getElementById('sync-notepad-textarea') ? document.getElementById('sync-notepad-textarea').value : ''
+            };
+            historyStack.push(JSON.stringify(currentState));
+            restoreState(redoStack.pop());
+        };
+
+        const updateUndoRedoButtons = () => {
+            undoBtn.disabled = historyStack.length === 0;
+            redoBtn.disabled = redoStack.length === 0;
+        };
+        undoBtn.addEventListener('click', undo);
+        redoBtn.addEventListener('click', redo);
+
+        // --- LÓGICA DE COMANDOS ---
+           const handlePlayPause = () => {
+            // Si el usuario estaba editando texto (focus en editor), salimos del modo edición
+            // pero mantenemos el subtítulo seleccionado para poder usar atajos de sincro.
+            if (isUserEditing) {
+                isUserEditing = false;
+                inVideoEditor.blur(); // Quitamos foco del texto
+                document.body.focus(); // Devolvemos el foco al cuerpo para que funcionen los atajos
+            }
+            
+            if (wavesurfer) {
+                wavesurfer.playPause();
+            }
+        };
+        const handleSetInTime = () => {
+            isCreatingSubtitle = true;
+            if (activeSubtitleIndex !== -1 || !wsRegions) return;
+            saveState();
+            const currentTime = videoPlayer.currentTime;
+            const newSubtitle = { id: String(getNextAvailableId()), start: currentTime, end: currentTime + 0.1, text: '', style: 'Default' };
+            subtitles.push(newSubtitle);
+            setActiveSubtitle(subtitles.length - 1);
+            renderSubtitles();
+        };
+        const handleSetOutTime = () => {
+            if (activeSubtitleIndex === -1) return;
+            saveState();
+            const currentTime = videoPlayer.currentTime;
+            const sub = subtitles[activeSubtitleIndex];
+            sub.end = currentTime > sub.start ? currentTime : sub.start + 0.1;
+            if (wsRegions) {
+                const region = wsRegions.getRegions().find(r => r.id == sub.id);
+                if (region) region.setOptions({ end: sub.end, color: 'rgba(7, 91, 162, 0.5)' });
+            }
+            setActiveSubtitle(-1);
+isCreatingSubtitle = false; 
+            renderSubtitles(false);
+        };
+
+const handleCreateSubtitleFromSelection = () => {
+            // 1. Comprueba que existe una selección activa.
+            if (!selectionRegion) {
+                showModalAlert('Primero, haz clic y arrastra sobre la onda para crear una selección.');
+                return;
+            }
+    
+            // 2. Guarda el estado para poder deshacer la acción.
+            saveState();
+    
+            // 3. Crea el nuevo objeto de subtítulo usando los tiempos de la selección.
+            const newSubtitle = {
+                id: String(getNextAvailableId()),
+                start: selectionRegion.start,
+                end: selectionRegion.end,
+                text: '', // El texto empieza vacío para que el usuario lo escriba.
+                style: 'Default'
+            };
+    
+            // 4. Añade el nuevo subtítulo al array principal.
+            subtitles.push(newSubtitle);
+    
+            // 5. Elimina la región de selección temporal de la vista.
+            selectionRegion.remove();
+            selectionRegion = null;
+    
+            // 6. Refresca la tabla y las regiones de subtítulos.
+            renderSubtitles(true);
+    
+            // 7. Activa el nuevo subtítulo para que se pueda editar inmediatamente.
+            setActiveSubtitle(subtitles.length - 1);
+        };
+
+   const setupRightClickDrag = (wavesurferInstance, regionsPlugin) => {
+            const waveElement = wavesurferInstance.getWrapper();
+            let isRightDragging = false;
+            let dragStartTime = 0;
+
+            waveElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            waveElement.addEventListener('mousedown', (e) => {
+                if (e.button !== 2) return;
+
+                // 1. Ocultar el menú contextual si estaba abierto
+                const regionContextMenu = document.getElementById('region-context-menu');
+                if (regionContextMenu) regionContextMenu.classList.add('hidden');
+
+                // 2. Si el clic derecho se hizo directamente encima del fragmento verde, 
+                // paramos la creación. El evento de la región se encargará de abrir el menú.
+                if (selectionRegion && selectionRegion.element && selectionRegion.element.contains(e.target)) {
+                    return;
+                }
+
+                // 3. Empezar a crear un nuevo fragmento arrastrando
+                isRightDragging = true;
+                
+                const interaction = wavesurferInstance.getInteractionData(e);
+                if (!interaction) return; // Seguridad extra
+                dragStartTime = interaction.time;
+
+                if (selectionRegion) {
+                    selectionRegion.remove();
+                    selectionRegion = null;
+                }
+
+                selectionRegion = regionsPlugin.addRegion({
+                    id: 'temp-selection',
+                    start: dragStartTime,
+                    end: dragStartTime,
+                    color: 'rgba(45, 212, 191, 0.4)',
+                    drag: false,
+                    resize: false,
+                });
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isRightDragging) return;
+                
+                const interaction = wavesurferInstance.getInteractionData(e);
+                if (!interaction) return;
+                
+                if (selectionRegion) {
+                    selectionRegion.setOptions({
+                        start: Math.min(interaction.time, dragStartTime),
+                        end: Math.max(interaction.time, dragStartTime)
+                    });
+                }
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                if (e.button !== 2 || !isRightDragging) return;
+
+                if (selectionRegion && (selectionRegion.end - selectionRegion.start) < 0.05) {
+                    selectionRegion.remove();
+                    selectionRegion = null;
+                }
+                isRightDragging = false;
+            });
+        };
+
+        // --- INICIALIZACIÓN Y EVENTOS DE WAVESURFER ---
+const initializeWaveSurfer = () => {
+            // 1. Limpieza previa
+            if (wavesurfer) {
+                wavesurfer.destroy();
+                wavesurfer = null;
+            }
+            shotChanges = [];
+            document.getElementById('waveform-minimap').innerHTML = '';
+            customProgressBarContainer.style.opacity = '0';
+            progressTimeCurrent.textContent = formatSrtTime(0);
+            progressTimeDuration.textContent = formatSrtTime(0);
+
+            // 2. Crear instancia
+            wavesurfer = WaveSurfer.create({
+                container: waveformContainer, 
+                waveColor: 'rgb(107, 114, 128)', 
+                progressColor: '#A4CAFE',
+                media: videoPlayer, 
+                cursorWidth: 2, 
+                cursorColor: '#F59E0B', 
+                barWidth: 3, 
+                barRadius: 3, 
+                height: 'auto',
+                // IMPORTANTE: dragToSeek en false permite que el plugin de regiones capture el arrastre
+                dragToSeek: false, 
+                plugins: [ 
+                    // Creamos el plugin SIN configuración aquí para evitar conflictos
+                    WaveSurfer.Regions.create(), 
+                    WaveSurfer.Minimap.create({
+                        container: '#waveform-minimap',
+                        waveColor: 'rgb(156, 163, 175)',
+                        progressColor: 'rgb(7, 91, 162)',
+                        height: 60
+                    })
+                ]
+            });
+
+            // Obtenemos la referencia al plugin
+            wsRegions = wavesurfer.plugins[0];
+
+            // 3. ACTIVACIÓN EXPLÍCITA DE LA SELECCIÓN (La clave para que funcione)
+            wsRegions.enableDragSelection({
+                color: 'rgba(34, 197, 94, 0.4)', // Verde Matrix 🟢
+                slop: 5 // Tolerancia de píxeles para empezar a arrastrar
+            });
+
+            // 4. Lógica de limpieza de regiones y asignación de menú
+            wsRegions.on('region-created', (region) => {
+                if (region.id.startsWith('shot_')) return;
+
+                region.element.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const regionContextMenu = document.getElementById('region-context-menu');
+                    if (!regionContextMenu) return;
+
+                    // NUEVA LÓGICA: Es un subtítulo si su ID existe en nuestra lista. Si no, es temporal.
+                    const isSubtitle = subtitles.some(s => s.id === region.id);
+                    const isTemp = !isSubtitle;
+                    
+                    // Alternar la visibilidad de los botones según lo que estemos clicando
+                    document.getElementById('ctx-region-play').style.display = isTemp ? 'flex' : 'none';
+                    document.getElementById('ctx-region-create').style.display = isTemp ? 'flex' : 'none';
+                    document.getElementById('ctx-region-clear').style.display = isTemp ? 'flex' : 'none';
+                    
+                    document.getElementById('ctx-sub-play').style.display = isSubtitle ? 'flex' : 'none';
+                    document.getElementById('ctx-sub-delete').style.display = isSubtitle ? 'flex' : 'none';
+
+                    // Si es un subtítulo real, lo seleccionamos para que se marque en la tabla y editor
+                    if (isSubtitle) {
+                        const subIndex = subtitles.findIndex(s => s.id === region.id);
+                        if (subIndex > -1) {
+                            selectedSubtitleIndices.clear();
+                            selectedSubtitleIndices.add(subIndex);
+                            setActiveSubtitle(subIndex);
+                            renderSubtitles(false);
+                        }
+                    }
+
+                    // Posicionar y abrir el menú
+                    regionContextMenu.style.top = `${e.clientY}px`;
+                    regionContextMenu.style.left = `${e.clientX}px`;
+                    regionContextMenu.classList.remove('hidden');
+                });
+
+                if (region.id === 'temp-selection') return;
+
+                const isExistingSubtitle = subtitles.some(s => s.id === region.id);
+                if (isExistingSubtitle) return;
+
+                // Borramos la selección anterior para que solo haya una verde activa
+                if (selectionRegion && selectionRegion !== region) {
+                    try { selectionRegion.remove(); } catch(e){}
+                }
+                selectionRegion = region;
+            });
+
+            wsRegions.on('region-clicked', (region, e) => {
+                 e.stopPropagation();
+                 if (!subtitles.some(s => s.id === region.id)) {
+                     selectionRegion = region;
+                 }
+            });
+
+            setupRightClickDrag(wavesurfer, wsRegions);
+
+            // Eventos estándar
+            wavesurfer.on('ready', () => {
+                loadingIndicator.style.display = 'none';
+                detectShotsBtn.disabled = false;
+                wavesurfer.zoom(Number(zoomSliderH.value));
+                renderSubtitles(true);
+                renderShotChanges();
+                
+                const duration = wavesurfer.getDuration();
+                progressTimeDuration.textContent = formatSrtTime(duration);
+                customProgressBarContainer.style.opacity = '1';
+                updateProgressBar(0, duration);
+            });
+
+            wavesurfer.on('loading', (p) => { loadingIndicator.innerHTML = `<p class="bg-black/70 px-4 py-2 rounded-lg">${t('wfm_generating')} ${p}%</p>`; });
+            wavesurfer.on('play', () => { playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden'); });
+            wavesurfer.on('pause', () => { playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); });
+            wavesurfer.on('timeupdate', (t) => { timecodeDisplay.textContent = formatSrtTime(t); updateProgressBar(t, wavesurfer.getDuration()); });
+
+            // Eventos de edición de regiones
+            wsRegions.on('region-updated', (region) => {
+                if (region.id.startsWith('shot_')) return;
+                saveState();
+                let { start, end } = region;
+                shotChanges.forEach(shotTime => {
+                    if (Math.abs(start - shotTime) < snapThreshold) start = shotTime;
+                    if (Math.abs(end - shotTime) < snapThreshold) end = shotTime;
+                });
+                if (start !== region.start || end !== region.end) region.setOptions({ start, end });
+                const subIndex = subtitles.findIndex(s => s.id == region.id);
+                if (subIndex > -1) {
+                    subtitles[subIndex].start = start;
+                    subtitles[subIndex].end = end;
+                    renderSubtitles(false);
+                }
+            });
+
+            wsRegions.on('region-in', (region) => {
+                if (region.id.startsWith('shot_')) return;
+                const sub = subtitles.find(s => s.id == region.id);
+                if (sub) {
+                    const styleDefinition = assStyles.find(style => style.Name === sub.style) || assStyles.find(style => style.Name === 'Default');
+                    applyAssStyleToElement(subtitlePreview, styleDefinition);
+                    subtitlePreview.innerHTML = `<span>${sub.text.replace(/\n/g, '<br>')}</span>`;
+
+                    if (!isUserEditing) {
+                        setActiveSubtitle(subtitles.findIndex(s => s.id === region.id), { fromPlayback: true });
+                    }
+                }
+            });
+           
+            wsRegions.on('region-out', (region) => {
+                if (region.id.startsWith('shot_')) return;
+                subtitlePreview.innerHTML = '';
+                subtitlePreview.style.cssText = '';
+                const subIndex = subtitles.findIndex(s => s.id === region.id);
+                if (!isUserEditing && workMode !== 'sync' && activeSubtitleIndex === subIndex) {
+                    setActiveSubtitle(-1, { fromPlayback: true });
+                }
+            });
+
+            wsRegions.on('region-clicked', (region, e) => {
+                if (region.id.startsWith('shot_')) return;
+                e.stopPropagation();
+                wavesurfer.seekTo(region.start / wavesurfer.getDuration());
+                handleRowClick(e, subtitles.findIndex(s => s.id == region.id));
+            });
+        };
+
+ waveformContainer.addEventListener('click', (e) => {
+                // Esto solo se activa si el clic es fuera de una región,
+                // ya que 'region-clicked' detiene la propagación del evento.
+                if (workMode === 'sync' && activeSubtitleIndex !== -1) {
+                    setActiveSubtitle(-1);
+                }
+            });
+        
+const createNewProject = () => {
+    isTranslationMode = false;
+    if (wavesurfer) { wavesurfer.destroy(); wavesurfer = null; }
+    subtitles = []; assStyles = [createDefaultAssStyle()]; shotChanges = [];
+    historyStack = []; redoStack = []; activeSubtitleIndex = -1; nextSubtitleId = 1;
+
+    updateUndoRedoButtons();
+    setActiveSubtitle(-1); 
+    inVideoEditor.innerHTML = ''; 
+    inVideoEditorContainer.style.display = 'none';
+    renderSubtitles(false); 
+    
+    videoPlayer.src = '';
+    loadingIndicator.style.display = 'flex';
+    loadingIndicator.innerHTML = `
+        <img src="https://raw.githubusercontent.com/rlstradu/httrans/refs/heads/main/subpanda-logo.png" alt="Subpanda Logo" class="h-20 opacity-70" style="filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));">
+        <label for="video-loader" class="bg-black/70 px-4 py-2 rounded-lg cursor-pointer hover:bg-black/90 transition-colors">${t('msg_import_video_prompt')}</label>
+    `;
+    detectShotsBtn.disabled = true;
+    timecodeDisplay.textContent = '00:00:00,000';
+    customProgressBarContainer.style.opacity = '0';
+    progressTimeCurrent.textContent = '00:00:00,000';
+    progressTimeDuration.textContent = '00:00:00,000';
+    updateProgressBar(0, 1);
+
+    const videoLoaderLabel = document.querySelector('label[for="video-loader"]');
+    if (videoLoaderLabel) { videoLoaderLabel.querySelector('span').textContent = t('label_load_video'); }
+
+    showModalAlert(t('msg_new_project'));
+};        
+
+
+        // --- MANEJO DE ARCHIVOS Y VÍDEO ---
+    const loadVideoFile = (file) => {
+    const videoURL = URL.createObjectURL(file);
+    videoPlayer.src = videoURL;
+    loadingIndicator.style.display = 'flex';
+    loadingIndicator.innerHTML = `<p class="bg-black/70 px-4 py-2 rounded-lg">${t('msg_loading_video')}</p>`;
+    detectShotsBtn.disabled = true;
+
+    videoPlayer.addEventListener('loadeddata', initializeWaveSurfer, { once: true });
+
+    const videoLoaderLabel = document.querySelector('label[for="video-loader"]');
+    if (videoLoaderLabel) {
+        videoLoaderLabel.querySelector('span').textContent = t('label_change_video');
+    }
+};
+
+videoLoader.addEventListener('change', (e) => { 
+    if (e.target.files[0]) {
+        loadVideoFile(e.target.files[0]);
+    }
+    // AÑADIDO: Resetea el input para poder cargar el mismo vídeo otra vez.
+    e.target.value = null; 
+});
+        // --- QA CHECKS ---
+        const runSingleSubQaCheck = (index) => {
+            const issues = [];
+            const sub = subtitles[index];
+            if (!sub) return issues;
+            const stats = calculateSubtitleStats(sub);
+            const text = sub.text;
+            const lines = text.split('\n');
+
+            if (qaSettings.maxCpsEnabled && stats.cps > qaSettings.maxCps) 
+                issues.push(`${t('qa_err_cps')}: ${stats.cps.toFixed(1)} (${t('qa_limit')} ${qaSettings.maxCps})`);
+            
+            if (qaSettings.maxWpmEnabled && stats.wpm > qaSettings.maxWpm) 
+                issues.push(`${t('qa_err_wpm')}: ${stats.wpm.toFixed(0)}`);
+            
+            if (qaSettings.maxCplEnabled) stats.cpl.forEach((len, i) => { 
+                if (len > qaSettings.maxCpl) 
+                    issues.push(`${t('qa_err_cpl')} (L${i + 1}): ${len} (${t('qa_limit')} ${qaSettings.maxCpl})`); 
+            });
+
+            if (qaSettings.maxLinesEnabled && lines.length > qaSettings.maxLines) 
+                issues.push(`${t('qa_err_lines')}: ${lines.length} (${t('qa_limit')} ${qaSettings.maxLines})`);
+            
+            if (qaSettings.emptySubsEnabled && text.trim() === '') 
+                issues.push(t('qa_err_empty'));
+            
+            if (qaSettings.minDurationEnabled) {
+                const dur = qaSettings.minDurationUnit === 'ms' ? stats.duration * 1000 : Math.round(stats.duration * frameRate);
+                if (dur < qaSettings.minDuration) 
+                    issues.push(`${t('qa_err_min_dur')}: ${dur.toFixed(0)} ${qaSettings.minDurationUnit} (${t('qa_min')} ${qaSettings.minDuration} ${qaSettings.minDurationUnit})`);
+            }
+            if (qaSettings.maxDurationEnabled) {
+                const dur = qaSettings.maxDurationUnit === 'ms' ? stats.duration * 1000 : Math.round(stats.duration * frameRate);
+                if (dur > qaSettings.maxDuration) 
+                    issues.push(`${t('qa_err_max_dur')}: ${dur.toFixed(0)} ${qaSettings.maxDurationUnit} (${t('qa_max')} ${qaSettings.maxDuration} ${qaSettings.maxDurationUnit})`);
+            }
+            if (qaSettings.overlapEnabled) {
+                 if (index > 0 && sub.start < subtitles[index - 1].end) issues.push(t('qa_err_overlap_prev'));
+                 if (index < subtitles.length - 1 && sub.end > subtitles[index + 1].start) issues.push(t('qa_err_overlap_next'));
+            }
+            if (index > 0) {
+                const gap = sub.start - subtitles[index - 1].end;
+                if (gap >= 0) {
+                    if (qaSettings.minGapMsEnabled && Math.round(gap * 1000) < qaSettings.minGapMs) 
+                        issues.push(`${t('qa_err_gap')}: ${Math.round(gap * 1000)}ms (${t('qa_min')} ${qaSettings.minGapMs}ms)`);
+                    if (qaSettings.minGapFramesEnabled && Math.round(gap * frameRate) < qaSettings.minGapFrames) 
+                        issues.push(`${t('qa_err_gap')}: ${Math.round(gap*frameRate)} frames (${t('qa_min')} ${qaSettings.minGapFrames} frames)`);
+                }
+            }
+            return issues;
+        };
+
+// ========================================================================
+// === INICIO: LÓGICA COMPLETA DEL PANEL DE REVISIÓN DE QA (V3.1 - CORREGIDA) ===
+// ========================================================================
+
+const openQaReviewModal = () => {
+    // NUEVA LÓGICA PARA MANTENER EL ESTADO DE LOS ERRORES
+    
+    // 1. Generamos una lista fresca con los errores que existen AHORA MISMO.
+    const freshIssues = [];
+    subtitles.forEach((sub, index) => {
+        const issues = runSingleSubQaCheck(index);
+        if (issues.length > 0) {
+            freshIssues.push({
+                id: sub.id,
+                index: index,
+                issues: issues,
+                text: sub.text,
+                start: sub.start,
+                end: sub.end,
+                status: 'visible' // Estado por defecto para los errores nuevos
+            });
+        }
+    });
+
+    // 2. Creamos la lista actualizada, preservando los estados antiguos.
+    const updatedQaIssues = freshIssues.map(freshItem => {
+        // Buscamos si este error (por su ID de subtítulo) ya existía en la lista anterior.
+        const existingItem = currentQaIssues.find(oldItem => oldItem.id === freshItem.id);
+
+        if (existingItem) {
+            // Si existía, mantenemos su estado anterior (revisado o ignorado).
+            freshItem.status = existingItem.status;
+        }
+        // Si no existía, se queda con el estado 'visible' por defecto.
+        return freshItem;
+    });
+
+    // 3. Reemplazamos la lista antigua por la nueva lista actualizada.
+    currentQaIssues = updatedQaIssues;
+
+    // 4. Renderizamos el panel con la información actualizada.
+    renderQaReviewPanel();
+    qaReviewPanel.classList.remove('hidden');
+};
+
+const renderQaReviewPanel = () => {
+    // NUEVO: Calculamos los contadores para cada estado.
+    const counts = {
+        visible: currentQaIssues.filter(item => item.status === 'visible').length,
+        reviewed: currentQaIssues.filter(item => item.status === 'reviewed').length,
+        ignored: currentQaIssues.filter(item => item.status === 'ignored').length,
+    };
+
+    // MODIFICADO: Ahora el título principal es fijo.
+    let html = `
+        <div class="floating-pane-header">
+            <h2>${t('rep_title')}</h2>
+            <div class="header-button-group">
+                <button class="header-icon-btn" id="restore-qa-list-btn" title="${t('tooltip_qa_restore')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 11.25H6.375m3.438 0a2.25 2.25 0 1 1 4.5 0a2.25 2.25 0 0 1-4.5 0Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7.875 9.75 6.375 11.25l1.5 1.5" />
+                    </svg>
+                </button>
+                <button class="header-icon-btn" id="export-qa-btn" title="${t('tooltip_qa_export')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                </button>
+                <button class="header-icon-btn" id="reset-qa-panel-btn" title="${t('tooltip_qa_reset_pos')}">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+                </button>
+                <button class="header-icon-btn close-btn" title="${t('btn_close')}">&times;</button>
+            </div>
+        </div>
+
+        <div class="qa-panel-tabs">
+            <button class="qa-tab-btn ${activeQaStatus === 'visible' ? 'active' : ''}" data-status="visible">${t('rep_pending')} (${counts.visible})</button>
+            <button class="qa-tab-btn ${activeQaStatus === 'reviewed' ? 'active' : ''}" data-status="reviewed">${t('rep_reviewed')} (${counts.reviewed})</button>
+            <button class="qa-tab-btn ${activeQaStatus === 'ignored' ? 'active' : ''}" data-status="ignored">${t('rep_ignored')} (${counts.ignored})</button>
+        </div>
+
+        <div class="floating-pane-content">`;
+
+    // MODIFICADO: Filtramos los errores basándonos en la pestaña activa.
+    const issuesToShow = currentQaIssues.filter(item => item.status === activeQaStatus);
+
+    if (issuesToShow.length === 0) {
+        html += `<p class="text-center text-gray-400 py-8">${t('rep_no_errors')}</p>`;
+    } else {
+        issuesToShow.forEach(item => {
+            const originalItemIndex = currentQaIssues.findIndex(i => i.id === item.id);
+            // AQUI ESTABAN LOS TEXTOS FIJOS. AHORA USAN t()
+            html += `
+                <div class="qa-review-item">
+                    <button class="qa-review-item-header" data-index="${item.index}">
+                        ${t('lbl_subtitle_num')}${item.id} (${item.issues.length} ${t('rep_errors_label').replace(':','').toLowerCase()})
+                    </button>
+                    <ul class="qa-review-item-errors">
+                        ${item.issues.map(issue => `<li>${issue}</li>`).join('')}
+                    </ul>
+                    <div class="qa-item-actions">
+                        <button class="qa-action-btn" data-item-index="${originalItemIndex}" data-action="ignore">${t('qa_btn_ignore')}</button>
+                        <button class="qa-action-btn" data-item-index="${originalItemIndex}" data-action="review">${t('qa_btn_mark_reviewed')}</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    html += `</div>
+        <div class="resizer top-left"></div><div class="resizer top-right"></div><div class="resizer bottom-left"></div><div class="resizer bottom-right"></div>
+        <div class="resizer top"></div><div class="resizer bottom"></div><div class="resizer left"></div><div class="resizer right"></div>`;
+
+    qaReviewPanel.innerHTML = html;
+    makePanelInteractive(qaReviewPanel);
+
+    const updateItemStatus = (itemIndex, status) => {
+        currentQaIssues[itemIndex].status = status;
+        renderQaReviewPanel();
+    };
+
+    qaReviewPanel.querySelectorAll('.qa-action-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const itemIndex = parseInt(e.currentTarget.dataset.itemIndex, 10);
+            const action = e.currentTarget.dataset.action;
+            updateItemStatus(itemIndex, action === 'ignore' ? 'ignored' : 'reviewed');
+        });
+    });
+
+    qaReviewPanel.querySelectorAll('.qa-tab-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            activeQaStatus = e.currentTarget.dataset.status;
+            renderQaReviewPanel();
+        });
+    });
+
+    qaReviewPanel.querySelector('#restore-qa-list-btn').addEventListener('click', () => {
+        currentQaIssues.forEach(item => item.status = 'visible');
+        activeQaStatus = 'visible';
+        renderQaReviewPanel();
+    });
+    qaReviewPanel.querySelector('.close-btn').addEventListener('click', () => qaReviewPanel.classList.add('hidden'));
+    qaReviewPanel.querySelector('#reset-qa-panel-btn').addEventListener('click', () => resetQaPanel());
+    qaReviewPanel.querySelector('#export-qa-btn').addEventListener('click', () => openExportQaModal());
+    const allQaItems = qaReviewPanel.querySelectorAll('.qa-review-item');
+    qaReviewPanel.querySelectorAll('.qa-review-item-header').forEach(button => {
+        button.addEventListener('click', (e) => {
+            allQaItems.forEach(item => item.classList.remove('active'));
+            const parentItem = e.currentTarget.closest('.qa-review-item');
+            if (parentItem) {
+                parentItem.classList.add('active');
+            }
+            setActiveSubtitle(parseInt(e.currentTarget.dataset.index, 10));
+        });
+    });
+};
+
+
+
+const makePanelInteractive = (panel) => {
+    const header = panel.querySelector('.floating-pane-header');
+    let dragInfo = { active: false, type: null, initialX: 0, initialY: 0, initialLeft: 0, initialTop: 0, initialWidth: 0, initialHeight: 0 };
+
+    const onMouseDown = (e, type) => {
+        dragInfo.active = true;
+        dragInfo.type = type;
+        dragInfo.initialX = e.clientX;
+        dragInfo.initialY = e.clientY;
+        dragInfo.initialLeft = panel.offsetLeft;
+        dragInfo.initialTop = panel.offsetTop;
+        dragInfo.initialWidth = panel.offsetWidth;
+        dragInfo.initialHeight = panel.offsetHeight;
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    };
+
+    header.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) { return; }
+        onMouseDown(e, 'drag');
+    });
+
+    panel.querySelectorAll('.resizer').forEach(resizer => {
+        resizer.addEventListener('mousedown', (e) => onMouseDown(e, resizer.className.replace('resizer ', '')));
+    });
+
+    const onMouseMove = (e) => {
+        if (!dragInfo.active) return;
+        const dx = e.clientX - dragInfo.initialX;
+        const dy = e.clientY - dragInfo.initialY;
+
+        if (dragInfo.type === 'drag') {
+            panel.style.left = `${dragInfo.initialLeft + dx}px`;
+            panel.style.top = `${dragInfo.initialTop + dy}px`;
+        } else {
+            if (dragInfo.type.includes('right')) panel.style.width = `${dragInfo.initialWidth + dx}px`;
+            if (dragInfo.type.includes('bottom')) panel.style.height = `${dragInfo.initialHeight + dy}px`;
+            if (dragInfo.type.includes('left')) {
+                panel.style.width = `${dragInfo.initialWidth - dx}px`;
+                panel.style.left = `${dragInfo.initialLeft + dx}px`;
+            }
+            if (dragInfo.type.includes('top')) {
+                panel.style.height = `${dragInfo.initialHeight - dy}px`;
+                panel.style.top = `${dragInfo.initialTop + dy}px`;
+            }
+        }
+    };
+    
+    const onMouseUp = () => {
+        dragInfo.active = false;
+        document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+};
+
+const resetQaPanel = () => {
+    qaReviewPanel.style.top = '100px';
+    qaReviewPanel.style.left = '';
+    qaReviewPanel.style.right = '20px';
+    qaReviewPanel.style.width = '450px';
+    qaReviewPanel.style.height = '';
+};
+
+const openExportQaModal = () => {
+    const modal = document.getElementById('export-qa-report-modal');
+    const defaultFilename = `Informe_QA_${new Date().toISOString().slice(0,10)}`;
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">${t('modal_title_qa_export')}</h2>
+                <button id="close-export-qa-modal" class="text-3xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="qa-export-filename" class="text-sm font-medium text-gray-300">${t('lbl_filename')}</label>
+                    <input type="text" id="qa-export-filename" class="text-import-input w-full mt-1 p-2 rounded-lg" value="${defaultFilename}">
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-300">${t('lbl_format')}</label>
+                    <div class="flex justify-around mt-2">
+                        <label><input type="radio" name="qa-export-format" value="pdf" checked> PDF</label>
+                        <label><input type="radio" name="qa-export-format" value="html"> HTML</label>
+                        <label><input type="radio" name="qa-export-format" value="word"> Word (.doc)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-4 mt-6 pt-4 border-t border-light-gray">
+                <button id="cancel-export-qa" class="text-btn">${t('btn_cancel')}</button>
+                <button id="confirm-export-qa" class="text-btn bg-blue-600 hover:bg-blue-700">${t('btn_export')}</button>
+            </div>
+        </div>`;
+        
+    modal.style.display = 'flex';
+    modal.querySelector('#close-export-qa-modal').addEventListener('click', () => modal.style.display = 'none');
+    modal.querySelector('#cancel-export-qa').addEventListener('click', () => modal.style.display = 'none');
+    modal.querySelector('#confirm-export-qa').addEventListener('click', () => {
+        const filename = document.getElementById('qa-export-filename').value;
+        const format = document.querySelector('input[name="qa-export-format"]:checked').value;
+        switch(format) {
+            case 'pdf': exportQaToPdf(filename); break;
+            case 'html': exportQaToHtml(filename); break;
+            case 'word': exportQaToWord(filename); break;
+        }
+        modal.style.display = 'none';
+    });
+};
+
+const generateReportContent = () => {
+    // 1. Separamos los problemas en tres listas
+    const pendingIssues = currentQaIssues.filter(item => item.status === 'visible');
+    const reviewedIssues = currentQaIssues.filter(item => item.status === 'reviewed');
+    const ignoredIssues = currentQaIssues.filter(item => item.status === 'ignored');
+
+    // 2. Construimos el contenido usando t()
+    let content = `${t('rep_title')} - ${new Date().toLocaleString()}\n\n`;
+    content += `${t('rep_summary')}\n`;
+    content += `- ${t('rep_pending')}: ${pendingIssues.length}\n`;
+    content += `- ${t('rep_reviewed')}: ${reviewedIssues.length}\n`; // Corregido
+    content += `- ${t('rep_ignored')}: ${ignoredIssues.length}\n\n`;   // Corregido
+
+    // 3. Función auxiliar
+    const appendIssuesToContent = (title, issues) => {
+        content += `========================================\n`;
+        content += ` ${title.toUpperCase()} (${issues.length})\n`;
+        content += `========================================\n\n`;
+
+        if (issues.length === 0) {
+            content += `${t('rep_no_errors')}\n\n`; // Corregido para usar t()
+        } else {
+            issues.forEach(item => {
+                content += `${t('lbl_subtitle_num')}${item.id} (${formatSrtTime(item.start)} --> ${formatSrtTime(item.end)})\n`;
+                content += `\n${item.text}\n\n`;
+                content += `${t('rep_errors_label')}\n`; // Corregido
+                item.issues.forEach(issue => {
+                    content += `  - ${issue}\n`;
+                });
+                content += `\n`;
+            });
+        }
+    };
+
+    // 4. Añadimos cada sección
+    appendIssuesToContent(t('rep_pending'), pendingIssues);
+    appendIssuesToContent(t('rep_reviewed'), reviewedIssues);
+    appendIssuesToContent(t('rep_ignored'), ignoredIssues);
+
+    return content;
+};
+
+
+const exportQaToPdf = (filename) => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 15;
+    const lineHeight = 7;
+    let currentY = margin; 
+
+    const pendingIssues = currentQaIssues.filter(item => item.status === 'visible');
+    const reviewedIssues = currentQaIssues.filter(item => item.status === 'reviewed');
+    const ignoredIssues = currentQaIssues.filter(item => item.status === 'ignored');
+
+    const checkPageBreak = (neededHeight) => {
+        if (currentY + neededHeight > pageHeight - margin) {
+            doc.addPage();
+            currentY = margin;
+        }
+    };
+
+    const renderSection = (title, issues) => {
+        checkPageBreak(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title.toUpperCase(), margin, currentY);
+        currentY += lineHeight * 1.5;
+        doc.setFont('helvetica', 'normal');
+
+        if (issues.length === 0) {
+            doc.setTextColor(150);
+            // CAMBIO: Usamos t()
+            doc.text(t('rep_no_errors'), margin, currentY);
+            doc.setTextColor(0);
+            currentY += lineHeight * 2;
+            return;
+        }
+
+        issues.forEach(item => {
+            const itemHeight = (4 + item.issues.length) * lineHeight + 10;
+            checkPageBreak(itemHeight);
+
+            doc.text(`${t('header_subs')} #${item.id} (${formatSrtTime(item.start)} --> ${formatSrtTime(item.end)})`, margin, currentY);
+            currentY += lineHeight;
+            doc.text(item.text.replace(/\n/g, ' / '), margin, currentY);
+            currentY += lineHeight;
+            // CAMBIO: "Errores:" a inglés si corresponde. (Añadiremos 'rep_errors_label' al diccionario abajo)
+            doc.text(currentLang === 'es' ? 'Errores:' : 'Errors:', margin, currentY);
+            currentY += lineHeight;
+
+            doc.setTextColor(255, 0, 0);
+            item.issues.forEach(issue => {
+                doc.text(`  - ${issue}`, margin, currentY);
+                currentY += lineHeight;
+            });
+            doc.setTextColor(0, 0, 0); 
+
+            currentY += 3;
+            doc.setDrawColor(200);
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += lineHeight;
+        });
+    };
+
+    doc.setFontSize(16);
+    // CAMBIO: Usamos t()
+    doc.text(t('rep_title'), pageWidth / 2, currentY, { align: 'center' });
+    currentY += lineHeight * 2;
+    doc.setFontSize(10);
+    
+    renderSection(`${t('rep_pending')} (${pendingIssues.length})`, pendingIssues);
+    renderSection(`${t('rep_reviewed')} (${reviewedIssues.length})`, reviewedIssues);
+    renderSection(`${t('rep_ignored')} (${ignoredIssues.length})`, ignoredIssues);
+
+    doc.save(`${filename}.pdf`);
+};
+
+
+const exportQaToHtml = (filename) => {
+    // MODIFICADO: Ahora llamamos a nuestra nueva función generadora de informes.
+    const htmlContent = generateRichHtmlReport();
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${filename}.html`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+};
+
+const generateRichHtmlReport = () => {
+    // 1. Separamos los errores en las tres categorías
+    const pendingIssues = currentQaIssues.filter(item => item.status === 'visible');
+    const reviewedIssues = currentQaIssues.filter(item => item.status === 'reviewed');
+    const ignoredIssues = currentQaIssues.filter(item => item.status === 'ignored');
+
+    // 2. Función auxiliar para crear la tabla de cada sección
+    const createSectionTable = (issues) => {
+        if (issues.length === 0) {
+            return `<p class="empty-section">${t('rep_no_errors')}</p>`;
+        }
+        let tableHtml = '<table class="error-table">';
+        issues.forEach(item => {
+            tableHtml += `
+                <tr class="error-card">
+                    <td class="error-meta">
+                        <strong>${t('header_subs')} #${item.id}</strong><br>
+                        <span class="monospace">${formatSrtTime(item.start)}</span><br>
+                        <span class="monospace">${formatSrtTime(item.end)}</span>
+                    </td>
+                    <td class="error-details">
+                        <p class="subtitle-text monospace">${item.text.replace(/\n/g, '<br>')}</p>
+                        <ul class="error-list">
+                            ${item.issues.map(issue => `<li>${issue}</li>`).join('')}
+                        </ul>
+                    </td>
+                </tr>
+            `;
+        });
+        tableHtml += '</table>';
+        return tableHtml;
+    };
+
+    // 3. Construimos el documento HTML completo con estilos CSS incrustados
+    return `
+        <!DOCTYPE html>
+        <html lang="${currentLang}">
+        <head>
+            <meta charset="UTF-8">
+            <title>${t('rep_title')}</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+                body {
+                    font-family: 'Inter', sans-serif;
+                    background-color: #1E1E1E;
+                    color: #EAEAEA;
+                    margin: 0;
+                    padding: 40px;
+                }
+                .report-container {
+                    max-width: 900px;
+                    margin: auto;
+                    background-color: #2D2D2D;
+                    border-radius: 12px;
+                    padding: 30px 40px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                }
+                .report-header h1 {
+                    color: #A4CAFE;
+                    margin: 0 0 10px 0;
+                }
+                .report-header p {
+                    margin: 0 0 30px 0;
+                    color: #A0A0A0;
+                    border-bottom: 1px solid #373737;
+                    padding-bottom: 20px;
+                }
+                .report-summary {
+                    background-color: #252525;
+                    border: 1px solid #373737;
+                    border-radius: 8px;
+                    padding: 15px 20px;
+                    margin-bottom: 30px;
+                    display: flex;
+                    justify-content: space-around;
+                }
+                .summary-item { text-align: center; }
+                .summary-item strong { font-size: 1.5rem; color: #EAEAEA; }
+                .summary-item span { font-size: 0.9rem; color: #A0A0A0; }
+                
+                .report-section h2 {
+                    margin-top: 40px;
+                    border-bottom: 2px solid #A4CAFE;
+                    padding-bottom: 10px;
+                    color: #EAEAEA;
+                }
+                .error-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                .error-card {
+                    border-bottom: 1px solid #373737;
+                }
+                .error-card td {
+                    padding: 15px 10px;
+                    vertical-align: top;
+                }
+                .error-meta {
+                    width: 25%;
+                    color: #A0A0A0;
+                    font-size: 0.9rem;
+                }
+                .error-meta strong { color: #EAEAEA; font-size: 1rem; }
+                .error-details .subtitle-text {
+                    background-color: #252525;
+                    padding: 10px;
+                    border-radius: 6px;
+                    white-space: pre-wrap;
+                    margin-top: 0;
+                }
+                .error-list {
+                    padding-left: 20px;
+                    margin: 15px 0 0 0;
+                }
+                .error-list li {
+                    color: #ef4444; /* Rojo para los errores */
+                    margin-bottom: 8px;
+                }
+                .empty-section {
+                    color: #A0A0A0;
+                    padding: 20px;
+                    text-align: center;
+                    background-color: #252525;
+                    border-radius: 8px;
+                }
+                .monospace { font-family: monospace; }
+
+            </style>
+        </head>
+        <body>
+            <div class="report-container">
+                <header class="report-header">
+                    <h1>${t('rep_title')}</h1>
+                    <p>${t('rep_generated')} ${new Date().toLocaleString()}</p>
+                </header>
+
+                <div class="report-summary">
+                    <div class="summary-item"><strong>${pendingIssues.length}</strong><br><span>${t('rep_pending')}</span></div>
+                    <div class="summary-item"><strong>${reviewedIssues.length}</strong><br><span>${t('rep_reviewed')}</span></div>
+                    <div class="summary-item"><strong>${ignoredIssues.length}</strong><br><span>${t('rep_ignored')}</span></div>
+                </div>
+
+                <section class="report-section">
+                    <h2>${t('rep_pending')}</h2>
+                    ${createSectionTable(pendingIssues)}
+                </section>
+
+                <section class="report-section">
+                    <h2>${t('rep_reviewed')}</h2>
+                    ${createSectionTable(reviewedIssues)}
+                </section>
+
+                <section class="report-section">
+                    <h2>${t('rep_ignored')}</h2>
+                    ${createSectionTable(ignoredIssues)}
+                </section>
+            </div>
+        </body>
+        </html>
+    `;
+};
+
+const exportQaToWord = (filename) => {
+    const reportText = generateReportContent();
+    const htmlContent = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe QA</title></head><body><pre>${reportText}</pre></body></html>`;
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${filename}.doc`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+};
+
+// ========================================================================
+// === FIN: LÓGICA COMPLETA DEL PANEL DE REVISIÓN DE QA (V3.1 - CORREGIDA) ===
+// ========================================================================
+
+        // --- RENDERIZADO DE SUBTÍTULOS ---
+        const stripHtml = (html) => html.replace(/<[^>]*>?/gm, '');
+        const countWords = (text) => text.trim().split(/\s+/).filter(Boolean).length;
+        const calculateSubtitleStats = (sub) => {
+            const duration = sub.end - sub.start;
+            if (duration <= 0) return { duration: 0, cps: 0, wpm: 0, cpl: sub.text.split('\n').map(l => l.length), lineCounts: sub.text.split('\n').map((l, i) => `L${i+1}: ${l.length}`).join(' / ') };
+            const plainText = stripHtml(sub.text.replace(/\{[^\}]+\}/g, '')); // Strip ASS tags for stats
+            const charCount = plainText.length;
+            const wordCount = countWords(plainText);
+            const cps = duration > 0 ? (charCount / duration) : 0;
+            const wpm = duration > 0 ? (wordCount / duration) * 60 : 0;
+            const lines = plainText.split('\n');
+            const cpl = lines.map(line => line.length);
+            const lineCounts = lines.map((line, i) => `L${i + 1}: ${line.length}`).join('<br>');
+            return { duration, cps, wpm, cpl, lineCounts };
+        };
+
+        const getNextAvailableId = () => {
+            if (subtitles.length === 0) {
+                // Si no hay subtítulos, empezamos desde 1
+                return 1;
+            }
+            // Encontramos el ID numérico más alto en la lista actual
+            // Usamos Math.max(0, ...) para evitar errores si todos los IDs fueran inválidos
+            const maxId = Math.max(0, ...subtitles.map(s => parseInt(s.id, 10) || 0));
+            // El nuevo ID será el más alto + 1
+            return maxId + 1;
+        };
+
+        const formatSrtTime = (time) => {
+            if (isNaN(time) || time < 0) return '--:--:--,---';
+            const date = new Date(0);
+            date.setSeconds(time);
+            const timeStr = date.toISOString().substr(11, 8);
+            if (timeFormat === 'frames') {
+                const frame = Math.round((time * frameRate) % frameRate);
+                return `${timeStr}:${String(frame).padStart(2, '0')}`;
+            }
+            return `${timeStr},${String(Math.round((time % 1) * 1000)).padStart(3, '0')}`;
+        };
+        const renderSubtitles = (renderRegions = true) => {
+            subtitleBody.innerHTML = '';
+            
+            subtitles.sort((a, b) => {
+                if (a.start < 0 && b.start < 0) return 0;
+                if (a.start < 0) return 1;
+                if (b.start < 0) return -1;
+                return a.start - b.start;
+            });
+
+            if (renderRegions && wsRegions?.getRegions) wsRegions.getRegions().filter(r => !r.id.startsWith('shot_') && r.id !== 'temp-selection').forEach(r => r.remove());
+
+            document.getElementById('original-text-header').style.display = isTranslationMode ? '' : 'none';
+
+
+            subtitles.forEach((sub, index) => {
+                if (renderRegions && wsRegions && sub.end > sub.start) addSubtitleRegion(sub);
+                const stats = calculateSubtitleStats(sub);
+                const qaIssues = runSingleSubQaCheck(index);
+                const row = document.createElement('tr');
+                row.className = 'subtitle-row';
+                row.classList.toggle('active', index === activeSubtitleIndex);
+                row.classList.toggle('selected', selectedSubtitleIndices.has(index));
+                row.classList.toggle('has-error', qaIssues.length > 0);
+                row.dataset.index = index;
+
+             
+
+                const styleOptions = assStyles.map(style => `<option value="${style.Name}" ${sub.style === style.Name ? 'selected' : ''}>${style.Name}</option>`).join('');
+
+row.innerHTML = `
+    <td class="p-2 align-top text-center col-qa">${qaIssues.length > 0 ? `<div data-tooltip="${qaIssues.join('\n')}"><svg class="w-5 h-5 qa-alert-icon mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg></div>` : ''}</td>
+    <td class="p-2 text-gray-400 align-top col-id">${sub.id}</td>
+    <td class="p-2 font-mono text-sm align-top col-times">
+        <div class="time-col-item text-cyan-300"><span>[</span><span>${formatSrtTime(sub.start)}</span></div>
+        <div class="time-col-item text-fuchsia-300"><span>]</span><span>${formatSrtTime(sub.end)}</span></div>
+        <div class="time-col-item text-yellow-400"><span>🕒</span><span>${stats.duration.toFixed(3)}s</span></div>
+    </td>
+    
+    <td class="p-2 align-top col-original-text" style="display: ${isTranslationMode ? '' : 'none'};">
+        <div class="table-text-preview">${sub.originalText ? sub.originalText.replace(/\n/g, '<br>') : ''}</div>
+    </td>
+
+    <td class="p-2 align-top col-text"><div class="table-text-preview">${sub.text.replace(/\n/g, '<br>')}</div></td>
+    <td class="p-2 text-center font-mono align-top table-stats col-cps ${qaIssues.some(i => i.includes('CPS')) ? 'text-red-400' : ''}">${stats.cps.toFixed(1)}</td>
+    <td class="p-2 text-center font-mono align-top table-stats col-wpm ${qaIssues.some(i => i.includes('PPM')) ? 'text-red-400' : ''}">${stats.wpm.toFixed(0)}</td>
+    <td class="p-2 text-xs font-mono align-top table-stats col-lines ${qaIssues.some(i => i.includes('CPL')) ? 'text-red-400' : ''}">${stats.lineCounts}</td>
+    <td class="p-2 align-top col-style"><select class="style-select" data-index="${index}">${styleOptions}</select></td>
+`;
+                subtitleBody.appendChild(row);
+            });
+
+            addTableListeners();
+            initializeTooltips();
+            updateColumnVisibility();
+applyColumnVisibility();
+
+        };
+
+        let lastClickedIndex = -1;
+        const handleRowClick = (e, index) => {
+            if (e.target.closest('select, [data-tooltip]')) return;
+            
+            if (e.shiftKey && lastClickedIndex !== -1) {
+                selectedSubtitleIndices.clear();
+                const start = Math.min(index, lastClickedIndex);
+                const end = Math.max(index, lastClickedIndex);
+                for (let i = start; i <= end; i++) {
+                    selectedSubtitleIndices.add(i);
+                }
+            } else if (e.ctrlKey || e.metaKey) {
+                if (selectedSubtitleIndices.has(index)) {
+                    selectedSubtitleIndices.delete(index);
+                } else {
+                    selectedSubtitleIndices.add(index);
+                }
+            } else {
+                selectedSubtitleIndices.clear();
+                selectedSubtitleIndices.add(index);
+                setActiveSubtitle(index);
+            }
+            
+            lastClickedIndex = index;
+            renderSubtitles(false);
+        };
+
+const handleRowDoubleClick = (index) => {
+    // Nos aseguramos de que el wavesurfer esté listo
+    if (!wavesurfer) return;
+
+    const sub = subtitles[index];
+
+    // Comprobamos que el subtítulo existe y tiene un tiempo de inicio válido
+    if (sub && sub.start >= 0) {
+        // Le decimos a wavesurfer (y al vídeo) que vaya a ese segundo exacto
+        wavesurfer.setTime(sub.start);
+        
+        // Opcional: Pausamos el vídeo para que el usuario pueda ver el frame exacto
+        wavesurfer.pause();
+    }
+};
+
+        const addTableListeners = () => {
+            document.querySelectorAll('.subtitle-row').forEach(row => {
+                const index = parseInt(row.dataset.index);
+                row.addEventListener('click', (e) => handleRowClick(e, index));
+    row.addEventListener('dblclick', () => handleRowDoubleClick(index));
+                row.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    contextMenuIndex = index;
+                    if (!selectedSubtitleIndices.has(index)) {
+                         selectedSubtitleIndices.clear();
+                         selectedSubtitleIndices.add(index);
+                         renderSubtitles(false);
+                    }
+                    contextMenu.style.top = `${e.clientY}px`;
+                    contextMenu.style.left = `${e.clientX}px`;
+                    contextMenu.classList.remove('hidden');
+                    document.getElementById('ctx-menu-merge-prev').style.display = index > 0 ? 'flex' : 'none';
+                    document.getElementById('ctx-menu-merge-next').style.display = index < subtitles.length - 1 ? 'flex' : 'none';
+                });
+            });
+
+            document.querySelectorAll('.style-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    saveState();
+                    const index = parseInt(e.target.dataset.index);
+                    subtitles[index].style = e.target.value;
+                });
+            });
+        };
+        const addSubtitleRegion = (sub) => {
+            if (!wsRegions) return;
+            const isCreating = activeSubtitleIndex > -1 && subtitles[activeSubtitleIndex]?.id === sub.id;
+            const stats = calculateSubtitleStats(sub);
+            const region = wsRegions.addRegion({
+                id: sub.id, start: sub.start, end: sub.end, color: 'rgba(55, 55, 55, 0.7)', drag: true, resize: true,
+            });
+            const content = document.createElement('div');
+            content.className = 'region-content';
+            content.innerHTML = `<div><span class="region-id">${sub.id}</span></div><div class="region-text-line">${stripHtml(sub.text)}</div><div class="region-stats">CPS: ${stats.cps.toFixed(1)} | PPM: ${stats.wpm.toFixed(0)}</div><div class="region-stats text-xs">${stats.lineCounts}</div>`;
+            if(region.element) region.element.appendChild(content);
+        };
+        
+   const setActiveSubtitle = (index, options = {}) => {
+    if (workMode === 'preview' && index !== -1) return;
+    const { fromPlayback = false, focusEditor = workMode === 'edit' } = options;
+
+    if (activeSubtitleIndex > -1 && activeSubtitleIndex !== index) {
+        const oldSub = subtitles[activeSubtitleIndex];
+        if (oldSub && wsRegions) {
+            const oldRegion = wsRegions.getRegions().find(r => r.id == oldSub.id);
+            if (oldRegion) oldRegion.setOptions({ color: 'rgba(55, 55, 55, 0.7)' });
+        }
+    }
+
+    if (activeSubtitleIndex === index && !fromPlayback) return;
+
+    lastActiveSubtitleIndex = activeSubtitleIndex;
+    activeSubtitleIndex = index;
+
+    document.querySelectorAll('.subtitle-row').forEach((row) => row.classList.toggle('active', parseInt(row.dataset.index) === index));
+
+    const originalPreview = document.getElementById('in-video-original-text-preview');
+
+    if (index === -1) {
+        inVideoEditorContainer.classList.add('hidden');
+        inVideoEditorContainer.classList.remove('flex');
+        inVideoEditor.style.cssText = '';
+        document.body.focus();
+        if (originalPreview) originalPreview.classList.add('hidden');
+    } else {
+        const sub = subtitles[index];
+        if (wsRegions) wsRegions.getRegions().find(r => r.id == sub.id)?.setOptions({ color: 'rgba(7, 91, 162, 0.8)' });
+        subtitlePreview.innerHTML = '';
+
+        if (isTranslationMode && sub.originalText) {
+            originalPreview.textContent = sub.originalText;
+            originalPreview.classList.remove('hidden');
+        } else {
+            originalPreview.classList.add('hidden');
+        }
+
+        inVideoEditor.innerHTML = sub.text.replace(/\n/g, '<br>');
+        const styleDefinition = assStyles.find(style => style.Name === sub.style) || assStyles.find(style => style.Name === 'Default');
+        applyAssStyleToElement(inVideoEditor, styleDefinition, 'basic');
+
+        inVideoEditorContainer.classList.remove('hidden');
+        inVideoEditorContainer.classList.add('flex');
+        updateInVideoStats(sub);
+
+        if (focusEditor && !fromPlayback) {
+            setTimeout(() => {
+                focusContentEditable(inVideoEditor, true);
+            }, 0);
+        } else {
+            document.body.focus();
+        }
+
+        const row = subtitleBody.querySelector(`tr[data-index="${index}"]`);
+        if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+};
+
+const updateInVideoStats = (sub) => {
+    const left = document.getElementById('in-video-stats-left');
+    const right = document.getElementById('in-video-stats-right');
+    const translatedStats = calculateSubtitleStats(sub);
+    const origLabel = t('stats_orig'); 
+    const wpmLabel = t('col_name_wpm'); // CORREGIDO: Usa la clave correcta "PPM/WPM"
+
+    if (isTranslationMode) {
+        const originalSub = { ...sub, text: sub.originalText };
+        const originalStats = calculateSubtitleStats(originalSub);
+        left.innerHTML = `<div class="stats-label ${translatedStats.cps > qaSettings.maxCps ? 'warning' : ''}">CPS: ${translatedStats.cps.toFixed(1)} (${origLabel}: ${originalStats.cps.toFixed(1)})</div><div class="stats-label ${translatedStats.wpm > qaSettings.maxWpm ? 'warning' : ''}">${wpmLabel}: ${translatedStats.wpm.toFixed(0)} (${origLabel}: ${originalStats.wpm.toFixed(0)})</div>`;
+        right.innerHTML = translatedStats.cpl.map((len, i) => `<div class="stats-label ${len > qaSettings.maxCpl ? 'warning' : ''}">L${i + 1}: ${len} (${origLabel}: ${originalStats.cpl[i] || 0})</div>`).join('');
+    } else {
+        left.innerHTML = `<div class="stats-label ${translatedStats.cps > qaSettings.maxCps ? 'warning' : ''}">CPS: ${translatedStats.cps.toFixed(1)}</div><div class="stats-label ${translatedStats.wpm > qaSettings.maxWpm ? 'warning' : ''}">${wpmLabel}: ${translatedStats.wpm.toFixed(0)}</div>`;
+        right.innerHTML = translatedStats.cpl.map((len, i) => `<div class="stats-label ${len > qaSettings.maxCpl ? 'warning' : ''}">L${i + 1}: ${len}</div>`).join('');
+    }
+};
+
+const updateTableRow = (index) => {
+    const row = subtitleBody.querySelector(`tr[data-index="${index}"]`);
+    if (!row) return;
+    const sub = subtitles[index];
+    if (!sub) return;
+    const stats = calculateSubtitleStats(sub);
+    const qaIssues = runSingleSubQaCheck(index);
+
+    const textCell = row.querySelector('.col-text .table-text-preview');
+    if (textCell) textCell.innerHTML = sub.text.replace(/\n/g, '<br>');
+
+    const cpsCell = row.querySelector('.col-cps');
+    if (cpsCell) {
+        cpsCell.textContent = stats.cps.toFixed(1);
+        cpsCell.classList.toggle('text-red-400', qaIssues.some(i => i.includes('CPS')));
+    }
+
+    const wpmCell = row.querySelector('.col-wpm');
+    if (wpmCell) {
+        wpmCell.textContent = stats.wpm.toFixed(0);
+        wpmCell.classList.toggle('text-red-400', qaIssues.some(i => i.includes('PPM')));
+    }
+
+    const linesCell = row.querySelector('.col-lines');
+    if (linesCell) {
+        linesCell.innerHTML = stats.lineCounts;
+        linesCell.classList.toggle('text-red-400', qaIssues.some(i => i.includes('CPL')));
+    }
+
+    const qaCell = row.querySelector('.col-qa');
+    if (qaCell) {
+        if (qaIssues.length > 0) {
+            qaCell.innerHTML = `<div data-tooltip="${qaIssues.join('\n')}"><svg class="w-5 h-5 qa-alert-icon mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg></div>`;
+            initializeTooltips();
+        } else {
+            qaCell.innerHTML = '';
+        }
+    }
+    row.classList.toggle('has-error', qaIssues.length > 0);
+};
+
+inVideoEditor.addEventListener('input', () => {
+    if (activeSubtitleIndex === -1) return;
+    const sub = subtitles[activeSubtitleIndex];
+    
+    // 1. Obtenemos el HTML para conservar <b> y <i>
+    let rawHtml = inVideoEditor.innerHTML;
+
+    // 2. Limpieza: Chrome añade <div> para saltos de línea, otros usan <br>
+    // Convertimos todo eso a saltos de línea estándar \n
+    let cleanText = rawHtml
+        .replace(/<br\s*\/?>/gi, '\n')       // <br> a \n
+        .replace(/<div>/gi, '\n')            // <div> a \n (Chrome)
+        .replace(/<\/div>/gi, '')            // Eliminar cierres de div
+        .replace(/&nbsp;/g, ' ');            // Espacios duros a normales
+
+    // 3. Opcional: Limpiar estilos basura si pegan texto de Word (spans, colores, etc.)
+    // Dejamos solo tags básicos permitidos en SRT
+    // (Si confías en que no pegarán cosas raras, esto no es estricto, pero ayuda)
+    
+    sub.text = cleanText.trim(); // Guardamos con etiquetas
+    
+    updateInVideoStats(sub);
+    updateTableRow(activeSubtitleIndex);
+});
+
+inVideoEditor.addEventListener('blur', () => {
+    if (activeSubtitleIndex > -1) {
+        saveState();
+    }
+});
+
+        inVideoEditor.addEventListener('focus', () => { isUserEditing = true; });
+
+        // --- MANEJO DE EVENTOS GENERAL ---
+        playPauseBtn.addEventListener('click', handlePlayPause);
+        setInBtn.addEventListener('click', handleSetInTime);
+        setOutBtn.addEventListener('click', handleSetOutTime);
+        pressAndHoldBtn.addEventListener('mousedown', () => {
+            // Añadimos '!' para forzar el color sobre el gris del hover
+            pressAndHoldBtn.classList.add('!bg-green-500', '!text-white');
+            isPressAndHoldCreating = true;
+            handleSetInTime();
+        });
+        const releasePressAndHold = () => {
+             if (isPressAndHoldCreating) {
+                // Importante: quitar las mismas clases con '!' que añadimos antes
+                pressAndHoldBtn.classList.remove('!bg-green-500', '!text-white');
+                isPressAndHoldCreating = false;
+                handleSetOutTime();
+            }
+        };
+        document.body.addEventListener('mouseup', releasePressAndHold);
+        pressAndHoldBtn.addEventListener('mouseleave', releasePressAndHold);
+        timeFormatToggle.addEventListener('click', () => {
+    timeFormat = timeFormat === 'ms' ? 'frames' : 'ms';
+    renderSubtitles(false);
+    if(wavesurfer) {
+        const currentTime = wavesurfer.getCurrentTime();
+        const duration = wavesurfer.getDuration();
+        // Actualiza el contador principal
+        timecodeDisplay.textContent = formatSrtTime(currentTime);
+
+        // --- LÍNEAS AÑADIDAS ---
+        // Actualiza los contadores de la nueva barra de progreso
+        progressTimeCurrent.textContent = formatSrtTime(currentTime);
+        progressTimeDuration.textContent = formatSrtTime(duration);
+    }
+});
+        fpsInput.addEventListener('change', (e) => {
+            const newFps = parseFloat(e.target.value);
+            if (!isNaN(newFps) && newFps > 0) frameRate = newFps;
+            if (timeFormat === 'frames') renderSubtitles(false);
+        });
+        
+// ==============================================================
+        // === LÓGICA DEL MENÚ HERRAMIENTAS (COLAB) ===
+        // ==============================================================
+
+        const colabUrls = {
+            shots: "https://colab.research.google.com/drive/1bCeP0G84lxv7z9U9yVSHWopOf6AbLVtz?usp=sharing",
+            transcription: "https://colab.research.google.com/drive/1LSuFLyzvPz2Empf48nfvNC5GiYL6-SXq",
+            spotting: "https://colab.research.google.com/drive/1bre-yN-_eaSO4SHV_bGG0irYP-31bT_A?usp=sharing"
+        };
+
+        const openToolModal = (toolType) => {
+            let messageKey = '';
+            let url = '';
+
+            switch (toolType) {
+                case 'shots':
+                    messageKey = 'msg_colab_shots';
+                    url = colabUrls.shots;
+                    break;
+                case 'transcription':
+                    messageKey = 'msg_colab_transcription';
+                    url = colabUrls.transcription;
+                    break;
+                case 'spotting':
+                    messageKey = 'msg_colab_spotting';
+                    url = colabUrls.spotting;
+                    break;
+            }
+
+            // Usamos el modal de confirmación existente para mostrar las instrucciones
+            showConfirmationModal(t(messageKey), () => {
+                window.open(url, 'colab_window', 'width=900,height=700,resizable,scrollbars');
+            });
+        };
+
+        // Conectar los botones del menú
+        document.getElementById('tool-shot-change-btn').addEventListener('click', () => openToolModal('shots'));
+        document.getElementById('tool-auto-transcription-btn').addEventListener('click', () => openToolModal('transcription'));
+        document.getElementById('tool-auto-spotting-btn').addEventListener('click', () => openToolModal('spotting'));
+
+        // ACTUALIZACIÓN: El botón antiguo de la interfaz principal ahora usa esta misma función
+        detectShotsBtn.addEventListener('click', () => openToolModal('shots'));
+
+        // ==============================================================
+        // === FIN LÓGICA HERRAMIENTAS ===
+        // ==============================================================
+
+// Función global para reproducir fragmentos y bucles
+let playLoopUnsub = null;
+let playLoopPauseUnsub = null;
+
+const playFragmentLoop = (start, end, loops = 1) => {
+    if (!wavesurfer || start >= end) return;
+    
+    if (playLoopUnsub) { wavesurfer.un('timeupdate', playLoopUnsub); playLoopUnsub = null; }
+    if (playLoopPauseUnsub) { wavesurfer.un('pause', playLoopPauseUnsub); playLoopPauseUnsub = null; }
+    
+    let currentLoop = 0;
+    wavesurfer.setTime(start);
+    
+    // Le damos un respiro al navegador para colocar el cabezal antes de reproducir
+    setTimeout(() => {
+        wavesurfer.play();
+    }, 50);
+    
+    playLoopUnsub = (currentTime) => {
+        if (currentTime >= end) {
+            currentLoop++;
+            if (currentLoop >= loops) {
+                wavesurfer.pause(); // Al pausar, se limpiará todo automáticamente
+            } else {
+                wavesurfer.setTime(start);
+            }
+        }
+    };
+    
+    playLoopPauseUnsub = () => {
+        if (playLoopUnsub) { wavesurfer.un('timeupdate', playLoopUnsub); playLoopUnsub = null; }
+        if (playLoopPauseUnsub) { wavesurfer.un('pause', playLoopPauseUnsub); playLoopPauseUnsub = null; }
+    };
+    
+    wavesurfer.on('timeupdate', playLoopUnsub);
+    wavesurfer.on('pause', playLoopPauseUnsub);
+};
+
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+    if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+if (e.target === inVideoEditor && e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); setActiveSubtitle(-1); isUserEditing = false; return; }
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || document.querySelector('.modal[style*="flex"]')) return;
+    
+    const actionName = Object.keys(shortcuts).find(name => {
+        const sc = shortcuts[name];
+        return sc.code === e.code && sc.ctrlKey === e.ctrlKey && sc.shiftKey === e.shiftKey && sc.altKey === e.altKey;
+    });
+
+    if (actionName) {
+        e.preventDefault();
+
+const actions = {
+    // --- Reproducción ---
+    playPause: handlePlayPause,
+    playSelectedSub: () => {
+        if (activeSubtitleIndex !== -1) playFragmentLoop(subtitles[activeSubtitleIndex].start, subtitles[activeSubtitleIndex].end, 1);
+    },
+    playSelectionRegion: () => {
+        if (selectionRegion) playFragmentLoop(selectionRegion.start, selectionRegion.end, 1);
+        else showModalAlert('No hay ninguna selección activa en la onda.');
+    },
+    // --- Creación ---
+    setInTime: handleSetInTime,
+    setOutTime: handleSetOutTime,
+    // --- Sincronización ---
+    spottingSetIn: () => {
+        if (activeSubtitleIndex === -1) return;
+        saveState();
+        const sub = subtitles[activeSubtitleIndex];
+        sub.start = videoPlayer.currentTime;
+        renderSubtitles(true);
+    },
+    spottingSetOutAndNext: () => {
+        if (activeSubtitleIndex === -1) return;
+        saveState();
+        const sub = subtitles[activeSubtitleIndex];
+        sub.end = videoPlayer.currentTime;
+        renderSubtitles(true);
+        const nextUnsyncedIndex = subtitles.findIndex((s, i) => i > activeSubtitleIndex && s.start < 0);
+        setActiveSubtitle(nextUnsyncedIndex !== -1 ? nextUnsyncedIndex : -1, { focusEditor: false });
+    },
+    spottingHold: () => {
+        if (activeSubtitleIndex !== -1 && !isSpottingHoldActive) {
+            saveState();
+            isSpottingHoldActive = true;
+            const sub = subtitles[activeSubtitleIndex];
+            sub.start = videoPlayer.currentTime;
+            sub.end = sub.start;
+            renderSubtitles(true);
+        }
+    },
+    // --- Navegación y Búsqueda ---
+    seekBackwardMedium: () => wavesurfer?.skip(-0.5),
+    seekForwardMedium: () => wavesurfer?.skip(0.5),
+    seekBackwardFrame: () => wavesurfer?.skip(-1 / frameRate),
+    seekForwardFrame: () => wavesurfer?.skip(1 / frameRate),
+    goToNextSub: () => { 
+        if (subtitles.length > 0) {
+            setActiveSubtitle((activeSubtitleIndex + 1) % subtitles.length);
+            if (autoPlayNavEnabled && activeSubtitleIndex !== -1) {
+                playFragmentLoop(subtitles[activeSubtitleIndex].start, subtitles[activeSubtitleIndex].end, autoPlayNavLoops);
+            }
+        } 
+    },
+    goToPrevSub: () => { 
+        if (subtitles.length > 0) {
+            setActiveSubtitle((activeSubtitleIndex - 1 + subtitles.length) % subtitles.length);
+            if (autoPlayNavEnabled && activeSubtitleIndex !== -1) {
+                playFragmentLoop(subtitles[activeSubtitleIndex].start, subtitles[activeSubtitleIndex].end, autoPlayNavLoops);
+            }
+        } 
+    },
+    goToNextUntimed: () => {
+        const nextIndex = subtitles.findIndex((s, i) => i > activeSubtitleIndex && s.start < 0);
+        if (nextIndex !== -1) setActiveSubtitle(nextIndex);
+        else showModalAlert('No hay más subtítulos sin sincronizar.');
+    },
+    goToLastTimed: () => {
+        const lastIndex = subtitles.map(s => s.start >= 0).lastIndexOf(true);
+        if (lastIndex !== -1) setActiveSubtitle(lastIndex);
+    },
+    // --- Edición ---
+    splitSub: () => {
+        if (activeSubtitleIndex === -1 || !wavesurfer) return;
+        document.getElementById('ctx-menu-split').click();
+    },
+    mergePrev: () => {
+        if (activeSubtitleIndex <= 0) return;
+        contextMenuIndex = activeSubtitleIndex;
+        document.getElementById('ctx-menu-merge-prev').click();
+    },
+    mergeNext: () => {
+        if (activeSubtitleIndex === -1 || activeSubtitleIndex >= subtitles.length - 1) return;
+        contextMenuIndex = activeSubtitleIndex;
+        document.getElementById('ctx-menu-merge-next').click();
+    },
+    // --- Ajuste Fino ---
+    nudgeForward: () => {
+        const targetIndex = activeSubtitleIndex !== -1 ? activeSubtitleIndex : lastActiveSubtitleIndex;
+        if (targetIndex === -1) return;
+        saveState();
+        subtitles[targetIndex].end += (1 / frameRate);
+        if (activeSubtitleIndex === -1) setActiveSubtitle(targetIndex);
+        renderSubtitles(true);
+    },
+    nudgeBackward: () => {
+        const targetIndex = activeSubtitleIndex !== -1 ? activeSubtitleIndex : lastActiveSubtitleIndex;
+        if (targetIndex === -1) return;
+        const sub = subtitles[targetIndex];
+        if (sub.end - (1 / frameRate) > sub.start) {
+            saveState();
+            sub.end -= (1 / frameRate);
+            if (activeSubtitleIndex === -1) setActiveSubtitle(targetIndex);
+            renderSubtitles(true);
+        }
+    },
+
+ nudgeStartForward: () => { // NUEVO: Ajusta el INICIO (Alt+X)
+                const targetIndex = activeSubtitleIndex !== -1 ? activeSubtitleIndex : lastActiveSubtitleIndex;
+                if (targetIndex === -1) return;
+                const sub = subtitles[targetIndex];
+                if (sub.start + (1 / frameRate) < sub.end) {
+                    saveState();
+                    sub.start += (1 / frameRate);
+                    if (activeSubtitleIndex === -1) setActiveSubtitle(targetIndex);
+                    renderSubtitles(true);
+                }
+            },
+            nudgeStartBackward: () => { // NUEVO: Ajusta el INICIO (Alt+Z)
+                const targetIndex = activeSubtitleIndex !== -1 ? activeSubtitleIndex : lastActiveSubtitleIndex;
+                if (targetIndex === -1) return;
+                saveState();
+                subtitles[targetIndex].start -= (1 / frameRate);
+                if (activeSubtitleIndex === -1) setActiveSubtitle(targetIndex);
+                renderSubtitles(true);
+            },
+
+    correctInTime: () => {
+        const targetIndex = activeSubtitleIndex !== -1 ? activeSubtitleIndex : lastActiveSubtitleIndex;
+        if (targetIndex === -1 || !wavesurfer) return;
+        saveState();
+        subtitles[targetIndex].start = wavesurfer.getCurrentTime();
+        if (activeSubtitleIndex === -1) setActiveSubtitle(targetIndex);
+        renderSubtitles(true);
+    },
+    correctOutTime: () => {
+                const targetIndex = activeSubtitleIndex !== -1 ? activeSubtitleIndex : lastActiveSubtitleIndex;
+                if (targetIndex === -1 || !wavesurfer) return;
+                saveState();
+                subtitles[targetIndex].end = wavesurfer.getCurrentTime();
+                if (activeSubtitleIndex === -1) setActiveSubtitle(targetIndex);
+                renderSubtitles(true);
+            }, // <-- ¡PUNTO CLAVE: Asegúrate de que esta coma está aquí!
+createAndHold: () => {
+                if (!isPressAndHoldCreating) {
+                    isPressAndHoldCreating = true;
+                    // Aquí también añadimos '!' para consistencia
+                    pressAndHoldBtn.classList.add('!bg-green-500', '!text-white');
+                    handleSetInTime();
+                }
+            },
+            // --- LÍNEA AÑADIDA ---
+            createFromSelection: handleCreateSubtitleFromSelection,
+            createSubFromNotepad: () => { document.getElementById('create-sub-from-notepad-btn').click(); },
+            notepadPandaHold: () => { handleNotepadPandaPress(); }
+        };
+
+        if (actions[actionName]) actions[actionName]();
+    }
+    
+});
+
+
+        document.addEventListener('keyup', (e) => {
+            const spottingHoldShortcut = shortcuts.spottingHold;
+            
+            // Lógica para Sincro Rápida (Spotting Hold)
+            if (spottingHoldShortcut && spottingHoldShortcut.code === e.code && isSpottingHoldActive) {
+                e.preventDefault();
+                if (activeSubtitleIndex !== -1) {
+                    const sub = subtitles[activeSubtitleIndex];
+                    sub.end = videoPlayer.currentTime;
+                    renderSubtitles(true);
+                    
+                    // Buscar el siguiente subtítulo que no tenga tiempos (start < 0)
+                    // Mejorado: Busca a partir del índice actual para no volver al principio
+                    const nextUnsyncedIndex = subtitles.findIndex((s, i) => i > activeSubtitleIndex && s.start < 0);
+                    
+                    // Si no encuentra uno delante, busca desde el principio (fallback)
+                    const targetIndex = nextUnsyncedIndex !== -1 
+                        ? nextUnsyncedIndex 
+                        : subtitles.findIndex(s => s.start < 0);
+
+                    setActiveSubtitle(targetIndex, { focusEditor: false });
+                }
+                isSpottingHoldActive = false;
+            }
+
+            // Lógica para el Botón Panda (Create on Press / Close on Release)
+            if (shortcuts.createAndHold?.code === e.code && isPressAndHoldCreating) {
+                e.preventDefault();
+                releasePressAndHold();
+            }
+            
+            // Lógica para el Botón Panda del Bloc de Notas
+            if (shortcuts.notepadPandaHold?.code === e.code && isNotepadPandaCreating) {
+                e.preventDefault();
+                releaseNotepadPanda();
+            }
+        });
+
+
+
+        // --- LÓGICA DEL MENÚ CONTEXTUAL ---
+        const setupContextMenuAction = (id, action) => { document.getElementById(id).addEventListener('click', () => { if (contextMenuIndex !== -1) { saveState(); action(); } }); };
+        setupContextMenuAction('ctx-menu-delete', () => {
+            const sortedIndices = Array.from(selectedSubtitleIndices).sort((a, b) => b - a);
+            sortedIndices.forEach(index => subtitles.splice(index, 1));
+            selectedSubtitleIndices.clear();
+            setActiveSubtitle(-1);
+            renderSubtitles(true);
+        });
+        setupContextMenuAction('ctx-menu-merge-next', () => {
+            if (contextMenuIndex < 0 || contextMenuIndex >= subtitles.length - 1) return;
+            const current = subtitles[contextMenuIndex], next = subtitles[contextMenuIndex + 1];
+            current.end = next.end;
+            current.text += (current.text ? "\n" : "") + next.text;
+            subtitles.splice(contextMenuIndex + 1, 1);
+            if (activeSubtitleIndex === contextMenuIndex + 1) setActiveSubtitle(contextMenuIndex);
+            renderSubtitles(true);
+        });
+        setupContextMenuAction('ctx-menu-merge-prev', () => {
+            if (contextMenuIndex <= 0) return;
+            const current = subtitles[contextMenuIndex], prev = subtitles[contextMenuIndex - 1];
+            prev.end = current.end;
+            prev.text += (prev.text ? "\n" : "") + current.text;
+            subtitles.splice(contextMenuIndex, 1);
+            if (activeSubtitleIndex === contextMenuIndex) setActiveSubtitle(contextMenuIndex - 1);
+            renderSubtitles(true);
+        });
+        setupContextMenuAction('ctx-menu-split', () => {
+            const sub = subtitles[contextMenuIndex];
+            const splitTime = wavesurfer.getCurrentTime();
+            if (splitTime < sub.start || splitTime > sub.end) return showModalAlert(t('alert_head_inside_sub'));
+            if (activeSubtitleIndex !== contextMenuIndex) setActiveSubtitle(contextMenuIndex);
+            
+            // CAMBIO: Lógica para obtener la posición del cursor en un div contenteditable
+            const selection = window.getSelection();
+            let pos = 0;
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const preCaretRange = range.cloneRange();
+                preCaretRange.selectNodeContents(inVideoEditor);
+                preCaretRange.setEnd(range.startContainer, range.startOffset);
+                pos = preCaretRange.toString().length;
+            }
+
+            const newSub = { id: 'temp', start: splitTime, end: sub.end, text: sub.text.substring(pos), style: sub.style };
+            sub.end = splitTime;
+            sub.text = sub.text.substring(0, pos);
+            subtitles.splice(contextMenuIndex + 1, 0, newSub);
+            subtitles.forEach((s, i) => s.id = String(i + 1));
+            renderSubtitles(true);
+            setActiveSubtitle(contextMenuIndex + 1);
+        });
+        document.addEventListener('click', () => { 
+            contextMenu.classList.add('hidden'); contextMenuIndex = -1; 
+            document.getElementById('region-context-menu').classList.add('hidden');
+        });
+        
+        document.getElementById('ctx-region-play').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('region-context-menu').classList.add('hidden');
+            if (selectionRegion) {
+                playFragmentLoop(selectionRegion.start, selectionRegion.end, 1);
+            }
+        });
+
+        document.getElementById('ctx-region-create').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('region-context-menu').classList.add('hidden');
+            handleCreateSubtitleFromSelection();
+        });
+        
+        document.getElementById('ctx-region-clear').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('region-context-menu').classList.add('hidden');
+            if (selectionRegion) { 
+                selectionRegion.remove(); 
+                selectionRegion = null; 
+            }
+        });
+
+        document.getElementById('ctx-sub-play').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('region-context-menu').classList.add('hidden');
+            if (activeSubtitleIndex !== -1) {
+                playFragmentLoop(subtitles[activeSubtitleIndex].start, subtitles[activeSubtitleIndex].end, 1);
+            }
+        });
+
+        document.getElementById('ctx-sub-delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('region-context-menu').classList.add('hidden');
+            if (activeSubtitleIndex !== -1) {
+                saveState();
+                subtitles.splice(activeSubtitleIndex, 1);
+                selectedSubtitleIndices.clear();
+                setActiveSubtitle(-1);
+                renderSubtitles(true);
+            }
+        });
+        
+        const ctxStyleSubmenu = document.getElementById('ctx-style-submenu');
+        document.getElementById('ctx-menu-change-style').addEventListener('mouseenter', () => {
+            const submenuContainer = ctxStyleSubmenu.querySelector('.menu-item-container');
+            submenuContainer.innerHTML = '';
+            assStyles.forEach(style => {
+                const item = document.createElement('div');
+                item.className = 'menu-item';
+                item.textContent = style.Name;
+                item.onclick = () => {
+                    saveState();
+                    selectedSubtitleIndices.forEach(index => {
+                        subtitles[index].style = style.Name;
+                    });
+                    renderSubtitles(false);
+                    contextMenu.classList.add('hidden');
+                };
+                submenuContainer.appendChild(item);
+            });
+            ctxStyleSubmenu.style.display = 'block';
+        });
+        document.getElementById('ctx-menu-change-style').addEventListener('mouseleave', () => {
+            ctxStyleSubmenu.style.display = 'none';
+        });
+
+document.getElementById('update-preview-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    updateStylePreview();
+});
+
+        // --- IMPORTACIÓN / EXPORTACIÓN ---
+        const timeToSecondsSrt = (t) => { const [h, m, s] = t.replace(',', '.').split(':'); return parseFloat(h) * 3600 + parseFloat(m) * 60 + parseFloat(s); };
+        const parseSrt = (content) => {
+    const subs = [];
+    // Normalizamos saltos de línea
+    const blocks = content.replace(/\r/g, '').trim().split(/\n\s*\n/);
+    
+    blocks.forEach(block => {
+        const lines = block.trim().split('\n');
+        // CAMBIO IMPORTANTE: Aceptamos bloques de 2 líneas (ID y Tiempo)
+        if (lines.length >= 2) { 
+            const timeLine = lines[1];
+            // Verificamos que la segunda línea parezca un código de tiempo
+            if (timeLine.includes('-->')) {
+                const [startStr, endStr] = timeLine.split(' --> ');
+                
+                // Si hay líneas después de la 2, son el texto. Si no, texto vacío.
+                const textContent = lines.length > 2 ? lines.slice(2).join('\n') : "";
+                
+                subs.push({ 
+                    id: String(subs.length + 1), 
+                    start: timeToSecondsSrt(startStr), 
+                    end: timeToSecondsSrt(endStr), 
+                    text: textContent, 
+                    style: 'Default' 
+                });
+            }
+        }
+    });
+    return subs;
+};
+        srtLoader.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+isTranslationMode = false;
+                    saveState();
+                    subtitles = parseSrt(ev.target.result);
+                    renderSubtitles(true);
+                    showModalAlert(subtitles.length + " " + t('header_subs').toLowerCase() + " imported."); 
+                    // O para hacerlo perfecto en español/ingles:
+                    showModalAlert(`${subtitles.length} ${currentLang === 'es' ? 'subtítulos importados' : 'subtitles imported'}.`);
+                    } catch (err) { showModalAlert('Error al parsear el archivo SRT.'); console.error("SRT Parse Error:", err); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+        exportSrtBtn.addEventListener('click', () => {
+            if (subtitles.length === 0) return showModalAlert('No hay subtítulos para exportar.');
+            const srt = subtitles.map((s, i) => `${i + 1}\n${formatSrtTime(s.start)} --> ${formatSrtTime(s.end)}\n${s.text}\n`).join('\n');
+            const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'subtitulos.srt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+       
+const loadProjectData = (jsonData, projectName) => {
+    try {
+        saveState();
+        const data = JSON.parse(jsonData);
+        subtitles = data.subtitles || [];
+        shotChanges = data.shotChanges || [];
+        assStyles = data.assStyles || [createDefaultAssStyle()];
+        qaSettings = { ...qaSettings, ...data.qaSettings };
+        frameRate = data.frameRate || 25;
+        fpsInput.value = frameRate;
+        nextSubtitleId = subtitles.length > 0 ? Math.max(...subtitles.map(s => parseInt(s.id, 10) || 0)) + 1 : 1;
+        
+        const notepadOriginalTextarea = document.getElementById('sync-notepad-textarea');
+        const notepadTranslationTextarea = document.getElementById('sync-notepad-trans-textarea');
+        if (notepadOriginalTextarea) notepadOriginalTextarea.value = data.notepadOriginal || '';
+        if (notepadTranslationTextarea) notepadTranslationTextarea.value = data.notepadTranslation || '';
+        if (typeof updateNotepadStats === 'function') updateNotepadStats();
+        
+        renderSubtitles(true);
+        renderShotChanges();
+        applyColumnVisibility(); // Usamos la nueva función de visibilidad
+        showModalAlert(`Proyecto "${projectName}" importado.`);
+        
+        // Añade el proyecto a la lista de recientes
+        addRecentProject(projectName, jsonData);
+    } catch (err) { 
+        showModalAlert('Error al cargar el proyecto.'); 
+        console.error("Project Load Error:", err); 
+    }
+};
+
+// --- INICIO: Lógica de Proyectos Recientes (Versión Modal) ---
+const loadProjectModal = document.getElementById('load-project-modal');
+const openLoadProjectModalBtn = document.getElementById('open-load-project-modal-btn');
+
+const getRecentProjects = () => {
+    const recents = localStorage.getItem('subpanda-recent-projects');
+    return recents ? JSON.parse(recents) : [];
+};
+
+const addRecentProject = (projectName, projectData) => {
+    let recents = getRecentProjects();
+    recents = recents.filter(p => p.name !== projectName);
+    recents.unshift({ name: projectName, data: projectData });
+    recents = recents.slice(0, 3);
+    localStorage.setItem('subpanda-recent-projects', JSON.stringify(recents));
+};
+
+const populateLoadProjectModal = () => {
+    const container = document.getElementById('modal-recent-projects-list');
+    const recents = getRecentProjects();
+    container.innerHTML = '';
+
+    if (recents.length === 0) {
+        container.innerHTML = '<p class="no-recent-projects">No hay proyectos recientes.</p>';
+        return;
+    }
+
+    recents.forEach(project => {
+        const item = document.createElement('button');
+        item.className = 'recent-project-item';
+        item.innerHTML = `<span class="recent-project-item-name">${project.name}</span>`;
+        item.title = project.name;
+        
+        item.addEventListener('click', () => {
+            loadProjectModal.style.display = 'none'; 
+            // Combinamos la traducción con el nombre del proyecto
+            showConfirmationModal(
+                `${t('msg_confirm_load')} ("${project.name}")`, 
+                () => loadProjectData(project.data, project.name)
+            );
+        });
+        container.appendChild(item);
+    });
+};
+
+openLoadProjectModalBtn.addEventListener('click', () => {
+    populateLoadProjectModal();
+    loadProjectModal.style.display = 'flex';
+});
+
+loadProjectModal.querySelector('.close-load-project-modal').addEventListener('click', () => {
+    loadProjectModal.style.display = 'none';
+});
+// --- FIN: Lógica de Proyectos Recientes (Versión Modal) ---
+
+projectLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0]; 
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        loadProjectData(ev.target.result, file.name);
+        loadProjectModal.style.display = 'none'; // Cierra el modal si se carga desde archivo
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});        
+
+   // --- INICIO: Nueva lógica para Guardar Proyecto con ventana modal ---
+const saveProjectModal = document.getElementById('save-project-modal');
+const saveProjectFilenameInput = document.getElementById('save-project-filename-input');
+const confirmSaveProjectBtn = document.getElementById('confirm-save-project-btn');
+const cancelSaveProjectBtn = document.getElementById('cancel-save-project-btn');
+
+exportProjectBtn.addEventListener('click', () => {
+    if (subtitles.length === 0 && shotChanges.length === 0) {
+        showModalAlert(t('msg_nothing_save'));
+        return;
+    }
+    // Generar un nombre de archivo por defecto y mostrar el modal
+    saveProjectFilenameInput.value = `proyecto_subpanda_${new Date().toISOString().slice(0,10)}.json`;
+    saveProjectModal.style.display = 'flex';
+    saveProjectFilenameInput.focus();
+});
+
+confirmSaveProjectBtn.addEventListener('click', () => {
+    const projectName = saveProjectFilenameInput.value.trim();
+    if (!projectName.endsWith('.json')) {
+        showModalAlert(t('msg_json_error'));
+        return;
+    }
+    
+    const notepadOriginal = document.getElementById('sync-notepad-textarea')?.value || '';
+    const notepadTranslation = document.getElementById('sync-notepad-trans-textarea')?.value || '';
+    const projectData = JSON.stringify({ subtitles, shotChanges, assStyles, qaSettings, frameRate, notepadOriginal, notepadTranslation }, null, 2);
+    
+    // Lógica de descarga
+    const blob = new Blob([projectData], { type: 'application/json;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = projectName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    
+    // Añadir a recientes y cerrar modal
+    addRecentProject(projectName, projectData);
+    saveProjectModal.style.display = 'none';
+});
+
+cancelSaveProjectBtn.addEventListener('click', () => {
+    saveProjectModal.style.display = 'none';
+});
+
+saveProjectModal.querySelector('.close-save-project-modal').addEventListener('click', () => {
+    saveProjectModal.style.display = 'none';
+});
+// --- FIN: Nueva lógica para Guardar Proyecto ---
+        
+        // --- MODALES Y VISIBILIDAD ---
+        const updateColumnVisibility = () => {
+            const toggle = (headerId, colClass, isEnabled) => {
+                document.getElementById(headerId).style.display = isEnabled ? '' : 'none';
+                document.querySelectorAll(colClass).forEach(c => c.style.display = isEnabled ? '' : 'none');
+            };
+            toggle('cps-header', '.cps-col', qaSettings.maxCpsEnabled);
+            toggle('wpm-header', '.wpm-col', qaSettings.maxWpmEnabled);
+        };
+
+       const showModalAlert = (message, titleKey = 'modal_title_notification') => {
+            // titleKey ahora busca la traducción o usa el string si no existe
+            const title = t(titleKey) !== titleKey ? t(titleKey) : titleKey;
+            alertModal.innerHTML = `<div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">${title}</h2><button class="close-alert-modal text-2xl font-bold">&times;</button></div><p>${message}</p></div>`;
+            alertModal.style.display = 'flex';
+            alertModal.querySelector('.close-alert-modal').addEventListener('click', () => alertModal.style.display = 'none');
+        };
+
+        const showConfirmationModal = (message, onConfirm) => {
+            confirmationModal.innerHTML = `
+                <div class="modal-content">
+                    <h2 class="text-xl font-bold mb-4">${t('modal_title_confirmation')}</h2>
+                    <p class="mb-6">${message}</p>
+                    <div class="flex justify-end gap-4">
+                        <button id="confirm-cancel" class="text-btn">${t('btn_cancel')}</button>
+                        <button id="confirm-ok" class="text-btn bg-red-600 hover:bg-red-700">${t('btn_confirm')}</button>
+                    </div>
+                </div>`;
+            confirmationModal.style.display = 'flex';
+            document.getElementById('confirm-ok').onclick = () => {
+                onConfirm();
+                confirmationModal.style.display = 'none';
+            };
+            document.getElementById('confirm-cancel').onclick = () => {
+                confirmationModal.style.display = 'none';
+            };
+        };
+
+        // --- ACTUALIZACIÓN: Modal de Ajustes de QA Traducido ---
+qaSettingsModalBtn.addEventListener('click', () => {
+    const createToggleSwitch = (id, isChecked) => `<label class="toggle-switch"><input type="checkbox" id="${id}-toggle" ${isChecked ? 'checked' : ''}><span class="slider"></span></label>`;
+    
+    const createSimpleToggleRow = (id, labelKey, descKey, enabled) => `<div><div class="flex justify-between items-center"><label for="${id}-toggle" class="text-sm font-medium">${t(labelKey)}</label>${createToggleSwitch(id, enabled)}</div><p class="qa-rule-description">${t(descKey)}</p></div>`;
+    
+    const createInputRow = (id, labelKey, descKey, value, enabled, hasUnitSelector = false, unit = 'ms') => `<div><div class="flex justify-between items-center"><label for="${id}-input" class="text-sm font-medium">${t(labelKey)}</label><div class="flex items-center gap-4"><div class="qa-input-group"><input type="number" step="1" id="${id}-input" value="${value}" class="bg-dark-gray border border-light-gray text-sm rounded-lg block w-full p-2.5 qa-input dark-text">${hasUnitSelector ? `<select id="${id}-unit" class="qa-unit-select"><option value="ms" ${unit === 'ms' ? 'selected' : ''}>ms</option><option value="frames" ${unit === 'frames' ? 'selected' : ''}>frames</option></select>` : ''}</div>${createToggleSwitch(id + '-enabled', enabled)}</div></div><p class="qa-rule-description">${t(descKey)}</p></div>`;
+
+    qaSettingsModal.innerHTML = `
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${t('modal_title_qa')}</h2><button class="close-qa-modal text-3xl font-bold hover:text-red-500">&times;</button></div>
+            <div class="space-y-6 overflow-y-auto pr-2" style="max-height: 70vh;"> <div class="qa-group"><h3 class="qa-group-title">${t('qa_cat_timing')}</h3><div class="space-y-4">
+                    ${createInputRow('min-duration', 'qa_lbl_min_dur', 'qa_desc_min_dur', qaSettings.minDuration, qaSettings.minDurationEnabled, true, qaSettings.minDurationUnit)}
+                    ${createInputRow('max-duration', 'qa_lbl_max_dur', 'qa_desc_max_dur', qaSettings.maxDuration, qaSettings.maxDurationEnabled, true, qaSettings.maxDurationUnit)}
+                    ${createInputRow('min-gap-frames', 'qa_lbl_min_gap', 'qa_desc_min_gap', qaSettings.minGapFrames, qaSettings.minGapFramesEnabled, false)}
+                    ${createSimpleToggleRow('overlap-enabled', 'qa_lbl_overlap', 'qa_desc_overlap', qaSettings.overlapEnabled)}
+                </div></div>
+                
+                <div class="qa-group"><h3 class="qa-group-title">${t('qa_cat_speed')}</h3><div class="space-y-4">
+                    ${createInputRow('max-cps', 'qa_lbl_max_cps', 'qa_desc_max_cps', qaSettings.maxCps, qaSettings.maxCpsEnabled)}
+                    ${createInputRow('max-wpm', 'qa_lbl_max_wpm', 'qa_desc_max_wpm', qaSettings.maxWpm, qaSettings.maxWpmEnabled)}
+                    ${createInputRow('max-cpl', 'qa_lbl_max_cpl', 'qa_desc_max_cpl', qaSettings.maxCpl, qaSettings.maxCplEnabled)}
+                    ${createInputRow('max-lines', 'qa_lbl_max_lines', 'qa_desc_max_lines', qaSettings.maxLines, qaSettings.maxLinesEnabled)}
+                </div></div>
+
+                <div class="qa-group"><h3 class="qa-group-title">${t('qa_cat_format')}</h3><div class="space-y-4">
+                    ${createSimpleToggleRow('tag-errors-enabled', 'qa_lbl_tag_errors', 'qa_desc_tag_errors', qaSettings.tagErrorsEnabled)}
+                    ${createSimpleToggleRow('double-spaces-enabled', 'qa_lbl_double_spaces', 'qa_desc_double_spaces', qaSettings.doubleSpacesEnabled)}
+                    ${createSimpleToggleRow('space-after-dash-enabled', 'qa_lbl_space_dash', 'qa_desc_space_dash', qaSettings.spaceAfterDashEnabled)}
+                    ${createSimpleToggleRow('punctuation-pairs-enabled', 'qa_lbl_punct_pairs', 'qa_desc_punct_pairs', qaSettings.punctuationPairsEnabled)}
+                    ${createSimpleToggleRow('lowercase-after-period-enabled', 'qa_lbl_low_period', 'qa_desc_low_period', qaSettings.lowercaseAfterPeriodEnabled)}
+                    ${createSimpleToggleRow('space-after-period-enabled', 'qa_lbl_space_period', 'qa_desc_space_period', qaSettings.spaceAfterPeriodEnabled)}
+                    ${createSimpleToggleRow('quotes-and-period-enabled', 'qa_lbl_quote_period', 'qa_desc_quote_period', qaSettings.quotesAndPeriodEnabled)}
+                </div></div>
+
+                <div class="qa-group"><h3 class="qa-group-title">${t('qa_cat_style')}</h3><div class="space-y-4">
+                    ${createSimpleToggleRow('ellipsis-char-enabled', 'qa_lbl_ellipsis', 'qa_desc_ellipsis', qaSettings.ellipsisCharEnabled)}
+                    ${createSimpleToggleRow('ellipsis-link-enabled', 'qa_lbl_ellipsis_link', 'qa_desc_ellipsis_link', qaSettings.ellipsisLinkEnabled)}
+                    ${createSimpleToggleRow('dialogue-dash-consistency-enabled', 'qa_lbl_dash_cons', 'qa_desc_dash_cons', qaSettings.dialogueDashConsistencyEnabled)}
+                    ${createSimpleToggleRow('cardinal-numbers-enabled', 'qa_lbl_cardinals', 'qa_desc_cardinals', qaSettings.cardinalNumbersEnabled)}
+                    ${createSimpleToggleRow('semicolon-enabled', 'qa_lbl_semicolon', 'qa_desc_semicolon', qaSettings.semicolonEnabled)}
+                    ${createSimpleToggleRow('brackets-enabled', 'qa_lbl_brackets', 'qa_desc_brackets', qaSettings.bracketsEnabled)}
+                    ${createSimpleToggleRow('empty-subs-enabled', 'qa_lbl_empty_subs', 'qa_desc_empty_subs', qaSettings.emptySubsEnabled)}
+                </div></div>
+
+                <button id="save-qa-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4">${t('btn_save')}</button>
+            </div>
+        </div>`;
+    
+    qaSettingsModal.style.display = 'flex';
+    
+    // Lógica de guardado (Esta parte estaba bien en la v5, pero la pongo aquí completa para asegurar)
+    qaSettingsModal.querySelector('.close-qa-modal').addEventListener('click', () => qaSettingsModal.style.display = 'none');
+    
+    qaSettingsModal.querySelector('#save-qa-btn').addEventListener('click', () => {
+        saveState();
+        const getVal = (id) => document.getElementById(id).value;
+        
+        // Esta parte mágica ya funcionaba en la v5: escanea todas las claves de qaSettings
+        // y busca si existe un toggle con ese nombre. Al haber restaurado el HTML con los IDs correctos,
+        // esto volverá a funcionar automáticamente.
+        Object.keys(qaSettings).filter(k => k.endsWith('Enabled')).forEach(key => {
+            const id = key.replace(/([A-Z])/g, '-$1').toLowerCase(); // Convierte camelCase a kebab-case
+            const toggle = document.getElementById(`${id}-toggle`);
+            if (toggle) qaSettings[key] = toggle.checked;
+        });
+
+        qaSettings.minDuration = parseInt(getVal('min-duration-input'), 10) || 1000;
+        qaSettings.minDurationUnit = getVal('min-duration-unit');
+        qaSettings.maxDuration = parseInt(getVal('max-duration-input'), 10) || 7000;
+        qaSettings.maxDurationUnit = getVal('max-duration-unit');
+        qaSettings.minGapFrames = parseInt(getVal('min-gap-frames-input'), 10) || 2;
+        qaSettings.maxCps = parseFloat(getVal('max-cps-input')) || 20;
+        qaSettings.maxWpm = parseInt(getVal('max-wpm-input'), 10) || 180;
+        qaSettings.maxCpl = parseInt(getVal('max-cpl-input'), 10) || 42;
+        qaSettings.maxLines = parseInt(getVal('max-lines-input'), 10) || 2;
+        
+        qaSettingsModal.style.display = 'none';
+        renderSubtitles(false);
+        updateColumnVisibility(); // Asegurar que se actualizan las columnas si cambiamos CPS/WPM
+    });
+});
+        
+        const formatShortcutForDisplay = (shortcut) => {
+            if (!shortcut || !shortcut.code) return 'Ninguno';
+            let parts = [];
+            if (shortcut.ctrlKey) parts.push('Ctrl');
+            if (shortcut.altKey) parts.push('Alt');
+            if (shortcut.shiftKey) parts.push('Shift');
+            let key = shortcut.code.startsWith('Key') ? shortcut.code.substring(3) : shortcut.code;
+            key = key.startsWith('Arrow') ? key.substring(5) : key;
+            if (key === 'Backquote') key = 'º';
+            parts.push(key);
+            return parts.join(' + ');
+        };
+
+        openShortcutsModal.addEventListener('click', () => {
+            tempShortcuts = JSON.parse(JSON.stringify(shortcuts));
+            
+            const groupTranslations = {
+                'Reproducción y sincronización': { es: 'Reproducción y sincronización', en: 'Playback & Synchronization' },
+                'Creación y edición': { es: 'Creación y edición', en: 'Creation & Editing' },
+                'Navegación y ajuste fino': { es: 'Navegación y ajuste fino', en: 'Navigation & Fine Tuning' }
+            };
+
+            let content = `
+                <div class="modal-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">${t('modal_title_shortcuts')}</h2>
+                        <button class="close-shortcuts-modal text-3xl font-bold hover:text-red-500">&times;</button>
+                    </div>
+                    <div id="shortcuts-list" class="space-y-4 mb-6 overflow-y-auto pr-2" style="max-height: 50vh;">`;
+
+            for (const groupName in shortcutGroups) {
+                const translatedGroup = groupTranslations[groupName] ? groupTranslations[groupName][currentLang] : groupName;
+
+                content += `<div>
+                                <h3 class="text-lg font-semibold text-gray-400 mb-2">${translatedGroup}</h3>`;
+                
+                // Inyectamos el bloque de Autoplay dentro del grupo de Navegación
+                if (groupName === 'Navegación y ajuste fino') {
+                    content += `
+                    <div class="flex items-center gap-4 mb-4 p-3 bg-medium-gray rounded-lg border border-light-gray">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="nav-autoplay-cb" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded" ${autoPlayNavEnabled ? 'checked' : ''}>
+                            <label for="nav-autoplay-cb" class="ml-2 text-sm font-medium text-gray-300 cursor-pointer" data-i18n="nav_auto_play">${t('nav_auto_play')}</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="nav-autoplay-loops" min="1" max="10" class="border border-light-gray text-sm rounded-lg w-16 p-1 text-center" style="background-color: var(--dark-gray); color: var(--text-primary);" value="${autoPlayNavLoops}">
+                            <span class="text-sm text-gray-400" data-i18n="nav_loops">${t('nav_loops')}</span>
+                        </div>
+                    </div>`;
+                }
+
+                content += `<div class="space-y-2">`;
+                
+                for (const action in shortcutGroups[groupName]) {
+                    const name = t(`sc_name_${action}`);
+                    const desc = t(`sc_desc_${action}`);
+
+                    content += `
+                        <div class="flex justify-between items-center p-2 bg-dark-gray rounded-lg text-sm">
+                            <div>
+                                <span>${name}</span>
+                                <p class="text-xs text-gray-500">${desc}</p>
+                            </div>
+                            <input type="text" readonly class="shortcut-input text-sm" id="shortcut-input-${action}" value="${formatShortcutForDisplay(tempShortcuts[action])}" data-action="${action}">
+                        </div>`;
+                }
+                content += `</div></div>`;
+            }
+
+            // --- AQUÍ HEMOS AÑADIDO EL BOTÓN DE RESTAURAR ---
+            content += `</div>
+                    <div class="flex justify-between items-center mt-4 pt-4 border-t border-light-gray">
+                         <div>
+                            <button id="import-shortcuts-btn" class="text-btn">${t('btn_import_shortcuts')}</button>
+                            <button id="export-shortcuts-btn" class="text-btn ml-2">${t('btn_export_shortcuts')}</button>
+                            <button id="restore-shortcuts-btn" class="text-btn ml-2 hover:bg-red-900 hover:text-white transition-colors">${t('btn_restore_defaults')}</button> 
+                        </div>
+                        <button id="save-shortcuts-btn" class="text-btn bg-blue-600 hover:bg-blue-700">${t('btn_save')}</button>
+                    </div>
+                </div>`;
+            shortcutsModal.innerHTML = content;
+            shortcutsModal.style.display = 'flex';
+
+            shortcutsModal.querySelector('.close-shortcuts-modal').addEventListener('click', () => shortcutsModal.style.display = 'none');
+            
+            shortcutsModal.querySelector('#save-shortcuts-btn').addEventListener('click', () => {
+                autoPlayNavEnabled = document.getElementById('nav-autoplay-cb').checked;
+                autoPlayNavLoops = parseInt(document.getElementById('nav-autoplay-loops').value, 10) || 1;
+                localStorage.setItem('subpanda-nav-settings', JSON.stringify({ enabled: autoPlayNavEnabled, loops: autoPlayNavLoops }));
+                
+                shortcuts = JSON.parse(JSON.stringify(tempShortcuts));
+                localStorage.setItem('subpanda-shortcuts', JSON.stringify(shortcuts));
+                showModalAlert(t('msg_shortcuts_saved'));
+                shortcutsModal.style.display = 'none';
+            });
+            
+            shortcutsModal.querySelector('#export-shortcuts-btn').addEventListener('click', () => {
+                const blob = new Blob([JSON.stringify(shortcuts, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'atajos_subpanda.json';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+            
+            shortcutsModal.querySelector('#import-shortcuts-btn').addEventListener('click', () => shortcutsLoader.click());
+
+            // --- LÓGICA DEL NUEVO BOTÓN RESTAURAR ---
+            shortcutsModal.querySelector('#restore-shortcuts-btn').addEventListener('click', () => {
+                if (confirm(t('msg_confirm_restore'))) {
+                    // 1. Copiamos los defaults sobre los temporales
+                    tempShortcuts = JSON.parse(JSON.stringify(defaultShortcuts));
+                    
+                    // 2. Actualizamos visualmente todos los inputs ahora mismo
+                    shortcutsModal.querySelectorAll('.shortcut-input').forEach(input => {
+                        const action = input.dataset.action;
+                        if (tempShortcuts[action]) {
+                            input.value = formatShortcutForDisplay(tempShortcuts[action]);
+                        }
+                    });
+                }
+            });
+            // -----------------------------------------
+
+            shortcutsModal.querySelectorAll('.shortcut-input').forEach(input => {
+                input.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    const action = e.target.dataset.action;
+                    if (e.key === 'Escape') {
+                         e.target.value = formatShortcutForDisplay(tempShortcuts[action]);
+                         e.target.blur();
+                         return;
+                    }
+                    if (e.key === 'Backspace' || e.key === 'Delete') {
+                        tempShortcuts[action] = {};
+                    } else {
+                        tempShortcuts[action] = {
+                            code: e.code,
+                            altKey: e.altKey,
+                            ctrlKey: e.ctrlKey,
+                            shiftKey: e.shiftKey
+                        };
+                    }
+                    e.target.value = formatShortcutForDisplay(tempShortcuts[action]);
+                });
+                input.addEventListener('focus', (e) => e.target.value = t('input_press_key'));
+                input.addEventListener('blur', (e) => e.target.value = formatShortcutForDisplay(tempShortcuts[e.target.dataset.action]));
+            });
+        });
+        
+        shortcutsLoader.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if (Object.keys(imported).every(key => defaultShortcuts.hasOwnProperty(key))) {
+                        shortcuts = imported;
+                        localStorage.setItem('subpanda-shortcuts', JSON.stringify(shortcuts));
+                        showModalAlert(t('msg_shortcuts_imported'));
+                        shortcutsModal.style.display = 'none';
+                    } else {
+                        showModalAlert('El archivo de atajos no es válido.');
+                    }
+                } catch (err) { showModalAlert(t('msg_shortcuts_error')); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === shortcutsModal) shortcutsModal.style.display = 'none';
+            if (e.target === alertModal) alertModal.style.display = 'none';
+            if (e.target === qaSettingsModal) qaSettingsModal.style.display = 'none';
+            if (e.target === qaReviewModal) qaReviewModal.style.display = 'none';
+            if (e.target === backupModal) backupModal.style.display = 'none';
+            if (e.target === confirmationModal) confirmationModal.style.display = 'none';
+            if (e.target === pdfNameModal) pdfNameModal.style.display = 'none';
+            if (e.target === assStyleEditorModal) assStyleEditorModal.style.display = 'none';
+        });
+
+        // --- DETECCIÓN DE CAMBIOS DE PLANO ---
+       
+const renderShotChanges = () => {
+    if (!wsRegions) return;
+    wsRegions.getRegions().filter(r => r.id.startsWith('shot_')).forEach(r => r.remove());
+    shotChanges.forEach((time, i) => {
+        wsRegions.addRegion({
+            id: `shot_${i}`,
+            start: time,
+            end: time + 0.01,
+            color: 'rgba(255, 255, 255, 0.7)',
+            attributes: { 'data-shot-change': 'true' },
+            drag: false,
+            resize: false
+        });
+    });
+};
+
+const detectSceneChangesFFmpeg = async (options = {}) => {
+    const videoFile = videoLoader.files[0];
+    if (!videoPlayer.src || !videoFile) {
+        return showModalAlert(t('msg_load_video_first'));
+    }
+    const { threshold = 0.4 } = options;
+    isDetectionCancelled = false;
+    detectShotsBtn.disabled = true;
+    progressModal.style.display = 'flex';
+    shotDetectionProgressBar.style.width = '0%';
+    shotDetectionProgressText.textContent = t('msg_shot_analysis');
+    shotChanges = [];
+
+    try {
+        if (!ffmpeg) {
+            ffmpeg = new FFmpeg.FFmpeg();
+            ffmpeg.on('log', ({ message }) => {
+                if (message.includes('pts_time:')) {
+                    const match = message.match(/pts_time:([\d.]+)/);
+                    if (match && match[1]) { shotChanges.push(parseFloat(match[1])); }
+                }
+            });
+            await ffmpeg.load({ coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js" });
+        }
+        ffmpeg.on('progress', ({ progress }) => {
+            const progressPercent = Math.round(progress * 100);
+            if (progressPercent > 0 && progressPercent <= 100) {
+                 shotDetectionProgressBar.style.width = `${progressPercent}%`;
+                 shotDetectionProgressText.textContent = `${t('msg_processing')} ${progressPercent}%`;
+            }
+        });
+        
+        shotDetectionProgressText.textContent = t('msg_preparing_file');
+        await ffmpeg.writeFile(videoFile.name, await FFmpeg.fetchFile(videoFile));
+        
+        shotDetectionProgressText.textContent = t('msg_analyzing');
+        await ffmpeg.exec(['-i', videoFile.name, '-vf', `select='gt(scene,${threshold})',showinfo`, '-f', 'null', '-']);
+
+        if (!isDetectionCancelled) {
+            renderShotChanges();
+            showModalAlert(`${shotChanges.length} ${t('alert_shots_detected')}`);
+        }
+    } catch (err) {
+        console.error("Error en detección con FFmpeg:", err);
+        showModalAlert(t('alert_ffmpeg_error'));
+    } finally {
+        progressModal.style.display = 'none';
+        detectShotsBtn.disabled = false;
+    }
+};
+
+cancelDetectionBtn.addEventListener('click', () => { 
+    isDetectionCancelled = true; 
+    if (ffmpeg) {
+        // Esta función intenta detener el proceso en curso en ffmpeg.wasm
+        ffmpeg.terminate();
+        ffmpeg = null; // Forzamos la recarga en el próximo uso
+    }
+});
+
+        // --- TOOLTIPS, RESIZERS, DRAG & DROP ---
+        const initializeTooltips = () => {
+            document.querySelectorAll('[data-tooltip]').forEach(elem => {
+                elem.addEventListener('mouseenter', (e) => {
+                    const target = e.currentTarget;
+                    tooltip.textContent = target.dataset.tooltip;
+                    tooltip.style.display = 'block';
+                    const rect = target.getBoundingClientRect();
+                    let top = rect.bottom + 8, left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
+                    if (top + tooltip.offsetHeight > window.innerHeight) top = rect.top - tooltip.offsetHeight - 8;
+                    if (left < 0) left = 8;
+                    if (left + tooltip.offsetWidth > window.innerWidth) left = window.innerWidth - tooltip.offsetWidth - 8;
+                    tooltip.style.left = `${left}px`;
+                    tooltip.style.top = `${top}px`;
+                    setTimeout(() => { tooltip.style.opacity = '1'; tooltip.style.transform = 'scale(1) translateY(0)'; }, 10);
+                });
+                elem.addEventListener('mouseleave', () => {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.transform = 'scale(0.95) translateY(10px)';
+                    setTimeout(() => { if (tooltip.style.opacity === '0') tooltip.style.display = 'none'; }, 200);
+                });
+            });
+        };
+        resizer.addEventListener('mousedown', () => {
+            document.addEventListener('mousemove', handlePanelResize);
+            document.addEventListener('mouseup', () => document.removeEventListener('mousemove', handlePanelResize), { once: true });
+        });
+        function handlePanelResize(e) {
+            const containerRect = resizer.parentElement.getBoundingClientRect();
+            let leftWidth = e.clientX - containerRect.left;
+            if (leftWidth < 400) leftWidth = 400;
+            if (leftWidth > containerRect.width - 300) leftWidth = containerRect.width - 300;
+            const leftPercentage = (leftWidth / containerRect.width) * 100;
+            leftPanel.style.width = `${leftPercentage}%`;
+            rightPanel.style.width = `${100 - leftPercentage}%`;
+        }
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dragOverlay.classList.remove('visible');
+            const file = e.dataTransfer.files[0];
+            if (file?.type.startsWith('video/')) loadVideoFile(file);
+            else showModalAlert('Por favor, arrastra un archivo de vídeo válido.');
+        });
+        ['dragenter', 'dragover'].forEach(ev => document.body.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dragOverlay.classList.add('visible'); }));
+        ['dragleave', 'drop'].forEach(ev => document.body.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dragOverlay.classList.remove('visible'); }));
+        
+        // --- LÓGICA DE COPIA DE SEGURIDAD ---
+        const saveBackup = () => {
+            try {
+                const projectData = { subtitles, shotChanges, assStyles, qaSettings, frameRate };
+                localStorage.setItem('subpanda-backup', JSON.stringify(projectData));
+                localStorage.setItem('subpanda-backup-timestamp', new Date().toISOString());
+                updateBackupTimestamp();
+            } catch (error) { console.error("Error saving backup:", error); }
+        };
+        const updateBackupTimestamp = () => {
+            const ts = localStorage.getItem('subpanda-backup-timestamp');
+            // Usamos t('backup_saved_at') y t('backup_empty')
+            lastBackupTimeEl.textContent = ts ? `${t('backup_saved_at')} ${new Date(ts).toLocaleTimeString()}.` : t('backup_empty');
+        };
+        const getBackupData = () => {
+            const json = localStorage.getItem('subpanda-backup');
+            if (!json) { showModalAlert('No se encontró copia de seguridad.'); return null; }
+            try { return JSON.parse(json); } 
+            catch (e) { showModalAlert('Error al leer la copia de seguridad.'); return null; }
+        };
+        openBackupModalBtn.addEventListener('click', () => { updateBackupTimestamp(); backupModal.style.display = 'flex'; });
+        backupModal.querySelector('.close-backup-modal').addEventListener('click', () => backupModal.style.display = 'none');
+        restoreBackupBtn.addEventListener('click', () => {
+            const data = getBackupData(); if (!data) return;
+            saveState();
+            subtitles = data.subtitles || [];
+            shotChanges = data.shotChanges || [];
+            assStyles = data.assStyles || [createDefaultAssStyle()];
+            qaSettings = { ...qaSettings, ...data.qaSettings };
+            frameRate = data.frameRate || 25;
+            fpsInput.value = frameRate;
+            nextSubtitleId = subtitles.length > 1 ? Math.max(...subtitles.map(s => parseInt(s.id, 10))) + 1 : 1;
+            renderSubtitles(true);
+            renderShotChanges();
+            updateColumnVisibility();
+            showModalAlert(t('msg_backup_restored'));
+            backupModal.style.display = 'none';
+        });
+        exportBackupJsonBtn.addEventListener('click', () => {
+            const data = getBackupData(); if (!data) return;
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'backup_subpanda.json';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+        exportBackupSrtBtn.addEventListener('click', () => {
+            const data = getBackupData();
+            if (!data || data.subtitles.length === 0) return showModalAlert(t('alert_no_subs_export'));
+            const srt = data.subtitles.sort((a,b) => a.start - b.start).map((s, i) => `${i + 1}\n${formatSrtTime(s.start)} --> ${formatSrtTime(s.end)}\n${s.text}\n`).join('\n');
+            const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'backup_subtitulos.srt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+       
+
+        // --- Lógica de Modos de Trabajo ---
+        const setWorkMode = (mode) => {
+            workMode = mode;
+            
+            // Limpiamos el estado visual de los botones
+            modeEditBtn.classList.remove('bg-blue-600');
+            modeSyncBtn.classList.remove('bg-blue-600');
+            modePreviewBtn.classList.remove('bg-blue-600');
+
+            // --- NUEVO: Gestión de visibilidad del Preview ASS ---
+            // Usamos la clase '!hidden' de Tailwind para forzar la ocultación
+            // ignorando los estilos inline que pone el renderizador ASS.
+            if (mode === 'preview') {
+                subtitlePreview.classList.remove('!hidden');
+            } else {
+                subtitlePreview.classList.add('!hidden');
+            }
+            // -----------------------------------------------------
+
+            if (mode === 'edit') {
+                workModeDisplay.textContent = t('mode_edit');
+                modeEditBtn.classList.add('bg-blue-600');
+            } else if (mode === 'sync') {
+                workModeDisplay.textContent = t('mode_sync');
+                modeSyncBtn.classList.add('bg-blue-600');
+            } else if (mode === 'preview') {
+                workModeDisplay.textContent = t('mode_preview');
+                modePreviewBtn.classList.add('bg-blue-600');
+                // Al entrar en preview, deseleccionamos el subtítulo actual para ver el vídeo limpio
+                if (activeSubtitleIndex !== -1) {
+                    setActiveSubtitle(-1);
+                }
+            }
+        };
+
+        modeEditBtn.addEventListener('click', () => setWorkMode('edit'));
+        modeSyncBtn.addEventListener('click', () => setWorkMode('sync'));
+modePreviewBtn.addEventListener('click', () => setWorkMode('preview'));
+        
+// --- INICIO: Lógica de visibilidad de columnas ---
+const loadColumnVisibility = () => {
+    const saved = localStorage.getItem('subpanda-column-visibility');
+    if (saved) {
+        columnVisibility = JSON.parse(saved);
+    } else {
+        // Estado por defecto: todas visibles
+        columnConfig.forEach(col => { columnVisibility[col.id] = true; });
+    }
+};
+
+const saveColumnVisibility = () => {
+    localStorage.setItem('subpanda-column-visibility', JSON.stringify(columnVisibility));
+};
+
+const applyColumnVisibility = () => {
+    columnConfig.forEach(col => {
+        const isVisible = columnVisibility[col.id];
+        const displayValue = isVisible ? '' : 'none';
+        
+        const header = document.getElementById(col.headerId);
+        if (header) header.style.display = displayValue;
+
+        // Necesitamos ser más específicos para aplicar a las celdas correctas
+        document.querySelectorAll(`.col-${col.id}`).forEach(cell => {
+            cell.style.display = displayValue;
+        });
+    });
+};
+
+const populateColumnsMenu = () => {
+    const container = document.getElementById('columns-menu-container');
+    container.innerHTML = ''; 
+    columnConfig.forEach(col => {
+        const item = document.createElement('div');
+        item.className = 'menu-item';
+        const translatedName = t(`col_name_${col.id}`);
+        
+        item.innerHTML = `
+            <input type="checkbox" id="toggle-col-${col.id}" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded" ${columnVisibility[col.id] ? 'checked' : ''}>
+            <label for="toggle-col-${col.id}" class="ml-2 text-sm font-medium text-gray-300 cursor-pointer" data-i18n="col_name_${col.id}">${translatedName}</label>
+        `;
+        
+        const checkbox = item.querySelector('input');
+        checkbox.addEventListener('change', () => {
+            columnVisibility[col.id] = checkbox.checked;
+            saveColumnVisibility();
+            applyColumnVisibility();
+        });
+        item.addEventListener('click', (e) => e.stopPropagation());
+        container.appendChild(item);
+    });
+};
+
+const makeTableColumnsResizable = () => {
+    const table = document.getElementById('subtitle-grid');
+    const headers = table.querySelectorAll('th');
+
+    headers.forEach(th => {
+        // Si ya tiene resizer, lo borramos para no duplicar
+        const existingResizer = th.querySelector('.th-resizer');
+        if (existingResizer) existingResizer.remove();
+
+        const resizer = document.createElement('div');
+        resizer.className = 'th-resizer';
+        th.appendChild(resizer);
+
+        let startX, startWidth;
+
+        const onMouseMove = (e) => {
+            if (startX !== undefined) {
+                const diff = e.pageX - startX;
+                // Mínimo 30px para no colapsar la columna
+                const newWidth = Math.max(30, startWidth + diff); 
+                th.style.width = `${newWidth}px`;
+            }
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            startX = undefined;
+            document.body.style.cursor = '';
+            // Opcional: Guardar anchos en localStorage aquí si quisieras persistencia
+        };
+
+        resizer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Evita que se ordene la columna si tuviera esa función
+            startX = e.pageX;
+            startWidth = th.offsetWidth;
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            document.body.style.cursor = 'col-resize';
+        });
+        
+        // Evitar que el click en el resizer se propague al th
+        resizer.addEventListener('click', (e) => e.stopPropagation());
+    });
+};
+
+
+// --- FIN: Lógica de visibilidad de columnas ---
+
+
+        // --- CONTROLES DE VOLUMEN Y VELOCIDAD ---
+        volumeSliderH.addEventListener('input', (e) => {
+            const volume = parseFloat(e.target.value);
+            videoPlayer.volume = volume;
+            volumeValue.textContent = `${Math.round(volume * 100)}%`;
+        });
+
+zoomSliderH.addEventListener('input', (e) => {
+    const zoom = Number(e.target.value);
+    if (wavesurfer) wavesurfer.zoom(zoom);
+    zoomValue.textContent = zoom;
+});       
+
+        speedSliderH.addEventListener('input', (e) => {
+            const speedIndex = parseInt(e.target.value, 10);
+            const speed = speedLevels[speedIndex];
+            videoPlayer.playbackRate = speed;
+            speedValue.textContent = `${speed}x`;
+        });
+
+        // --- LÓGICA DE ASS ---
+        const timeToSecondsAss = (t) => { const [h, m, s] = t.split(':'); return parseInt(h, 10) * 3600 + parseInt(m, 10) * 60 + parseFloat(s); };
+        const formatAssTime = (time) => {
+            if (isNaN(time) || time < 0) return '0:00:00.00';
+            const hours = Math.floor(time / 3600);
+            const minutes = Math.floor((time % 3600) / 60);
+            const seconds = Math.floor(time % 60);
+            const centiseconds = Math.round((time - Math.floor(time)) * 100);
+            return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(centiseconds).padStart(2, '0')}`;
+        };
+
+        const parseAss = (content) => {
+            const lines = content.replace(/\r/g, '').split('\n');
+            let stylesSection = false, eventsSection = false;
+            let styleFormat = [], eventFormat = [];
+            const parsedStyles = [];
+            const parsedSubtitles = [];
+
+            lines.forEach(line => {
+                if (line.trim() === '[V4+ Styles]') { stylesSection = true; eventsSection = false; return; }
+                if (line.trim() === '[Events]') { eventsSection = true; stylesSection = false; return; }
+                if (line.trim().startsWith('[')) { stylesSection = false; eventsSection = false; return; }
+
+                if (stylesSection && line.startsWith('Format:')) {
+                    styleFormat = line.substring(8).split(',').map(s => s.trim());
+                } else if (stylesSection && line.startsWith('Style:')) {
+                    const values = line.substring(7).split(',');
+                    const styleObj = {};
+                    styleFormat.forEach((key, i) => { styleObj[key] = values[i]?.trim(); });
+                    parsedStyles.push(styleObj);
+                } else if (eventsSection && line.startsWith('Format:')) {
+                    eventFormat = line.substring(8).split(',').map(s => s.trim());
+                } else if (eventsSection && line.startsWith('Dialogue:')) {
+                    const values = line.substring(10).split(',');
+                    const eventObj = {};
+                    eventFormat.forEach((key, i) => { eventObj[key] = values[i]?.trim(); });
+                    
+                    // Re-join text field if it contained commas
+                    const textIndex = eventFormat.indexOf('Text');
+                    if (textIndex !== -1 && values.length > eventFormat.length) {
+                        eventObj.Text = values.slice(textIndex).join(',');
+                    }
+
+                    parsedSubtitles.push({
+                        id: String(parsedSubtitles.length + 1),
+                        start: timeToSecondsAss(eventObj.Start),
+                        end: timeToSecondsAss(eventObj.End),
+                        text: eventObj.Text.replace(/\\N/g, '\n'),
+                        style: eventObj.Style
+                    });
+                }
+            });
+
+            return { styles: parsedStyles, subtitles: parsedSubtitles };
+        };
+
+        
+// --- INICIO DEL BLOQUE CORREGIDO ---
+
+assLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            // AÑADE ESTA LÍNEA QUE FALTABA
+            isTranslationMode = false; 
+
+            saveState();
+            const parsed = parseAss(ev.target.result);
+            assStyles = parsed.styles.length > 0 ? parsed.styles : [createDefaultAssStyle()];
+            subtitles = parsed.subtitles;
+            renderSubtitles(true);
+            showModalAlert(`${subtitles.length} subtítulos y ${assStyles.length} estilos importados de .ASS`);
+        } catch (err) { showModalAlert('Error al parsear el archivo ASS.'); console.error("ASS Parse Error:", err); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+// ESTE ES EL BLOQUE DEL TRADUCTOR, AHORA EN SU PROPIO SITIO
+const translationLoader = document.getElementById('translation-loader');
+translationLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            saveState();
+            let parsedSubs;
+            if (file.name.endsWith('.srt')) {
+                parsedSubs = parseSrt(ev.target.result);
+            } else if (file.name.endsWith('.ass')) {
+                const parsed = parseAss(ev.target.result);
+                assStyles = parsed.styles.length > 0 ? parsed.styles : [createDefaultAssStyle()];
+                parsedSubs = parsed.subtitles;
+            } else {
+                showModalAlert('Formato de archivo no soportado para traducción.');
+                return;
+            }
+
+            // Activa el modo traducción y prepara los subtítulos
+            isTranslationMode = true;
+            subtitles = parsedSubs.map(sub => ({
+                ...sub,
+                originalText: sub.text,
+                text: ''
+            }));
+
+            renderSubtitles(true);
+            showModalAlert(`Modo Traducción activado. ${subtitles.length} subtítulos cargados para traducir.`);
+
+        } catch (err) {
+            showModalAlert('Error al parsear el archivo para traducir.');
+            console.error("Translation Parse Error:", err);
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+// --- CÓDIGO AÑADIDO PARA IMPORTAR CAMBIOS DE PLANO ---
+        shotChangeLoader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const content = ev.target.result;
+                    // Limpiamos saltos de línea de Windows (\r) y separamos por cada línea
+                    const lines = content.replace(/\r/g, '').trim().split('\n');
+                    
+                    shotChanges = []; // Limpiamos el array existente
+                    
+                    lines.forEach(line => {
+                        // Convertimos la línea (ej: "10.04") a un número
+                        const time = parseFloat(line.trim());
+                        // Si es un número válido, lo añadimos
+                        if (!isNaN(time) && time >= 0) {
+                            shotChanges.push(time);
+                        }
+                    });
+                    
+                    // Ordenamos los tiempos por si acaso el .txt viniera desordenado
+                    shotChanges.sort((a, b) => a - b); 
+                    
+                    if (wavesurfer) {
+                        // ¡Esta es tu función! La llamamos para que dibuje las líneas
+                        renderShotChanges();
+                        showModalAlert(`${shotChanges.length} cambios de plano importados y visualizados.`);
+                    } else {
+                        // Si no hay vídeo, los guardamos para cuando se cargue
+                        showModalAlert(`${shotChanges.length} cambios de plano importados. Se mostrarán al cargar un vídeo.`);
+                    }
+
+                } catch (err) { 
+                    showModalAlert('Error al leer el archivo de cambios de plano.'); 
+                    console.error("Shot Change Parse Error:", err); 
+                }
+            };
+            
+            reader.readAsText(file);
+            e.target.value = ''; // Resetea el input para poder cargar el mismo archivo otra vez
+        });
+        // --- FIN DEL CÓDIGO AÑADIDO ---
+
+
+// --- FIN DEL BLOQUE CORREGIDO ---
+
+
+
+  
+        exportAssBtn.addEventListener('click', () => {
+            if (subtitles.length === 0) return showModalAlert(t('alert_no_subs_export'));
+            
+            const scriptInfo = `[Script Info]
+Title: Subpanda Project
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+
+`;
+            const styleHeader = `[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+`;
+            const styleLines = assStyles.map(s => `Style: ${Object.values(s).join(',')}`).join('\n');
+
+            const eventHeader = `
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+            
+            // FUNCIÓN HELPER PARA CONVERTIR HTML A TAGS ASS
+            const htmlToAssTags = (text) => {
+                let assText = text.replace(/\n/g, '\\N'); // Saltos de línea
+                
+                // Negrita <b> o <strong> -> {\b1}...{\b0}
+                assText = assText.replace(/<b>/gi, '{\\b1}').replace(/<\/b>/gi, '{\\b0}');
+                assText = assText.replace(/<strong>/gi, '{\\b1}').replace(/<\/strong>/gi, '{\\b0}');
+                
+                // Cursiva <i> o <em> -> {\i1}...{\i0}
+                assText = assText.replace(/<i>/gi, '{\\i1}').replace(/<\/i>/gi, '{\\i0}');
+                assText = assText.replace(/<em>/gi, '{\\i1}').replace(/<\/em>/gi, '{\\i0}');
+                
+                // Subrayado <u> -> {\u1}...{\u0}
+                assText = assText.replace(/<u>/gi, '{\\u1}').replace(/<\/u>/gi, '{\\u0}');
+
+                return assText;
+            };
+
+            const eventLines = subtitles
+                .sort((a, b) => a.start - b.start)
+                .map(s => `Dialogue: 0,${formatAssTime(s.start)},${formatAssTime(s.end)},${s.style},,0,0,0,,${htmlToAssTags(s.text)}`)
+                .join('\n');
+
+            const assContent = scriptInfo + styleHeader + styleLines + eventHeader + eventLines;
+            const blob = new Blob([assContent], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'subtitulos.ass';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+// --- REEMPLAZA LA FUNCIÓN ANTIGUA POR ESTA VERSIÓN COMPLETA ---
+const applyAssStyleToElement = (element, style, mode = 'full') => {
+    if (!element || !style) return;
+
+    element.style.cssText = ''; // Reseteamos estilos anteriores
+
+    // --- ESTILOS BÁSICOS (Tipografía) ---
+    element.style.fontFamily = style.Fontname || 'Arial';
+    
+    // CONFIGURACIÓN IMPORTANTE: Negrita y Cursiva
+    element.style.fontWeight = style.Bold === '-1' ? 'bold' : 'normal';
+    element.style.fontStyle = style.Italic === '-1' ? 'italic' : 'normal';
+
+    // Decoraciones (Subrayado / Tachado)
+    let textDecorations = [];
+    if (style.Underline === '-1') textDecorations.push('underline');
+    if (style.StrikeOut === '-1') textDecorations.push('line-through');
+    element.style.textDecoration = textDecorations.length > 0 ? textDecorations.join(' ') : 'none';
+
+    // === MODO EDICIÓN (BASIC) ===
+    // Aquí forzamos un tamaño cómodo para trabajar y reseteamos colores
+    if (mode === 'basic') {
+        element.style.fontSize = '18px'; // Tamaño fijo y cómodo para editar
+        element.style.lineHeight = '1.5';
+        element.style.color = 'var(--text-primary)';
+        element.style.textAlign = 'center';
+        // Opcional: Añadir un poco de sombra suave para legibilidad sobre vídeo
+        element.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)'; 
+        return; // Terminamos aquí para el modo edición
+    }
+
+    // === MODO VISTA PREVIA (FULL) ===
+    // Aquí sí aplicamos el tamaño real del subtítulo y todos los efectos
+    
+    // 1. Tamaño y Espaciado Real
+    element.style.fontSize = style.Fontsize ? `${style.Fontsize}px` : '28px';
+    element.style.letterSpacing = style.Spacing ? `${style.Spacing}px` : 'normal';
+    
+    // 2. Colores
+    element.style.color = assColorToHex(style.PrimaryColour);
+    element.style.padding = '0.1em 0.25em'; 
+
+    // 3. Bordes y Sombras (Caja Opaca vs Contorno)
+    if (style.BorderStyle === '3') {
+        element.style.backgroundColor = assColorToHex(style.OutlineColour);
+        element.style.textShadow = 'none';
+    } else {
+        element.style.backgroundColor = 'transparent';
+        let textShadows = [];
+        const outlineWidth = parseFloat(style.Outline) || 0;
+        if (outlineWidth > 0) {
+            const outlineColor = assColorToHex(style.OutlineColour);
+            for (let x = -outlineWidth; x <= outlineWidth; x += 0.5) {
+                for (let y = -outlineWidth; y <= outlineWidth; y += 0.5) {
+                    if (x*x + y*y <= outlineWidth*outlineWidth) {
+                        textShadows.push(`${x}px ${y}px 0 ${outlineColor}`);
+                    }
+                }
+            }
+        }
+        const shadowDepth = parseFloat(style.Shadow) || 0;
+        if (shadowDepth > 0) {
+            const shadowColor = assColorToHex(style.BackColour);
+            textShadows.push(`${shadowDepth}px ${shadowDepth}px 2px ${shadowColor}`);
+        }
+        if (textShadows.length > 0) element.style.textShadow = textShadows.join(', ');
+    }
+
+    // 4. Transformaciones (Escala y Rotación)
+    let transforms = [];
+    const scaleX = (parseFloat(style.ScaleX) || 100) / 100;
+    const scaleY = (parseFloat(style.ScaleY) || 100) / 100;
+    if (scaleX !== 1 || scaleY !== 1) transforms.push(`scale(${scaleX}, ${scaleY})`);
+    
+    const angle = parseFloat(style.Angle) || 0;
+    if (angle !== 0) transforms.push(`rotate(${angle}deg)`);
+
+    // 5. Posicionamiento
+    const alignment = parseInt(style.Alignment, 10);
+    const marginL = style.MarginL || '10', marginR = style.MarginR || '10', marginV = style.MarginV || '10';
+    
+    element.style.position = 'absolute';
+    element.style.bottom = 'auto'; element.style.top = 'auto'; 
+    element.style.left = 'auto'; element.style.right = 'auto';
+
+    let alignTransforms = [];
+
+    switch (alignment) {
+        case 1: element.style.bottom = `${marginV}px`; element.style.left = `${marginL}px`; element.style.textAlign = 'left'; break;
+        case 2: element.style.bottom = `${marginV}px`; element.style.left = '50%'; alignTransforms.push('translateX(-50%)'); element.style.textAlign = 'center'; break;
+        case 3: element.style.bottom = `${marginV}px`; element.style.right = `${marginR}px`; element.style.textAlign = 'right'; break;
+        case 4: element.style.top = '50%'; element.style.left = `${marginL}px`; alignTransforms.push('translateY(-50%)'); element.style.textAlign = 'left'; break;
+        case 5: element.style.top = '50%'; element.style.left = '50%'; alignTransforms.push('translate(-50%, -50%)'); element.style.textAlign = 'center'; break;
+        case 6: element.style.top = '50%'; element.style.right = `${marginR}px`; alignTransforms.push('translateY(-50%)'); element.style.textAlign = 'right'; break;
+        case 7: element.style.top = `${marginV}px`; element.style.left = `${marginL}px`; element.style.textAlign = 'left'; break;
+        case 8: element.style.top = `${marginV}px`; element.style.left = '50%'; alignTransforms.push('translateX(-50%)'); element.style.textAlign = 'center'; break;
+        case 9: element.style.top = `${marginV}px`; element.style.right = `${marginR}px`; element.style.textAlign = 'right'; break;
+        default: element.style.bottom = `${marginV}px`; element.style.left = '50%'; alignTransforms.push('translateX(-50%)'); element.style.textAlign = 'center';
+    }
+
+    element.style.transform = [...alignTransforms, ...transforms].join(' ');
+};
+
+        // --- LÓGICA DEL EDITOR DE ESTILOS ASS ---
+        let activeStyleName = null;
+        const styleForm = document.getElementById('style-form-container');
+
+// --- NUEVA FUNCIÓN PARA LA VISTA PREVIA EN VIVO ---
+        const updateStylePreview = () => {
+            const previewElement = document.getElementById('style-preview-text');
+            if (!previewElement) return;
+
+            const tempStyle = {};
+            const styleKeys = Object.keys(createDefaultAssStyle());
+            
+            styleKeys.forEach(key => {
+                const input = document.getElementById(`style-${key.toLowerCase()}`);
+                if (input) {
+                    tempStyle[key] = input.value;
+                }
+            });
+            
+            // Reutilizamos tu función applyAssStyleToElement para la preview
+            // El 'full' es importante para que aplique colores y alineación
+            applyAssStyleToElement(previewElement, tempStyle, 'full');
+        };
+
+        // --- FUNCIÓN 'populateStyleEditor' ACTUALIZADA ---
+        const populateStyleEditor = () => {
+            styleList.innerHTML = '';
+            assStyles.forEach(style => {
+                const li = document.createElement('li');
+                li.textContent = style.Name;
+                li.dataset.styleName = style.Name;
+                if (style.Name === activeStyleName) li.classList.add('active');
+                li.addEventListener('click', () => {
+                    activeStyleName = style.Name;
+                    populateStyleEditor(); // Se llama a sí misma para refrescar
+                });
+                styleList.appendChild(li);
+            });
+
+            if (activeStyleName) {
+                const style = assStyles.find(s => s.Name === activeStyleName);
+                if (style) {
+                    // Rellena todos los campos del formulario
+                    Object.keys(style).forEach(key => {
+                        const inputId = `style-${key.toLowerCase()}`;
+                        const input = document.getElementById(inputId);
+                        if (input) input.value = style[key];
+                        
+                        // Sincroniza los selectores de color
+                        if (key.toLowerCase().includes('colour')) {
+                            const picker = document.getElementById(`${inputId}-picker`);
+                            if (picker) picker.value = assColorToHex(style[key]);
+                        }
+                    });
+
+                    // (NUEVO) Sincronizar el grid de alineación visual
+                    const alignment = style.Alignment || '2';
+                    document.querySelectorAll('.alignment-grid button').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.align === alignment);
+                    });
+                    
+                    // (NUEVO) Actualizar la vista previa al cargar
+                    updateStylePreview();
+                }
+            }
+        };
+
+      const assColorToHex = (assColor) => {
+    if (!assColor || !assColor.startsWith('&H')) return '#FFFFFF';
+    // El formato ASS es &H<AA><BB><GG><RR>
+    const bbggrr = assColor.substring(assColor.length - 6); // Se obtiene la parte BBGGRR
+    const bb = bbggrr.substring(0, 2) || '00';
+    const gg = bbggrr.substring(2, 4) || '00';
+    const rr = bbggrr.substring(4, 6) || '00';
+    return `#${rr}${gg}${bb}`;
+};
+
+        const hexToAssColor = (hex) => {
+            const r = hex.substring(1, 3);
+            const g = hex.substring(3, 5);
+            const b = hex.substring(5, 7);
+            return `&H00${b.toUpperCase()}${g.toUpperCase()}${r.toUpperCase()}`;
+        };
+
+        // --- LISTENER 'openAssStyleEditorBtn' ACTUALIZADO ---
+        openAssStyleEditorBtn.addEventListener('click', () => {
+            activeStyleName = assStyles[0]?.Name || null;
+            populateStyleEditor(); // Esto rellena el formulario y la 1ª preview
+            assStyleEditorModal.style.display = 'flex';
+
+            // (NUEVO) Enganchamos un listener en el contenedor del formulario
+            // para actualizar la vista previa con CUALQUIER cambio.
+            const formContainer = document.getElementById('style-form-container');
+            
+            // Usamos .oninput para que se sobrescriba y no se duplique
+            formContainer.oninput = (e) => {
+                // Si el cambio viene de un input o select, actualiza la preview
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+                    // Actualizamos el campo de texto si se usa el picker de color
+                    if (e.target.type === 'color') {
+                        const textInputId = e.target.id.replace('-picker', '');
+                        document.getElementById(textInputId).value = hexToAssColor(e.target.value);
+                    }
+                    // Actualizamos el picker si se escribe en el campo de texto
+                    if (e.target.type === 'text' && e.target.id.includes('colour')) {
+                         const pickerId = e.target.id + '-picker';
+                         const picker = document.getElementById(pickerId);
+                         if (picker) picker.value = assColorToHex(e.target.value);
+                    }
+                    
+                    updateStylePreview(); // Actualiza la preview en vivo
+                }
+            };
+        });
+
+        assStyleEditorModal.querySelector('.close-ass-style-editor-modal').addEventListener('click', () => assStyleEditorModal.style.display = 'none');
+        
+        document.getElementById('add-new-style-btn').addEventListener('click', () => {
+            let newName = 'NuevoEstilo';
+            let counter = 1;
+            while (assStyles.some(s => s.Name === newName)) {
+                newName = `NuevoEstilo${counter++}`;
+            }
+            const newStyle = { ...assStyles.find(s => s.Name === 'Default') || createDefaultAssStyle(), Name: newName };
+            assStyles.push(newStyle);
+            activeStyleName = newName;
+            populateStyleEditor();
+        });
+
+        document.getElementById('delete-style-btn').addEventListener('click', () => {
+            if (!activeStyleName || activeStyleName === 'Default') {
+                showModalAlert(t('msg_style_delete_error'));
+                return;
+            }
+            assStyles = assStyles.filter(s => s.Name !== activeStyleName);
+            // Revert subtitles using this style to Default
+            subtitles.forEach(sub => { if (sub.style === activeStyleName) sub.style = 'Default'; });
+            activeStyleName = 'Default';
+            populateStyleEditor();
+            renderSubtitles(false);
+        });
+
+  document.getElementById('save-style-changes-btn').addEventListener('click', () => {
+    if (!activeStyleName) return;
+    saveState();
+    const styleIndex = assStyles.findIndex(s => s.Name === activeStyleName);
+    if (styleIndex === -1) return;
+
+    const oldName = activeStyleName;
+    const newStyle = {};
+    const styleKeys = Object.keys(createDefaultAssStyle());
+    styleKeys.forEach(key => {
+        const input = document.getElementById(`style-${key.toLowerCase()}`);
+        if (input) newStyle[key] = input.value;
+    });
+
+    if (newStyle.Name !== oldName && assStyles.some(s => s.Name === newStyle.Name)) {
+        // En lugar de un alert, usamos el feedback no invasivo
+        const feedbackEl = document.getElementById('save-style-feedback');
+        feedbackEl.textContent = t('msg_style_exists');
+        feedbackEl.style.color = '#f87171'; // Rojo (red-400)
+        showFeedbackMessage('save-style-feedback');
+        
+        // Restaurar el color y texto originales después
+        setTimeout(() => {
+            feedbackEl.textContent = t('msg_saved');
+            feedbackEl.style.color = '#4ade80'; // Verde (green-400)
+        }, 2000);
+
+        newStyle.Name = oldName;
+        document.getElementById('style-name').value = oldName;
+        return;
+    }
+
+    assStyles[styleIndex] = newStyle;
+
+    if (newStyle.Name !== oldName) {
+        subtitles.forEach(sub => { if (sub.style === oldName) sub.style = newStyle.Name; });
+    }
+
+    activeStyleName = newStyle.Name;
+    populateStyleEditor();
+    renderSubtitles(false);
+
+    // Esta es la única línea que debe ir aquí para mostrar el aviso:
+    showFeedbackMessage('save-style-feedback');
+});
+
+
+document.getElementById('apply-style-to-all-btn').addEventListener('click', () => {
+     if (!activeStyleName) return;
+     saveState();
+     subtitles.forEach(sub => sub.style = activeStyleName);
+     renderSubtitles(false);
+     showFeedbackMessage('apply-style-feedback');
+});
+
+
+        // Link color pickers to text inputs
+        styleForm.querySelectorAll('input[type="color"]').forEach(picker => {
+            picker.addEventListener('input', (e) => {
+                const textInputId = e.target.id.replace('-picker', '');
+                document.getElementById(textInputId).value = hexToAssColor(e.target.value);
+            });
+        });
+        styleForm.querySelectorAll('input[type="text"][id*="colour"]').forEach(textInput => {
+            textInput.addEventListener('input', (e) => {
+                const pickerId = e.target.id + '-picker';
+                const picker = document.getElementById(pickerId);
+                if (picker) picker.value = assColorToHex(e.target.value);
+            });
+        });
+
+// --- INICIO: Lógica y conexiones para la barra de Buscar y Reemplazar ---
+const findReplaceToolbar = document.getElementById('find-replace-toolbar');
+const frBarFindInput = document.getElementById('fr-bar-find-input');
+const frBarReplaceInput = document.getElementById('fr-bar-replace-input');
+const frBarPrevBtn = document.getElementById('fr-bar-prev-btn');
+const frBarNextBtn = document.getElementById('fr-bar-next-btn');
+const frBarSearchCount = document.getElementById('fr-bar-search-count');
+const frBarReplaceBtn = document.getElementById('fr-bar-replace-btn');
+const frBarReplaceAllBtn = document.getElementById('fr-bar-replace-all-btn');
+const frBarCloseBtn = document.getElementById('fr-bar-close-btn');
+let lastFrBarSearchTerm = '';
+
+let frBarResults = [];
+let frBarCurrentIndex = -1;
+
+const highlightFrBarMatch = () => {
+    if (frBarCurrentIndex === -1 || frBarResults.length === 0) return;
+    const result = frBarResults[frBarCurrentIndex];
+    setActiveSubtitle(result.subtitleIndex);
+
+    setTimeout(() => {
+        inVideoEditor.focus();
+        const selection = window.getSelection();
+        const range = document.createRange();
+        let charCount = 0;
+        for (const node of inVideoEditor.childNodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const nodeLength = node.textContent.length;
+                if (charCount + nodeLength >= result.matchIndex) {
+                    range.setStart(node, result.matchIndex - charCount);
+                    range.setEnd(node, result.matchIndex - charCount + result.text.length);
+                    break;
+                }
+                charCount += nodeLength;
+            } else {
+                charCount++;
+            }
+        }
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }, 100);
+};
+
+const performFrBarFind = () => {
+    const findText = frBarFindInput.value;
+    frBarResults = [];
+    frBarCurrentIndex = -1;
+    if (!findText) {
+        frBarSearchCount.textContent = '0 / 0';
+        return;
+    }
+
+lastFrBarSearchTerm = findText; // 
+
+    const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    subtitles.forEach((sub, subIndex) => {
+        let match;
+        while ((match = regex.exec(sub.text)) !== null) {
+            frBarResults.push({ subtitleIndex: subIndex, matchIndex: match.index, text: match[0] });
+        }
+    });
+    if (frBarResults.length > 0) {
+        frBarCurrentIndex = 0;
+        highlightFrBarMatch();
+    }
+    frBarSearchCount.textContent = `${frBarCurrentIndex + 1} / ${frBarResults.length}`;
+};
+
+frBarFindInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        // NOTA: Si la búsqueda es la misma, navega. Si es nueva, busca.
+        if (frBarFindInput.value === lastFrBarSearchTerm && frBarResults.length > 0) {
+            frBarNextBtn.click(); // Simula un clic en el botón "Siguiente"
+        } else {
+            performFrBarFind(); // Realiza una nueva búsqueda
+        }
+    }
+});
+frBarNextBtn.addEventListener('click', () => {
+    if (frBarResults.length === 0) return;
+    frBarCurrentIndex = (frBarCurrentIndex + 1) % frBarResults.length;
+    frBarSearchCount.textContent = `${frBarCurrentIndex + 1} / ${frBarResults.length}`;
+    highlightFrBarMatch();
+});
+frBarPrevBtn.addEventListener('click', () => {
+    if (frBarResults.length === 0) return;
+    frBarCurrentIndex = (frBarCurrentIndex - 1 + frBarResults.length) % frBarResults.length;
+    frBarSearchCount.textContent = `${frBarCurrentIndex + 1} / ${frBarResults.length}`;
+    highlightFrBarMatch();
+});
+
+frBarReplaceBtn.addEventListener('click', () => {
+    if (frBarCurrentIndex === -1 || frBarResults.length === 0) return;
+    const result = frBarResults[frBarCurrentIndex];
+    const sub = subtitles[result.subtitleIndex];
+    const replaceText = frBarReplaceInput.value;
+    saveState();
+    sub.text = sub.text.substring(0, result.matchIndex) + replaceText + sub.text.substring(result.matchIndex + result.text.length);
+    renderSubtitles(false);
+    performFrBarFind();
+});
+
+frBarReplaceAllBtn.addEventListener('click', () => {
+    const findText = frBarFindInput.value;
+    const replaceText = frBarReplaceInput.value;
+    if (!findText) return;
+    saveState();
+    let replacementsCount = 0;
+    const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    subtitles.forEach(sub => {
+        const textBefore = sub.text;
+        sub.text = sub.text.replace(regex, replaceText);
+        if (sub.text !== textBefore) {
+            // Contamos reemplazos reales
+            replacementsCount += (textBefore.match(regex) || []).length;
+        }
+    });
+    renderSubtitles(false);
+    showModalAlert(`${replacementsCount} reemplazos realizados.`);
+    findReplaceToolbar.classList.remove('visible');
+});
+
+// Conectar botón del menú principal para mostrar/ocultar la barra
+openFindReplaceModalBtn.addEventListener('click', () => {
+    findReplaceToolbar.classList.toggle('visible');
+    if (findReplaceToolbar.classList.contains('visible')) {
+        frBarFindInput.focus();
+    }
+});
+frBarCloseBtn.addEventListener('click', () => {
+    findReplaceToolbar.classList.remove('visible');
+});
+// --- FIN: Lógica y conexiones para la barra de Buscar y Reemplazar ---
+
+        // --- INICIALIZACIÓN FINAL ---
+
+loadColumnVisibility();
+applyColumnVisibility();
+makeTableColumnsResizable();
+populateColumnsMenu();
+        loadShortcuts();
+        initializeTooltips();
+        updateColumnVisibility();
+        setWorkMode('edit');
+
+        setInterval(saveBackup, 60000); // Guardar copia de seguridad cada minuto
+
+// --- Lógica para los botones de Negrita y Cursiva del menú Editar ---
+const boldBtn = document.getElementById('edit-menu-bold-btn');
+const italicBtn = document.getElementById('edit-menu-italic-btn');
+
+const applyFormat = (format) => {
+    inVideoEditor.focus(); // Nos aseguramos de que el foco está en el editor
+    document.execCommand(format, false, null);
+};
+
+boldBtn.addEventListener('click', () => applyFormat('bold'));
+italicBtn.addEventListener('click', () => applyFormat('italic'));
+
+// NOTA: Los atajos Ctrl+B y Ctrl+I suelen funcionar de forma nativa en los navegadores para estas acciones.
+
+
+
+// --- Lógica COMPLETA para la ventana de Añadir Símbolo con categorías ---
+const openSymbolModalBtn = document.getElementById('open-symbol-modal-btn');
+const symbolModal = document.getElementById('symbol-modal');
+const symbolCategoriesContainer = document.getElementById('symbol-categories');
+const symbolGrid = document.getElementById('symbol-grid');
+
+const symbolMap = {
+    'Más comunes': ['…', '—', '‘', '’', '“', '”', '«', '»', '¡', '¿', '♪', '♫'],
+    'Moneda y legal': ['€', '£', '¥', '$', '¢', '©', '®', '™', '§', '°'],
+    'Puntuación y diacríticos': ['.', ',', ';', ':', '?', '!', '"', '(', ')', '[', ']', '{', '}', '/', '\\', '&', '@', '#', '%', '*', '-', '_', '+', '=', '·', '¨', '´', '`', '¸', 'ˆ'],
+    'Letras con acento (A-G)': ['Á', 'À', 'Â', 'Ä', 'Ã', 'Å', 'Æ', 'á', 'à', 'â', 'ä', 'ã', 'å', 'æ', 'Ç', 'ç', 'É', 'È', 'Ê', 'Ë', 'é', 'è', 'ê', 'ë', 'Í', 'Ì', 'Î', 'Ï'],
+    'Letras con acento (H-Z)': ['í', 'ì', 'î', 'ï', 'Ñ', 'ñ', 'Ó', 'Ò', 'Ô', 'Ö', 'Õ', 'Ø', 'ó', 'ò', 'ô', 'ö', 'õ', 'ø', 'Ú', 'Ù', 'Û', 'Ü', 'ú', 'ù', 'û', 'ü', 'Ý', 'ý', 'ÿ', 'ß'],
+    'Matemáticas y fracciones': ['¹', '²', '³', '¼', '½', '¾', '×', '÷', '±', '≠', '≈', '≤', '≥', '∞', 'µ', 'Σ', 'Π', '√', '∫', 'ƒ']
+};
+
+const populateSymbolGrid = (category) => {
+    symbolGrid.innerHTML = '';
+    const chars = symbolMap[category];
+    if (!chars) return;
+
+    chars.forEach(char => {
+        const button = document.createElement('button');
+        button.className = 'symbol-button';
+        button.textContent = char;
+        button.onclick = () => {
+            inVideoEditor.focus();
+            document.execCommand('insertText', false, char);
+        };
+        symbolGrid.appendChild(button);
+    });
+};
+
+// Primero, mapeamos el nombre interno a la clave de traducción
+const symbolCategoryKeys = {
+    'Más comunes': 'sym_cat_common',
+    'Moneda y legal': 'sym_cat_currency',
+    'Puntuación y diacríticos': 'sym_cat_punct',
+    'Letras con acento (A-G)': 'sym_cat_accents_1',
+    'Letras con acento (H-Z)': 'sym_cat_accents_2',
+    'Matemáticas y fracciones': 'sym_cat_math'
+};
+
+const populateSymbolCategories = () => {
+    symbolCategoriesContainer.innerHTML = '';
+    Object.keys(symbolMap).forEach((categoryName, index) => {
+        const button = document.createElement('button');
+        button.className = 'category-button';
+        // AQUÍ ESTÁ EL CAMBIO: Usamos la clave para traducir
+        button.textContent = t(symbolCategoryKeys[categoryName] || categoryName);
+        
+        if (index === 0) button.classList.add('active');
+
+        button.onclick = () => {
+            symbolCategoriesContainer.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            populateSymbolGrid(categoryName);
+        };
+        symbolCategoriesContainer.appendChild(button);
+    });
+};
+
+openSymbolModalBtn.addEventListener('click', () => {
+    populateSymbolCategories();
+    // Poblar la rejilla con la primera categoría por defecto
+    const firstCategory = Object.keys(symbolMap)[0];
+    populateSymbolGrid(firstCategory);
+    symbolModal.style.display = 'flex';
+});
+
+symbolModal.querySelector('.close-symbol-modal').addEventListener('click', () => {
+    symbolModal.style.display = 'none';
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === symbolModal) symbolModal.style.display = 'none';
+});
+
+// --- Lógica COMPLETA y CORREGIDA de la barra de progreso personalizada ---
+let isScrubbing = false;
+let wasPlaying = false; // Para saber si hay que reanudar la reproducción
+
+const handleScrub = (e) => {
+    if (!wavesurfer || !wavesurfer.getDuration()) return;
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+    wavesurfer.seekTo(percentage);
+};
+
+progressBar.addEventListener('mousedown', (e) => {
+    isScrubbing = true;
+    wasPlaying = wavesurfer.isPlaying(); // Guardamos el estado antes de pausar
+    wavesurfer.pause(); // Pausamos para un control preciso al arrastrar
+    handleScrub(e);
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (isScrubbing) {
+        handleScrub(e);
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    if (isScrubbing) {
+        isScrubbing = false;
+        if (wasPlaying) {
+            wavesurfer.play(); // Reanudamos la reproducción si estaba activa
+        }
+    }
+});
+
+// Lógica para la etiqueta de tiempo (tooltip) al pasar el ratón
+customProgressBarContainer.addEventListener('mouseenter', () => {
+    // AÑADIDO: Comprueba si hay un modal abierto
+    const isModalOpen = !!document.querySelector('.modal[style*="flex"]');
+    if (isModalOpen) return; // Si hay un modal, no mostrar el tooltip
+
+    if (wavesurfer && wavesurfer.getDuration()) {
+        tooltip.style.display = 'block';
+    }
+});
+
+customProgressBarContainer.addEventListener('mouseleave', () => {
+    tooltip.style.opacity = '0';
+    tooltip.style.transform = 'scale(0.95) translateY(10px)';
+    setTimeout(() => { if (tooltip.style.opacity === '0') tooltip.style.display = 'none'; }, 200);
+});
+
+customProgressBarContainer.addEventListener('mousemove', (e) => {
+    // AÑADIDO: Comprueba si hay un modal abierto
+    const isModalOpen = !!document.querySelector('.modal[style*="flex"]');
+    if (isModalOpen) {
+        tooltip.style.display = 'none'; // Nos aseguramos de ocultarlo
+        return; // Salimos de la función
+    }
+    if (!wavesurfer || !wavesurfer.getDuration() || isScrubbing) return;
+
+    const rect = progressBar.getBoundingClientRect();
+    const hoverX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, hoverX / rect.width));
+    const hoverTime = percentage * wavesurfer.getDuration();
+
+    tooltip.textContent = formatSrtTime(hoverTime);
+
+    const rectContainer = customProgressBarContainer.getBoundingClientRect();
+    let top = rectContainer.top - tooltip.offsetHeight - 5; // 5px por encima de la barra
+    let left = e.clientX - tooltip.offsetWidth / 2;
+
+    if (left < 0) left = 8;
+    if (left + tooltip.offsetWidth > window.innerWidth) left = window.innerWidth - tooltip.offsetWidth - 8;
+
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+
+    setTimeout(() => {
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'scale(1) translateY(0)';
+    }, 10);
+});
+
+// --- NUEVO LISTENER PARA EL GRID DE ALINEACIÓN ---
+        assStyleEditorModal.querySelectorAll('.alignment-grid button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Evita que el botón envíe un formulario
+                const newAlign = e.currentTarget.dataset.align;
+                
+                // Actualiza el input oculto
+                document.getElementById('style-alignment').value = newAlign;
+                
+                // Actualiza la UI de los botones
+                assStyleEditorModal.querySelectorAll('.alignment-grid button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                e.currentTarget.classList.add('active');
+                
+                // Actualiza la vista previa
+                updateStylePreview();
+            });
+        });
+
+newProjectBtn.addEventListener('click', () => {
+    // Comprueba si hay subtítulos en el proyecto actual
+    if (subtitles.length > 0) {
+        // Si hay progreso, muestra una ventana de confirmación
+        showConfirmationModal(
+            t('msg_confirm_new'), // Usa la clave del diccionario
+            () => {
+                // Esta función se ejecuta solo si el usuario pulsa "Confirmar"
+                createNewProject();
+            }
+        );
+    } else {
+        // Si no hay progreso, crea el nuevo proyecto directamente
+        createNewProject();
+    }
+   });
+    
+   // --- LÓGICA DEL CHANGELOG ---
+    const changelogBtn = document.getElementById('changelog-btn');
+    const changelogModal = document.getElementById('changelog-modal');
+    const changelogContent = document.getElementById('changelog-content');
+
+    changelogBtn.addEventListener('click', async () => {
+        changelogModal.style.display = 'flex';
+        changelogContent.textContent = 'Cargando changelog...';
+        try {
+            // Añadimos un timestamp para evitar la caché del navegador
+            const response = await fetch('https://httrans.org/changelog/subpandaass.txt?t=' + new Date().getTime());
+            if (!response.ok) throw new Error('Error de conexión');
+            const text = await response.text();
+            changelogContent.textContent = text;
+        } catch (error) {
+            changelogContent.textContent = 'No se pudo cargar el changelog en este momento.';
+            console.error('Error obteniendo changelog:', error);
+        }
+    });
+
+    changelogModal.querySelector('.close-changelog-modal').addEventListener('click', () => {
+        changelogModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === changelogModal) changelogModal.style.display = 'none';
+    });
+
+   // --- LÓGICA DEL BLOC DE NOTAS PARA SINCRONIZAR ---
+    const syncTextLoader = document.getElementById('sync-text-loader');
+    const syncNotepadContainer = document.getElementById('sync-notepad-container');
+    const syncNotepadResizer = document.getElementById('sync-notepad-resizer');
+    const syncNotepadTextarea = document.getElementById('sync-notepad-textarea');
+    const syncNotepadStats = document.getElementById('sync-notepad-stats');
+    const syncNotepadTransTextarea = document.getElementById('sync-notepad-trans-textarea');
+    const syncNotepadTransStats = document.getElementById('sync-notepad-trans-stats');
+    const syncNotepadTransCol = document.getElementById('sync-notepad-trans-col');
+    const toggleNotepadTranslationBtn = document.getElementById('toggle-notepad-translation-btn');
+    const createSubFromNotepadBtn = document.getElementById('create-sub-from-notepad-btn');
+
+    // --- NUEVA LÓGICA: Botón Panda del Bloc de Notas ---
+    const extractFirstLineFromNotepad = () => {
+        let activeTextarea = syncNotepadTextarea;
+        
+        // Seleccionar inteligentemente la caja de texto (priorizar donde haya texto o foco)
+        if (!syncNotepadTransCol.classList.contains('hidden')) {
+            if (document.activeElement === syncNotepadTransTextarea || syncNotepadTransTextarea.value.trim() !== '') {
+                activeTextarea = syncNotepadTransTextarea;
+            }
+        }
+        
+        let val = activeTextarea.value.trimStart();
+        if (!val) return '';
+
+        // Buscamos un bloque de texto hasta encontrar un salto de línea vacío (dos o más saltos seguidos)
+        // Usamos [\s\S] para máxima compatibilidad en cualquier navegador.
+        const blockMatch = val.match(/([\s\S]*?)(?:\n\s*\n|$)/);
+        
+        let extractedBlock = '';
+        if (blockMatch) {
+            extractedBlock = blockMatch[1].trim();
+            // Recortamos el bloque extraído incluyendo el separador, y limpiamos espacios
+            activeTextarea.value = val.substring(blockMatch[0].length).trimStart();
+        } else {
+            extractedBlock = val.trim();
+            activeTextarea.value = '';
+        }
+        
+        updateNotepadStats();
+        return extractedBlock;
+    };
+
+    window.handleNotepadPandaPress = () => {
+        if (isNotepadPandaCreating) return;
+        
+        // Si hay un subtítulo seleccionado, lo deseleccionamos para poder crear el nuevo
+        if (activeSubtitleIndex !== -1) {
+            setActiveSubtitle(-1);
+        }
+
+        isNotepadPandaCreating = true;
+        document.getElementById('panda-notepad-btn').classList.add('!bg-blue-500', '!text-white');
+        
+        const firstLine = extractFirstLineFromNotepad();
+        
+        isCreatingSubtitle = true;
+        if (!wsRegions) return;
+        saveState();
+        
+        const currentTime = videoPlayer.currentTime;
+        const newSubtitle = { 
+            id: String(getNextAvailableId()), 
+            start: currentTime, 
+            end: currentTime + 0.1, 
+            text: firstLine, 
+            style: 'Default' 
+        };
+        subtitles.push(newSubtitle);
+        setActiveSubtitle(subtitles.length - 1);
+        renderSubtitles();
+    };
+
+    window.releaseNotepadPanda = () => {
+         if (isNotepadPandaCreating) {
+            document.getElementById('panda-notepad-btn').classList.remove('!bg-blue-500', '!text-white');
+            isNotepadPandaCreating = false;
+            handleSetOutTime(); // Cierra el subtítulo
+        }
+    };
+
+    const pandaNotepadBtn = document.getElementById('panda-notepad-btn');
+    if(pandaNotepadBtn) {
+        pandaNotepadBtn.addEventListener('mousedown', handleNotepadPandaPress);
+        document.body.addEventListener('mouseup', releaseNotepadPanda);
+        pandaNotepadBtn.addEventListener('mouseleave', releaseNotepadPanda);
+    }
+    // --- FIN NUEVA LÓGICA ---
+
+    // Lógica para exportar el bloc de notas
+    const exportNotepadBtn = document.getElementById('export-notepad-btn');
+    const exportNotepadModal = document.getElementById('export-notepad-modal');
+    
+    exportNotepadBtn.addEventListener('click', () => {
+        exportNotepadModal.style.display = 'flex';
+    });
+    
+    exportNotepadModal.querySelector('.close-export-notepad-modal').addEventListener('click', () => exportNotepadModal.style.display = 'none');
+    document.getElementById('cancel-export-notepad-btn').addEventListener('click', () => exportNotepadModal.style.display = 'none');
+    
+    document.getElementById('confirm-export-notepad-btn').addEventListener('click', () => {
+        const choice = document.querySelector('input[name="export-notepad-choice"]:checked').value;
+        const textToExport = choice === 'original' ? syncNotepadTextarea.value : syncNotepadTransTextarea.value;
+        
+        if (!textToExport.trim()) {
+            showModalAlert('El bloc de notas seleccionado está vacío.');
+            return;
+        }
+        
+        const blob = new Blob([textToExport], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `bloc_de_notas_${choice}_${new Date().toISOString().slice(0,10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        
+        exportNotepadModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === exportNotepadModal) exportNotepadModal.style.display = 'none';
+    });
+
+    // Botón para alternar el Modo Traducción
+    toggleNotepadTranslationBtn.addEventListener('click', () => {
+        syncNotepadTransCol.classList.toggle('hidden');
+        // Al prescindir de fondos azules, marcamos el botón activo cambiando el texto a azul brillante
+        toggleNotepadTranslationBtn.classList.toggle('text-blue-400');
+    });
+
+    // Función unificada para actualizar estadísticas de TODAS las líneas
+    const updateNotepadStats = () => {
+        const generateStatsHTML = (textarea) => {
+            const lines = textarea.value.split('\n'); // Ahora toma todas las líneas
+            return lines.map((line) => {
+                const len = line.trimEnd().length;
+                const isLong = qaSettings && qaSettings.maxCplEnabled && len > qaSettings.maxCpl;
+                return `<div class="${isLong ? 'text-red-400 font-bold' : ''}" style="height: 1.25rem;">${len > 0 ? len : '-'}</div>`;
+            }).join('');
+        };
+
+        if (syncNotepadTextarea && syncNotepadStats) {
+            syncNotepadStats.innerHTML = generateStatsHTML(syncNotepadTextarea);
+        }
+        if (syncNotepadTransTextarea && syncNotepadTransStats) {
+            syncNotepadTransStats.innerHTML = generateStatsHTML(syncNotepadTransTextarea);
+        }
+    };
+
+    // Actualizar cuando el usuario escribe
+    syncNotepadTextarea.addEventListener('input', updateNotepadStats);
+    syncNotepadTransTextarea.addEventListener('input', updateNotepadStats);
+
+    // Deseleccionar subtítulos al interactuar con el bloc de notas
+    [syncNotepadTextarea, syncNotepadTransTextarea].forEach(textarea => {
+        ['focus', 'click'].forEach(eventType => {
+            textarea.addEventListener(eventType, () => {
+                if (activeSubtitleIndex !== -1) {
+                    setActiveSubtitle(-1);
+                }
+            });
+        });
+    });
+    
+    // Sincronizar el scroll de ambas cajas de texto y de sus stats
+    const syncScroll = (sourceElem) => {
+        const scrollTop = sourceElem.scrollTop;
+        syncNotepadStats.style.transform = `translateY(-${scrollTop}px)`;
+        syncNotepadTransStats.style.transform = `translateY(-${scrollTop}px)`;
+        
+        // Sincronizar las columnas entre sí
+        if (sourceElem === syncNotepadTextarea && !syncNotepadTransCol.classList.contains('hidden')) {
+            syncNotepadTransTextarea.scrollTop = scrollTop;
+        } else if (sourceElem === syncNotepadTransTextarea) {
+            syncNotepadTextarea.scrollTop = scrollTop;
+        }
+    };
+
+    syncNotepadTextarea.addEventListener('scroll', () => syncScroll(syncNotepadTextarea));
+    syncNotepadTransTextarea.addEventListener('scroll', () => syncScroll(syncNotepadTransTextarea));
+    const closeNotepadBtn = document.getElementById('close-notepad-btn');
+
+    const openNotepadBottomBtn = document.getElementById('open-notepad-bottom-btn');
+    const notepadToggleBar = document.getElementById('notepad-toggle-bar');
+
+    // Cargar el archivo TXT
+    syncTextLoader.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            saveState(); // Guardamos el estado antes de sobreescribir el bloc
+            syncNotepadTextarea.value = ev.target.result;
+            updateNotepadStats(); // <-- AÑADIDO
+            syncNotepadContainer.classList.remove('hidden');
+            syncNotepadContainer.classList.add('flex');
+            syncNotepadResizer.style.display = 'block';
+            notepadToggleBar.classList.add('hidden');
+        };
+        reader.readAsText(file);
+        e.target.value = ''; // Resetear el input
+    });
+
+    // Abrir el bloc de notas manualmente
+    openNotepadBottomBtn.addEventListener('click', () => {
+        syncNotepadContainer.classList.remove('hidden');
+        syncNotepadContainer.classList.add('flex');
+        syncNotepadResizer.style.display = 'block';
+        notepadToggleBar.classList.add('hidden'); // Ocultar el botón
+    });
+
+    // Cerrar el bloc de notas
+    closeNotepadBtn.addEventListener('click', () => {
+        syncNotepadContainer.classList.add('hidden');
+        syncNotepadContainer.classList.remove('flex');
+        syncNotepadResizer.style.display = 'none';
+        notepadToggleBar.classList.remove('hidden'); // Mostrar el botón
+    });
+
+    // Lógica para redimensionar el bloc de notas y la tabla
+    syncNotepadResizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        document.body.style.cursor = 'row-resize';
+        document.addEventListener('mousemove', handleNotepadResize);
+        document.addEventListener('mouseup', () => {
+            document.body.style.cursor = '';
+            document.removeEventListener('mousemove', handleNotepadResize);
+        }, { once: true });
+    });
+
+    function handleNotepadResize(e) {
+        const rightPanel = document.getElementById('right-panel');
+        const panelRect = rightPanel.getBoundingClientRect();
+        // Calculamos la altura basándonos en el ratón y el límite inferior del panel
+        let newHeight = panelRect.bottom - e.clientY;
+        
+        if (newHeight < 80) newHeight = 80; // Altura mínima del bloc
+        if (newHeight > panelRect.height - 150) newHeight = panelRect.height - 150; // Altura máxima (deja espacio para la tabla)
+        
+        syncNotepadContainer.style.height = `${newHeight}px`;
+    }
+
+    // Permitir el atajo de teclado directamente dentro de ambos textareas
+    const handleNotepadKeydown = (e) => {
+        const sc = shortcuts.createSubFromNotepad;
+        if (sc && e.code === sc.code && e.altKey === sc.altKey && e.ctrlKey === sc.ctrlKey && e.shiftKey === sc.shiftKey) {
+            e.preventDefault();
+            createSubFromNotepadBtn.click();
+        }
+        
+        // Habilitar el atajo del Botón Panda (Insert) mientras el cursor está en el bloc
+        const scPanda = shortcuts.notepadPandaHold;
+        if (scPanda && e.code === scPanda.code && e.altKey === scPanda.altKey && e.ctrlKey === scPanda.ctrlKey && e.shiftKey === scPanda.shiftKey) {
+            e.preventDefault();
+            handleNotepadPandaPress();
+        }
+    };
+    syncNotepadTextarea.addEventListener('keydown', handleNotepadKeydown);
+    syncNotepadTransTextarea.addEventListener('keydown', handleNotepadKeydown);
+
+    // Crear subtítulo detectando automáticamente en qué bloc has seleccionado el texto
+    createSubFromNotepadBtn.addEventListener('click', () => {
+        let activeTextarea = null;
+        
+        // Damos prioridad a la columna de traducción si está visible y tiene selección
+        if (!syncNotepadTransCol.classList.contains('hidden') && syncNotepadTransTextarea.selectionStart !== syncNotepadTransTextarea.selectionEnd) {
+            activeTextarea = syncNotepadTransTextarea;
+        } else if (syncNotepadTextarea.selectionStart !== syncNotepadTextarea.selectionEnd) {
+            activeTextarea = syncNotepadTextarea;
+        }
+
+        if (!activeTextarea) {
+            showModalAlert('Selecciona el texto que quieres convertir en subtítulo dentro de alguno de los blocs de notas.');
+            return;
+        }
+
+        const startPos = activeTextarea.selectionStart;
+        const endPos = activeTextarea.selectionEnd;
+        const selectedText = activeTextarea.value.substring(startPos, endPos).trim();
+
+        if (!selectionRegion) {
+            showModalAlert('Primero, haz clic derecho y arrastra sobre la onda para crear una selección (fragmento verde).');
+            return;
+        }
+
+        saveState();
+        
+        const newSubtitle = {
+            id: String(getNextAvailableId()),
+            start: selectionRegion.start,
+            end: selectionRegion.end,
+            text: selectedText,
+            style: 'Default'
+        };
+
+        subtitles.push(newSubtitle);
+        
+        // Magia: Borramos el texto seleccionado del bloc de notas correspondiente
+        let val = activeTextarea.value;
+        let removeEnd = endPos;
+        
+        while(removeEnd < val.length && (val[removeEnd] === ' ' || val[removeEnd] === '\t')) {
+            removeEnd++;
+        }
+        if (removeEnd < val.length && val[removeEnd] === '\r') removeEnd++;
+        if (removeEnd < val.length && val[removeEnd] === '\n') removeEnd++;
+
+        activeTextarea.value = val.substring(0, startPos) + val.substring(removeEnd);
+        updateNotepadStats(); 
+        
+        // Ajuste de scroll
+        activeTextarea.blur();
+        activeTextarea.focus();
+        
+        selectionRegion.remove();
+        selectionRegion = null;
+
+        renderSubtitles(true);
+        setActiveSubtitle(subtitles.length - 1);
+    });
+
+   // --- Inicializar idioma al cargar ---
+    changeLanguage('en');
+
+   });

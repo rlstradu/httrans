@@ -21,8 +21,8 @@ import {
     parseVttContent,
     posicionDe,
     reconstructVtt,
-} from '../src/js/core/vtt.js';
-import { detectarFormatoSrt } from '../src/js/core/srt.js';
+} from '@core/vtt.js';
+import { detectarFormatoSrt } from '@core/srt.js';
 
 const SENCILLO = `WEBVTT
 

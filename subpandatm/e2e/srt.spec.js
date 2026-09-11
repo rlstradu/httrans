@@ -568,6 +568,12 @@ test.describe('la pestaña de QA', () => {
         const SIN_TRADUCIR = ['1', '00:00:01,000 --> 00:00:04,000', 'Hello', ''].join('\n');
         await cargarBytes(page, [...Buffer.from(SIN_TRADUCIR, 'utf8')]);
 
+        // "Sin traducir" viene apagada de fábrica, así que aquí se enciende a
+        // propósito: es la manera más corta de tener un subtítulo con aviso y
+        // poder arreglarlo escribiendo.
+        await page.locator('#qaBtn').click();
+        await page.locator('#qaRegla-sin_traducir').check();
+
         await expect(page.locator('#avisoQa-0')).toBeVisible();
 
         await page.locator('#translation-0').click();
@@ -576,6 +582,60 @@ test.describe('la pestaña de QA', () => {
 
         await expect(page.locator('#avisoQa-0')).toBeHidden();
         await expect(page.locator('#avisoQa-0')).toHaveAttribute('title', '');
+    });
+
+    test('recién abierto un archivo no salta un aviso en cada subtítulo', async ({ page }) => {
+        // "Sin traducir" encendida de fábrica recibía con un aviso en todas las
+        // tarjetas, y unos avisos que están siempre no los mira nadie.
+        const TRES = [
+            '1', '00:00:01,000 --> 00:00:04,000', 'Hello', '',
+            '2', '00:00:05,000 --> 00:00:08,000', 'World', '',
+            '3', '00:00:09,000 --> 00:00:12,000', 'Bye', '',
+        ].join('\n');
+        await cargarBytes(page, [...Buffer.from(TRES, 'utf8')]);
+
+        await expect(page.locator('.segmento-aviso:visible')).toHaveCount(0);
+    });
+
+    // Uno limpio, uno que dura 300 ms y otro limpio: con un vecino correcto a
+    // cada lado se ve si el aviso descoloca algo.
+    const UNO_MALO_ENTRE_DOS_BUENOS = [
+        '1', '00:00:01,000 --> 00:00:03,000', 'Hello there', '',
+        '2', '00:00:05,000 --> 00:00:05,300', 'Too short', '',
+        '3', '00:00:07,000 --> 00:00:09,000', 'All good', '',
+    ].join('\n');
+
+    test('el aviso va arriba de su columna, a la altura de los tiempos', async ({ page }) => {
+        // Pegado al visto se leía como parte del botón, y no lo es.
+        await cargarBytes(page, [...Buffer.from(UNO_MALO_ENTRE_DOS_BUENOS, 'utf8')]);
+
+        const sitios = await page.locator('#translation-unit-1').evaluate((fila) => {
+            const caja = fila.getBoundingClientRect();
+            const franja = fila.querySelector('.segmento-tiempos').getBoundingClientRect();
+            const aviso = fila.querySelector('.segmento-aviso').getBoundingClientRect();
+            return {
+                franja: franja.top + franja.height / 2 - caja.top,
+                aviso: aviso.top + aviso.height / 2 - caja.top,
+            };
+        });
+        expect(Math.abs(sitios.aviso - sitios.franja)).toBeLessThan(4);
+    });
+
+    test('y el visto no se mueve esté el aviso o no', async ({ page }) => {
+        // La rejilla no coloca lo que no se pinta: sin decirle a cada uno su
+        // fila, el visto de un subtítulo correcto se subía al hueco del aviso y
+        // la columna de vistos quedaba a dos alturas.
+        await cargarBytes(page, [...Buffer.from(UNO_MALO_ENTRE_DOS_BUENOS, 'utf8')]);
+
+        const dondeCaeElVisto = (indice) =>
+            page.locator(`#translation-unit-${indice}`).evaluate((fila) => {
+                const caja = fila.getBoundingClientRect();
+                return fila.querySelector('.segmento-check').getBoundingClientRect().top - caja.top;
+            });
+
+        await expect(page.locator('#avisoQa-1')).toBeVisible();
+        await expect(page.locator('#avisoQa-2')).toBeHidden();
+        expect(Math.abs((await dondeCaeElVisto(1)) - (await dondeCaeElVisto(2)))).toBeLessThan(2);
     });
 
     test('ya no hay cuadro flotante de errores', async ({ page }) => {
@@ -588,6 +648,10 @@ test.describe('la pestaña de QA', () => {
         // para ver que hablan del mismo sitio.
         await cargarBytes(page, [...Buffer.from(CON_FALLOS, 'utf8')]);
         await page.locator('#qaBtn').click();
+        // Con "sin traducir" encendida, el segundo subtítulo falla por dos
+        // cosas a la vez: dura 300 ms y no tiene traducción. Es lo que hace
+        // falta aquí, que lo que se comprueba es que las dos salgan juntas.
+        await page.locator('#qaRegla-sin_traducir').check();
         await page.locator('#qaRevisarBtn').click();
 
         const segundo = page.locator('.qa-error-item').filter({ hasText: '#2' });

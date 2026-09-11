@@ -33,6 +33,15 @@
             --texto-titulo: 1rem;    /* 16px: títulos de ventana y de panel */
             --texto-base: 0.875rem;  /* 14px: el texto normal */
             --texto-meta: 0.75rem;   /* 12px: recuentos, notas, etiquetas */
+
+            /* Lo que mide de alto la franja de tiempos de cada subtítulo. No
+               se la impone: es lo que mide con su contenido, medido en el
+               navegador. La usa la columna del visto, que reserva arriba una
+               fila de esta altura para que el aviso de calidad caiga centrado
+               en la misma línea que los tiempos. Si algún día cambia el alto
+               de esa franja —otra letra, otro relleno—, este número hay que
+               volver a tomarlo o el aviso se queda descolocado. */
+            --franja-tiempos-alto: 2.25rem;
         }
 
         html.dark {
@@ -2831,13 +2840,23 @@ video::-ms-fullscreen-button {
         .segmento-estado {
             width: 38px;
             flex-shrink: 0;
-            display: flex;
+            /* Dos filas: arriba el aviso, a la altura de la franja de tiempos;
+               abajo el visto, centrado en lo que queda. La primera fila mide lo
+               mismo esté el aviso o no, así que el visto no da un salto cuando
+               un subtítulo se arregla. */
+            display: grid;
+            grid-template-rows: var(--franja-tiempos-alto) 1fr;
             align-items: center;
-            justify-content: center;
+            justify-items: center;
             /* Sin fondo propio, como la franja de los tiempos: la tarjeta es de
                un solo color y lo que separa esta columna es su raya. */
             border-left: 1px solid var(--color-medium-gray);
         }
+        /* Cada uno en su fila, dicho a mano. Si se dejara a la colocación
+           automática, el día que el aviso está escondido el visto se subiría a
+           la fila de arriba: la rejilla no coloca lo que no se pinta. */
+        .segmento-estado .segmento-aviso { grid-row: 1; }
+        .segmento-estado .segmento-check { grid-row: 2; }
         .segmento-check {
             background: none;
             border: none;
@@ -3604,9 +3623,10 @@ video::-ms-fullscreen-button {
             color: var(--color-dark);
         }
 
-        /* El aviso de que este subtítulo tiene algo que mirar, al lado del
-           visto de validar. Va aquí y no en una columna aparte porque es donde
-           está lo otro que dice en qué estado está el subtítulo. */
+        /* El aviso de que este subtítulo tiene algo que mirar. Va en la misma
+           columna que el visto porque es lo otro que dice en qué estado está el
+           subtítulo, pero arriba del todo y no pegado a él: junto al visto se
+           leía como parte del botón, y no lo es. */
         .segmento-aviso {
             display: inline-flex;
             align-items: center;

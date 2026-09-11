@@ -19,7 +19,7 @@ import {
     parseTtmlContent,
     reconstructTtml,
     tiempoTtmlAMs,
-} from '../src/js/core/ttml.js';
+} from '@core/ttml.js';
 
 /** Un TTML de los que manda una plataforma: con cabeza, estilos y regiones. */
 const COMPLETO = `<?xml version="1.0" encoding="utf-8"?>

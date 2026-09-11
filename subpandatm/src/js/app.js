@@ -18,10 +18,10 @@ import cssDeLasRegiones from '../css/region.css?inline';
 import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from 'diff-match-patch';
 import { conectarElEditor } from './editor-puente.js';
 import { initAlineacion } from './alineacion.js';
-import { guardarSubtitulos, leerSubtitulos } from './core/codificacion.js';
-import { cuantoSeVe, partirEnDos } from './core/partir.js';
-import { escaparHtml } from './core/xml.js';
-import { compararEtiquetas } from './core/etiquetas.js';
+import { guardarSubtitulos, leerSubtitulos } from '@core/codificacion.js';
+import { cuantoSeVe, partirEnDos } from '@core/partir.js';
+import { escaparHtml } from '@core/xml.js';
+import { compararEtiquetas } from '@core/etiquetas.js';
 import {
     EXTENSIONES,
     conLaExtensionDe,
@@ -36,7 +36,7 @@ import {
     lasDeFabrica,
     revisar,
     soloLasEncendidas,
-} from './core/qa.js';
+} from '@core/qa.js';
 import { initRecientes } from './recientes.js';
 import { initChangelog } from './changelog.js';
 import { db } from './db.js';
@@ -101,7 +101,7 @@ import {
     reconstructOriginalSrt,
     reconstructSrt,
     textoVisible,
-} from './core/srt.js';
+} from '@core/srt.js';
 
         // La base de datos vive en db.js, con su versión 2: la memoria y el
         // glosario tienen ahora sus propias tablas, atadas a cada proyecto.
@@ -1694,9 +1694,11 @@ if (useFrameTimecode) {
                         <!-- El aviso de que este subtítulo tiene algo que
                              mirar. Sin él hay que ir a la pestaña de QA para
                              saber cuáles están mal, y al volver ya no te
-                             acuerdas de cuál era. Se pinta desde fuera
-                             (pintarLosAvisos): aquí solo se reserva el sitio,
-                             para que la fila no dé un salto al aparecer. -->
+                             acuerdas de cuál era. Va arriba del todo de esta
+                             columna, a la altura de la franja de tiempos, y el
+                             visto se queda centrado abajo: la fila reserva el
+                             hueco esté o no, así que nada se mueve al
+                             aparecer. Lo pinta pintarLosAvisos(). -->
                         <span class="segmento-aviso hidden" id="avisoQa-${entryIndex}" role="img">
                             <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>

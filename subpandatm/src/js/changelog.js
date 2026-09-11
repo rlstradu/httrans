@@ -12,7 +12,7 @@
  * siguiente. Antes de enseñarlo se le da forma (ver core/changelog-formato.js):
  * títulos de versión, secciones y una lista de puntos.
  */
-import { formatearChangelog } from './core/changelog-formato.js';
+import { formatearChangelog } from '@core/changelog-formato.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
 

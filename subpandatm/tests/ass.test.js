@@ -22,7 +22,7 @@ import {
     parseAssContent,
     reconstructAss,
     tiempoAssAMs,
-} from '../src/js/core/ass.js';
+} from '@core/ass.js';
 
 /** Un .ass de los que salen de Aegisub, con lo que suelen traer. */
 const COMPLETO = `[Script Info]

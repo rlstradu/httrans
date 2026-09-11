@@ -6,7 +6,7 @@
  * signos a la vista en medio de la frase.
  */
 import { describe, expect, it } from 'vitest';
-import { formatearChangelog } from '../src/js/core/changelog-formato.js';
+import { formatearChangelog } from '@core/changelog-formato.js';
 
 const UNA_VERSION = (cuerpo) => `=========================================
 subpandaTM v2.0.0 - Una versión

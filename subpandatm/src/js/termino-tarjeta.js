@@ -11,7 +11,7 @@
  * Vive suelta al final de la página, no dentro del segmento: dentro se la
  * comería el recorte del texto original en cuanto asomara por el borde.
  */
-import { escaparHtml } from './core/xml.js';
+import { escaparHtml } from '@core/xml.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
 

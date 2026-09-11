@@ -43,7 +43,7 @@
  * `documento` va vacío; el WebVTT sí, y por eso el primero que entra por esta
  * puerta es él.
  */
-import { ETIQUETAS_DE_SRT, parseSrtContent, reconstructSrt } from './srt.js';
+import { ETIQUETAS_DE_SRT, parseSrtContent, reconstructSrt } from '@core/srt.js';
 import {
     ETIQUETAS_DE_VTT,
     conLaPosicion,
@@ -53,8 +53,8 @@ import {
     paraVerElVtt,
     parseVttContent,
     reconstructVtt,
-} from './vtt.js';
-import { ETIQUETAS_DE_TTML, esTtml, paraVerElTtml, parseTtmlContent, reconstructTtml } from './ttml.js';
+} from '@core/vtt.js';
+import { ETIQUETAS_DE_TTML, esTtml, paraVerElTtml, parseTtmlContent, reconstructTtml } from '@core/ttml.js';
 import {
     ETIQUETAS_DE_ASS,
     esAss,
@@ -63,7 +63,7 @@ import {
     paraVerElAss,
     parseAssContent,
     reconstructAss,
-} from './ass.js';
+} from '@core/ass.js';
 
 /**
  * Qué se le puede ofrecer con cada formato abierto.

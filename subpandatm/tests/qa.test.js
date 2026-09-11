@@ -15,7 +15,7 @@ import {
     lasDeFabrica,
     revisar,
     soloLasEncendidas,
-} from '../src/js/core/qa.js';
+} from '@core/qa.js';
 
 /** Un subtítulo con lo justo, y lo que se le quiera cambiar. */
 function sub(cambios = {}) {
@@ -65,8 +65,15 @@ describe('la tabla de reglas', () => {
             .map(([id]) => id)
             .sort();
         expect(encendidas).toEqual(
-            ['cps', 'duracion_minima', 'etiquetas', 'largo_de_linea', 'sin_traducir', 'solapamiento'].sort(),
+            ['cps', 'duracion_minima', 'etiquetas', 'largo_de_linea', 'solapamiento'].sort(),
         );
+    });
+
+    it('la de sin traducir viene apagada, que al abrir un archivo saltaría en todos', () => {
+        // Recién abierto no hay ni una línea traducida: encendida, la lista
+        // sale con un aviso en cada subtítulo y ninguno dice nada que no se
+        // vea. Es una regla para el final, no para el principio.
+        expect(lasDeFabrica().sin_traducir).toBe(false);
     });
 });
 

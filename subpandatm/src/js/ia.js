@@ -34,7 +34,7 @@ import { translations } from './translations.js';
 import { hayServicioConectado, leerConfiguracion, seRespetanLosLimites } from './core/ia/ajustes.js';
 import { proveedorPorId } from './core/ia/proveedores.js';
 import { loQueCabe, preguntar, traducirUno } from './core/ia/traducir.js';
-import { limpiarParaSubtitulo } from './core/srt.js';
+import { limpiarParaSubtitulo } from '@core/srt.js';
 
 const t = (clave) => translations[state.currentLanguage][clave] || '';
 const $ = (id) => document.getElementById(id);

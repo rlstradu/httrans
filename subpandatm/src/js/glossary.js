@@ -1,5 +1,5 @@
 import { enderezarGlosario, generarTBX, leerTBX, tieneFicha } from './core/tbx.js';
-import { escaparHtml } from './core/xml.js';
+import { escaparHtml } from '@core/xml.js';
 import { hideLoadingOverlay, showLoadingOverlay, showMessage } from './dialogs.js';
 import { glosarioLista, buscarPaneles, tbxFileInput } from './dom.js';
 import { terminosQueResponden } from './core/glosario-coincidencias.js';
