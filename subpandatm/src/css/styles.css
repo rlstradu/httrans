@@ -1,0 +1,3623 @@
+        /* --- COLORES Y TAMAÑOS ---------------------------------------------
+           Los mismos nombres que usa Poanda, para que las dos herramientas se
+           puedan tocar con la misma cabeza. Lo que cambia es el color de marca:
+           subpandaTM es azul, y lo sigue siendo.
+
+           Antes cada color estaba escrito a mano allí donde hiciera falta, así
+           que cambiar el azul obligaba a buscarlo por toda la hoja. */
+        :root {
+            --color-primary: #075BA2;      /* El azul de subpandaTM */
+            --color-primary-hover: #064f8a;
+            --color-dark: #373737;
+            --color-light-gray: #f3f4f6;
+            --color-white: #ffffff;
+            --color-medium-gray: #e5e7eb;
+            --color-neutral-gray: #6b7280;
+            --color-borde: #d1d5db;
+            /* El azul rebajado de los tiradores: el asa que se ve en el
+               separador y en las dos rayas que se arrastran. Un separador gris
+               parece un borde de la página, y nadie prueba a arrastrar un
+               borde. */
+            --color-tirador: #9dc0e0;
+            /* El fondo de la fila de pestañas: un punto más oscuro que la
+               columna, para que se lea como un menú y no como cuatro palabras
+               sueltas. */
+            --color-pestanas: #e8eaee;
+            /* Los dos separadores que se arrastran son la misma pieza y se
+               pintan igual: el de entre el vídeo y el editor, y el del borde de
+               la columna de consulta. Eran distintos —uno con relleno y otro
+               transparente— y se notaba. */
+            --color-separador: #ffffff;
+            --color-separador-borde: #e8eaed;
+
+            --texto-titulo: 1rem;    /* 16px: títulos de ventana y de panel */
+            --texto-base: 0.875rem;  /* 14px: el texto normal */
+            --texto-meta: 0.75rem;   /* 12px: recuentos, notas, etiquetas */
+        }
+
+        html.dark {
+            --color-dark: #f3f4f6;
+            --color-light-gray: #111827;
+            --color-white: #1f2937;
+            --color-medium-gray: #374151;
+            --color-neutral-gray: #9ca3af;
+            --color-borde: #4b5563;
+            /* El azul se rebaja en oscuro por la misma razón que Poanda rebaja
+               su rosa: un color pensado para verse sobre blanco deslumbra sobre
+               fondo oscuro, sobre todo en trazos finos. */
+            --color-primary: #2563eb;
+            --color-primary-hover: #1d4ed8;
+            --color-tirador: #3b6ea5;
+            --color-pestanas: #0b111c;
+            --color-separador: #2f3947;
+            --color-separador-borde: #3d4a5c;
+        }
+
+        /* --- LAS BARRAS DE DESPLAZAMIENTO ----------------------------------
+           En oscuro salían claras: el navegador las pinta a su manera si nadie
+           le dice lo contrario, y una barra gris claro sobre un fondo casi negro
+           es lo más brillante de la pantalla, justo al lado del texto. Se pintan
+           aquí en los dos modos para que sean parte de la ventana y no un
+           añadido del sistema.
+
+           color-scheme es lo que entienden Firefox y los cuadros nativos;
+           ::-webkit-scrollbar, lo que entienden Chrome y Safari. Hacen falta los
+           dos. */
+        html.dark { color-scheme: dark; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background-color: #f1f1f1; }
+        ::-webkit-scrollbar-thumb {
+            background-color: #c9c9c9;
+            border-radius: 5px;
+            border: 2px solid #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
+
+        /* En oscuro van más claras que el fondo, no más oscuras: una barra del
+           color del panel no se distingue de él, y una barra que no se ve no
+           dice por dónde vas. */
+        html.dark ::-webkit-scrollbar-track { background-color: #1f2937; }
+        html.dark ::-webkit-scrollbar-thumb {
+            background-color: #6b7280;
+            border-color: #1f2937;
+        }
+        html.dark ::-webkit-scrollbar-thumb:hover { background-color: #9ca3af; }
+
+        /* General styles for body and font */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: #202020;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* Ensures preformatted text respects line breaks and doesn't overflow */
+        pre {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+#statsContainer {
+            display: none !important; /* Oculta el div de estadísticas permanentemente */
+        }
+
+        /* --- LA BARRA DE VELOCIDAD DE LECTURA -------------------------------
+   Dice de un vistazo si el subtítulo se puede leer en el tiempo que está en
+   pantalla. En oscuro va en tonos apagados: los verdes y los rojos pensados
+   para fondo blanco, sobre fondo oscuro, son dos luces al lado del texto. */
+:root {
+    --cps-fondo: #e5e7eb;
+    --cps-bien: #22c55e;
+    --cps-pasado: #ef4444;
+    --cps-limite: #075BA2;
+}
+html.dark {
+    --cps-fondo: #374151;
+    --cps-bien: #15803d;
+    --cps-pasado: #b91c1c;
+    --cps-limite: #60a5fa;
+}
+
+.cps-bar-container {
+    width: 100%;
+    height: 6px; /* Altura fina */
+    background-color: var(--cps-fondo);
+    border-radius: 3px;
+    margin-top: 5px; /* Separación del editor */
+    position: relative;
+    overflow: hidden; /* Asegura que la barra de llenado no se salga */
+}
+
+/* Estilo de la barra de llenado */
+.cps-bar-fill {
+    height: 100%;
+    width: 0; /* Inicialmente a 0 */
+    background-color: var(--cps-bien);
+    transition: width 0.1s ease-out, background-color 0.3s ease; /* Transición suave */
+}
+/* Por encima del límite de caracteres por segundo. */
+.cps-bar-fill.cps-bar-alta { background-color: var(--cps-pasado); }
+
+/* Estilo del indicador de límite (la 'línea') */
+.cps-bar-limit-marker {
+    position: absolute;
+    top: 0;
+    width: 2px; /* Ancho de la línea de límite */
+    height: 100%;
+    background-color: var(--cps-limite);
+    z-index: 10; /* Asegura que esté por encima del relleno */
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+    /* Se posicionará dinámicamente con JavaScript */
+}
+
+/* --- ESTILOS PARA LAS REGIONES DE WAVESURFER (MODIFICADO v2) --- */
+        /* La región ya no es un bloque azul opaco: debajo de la onda hay ahora
+           un espectrograma, y taparlo con azul al 70 % sería quitarlo. Lo que
+           marca dónde empieza y acaba un subtítulo son los bordes; el relleno
+           es solo un tinte para saber qué trozo está cogido. */
+        #waveform ::part(region) {
+            z-index: 10;
+            overflow: visible !important;
+            background-color: rgba(7, 91, 162, 0.18);
+            border-left: 2px solid rgba(7, 91, 162, 0.95);
+            border-right: 2px solid rgba(7, 91, 162, 0.95);
+            transition: background-color 0.15s ease;
+font-size: small;
+    color: #fff !important;
+    padding: 10px;
+        }
+        #waveform ::part(region):hover {
+            background-color: rgba(7, 91, 162, 0.32);
+        }
+        /* La regla de segundos va por encima del tinte de las regiones, que si
+           no le pasa por encima y deja las cifras teñidas de azul. Es la
+           referencia para orientarse: tiene que leerse esté donde esté. */
+        #waveform ::part(timeline-wrapper) {
+            position: relative;
+            z-index: 12;
+            background-color: var(--color-white);
+            border-top: 1px solid var(--color-medium-gray);
+        }
+        #waveform ::part(region-handle-left),
+        #waveform ::part(region-handle-right) {
+            background-color: rgba(7, 91, 162, 0.95);
+            width: 5px;
+            cursor: ew-resize;
+        }
+        /* Las etiquetas que van dentro de cada región (número, original,
+           traducción y recuentos) se pintan dentro del shadow DOM de
+           WaveSurfer, donde esta hoja no llega. Sus estilos viven en
+           css/region.css y se inyectan ahí desde app.js. */
+        /* --- FIN ESTILOS REGIONES --- */
+
+/* --- INICIO: ESTILOS PARA ONDA BLOQUEADA --- */
+        #waveform.is-locked ::part(region) {
+            opacity: 0.4 !important; /* Más transparente */
+            transition: opacity 0.3s ease; /* Transición para la opacidad */
+        }
+
+        /* Oculta el icono de candado que no corresponda */
+        #lockWaveformBtn .lock-icon-open.hidden,
+        #lockWaveformBtn .lock-icon-closed.hidden {
+            display: none;
+        }
+        /* --- FIN: ESTILOS PARA ONDA BLOQUEADA --- */
+
+/* --- INICIO: ESTILO PARA REGIÓN ACTIVA EN SEGUIMIENTO --- */
+        #waveform ::part(region.region-playback-active) {
+            background-color: rgba(255, 165, 0, 0.3) !important; /* Naranja, sin tapar el espectrograma */
+            border-left: 2px solid rgba(255, 140, 0, 0.95);
+            border-right: 2px solid rgba(255, 140, 0, 0.95);
+            transition: background-color 0.1s ease-out, border-color 0.1s ease-out;
+        }
+        /* --- FIN: ESTILO PARA REGIÓN ACTIVA --- */
+
+/* --- INICIO: ESTILOS PARA SUBTÍTULO ACTIVO EN EDITOR --- */
+        /* Estilo para el div editable cuando tiene el foco */
+        .translation-editor-wrapper div[contenteditable="true"]:focus {
+            border-color: #333 !important; /* Borde más oscuro */
+            box-shadow: 0 0 0 1px #333; /* Opcional: una sombra sutil para realzar */
+        }
+
+        /* Estilo para la unidad completa del subtítulo cuando un editor interno tiene el foco */
+        .translation-unit-active {
+            background-color: #ffffff !important; 
+            transition: background-color 0.2s ease-in-out; /* Transición suave */
+        }
+        /* --- FIN: ESTILOS PARA SUBTÍTULO ACTIVO EN EDITOR --- */
+
+        /* --- UNIFIED BUTTON STYLES --- */
+        /* Los botones de la barra de arriba, con la forma de los de Poanda:
+           todos del mismo rango y todos con el mismo aspecto.
+
+           Antes unos eran azules y otros grises, y el color no significaba
+           nada: "Proyecto" era azul y "Herramientas" gris, aunque los dos son
+           menús que se abren igual. Ahora la barra es toda del mismo tono claro
+           y el azul se guarda para lo que está encendido, que es la única
+           diferencia que de verdad hay que ver de un vistazo. */
+        .btn {
+            font-size: var(--texto-base);
+            font-weight: 500;
+            white-space: nowrap;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            background-color: var(--color-white);
+            color: var(--color-dark);
+            border: 1px solid var(--color-borde);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1.5;
+        }
+        .btn:hover:not(:disabled) { background-color: #f9fafb; }
+        .btn:disabled { opacity: 0.5; cursor: default; }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Primary button style */
+        .btn-primary {
+            background-color: #075BA2;
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #f9fafb;
+        }
+        /* Dentro de una ventana sí manda el azul: ahí el botón principal es la
+           acción que se espera que se pulse, y no compite con una barra entera
+           de botones del mismo rango. */
+        .modal-content .btn-primary {
+            background-color: var(--color-primary);
+            color: #ffffff;
+            border-color: var(--color-primary);
+            font-weight: 600;
+        }
+        .modal-content .btn-primary:hover:not(:disabled) {
+            background-color: var(--color-primary-hover);
+        }
+
+        /* En la barra, "primary" y "secondary" se ven igual: lo que distingue
+           a un botón no es su rango sino si está encendido. */
+        .btn-primary,
+        .btn-secondary {
+            background-color: var(--color-white);
+            color: var(--color-dark);
+            border-color: var(--color-borde);
+        }
+
+       .btn-secondary:hover:not(:disabled) {
+            background-color: #f9fafb;
+        }
+
+        /* El botón encendido: es lo único que se sale del tono claro de la
+           barra, y por eso se ve a la primera. */
+        /* --- LOS DESPLEGABLES ------------------------------------------------
+           Un <select> sin tocar se pinta como el del sistema operativo: en un
+           Mac sale con su relieve y su flechita azul, en Windows con un cuadrado
+           gris, y en la misma pantalla convivían tres estéticas distintas. Aquí
+           se apaga ese dibujo y se pone el de la herramienta, con su flecha.
+
+           Lo que no se puede vestir es la lista que se despliega al pulsarlo:
+           esa la dibuja el sistema y ningún navegador deja tocarla. Lo que sí
+           se ve igual en todos es el control cerrado, que es lo que está en
+           pantalla el 99 % del tiempo. */
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            font-family: inherit;
+            color: var(--color-dark);
+            background-color: var(--color-white);
+            border: 1px solid var(--color-borde);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            /* La flecha, dibujada aquí mismo: un archivo menos que pedir, y del
+               color del texto en los dos modos. */
+            background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                linear-gradient(135deg, currentColor 50%, transparent 50%);
+            background-position: calc(100% - 14px) calc(50% + 1px), calc(100% - 9px) calc(50% + 1px);
+            background-size: 5px 5px, 5px 5px;
+            background-repeat: no-repeat;
+            padding-right: 1.75rem;
+        }
+        select:focus { outline: none; border-color: var(--color-primary); }
+        select:disabled { opacity: 0.55; cursor: not-allowed; }
+        /* La lista desplegada no se puede vestir, pero el color de fondo de las
+           opciones sí llega en buena parte de los navegadores: sin esto, en modo
+           oscuro salían en blanco. */
+        select option { background-color: var(--color-white); color: var(--color-dark); }
+
+        .btn.active,
+        .btn-secondary.active {
+            background-color: var(--color-primary);
+            color: #ffffff;
+            border-color: var(--color-primary);
+            font-weight: 600;
+        }
+        .btn.active:hover:not(:disabled),
+        .btn-secondary.active:hover:not(:disabled) {
+            background-color: var(--color-primary-hover);
+        }
+
+        /* Destructive button style */
+        .btn-destructive {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-destructive:hover:not(:disabled) {
+            background-color: #dc2626;
+        }
+        
+        /* Language button style */
+        .btn-lang {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            padding: 0.25rem 0.75rem;
+        }
+        .btn-lang.active {
+            background-color: #075BA2;
+            color: white;
+            font-weight: 700;
+        }
+
+.btn-active {
+            background-color: #075BA2 !important; /* Mismo azul que el primario */
+            color: white !important; /* Forzamos el color blanco */
+            font-weight: 700 !important; /* Forzamos la negrita */
+        }
+
+
+
+
+        /* Specific styles for code display fields (original, translation) */
+        .subtitle-display-code {
+            background-color: #e3e3e3;
+            border: 1px solid #000;
+            color: #202020;
+        }
+        .subtitle-editor {
+            background-color: #ffffff;
+            color: #000000;
+            min-height: 50px;
+            border: 1px solid #d1d5db;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+        }
+        .subtitle-editor[contenteditable="false"] {
+            background-color: #f3f4f6;
+        }
+
+        /* Background of translation units */
+        .translation-unit-bg {
+            background-color: #f8f8f8;
+            border-color: #e5e7eb;
+        }
+
+        /* 2-column layout classes */
+        .translation-row {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .translation-row {
+                flex-direction: row;
+            }
+            .original-col, .translation-col {
+                flex: 1;
+            }
+        }
+
+        /* Modal (pop-up) styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        /* El cuadro de confirmación se abre encima de otro cuadro (por ejemplo,
+           el de copias de seguridad), así que tiene que quedar por delante. */
+        #confirmModal {
+            z-index: 1100;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 500px;
+        }
+        #shortcutsModal .modal-content,
+        #findReplaceModal .modal-content {
+            width: 650px;
+            max-width: 95%;
+        }
+        .shortcut-icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            vertical-align: middle;
+            margin: 0 4px;
+        }
+        .shortcut-input {
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            text-align: center;
+            min-width: 120px;
+            display: inline-block;
+        }
+        .shortcut-input.recording {
+            background-color: #fffbe6;
+            border-color: #facc15;
+        }
+
+        /* --- START: Floating Panel Styles --- */
+        .floating-panel {
+            position: fixed;
+            width: 480px;
+            min-width: 350px;
+            max-width: 80vw;
+            height: 75vh;
+            min-height: 300px;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 950;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Changed from 'hidden' to allow resizers to be placed outside */
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+
+        #terminologySidebar {
+            top: auto;
+            right: auto;
+            bottom: 20px;
+            left: 20px;
+            transform-origin: bottom left;
+        }
+
+        #translationMemorySidebar {
+            top: auto;
+            right: 20px;
+            bottom: 20px;
+            left: auto;
+            transform-origin: bottom right;
+        }
+
+        .floating-panel.is-visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        
+        .floating-panel .sidebar-header {
+            cursor: move;
+            background-color: #f9fafb;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .floating-panel .sidebar-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .panel-resizer {
+            position: absolute;
+            background: transparent;
+        }
+        .panel-resizer.top { top: -5px; left: 0; right: 0; height: 10px; cursor: ns-resize; }
+        .panel-resizer.bottom { bottom: -5px; left: 0; right: 0; height: 10px; cursor: ns-resize; }
+        .panel-resizer.left { top: 0; bottom: 0; left: -5px; width: 10px; cursor: ew-resize; }
+        .panel-resizer.right { top: 0; bottom: 0; right: -5px; width: 10px; cursor: ew-resize; }
+        .panel-resizer.top-left { top: -5px; left: -5px; width: 10px; height: 10px; cursor: nwse-resize; z-index: 1; }
+        .panel-resizer.top-right { top: -5px; right: -5px; width: 10px; height: 10px; cursor: nesw-resize; z-index: 1; }
+        .panel-resizer.bottom-left { bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: nesw-resize; z-index: 1; }
+        .panel-resizer.bottom-right { bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: nwse-resize; z-index: 1; }
+        
+        /* --- END: Floating Panel Styles --- */
+
+
+        /* Glossary/TM specific styles */
+        .glossary-input-group input, .glossary-input-group select,
+        .tm-input-group input, .tm-input-group select,
+        .qa-input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-top: 4px;
+            color: #202020;
+            background-color: #fff;
+        }
+        .glossary-info-box, .tm-info-box {
+            background-color: #f0f8ff;
+            border: 1px solid #d0e8f8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #333;
+        }
+        .glossary-highlight {
+            background-color: #ffcc00;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+        .glossary-row-highlight {
+            background-color: #ffcc00 !important;
+            transition: background-color 0.3s ease;
+        }
+
+        /* El borde del subtítulo activo se define una sola vez, abajo, en
+           .segmento-fila.translation-unit-active. Aquí había otra regla del
+           diseño anterior que ponía dos píxeles de borde donde la fila tiene
+           uno, más un cerco de tres: las dos se sumaban y el azul salía de
+           distinto grosor según el lado. */
+
+        /* Loading Overlay Styles */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1001; font-size: 1.2rem; color: #333;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Accordion styles */
+        .accordion-item { border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; margin-bottom: 1rem; }
+        .accordion-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 0.75rem 1rem; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; user-select: none; }
+        .accordion-header:hover { background-color: #f3f4f6; color: #075BA2; }
+        .accordion-icon { transition: transform 0.3s ease; }
+        .accordion-icon.rotated { transform: rotate(180deg); }
+        .accordion-content { overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; padding: 0 1rem; }
+        .accordion-content.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; }
+        .accordion-content.expanded { max-height: 500px; padding-top: 1rem; padding-bottom: 1rem; }
+
+        /* TM Table styles */
+        .tm-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+        .tm-table th:nth-child(1), .tm-table td:nth-child(1) { width: 15%; text-align: center; }
+        .tm-table th:nth-child(2), .tm-table td:nth-child(2),
+        .tm-table th:nth-child(3), .tm-table td:nth-child(3) {
+            width: 42.5%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .tm-best-match-highlight { background-color: #d1fae5 !important; border-color: #10b981 !important; border-width: 2px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); }
+        
+        /* Diff styles */
+        .diff-deletion { background-color: #fdd; text-decoration: line-through; }
+        .diff-insertion { background-color: #dfd; }
+
+        /* QA Error Styles */
+        .qa-error { color: #ef4444; font-weight: 700; }
+        .qa-success { color: #22c55e; font-weight: 700; }
+        #qaErrorStats.clickable { cursor: pointer; text-decoration: underline; }
+        .qa-error-item { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background-color 0.2s; }
+        .qa-error-item:hover { background-color: #f3f4f6; }
+        /* Qué formato le falta a la traducción, dicho con palabras:
+           "Tags" no le dice a nadie qué tiene que arreglar. */
+        .qa-error-etiquetas { margin-top: 0.25rem; font-size: 0.8125rem; color: #dc2626; }
+        html.dark .qa-error-etiquetas { color: #f87171; }
+        #qaErrorListContainer { max-height: 60vh; overflow-y: auto; }
+
+        /* Header styles */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* El relleno se recorta para que el logotipo pueda crecer sin que
+               la barra crezca con él: el alto de la barra lo marca el logotipo,
+               que es lo más alto que hay dentro. */
+            padding: 0.4rem 1rem;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            flex-wrap: wrap;
+        }
+        /* El logotipo, a la izquierda de la barra, como en Poanda. Estaba dentro
+           del reproductor, que es donde menos falta hace: desaparecía en cuanto
+           se cargaba un vídeo. */
+        .logo-barra {
+            height: 56px;
+            width: auto;
+            flex-shrink: 0;
+        }
+        /* La imagen lleva el texto en oscuro, pensado para fondo blanco: sobre
+           el fondo negro del modo oscuro se pierde. Una sombra clara paralela lo
+           devuelve, sin tener que mantener una segunda imagen. */
+        html.dark .logo-barra {
+            filter: drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.9))
+                drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.9))
+                drop-shadow(0 0 3px rgba(255, 255, 255, 0.7));
+        }
+        .header-main-actions {
+            display: flex;
+            flex-grow: 1;
+            justify-content: center;
+            gap: 0.5rem; /* Reduced gap for smaller buttons */
+            flex-wrap: wrap;
+        }
+        .header-lang-switcher {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Main content area */
+        .main-app-content { display: flex; flex-direction: column; flex-grow: 1; padding: 1rem; gap: 1rem; }
+        .editor-and-sidebars-wrapper { display: flex; flex-direction: column; flex-grow: 1; gap: 1rem; min-height: 0;}
+        /* El separador entre la columna del vídeo y la de los subtítulos: del
+           mismo tono que una barra de desplazamiento, que es lo que es. Antes
+           era un gris bastante más marcado y partía la pantalla en dos de una
+           manera que no venía a cuento. */
+        #horizontal-resizer,
+        .tirador-ancho {
+            width: 10px; cursor: col-resize;
+            background-color: var(--color-separador);
+            border-left: 1px solid var(--color-separador-borde);
+            border-right: 1px solid var(--color-separador-borde);
+            display: flex; align-items: center; justify-content: center;
+        }
+        #horizontal-resizer { height: auto; }
+        /* El asa: una raya azul corta en el centro. Sin ella el separador es un
+           gris entre dos columnas, y un gris entre dos columnas nadie prueba a
+           arrastrarlo. Se ve siempre, no solo al pasar por encima: lo que hay
+           que descubrir es justamente que se puede mover. */
+        #horizontal-resizer::before {
+            content: ''; width: 3px; height: 2.5rem; border-radius: 3px;
+            background-color: var(--color-tirador);
+            transition: background-color 0.15s;
+        }
+        #horizontal-resizer:hover,
+        .tirador-ancho:hover { background-color: var(--color-separador-borde); }
+        #horizontal-resizer:hover::before,
+        .tirador-ancho:hover::before { background-color: var(--color-primary); }
+
+        @media (min-width: 1024px) {
+            .main-app-content { flex-direction: row; align-items: stretch; gap: 0; }
+            /* La columna del vídeo ocupa el alto entero: el reproductor pegado
+               arriba y la onda estirándose hasta el borde de abajo. Antes se
+               encogía hasta lo que midiera su contenido y se quedaba pegada
+               arriba con posición fija, así que debajo de la onda quedaba un
+               hueco gris que crecía con la ventana. */
+            .video-player-section {
+                flex-shrink: 0;
+                /* Un cuarto, no un tercio: el reproductor y la onda se leen
+                   igual de bien, y el tercio que se lleva de más se lo quitaba
+                   a las tarjetas de subtítulo del centro, que salían
+                   apelotonadas. Se sigue pudiendo mover con el separador. */
+                flex-basis: 25%;
+                align-self: stretch;
+                min-height: 0;
+                /* Sin esto la columna no puede ser más estrecha que lo que
+                   mide la onda dibujada, que con el zoom puesto son miles de
+                   píxeles: se comía la pantalla y al editor de subtítulos le
+                   quedaba una tira donde el texto salía letra por letra. */
+                min-width: 0;
+                padding-right: 0.5rem;
+            }
+            .right-panel-content { 
+                flex-grow: 1; 
+                display: flex; 
+                flex-direction: column; 
+                gap: 0;
+                overflow: hidden; /* ADDED to contain the scrolling child */
+                min-height: 0;
+            }
+            /* El editor a la izquierda y la columna de consulta a su
+               derecha, uno al lado del otro: la memoria y el glosario están a
+               la vista mientras se traduce, no encima del texto. */
+            .editor-and-sidebars-wrapper { flex-direction: row; flex-grow: 1; display: flex; gap: 0.75rem; }
+            .editor-main-content { flex: 1 1 auto; min-width: 0; overflow-y: auto; }
+            #vertical-resizer { display: none; }
+        }
+
+        /* --- LA COLUMNA DEL VÍDEO ------------------------------------------
+           Tres piezas en vertical: el reproductor arriba sin nada por encima,
+           su botonera justo debajo y el bloque de la onda llevándose todo lo
+           que quede hasta el borde inferior. */
+        .video-player-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem;
+            min-height: 0;
+        }
+
+        /* Video player styles */
+        #videoPlayerContainer { width: 100%; flex: 0 0 auto; background-color: #000; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #videoPlayerWrapper { position: relative; width: 100%; line-height: 0; background-color: #000; border-radius: 0.5rem; min-height: 250px; }
+        #videoPlayer { width: 100%; height: auto; max-height: calc(45vh - 105px); border-radius: 0.5rem; object-fit: contain; background-color: #000; }
+
+        /* El bloque de la onda: el dibujo se lleva el alto que sobre y la
+           botonera se queda abajo del todo, pegada al borde de la columna. */
+        .onda-bloque {
+            flex: 1 1 auto;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+        }
+        .onda-bloque.hidden { display: none !important; }
+        .onda-bloque #waveform {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: 0.5rem;
+            overflow: hidden;
+        }
+        /* La vista previa ocupa el vídeo entero y se reparte en tres franjas:
+           arriba, en medio y abajo. En un ASS es de lo más normal que haya dos
+           subtítulos a la vez —un cartel arriba y el diálogo abajo—, y cada uno
+           tiene que verse en su sitio en lugar de uno encima del otro. */
+        /* El 10% de abajo es el de siempre: es donde estaba el subtítulo antes
+           de repartir la pantalla en franjas, y ahí es donde se espera. */
+        #subtitlePreviewOverlay { position: absolute; inset: 0; padding: 6% 1rem 10%; text-align: center; pointer-events: none; transition: opacity 0.3s ease; }
+        #subtitlePreviewText {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+            font-weight: 500;
+            font-size: var(--user-font-size);
+            color: white;
+            line-height: 1.4;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 1);
+            white-space: pre-wrap;
+        }
+        /* Las tres franjas están siempre, aunque estén vacías: es lo que hace
+           que la de abajo se quede abajo cuando arriba no hay nada. */
+        .previa-franja { display: flex; flex-direction: column; align-items: center; gap: 0.35em; }
+        .previa-franja:empty { min-height: 0; }
+        .previa-linea {
+            display: block;
+            padding: 0.10em 0.25em;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 0.25rem;
+        }
+        #videoFileInput { display: none; }
+
+        /* Animation for Restore button */
+        @keyframes pulse-yellow { 0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 50% { box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); } }
+        .animate-pulse-yellow { animation: pulse-yellow 2s infinite; }
+
+        /* --- LAS BOTONERAS -------------------------------------------------
+           La del vídeo y la de la onda son la misma cosa con distinto
+           contenido: una franja clara pegada debajo de su recuadro. Antes la
+           del vídeo era una barra negra flotante que solo salía al pasar el
+           ratón por encima del reproductor, y la de la onda una franja gris
+           suelta: dos maneras distintas de poner cuatro botones, una encima de
+           la otra. */
+        .botonera {
+            flex: 0 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            padding: 0.4rem;
+            background-color: var(--color-light-gray);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem;
+        }
+        /* La de la onda va cosida al recuadro del dibujo, sin separación. */
+        .botonera-onda {
+            border-radius: 0 0 0.5rem 0.5rem;
+            border-top: none;
+            margin-top: -1px;
+        }
+        .botonera .btn { padding: 0.3rem 0.55rem; }
+        /* Todos los botones de las dos botoneras son el mismo cuadrado. Antes
+           cada uno medía lo que midiera su contenido —un icono, un signo, un
+           desplegable con su texto—, y la fila era una escalera. */
+        .botonera-cuadrado {
+            width: 2rem;
+            height: 2rem;
+            padding: 0 !important;
+            justify-content: center;
+        }
+        .botonera-cuadrado svg { width: 1.15rem; height: 1.15rem; }
+        /* Saltar un segundo: la flecha y el número, no un dibujo. Eran dos
+           flechas circulares con un "1" dentro, y no se entendía para qué eran
+           sin pasar el ratón por encima y esperar al rótulo. */
+        .botonera-salto {
+            font-size: 0.8rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            font-variant-numeric: tabular-nums;
+        }
+        .botonera-grupo {
+            display: flex;
+            gap: 0.2rem;
+        }
+        .botonera-separador {
+            width: 1px;
+            align-self: stretch;
+            margin: 0.1rem 0.15rem;
+            background-color: var(--color-borde);
+        }
+        /* Los signos + y − del tamaño de letra: cuadrados, para que no queden
+           dos botones de anchos distintos uno al lado del otro. */
+        .botonera-signo {
+            width: 1.9rem;
+            justify-content: center;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        /* Una cifra, no un botón: el tamaño de letra y la altura de la onda. */
+        .botonera-dato {
+            font-family: monospace;
+            font-size: var(--texto-meta);
+            font-weight: 600;
+            color: var(--color-dark);
+            min-width: 3rem;
+            text-align: center;
+        }
+        button.botonera-dato { cursor: pointer; }
+        /* Un icono suelto que solo etiqueta lo que hay al lado. */
+        .botonera-icono {
+            display: inline-flex;
+            align-items: center;
+            color: var(--color-neutral-gray);
+        }
+        /* Los desplegables de la botonera se ven como los botones: mismo borde,
+           mismo alto, misma letra. */
+        .botonera-select {
+            padding: 0.25rem 1.5rem 0.25rem 0.4rem;
+            font-size: var(--texto-meta);
+        }
+
+        /* --- LOS DESLIZADORES DE LA ONDA ------------------------------------
+           El zoom a lo ancho y la altura a lo alto son la misma clase de ajuste,
+           así que se manejan igual: un icono que abre un deslizador, como un
+           control de volumen. Con botones de más y de menos los saltos eran
+           fijos, hacían falta ocho pulsaciones para llegar donde uno quiere, y
+           no se veía en qué punto estabas. */
+        .deslizador { position: relative; display: inline-flex; }
+        .deslizador-cuerpo {
+            position: absolute;
+            bottom: calc(100% + 0.4rem);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.6rem;
+            background-color: var(--color-white);
+            border: 1px solid var(--color-borde);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .deslizador-cuerpo.hidden { display: none !important; }
+        .deslizador-cuerpo input[type='range'] {
+            width: 150px;
+            accent-color: var(--color-primary);
+            cursor: pointer;
+        }
+        /* Cuando lo que se elige no es una cifra sino una de dos cosas, el
+           cuadrito lleva dentro un par de botones en vez de un deslizador. */
+        .eleccion { display: flex; gap: 0.2rem; }
+        .eleccion-opcion {
+            padding: 0.25rem 0.6rem;
+            font-family: inherit;
+            font-size: var(--texto-meta);
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--color-dark);
+            background-color: transparent;
+            border: 1px solid var(--color-borde);
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+        .eleccion-opcion:hover { background-color: var(--color-light-gray); }
+        .eleccion-opcion.activa {
+            color: #ffffff;
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .deslizador-cifra {
+            min-width: 2.6rem;
+            text-align: right;
+            font-family: var(--fuente-mono, ui-monospace, Menlo, Consolas, monospace);
+            font-size: var(--texto-meta);
+            font-variant-numeric: tabular-nums;
+            color: var(--color-neutral-gray);
+        }
+
+/* --- START: Fullscreen Video Controls & Subtitles --- */
+
+/* En pantalla completa la botonera vuelve a ser una barra flotante encima del
+   vídeo: es lo que se espera de un reproductor a pantalla completa, y abajo no
+   hay ya ninguna columna donde ponerla. */
+#videoBloque:fullscreen {
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#videoBloque:fullscreen #videoPlayerContainer {
+    width: 100%;
+    height: 100%;
+    box-shadow: none;
+}
+#videoBloque:fullscreen #videoPlayerWrapper { height: 100%; }
+#videoBloque:fullscreen #videoControlsBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    width: auto;
+    border: none;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+#videoBloque:fullscreen:hover #videoControlsBar { opacity: 1; }
+
+/* Ajusta la posición de los subtítulos en pantalla completa para que no choquen con los controles */
+#videoBloque:fullscreen #subtitlePreviewOverlay {
+    bottom: 8%;
+}
+
+/* Anula la restricción de altura del vídeo SÓLO en pantalla completa */
+#videoBloque.is-fullscreen #videoPlayer {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain;
+}
+
+/* --- END: Fullscreen Video Controls & Subtitles --- */
+
+/* --- START: Custom Video Controls Styles --- */
+
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #4a5568;
+            border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -4px; /* Center thumb on track */
+        }
+        input[type=range]:focus::-webkit-slider-runnable-track {
+            background: #2d3748;
+        }
+
+          .volume-control {
+            position: relative;
+            /* Añadimos padding para crear un "puente" para el hover */
+            padding-bottom: 0.5rem;
+            margin-bottom: -0.5rem; /* Compensamos el padding para no mover otros elementos */
+        }
+
+        .volume-slider-container {
+            position: absolute;
+            /* Ajustamos la posición para que quede justo encima del botón */
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(17, 24, 39, 0.75);
+            padding: 1rem 0.75rem;
+            border-radius: 0.75rem;
+            display: none;
+        }
+
+        .volume-control:hover .volume-slider-container {
+            display: block;
+        }
+
+        #volumeBar {
+            -webkit-appearance: slider-vertical;
+            writing-mode: bt-lr;
+            background-color: transparent;
+            width: 15px;
+            height: 96px;
+        }
+
+video::-webkit-media-controls-fullscreen-button {
+    display: none;
+}
+video::-moz-fullscreen-button {
+    display: none !important; /* Mantenemos esto con !important por si acaso */
+    opacity: 0 !important;    /* Lo hacemos totalmente transparente */
+    width: 0 !important;     /* Forzamos a que no tenga anchura */
+    pointer-events: none;    /* Desactivamos cualquier clic sobre él */
+}
+
+video::-ms-fullscreen-button {
+    display: none;
+}
+
+        /* --- END: Custom Video Controls Styles --- */
+
+#customFullscreenBtn span {
+    font-size: 28px;      /* Tamaño grande para el carácter */
+    line-height: 1;       /* Centrado vertical perfecto */
+}
+
+/* --- START: Vertical Size Control Styles --- */
+.size-control {
+    position: relative;
+    padding-bottom: 0.5rem;
+    margin-bottom: -0.5rem;
+}
+
+.size-slider-container {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17, 24, 39, 0.75);
+    padding: 1rem 0.75rem;
+    border-radius: 0.75rem;
+    display: none;
+}
+
+.size-control:hover .size-slider-container {
+    display: block;
+}
+
+#subtitleFontSize {
+    -webkit-appearance: slider-vertical;
+    writing-mode: bt-lr;
+    background-color: transparent;
+    width: 15px;
+    height: 96px;
+    cursor: pointer;
+}
+
+#subtitleFontSize::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    margin-top: 0;
+    margin-left: -4px;
+}
+
+/* Estilos para el manejador en Firefox */
+#volumeBar::-moz-range-thumb,
+#subtitleFontSize::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    border: none; /* Importante para evitar estilos por defecto */
+}
+
+/* Estilos para la pista en Firefox (opcional pero recomendado) */
+#volumeBar::-moz-range-track,
+#subtitleFontSize::-moz-range-track {
+  background: #4a5568;
+  border-radius: 5px;
+  width: 8px;
+}
+
+/* --- START: Subtitle Source Control Styles --- */
+.source-control {
+    position: relative;
+    padding-bottom: 0.5rem;
+    margin-bottom: -0.5rem; /* Puente para el hover */
+}
+
+.source-options-container {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17, 24, 39, 0.75);
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    display: none; /* Oculto por defecto */
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 120px; /* Ancho fijo para el menú */
+}
+
+.source-control:hover .source-options-container {
+    display: flex; /* Se muestra al hacer hover */
+}
+
+.source-option {
+    background-color: transparent;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    width: 100%;
+    transition: background-color 0.2s ease;
+}
+
+.source-option:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.source-option.active {
+    background-color: #075BA2; /* Color primario para la opción activa */
+    font-weight: 700;
+}
+/* --- END: Subtitle Source Control Styles --- */
+
+/* --- Planner Styles --- */
+.session-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+.session-row:hover {
+    background-color: #f9fafb;
+}
+.session-row.completed {
+    background-color: #f0fdf4; /* green-50 */
+}
+.session-row.completed .session-text {
+    text-decoration: line-through;
+    color: #6b7280;
+}
+.session-row.active {
+    border-color: #075BA2;
+    box-shadow: 0 0 0 2px rgba(7, 91, 162, 0.2);
+}
+.session-text {
+    flex-grow: 1;
+    font-size: 0.875rem;
+}
+.session-time {
+    font-family: monospace;
+    font-weight: 600;
+    background-color: #e5e7eb;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.9rem;
+}
+
+/* La lista de sesiones se lleva todo el alto que quede en la pestaña. Tenía un
+   tope de 250 píxeles heredado de cuando el planificador era un acordeón
+   plegado debajo del vídeo: ahora es una pestaña con la columna entera para
+   ella, y ese tope solo servía para cortar la lista a los cuatro elementos y
+   sacar una barra de desplazamiento al lado. El desplazamiento, si hace falta,
+   lo pone .planificador-resultados. */
+#sessionResults {
+    padding-right: 0.25rem; /* Espacio para la barra de desplazamiento */
+}
+
+#videoPlayerContainer {
+    flex-shrink: 0;
+}
+
+/* --- END: Planner Styles --- */
+
+/* --- Notificaciones (Toast) --- */
+        #messageBox {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: auto;
+            max-width: 350px;
+            z-index: 2000;
+            transition: opacity 0.3s ease-in-out; /* Solo transicionamos la opacidad */
+            opacity: 0; /* Por defecto, es invisible */
+            pointer-events: none; /* Evita que se pueda hacer clic cuando está invisible */
+        }
+        #messageBox.is-visible {
+            opacity: 1;
+            pointer-events: auto; /* Permite interacción cuando es visible */
+        }
+        #messageBox .modal-content {
+            padding: 1rem 1.5rem;
+            text-align: center;
+        }
+        #messageClose {
+            display: none;
+        }
+
+/* La botonera del vídeo se adapta sola: es una fila que salta de línea cuando
+   la columna se estrecha. Aquí había una tanda de reglas para encogerla, con
+   los botones Original y Traducción convertidos en una "O" y una "T" sueltas y
+   la etiqueta de cargar vídeo cambiada por un emoji, porque la barra iba
+   flotando sobre el vídeo y no podía crecer. Ya no flota. */
+
+/* --- INICIO: AÑADIR ESTE BLOQUE DE CSS --- */
+        #statusBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px; /* Altura de la barra */
+            background-color: #ffffff;
+            border-top: 1px solid #d1d5db; /* Borde superior sutil */
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05); /* Sombra ligera */
+            z-index: 980; /* Encima del contenido, debajo de modales */
+            padding: 0 1rem; /* Espaciado horizontal */
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Para contenido futuro */
+            font-size: 0.875rem;
+            color: #374151; /* Color de texto gris oscuro */
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(100%); /* Oculto por defecto (movido hacia abajo) */
+        }
+        #statusBar.is-visible {
+            transform: translateY(0); /* Visible (en su posición original) */
+        }
+
+
+/* --- FIN: AÑADIR ESTE BLOQUE DE CSS --- */
+
+/* --- ESTILOS MODO OSCURO --- */
+        
+        /* Fondo base y texto */
+        html.dark body {
+            background-color: #111827; /* Gris muy oscuro */
+            color: #e5e7eb; /* Texto claro */
+        }
+
+        /* Paneles, Modales y Tarjetas */
+        html.dark .bg-white, 
+        html.dark .modal-content, 
+        html.dark .floating-panel,
+        html.dark .translation-unit-active,
+        html.dark .subtitle-editor {
+            background-color: #1f2937 !important; /* Gris oscuro panel */
+            color: #e5e7eb !important;
+        }
+        /* El borde gris se lo queda solo el campo de escritura. Puesto también
+           sobre la fila activa —y con !important— le tapaba el azul: en oscuro
+           el subtítulo en el que estabas se marcaba en gris sobre gris. */
+        html.dark .subtitle-editor { border-color: #374151 !important; }
+
+        /* Inputs y Textareas */
+        html.dark input, 
+        html.dark select, 
+        html.dark textarea,
+        html.dark .subtitle-display-code {
+            background-color: #374151 !important;
+            color: #fff !important;
+            border-color: #4b5563 !important;
+        }
+
+        /* Headers y Fondos claros */
+        html.dark .app-header,
+        html.dark .bg-gray-50,
+        html.dark .bg-gray-100 {
+            background-color: #111827 !important;
+            color: #e5e7eb !important;
+            border-color: #374151 !important;
+        }
+
+        /* Textos oscuros forzados a claro */
+        html.dark .text-gray-700,
+        html.dark .text-gray-900,
+        html.dark .text-black {
+            color: #d1d5db !important;
+        }
+
+        /* Hover en menús */
+        html.dark .hover\:bg-gray-100:hover {
+            background-color: #374151 !important;
+        }
+
+        /* Botones de la barra en modo oscuro */
+        html.dark .btn,
+        html.dark .btn-primary,
+        html.dark .btn-secondary {
+            background-color: #374151;
+            color: #e5e7eb;
+            border-color: var(--color-borde);
+        }
+        html.dark .btn:hover:not(:disabled),
+        html.dark .btn-primary:hover:not(:disabled),
+        html.dark .btn-secondary:hover:not(:disabled) {
+            background-color: #4b5563;
+        }
+        /* El encendido sigue siendo azul también en oscuro: es el único que
+           tiene que destacar. */
+        html.dark .btn.active,
+        html.dark .btn-secondary.active,
+        html.dark .modal-content .btn-primary {
+            background-color: var(--color-primary);
+            color: #ffffff;
+            border-color: var(--color-primary);
+        }
+        
+        /* Correcciones específicas */
+        html.dark .translation-unit-bg {
+            background-color: #1f2937; /* Fondo de la tarjeta de subtítulo */
+            border-color: #374151;
+        }
+        html.dark #statusBar {
+            background-color: #1f2937;
+            border-top-color: #374151;
+            color: #9ca3af;
+        }
+        html.dark .accordion-header {
+             background-color: #1f2937;
+             border-bottom-color: #374151;
+        }
+        html.dark .accordion-header:hover {
+             background-color: #374151;
+        }
+
+/* --- CORRECCIONES ADICIONALES MODO OSCURO --- */
+
+        /* Encabezados de los paneles laterales (Terminología, TM, etc.) */
+        html.dark .sidebar-header {
+            background-color: #1f2937 !important; /* Mismo gris que el panel */
+            border-bottom-color: #374151 !important; /* Borde sutil */
+            color: #e5e7eb !important;
+        }
+
+        /* Cajas de información (Info Boxes) de glosarios y TM */
+        html.dark .glossary-info-box, 
+        html.dark .tm-info-box,
+        html.dark .bg-blue-50, /* Cajas de aviso azules */
+        html.dark .bg-gray-100 { /* Cajas de estadísticas */
+            background-color: #374151 !important; /* Un gris un poco más claro para destacar */
+            border-color: #4b5563 !important;
+            color: #d1d5db !important;
+        }
+
+        /* Corrección para textos azules dentro de las cajas oscuras (para que se lean bien) */
+        html.dark .text-blue-700,
+        html.dark .text-blue-800 {
+            color: #93c5fd !important; /* Azul claro legible */
+        }
+        
+        /* Botones de cerrar (X) y restaurar en los paneles */
+        html.dark .sidebar-header button {
+            color: #9ca3af !important;
+        }
+        html.dark .sidebar-header button:hover {
+            color: #fff !important;
+        }
+
+        /* --- AJUSTES FINALES DE COLORES EN MODO OSCURO --- */
+
+        /* 1. Resizer Horizontal (Barra separadora) */
+        /* En oscuro era un gris bastante más claro que todo lo demás, y partía
+           la pantalla en dos. Ahora el separador se calla y habla el asa. */
+        html.dark #horizontal-resizer {
+            background-color: var(--color-separador) !important;
+            border-left-color: var(--color-separador-borde) !important;
+            border-right-color: var(--color-separador-borde) !important;
+        }
+        html.dark #horizontal-resizer:hover {
+            background-color: var(--color-separador-borde) !important;
+        }
+        
+        /* 2. Memoria de Traducción (TM): Diferencias */
+        /* Inserciones (Verde) */
+        html.dark .diff-insertion {
+            background-color: #064e3b !important; /* Verde botella oscuro */
+            color: #ecfccb !important; /* Texto verde muy claro para contraste */
+            border: 1px solid #065f46; /* Borde sutil */
+        }
+        /* Eliminaciones (Rojo) */
+        html.dark .diff-deletion {
+            background-color: #450a0a !important; /* Rojo sangre oscuro */
+            color: #fecaca !important; /* Texto rojo muy claro */
+            text-decoration-color: #f87171 !important; /* Color de la línea de tachado */
+        }
+        /* Fila de "Mejor coincidencia" (Best Match) */
+        html.dark .tm-best-match-highlight {
+            background-color: rgba(6, 78, 59, 0.3) !important; /* Verde oscuro transparente */
+            border-color: #065f46 !important;
+            box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.3) !important;
+        }
+
+        /* 3. Glosario: Resaltados (Amarillo) */
+        /* Término resaltado dentro del texto original */
+        html.dark .glossary-highlight {
+            background-color: #713f12 !important; /* Ocre/Dorado oscuro */
+            color: #fef08a !important; /* Amarillo pálido para el texto */
+            border: 1px solid #854d0e;
+        }
+        /* Fila resaltada en la tabla lateral */
+        html.dark .glossary-row-highlight {
+            background-color: rgba(113, 63, 18, 0.4) !important; /* Marrón dorado semitransparente */
+        }
+
+/* Fondo principal de la aplicación */
+        /* Lo oscurecemos casi hasta el negro para mejorar el contraste con las tarjetas */
+        html.dark .main-app-content {
+            background-color: #0b121a !important; /* Tono "Slate 950", muy cercano al negro */
+        }
+        /* Etiqueta de coincidencia de glosario (encima del subtítulo) */
+        /* Cambiamos el amarillo brillante por un ocre oscuro legible */
+        html.dark span[id^="glossary-match-"] {
+            background-color: #713f12 !important; /* Marrón/Dorado oscuro */
+            color: #fef08a !important; /* Texto amarillo pálido */
+            border: 1px solid #854d0e !important; /* Borde sutil para definición */
+        }
+
+        /* --- EL BOCADILLO DEL PANDA ----------------------------------------
+           La bienvenida la da el panda, igual que en Poanda. Antes era un
+           recuadro gris con la letra también gris: era lo primero que se veía
+           al entrar y costaba leerlo.
+
+           El panda va a la izquierda y el bocadillo a su derecha, no uno encima
+           del otro: apilarlos cuesta el doble de alto para decir lo mismo. */
+        .panda-aviso {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 1rem 0.25rem;
+        }
+        .panda-aviso-panda {
+            flex: 0 0 auto;
+            width: 84px;
+            height: auto;
+            display: block;
+        }
+        /* El panda lleva mucho negro: en modo oscuro se le pierde el contorno y
+           se quedan las gafas flotando. */
+        html.dark .panda-aviso-panda {
+            filter: drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.7))
+                drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.7));
+        }
+        .panda-aviso-bocadillo {
+            flex: 1 1 auto;
+            min-width: 0;
+            position: relative;
+            margin: 0;
+            font-size: var(--texto-base);
+            line-height: 1.45;
+            color: var(--color-dark);
+            background-color: #eff6ff;
+            border: 1px solid var(--color-primary);
+            border-radius: 10px;
+            padding: 0.7rem 0.9rem;
+        }
+        html.dark .panda-aviso-bocadillo {
+            background-color: #1e293b;
+            border-color: var(--color-primary);
+            color: #f3f4f6;
+        }
+        /* El pico, apuntando hacia el panda. Son dos triángulos, uno encima del
+           otro: el de abajo hace de borde y el de arriba tapa su interior, que
+           es como se dibuja un pico con marco sin recortar nada. */
+        .panda-aviso-bocadillo::before,
+        .panda-aviso-bocadillo::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 100%;
+            margin-top: -9px;
+            width: 0;
+            height: 0;
+            border: 9px solid transparent;
+            border-right-color: var(--color-primary);
+        }
+        .panda-aviso-bocadillo::after {
+            margin-top: -8px;
+            margin-right: -1px;
+            border-width: 8px;
+            border-right-color: #eff6ff;
+        }
+        html.dark .panda-aviso-bocadillo::after { border-right-color: #1e293b; }
+
+
+
+/* ===================================================================
+   LA COLUMNA DE CONSULTA: LA MEMORIA Y EL GLOSARIO
+   ===================================================================
+   Traído de Poanda tal cual, cambiando solo el color de marca (allí rosa,
+   aquí el azul de subpandaTM) y la forma de marcar el modo oscuro.
+
+   Lo que cambia respecto a lo que había: la memoria y el glosario eran dos
+   ventanas flotantes que se abrían encima del editor, tapaban justo el texto
+   que hay que mirar y había que apartarlas a mano cada vez. Ahora son dos
+   recuadros en una columna a la derecha, los dos a la vista mientras se
+   traduce. Las coincidencias y los términos salen en tarjetas y no en tablas
+   de tres columnas: en media columna, cada celda daba para cuatro palabras.
+
+   El amarillo de marcar términos se conserva: marcarlos en azul sobre un
+   texto que ya lleva azul no se vería.
+   =================================================================== */
+        /* La cabecera ya no es un asa de arrastrar: los paneles no se mueven. */
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; user-select: none; }
+        /* El cuerpo se desplaza por dentro y el panel no crece: en una columna
+           compartida, un panel que crece con su contenido se come al de al lado. */
+        .sidebar-content { flex: 1; min-height: 0; overflow-y: auto; padding-right: 0.5rem; }
+
+        /* Cabecera y cuerpo llevan el relleno; el panel en sí no, para que la
+           franja de desplazamiento quede pegada al borde. */
+        .terminology-sidebar, .translation-memory-sidebar { padding: 0.75rem !important; }
+
+        /* El título del panel, en la misma fila que sus botones. Era un titular
+           de 18 px en negrita ocupando un renglón entero para sí: en media
+           columna, eso es una fila de coincidencias que no se ve. */
+        /* Baja del tamaño de "título de ventana" (16 px) al del texto normal.
+           La escala reserva los 16 px para títulos de ventana, y estos dos
+           dejaron de serlo: ya no son ventanas flotantes sino dos secciones de
+           una misma columna, y ahí un titular grande se come una fila de
+           coincidencias. El selector lleva la cabecera delante para ganarle a
+           la regla general de la escala, que apunta a los h3 del panel. */
+        .sidebar-header .panel-titulo {
+            font-size: var(--texto-meta); font-weight: 700; line-height: 1.4;
+            color: var(--color-dark); margin: 0; white-space: nowrap;
+        }
+
+        /* Importar, exportar y plegar: iconos a la derecha del título, con el
+           nombre en el tooltip. Llevan el mismo borde que los botones de la
+           barra de arriba, que es lo que dice que se pueden pulsar. */
+        .panel-acciones { display: flex; align-items: center; gap: 0.25rem; }
+        .panel-icono {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 26px; height: 26px; border-radius: 0.375rem; cursor: pointer;
+            color: var(--color-neutral-gray); background-color: var(--color-white);
+            border: 1px solid #d1d5db; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .panel-icono:hover { color: var(--color-primary); background-color: #f9fafb; }
+        html.dark .panel-icono {
+            background-color: #374151; color: #e5e7eb; border-color: #4b5563;
+        }
+        html.dark .panel-icono:hover { background-color: #4b5563; }
+        .panel-icono svg { width: 14px; height: 14px; }
+
+        /* La equis pliega el panel y deja su título a la vista; volver a
+           pulsarla lo abre. Cerrarlo del todo no tendría sentido: la columna
+           está siempre ahí. */
+        .panel-plegado .panel-plegar svg { transform: rotate(45deg); }
+        .panel-plegar svg { transition: transform 0.15s; }
+
+        /* Un buscador para los dos paneles, encima de los dos. Antes había uno
+           en cada uno, con su título encima, buscando lo mismo. */
+        .paneles-buscador { flex: 0 0 auto; margin-bottom: 0.5rem; position: relative; }
+        /* La lupa va dentro del campo, no al lado: dice qué se hace ahí sin
+           gastar una palabra de las pocas que caben en media columna. Es un
+           adorno, no un botón, así que no responde al ratón. */
+        .paneles-buscador-lupa {
+            position: absolute; left: 0.45rem; top: 50%; transform: translateY(-50%);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--color-neutral-gray); pointer-events: none;
+        }
+        .paneles-buscador-lupa svg { width: 13px; height: 13px; display: block; }
+        html.dark .paneles-buscador-lupa { color: #9ca3af; }
+        .paneles-buscador .ia-campo { margin: 0; padding-left: 1.6rem; }
+
+        /* El aviso de que la memoria y el glosario están vacíos: lo dice el panda,
+           debajo de los dos paneles. Aquí abajo no le quita el sitio a nada, y
+           quien ya sabe cómo funciona esto lo cierra con su equis. */
+        .paneles-aviso {
+            flex: 0 0 auto;
+            padding: 0.6rem 0 0;
+            gap: 0.45rem;
+        }
+        .paneles-aviso .paneles-aviso-panda { width: 54px; }
+        .paneles-aviso .panda-aviso-bocadillo {
+            font-size: var(--texto-meta);
+            padding: 0.5rem 1.6rem 0.5rem 0.6rem;
+        }
+        .paneles-aviso-cerrar {
+            position: absolute; top: 0.15rem; right: 0.3rem;
+            border: none; background: none; cursor: pointer; line-height: 1;
+            font-size: 1.1rem; color: var(--color-neutral-gray); padding: 0.1rem 0.25rem;
+        }
+        .paneles-aviso-cerrar:hover { color: var(--color-primary); }
+
+
+        /* LAS COINCIDENCIAS DE LA MEMORIA
+           ================================
+
+           Antes era una tabla de tres columnas (porcentaje, original,
+           traducción) dentro de un panel estrecho. Con ese ancho, cada celda
+           partía el texto en cinco o seis líneas de dos palabras, y el original
+           venía marcado carácter a carácter, así que una coincidencia mala se
+           veía como confeti rojo y verde entre letras sueltas.
+
+           Ahora cada coincidencia es una tarjeta, como en Locversia: el
+           porcentaje y el botón de insertar arriba, el original debajo y la
+           traducción al final, cada cosa en su línea y a todo el ancho. Se lee
+           de arriba abajo, que es como se mira una coincidencia: primero cuánto
+           se parece, luego en qué se diferencia, luego qué se puso. */
+        .tm-lista { display: flex; flex-direction: column; gap: 8px; }
+
+        .tm-tarjeta {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            /* El canto izquierdo lleva el color de la banda: en una lista de
+               cinco, dice de un vistazo cuáles valen sin leer el porcentaje. */
+            border-left: 3px solid var(--color-neutral-gray);
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+
+        .tm-tarjeta-cabecera {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; margin-bottom: 6px;
+        }
+
+        /* El porcentaje. La etiqueta en palabras ("coincidencia exacta") va en
+           el title y no en la tarjeta: en una columna estrecha ocuparía la
+           línea entera y dejaría al botón de insertar sin sitio. */
+        .tm-insignia {
+            font-size: var(--texto-meta); font-weight: 700; line-height: 1;
+            padding: 3px 7px; border-radius: 4px;
+            border: 1px solid currentColor; background-color: transparent;
+            color: var(--color-neutral-gray);
+            cursor: help; flex-shrink: 0;
+        }
+
+        /* El botón de insertar: letra blanca sobre el azul. Estos estilos
+           vinieron de Poanda tal cual, y allí el color de marca es un rosa
+           claro sobre el que la letra oscura se lee bien. El azul de subpandaTM
+           es oscuro: encima, la letra oscura no se leía. */
+        .tm-insertar {
+            font-size: var(--texto-meta); font-weight: 600;
+            padding: 3px 9px; border: none; border-radius: 4px;
+            background-color: var(--color-primary); color: #ffffff;
+            flex-shrink: 0; transition: background-color 0.2s;
+        }
+        .tm-insertar:hover { background-color: var(--color-primary-hover); }
+
+        .tm-tarjeta-origen, .tm-tarjeta-destino {
+            font-size: var(--texto-meta); line-height: 1.45;
+            margin: 0; overflow-wrap: anywhere;
+        }
+        /* El original es la referencia; la traducción es lo que se va a copiar,
+           así que va en el color del texto normal y con algo más de peso. */
+        .tm-tarjeta-origen { color: var(--color-neutral-gray); margin-bottom: 4px; }
+        .tm-tarjeta-destino { color: var(--color-dark); font-weight: 500; }
+
+        /* Las cuatro bandas. Los colores no son nuevos: el verde es el de
+           .diff-added, el rosa es el de la marca, el ámbar es el del glosario y
+           el gris es el de los textos secundarios. */
+        .tm-banda-exacta { border-left-color: #22863a; }
+        .tm-banda-exacta .tm-insignia { color: #22863a; }
+        .tm-banda-alta { border-left-color: var(--color-primary); }
+        .tm-banda-alta .tm-insignia { color: var(--color-primary); }
+        .tm-banda-media { border-left-color: #F7CF7E; }
+        .tm-banda-media .tm-insignia { color: #92400e; }
+        .tm-banda-baja { border-left-color: var(--color-neutral-gray); }
+        /* Resultados de una búsqueda: no hay banda que valga, porque no hay
+           parecido que medir. Gris, como lo "bajo". */
+        .tm-banda-busqueda { border-left-color: var(--color-neutral-gray); }
+
+        /* La coincidencia que la memoria propone para el segmento actual. */
+        .tm-tarjeta-mejor { box-shadow: 0 0 0 2px rgba(7, 91, 162, 0.30); }
+
+        /* En qué se diferencia el original guardado del que se está
+           traduciendo. Se marca por palabras, no por letras: partir "traducción"
+           en "tra|duc|ción" no dice nada que sirva para decidir. */
+        .tm-diff-mas { background-color: #e6ffed; color: #22863a; border-radius: 3px; padding: 0 2px; }
+        .tm-diff-menos { background-color: #ffebe9; color: #b31d28; text-decoration: line-through; border-radius: 3px; padding: 0 2px; }
+        /* Buscando en la memoria no hay con qué comparar, así que en vez del
+           diff se resalta lo que se ha escrito en el buscador. */
+        .tm-encontrado { background-color: #F7CF7E; color: var(--color-dark); border-radius: 3px; padding: 0 2px; }
+
+        .glossary-info-box, .tm-info-box { background-color: #fef3c7; border: 1px solid #F7CF7E; padding: 10px; border-radius: 6px; font-size: var(--texto-meta); color: var(--color-dark); }
+        /* El amarillo del glosario. Está en todo el archivo, no solo en el
+           segmento en el que se escribe: de un vistazo se ve qué partes del
+           texto tienen terminología decidida. Al pasar el ratón sale la ficha
+           (.termino-tarjeta), así que se marca como algo que responde. */
+        .glossary-highlight {
+            background-color: #F7CF7E; padding: 0 2px;
+            border-radius: 3px; cursor: help;
+            border-bottom: 1px dotted rgba(120, 53, 15, 0.55);
+        }
+        .glossary-highlight:hover, .glossary-highlight:focus-visible {
+            box-shadow: 0 0 0 2px rgba(247, 207, 126, 0.9);
+            outline: none;
+        }
+
+        /* En el glosario y en la memoria, el par sale con el nombre entero: ahí
+           no hay prisa y se está decidiendo si un término encaja. Delante lleva
+           un globo terráqueo que hace de etiqueta: antes decía "Idiomas de este
+           proyecto:" y el rótulo ocupaba más que el dato. El botón entero abre
+           el cuadro de idiomas. */
+        .par-del-proyecto {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            max-width: 100%; margin-bottom: 0.4rem;
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-dark); background: none;
+            border: none; padding: 0.1rem 0; cursor: pointer;
+        }
+        .par-del-proyecto:hover { color: var(--color-primary); }
+        .par-del-proyecto-icono {
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto; color: var(--color-neutral-gray);
+        }
+        .par-del-proyecto:hover .par-del-proyecto-icono { color: var(--color-primary); }
+        .par-del-proyecto-icono svg { width: 14px; height: 14px; display: block; }
+        .par-del-proyecto-texto { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        html.dark .par-del-proyecto-icono { color: #9ca3af; }
+
+        /* Un icono del panel que está haciendo algo ahora mismo. */
+        .panel-icono-activo {
+            color: var(--color-primary); background-color: #fef2f2;
+            border-color: var(--color-primary);
+        }
+        html.dark .panel-icono-activo {
+            background-color: #4b5563; border-color: var(--color-primary);
+        }
+
+        /* La ficha de un término: los dos campos obligatorios uno al lado del
+           otro, y debajo lo que se rellena cuando hay algo que documentar. */
+
+        /* LOS TÉRMINOS DEL GLOSARIO
+           =========================
+
+           Eran filas de una tabla de tres columnas —origen, destino, borrar—
+           dentro de un panel de unos 300 píxeles. La definición y las notas,
+           que son lo que explica por qué esa traducción y no otra, no salían
+           en ninguna parte: había que abrir la ficha de cada término para
+           verlas.
+
+           Ahora cada término es una tarjeta, como en Locversia: el término y
+           su categoría arriba con el botón de insertar, la traducción
+           destacada debajo, y al final la definición y las notas. Las que
+           están en el segmento que se tiene delante van primero, marcadas. */
+        .glosario-lista { display: flex; flex-direction: column; gap: 8px; }
+        .glosario-lista-titulo {
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-dark); margin: 12px 0 6px;
+        }
+        /* El rótulo que separa las coincidencias del resto. Solo sale cuando
+           hay las dos cosas: con un único grupo no separa nada. */
+        .glosario-grupo {
+            font-size: var(--texto-meta); font-weight: 600;
+            color: var(--color-neutral-gray); text-transform: uppercase;
+            letter-spacing: 0.04em; margin: 2px 0 0;
+        }
+        .glosario-grupo + .glosario-tarjeta { margin-top: 0; }
+
+        /* La tarjeta entera abre la ficha del término, así que tiene que
+           parecer pulsable. */
+        .glosario-tarjeta {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-left: 3px solid var(--color-medium-gray);
+            border-radius: 6px; padding: 8px 10px; cursor: pointer;
+        }
+        .glosario-tarjeta:hover { background-color: #fff7ed; }
+        html.dark .glosario-tarjeta { background-color: #1f2937; }
+        html.dark .glosario-tarjeta:hover { background-color: #374151; }
+        .glosario-tarjeta:focus-visible {
+            outline: 2px solid var(--color-primary); outline-offset: -2px;
+        }
+        /* La que está en el segmento de ahora lleva el amarillo del glosario en
+           el canto, el mismo con el que sale marcada la palabra en el texto:
+           así se ata lo de la columna con lo del segmento. */
+        .glosario-tarjeta-coincidencia { border-left-color: #F7CF7E; }
+
+        .glosario-tarjeta-cabecera {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 8px; margin-bottom: 4px;
+        }
+        .glosario-tarjeta-origen {
+            font-size: var(--texto-meta); font-weight: 700;
+            color: var(--color-neutral-gray); margin: 0;
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+            overflow-wrap: anywhere;
+        }
+        /* Sustantivo, verbo, adjetivo... En letra pequeña y en su recuadro,
+           para que no se lea como parte del término. */
+        .glosario-categoria {
+            font-size: 0.625rem; font-weight: 400; text-transform: lowercase;
+            padding: 1px 5px; border-radius: 4px;
+            border: 1px solid var(--color-medium-gray);
+            color: var(--color-neutral-gray);
+        }
+        .glosario-tarjeta-botones {
+            display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+        }
+        .glosario-insertar {
+            font-size: var(--texto-meta); font-weight: 600;
+            padding: 3px 9px; border: none; border-radius: 4px;
+            background-color: var(--color-primary); color: #ffffff;
+            transition: background-color 0.2s;
+        }
+        .glosario-insertar:hover { background-color: var(--color-primary-hover); }
+
+        /* La traducción es lo que se va a escribir: va en el color del texto
+           normal y con peso, y el término de origen queda de referencia. */
+        .glosario-tarjeta-destino {
+            font-size: var(--texto-base); font-weight: 600;
+            color: var(--color-dark); margin: 0; overflow-wrap: anywhere;
+        }
+        .glosario-tarjeta-definicion, .glosario-tarjeta-notas {
+            font-size: var(--texto-meta); line-height: 1.45;
+            color: var(--color-neutral-gray); margin: 4px 0 0;
+            overflow-wrap: anywhere;
+        }
+        /* La definición dice qué es; la nota, qué hacer con ella. Se separan
+           con una raya para que no se lean como un párrafo seguido. */
+        .glosario-tarjeta-definicion {
+            font-style: italic;
+            border-top: 1px dashed var(--color-medium-gray); padding-top: 4px;
+        }
+
+        /* El punto que dice que ese término lleva ficha (definición, notas o
+           categoría). Sin él había que abrirlos uno a uno para saberlo. */
+        .glosario-ficha {
+            display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+            margin-left: 5px; vertical-align: middle;
+            background-color: var(--color-primary);
+        }
+
+        /* La tarjeta que sale al pasar el ratón por un término resaltado.
+           Flota sobre todo lo demás porque nace pegada a una palabra que está
+           dentro de un bloque con recorte: dentro de él se vería a medias. */
+        .termino-tarjeta {
+            position: fixed; z-index: 1200; max-width: 22rem; min-width: 12rem;
+            padding: 0.5rem 0.6rem; border-radius: 6px;
+            background-color: var(--color-white); color: var(--color-dark);
+            border: 1px solid #d1d5db; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+            font-size: var(--texto-meta); line-height: 1.4;
+        }
+        html.dark .termino-tarjeta {
+            background-color: #1f2937; color: #f3f4f6; border-color: #4b5563;
+        }
+        /* Una palabra puede estar dos veces en el glosario con traducciones
+           distintas; entonces la tarjeta trae las dos, separadas. */
+        .termino-tarjeta-ficha + .termino-tarjeta-ficha {
+            margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb;
+        }
+        html.dark .termino-tarjeta-ficha + .termino-tarjeta-ficha { border-top-color: #4b5563; }
+        /* La palabra que se ha encontrado en el texto, encabezando la ficha:
+           con dos términos marcados seguidos, dice de cuál habla la tarjeta. */
+        .termino-tarjeta-encontrado {
+            font-weight: 600; font-size: var(--texto-meta);
+            color: var(--color-neutral-gray); margin-bottom: 0.15rem;
+            display: flex; align-items: baseline; gap: 0.4rem;
+        }
+        .termino-tarjeta-traduccion {
+            font-weight: 600; font-size: var(--texto-base);
+            display: flex; align-items: baseline; gap: 0.4rem;
+        }
+        .termino-tarjeta-categoria {
+            font-weight: 400; font-style: italic; color: var(--color-neutral-gray);
+            font-size: var(--texto-meta);
+        }
+        html.dark .termino-tarjeta-categoria { color: #9ca3af; }
+        .termino-tarjeta-dato { margin-top: 0.25rem; }
+        .termino-tarjeta-dato span { font-weight: 600; }
+        .termino-tarjeta-insertar {
+            margin-top: 0.45rem; padding: 0.2rem 0.5rem; border-radius: 4px;
+            font-size: var(--texto-meta); cursor: pointer;
+            background-color: var(--color-primary); color: #ffffff;
+            border: 1px solid transparent;
+        }
+        .termino-tarjeta-insertar:hover { background-color: var(--color-primary-hover); }
+
+        /* Barra de búsqueda: estrecha y en letra pequeña.
+           El campo llevaba `flex-grow` y se estiraba de lado a lado de la
+           pantalla para escribir dos palabras, con lo que la barra pesaba más
+           que la lista de segmentos que hay debajo. Ahora ocupa lo que necesita
+           y se para; el resto de la fila queda libre. */
+        /* El bloque cruza el panel de lado a lado, como el editor de debajo: es
+           una barra de herramientas, y una barra que se queda a medias parece
+           un recuadro suelto. Lo que no se estira es el campo de escribir. */
+        #poSearchContainer { padding: 0.625rem 0.75rem; }
+        /* El campo ocupa la barra entera menos las flechas y el contador: lo que
+           se redujo fue la letra y el alto, no el sitio para escribir. */
+
+        /* LA COLUMNA DE CONSULTA
+        
+           La memoria y el glosario eran dos ventanas flotantes que se abrían
+           encima del editor. Tapaban justo el texto que hay que mirar para
+           decidir si una coincidencia sirve, y había que apartarlas a mano cada
+           vez; además se podían solapar entre ellas. Ahora son dos recuadros en
+           una columna a la derecha: la memoria arriba, el glosario abajo, los
+           dos a la vista mientras se traduce y sin taparse nada. */
+        .paneles-derecha {
+            display: none;
+            position: relative;
+            flex: 0 0 auto;
+            width: var(--ancho-paneles, 340px);
+            min-width: 260px;
+            flex-direction: column;
+            gap: 0;
+            min-height: 0;
+            /* Sin hueco al final: el cuadro de escribir del PandaBot llega
+               hasta abajo del todo. Antes se reservaban 3 rem para la barra de
+               estadísticas, que va fija abajo y se pone por encima de lo que
+               tenga debajo; pero la barra está apagada de partida, así que ese
+               hueco era casi siempre un trozo muerto de columna. */
+            padding-bottom: 0;
+        }
+        /* Con la barra puesta sí hace falta el hueco: si no, la última franja de
+           los paneles queda tapada —se ve, pero no se puede pulsar, que es la
+           peor clase de fallo—. */
+        body.status-bar-visible .paneles-derecha { padding-bottom: 3rem; }
+        /* Solo con un archivo abierto: sin nada que traducir no hay nada que
+           consultar, y la columna vacía se comería el ancho de la portada. */
+        body.con-proyecto .paneles-derecha { display: flex; }
+        body.paneles-ocultos .paneles-derecha { display: none; }
+
+        .terminology-sidebar, .translation-memory-sidebar {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        /* El reparto entre los dos: la memoria se lleva la fracción que se haya
+           dejado con la raya y el glosario el resto. */
+        .translation-memory-sidebar { flex: var(--reparto-paneles, 1) 1 0; }
+        .terminology-sidebar { flex: calc(2 - var(--reparto-paneles, 1)) 1 0; }
+        /* Plegado: se queda la cabecera, para poder volver a abrirlo. */
+        .terminology-sidebar.panel-plegado,
+        .translation-memory-sidebar.panel-plegado {
+            flex: 0 0 auto;
+        }
+        .panel-plegado .sidebar-content { display: none; }
+
+        /* Los dos tiradores. El de en medio reparte el alto entre memoria y
+           glosario; el de la izquierda, el ancho de la columna entera. Hay días
+           de mucho glosario y días de mucha memoria. */
+        .tirador-reparto {
+            flex: 0 0 auto; height: 10px; cursor: row-resize;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .tirador-reparto::before {
+            content: ''; width: 2.5rem; height: 3px; border-radius: 3px;
+            background-color: var(--color-tirador);
+            transition: background-color 0.15s;
+        }
+        .tirador-reparto:hover::before { background-color: var(--color-primary); }
+        /* El del borde de la columna: la misma pieza que el de la izquierda,
+           puesta encima del hueco que la separa del editor. */
+        .tirador-ancho {
+            position: absolute; left: -10px; top: 0; bottom: 0; z-index: 5;
+        }
+        /* Igual que el separador de la izquierda: el asa se ve de partida. Este
+           era transparente hasta pasarle el ratón por encima, y era un tirador
+           que solo encontraba quien ya sabía que estaba ahí. */
+        .tirador-ancho::before {
+            content: ''; width: 3px; height: 2.5rem; border-radius: 3px;
+            background-color: var(--color-tirador);
+            transition: background-color 0.15s;
+        }
+        /* Mientras se arrastra, el asa se queda encendida: el ratón se sale de
+           una raya de tres píxeles enseguida, y el asa apagándose a mitad del
+           arrastre parece que se ha soltado. */
+        body.arrastrando-tirador .tirador-ancho::before,
+        body.arrastrando-tirador .tirador-reparto::before,
+        body.arrastrando-tirador #horizontal-resizer::before {
+            background-color: var(--color-primary);
+        }
+
+        /* --- LA BIENVENIDA -------------------------------------------------
+           El bocadillo arriba y el panda debajo, mirándolo. Y el bocadillo es
+           además donde se suelta el archivo: la zona de arrastre está justo
+           donde se está leyendo qué hay que hacer, y no en otro sitio de la
+           pantalla. */
+        /* Sin archivo abierto la bienvenida tiene la pantalla entera para ella:
+           la columna del vídeo se esconde —un reproductor vacío no sirve de
+           nada y se comía un tercio del ancho— y el panda sale grande y
+           centrado, que es lo único que hay que mirar. */
+        body:not(.con-proyecto) .video-player-section,
+        body:not(.con-proyecto) #horizontal-resizer { display: none; }
+        body:not(.con-proyecto) .main-app-content { justify-content: center; }
+
+        .bienvenida {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 2rem 1rem 1rem;
+            min-height: calc(100vh - 10rem);
+        }
+        .bienvenida .bienvenida-bocadillo {
+            max-width: 44rem;
+            padding: 1.6rem 2rem;
+            font-size: 1.05rem;
+        }
+        .bienvenida .bienvenida-panda { width: 190px; }
+        .bienvenida-bocadillo {
+            position: relative;
+            display: block;
+            max-width: 34rem;
+            margin: 0;
+            padding: 1.1rem 1.3rem;
+            font-size: var(--texto-base);
+            line-height: 1.5;
+            text-align: center;
+            color: var(--color-dark);
+            background-color: #eff6ff;
+            border: 2px dashed var(--color-primary);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+        .bienvenida-bocadillo:hover,
+        .bienvenida-bocadillo:focus-visible {
+            background-color: #dbeafe;
+            outline: none;
+        }
+        /* Mientras el archivo está encima, el recuadro lo dice: sin esto no hay
+           forma de saber si soltar aquí va a servir de algo. */
+        .bienvenida-encima {
+            background-color: #dbeafe;
+            border-style: solid;
+        }
+        html.dark .bienvenida-bocadillo {
+            background-color: #1e293b;
+            color: #f3f4f6;
+        }
+        html.dark .bienvenida-bocadillo:hover,
+        html.dark .bienvenida-encima { background-color: #273449; }
+
+        .bienvenida-texto { display: block; }
+        /* La instrucción de soltar va debajo, en azul, pero con la misma letra
+           que el texto de encima: en cuerpo pequeño era la parte que menos se
+           leía de las dos, y es justamente la que dice qué hacer ahora. */
+        .bienvenida-soltar {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: inherit;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        /* El pico del bocadillo apunta hacia abajo, al panda. Dos triángulos:
+           el de fuera hace de borde y el de dentro tapa su interior. */
+        .bienvenida-bocadillo::before,
+        .bienvenida-bocadillo::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border: 12px solid transparent;
+            border-top-color: var(--color-primary);
+            margin-left: -12px;
+        }
+        .bienvenida-bocadillo::after {
+            border-width: 10px;
+            margin-left: -10px;
+            margin-top: -3px;
+            border-top-color: #eff6ff;
+        }
+        html.dark .bienvenida-bocadillo::after { border-top-color: #1e293b; }
+        .bienvenida-encima::after { border-top-color: #dbeafe; }
+
+        .bienvenida-panda {
+            width: 130px;
+            height: auto;
+            margin-top: 1.1rem;
+            display: block;
+            /* Una sombra tenue debajo, para que se apoye en algo. Sin ella el
+               panda queda flotando en mitad de la página. */
+            filter: drop-shadow(0 6px 5px rgba(15, 23, 42, 0.18));
+        }
+        /* El panda lleva mucho negro: en oscuro se le pierde el contorno y se
+           quedan las gafas flotando. */
+        html.dark .bienvenida-panda {
+            filter: drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.7))
+                drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.7))
+                drop-shadow(0 6px 5px rgba(0, 0, 0, 0.5));
+        }
+
+        /* --- EL PANDA QUE PIDE EL VÍDEO -------------------------------------
+           Ocupa el hueco del reproductor mientras no hay vídeo. Antes había ahí
+           un logotipo suelto, que ni decía qué hacer ni servía para hacerlo: el
+           vídeo se cargaba desde una barra que solo salía al pasar el ratón. */
+        .pedir-video {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 1rem;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        .pedir-video.hidden { display: none !important; }
+        .pedir-video-bocadillo {
+            position: relative;
+            max-width: 22rem;
+            padding: 0.7rem 1rem;
+            font-size: var(--texto-base);
+            text-align: center;
+            color: var(--color-dark);
+            background-color: #eff6ff;
+            border: 2px dashed var(--color-primary);
+            border-radius: 12px;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+        .pedir-video:hover .pedir-video-bocadillo,
+        .pedir-video:focus-visible .pedir-video-bocadillo,
+        .pedir-video.bienvenida-encima .pedir-video-bocadillo {
+            background-color: #dbeafe;
+            border-style: solid;
+        }
+        .pedir-video:focus-visible { outline: none; }
+        html.dark .pedir-video-bocadillo { background-color: #1e293b; color: #f3f4f6; }
+        html.dark .pedir-video:hover .pedir-video-bocadillo,
+        html.dark .pedir-video.bienvenida-encima .pedir-video-bocadillo { background-color: #273449; }
+
+        .pedir-video-soltar {
+            display: block;
+            margin-top: 0.35rem;
+            font-size: inherit;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+        /* El pico del bocadillo, apuntando al panda de abajo. */
+        .pedir-video-bocadillo::before,
+        .pedir-video-bocadillo::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            width: 0; height: 0;
+            border: 10px solid transparent;
+            border-top-color: var(--color-primary);
+            margin-left: -10px;
+        }
+        .pedir-video-bocadillo::after {
+            border-width: 8px;
+            margin-left: -8px;
+            margin-top: -3px;
+            border-top-color: #eff6ff;
+        }
+        html.dark .pedir-video-bocadillo::after { border-top-color: #1e293b; }
+        .pedir-video-panda {
+            width: 92px;
+            height: auto;
+            margin-top: 0.4rem;
+            /* Sobre el fondo negro del reproductor el panda se pierde entero:
+               una sombra clara le devuelve el contorno. Y otra debajo, oscura,
+               para que se apoye en algo en lugar de flotar. */
+            filter: drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.8))
+                drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.8))
+                drop-shadow(0 7px 6px rgba(0, 0, 0, 0.75));
+        }
+
+        /* --- LOS MENÚS DE LA BARRA ------------------------------------------
+           Los mismos que Poanda: se abren al pasar el ratón, sin JavaScript.
+           Antes eran los de Tailwind, con una transición y una escala; se veían
+           distintos a los de la otra herramienta sin ganar nada. */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; z-index: 20;
+            background-color: var(--color-white); min-width: 190px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--color-borde); border-radius: 0.375rem;
+            padding: 0.25rem 0; margin-top: 2px;
+        }
+        .dropdown-content a,
+        .dropdown-content .dropdown-item {
+            display: block; color: var(--color-dark);
+            padding: 9px 14px; font-size: var(--texto-base);
+            text-decoration: none; cursor: pointer; white-space: nowrap;
+        }
+        .dropdown-content a:hover,
+        .dropdown-content .dropdown-item:hover { background-color: var(--color-light-gray); }
+        .dropdown:hover .dropdown-content { display: block; }
+        .dropdown-raya { margin: 0.25rem 0; border: none; border-top: 1px solid var(--color-medium-gray); }
+        /* Una acción que no se puede hacer todavía se ve apagada y no responde,
+           en vez de desaparecer: si el menú cambiara de tamaño según lo que se
+           puede hacer, cada entrada estaría en un sitio distinto cada vez. */
+        .dropdown-content .disabled-link { opacity: 0.45; pointer-events: none; }
+        .dropdown-content .dropdown-peligro { color: #b91c1c; }
+        html.dark .dropdown-content .dropdown-peligro { color: #fca5a5; }
+        .dropdown-content .dropdown-peligro:hover { background-color: #fef2f2; }
+        html.dark .dropdown-content .dropdown-peligro:hover { background-color: #3f1d1d; }
+        /* Este va pegado al borde derecho, así que se abre hacia dentro para no
+           salirse de la ventana. */
+        .dropdown-a-la-derecha { right: 0; }
+
+        /* El selector de idioma: en el botón se lee el idioma que está puesto y
+           dentro se marca con una palomita el activo. El nombre de cada idioma
+           se escribe en ese mismo idioma (English, Español), como es costumbre:
+           así lo reconoce quien no entiende el idioma en el que está la página
+           ahora mismo. */
+        .selector-idioma .dropdown-content { min-width: 140px; }
+        .selector-idioma .dropdown-content a { display: flex; justify-content: space-between; gap: 1rem; }
+        .selector-idioma .dropdown-content a::after { content: ''; width: 1em; text-align: right; }
+        .selector-idioma .dropdown-content a.active-lang { font-weight: 600; }
+        .selector-idioma .dropdown-content a.active-lang::after { content: '✓'; }
+
+        .header-lang-switcher { display: flex; align-items: center; gap: 0.5rem; }
+
+        /* El punto verde de "hay copia guardada", dentro de la entrada del menú
+           y pegado a su borde derecho. */
+        #backupBtn { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        #backupIndicator {
+            display: none; width: 8px; height: 8px; flex-shrink: 0;
+            background-color: #22c55e; border-radius: 50%;
+        }
+        #backupIndicator.hay-copia { display: block; }
+/* ======================================================================
+   VENTANA DEL CHANGELOG
+
+   El contenido llega ya estructurado desde core/changelog-formato.js. Lo
+   que hace falta aquí es que se note esa estructura de un vistazo: cada
+   versión separada de la anterior, las secciones marcadas y las novedades
+   como puntos de una lista con el nombre en negrita, para poder recorrer
+   la lista leyendo solo los nombres.
+   ====================================================================== */
+.changelog-cuerpo {
+    padding: 1.25rem 1.5rem;
+    font-size: var(--texto-base);
+    line-height: 1.6;
+    color: var(--color-dark);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-medium-gray);
+    border-radius: 0.375rem;
+    min-height: 150px;
+}
+
+/* Título de versión: cada uno abre bloque, con una raya encima que hace de
+   separador con la versión anterior. */
+.changelog-cuerpo .cl-version {
+    font-size: var(--texto-titulo);
+    font-weight: 700;
+    margin: 2rem 0 0.125rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-medium-gray);
+    color: var(--color-dark);
+}
+.changelog-cuerpo .cl-version:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+.changelog-cuerpo .cl-fecha {
+    margin: 0 0 0.75rem;
+    font-size: var(--texto-meta);
+    color: var(--color-neutral-gray);
+}
+
+/* El resumen de la versión, antes de que empiecen las secciones. */
+.changelog-cuerpo .cl-entradilla { margin: 0 0 1rem; }
+
+.changelog-cuerpo .cl-seccion {
+    margin: 1.25rem 0 0.5rem;
+    font-size: var(--texto-meta);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-neutral-gray);
+}
+
+.changelog-cuerpo .cl-lista { margin: 0; padding-left: 1.1rem; list-style: none; }
+.changelog-cuerpo .cl-lista li { position: relative; margin-bottom: 0.6rem; }
+/* El punto va en el color de Poanda: es la marca de la casa y de paso guía
+   la vista al bajar por la lista. */
+.changelog-cuerpo .cl-lista li::before {
+    content: '';
+    position: absolute;
+    left: -1.1rem;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+}
+.changelog-cuerpo .cl-lista strong { font-weight: 700; }
+.changelog-cuerpo code {
+    font-family: var(--fuente-mono);
+    /* En tamaño absoluto y no relativo: dentro de un título heredaría el suyo
+       y aparecerían dos tamaños de código distintos en la misma ventana. */
+    font-size: var(--texto-meta);
+    background-color: var(--color-light-gray);
+    border: 1px solid var(--color-medium-gray);
+    border-radius: 3px;
+    padding: 0 4px;
+}
+
+        /* ===================================================================
+           LAS FILAS DE SUBTÍTULO
+           ===================================================================
+           Con la forma de los segmentos de Poanda: un recuadro, el número en su
+           columna a la izquierda, y el original y la traducción uno al lado del
+           otro con la misma letra y la misma interlínea. Eso es lo que hace que
+           la lista se lea como una tabla y no como un formulario.
+
+           Lo propio de subtítulos —los tiempos, la barra de CPS y los botones
+           de vídeo— sigue estando, pero en su sitio y sin competir con el
+           texto: antes ocupaba dos renglones de etiquetas y botones por delante
+           de lo que hay que leer.
+           =================================================================== */
+        .segmento-fila {
+            display: flex;
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        html.dark .segmento-fila { background-color: var(--color-white); }
+
+        .segmento-numero {
+            width: 34px;
+            flex-shrink: 0;
+            padding-top: 0.5rem;
+            text-align: center;
+            font-family: var(--fuente-mono, ui-monospace, Menlo, Consolas, monospace);
+            font-size: var(--texto-meta);
+            color: var(--color-neutral-gray);
+            border-right: 1px solid var(--color-medium-gray);
+            user-select: none;
+        }
+
+        .segmento-cuerpo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+        /* La franja de los tiempos: pequeña y apagada, como el contexto de un
+           segmento de Poanda. Es un dato del subtítulo, no su texto.
+
+           Del mismo color que las celdas de abajo: llevaba un gris propio y la
+           tarjeta salía a franjas, un tono arriba, otro en el medio y otro en la
+           columna del visto. Lo que la separa es la raya de abajo, que basta. */
+        .segmento-tiempos {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.3rem 0.5rem;
+            border-bottom: 1px solid var(--color-medium-gray);
+            font-size: var(--texto-meta);
+            color: var(--color-neutral-gray);
+            /* Sin envolver: si los botones se van a un segundo renglón, la
+               franja pasa a ocupar más alto que el texto del subtítulo, que es
+               justo al revés de lo que se quiere. */
+            flex-wrap: nowrap;
+        }
+        /* Los tiempos y los botones de vídeo se desplazan si no caben; las
+           acciones del subtítulo se quedan quietas a la derecha. Antes la
+           franja entera se desplazaba a la vez y los últimos botones se salían
+           de la vista sin que nada lo dijera. */
+        .segmento-tiempos-izq {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .segmento-tiempos-izq::-webkit-scrollbar { display: none; }
+        .segmento-tiempos-der {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding-left: 0.2rem;
+        }
+        .segmento-tiempo {
+            width: 6rem;
+            flex-shrink: 0;
+            padding: 1px 2px;
+            text-align: center;
+            font-family: var(--fuente-mono, ui-monospace, Menlo, Consolas, monospace);
+            font-size: var(--texto-meta);
+            font-variant-numeric: tabular-nums;
+            color: var(--color-dark);
+            background-color: var(--color-white);
+            border: 1px solid var(--color-borde);
+            border-radius: 4px;
+        }
+        /* La duración va en un campo igual que la entrada y la salida, pero es
+           un resultado, no algo que se escriba: fondo apagado y más estrecho,
+           que le sobra sitio. */
+        .segmento-duracion {
+            width: 3.8rem;
+            margin-left: 0.25rem;
+            text-align: center;
+            background-color: var(--color-light-gray);
+            color: var(--color-neutral-gray);
+            cursor: default;
+        }
+        /* En oscuro los tiempos van un punto por debajo del blanco del texto: son
+           un dato de apoyo, y en tres campos seguidos a plena luz se llevaban la
+           mirada por delante del subtítulo, que es lo que hay que leer. */
+        html.dark .segmento-tiempo { color: #cbd5e1; }
+        html.dark .segmento-duracion { color: #94a3b8; }
+
+        .segmento-tiempos-raya {
+            width: 1px; height: 14px; margin: 0 0.15rem;
+            flex-shrink: 0;
+            background-color: var(--color-medium-gray);
+        }
+
+        .segmento-columnas { display: flex; min-width: 0; }
+        .segmento-col {
+            flex: 1;
+            min-width: 0;
+            padding: 0.5rem 0.625rem 0.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .segmento-origen { border-right: 1px solid var(--color-medium-gray); }
+
+        /* Original y traducción se ven exactamente igual: mismo tamaño, misma
+           interlínea y ningún marco alrededor del cuadro de escritura. */
+        .segmento-texto {
+            font-family: inherit;
+            font-size: var(--texto-base);
+            line-height: 1.55;
+            color: var(--color-dark);
+            background: transparent;
+            border: none;
+            outline: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            min-height: 1.55em;
+        }
+        /* --- LOS RECUENTOS POR LÍNEA ---------------------------------------
+           Cada cifra al final de su línea, en una columna estrecha pegada al
+           margen derecho del campo, y el total debajo de la última con una raya
+           encima: se lee como una suma. Antes iban todas seguidas en el pie
+           ("L1: 29, L2: 14"), así que para saber si la primera línea se pasaba
+           había que ir contando por cuál ibas.
+
+           La columna va superpuesta y el texto le reserva el hueco con su
+           relleno derecho: así las cifras caen a la altura exacta de su línea
+           sin tener que medir nada desde JavaScript. */
+        .segmento-texto-caja { position: relative; }
+        /* El hueco que el texto le deja a las cifras. El box-sizing va escrito
+           aquí a mano y no se deja al reseteo de Tailwind: de él depende que la
+           copia invisible se parta por los mismos sitios que el texto, y si un
+           día Tailwind no llega —o llega más tarde— las cifras se descolocan sin
+           que nada avise. */
+        .segmento-texto-caja .segmento-texto {
+            box-sizing: border-box;
+            padding-right: 2.6rem;
+        }
+        /* La columna de cifras va superpuesta al texto y ocupa su mismo ancho:
+           dentro lleva una copia invisible de cada línea, que se parte por los
+           mismos sitios que la de verdad. Así cada bloque mide lo que mide su
+           línea y la cifra cae a su altura aunque la línea dé la vuelta. */
+        .segmento-lineas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            user-select: none;
+            font-family: inherit;
+            font-size: var(--texto-base);
+            line-height: 1.55;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        /* La copia invisible se alinea como el texto de verdad: si el texto va
+           centrado y la copia no, la marca de lo que sobra cae en otro sitio de
+           la línea. */
+        .segmento-linea {
+            position: relative;
+            box-sizing: border-box;
+            padding-right: 2.6rem;
+            text-align: inherit;
+        }
+        .segmento-linea-eco { visibility: hidden; }
+        /* Lo que se pasa del límite de caracteres por línea, encendido en rojo
+           justo encima de esos caracteres. La cifra del margen dice cuántos
+           sobran; esto dice cuáles. Las letras van transparentes: quien las
+           dibuja es el texto de verdad, que está debajo; aquí solo se pone el
+           color detrás. */
+        .segmento-linea-sobra {
+            color: transparent;
+            background-color: rgba(220, 38, 38, 0.22);
+            border-radius: 2px;
+            box-shadow: 0 1px 0 0 rgba(220, 38, 38, 0.55);
+        }
+        html.dark .segmento-linea-sobra {
+            background-color: rgba(248, 113, 113, 0.28);
+            box-shadow: 0 1px 0 0 rgba(248, 113, 113, 0.6);
+        }
+        .segmento-linea-cuenta {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-family: var(--fuente-mono, ui-monospace, Menlo, Consolas, monospace);
+            font-size: var(--texto-meta);
+            line-height: 1.55;
+            font-variant-numeric: tabular-nums;
+            color: var(--color-neutral-gray);
+            opacity: 0.75;
+        }
+        /* La suma va en el pie, alineada con la columna de cifras de arriba y
+           con una raya encima. */
+        .segmento-linea-suma {
+            min-width: 2.2rem;
+            text-align: right;
+            border-top: 1px solid var(--color-borde);
+            padding-top: 1px;
+            font-family: var(--fuente-mono, ui-monospace, Menlo, Consolas, monospace);
+            font-size: var(--texto-meta);
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: var(--color-neutral-gray);
+        }
+        .segmento-linea-suma.hidden { display: none !important; }
+        /* Los CPS llevan su propia raya encima, igual que la suma de la derecha:
+           las dos cifras del pie se leen entonces como lo que son, el resultado
+           de lo que hay escrito arriba. */
+        .segmento-pie .segmento-cuenta {
+            border-top: 1px solid var(--color-borde);
+            padding-top: 1px;
+        }
+        .segmento-linea-cuenta.qa-error { color: #dc2626; font-weight: 600; opacity: 1; }
+        html.dark .segmento-linea-cuenta.qa-error { color: #f87171; }
+
+        /* El campo vacío dice qué va ahí, en gris claro. Un recuadro en blanco
+           al lado del original no dice si es que falta traducirlo o es que el
+           subtítulo no lleva texto. Desaparece en cuanto se escribe la primera
+           letra: es :empty, no un texto que haya que borrar. */
+        .subtitle-editor:empty::before {
+            content: attr(data-placeholder);
+            color: var(--color-borde);
+            pointer-events: none;
+        }
+        /* Y el campo mide siempre lo que mide su original, esté vacío o escrito:
+           con un subtítulo de dos líneas al lado, un hueco de una sola dejaba la
+           tarjeta coja. Y encogiéndose al escribir la primera línea, la barra de
+           CPS y las cifras daban un salto hacia arriba en mitad de la frase. */
+        .subtitle-editor { min-height: calc(1.55em * var(--lineas-original, 1)); }
+        html.dark .subtitle-editor:empty::before { color: #4b5563; }
+        .segmento-origen .segmento-texto { color: var(--color-neutral-gray); }
+        html.dark .segmento-origen .segmento-texto { color: #cbd5e1; }
+        /* Un subtítulo validado se ve entero pero apagado: sigue ahí para
+           consultarlo, y se nota que ya no se está trabajando en él. */
+        .segmento-destino .segmento-texto[contenteditable='false'] { opacity: 0.65; }
+
+        /* Pie de la columna de traducción: los recuentos a la izquierda y las
+           acciones a la derecha, todo pequeño y apagado. */
+        .segmento-pie {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.35rem;
+            min-height: 20px;
+            flex-wrap: wrap;
+        }
+        /* El buscador de los paneles se salía de su columna: un campo sin
+           box-sizing mide su ancho sin contar el relleno ni el borde. */
+        .paneles-campo {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.3rem 0.5rem;
+            font-size: var(--texto-base);
+            color: var(--color-dark);
+            background-color: var(--color-white);
+            border: 1px solid var(--color-borde);
+            border-radius: 0.375rem;
+        }
+        .paneles-buscador .paneles-campo { padding-left: 1.7rem; }
+        .segmento-pie-hueco { flex: 1 1 auto; }
+        .segmento-cuenta {
+            font-family: var(--fuente-mono, ui-monospace, Menlo, Consolas, monospace);
+            font-size: var(--texto-meta);
+            color: var(--color-neutral-gray);
+            user-select: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .segmento-tiempos .segmento-icono { flex-shrink: 0; }
+        /* El del color es el mismo botón, con el selector del sistema escondido
+           debajo: lo que se ve es la "A" subrayada del color elegido, que es lo
+           que hay que mirar para saber en qué color va a escribir. */
+        .segmento-color { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+        .segmento-color input[type="color"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: none;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .segmento-color span { font-weight: 700; border-bottom: 2px solid currentColor; line-height: 1; }
+        /* El de la posición es un desplegable, pero lo que se ve es un dibujo:
+           una pantalla con un subtítulo dentro. Un <select> enseña el texto de
+           la opción elegida, y "Arriba izquierda" en un recuadro de 24 píxeles
+           sale cortado. El desplegable va detrás, invisible pero entero: se
+           abre igual, se maneja con el teclado igual y el nombre de cada
+           casilla se lee al desplegarlo. Es el mismo apaño que el selector de
+           color, que también esconde su <input> detrás de una letra. */
+        .segmento-posicion { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+        .segmento-posicion select {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: none;
+            opacity: 0;
+            cursor: pointer;
+            appearance: none;
+        }
+        /* Cada uno en su recuadro, y todos del mismo tamaño, como los de la
+           botonera del vídeo. Antes eran iconos sueltos flotando sobre el fondo
+           de la tarjeta: no se veía dónde empezaba y acababa cada botón, y la
+           fila era una escalera porque cada uno medía lo que midiera su
+           contenido —una flecha, un signo, un dibujo—. */
+        .segmento-icono {
+            /* Cuadrados los de dibujo, y los que llevan dos signos —"→←", "←→"—
+               se estiran lo justo para que no se les salga la flecha. */
+            min-width: 1.5rem;
+            height: 1.5rem;
+            /* Explícito y no heredado: un <select> y un <label> no lo traen de
+               serie, y sin esto el borde les añade dos píxeles y la fila de
+               botones vuelve a ser una escalera. */
+            box-sizing: border-box;
+            padding: 0 3px;
+            border-radius: 4px;
+            border: 1px solid var(--color-borde);
+            background-color: var(--color-white);
+            color: var(--color-neutral-gray);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            font-size: var(--texto-meta);
+            line-height: 1;
+            transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .segmento-icono:hover {
+            background-color: var(--color-light-gray);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        /* Borrar un subtítulo no se deshace desde el propio botón, así que al
+           menos avisa de lo que es antes de pulsarlo. */
+        .segmento-icono-peligro:hover { border-color: #dc2626; color: #dc2626; }
+        /* Lo que se usa mucho pero no está en la norma del formato: el color de
+           un SRT lo respetan los reproductores de ordenador y lo quitan muchos
+           de televisión. El botón se queda —quitarlo sería quitar algo que
+           funciona casi siempre— con un punto que lo distingue de los que sí
+           están garantizados. El punto va por encima y no ocupa sitio: la fila
+           de botones mide lo mismo con él que sin él. */
+        .segmento-icono-segun { position: relative; }
+        .segmento-icono-segun::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: var(--color-tirador);
+        }
+        /* Con una posición puesta el botón se queda encendido: así se ve de un
+           vistazo qué subtítulos llevan posición y cuáles van donde siempre,
+           sin abrir el desplegable de uno en uno. Va después de
+           .segmento-icono a propósito: las dos reglas pesan lo mismo, así que
+           gana la última, y puesta antes el color gris se comía a este. */
+        .segmento-posicion-puesta {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        .segmento-icono svg { width: 14px; height: 14px; }
+
+        /* Validar y editar sí son botones con su borde: son las dos decisiones
+           que se toman en cada subtítulo, y tienen que verse. */
+        .segmento-boton {
+            font-size: var(--texto-meta);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--color-borde);
+            background-color: var(--color-white);
+            color: var(--color-dark);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .segmento-boton:hover { background-color: var(--color-light-gray); }
+        .segmento-boton-principal {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #ffffff;
+        }
+        .segmento-boton-principal:hover { background-color: var(--color-primary-hover); }
+
+        /* El subtítulo en el que se está: se marca con el borde y no con un
+           fondo, para que el texto se siga leyendo igual que en los demás. */
+        .segmento-fila.translation-unit-active {
+            border-color: var(--color-primary);
+            /* La barra de la izquierda va por dentro, no como borde: un borde
+               más grueso movería el contenido dos píxeles cada vez que se entra
+               y se sale del subtítulo. Es la misma marca que usa Poanda. */
+            box-shadow: inset 3px 0 0 0 var(--color-primary);
+        }
+
+        /* En pantallas estrechas, el original encima de la traducción. */
+        @media (max-width: 900px) {
+            .segmento-columnas { flex-direction: column; }
+            .segmento-origen { border-right: none; border-bottom: 1px solid var(--color-medium-gray); }
+        }
+
+        /* --- EL ALTO DE LA APLICACIÓN --------------------------------------
+           Con un archivo abierto, la aplicación mide exactamente la ventana y
+           lo que se desplaza es la lista de subtítulos, no la página entera.
+
+           Sin esto, la página crecía con el archivo: con doscientos subtítulos,
+           la columna de la derecha medía lo mismo que la lista, la memoria se
+           estiraba hasta ocupar media página y el glosario quedaba al final del
+           todo, a un scroll de distancia de donde se está trabajando. Es la
+           misma disposición que cualquier herramienta TAO —y que Poanda—: la
+           barra y los paneles se quedan quietos y solo se mueve el texto.
+
+           Sin archivo abierto se deja crecer, para que la pantalla de
+           bienvenida pueda pasarse de alto en una ventana pequeña. */
+        body.con-proyecto {
+            height: 100vh;
+            min-height: 0;
+            overflow: hidden;
+        }
+        body.con-proyecto .main-app-content { min-height: 0; overflow: hidden; }
+        .paneles-derecha { min-height: 0; }
+
+        /* La columna del visto, a la derecha de la fila y centrada, como en
+           Poanda: un solo botón que enciende y apaga. */
+        .segmento-estado {
+            width: 38px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Sin fondo propio, como la franja de los tiempos: la tarjeta es de
+               un solo color y lo que separa esta columna es su raya. */
+            border-left: 1px solid var(--color-medium-gray);
+        }
+        .segmento-check {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+        }
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--color-neutral-gray);
+            opacity: 0.35;
+            transition: opacity 0.15s, color 0.15s;
+        }
+        .segmento-check:hover .check-icon { opacity: 0.7; }
+        .segmento-check.validado .check-icon { color: #16a34a; opacity: 1; }
+        html.dark .segmento-check.validado .check-icon { color: #4ade80; }
+
+        /* Un recuento fuera de límite se marca en rojo: es la única cifra del
+           pie que pide hacer algo. */
+        .segmento-cuenta .qa-error,
+        .segmento-cuenta.qa-error { color: #dc2626; font-weight: 600; }
+        html.dark .segmento-cuenta .qa-error,
+        html.dark .segmento-cuenta.qa-error { color: #f87171; }
+
+        /* --- LAS PESTAÑAS DE LA COLUMNA ------------------------------------
+           Una sola a la vista cada vez. La memoria y el glosario son lo que se
+           consulta mientras se traduce; el planificador se mira una vez al
+           empezar el encargo. */
+        /* La fila de pestañas lleva su propio fondo, un punto más oscuro que la
+           columna: sin él eran cuatro palabras sueltas en el aire y no se leían
+           como lo que son, un menú de pestañas. */
+        .panel-pestanas {
+            flex: 0 0 auto;
+            display: flex;
+            gap: 0.15rem;
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0.25rem 0;
+            background-color: var(--color-pestanas);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .panel-pestana {
+            border: none;
+            background: none;
+            padding: 0.35rem 0.6rem;
+            font-size: var(--texto-meta);
+            font-weight: 600;
+            color: var(--color-neutral-gray);
+            cursor: pointer;
+            border-radius: 0.375rem 0.375rem 0 0;
+            white-space: nowrap;
+        }
+        .panel-pestana:hover { color: var(--color-dark); }
+        /* La que se ve sale del fondo hacia delante, como una carpeta: es lo que
+           dice cuál de las cuatro estás mirando sin tener que leerlas. */
+        .panel-pestana.activa {
+            color: var(--color-primary);
+            background-color: var(--color-white);
+            box-shadow: inset 0 2px 0 0 var(--color-primary);
+        }
+        /* El cuerpo de cada pestaña se lleva el alto que sobra y se desplaza
+           por dentro, para que la columna no crezca con lo que tenga dentro. */
+        /* La equis que cierra la columna, al final de la fila de pestañas. */
+        .panel-pestanas-cerrar {
+            margin-left: auto;
+            align-self: center;
+            padding: 0 0.35rem;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            line-height: 1;
+            color: var(--color-neutral-gray);
+            cursor: pointer;
+        }
+        .panel-pestanas-cerrar:hover { color: var(--color-dark); }
+
+        .panel-pestana-cuerpo {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-pestana-cuerpo.hidden { display: none !important; }
+
+        /* --- EL CONTROL DE CALIDAD ------------------------------------------
+           Los límites, a la vista mientras se traduce. Debajo irán los filtros
+           para repasar errores, como en Poanda. */
+        /* La pestaña tiene su propio relleno y su tamaño de letra: los otros
+           dos cuerpos lo llevan dentro de sus recuadros, y este no tiene
+           recuadro que lo lleve. */
+        #qaContainer {
+            padding: 0.75rem 0.25rem;
+            font-size: var(--texto-base);
+        }
+        .qa-apartado {
+            margin: 0 0 0.6rem;
+            font-size: var(--texto-titulo);
+            font-weight: 700;
+            color: var(--color-dark);
+        }
+        .qa-fila {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .qa-fila .ia-etiqueta { margin: 0; font-size: var(--texto-base); }
+        .qa-numero { width: 4.5rem; flex: 0 0 auto; text-align: center; }
+        /* La pestaña son dos zonas que se reparten el alto: arriba qué se
+           revisa, abajo lo que ha salido. Los filtros no se llevan más de la
+           mitad: se tocan de vez en cuando, y lo que se mira mientras se
+           repasa es la lista. */
+        /* El alto de las comprobaciones lo manda la raya que hay debajo, que
+           se arrastra. Antes era un 45% fijo, y al cargar la lista de errores
+           los filtros se quedaban en un hueco donde apenas se veían dos de
+           diecinueve. Lo pone paneles.js, que es de quien son las rayas. */
+        .qa-resumen {
+            flex: 0 0 auto;
+            height: var(--reparto-qa, 45%);
+            min-height: 0;
+            overflow-y: auto;
+            margin-top: 0.75rem;
+        }
+        /* Sin la lista de errores a la vista no hay nada que repartir: las
+           comprobaciones se quedan con todo el alto. */
+        .qa-sin-errores .qa-resumen { height: auto; flex: 1 1 auto; }
+        .qa-sin-errores #tiradorQa { display: none; }
+        .qa-filtros-cabeza,
+        .qa-errores-cabeza {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+        .qa-errores-cabeza {
+            flex: 0 0 auto;
+            margin-top: 0.9rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--color-borde);
+        }
+        .qa-errores-cabeza .qa-apartado { margin: 0; }
+        .qa-errores {
+            flex: 1 1 auto;
+            min-height: 6rem;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+            font-size: var(--texto-base);
+            color: var(--color-neutral-gray);
+        }
+
+        /* Los filtros: una fila por comprobación. La casilla dice si se
+           revisa, el número dice cuántas han saltado, y el límite —si la regla
+           tiene uno— va en la misma fila, que es donde se busca. */
+        .qa-filtros-botones {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        /* Una rejilla y no una fila: la explicación va debajo del nombre,
+           alineada con él, y ni el límite ni el número se mueven de su
+           columna por mucho que la explicación ocupe dos renglones. */
+        .qa-regla {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            align-items: center;
+            gap: 0.15rem 0.5rem;
+            padding: 0.3rem 0;
+        }
+        .qa-regla + .qa-regla { border-top: 1px solid var(--color-separador-borde); }
+        .qa-regla-nombre { font-size: var(--texto-base); cursor: pointer; }
+        /* Qué detecta cada una, en pequeño y debajo. Diecinueve nombres sueltos
+           no dicen qué hace cada uno, y el que no se entiende no se enciende. */
+        .qa-regla-desc {
+            grid-column: 2 / -1;
+            margin: 0;
+            font-size: var(--texto-meta);
+            line-height: 1.3;
+            color: var(--color-neutral-gray);
+        }
+        .qa-regla-limite {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.1rem;
+        }
+        /* A cuántos milisegundos equivalen los fotogramas que hay escritos: un
+           subtitulador piensa en fotogramas y el archivo se escribe en
+           milisegundos, y así no hay que hacer la cuenta de cabeza. */
+        .qa-regla-equivale {
+            font-size: 0.65rem;
+            line-height: 1;
+            color: var(--color-neutral-gray);
+            white-space: nowrap;
+        }
+        /* Apagada se ve, pero se ve apagada: si desapareciera no habría manera
+           de volver a encenderla. */
+        .qa-regla-apagada .qa-regla-nombre { opacity: 0.55; }
+        .qa-regla .qa-numero { width: 4rem; padding: 0.1rem; font-size: var(--texto-meta); }
+        /* El número, a la derecha y siempre en el mismo sitio: así la columna
+           se lee de arriba abajo sin ir buscando dónde cae cada cifra. */
+        .qa-regla-cuenta {
+            flex: 0 0 auto;
+            min-width: 1.75rem;
+            text-align: right;
+            font-size: var(--texto-meta);
+            color: var(--color-neutral-gray);
+        }
+        .qa-aviso { color: #b45309; font-weight: 600; }
+
+        /* Cada error de la lista: el subtítulo arriba y debajo por qué ha
+           saltado. Un subtítulo puede saltar por cuatro reglas a la vez, y
+           cuatro filas con el mismo número obligan a leerlas todas para ver
+           que hablan del mismo sitio. */
+        .qa-error-cabeza {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .qa-error-numero { font-weight: 700; }
+        .qa-error-texto {
+            font-size: var(--texto-meta);
+            color: var(--color-neutral-gray);
+            margin: 0.15rem 0 0.3rem;
+        }
+        .qa-motivo {
+            font-size: var(--texto-meta);
+            padding-left: 0.6rem;
+            border-left: 2px solid var(--color-borde);
+            margin-top: 0.2rem;
+        }
+        .qa-motivo-error { border-left-color: #dc2626; }
+        .qa-motivo-aviso { border-left-color: #b45309; }
+
+        /* --- EL PLANIFICADOR ------------------------------------------------ */
+        .planificador-controles {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--color-medium-gray);
+        }
+        .planificador-fila {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: var(--texto-base);
+            color: var(--color-dark);
+        }
+        .planificador-numero { width: 4.5rem; text-align: center; }
+        .planificador-resultados {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding-top: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: var(--texto-base);
+            color: var(--color-dark);
+        }
+
+        /* ===================================================================
+           EL ASISTENTE DE IA
+           ===================================================================
+           Los mismos estilos que Poanda, con el azul de subpandaTM en lugar de
+           su rosa. Es una pestaña más de la columna de consulta, delante del
+           planificador: antes era una columna propia que se abría a la derecha
+           y le quitaba ancho al editor mientras estaba abierta.
+           =================================================================== */
+        .ai-sidebar {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-size: var(--texto-base);
+            line-height: 1.5;
+        }
+        .ai-sidebar button,
+        .ai-sidebar input,
+        .ai-sidebar select,
+        .ai-sidebar textarea { font-family: inherit; font-size: inherit; }
+        .ai-sidebar .sidebar-header {
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--color-medium-gray);
+            background-color: var(--color-light-gray);
+        }
+
+        .ai-chat-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background-color: var(--color-light-gray);
+        }
+        .ai-message {
+            max-width: 92%;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .ai-message-user {
+            align-self: flex-end;
+            padding: 0.5rem 0.7rem;
+            border-radius: 0.6rem;
+            border-bottom-right-radius: 0;
+            background-color: var(--color-primary);
+            color: #ffffff;
+        }
+        /* Todo lo que dice el PandaBot sale de su boca, no solo el saludo: el
+           mensaje es el panda y su bocadillo, y el bocadillo pone el recuadro.
+           Antes solo el primero tenía cara y los demás eran recuadros sueltos,
+           como si la conversación la empezara uno y la siguiera otro. */
+        .ai-message-bot {
+            align-self: flex-start;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.4rem;
+            /* El panda ocupa lo suyo, así que al bocadillo le queda menos: sin
+               esto, un mensaje largo salía en renglones de tres palabras. */
+            max-width: 100%;
+        }
+
+        .ai-input-area {
+            flex: 0 0 auto;
+            padding: 0.75rem;
+            border-top: 1px solid var(--color-medium-gray);
+            background-color: var(--color-white);
+        }
+        .ai-textarea {
+            width: 100%;
+            resize: none;
+            border: 1px solid var(--color-borde);
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            height: 50px;
+            color: var(--color-dark);
+            background-color: var(--color-white);
+        }
+        .ai-textarea:focus { outline: none; border-color: var(--color-primary); }
+
+        /* Los cuatro de abajo saltan de línea cuando no caben. Antes la fila se
+           desplazaba a un lado, y el cuarto botón se quedaba fuera de la vista
+           sin nada que dijera que estaba ahí. */
+        .ai-quick-actions {
+            flex: 0 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--color-white);
+            border-top: 1px solid var(--color-medium-gray);
+        }
+        .ai-quick-btn {
+            font-size: var(--texto-meta);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            background-color: var(--color-light-gray);
+            color: var(--color-neutral-gray);
+            border: 1px solid var(--color-medium-gray);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ai-quick-btn:hover {
+            background-color: var(--color-primary);
+            color: #ffffff;
+            border-color: var(--color-primary);
+        }
+
+        /* Pretraducir el archivo entero: debajo de los cuatro botones rápidos y
+           separado de ellos. Los de arriba son pastillas pequeñas porque tocan
+           el subtítulo en el que estás; éste ocupa la fila entera porque se
+           lleva por delante todo el archivo, y eso hay que verlo venir. */
+        .ai-accion-archivo {
+            flex: 0 0 auto;
+            padding: 0.5rem 1rem;
+            background-color: var(--color-white);
+            border-bottom: 1px solid var(--color-medium-gray);
+        }
+        .ai-btn-archivo {
+            width: 100%;
+            font-size: var(--texto-meta);
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.375rem;
+            background-color: var(--color-primary);
+            color: #ffffff;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .ai-btn-archivo:hover { background-color: var(--color-primary-hover); }
+
+        /* Los ajustes, en su propio cuadro. Se desplegaban dentro del panel,
+           encima de la conversación: seis campos en media columna, en el mismo
+           sitio donde se está hablando con el modelo. Demasiado junto para algo
+           que se toca una vez. */
+        .ia-ajustes {
+            font-size: var(--texto-base);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .ia-ajustes .ia-campo { font-size: var(--texto-base); padding: 0.4rem 0.5rem; }
+        .ia-ajustes .ia-pista { font-size: var(--texto-meta); }
+        /* Lo que hay que saber antes de rellenar algo lo dice el panda, igual
+           que en el editor y en el chat. En letra pequeña debajo del campo, la
+           parte que importa —qué pasa con tu clave— es justo la que nadie lee. */
+        .ia-dice {
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0 0 0.75rem;
+        }
+        .ia-dice-panda { width: 58px; }
+        .ia-dice .panda-aviso-bocadillo { font-size: var(--texto-meta); }
+        .ia-dice .panda-aviso-bocadillo::before,
+        .ia-dice .panda-aviso-bocadillo::after { top: 1.4rem; }
+        .ia-dice p { margin: 0; }
+        /* Los ajustes avanzados, plegados hasta que se piden. */
+        .ia-avanzado {
+            margin-top: 1rem;
+            padding-top: 0.9rem;
+            border-top: 1px solid var(--color-medium-gray);
+        }
+        .ia-avanzado.hidden { display: none !important; }
+        .ia-avanzado .ia-casilla-limites { margin-top: 0; padding-top: 0; border-top: none; }
+        .ia-avanzado .ia-dice { padding: 0.75rem 0 0; }
+        .ia-enlace-clave { color: var(--color-primary); font-weight: 600; text-decoration: underline; }
+
+        /* Cómo va la descarga del modelo local. Sin barra, traerse dos gigas es
+           una pantalla parada durante varios minutos. */
+        /* El aviso grande: el que cuenta lo que hay que saber antes de
+           descargar un modelo de dos gigas. Es lo más importante del cuadro, y
+           el tamaño de un aviso es lo que dice cuánto importa. El panda va
+           centrado con el bocadillo y no colgando de su primera línea, que es
+           lo que pasaba con el desplegable justo encima. */
+        .ia-dice-grande {
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 0.25rem;
+        }
+        .ia-dice-grande .panda-aviso-panda { width: 120px; }
+        .ia-dice-grande .panda-aviso-bocadillo { padding: 1.1rem 1.2rem; }
+        /* El pico del bocadillo, a media altura, que es donde está el panda. */
+        .ia-dice-grande .panda-aviso-bocadillo::before,
+        .ia-dice-grande .panda-aviso-bocadillo::after { top: 50%; transform: translateY(-50%); }
+
+        .ia-descarga { margin-top: 0.75rem; }
+        /* El cancelar, a la derecha: a la izquierda compite con "lo
+           avanzado", que es de otra cosa y está siempre. */
+        .ia-descarga .btn { margin-top: 0.5rem; display: block; margin-left: auto; }
+        /* Cuando el navegador no dice por dónde va, la barra se mueve sola: es
+           la manera de decir "sigo aquí" sin mentir sobre cuánto queda. Una
+           barra vacía y quieta durante cinco minutos parece un cuelgue. */
+        .ia-descarga-relleno.ia-descarga-sin-saber {
+            width: 35%;
+            animation: ia-descarga-vaiven 1.6s ease-in-out infinite;
+        }
+        @keyframes ia-descarga-vaiven {
+            0% { margin-left: 0; }
+            50% { margin-left: 65%; }
+            100% { margin-left: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ia-descarga-relleno.ia-descarga-sin-saber { animation: none; width: 100%; opacity: 0.4; }
+        }
+        .ia-descarga-barra {
+            height: 0.4rem;
+            border-radius: 999px;
+            background-color: var(--color-medium-gray);
+            overflow: hidden;
+        }
+        .ia-descarga-relleno {
+            width: 0;
+            height: 100%;
+            border-radius: 999px;
+            background-color: var(--color-primary);
+            transition: width 0.2s ease-out;
+        }
+
+        /* --- LOS PROYECTOS RECIENTES ---------------------------------------
+           Una fila por archivo abierto: el nombre grande, y debajo pequeño el
+           par de idiomas, lo que llevas traducido y cuándo lo tocaste. */
+        /* Más ancho que un cuadro normal: cada fila lleva el nombre del
+           archivo, el par de idiomas, el avance, la fecha y dos botones. */
+        .recientes-cuadro { width: 720px; }
+        .recientes-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+        .reciente {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--color-medium-gray);
+            border-radius: 0.375rem;
+            background-color: var(--color-white);
+        }
+        .reciente-info { min-width: 0; }
+        .reciente-nombre {
+            font-weight: 600;
+            color: var(--color-dark);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .reciente-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 0.15rem;
+            font-size: var(--texto-meta);
+            color: var(--color-neutral-gray);
+        }
+        .reciente-acciones { display: flex; flex: 0 0 auto; gap: 0.35rem; }
+        .reciente-acciones .segmento-boton:disabled { opacity: 0.5; cursor: default; }
+        html.dark .ia-enlace-clave { color: #93c5fd; }
+
+        /* --- EL CUADRO DE AJUSTES ------------------------------------------
+           Los de código de tiempo estaban sueltos en el menú Herramientas con su
+           propio cuadro, y cada ajuste nuevo pedía otra entrada en ese menú. */
+        .ajustes-apartado {
+            margin: 1.25rem 0 0.6rem;
+            font-size: var(--texto-titulo);
+            font-weight: 700;
+            color: var(--color-dark);
+        }
+        .ajustes-apartado:first-of-type { margin-top: 0; }
+        .ajustes-fila {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .ajustes-fila .ia-etiqueta { margin: 0; }
+        /* Las tres alineaciones, pegadas: son una sola elección de tres, y tres
+           botones sueltos parecerían tres acciones distintas. */
+        .ajustes-opciones {
+            display: flex;
+            flex: 0 0 auto;
+            border: 1px solid var(--color-borde);
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+        .ajustes-opcion {
+            padding: 0.25rem 0.7rem;
+            font-size: var(--texto-meta);
+            background-color: var(--color-white);
+            color: var(--color-neutral-gray);
+            border: none;
+            border-left: 1px solid var(--color-borde);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .ajustes-opcion:first-child { border-left: none; }
+        .ajustes-opcion:hover { background-color: var(--color-light-gray); color: var(--color-dark); }
+        .ajustes-opcion.activa {
+            background-color: var(--color-primary);
+            color: #ffffff;
+        }
+
+        /* La alineación elegida, puesta desde el <html>: así vale para los
+           subtítulos que ya están pintados y para los que se pinten después. */
+        /* La alineación va a la caja entera, no solo al texto: dentro está
+           también la capa invisible de los recuentos, que tiene que partirse y
+           colocarse exactamente igual que el texto para que las cifras y la
+           marca de lo que sobra caigan donde deben. */
+        html[data-alinear-original='center'] .segmento-origen .segmento-texto-caja { text-align: center; }
+        html[data-alinear-original='left'] .segmento-origen .segmento-texto-caja { text-align: left; }
+        html[data-alinear-original='right'] .segmento-origen .segmento-texto-caja { text-align: right; }
+        html[data-alinear-traduccion='center'] .segmento-destino .segmento-texto-caja { text-align: center; }
+        html[data-alinear-traduccion='left'] .segmento-destino .segmento-texto-caja { text-align: left; }
+        html[data-alinear-traduccion='right'] .segmento-destino .segmento-texto-caja { text-align: right; }
+
+        .ia-etiqueta {
+            display: block;
+            font-weight: 600;
+            margin: 0.5rem 0 0.15rem;
+            color: var(--color-dark);
+        }
+        .ia-campo {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.3rem 0.45rem;
+            font-size: var(--texto-meta);
+            color: var(--color-dark);
+            background-color: var(--color-white);
+            border: 1px solid var(--color-borde);
+            border-radius: 0.375rem;
+        }
+        .ia-casilla { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.3rem; }
+        .ia-casilla-limites {
+            margin-top: 0.75rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid var(--color-medium-gray);
+            font-weight: 600;
+        }
+        .ia-pista {
+            font-size: var(--texto-meta);
+            color: var(--color-neutral-gray);
+            margin-top: 0.25rem;
+            line-height: 1.35;
+        }
+        .ia-conectado {
+            font-weight: 600;
+            font-size: var(--texto-base);
+            color: var(--color-dark);
+            margin-bottom: 0.25rem;
+        }
+        /* El punto es un círculo dibujado, no una letra: así tiene el tamaño que
+           le toca sin salirse de la escala tipográfica. */
+        .ia-conectado-punto {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background-color: #16a34a;
+            margin-right: 0.35rem;
+            vertical-align: middle;
+        }
+
+        /* Pretraducir el archivo: un apartado plegado del propio panel, que se
+           abre desde la bienvenida. Era un cuadro encima de todo, y para una
+           decisión de un solo botón eso es demasiada ceremonia. */
+        .ia-apartado {
+            flex: 0 0 auto;
+            padding: 0.75rem 1rem;
+            background-color: var(--color-white);
+            border-bottom: 1px solid var(--color-medium-gray);
+        }
+        .ia-apartado.hidden { display: none !important; }
+        .ia-apartado-cabecera {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .ia-apartado-titulo {
+            margin: 0;
+            font-size: var(--texto-base);
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+        .ia-apartado-cerrar {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            line-height: 1;
+            color: var(--color-neutral-gray);
+            cursor: pointer;
+        }
+        .ia-apartado-cerrar:hover { color: var(--color-dark); }
+        .ia-apartado .ai-btn-archivo { margin-top: 0.6rem; }
+        .ia-barra {
+            height: 8px;
+            border-radius: 999px;
+            background-color: var(--color-medium-gray);
+            overflow: hidden;
+            margin: 0.75rem 0 0.35rem;
+        }
+        .ia-barra-avance {
+            height: 100%;
+            background-color: var(--color-primary);
+            width: 0;
+            transition: width 0.2s;
+        }
+
+        /* La bienvenida: el mismo bocadillo del panda que da la bienvenida en el
+           editor y que pide el vídeo, aquí en el chat. Es la misma voz hablando,
+           y un aviso con cara se lee; una franja de texto gris, no. */
+        /* Más pequeño que el del editor: la columna es estrecha y el bocadillo
+           necesita el ancho más que el panda. */
+        .ai-bienvenida-panda { width: 54px; }
+        .ai-message-bot .panda-aviso-bocadillo { font-size: var(--texto-meta); }
+        /* El pico apunta a la cara del panda y no a media altura del bocadillo:
+           en un mensaje largo, media altura queda muy por debajo de él. */
+        .ai-message-bot .panda-aviso-bocadillo::before,
+        .ai-message-bot .panda-aviso-bocadillo::after { top: 1.4rem; }
+        .ai-bienvenida p { margin: 0 0 0.5rem; }
+        .ai-bienvenida p:last-of-type { margin-bottom: 0; }
+        .ai-pregunta { font-weight: 600; }
+        /* El enlace a los ajustes: un botón, pero con cara de enlace. Mandar a
+           alguien a buscar una rueda dentada es mandarlo a buscar. */
+        .ai-enlace,
+        .ia-enlace-accion {
+            padding: 0;
+            background: none;
+            border: none;
+            font: inherit;
+            color: var(--color-primary);
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        html.dark .ai-enlace,
+        html.dark .ia-enlace-accion { color: #93c5fd; }
+        /* Las tres respuestas, una debajo de otra: se leen de un vistazo y no
+           hay que decidir entre tres cosas apretadas en una fila. */
+        .ai-opciones {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-top: 0.6rem;
+        }
+        .ai-opcion {
+            text-align: left;
+            padding: 0.35rem 0.6rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--color-primary);
+            background-color: var(--color-white);
+            color: var(--color-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .ai-opcion:hover { background-color: var(--color-primary); color: #ffffff; }
+        html.dark .ai-opcion { background-color: transparent; color: #93c5fd; border-color: #93c5fd; }
+        html.dark .ai-opcion:hover { background-color: var(--color-primary); color: #ffffff; }
+
+        .ai-insert-btn {
+            display: block;
+            margin-top: 5px;
+            padding: 0;
+            background: none;
+            border: none;
+            font-size: var(--texto-meta);
+            color: var(--color-primary);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        html.dark .ai-insert-btn { color: #93c5fd; }
+
+        /* El subtítulo que ha traducido la IA y nadie ha revisado todavía. */
+        .segmento-fila.borrador-ia .segmento-numero {
+            box-shadow: inset 3px 0 0 0 #f59e0b;
+        }
+
+        /* Lo que la onda tiene que contar: que está leyendo el audio, o por
+           qué no ha podido dibujarse. Un recuadro en blanco sin explicación
+           parece la herramienta colgada. */
+        .onda-dice {
+            margin: 0.4rem 0 0;
+            padding: 0.5rem 0.7rem;
+            border-radius: 6px;
+            background-color: var(--color-light-gray);
+            color: var(--color-neutral-gray);
+            font-size: var(--texto-meta);
+            line-height: 1.4;
+        }
+        .onda-dice-fallo {
+            border-left: 3px solid #dc2626;
+            color: var(--color-dark);
+        }
+
+        /* El aviso de que este subtítulo tiene algo que mirar, al lado del
+           visto de validar. Va aquí y no en una columna aparte porque es donde
+           está lo otro que dice en qué estado está el subtítulo. */
+        .segmento-aviso {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.25rem;
+            height: 1.25rem;
+            flex: 0 0 auto;
+            color: #b45309;
+            cursor: help;
+        }
+        .segmento-aviso svg { width: 100%; height: 100%; }
+        /* Lo que no se puede entregar así —dos subtítulos encima, uno que no da
+           tiempo a leer— en rojo; lo que hay que mirar, en ámbar. */
+        .segmento-aviso-error { color: #dc2626; }

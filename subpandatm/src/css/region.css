@@ -1,0 +1,59 @@
+/* Las etiquetas de cada región de la onda.
+ *
+ * WaveSurfer 7 dibuja la onda y sus regiones dentro de un shadow DOM, una
+ * cajita cerrada a la que la hoja de estilos de la página no entra. De ahí que
+ * estas reglas vivan aquí solas: app.js las mete dentro de esa cajita cuando
+ * se crea la onda. Mientras estuvieron en styles.css no se aplicaba ninguna,
+ * así que la etiqueta salía en blanco sobre la onda, sin fondo y sin tamaño.
+ *
+ * La etiqueta va pegada al borde de arriba de la región. Antes flotaba 65
+ * píxeles por encima, o sea fuera del recuadro y encima del vídeo.
+ */
+.region-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* Estaba a 8 píxeles, que en la práctica no se leía: era saber que ahí
+       ponía algo. La onda es ahora bastante más alta y hay sitio de sobra. */
+    font-size: 12px;
+    line-height: 1.35;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.62);
+    padding: 4px 7px;
+    border-radius: 0 0 3px 3px;
+    pointer-events: none;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.region-content .region-line {
+    white-space: nowrap;   /* Que no salte de línea */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 1px;
+}
+
+.region-content .region-line:last-child {
+    margin-bottom: 0;
+}
+
+.region-content .region-line1 {  /* Número */
+    font-weight: bold;
+    color: #e8e8e8;
+}
+
+.region-content .region-line2 {  /* Original */
+    color: #c4c4c4;
+}
+
+.region-content .region-line3 {  /* Traducción */
+    color: #ffffff;
+    min-height: 1.35em;   /* Guarda el hueco aunque no haya traducción */
+}
+
+.region-content .region-line4 {  /* Recuentos */
+    color: #facc15;
+    font-family: monospace;
+    font-size: 11px;
+}

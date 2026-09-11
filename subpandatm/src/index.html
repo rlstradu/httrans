@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">subpandaTM</title>
+    <link rel="icon" href="../subpandatm-logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // activa el modo oscuro por clases
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="bg-gray-100">
+    <header class="app-header">
+        <!-- El logotipo, a la izquierda de la barra, como en Poanda. Estaba
+             dentro del reproductor, que es el sitio donde menos falta hace:
+             desaparecía en cuanto se cargaba un vídeo. -->
+        <img id="logoBarra" class="logo-barra" src="../subpandatm-logo.png" alt="subpandaTM">
+
+        <div class="header-main-actions">
+            <!-- Proyecto y Archivo, separados y en este orden, como en Poanda.
+                 El proyecto es el encargo entero —los subtítulos, la traducción,
+                 la memoria y el glosario— guardado en un .subpanda; Archivo es
+                 lo que entra y sale suelto. Mezclarlos en un menú único obligaba
+                 a leerlo entero para distinguir "guardar el proyecto" de
+                 "exportar los subtítulos", que no son lo mismo ni de lejos. -->
+            <div class="dropdown">
+                <button id="projectBtn" class="btn btn-secondary dropdown-btn">
+                    <span data-i18n="project_menu">Project</span>
+                </button>
+                <div class="dropdown-content">
+                    <a id="newProjectBtn" data-i18n="new_project">New project</a>
+                    <label for="projectFile" class="dropdown-item">
+                        <span data-i18n="load_project">Open project (.subpanda)</span>
+                        <input type="file" id="projectFile" accept=".subpanda" class="hidden">
+                    </label>
+                    <a id="saveProjectBtn" class="disabled-link" data-i18n="save_project">Save project (.subpanda)</a>
+                    <hr class="dropdown-raya">
+                    <a id="recentProjectsBtn" data-i18n="recent_projects_btn">Recent projects</a>
+                    <hr class="dropdown-raya">
+                    <a id="resetAppBtn" class="dropdown-peligro" data-i18n="reset_app_btn">Reset application</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button id="fileBtn" class="btn btn-secondary dropdown-btn">
+                    <span data-i18n="file_menu_btn">File</span>
+                </button>
+                <div class="dropdown-content">
+                    <label for="srtFile" class="dropdown-item">
+                        <span data-i18n="import_srt">Import subtitles</span>
+                        <input type="file" id="srtFile" accept=".srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa" class="hidden">
+                    </label>
+                    <label for="translatedSrtFile" class="dropdown-item" data-i18n-title="import_translated_tooltip">
+                        <span data-i18n="import_translated_srt">Import translation</span>
+                        <input type="file" id="translatedSrtFile" accept=".srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa" class="hidden">
+                    </label>
+                    <hr class="dropdown-raya">
+                    <a id="saveSrt" class="disabled-link" data-i18n="export_srt">Export subtitles</a>
+                    <hr class="dropdown-raya">
+                    <!-- El vídeo, también desde aquí: si no, el único sitio es
+                         el panda del reproductor, y quien lo cierre por error se
+                         queda sin saber por dónde volver a cargarlo. -->
+                    <label for="videoFileMenuInput" class="dropdown-item">
+                        <span data-i18n="load_video">Load video</span>
+                        <input type="file" id="videoFileMenuInput" accept="video/*" class="hidden">
+                    </label>
+                    <hr class="dropdown-raya">
+                    <!-- El punto verde avisa de que hay copia guardada; va en la
+                         propia entrada del menú, y se ve al desplegarlo. -->
+                    <a id="backupBtn"><span data-i18n="backup_btn">Backup</span><span id="backupIndicator"></span></a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button id="toolsBtn" class="btn btn-secondary dropdown-btn">
+                    <span data-i18n="tools_menu">Tools</span>
+                </button>
+                <div class="dropdown-content">
+                    <a id="undoBtn" class="disabled-link" data-i18n="undo_btn">Undo</a>
+                    <a id="redoBtn" class="disabled-link" data-i18n="redo_btn">Redo</a>
+                    <hr class="dropdown-raya">
+                    <a id="findReplaceBtn" data-i18n="find_replace_btn">Find &amp; Replace</a>
+                    <a id="goToSubtitleBtn" data-i18n="go_to_subtitle_menu">Go to…</a>
+                    <a id="plannerBtn" data-i18n="planner_title">Planner</a>
+                    <hr class="dropdown-raya">
+                    <a id="shortcutsBtn" data-i18n="shortcuts_btn">Shortcuts</a>
+                    <a id="toggleStatusBarBtn" data-i18n="show_status_bar_btn">Show status bar</a>
+                    <hr class="dropdown-raya">
+                    <a id="settingsBtn" data-i18n="settings_btn">Settings</a>
+                </div>
+            </div>
+
+            <!-- La memoria y el glosario ya no se abren y se cierran cada uno
+                 por su lado: están siempre a la vista en la columna de la
+                 derecha. Lo único que queda es esconder esa columna cuando hace
+                 falta ancho para traducir. -->
+            <button id="panelesBtn" class="btn btn-secondary">
+                <span data-i18n="panels_btn">TM and Glossary</span>
+            </button>
+            <button id="qaBtn" class="btn btn-secondary">
+                <span data-i18n="qa_btn">QA</span>
+            </button>
+            <button id="aiBtn" class="btn btn-secondary">
+                <span data-i18n="context_btn">AI Assistant</span>
+            </button>
+        </div>
+
+        <!-- Idioma, tema y versión: los tres del mismo tamaño y con el mismo
+             borde, como en Poanda. Son tres controles del mismo rango, y antes
+             cada uno tenía su forma. -->
+        <div class="header-lang-switcher">
+            <div class="dropdown selector-idioma">
+                <button id="langBtn" class="btn btn-secondary dropdown-btn">
+                    <span id="langActual">English</span>
+                </button>
+                <div class="dropdown-content dropdown-a-la-derecha">
+                    <a id="langEnBtn" lang="en">English</a>
+                    <a id="langEsBtn" lang="es">Español</a>
+                </div>
+            </div>
+            <!-- El texto lo pone actualizarBotonTema(): depende del modo que
+                 esté puesto y del idioma, así que no se puede traducir con
+                 data-i18n. Dice a qué modo lleva, como en Poanda: un sol y una
+                 luna se parecen demasiado y nunca queda claro si dicen dónde
+                 estás o adónde vas. -->
+            <button id="themeToggleBtn" class="btn btn-secondary">Dark mode</button>
+            <button id="versionToggle" class="btn btn-secondary" data-i18n-title="changelog_btn_title">v2.0.0</button>
+        </div>
+    </header>
+
+    <div class="main-app-content">
+       <div class="video-player-section">
+
+    <!-- El reproductor y su botonera van juntos en un bloque: es este bloque el
+         que se pone en pantalla completa, no solo el vídeo, para que los
+         botones —el de salir, entre ellos— sigan estando ahí. -->
+    <div id="videoBloque" class="video-bloque">
+
+    <div id="videoPlayerContainer" class="w-full">
+        <div id="videoPlayerWrapper" class="relative bg-black rounded-lg group">
+    <video id="videoPlayer" class="w-full h-auto rounded-lg"></video>
+
+            <!-- Mientras no hay vídeo, el hueco del reproductor lo ocupa el
+                 panda pidiéndolo. Antes había ahí un logotipo suelto, que no
+                 decía qué hacer ni servía para hacerlo: el vídeo se cargaba
+                 desde una barra que solo aparecía al pasar el ratón. Este
+                 bocadillo se pulsa y también recibe el archivo arrastrado. -->
+            <label id="videoLogoPlaceholder" class="pedir-video" for="videoFileInput" tabindex="0">
+                <span class="pedir-video-bocadillo">
+                    <span data-i18n="ask_for_video">Now load the video for these subtitles.</span>
+                    <span class="pedir-video-soltar" data-i18n="drop_video_here">Drop it here, or click to choose it.</span>
+                </span>
+                <img class="pedir-video-panda" src="../images/panda-laptop.png" alt="" aria-hidden="true">
+            </label>
+
+            <div id="subtitlePreviewOverlay">
+                <span id="subtitlePreviewText"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Los controles del vídeo eran una barra negra flotante que solo aparecía
+         al pasar el ratón por encima del reproductor: tapaba la imagen y había
+         que descubrirla. Ahora es una botonera fija debajo, igual que la de la
+         onda, para que las dos columnas de la izquierda se lean igual. En
+         pantalla completa vuelve a colocarse encima del vídeo, que es donde
+         tiene que estar cuando el reproductor ocupa la pantalla entera. -->
+    <!-- Todos los botones son cuadrados y del mismo tamaño. Lo que necesita
+         elegirse —la velocidad, qué texto se ve y el tamaño de la letra— se
+         abre en un cuadrito, como el control de volumen de cualquier
+         reproductor: así la fila no crece con lo que ponga dentro de cada
+         control, y en una columna estrecha eso era lo que la descuadraba.
+
+         El campo del vídeo se queda aquí escondido: es al que apunta el panda
+         del reproductor, y también el menú Archivo. -->
+    <div id="videoControlsBar" class="botonera">
+        <input type="file" id="videoFileInput" accept="video/*" class="hidden">
+
+        <!-- Reproducir primero, y los dos saltos de un segundo detrás. El play
+             es el que más se pulsa y el que se busca sin mirar, así que va el
+             primero de la fila. Retroceder un segundo es lo que más se hace al
+             ajustar una entrada, y hasta hace poco solo estaba en el teclado.
+
+             Los saltos se dicen con una flecha y el número, no con un dibujo:
+             eran dos flechas circulares con un "1" dentro y no se entendía para
+             qué eran sin pasar el ratón por encima y esperar al rótulo. -->
+        <button id="playPauseBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="play_pause">
+            <svg class="icono-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.54.84l10.5-6.86a1 1 0 0 0 0-1.68L9.54 4.3A1 1 0 0 0 8 5.14Z"/></svg>
+            <svg class="icono-pausa hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h3.5v16H7zM13.5 4H17v16h-3.5z"/></svg>
+        </button>
+        <button id="seekBackBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="back_one_second">
+            <span class="botonera-salto" aria-hidden="true">&#8592;1</span>
+        </button>
+        <button id="seekForwardBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="forward_one_second">
+            <span class="botonera-salto" aria-hidden="true">1&#8594;</span>
+        </button>
+
+        <span class="botonera-separador" aria-hidden="true"></span>
+
+        <!-- La velocidad: para transcribir o para afinar una entrada se baja, y
+             para revisar se sube. -->
+        <div class="deslizador" data-deslizador>
+            <button id="playbackRateBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="playback_rate" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 13.5l4-4"/>
+                </svg>
+            </button>
+            <div class="deslizador-cuerpo hidden">
+                <input type="range" id="playbackRateRange" min="0" max="5" step="1" value="2" aria-labelledby="playbackRateBtn">
+                <span class="deslizador-cifra" id="playbackRateValor">1×</span>
+            </div>
+        </div>
+
+        <span class="botonera-separador" aria-hidden="true"></span>
+
+        <!-- Qué texto se ve sobre el vídeo. Eran dos botones con su rótulo, que
+             en una columna estrecha se llevaban media botonera. -->
+        <div class="deslizador" data-deslizador>
+            <button id="previewSourceBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="preview_source" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2.5" y="4.5" width="19" height="15" rx="2"/>
+                    <path stroke-linecap="round" d="M6 15h5M13 15h5"/>
+                    <path stroke-linecap="round" d="M6 11.5h3M11 11.5h7"/>
+                </svg>
+            </button>
+            <div class="deslizador-cuerpo hidden">
+                <div class="eleccion" role="group">
+                    <button type="button" class="eleccion-opcion activa" data-fuente="translation" data-i18n="translation_text_option">Translation</button>
+                    <button type="button" class="eleccion-opcion" data-fuente="original" data-i18n="original_text_option">Original</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- El tamaño del subtítulo va del 1 al 10, no en píxeles: la cifra en
+             píxeles no dice nada sin ver el vídeo, y el 1 de antes era ya
+             bastante grande. Ahora el 1 es de verdad pequeño y se entra por
+             el 4. -->
+        <div class="deslizador" data-deslizador>
+            <button id="fontSizeBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="preview_size" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 18.5 8 6l5 12.5M4.8 14.5h6.4"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.5 18.5 17.5 10l3 8.5M15.6 16h3.8"/>
+                </svg>
+            </button>
+            <div class="deslizador-cuerpo hidden">
+                <input type="range" id="fontSizeRange" min="1" max="10" step="1" value="3" aria-labelledby="fontSizeBtn">
+                <span class="deslizador-cifra" id="fontSizeDisplay">3</span>
+            </div>
+        </div>
+
+        <span class="botonera-separador" aria-hidden="true"></span>
+
+        <button id="customFullscreenBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="fullscreen">
+            <svg id="fullscreen-enter-char" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+            </svg>
+            <svg id="fullscreen-exit-char" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>
+            </svg>
+        </button>
+    </div>
+
+    </div>
+
+    <!-- La onda y su botonera van juntas en un bloque que se estira hasta abajo
+         del todo de la columna: así no queda hueco muerto debajo. -->
+    <div id="ondaBloque" class="onda-bloque hidden">
+    <div id="waveform" class="bg-white rounded-lg shadow-xl w-full"></div>
+        <!-- Qué le pasa a la onda: que la está leyendo, o por qué no ha podido.
+             Va aquí, en el propio recuadro, y no en un mensaje que pasa: es
+             donde se está mirando, y tiene que seguir ahí mientras el problema
+             siga. Antes no se decía nada y quedaba un recuadro en blanco. -->
+        <p id="ondaDice" class="onda-dice hidden"></p>
+        <div id="waveformControls" class="botonera botonera-onda hidden">
+            <button id="lockWaveformBtn" class="btn btn-secondary botonera-cuadrado" title="Bloquear/Desbloquear onda">
+                <svg class="lock-icon-open w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                </svg>
+                <svg class="lock-icon-closed hidden w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                </svg>
+            </button>
+<button id="followPlaybackBtn" class="btn btn-secondary botonera-cuadrado">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+    </button>
+            <span class="botonera-separador" aria-hidden="true"></span>
+
+            <!-- El zoom a lo ancho y la altura a lo alto: los dos son la misma
+                 clase de ajuste, así que se manejan igual. Dos botones de más y
+                 de menos daban saltos fijos y para llegar donde uno quiere había
+                 que pulsar ocho veces; con un deslizador se afina de una pasada
+                 y se ve dónde estás. Se abren al pulsar y se cierran solos. -->
+            <div class="deslizador" data-deslizador>
+                <button id="zoomBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="zoom_in" aria-expanded="false">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v3m0 0v3m0-3h3m-3 0h-3" />
+                    </svg>
+                </button>
+                <div class="deslizador-cuerpo hidden">
+                    <input type="range" id="zoomRange" min="20" max="600" step="5" value="100" aria-labelledby="zoomBtn">
+                    <span class="deslizador-cifra" id="zoomValor">100 %</span>
+                </div>
+            </div>
+
+            <div class="deslizador" data-deslizador>
+                <button id="waveHeightBtn" class="btn btn-secondary botonera-cuadrado" data-i18n-title="wave_height" aria-expanded="false">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15M12 4.5 8.5 8M12 4.5 15.5 8M12 19.5 8.5 16M12 19.5 15.5 16M4 12h3M17 12h3" />
+                    </svg>
+                </button>
+                <div class="deslizador-cuerpo hidden">
+                    <input type="range" id="waveHeightRange" min="0.2" max="4" step="0.05" value="1" aria-labelledby="waveHeightBtn">
+                    <span class="deslizador-cifra" id="waveHeightValor">1.0×</span>
+                </div>
+            </div>
+        </div>
+    </div>
+                <div id="statsContainer" class="bg-white p-4 rounded-lg shadow-xl w-full mt-4 hidden">
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="statsAccordionHeader">
+                            <h3 class="text-lg font-bold" data-i18n="translation_stats_title">Estadísticas</h3>
+                            <svg class="w-5 h-5 accordion-icon rotated" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div class="accordion-content collapsed" id="statsAccordionContent">
+                            <div class="bg-gray-100 p-3 rounded-md shadow-sm text-sm text-center space-y-1">
+                                <p><span id="segmentsProgress"></span></p>
+                                <p><span id="wordsTranslated"></span> / <span id="wordsTotal"></span></p>
+                                <p><span id="wordsRemaining"></span></p>
+                                <p id="qaErrorStats"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+</div> <div id="horizontal-resizer"></div>
+
+        <div class="right-panel-content">
+            <div class="editor-and-sidebars-wrapper" id="editorAndSidebarsWrapper">
+                <div class="editor-main-content space-y-4 pr-2" id="editorMainContent">
+                    <div id="translationsContainer">
+                        <!-- La bienvenida la da el panda en un bocadillo, igual
+                             que en Poanda. Antes era un recuadro gris con letra
+                             gris clara: era lo primero que se veía al entrar y
+                             costaba leerlo. -->
+                        <!-- La bienvenida: el bocadillo arriba y el panda
+                             debajo, mirándolo. El bocadillo es además donde se
+                             suelta el archivo, que es lo primero que hay que
+                             hacer: la zona de arrastre está justo donde se está
+                             leyendo qué hay que hacer, y no en otro sitio. -->
+                        <div id="initialMessage" class="bienvenida">
+                            <label id="zonaSoltar" class="bienvenida-bocadillo" for="srtFileBienvenida" tabindex="0">
+                                <span class="bienvenida-texto" data-i18n="no_translations">Import a subtitle file (.srt, .vtt, .ttml or .ass) and a video to start working. If you wish, you can work with a TMX translation memory and a TBX glossary, which you can import or create from scratch.</span>
+                                <span class="bienvenida-soltar" data-i18n="drop_srt_here">Drop your subtitles here, or click to choose them.</span>
+                                <input type="file" id="srtFileBienvenida" accept=".srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa,.subpanda" class="hidden">
+                            </label>
+                            <img class="bienvenida-panda" src="../images/panda-glasses.png" alt="" aria-hidden="true">
+                        </div>
+                    </div>
+                </div>
+
+    <!-- ================= LA COLUMNA DE CONSULTA =================
+         La memoria arriba y el glosario abajo, los dos a la vista mientras se
+         traduce. Antes eran dos ventanas flotantes que se abrían encima del
+         editor: tapaban justo el texto que hay que mirar para decidir si una
+         coincidencia sirve, se podían solapar entre ellas y había que apartarlas
+         a mano cada vez. Es la misma columna que usa Poanda. -->
+    <div id="panelesDerecha" class="paneles-derecha">
+        <div id="tiradorAncho" class="tirador-ancho" role="separator" aria-orientation="vertical" data-i18n-title="panel_resize_width"></div>
+
+        <!-- Un solo buscador para los dos paneles. Antes había uno en cada uno,
+             buscando lo mismo con dos campos y dos títulos: dos franjas de una
+             columna donde el sitio escasea. -->
+        <!-- Las pestañas de la columna. La memoria y el glosario son lo que se
+             consulta mientras se traduce; el planificador es otra cosa, se mira
+             una vez al empezar el encargo. Estaba debajo del reproductor, donde
+             le recortaba el vídeo por arriba. -->
+        <div class="panel-pestanas" role="tablist">
+            <button type="button" class="panel-pestana activa" role="tab" data-pestana="paneles" aria-selected="true" data-i18n="panels_btn">TM and Glossary</button>
+            <button type="button" class="panel-pestana" role="tab" data-pestana="ia" aria-selected="false" data-i18n="ai_pestana">PandaBot</button>
+            <button type="button" class="panel-pestana" role="tab" data-pestana="qa" aria-selected="false" data-i18n="qa_btn">QA</button>
+            <button type="button" class="panel-pestana" role="tab" data-pestana="planificador" aria-selected="false" data-i18n="planner_title">Planner</button>
+            <!-- La equis cierra la columna entera, sin tener que acordarse de
+                 con qué botón de la barra se abrió. -->
+            <button type="button" id="cerrarPanelesBtn" class="panel-pestanas-cerrar" data-i18n-title="panels_close">&times;</button>
+        </div>
+
+        <div id="pestanaPaneles" class="panel-pestana-cuerpo">
+        <div class="paneles-buscador">
+            <span class="paneles-buscador-lupa" aria-hidden="true"></span>
+            <input type="text" id="buscarPaneles" data-i18n-placeholder="panels_search_placeholder" class="paneles-campo">
+        </div>
+
+        <div id="translationMemorySidebar" class="translation-memory-sidebar">
+            <!-- Título, acciones y plegado en una sola fila: en media columna,
+                 una cabecera de dos renglones es una coincidencia menos. -->
+            <div class="sidebar-header">
+                <h3 class="panel-titulo" data-i18n="tm_sidebar_title" id="tmSidebarTitle">Translation Memory</h3>
+                <div class="panel-acciones">
+                    <label id="importTmxBtn" for="tmFileInput" class="panel-icono" data-i18n-title="import_tmx"><input type="file" id="tmFileInput" accept=".xml,.tmx" class="hidden" /></label>
+                    <button id="downloadTmxBtn" class="panel-icono" data-i18n-title="download_tmx" type="button"></button>
+                    <button id="closeTranslationMemorySidebarBtn" class="panel-icono panel-plegar" data-i18n-title="panel_collapse" type="button"></button>
+                </div>
+            </div>
+            <div class="sidebar-content">
+                <div id="tmInternalMessage" class="tm-info-box mb-4 hidden"></div>
+                <div id="tmEditorSection">
+                    <button id="memoriaParIdiomas" class="par-del-proyecto" type="button" data-i18n-title="lang_pair_title"><span class="par-del-proyecto-icono" aria-hidden="true"></span><span class="par-del-proyecto-texto" id="memoriaParIdiomasTexto"></span></button>
+                    <div id="tmResultados" class="hidden">
+                        <h4 class="panel-lista-titulo" data-i18n="tm_search_results_title" id="tmSearchResultsTitle">TM Search Results</h4>
+                        <!-- Una tarjeta por coincidencia, no una tabla de tres
+                             columnas: en media columna, cada celda medía cien
+                             píxeles y el texto salía cortado cada dos palabras,
+                             con el diff entre ellas convertido en confeti. -->
+                        <div id="tmResultadosLista" class="tm-lista"></div>
+                    </div>
+                    <div data-i18n="tm_no_match_found" id="tmNoMatchFoundMessage" class="panel-vacio hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tiradorReparto" class="tirador-reparto" role="separator" aria-orientation="horizontal" data-i18n-title="panel_resize_split"></div>
+
+        <div id="terminologySidebar" class="terminology-sidebar">
+            <div class="sidebar-header">
+                <h3 class="panel-titulo" data-i18n="terminology_sidebar_title" id="terminologySidebarTitle">Terminology</h3>
+                <div class="panel-acciones">
+                    <button id="addTermToggleBtn" class="panel-icono" data-i18n-title="add_term_title" type="button"></button>
+                    <button id="importTbxBtn" class="panel-icono" data-i18n-title="import_tbx" type="button"></button>
+                    <input type="file" id="tbxFileInput" accept=".xml,.tbx" class="hidden" />
+                    <button id="downloadTbxBtn" class="panel-icono" data-i18n-title="download_tbx" type="button"></button>
+                    <button id="closeTerminologySidebarBtn" class="panel-icono panel-plegar" data-i18n-title="panel_collapse" type="button"></button>
+                </div>
+            </div>
+            <div class="sidebar-content">
+                <div id="terminologyEditorSection">
+                    <button id="glosarioParIdiomas" class="par-del-proyecto" type="button" data-i18n-title="lang_pair_title"><span class="par-del-proyecto-icono" aria-hidden="true"></span><span class="par-del-proyecto-texto" id="glosarioParIdiomasTexto"></span></button>
+                    <!-- La ficha de un término se rellena en su propio cuadro
+                         (#terminoModal): son cinco campos, y en media columna no
+                         caben sin comerse la lista de términos. -->
+                    <div id="glosarioResultados" class="hidden">
+                        <h4 class="panel-lista-titulo" data-i18n="glossary_list_title" id="glossaryListTitle">Glossary</h4>
+                        <div id="glosarioLista" class="glosario-lista"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- El aviso de que la memoria y el glosario están vacíos: va debajo de
+             los dos paneles, no dentro de ninguno, y lo dice el panda. Quien ya
+             sabe cómo va esto lo cierra con su equis y no vuelve. -->
+        <div id="panelesAviso" class="paneles-aviso panda-aviso hidden">
+            <img class="panda-aviso-panda paneles-aviso-panda" src="../images/panda-glasses.png" alt="" aria-hidden="true">
+            <div class="panda-aviso-bocadillo">
+                <p data-i18n="panels_vacios"></p>
+                <button id="panelesAvisoCerrar" class="paneles-aviso-cerrar" type="button" data-i18n-title="panels_notice_dismiss">&times;</button>
+            </div>
+        </div>
+        </div>
+
+        <!-- ================= EL ASISTENTE DE IA =================
+             El mismo que Poanda, con el mismo núcleo. Habla directamente con el
+             servicio que se elija —Gemini, OpenAI, Claude o cualquiera que hable el
+             formato de OpenAI, incluidos los que corren en tu propio ordenador— con
+             la clave de quien lo usa y sin servidor propio por el medio: los
+             subtítulos de tus clientes no pasan por ninguna máquina nuestra.
+
+             Vive en una pestaña de la columna de consulta, delante del
+             planificador: es de lo que se usa mientras se traduce, y así no se come
+             el ancho del editor cuando no se está usando.
+
+             Lo que sustituye: un panel que copiaba un prompt al portapapeles para
+             pegarlo a mano en otra pestaña y esperaba que le devolvieras un JSON
+             pegado. El trabajo lo hacía la persona. -->
+        <div id="aiSidebar" class="panel-pestana-cuerpo ai-sidebar hidden">
+            <div class="sidebar-header">
+                <h3 class="panel-titulo">🐼 PandaBot AI</h3>
+                <div class="panel-acciones">
+                    <button id="aiConfigToggleBtn" class="panel-icono" type="button" data-i18n-title="ai_config_title" title="Configurar API">⚙️</button>
+                </div>
+            </div>
+
+            <!-- La conversación. Lo primero que sale es el saludo y una pregunta con
+                 tres respuestas: hasta que se elige una no se enseña nada más. El
+                 panel tenía todo a la vista a la vez —cuatro botones rápidos, el de
+                 pretraducir, el chat y los ajustes— y había que leerlo entero para
+                 saber por dónde empezar. -->
+            <div id="aiChatContainer" class="ai-chat-container"></div>
+
+            <!-- Pretraducir el archivo entero, en su propio apartado y plegado
+                 hasta que se pide. Va aparte de los cuatro botones de abajo a
+                 propósito: aquéllos tocan el subtítulo en el que estás, y éste se
+                 lleva por delante todo el archivo. -->
+            <div id="pretraducirSeccion" class="ia-apartado hidden">
+                <div class="ia-apartado-cabecera">
+                    <h4 class="ia-apartado-titulo" data-i18n="ai_pretraducir_titulo">Pre-translate the file</h4>
+                    <button id="pretraducirCerrarBtn" class="ia-apartado-cerrar" type="button" data-i18n-title="close_btn">&times;</button>
+                </div>
+                <p class="ia-pista" data-i18n="ai_pretraducir_alcance"></p>
+                <p class="ia-pista" data-i18n="ai_pretraducir_como"></p>
+                <div id="pretraducirAvance" class="hidden">
+                    <div class="ia-barra"><div id="pretraducirBarra" class="ia-barra-avance"></div></div>
+                    <p id="pretraducirEstado" class="ia-pista"></p>
+                </div>
+                <button id="pretraducirEmpezarBtn" class="ai-btn-archivo" type="button" data-i18n="ai_pretraducir_empezar">Pre-translate</button>
+            </div>
+
+            <!-- Los cuatro de abajo del todo: actúan sobre el subtítulo en el que
+                 está el cursor, así que están donde se está escribiendo. -->
+            <div class="ai-quick-actions">
+                <button id="aiQuickTranslate" class="ai-quick-btn" data-ai-action="translate" data-i18n="ai_quick_translate">Translate</button>
+                <button class="ai-quick-btn" data-ai-action="improve" data-i18n="ai_quick_improve">Improve</button>
+                <button class="ai-quick-btn" data-ai-action="shorten" data-i18n="ai_quick_shorten">Shorten</button>
+                <button class="ai-quick-btn" data-ai-action="explain" data-i18n="ai_quick_explain">Explain</button>
+            </div>
+
+            <div class="ai-input-area">
+                <div class="flex gap-2">
+                    <textarea id="aiUserInput" class="ai-textarea" data-i18n-placeholder="ai_input_placeholder"></textarea>
+                    <button id="aiSendBtn" class="btn btn-primary">➤</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- El control de calidad. Era un cuadro encima de todo con dos campos
+             y un botón de guardar: se abría, se cambiaba un número y se cerraba,
+             y para volver a mirar cuál era el límite había que abrirlo otra vez.
+             Aquí los límites están a la vista mientras se traduce, que es cuando
+             importan, y se aplican al escribirlos.
+
+             Los filtros para repasar errores —líneas largas, subtítulos rápidos,
+             solapes— vendrán a este mismo panel, debajo de los límites, como en
+             Poanda. -->
+        <div id="qaContainer" class="panel-pestana-cuerpo hidden">
+            <!-- El panda explica los límites, que es lo que hay que entender
+                 antes de revisar nada. Al pulsar "Revisar" se quita: a partir
+                 de ahí lo que se mira es la lista, y el bocadillo se estaría
+                 comiendo un tercio del alto para repetir algo ya leído. -->
+            <div id="qaPandaAviso" class="panda-aviso ia-dice">
+                <img class="panda-aviso-panda ia-dice-panda" src="../images/panda-glasses.png" alt="" aria-hidden="true">
+                <div class="panda-aviso-bocadillo">
+                    <p data-i18n="qa_limites_pista"></p>
+                </div>
+            </div>
+
+            <!-- Las comprobaciones, con su límite y cuántas han saltado. La
+                 pinta pintarElPanelDeQa() recorriendo la tabla de reglas: los
+                 límites viven cada uno junto a la comprobación que lo usa, y
+                 no en una lista aparte que hay que mantener en paralelo. -->
+            <div id="qaResumen" class="qa-resumen"></div>
+
+            <!-- La raya que reparte el alto entre las comprobaciones y la lista
+                 de errores. Con un reparto fijo, al cargar la lista los filtros
+                 se quedaban en un hueco donde apenas se veían dos. Es el mismo
+                 tirador que reparte la memoria y el glosario. -->
+            <div id="tiradorQa" class="tirador-reparto" role="separator" aria-orientation="horizontal" data-i18n-title="qa_repartir_titulo"></div>
+
+            <!-- La lista de errores. Estaba en un cuadro flotante que había que
+                 cerrar para tocar el subtítulo y volver a abrir para ver el
+                 siguiente: repasar veinte errores eran cuarenta clics de más.
+                 Aquí se queda abierta mientras se repasa. -->
+            <div class="qa-errores-cabeza">
+                <h4 class="qa-apartado" data-i18n="qa_errores_titulo">Errors</h4>
+                <button type="button" id="qaRevisarBtn" class="btn btn-secondary" data-i18n="qa_revisar_btn">Run QA</button>
+            </div>
+            <div id="qaErrorListContainer" class="qa-errores"></div>
+        </div>
+
+        <!-- El planificador: cuántas sesiones y cómo se reparte el encargo
+             entre ellas. Se mira una vez al empezar, así que vive en su propia
+             pestaña y no quitando sitio a lo que se consulta todo el rato. -->
+        <div id="plannerContainer" class="panel-pestana-cuerpo hidden">
+            <div class="planificador-controles">
+                <div class="planificador-fila">
+                    <label for="sessionCount" data-i18n="planner_divide_in">Divide into:</label>
+                    <input type="number" id="sessionCount" value="3" min="1" class="paneles-campo planificador-numero">
+                    <label for="sessionCount" data-i18n="planner_sessions">sessions</label>
+                </div>
+                <select id="divisionMethod" class="paneles-campo">
+                    <option value="subtitles" data-i18n="planner_method_subs">By number of subtitles</option>
+                    <option value="words" data-i18n="planner_method_words">By number of words</option>
+                    <option value="time" data-i18n="planner_method_time">By time</option>
+                </select>
+                <button id="calculateSessionsBtn" class="segmento-boton segmento-boton-principal" data-i18n="planner_calculate">Calculate</button>
+            </div>
+            <div id="sessionResults" class="planificador-resultados"></div>
+        </div>
+    </div>
+
+        </div>
+    </div>
+
+    <!-- Los ajustes de la IA, en su propio cuadro.
+
+         Estaban dentro del panel del asistente, desplegándose encima de la
+         conversación: qué servicio, la dirección, la clave, el modelo, las
+         instrucciones del encargo y los límites de subtitulado, todo en la misma
+         media columna que el chat. Demasiado en un solo sitio para algo que se
+         toca una vez y no se vuelve a mirar. -->
+    <div id="aiConfigModal" class="modal hidden">
+        <div class="modal-content ia-ajustes">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold m-0" data-i18n="ai_config_title">Configurar el servicio de IA</h2>
+                <button id="aiConfigCerrarBtn" type="button" class="ia-apartado-cerrar" data-i18n-title="close_btn">&times;</button>
+            </div>
+            <!-- Estado "conectado": enseña a qué está conectado, deja cambiar de
+                 modelo sin volver a conectar y lleva a cambiar de servicio. -->
+            <div id="aiConectado" class="hidden">
+                <p class="ia-conectado"><span class="ia-conectado-punto" aria-hidden="true"></span><span id="aiConectadoServicio"></span></p>
+
+                <label class="ia-etiqueta" data-i18n="ai_modelo_label">Model</label>
+                <select id="aiModelo" class="ia-campo"></select>
+                <p class="ia-pista" data-i18n="ai_modelo_pista"></p>
+
+                <label class="ia-etiqueta" data-i18n="ai_instrucciones_label">Instructions for this project</label>
+                <textarea id="aiInstrucciones" class="ia-campo" rows="2" data-i18n-placeholder="ai_instrucciones_pista"></textarea>
+
+                <div class="flex justify-between items-center gap-2 mt-3">
+                    <button class="btn btn-secondary ia-avanzado-btn" type="button" aria-expanded="false" aria-controls="aiAvanzado" data-i18n="ai_avanzado">Advanced settings</button>
+                    <span class="flex gap-2">
+                        <button id="aiCambiarBtn" class="btn btn-secondary" data-i18n="ai_cambiar_servicio">Change service</button>
+                        <button id="aiGuardarModeloBtn" class="btn btn-primary" data-i18n="save_btn">Save</button>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Estado "sin conectar": elegir servicio y pegar la clave.
+
+                 Lo dice el panda, como en el resto de la herramienta: dos
+                 campos con sus rótulos y un párrafo de letra pequeña debajo
+                 explicando qué pasa con la clave se lee como un formulario, y
+                 la parte que importa —que la clave no sale de aquí— es
+                 justamente la que nadie lee en letra pequeña. -->
+            <div id="aiSinConectar">
+                <div class="panda-aviso ia-dice">
+                    <img class="panda-aviso-panda ia-dice-panda" src="../images/panda-prof.png" alt="" aria-hidden="true">
+                    <div id="aiPandaConectar" class="panda-aviso-bocadillo">
+                        <p data-i18n="ai_panda_conectar"></p>
+                    </div>
+                </div>
+
+                <label class="ia-etiqueta" data-i18n="ai_proveedor_label">AI service</label>
+                <select id="aiProveedor" class="ia-campo"></select>
+
+                <div id="aiClaveBloque">
+                    <label class="ia-etiqueta" data-i18n="ai_api_key_label">API key</label>
+                    <input type="password" id="aiClave" class="ia-campo" data-i18n-placeholder="ai_api_key_placeholder" placeholder="Paste the key here…">
+                    <label class="ia-casilla"><input type="checkbox" id="aiRecordarClave"> <span data-i18n="ai_recordar_clave">Remember on this computer</span></label>
+                    <!-- Adónde se va a por la clave. Abre en otra pestaña: aquí
+                         se está a medio configurar, y llevarse la página por
+                         delante perdería lo escrito. -->
+                    <p class="ia-pista"><a id="aiEnlaceClave" class="ia-enlace-clave" href="#" target="_blank" rel="noopener noreferrer"></a></p>
+                </div>
+
+                <!-- La IA local. Lo cuenta el panda y no un párrafo de letra
+                     pequeña porque lo que hay que contar aquí no es un detalle:
+                     que el texto no sale del ordenador —que es la razón de
+                     elegirla— y que traduce peor que las de la nube —que es lo
+                     que hay que saber ANTES de descargar dos gigas, no
+                     después—. -->
+                <div id="aiLocalBloque" class="hidden">
+                    <div class="panda-aviso ia-dice ia-dice-grande">
+                        <img class="panda-aviso-panda ia-dice-panda" src="../images/panda-prof.png" alt="" aria-hidden="true">
+                        <div class="panda-aviso-bocadillo">
+                            <p id="aiPandaLocal"></p>
+                        </div>
+                    </div>
+
+                    <!-- Qué modelo se descarga. Solo lo enseña WebLLM: el de
+                         Chrome trae uno y no hay nada que elegir. -->
+                    <div id="aiModeloLocalBloque" class="hidden">
+                        <label class="ia-etiqueta" for="aiModeloLocal" data-i18n="ai_modelo_local_label">Model to download</label>
+                        <select id="aiModeloLocal" class="ia-campo"></select>
+                        <p class="ia-pista" data-i18n="ai_modelo_local_pista"></p>
+                    </div>
+
+                    <!-- Cómo va la descarga. Sin esto, traerse un modelo de dos
+                         gigas es una pantalla parada durante varios minutos.
+
+                         La barra tiene dos estados: cuando el navegador dice
+                         por dónde va, se llena; cuando no dice nada —el modelo
+                         de Chrome tarda un buen rato antes del primer aviso—,
+                         se mueve sola, que es la manera de decir "sigo aquí"
+                         sin mentir sobre cuánto queda. -->
+                    <div id="aiDescarga" class="ia-descarga hidden" role="status" aria-live="polite">
+                        <div class="ia-descarga-barra"><div id="aiDescargaRelleno" class="ia-descarga-relleno"></div></div>
+                        <p id="aiDescargaTexto" class="ia-pista"></p>
+                        <p class="ia-pista" data-i18n="ai_descarga_una_vez"></p>
+                        <button id="aiCancelarDescargaBtn" type="button" class="btn btn-secondary" data-i18n="ai_cancelar_descarga">Cancel</button>
+                    </div>
+
+                    <!-- Recuperar el sitio. Un par de modelos probados son diez
+                         gigas en el navegador, y ahí no se ven: no salen en la
+                         carpeta de descargas ni en ningún sitio donde alguien
+                         piense en mirar cuando le falte disco. -->
+                    <p class="ia-pista ia-espacio">
+                        <button id="aiBorrarModelosBtn" type="button" class="ia-enlace-accion" data-i18n="ai_borrar_modelos">Delete downloaded models</button>
+                        <span id="aiEspacioEstado"></span>
+                    </p>
+                </div>
+
+                <!-- Conectar a la derecha, y a su izquierda lo de siempre en un
+                     cuadro de ajustes: lo avanzado, plegado. Quien solo quiere
+                     empezar no tiene que decidir nada sobre ello. -->
+                <div class="flex justify-between items-center gap-2 mt-3">
+                    <button id="aiAvanzadoBtn" class="btn btn-secondary ia-avanzado-btn" type="button" aria-expanded="false" aria-controls="aiAvanzado" data-i18n="ai_avanzado">Advanced settings</button>
+                    <button id="aiConectarBtn" class="btn btn-primary" data-i18n="ai_conectar">Connect and save</button>
+                </div>
+            </div>
+
+            <!-- Lo propio de subtitular: que lo que traduzca la IA quepa en el
+                 tiempo que el subtítulo está en pantalla. Va fuera de las dos
+                 caras porque vale para las dos: no depende del servicio. -->
+            <div id="aiAvanzado" class="ia-avanzado hidden">
+                <label class="ia-casilla ia-casilla-limites">
+                    <input type="checkbox" id="aiRespetarLimites" checked>
+                    <span data-i18n="ai_respetar_limites">Fit the CPS and characters-per-line limits</span>
+                </label>
+                <div class="panda-aviso ia-dice">
+                    <img class="panda-aviso-panda ia-dice-panda" src="../images/panda-prof.png" alt="" aria-hidden="true">
+                    <div class="panda-aviso-bocadillo">
+                        <p data-i18n="ai_respetar_limites_info"></p>
+                    </div>
+                </div>
+            </div>
+
+            <p id="aiEstadoConexion" class="ia-pista"></p>
+        </div>
+    </div>
+
+    <!-- Los proyectos recientes. subpandaTM ya guardaba cada archivo abierto en
+         el navegador, pero lo único que se veía de todo eso era el desplegable
+         del cuadro de copia de seguridad: hay que saber que está ahí, y se llama
+         como si fuera un rescate de emergencia. Volver al encargo de ayer no es
+         un rescate, es lo que se hace cada mañana. -->
+    <div id="recentProjectsModal" class="modal hidden">
+        <div class="modal-content ia-ajustes recientes-cuadro">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-xl font-bold m-0" data-i18n="recent_projects_title">Recent projects</h2>
+                <button id="recentProjectsCloseBtn" type="button" class="ia-apartado-cerrar" data-i18n-title="close_btn">&times;</button>
+            </div>
+            <div class="panda-aviso ia-dice">
+                <img class="panda-aviso-panda ia-dice-panda" src="../images/panda-glasses.png" alt="" aria-hidden="true">
+                <div class="panda-aviso-bocadillo">
+                    <p data-i18n="recent_projects_info"></p>
+                </div>
+            </div>
+            <div id="recentProjectsList" class="recientes-lista"></div>
+            <p id="recentProjectsEmpty" class="ia-pista hidden" data-i18n="recent_projects_empty"></p>
+        </div>
+    </div>
+
+    <!-- El historial de cambios, que se lee del archivo que ya se publica en
+         changelog/subpandatm.txt: no hay una segunda copia que se quede
+         atrasada. -->
+    <div id="changelogModal" class="modal hidden">
+        <div class="modal-content" style="width: 750px; max-width: 95%;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold m-0">Changelog</h2>
+                <button id="changelogCloseBtn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold leading-none cursor-pointer">&times;</button>
+            </div>
+            <div class="overflow-y-auto rounded-md" style="max-height: 60vh;">
+                <div id="changelogContent" class="changelog-cuerpo"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- La tarjeta que sale al pasar el ratón por una palabra marcada en el
+         texto original. Vive suelta al final de la página: dentro del subtítulo
+         se la comería el recorte del texto en cuanto asomara por el borde. -->
+    <div id="terminoTarjeta" class="termino-tarjeta hidden" role="tooltip" aria-hidden="true"></div>
+            </div>
+
+    <!-- La ficha de un término: término, traducción, categoría, definición y
+         notas. Es lo que distingue un glosario de una lista de equivalencias. -->
+    <div id="terminoModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="terminoModalTitulo" class="text-xl font-bold mb-4"></h2>
+            <div class="termino-campos">
+                <label class="termino-campo">
+                    <span data-i18n="term">Term:</span>
+                    <input type="text" id="terminoOrigen" class="paneles-campo">
+                </label>
+                <label class="termino-campo">
+                    <span data-i18n="translation">Translation:</span>
+                    <input type="text" id="terminoDestino" class="paneles-campo">
+                </label>
+                <label class="termino-campo">
+                    <span data-i18n="term_pos">Part of speech:</span>
+                    <select id="terminoCategoria" class="paneles-campo"></select>
+                </label>
+                <label class="termino-campo">
+                    <span data-i18n="definition">Definition:</span>
+                    <textarea id="terminoDefinicion" rows="2" class="paneles-campo"></textarea>
+                </label>
+                <label class="termino-campo">
+                    <span data-i18n="notes">Notes:</span>
+                    <textarea id="terminoNotas" rows="2" class="paneles-campo"></textarea>
+                </label>
+            </div>
+            <p id="terminoError" class="termino-error"></p>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button id="terminoBorrarBtn" class="btn btn-destructive hidden" data-i18n="delete_button">Delete</button>
+                <button id="terminoCancelarBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancel</button>
+                <button id="terminoGuardarBtn" class="btn btn-primary" data-i18n="save_btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- El par de idiomas del proyecto. Un archivo se traduce en una dirección,
+         y esa dirección es del proyecto: antes se preguntaba dos veces, una en
+         el glosario y otra en la memoria, y se podían contradecir. -->
+    <div id="idiomasModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="lang_pair_title" class="text-xl font-bold mb-2">Project languages</h2>
+            <p id="idiomasAviso" class="termino-pista hidden"></p>
+            <div class="idiomas-par">
+                <label class="termino-campo">
+                    <span data-i18n="source_language">Source language:</span>
+                    <select id="idiomaOrigen" class="paneles-campo"></select>
+                </label>
+                <span class="idiomas-flecha" aria-hidden="true">→</span>
+                <label class="termino-campo">
+                    <span data-i18n="target_language">Target language:</span>
+                    <select id="idiomaDestino" class="paneles-campo"></select>
+                </label>
+            </div>
+            <p id="idiomasError" class="termino-error"></p>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button id="idiomasCancelarBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancel</button>
+                <button id="idiomasAceptarBtn" class="btn btn-primary" data-i18n="confirm_languages">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBox" class="modal hidden">
+        <div class="modal-content">
+            <p id="messageText" class="text-lg font-semibold mb-4"></p>
+            <button id="messageClose" class="btn btn-primary w-full" data-i18n="ok">OK</button>
+        </div>
+    </div>
+    
+    <div id="shortcutsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 data-i18n="shortcuts_title" class="text-xl font-bold">Atajos de teclado</h2>
+                <div class="flex gap-2">
+                    <label for="importShortcutsInput" class="btn btn-secondary text-sm" data-i18n="import_shortcuts_btn">Importar</label>
+                    <input type="file" id="importShortcutsInput" class="hidden" accept=".json">
+                    <button id="exportShortcutsBtn" class="btn btn-secondary text-sm" data-i18n="export_shortcuts_btn">Exportar</button>
+                </div>
+<div class="flex items-center gap-2">
+                    <label for="shortcutProfileSelector" class="text-sm font-medium">Perfil:</label>
+                    <select id="shortcutProfileSelector" class="paneles-campo">
+                        <option value="windows">Windows / Linux</option>
+                        <option value="mac">macOS</option>
+                    </select>
+                </div>
+            </div>
+            <div id="shortcutsList" class="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+                </div>
+            <div class="flex justify-between items-center mt-6">
+                <button id="restoreShortcutsBtn" class="btn btn-destructive" data-i18n="restore_defaults_btn">Restaurar valores por defecto</button>
+                <button id="shortcutsCloseBtn" class="btn btn-primary" data-i18n="close_btn">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+<div id="findReplacePanel" class="floating-panel" style="width: 600px; height: auto;">
+        <div class="sidebar-header">
+            <h3 class="text-lg font-bold" data-i18n="find_replace_title">Buscar y reemplazar</h3>
+            <div class="flex items-center">
+                <button class="reset-panel-btn text-gray-500 hover:text-gray-700 mr-2" title="Restaurar posición y tamaño">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20l6-6M20 4l-6 6"></path></svg>
+                </button>
+                <button id="closeFindReplacePanelBtn" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div class="sidebar-content p-4">
+            <div class="space-y-4">
+                <div>
+                    <label for="findInput" data-i18n="find_label" class="block text-sm font-medium mb-1">Buscar:</label>
+                    <input type="text" id="findInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div>
+                    <label for="replaceInput" data-i18n="replace_label" class="block text-sm font-medium mb-1">Reemplazar con:</label>
+                    <input type="text" id="replaceInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="caseSensitiveCheckbox" class="mr-2 rounded">
+                        <span data-i18n="case_sensitive">Distinguir mayúsculas y minúsculas</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="regexCheckbox" class="mr-2 rounded">
+                        <span data-i18n="regular_expression">Expresión regular</span>
+                    </label>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="findPrevBtn" class="btn btn-secondary" data-i18n="find_prev">Buscar anterior</button>
+                    <button id="findNextBtn" class="btn btn-secondary" data-i18n="find_next">Buscar siguiente</button>
+                    <button id="replaceBtn" class="btn btn-primary" data-i18n="replace">Reemplazar</button>
+                    <button id="replaceAllBtn" class="btn btn-destructive" data-i18n="replace_all">Reemplazar todo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="saveSrtModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="save_srt_title" class="text-xl font-bold mb-4">Exportar subtítulos</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="fileNameInput" data-i18n="file_name_label" class="block text-sm font-medium mb-1">Nombre del archivo:</label>
+                    <input type="text" id="fileNameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="cancelSaveBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                    <button id="confirmSaveBtn" class="btn btn-primary" data-i18n="save_btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="saveTbxModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="save_tbx_title" class="text-xl font-bold mb-4">Exportar Archivo TBX</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="fileNameInputTbx" data-i18n="file_name_label" class="block text-sm font-medium mb-1">Nombre del archivo:</label>
+                    <input type="text" id="fileNameInputTbx" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="cancelSaveTbxBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                    <button id="confirmSaveTbxBtn" class="btn btn-primary" data-i18n="save_btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="saveTmxModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="save_tmx_title" class="text-xl font-bold mb-4">Exportar Archivo TMX</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="fileNameInputTmx" data-i18n="file_name_label" class="block text-sm font-medium mb-1">Nombre del archivo:</label>
+                    <input type="text" id="fileNameInputTmx" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="cancelSaveTmxBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                    <button id="confirmSaveTmxBtn" class="btn btn-primary" data-i18n="save_btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="confirmModalTitle" class="text-xl font-bold mb-4"></h2>
+            <p id="confirmModalMessage" class="mb-6"></p>
+            <div class="flex justify-end space-x-2">
+                <button id="confirmModalCancelBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                <button id="confirmModalOkBtn" class="btn btn-primary" data-i18n="continue_btn">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="backupModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="backup_modal_title" class="text-xl font-bold mb-4">Copia de Seguridad</h2>
+            <div id="backupFoundView">
+                <div id="backupSelectWrap" class="mb-4 hidden">
+                    <label for="backupSelect" data-i18n="backup_select_label" class="block text-sm font-medium mb-1">Copia:</label>
+                    <select id="backupSelect" class="paneles-campo"></select>
+                </div>
+                <div id="backupInfo" class="bg-gray-100 p-4 rounded-md mb-4">
+                    <p data-i18n="restore_backup_info"></p>
+                    <p><strong><span data-i18n="file_label"></span></strong> <span id="backupFileName"></span></p>
+                    <p><strong><span data-i18n="last_modified_label"></span></strong> <span id="backupLastModified"></span></p>
+                </div>
+                <div class="flex justify-end space-x-2 flex-wrap gap-2">
+                    <button data-i18n="export_srt_btn" id="exportSrtFromBackupBtn" class="btn btn-primary">Exportar subtítulos</button>
+                    <button data-i18n="delete_backup_btn" id="deleteBackupBtn" class="btn btn-destructive">Borrar Backup</button>
+                    <button data-i18n="restore_btn" id="confirmRestoreBtn" class="btn btn-primary">Restaurar</button>
+                </div>
+            </div>
+            <div id="noBackupFoundView" class="hidden">
+                 <p data-i18n="no_backup_found_info"></p>
+            </div>
+            <button data-i18n="close_btn" id="closeBackupModalBtn" class="btn btn-secondary w-full mt-6">Cerrar</button>
+        </div>
+    </div>
+    <div id="reselectVideoModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="reselect_video_title" class="text-xl font-bold mb-4">Seleccionar vídeo</h2>
+            <p data-i18n="reselect_video_info" id="reselectVideoInfo" class="mb-4"></p>
+            <label for="reselectVideoInput" class="btn btn-primary w-full">
+                <span data-i18n="load_video">Cargar vídeo</span>
+                <input type="file" id="reselectVideoInput" accept="video/*" class="hidden">
+            </label>
+            <button id="skipReselectVideoBtn" class="btn btn-secondary w-full mt-2" data-i18n="skip_btn">Omitir</button>
+        </div>
+    </div>
+<div id="saveProjectModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="save_project_title" class="text-xl font-bold mb-4">Guardar Proyecto</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="projectFileNameInput" data-i18n="file_name_label" class="block text-sm font-medium mb-1">Nombre del archivo:</label>
+                    <input type="text" id="projectFileNameInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button id="cancelSaveProjectBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                    <button id="confirmSaveProjectBtn" class="btn btn-primary" data-i18n="save_btn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="confirmNewProjectModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="confirm_new_project_title" class="text-xl font-bold mb-4">Crear nuevo proyecto</h2>
+            <p data-i18n="confirm_new_project_message" class="mb-6">Tienes cambios sin guardar. ¿Quieres guardar el proyecto actual antes de continuar?</p>
+            <div class="flex justify-end space-x-2">
+                <button id="cancelNewProjectBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                <button id="continueWithoutSavingBtn" class="btn btn-destructive" data-i18n="continue_without_saving_btn">Continuar sin guardar</button>
+                <button id="saveAndContinueBtn" class="btn btn-primary" data-i18n="save_and_continue_btn">Guardar y continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmResetGlossaryModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="confirm_new_glossary_title" class="text-xl font-bold mb-4">Confirmar nuevo glosario</h2>
+            <p data-i18n="confirm_new_glossary_message" class="mb-6">Solo puedes tener un glosario activo. Si continúas, se borrarán todos los datos del glosario actual. Para evitar perder tu trabajo, asegúrate de exportarlo primero como un archivo TBX.</p>
+            <div class="flex justify-end space-x-2">
+                <button id="cancelResetGlossaryBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                <button id="confirmResetGlossaryBtn" class="btn btn-destructive" data-i18n="continue_btn">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmResetTmModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 data-i18n="confirm_new_tm_title" class="text-xl font-bold mb-4">Confirmar nueva TM</h2>
+            <p data-i18n="confirm_new_tm_message" class="mb-6">Solo puedes tener una memoria de traducción (TM) activa. Si continúas, se borrarán todos los datos de la TM actual. Para evitar perder tu trabajo, asegúrate de exportarla primero como un archivo TMX.</p>
+            <div class="flex justify-end space-x-2">
+                <button id="cancelResetTmBtn" class="btn btn-secondary" data-i18n="cancel_btn">Cancelar</button>
+                <button id="confirmResetTmBtn" class="btn btn-destructive" data-i18n="continue_btn">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p id="loadingMessage"></p>
+    </div>
+
+<!-- Los ajustes de la herramienta, en un solo sitio. Los del código de tiempo
+     estaban sueltos en el menú Herramientas con su propio cuadro, y cada ajuste
+     nuevo pedía otra entrada más en ese menú. -->
+<div id="timecodeModal" class="modal hidden">
+        <div class="modal-content ia-ajustes">
+            <div class="flex justify-between items-center mb-4">
+                <h2 data-i18n="settings_modal_title" class="text-xl font-bold m-0">Settings</h2>
+                <button id="ajustesCerrarBtn" type="button" class="ia-apartado-cerrar" data-i18n-title="close_btn">&times;</button>
+            </div>
+
+            <!-- Cómo se ve el texto en el editor. Un subtítulo se lee centrado
+                 en pantalla, y hay quien quiere verlo así también mientras lo
+                 traduce; a la izquierda se compara mejor renglón a renglón. -->
+            <h3 class="ajustes-apartado" data-i18n="settings_texto_titulo">Text in the editor</h3>
+            <div class="ajustes-fila">
+                <span class="ia-etiqueta" data-i18n="settings_alinear_original">Original alignment</span>
+                <div class="ajustes-opciones" id="alinearOriginal" role="group">
+                    <button type="button" class="ajustes-opcion" data-alinear="left" data-i18n="align_left">Left</button>
+                    <button type="button" class="ajustes-opcion" data-alinear="center" data-i18n="align_center">Centre</button>
+                    <button type="button" class="ajustes-opcion" data-alinear="right" data-i18n="align_right">Right</button>
+                </div>
+            </div>
+            <div class="ajustes-fila">
+                <span class="ia-etiqueta" data-i18n="settings_alinear_traduccion">Translation alignment</span>
+                <div class="ajustes-opciones" id="alinearTraduccion" role="group">
+                    <button type="button" class="ajustes-opcion" data-alinear="left" data-i18n="align_left">Left</button>
+                    <button type="button" class="ajustes-opcion" data-alinear="center" data-i18n="align_center">Centre</button>
+                    <button type="button" class="ajustes-opcion" data-alinear="right" data-i18n="align_right">Right</button>
+                </div>
+            </div>
+
+            <h3 class="ajustes-apartado" data-i18n="timecode_modal_title">Timecode</h3>
+            <div class="space-y-4">
+                
+                <div class="qa-input-group">
+                    <label for="projectFpsInput" data-i18n="project_fps_label" class="block text-sm font-medium mb-1">FPS del Proyecto:</label>
+                    <select id="projectFpsInput" class="paneles-campo">
+                        <option value="23.976">23.976</option>
+                        <option value="24">24</option>
+                        <option value="25" selected>25</option>
+                        <option value="29.97">29.97</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                        <option value="59.94">59.94</option>
+                        <option value="60">60</option>
+                        <option value="custom">Otro...</option>
+                    </select>
+                    <input type="number" id="projectFpsCustomInput" step="0.001" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white mt-2 hidden" placeholder="Escribe FPS personalizado">
+                </div>
+                
+                <div class="glossary-info-box bg-blue-50 border-blue-200">
+                    <p data-i18n="fps_recommendation_note" class="text-blue-700"></p>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="useFrameTimecodeToggle" class="mr-2 rounded">
+                    <label for="useFrameTimecodeToggle" data-i18n="show_frames_label" class="text-sm font-medium">Mostrar timecode en frames (ej. 00:00:10:05)</label>
+                </div>
+                <div class="glossary-info-box">
+                    <p data-i18n="timecode_warning">Aviso: los fotogramas son solo para verlos aquí. Al exportar, los tiempos se escriben como los escriba cada formato.</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                 <button id="closeTimecodeModalBtn" class="btn btn-secondary" data-i18n="close_btn">Cerrar</button>
+                <button id="saveTimecodeSettingsBtn" class="btn btn-primary" data-i18n="save_and_apply_btn">Guardar y aplicar</button>
+            </div>
+        </div>
+    </div>
+
+<div id="goToSubtitlePanel" class="floating-panel" style="width: 320px; height: auto;">
+    <div class="sidebar-header">
+        <h3 class="text-lg font-bold" data-i18n="go_to_subtitle_title">Ir a Subtítulo / TC</h3>
+        <div class="flex items-center">
+            <button class="reset-panel-btn text-gray-500 hover:text-gray-700 mr-2" title="Restaurar posición y tamaño">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20l6-6M20 4l-6 6"></path></svg>
+            </button>
+            <button id="closeGoToSubtitlePanelBtn" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+    <div class="sidebar-content p-4 space-y-4">
+        <div>
+            <label for="goToSubtitleInput" class="block text-sm font-medium mb-1" data-i18n="go_to_subtitle_label">Ir al subtítulo Nº:</label>
+            <div class="flex gap-2">
+                <input type="number" id="goToSubtitleInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-black bg-white" min="1">
+                <button id="goToSubtitleActionBtn" class="btn btn-primary" data-i18n="go_btn">Ir</button>
+            </div>
+        </div>
+        <div>
+            <label for="goToTimecodeInput" class="block text-sm font-medium mb-1" data-i18n="go_to_timecode_label">Ir al timecode:</label>
+            <div class="flex gap-2">
+                <input type="text" id="goToTimecodeInput" class="w-full border border-gray-300 rounded-md shadow-sm p-2 font-mono text-black bg-white" value="00:00:00,000" onfocus="this.select()">
+                <button id="goToTimecodeActionBtn" class="btn btn-primary" data-i18n="go_btn">Ir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="statusBar"></div>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

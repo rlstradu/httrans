@@ -1,0 +1,28 @@
+{
+    "name": "subpandatm",
+    "version": "2.0.0",
+    "private": true,
+    "description": "subpandaTM — editor de subtítulos con memoria de traducción TMX y glosario TBX. Parte de PandaTools by HTTrans.",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build && node scripts/publicar-compilado.mjs",
+        "preview": "npm run build && npx --yes serve .. -l 5174",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:e2e": "playwright test"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.49.0",
+        "fake-indexeddb": "^6.2.5",
+        "vite": "^5.4.21",
+        "vitest": "^2.1.8"
+    },
+    "dependencies": {
+        "dexie": "^4.4.5",
+        "diff": "^5.0.0",
+        "diff-match-patch": "^1.0.5",
+        "jszip": "^3.10.1",
+        "wavesurfer.js": "^7.12.11"
+    }
+}
