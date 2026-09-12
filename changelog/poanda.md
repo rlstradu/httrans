@@ -1299,7 +1299,7 @@ translation.
 
 ### New Features & Improvements
 
-## * **Direct JSON File Translation:** Added the capability to load single `.json` files (simple key-value format) via the new "File" > "Load JSON File" menu. Poanda will display the JSON key as the context (`msgctxt`) and the original value as the source text (`msgid`), leaving the translation field (`msgstr`) empty for you to fill in.
+- **Direct JSON File Translation:** Added the capability to load single `.json` files (simple key-value format) via the new "File" > "Load JSON File" menu. Poanda will display the JSON key as the context (`msgctxt`) and the original value as the source text (`msgid`), leaving the translation field (`msgstr`) empty for you to fill in.
 
 - **Save Translations as JSON:** Complementing the loading feature, you can now
   save your work back into a `.json` file using "File" > "Save JSON File". Poanda
@@ -1344,7 +1344,7 @@ files simple and efficient. It runs entirely in your browser, ensuring your data
 stays private. This initial release is packed with features to streamline your
 translation workflow.
 
-## Key Features
+### Key Features
 
 ### Core Translation Workflow
 
@@ -1418,7 +1418,7 @@ translation workflow.
 - **Easy Project Handling**: Start a new project, open an existing one, or save
   your current work for later.
 
-## Getting Started
+### Getting Started
 
 1. Simply open the `poanda.html` file in your web browser.
 
@@ -1426,7 +1426,7 @@ translation workflow.
 
 3. Start translating!
 
-## Feedback & Contributions
+### Feedback & Contributions
 
 This is the very first version, and your feedback is invaluable! If you find any
 bugs, have feature suggestions, or want to contribute, please feel free to reach

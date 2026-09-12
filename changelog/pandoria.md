@@ -2,7 +2,7 @@
 
 ## v1.3.0 — Dark Mode
 
-## Release Date: August 23, 2026
+*August 23, 2026*
 
 Adds a dark theme, matching the one already available in PandaTerm.
 
@@ -21,7 +21,7 @@ Adds a dark theme, matching the one already available in PandaTerm.
 
 ## v1.2.0 — Modular Codebase & TMX Compatibility
 
-## Release Date: August 23, 2026
+*August 23, 2026*
 
 This release is a behind-the-scenes overhaul focused on compatibility and
 maintainability rather than new features. The codebase has been split into a
@@ -126,7 +126,7 @@ straightforward TMX editor and a powerful text alignment tool for creating new
 translation memories from existing documents. It runs entirely offline in your
 browser, ensuring your data remains secure on your computer.
 
-## Key Features
+### Key Features
 
 ### TMX Editor Features
 
@@ -164,7 +164,7 @@ browser, ensuring your data remains secure on your computer.
 - **Multilingual UI**: The Pandoria interface is available in both English and
   Spanish.
 
-## Getting Started
+### Getting Started
 
 1. Open the `pandoria.html` file in your web browser.
 
@@ -174,7 +174,7 @@ browser, ensuring your data remains secure on your computer.
 
 4. To align documents, click "Align Texts".
 
-## Feedback & Contributions
+### Feedback & Contributions
 
 This is the very first version, and we welcome your feedback. If you find any
 bugs, have feature suggestions, or want to contribute, please feel free to reach

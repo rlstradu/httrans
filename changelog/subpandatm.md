@@ -1122,13 +1122,13 @@ stability based on user feedback.
 
 ### New Features & Improvements
 
-- **Glossary Context Tooltip: A new context-aware tooltip now appears directly
+- **Glossary Context Tooltip:** A new context-aware tooltip now appears directly
   above the active subtitle you are translating. When a term from your glossary is
   detected in the source text, this tooltip instantly shows its corresponding
   translation, saving you from looking away to the terminology panel and speeding
   up your work.
 
-- **Editor Stability and Workflow Fix: A critical issue has been resolved where
+- **Editor Stability and Workflow Fix:** A critical issue has been resolved where
   adding or deleting a term from the glossary would cause the entire subtitle
   editor to refresh. This interruption not only caused users to lose their scroll
   position, but also incorrectly reset the confirmed status of already validated
@@ -1136,20 +1136,20 @@ stability based on user feedback.
   position in the editor and the status of all your subtitles for a seamless
   workflow.
 
-- **Overhauled TMX Export Engine for Professional Compatibility: The TMX export
+- **Overhauled TMX Export Engine for Professional Compatibility:** The TMX export
   function has been rebuilt from the ground up to generate clean, valid files
   compliant with the TMX 1.4b standard. This resolves all previously encountered
   import errors in industry-standard CAT tools, allowing for a seamless workflow
   between subpandaTM and other platforms.
 
-- **Improved TMX Import and HTML Formatting Preservation: The TMX importer is now
+- **Improved TMX Import and HTML Formatting Preservation:** The TMX importer is now
   more robust and correctly interprets standard-compliant files. Crucially, any
   HTML formatting tags (like <i> for italics or <br> for line breaks) are now
   properly handled during both export and import. This means formatting is
   perfectly preserved when moving TMs between applications, and it will be
   rendered correctly in the editor, not as plain text.
 
-- **Note on Legacy TMX Files: Due to these improvements, the importer is now
+- **Note on Legacy TMX Files:** Due to these improvements, the importer is now
   stricter and will reject old TMX files that were generated with previous, buggy
   versions. To upgrade your old TMX files, simply load them into your new version
   of subpandaTM and re-export them. The new export process will automatically

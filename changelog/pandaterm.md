@@ -2,7 +2,7 @@
 
 ## v1.2.0 — Modular Codebase & CAT Tool Compatibility
 
-## Release Date: August 23, 2026
+*August 23, 2026*
 
 This release is a behind-the-scenes overhaul focused on compatibility and
 maintainability rather than new features. The codebase has been split into a
@@ -15,44 +15,44 @@ workflow are unchanged.
 
 ### Modular Codebase
 
-- **Refactored from a single HTML file into a clean project structure (index.html,
+- Refactored from a single HTML file into a clean project structure (index.html,
   css/styles.css, and a dozen focused files under js/), making the app far easier
   to maintain and extend going forward.
 
-- **No visual or behavioral changes beyond the fixes listed below: PandaTerm looks
+- **No visual or behavioral changes beyond the fixes listed below:** PandaTerm looks
   and works exactly as before, and still runs by simply double-clicking index.html
   — no server or build step required.
 
 ### TBX Compatibility Fixes
 
-- **Fixed element casing (langSet vs LangSet) that could cause a glossary exported
+- Fixed element casing (langSet vs LangSet) that could cause a glossary exported
   from PandaTerm to import as completely empty in Subversia.
 
-- **Added proper XML escaping for terms, definitions, and notes containing
+- Added proper XML escaping for terms, definitions, and notes containing
   characters like &, <, >, or quotes, which previously produced malformed files
   that failed to parse anywhere, including on re-import into PandaTerm itself.
 
-- **Added the martifHeader block required by the TBX file structure.
+- Added the martifHeader block required by the TBX file structure.
 
-- **Fixed the ordering of termNote and descrip elements inside each tig to match
+- Fixed the ordering of termNote and descrip elements inside each tig to match
   the official TBXcoreStructV02.dtd. Verified with real DTD validation (xmllint
   --valid), not just visual inspection.
 
 - Verified Third-Party CAT Tool Compatibility
 
-- **PandaTerm's TBX export now validates cleanly against the official TBX DTD.
+- PandaTerm's TBX export now validates cleanly against the official TBX DTD.
 
-- **Confirmed compatible with memoQ, which imports TBX, CSV, and Excel glossaries
+- Confirmed compatible with memoQ, which imports TBX, CSV, and Excel glossaries
   directly with no conversion step.
 
-- **Documented that Trados/MultiTerm requires every glossary import (TBX or CSV)
+- Documented that Trados/MultiTerm requires every glossary import (TBX or CSV)
   to go through the separate MultiTerm Convert utility first — this is a Trados
   requirement, not a PandaTerm limitation, but it's worth knowing before
   importing.
 
 ### UI Fix
 
-- **Fixed a visual glitch where the delete-confirmation modal would briefly flash
+- Fixed a visual glitch where the delete-confirmation modal would briefly flash
   off-center before jumping to the middle of the screen.
 
 - Known limitation carried over from this release: PandaTerm's CSV export
@@ -63,7 +63,7 @@ workflow are unchanged.
 
 ## v1.1.1 — Direct Code Import
 
-## Release Date: November 25, 2025
+*November 25, 2025*
 
 This update focuses on workflow efficiency by allowing users to import glossary
 data directly from the clipboard, eliminating the need to save and upload
@@ -72,7 +72,7 @@ validation to ensure data integrity.
 
 ### Key Features
 
-- **Quick Import & Validation
+- **Quick Import & Validation**
 
 - **Import from Code**: A new "Import Code" button has been added to the control
   panel. You can now paste XML or TBX content directly into a dedicated editor
@@ -91,7 +91,7 @@ validation to ensure data integrity.
 
 ## v1.1.0 — CSV Support & Session Restore
 
-## Release Date: November 7, 2025
+*November 7, 2025*
 
 This is a major feature update that introduces full support for the CSV format
 (import and export) and adds a critical session restore feature to prevent data
@@ -100,33 +100,33 @@ workflow.
 
 ### Key Features
 
-- **CSV & TBX Management
+- **CSV & TBX Management**
 
-- **CSV Import: You can now import glossaries from .csv files. The importer
+- **CSV Import:** You can now import glossaries from .csv files. The importer
   intelligently finds your terms by looking for headers like "Source Term" and
   "Target Term" or the glossary's language codes (e.g., "en-US", "es-ES").
 
-- **CSV & TBX Export: Glossaries can now be exported to .csv format (in addition
+- **CSV & TBX Export:** Glossaries can now be exported to .csv format (in addition
   to TBX) via a new export dialog. The CSV is saved with UTF-8 BOM to ensure
   compatibility with accents and special characters in Excel.
 
-- **Unified Interface: The main buttons have been renamed from "Import TBX" /
+- **Unified Interface:** The main buttons have been renamed from "Import TBX" /
   "Download TBX" to the more general "Import" and "Export" to reflect multi-format
   support. The app description is updated to "A simple TBX/CSV glossary editor".
 
-- **Session Backup & Restore Automatic Session Saving: Your work is now
+- **Session Backup & Restore Automatic Session Saving:** Your work is now
   automatically saved to your browser's local storage every time you add, edit,
   delete, or import a term.
 
-- **Restore on Launch: Never lose your work again! If you accidentally close the
+- **Restore on Launch:** Never lose your work again! If you accidentally close the
   tab or refresh the page, PandaTerm will find your previous session on startup
   and ask if you want to restore or discard it.
 
-- **Productivity & User Experience Collapsible Sections: The "Current glossary
+- **Productivity & User Experience Collapsible Sections:** The "Current glossary
   languages" and "Add term" sections are now collapsible, allowing you to hide
   them for a cleaner view of your glossary table.
 
-- **Toast Notifications: Informational messages (like "Import successful") now
+- **Toast Notifications:** Informational messages (like "Import successful") now
   appear as non-intrusive "toast" notifications at the bottom of the screen,
   replacing the previous modal pop-ups for non-critical alerts.
 
@@ -142,7 +142,7 @@ in your browser, ensuring your data always stays private and under your control.
 This release provides a comprehensive set of features for robust glossary
 management.
 
-## Key Features
+### Key Features
 
 ### Core Glossary Management
 
@@ -185,7 +185,7 @@ management.
 - **Multilingual Interface**: The PandaTerm user interface is available in both
   English and Spanish.
 
-## Getting Started
+### Getting Started
 
 1. Open the `pandaterm.html` file in your preferred web browser.
 
@@ -193,7 +193,7 @@ management.
 
 3. Begin building your glossary!
 
-## Feedback & Contributions
+### Feedback & Contributions
 
 As this is the first version, your feedback is incredibly valuable. If you
 encounter any issues, have ideas for new features, or would like to contribute,
