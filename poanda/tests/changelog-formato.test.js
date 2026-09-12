@@ -8,7 +8,7 @@
  * sobre todo, que no se pierda ni se invente texto por el camino.
  */
 import { describe, it, expect } from 'vitest';
-import { formatearChangelog } from '../src/js/core/changelog-formato.js';
+import { formatearChangelog } from '@core/changelog-formato.js';
 
 const ENTRADA = [
     '=======================================',

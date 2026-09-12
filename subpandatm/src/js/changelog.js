@@ -2,15 +2,14 @@
  * La ventana del changelog.
  *
  * El botón de versión de la cabecera abre el historial de cambios, que se lee
- * en vivo de changelog/subpandatm.txt, en la raíz del sitio. Es el mismo
- * archivo que ya se publicaba: no hay una segunda copia que se pueda quedar
- * atrasada.
+ * en vivo de changelog/subpandatm.md, en la raíz del sitio. Es el mismo archivo
+ * que lee la portada: no hay una segunda copia que se pueda quedar atrasada
+ * (AGENTS.md §8.1).
  *
- * El archivo es texto plano pensado para leerse en un editor, y puesto tal cual
- * en una ventana pequeña es un muro de texto: cada línea se parte dos veces y no
- * se distingue el título de una versión del cuerpo, ni una novedad de la
- * siguiente. Antes de enseñarlo se le da forma (ver core/changelog-formato.js):
- * títulos de versión, secciones y una lista de puntos.
+ * El archivo está en Markdown, pensado para leerse también al abrirlo en
+ * GitHub. Puesto tal cual en una ventana pequeña serían las almohadillas y los
+ * guiones a la vista, así que antes de enseñarlo se interpreta (ver
+ * changelog-formato.js): títulos de versión, apartados y lista de puntos.
  */
 import { formatearChangelog } from '@core/changelog-formato.js';
 import { state } from './state.js';
@@ -32,8 +31,9 @@ export function initChangelog() {
             changelogContent.textContent = t('changelog_cargando');
             changelogModal.classList.remove('hidden');
             try {
-                // Se añade el timestamp a la URL para evitar que el navegador guarde el txt en caché
-                const response = await fetch(`../changelog/subpandatm.txt?t=${Date.now()}`);
+                // Se añade el timestamp a la URL para evitar que el navegador
+                // guarde el archivo en caché
+                const response = await fetch(`../changelog/subpandatm.md?t=${Date.now()}`);
                 if (response.ok) {
                     const text = await response.text();
                     // formatearChangelog escapa lo que venga del archivo, así

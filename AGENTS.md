@@ -111,7 +111,7 @@ Documentadas aquí para que no se traten como bugs nuevos ni se dupliquen por ac
 - **Tipografía y CSS**: la portada y PandaTerm usan Montserrat; Pandoria usa Inter. La portada usa Tailwind por CDN; Pandoria lo compila localmente; PandaTerm no usa Tailwind, solo CSS propio. El objetivo a medio plazo es converger en Montserrat + Tailwind (el sistema de la portada) para toda herramienta nueva o refactorizada — ver `docs/design-system.md` §7.
 - **Nombre del atributo de i18n**: la portada usa `data-key`, las herramientas individuales usan `data-i18n`. Mismo concepto, nombre distinto.
 
-- **Changelog por duplicado**: `poanda/CHANGELOG.md` (que alimenta el modal de la propia herramienta) y `changelog/poanda.txt` (que alimenta el modal de la portada) tienen el mismo contenido y hay que actualizar los dos. Unificarlo exige tocar el modal de changelogs de la portada; está pendiente.
+- ~~**Changelog por duplicado**~~: **resuelto en septiembre de 2026.** Poanda, PandaTerm, Pandoria y subpandaTM leen ya un único `changelog/<id>.md` (§8). Al unificarlos apareció que las dos copias de Poanda tenían **historiales distintos** —en la carpeta estaban la 2.0.0, 2.1.0 y 2.2.0 y faltaban la 1.1.0 a la 1.4.0; en la raíz, al revés—, así que el archivo de ahora es la unión de las dos. Las ocho herramientas sin refactorizar siguen con su `.txt`.
 
 - **Exportación TBX/TMX sin escapar**: `generateTBX` y `generateTMX` de Poanda insertan los términos en el XML sin escapar `&`, `<` ni `>`, y usan `LangSet` con mayúscula en vez de `langSet`. Son los dos mismos fallos que PandaTerm corrigió en su v1.2.0; en Poanda siguen ahí. Están documentados como tests pendientes en `poanda/tests/formats.test.js`.
 
@@ -119,7 +119,64 @@ Documentadas aquí para que no se traten como bugs nuevos ni se dupliquen por ac
 
 ## 8. Versionado y Changelog
 
-Cada herramienta refactorizada lleva: un botón de versión arriba (p. ej. `v1.2.0`) que abre un modal con el historial de cambios, alimentado en vivo desde `CHANGELOG.md` (o desde `changelog/<id>.txt`, según la herramienta — la portada usa esta segunda ruta para su propio modal de changelogs). Al hacer un cambio con impacto para quien usa la herramienta, se añade una entrada nueva arriba del todo de su `CHANGELOG.md` y se sube la versión mostrada en el botón.
+Cada herramienta refactorizada lleva un botón de versión arriba (p. ej. `v1.2.0`) que abre un modal con el historial de cambios, leído en vivo del archivo. Al hacer un cambio con impacto para quien usa la herramienta, se añade una entrada nueva arriba del todo de ese archivo y se sube la versión que muestra el botón.
+
+### 8.1 Un solo archivo por herramienta
+
+**El historial de cada herramienta vive en `changelog/<id>.md`, en la raíz del repositorio, y no hay una segunda copia en ninguna parte.** Ese mismo archivo lo leen la herramienta y el modal de changelogs de la portada.
+
+La regla es esa y no otra porque la alternativa ya falló: con una copia en la carpeta de la herramienta y otra en `changelog/`, las dos se separaron sin que nada avisara (ver §7). Un historial que se contradice consigo mismo es peor que no tenerlo.
+
+De ahí se derivan tres cosas:
+
+1. **Nunca un `CHANGELOG.md` dentro de la carpeta de una herramienta.** Si aparece uno, sobra.
+2. **La dirección se escribe en relativo** (`../changelog/<id>.md`), nunca absoluta. Una dirección absoluta mete el dominio dentro del código —deja de funcionar el día que cambie el alojamiento o el nombre de usuario de GitHub— y obliga a depender de CORS para leer un archivo del propio sitio.
+3. **Una sola edición por versión.** Si hay que tocar dos archivos para publicar una versión, tarde o temprano se toca uno solo.
+
+### 8.2 Cómo se escribe
+
+Markdown de verdad, no texto plano con rayas. Los archivos antiguos usaban `====` y títulos sueltos; eso se va migrando. La forma es:
+
+```markdown
+# subpandaTM
+
+## v2.0.0 — The Same Tools as Poanda
+
+*Released 11 September 2026*
+
+Un párrafo de presentación de la versión, opcional, para las grandes.
+
+### Four Subtitle Formats
+
+- Punto breve, una idea por punto.
+- Otro punto. Si hace falta explicar el porqué, va en la misma frase.
+
+### Quality Checks
+
+- ...
+
+## v1.1.7 — ...
+```
+
+- **Un solo `#`** al principio, con el nombre de la herramienta.
+- **Un `##` por versión**, de la más nueva a la más vieja, con el número y un título corto.
+- **La fecha en cursiva**, debajo del título de la versión.
+- **`###` para cada apartado** dentro de una versión.
+- **Puntos con `-`**, breves. Nada de párrafos largos: el changelog se hojea, no se lee de corrido.
+- **`` `código` ``** para nombres de archivo, teclas y claves; **negrita** para el nombre de una novedad.
+- Se escribe **en inglés**, como el resto de los changelogs del proyecto.
+
+El modal no enseña el Markdown en crudo: lo interpreta `changelog-formato.js` antes de pintarlo.
+
+### 8.3 La migración, mientras dure
+
+Las doce herramientas no se migran a la vez. Mientras haya archivos de los dos tipos conviviendo:
+
+- **La portada pide `changelog/<id>.md` y, si no existe, `changelog/<id>.txt`.** El respaldo desaparece solo cuando la última herramienta esté migrada; no hay que llevar una lista de cuáles van por dónde.
+- **`changelog-formato.js` entiende los dos**: el Markdown nuevo y el texto plano con rayas de siempre. Lo segundo se retira cuando no quede ningún `.txt`.
+- Al migrar una herramienta se hace todo de una vez: se reescribe su historial en Markdown como `changelog/<id>.md`, se apunta la herramienta a ese archivo en relativo, y **se borran el `.txt` viejo y el `CHANGELOG.md` de su carpeta si lo tenía**. Dejar los viejos "por si acaso" es exactamente cómo empezó el problema.
+
+Orden acordado (septiembre de 2026): Poanda, PandaTerm, Pandoria y subpandaTM primero, que son las refactorizadas; el resto cuando les toque su propio refactor.
 
 ## 9. Rebranding en curso: PandaTools by HTTrans
 

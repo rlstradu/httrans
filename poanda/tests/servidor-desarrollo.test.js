@@ -42,21 +42,26 @@ describe('servidor de desarrollo', () => {
         expect(respuesta.headers.get('content-type')).toContain('image/png');
     });
 
-    it('sirve el CHANGELOG.md como texto, no como página', async () => {
+    it('sirve el changelog como texto, no como página', async () => {
         // Es el archivo que alimenta la ventana del botón de versión. Cuando no
         // se encontraba, Vite devolvía el index.html con un 200 y en la ventana
         // aparecía el código de la página en lugar del historial de cambios.
-        const respuesta = await fetch(`${base}/CHANGELOG.md`);
+        //
+        // Vive en changelog/poanda.md, en la raíz del sitio, y es el mismo que
+        // lee la portada: una sola copia por herramienta (AGENTS.md §8.1).
+        // Antes había otra en poanda/CHANGELOG.md y las dos se separaron sin
+        // que nadie se enterara.
+        const respuesta = await fetch(`${base}/changelog/poanda.md`);
         expect(respuesta.status).toBe(200);
         expect(respuesta.headers.get('content-type')).toContain('text/markdown');
-        expect(await respuesta.text()).toContain('Poanda v');
+        expect(await respuesta.text()).toContain('Poanda');
     });
 
     it('ninguna ruta compartida devuelve la página por error', async () => {
         // Comprobación general del fallo que ya ha aparecido dos veces: Vite
         // responde con el index.html y un 200 cuando no encuentra un archivo,
         // así que mirar el código de respuesta no basta. Hay que mirar el tipo.
-        const rutas = ['/CHANGELOG.md', '/poanda-logo-final-v1.png', '/images/favicon-poanda.png'];
+        const rutas = ['/changelog/poanda.md', '/poanda-logo-final-v1.png', '/images/favicon-poanda.png'];
         for (const ruta of rutas) {
             const respuesta = await fetch(`${base}${ruta}`);
             expect(

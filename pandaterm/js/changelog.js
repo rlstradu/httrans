@@ -5,19 +5,19 @@
 // The version NUMBER below is a plain constant — bump it by hand on every
 // release. The changelog TEXT itself is intentionally NOT bundled with the
 // app: the modal fetches it live from CHANGELOG_URL every time it's
-// opened, so publishing an updated pandaterm.txt at that address is enough
+// opened, so publishing an updated pandaterm.md at that address is enough
 // to update what users see here — no code change or new PandaTerm release
 // needed for that part.
 //
-// Note: fetching a remote URL from a page opened via file:// (double-click)
-// sends the request with Origin: null. That only succeeds if the server
-// hosting CHANGELOG_URL responds with a permissive CORS header
-// (Access-Control-Allow-Origin: * or one that allows null) for this file.
-// If the request is blocked, the modal shows a short error plus a direct
-// link instead of leaving the textarea empty.
+// The address is relative on purpose. It used to be written out in full,
+// pointing at httrans.org: with the domain baked into the code, these links
+// break the day the hosting or the GitHub username changes, and reading a file
+// from the site itself needed a permissive CORS header to work at all. A
+// relative path needs neither. If the request still fails (offline, 404), the
+// modal shows a short error plus the "open in a new tab" link.
 
 const PANDATERM_VERSION = '1.2.0';
-const CHANGELOG_URL = 'https://httrans.org/changelog/pandaterm.txt';
+const CHANGELOG_URL = '../changelog/pandaterm.md';
 
 /**
  * Sets the version button's label. Called once on startup from main.js.

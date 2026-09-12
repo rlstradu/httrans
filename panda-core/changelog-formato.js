@@ -1,18 +1,21 @@
 /**
- * Da forma al changelog para la ventana de Poanda.
+ * Da forma al changelog para la ventana de una herramienta.
  *
- * El CHANGELOG.md es un archivo de texto plano pensado para leerse en un editor:
- * rayas de iguales para separar versiones, una palabra suelta como título de
- * sección ("New", "Fixed") y párrafos corridos debajo. Puesto tal cual en una
- * ventana pequeña es un muro de texto donde no se distingue el título de la
- * versión del cuerpo, ni una novedad de la siguiente.
+ * Entiende dos formatos, porque ahora mismo conviven (AGENTS.md §8.3):
  *
- * Aquí se reconoce esa estructura y se convierte en HTML: cada versión con su
- * título y su fecha, cada sección con su encabezado y cada novedad como un punto
- * de una lista. El archivo no cambia; lo único que cambia es cómo se presenta.
+ * - **El nuevo**, Markdown de verdad: un `#` con el nombre de la herramienta,
+ *   un `##` por versión, la fecha en cursiva, `###` por apartado y puntos con
+ *   `-`. La estructura está dicha en el archivo, no se adivina.
+ * - **El de siempre**, texto plano pensado para leerse en un editor: rayas de
+ *   iguales para separar versiones, una palabra suelta como título de apartado
+ *   y párrafos corridos debajo. Ahí la estructura se deduce de la forma del
+ *   texto —y no de una lista de palabras fijas, para que siga funcionando
+ *   cuando aparezca un apartado nuevo—. Se podrá retirar cuando no quede
+ *   ningún `.txt`.
  *
- * La estructura se deduce de la forma del texto, no de una lista de palabras
- * fijas, para que siga funcionando cuando aparezca una sección nueva.
+ * En los dos casos el resultado es el mismo HTML: cada versión con su título y
+ * su fecha, cada apartado con su encabezado y cada novedad como un punto de una
+ * lista. El archivo no cambia; lo único que cambia es cómo se presenta.
  */
 import { desenvolverParrafos } from './text.js';
 
@@ -66,24 +69,157 @@ function escapar(texto) {
 }
 
 /**
- * Escapa y marca lo poco que se marca: `esto` es código y **esto** va en
- * negrita. Son las dos que aparecen en el changelog escrito a mano, y sin
- * esto los asteriscos se leían tal cual en medio de la frase.
+ * Escapa y marca lo poco que se marca: `esto` es código, **esto** va en negrita
+ * y *esto* en cursiva. Sin esto los asteriscos y las comillas se leían tal cual
+ * en medio de la frase.
+ *
+ * El orden importa: primero el código, que dentro puede llevar asteriscos que
+ * no son marcas; después la negrita, que se come sus dos asteriscos; y solo al
+ * final la cursiva, que ya no se encuentra con los de la negrita.
  */
 function comoHtml(texto) {
     return escapar(texto)
         .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+}
+
+/**
+ * ¿Es uno de los changelogs nuevos, escritos en Markdown de verdad?
+ *
+ * Se mira la primera línea con algo escrito: los nuevos empiezan por un `#` con
+ * el nombre de la herramienta y los viejos por una raya de iguales. No vale con
+ * buscar un `##` en cualquier parte, porque alguna entrada antigua ya traía uno
+ * suelto en medio.
+ *
+ * @param {string} texto
+ * @returns {boolean}
+ */
+function esMarkdown(texto) {
+    const primera = texto.split('\n').find((l) => l.trim());
+    return Boolean(primera && /^#\s+\S/.test(primera.trim()));
+}
+
+/**
+ * Une los renglones que son continuación del anterior.
+ *
+ * Los archivos se escriben con las líneas cortadas a unas ochenta columnas para
+ * poder leerlos en un editor, pero un punto de la lista es un punto aunque
+ * ocupe tres renglones. Lo que nunca se une: lo que empieza por `#` o por `-`,
+ * que ahí empieza algo nuevo.
+ *
+ * @param {string[]} lineas
+ * @returns {string[]}
+ */
+function unirLosRenglonesPartidos(lineas) {
+    const EMPIEZA_ALGO = /^(#{1,6}\s|[-*+]\s|\d+[.)]\s|>\s|```)/;
+    const salida = [];
+
+    for (const cruda of lineas) {
+        const linea = cruda.trim();
+        const anterior = salida.length ? salida[salida.length - 1] : null;
+
+        const continua =
+            anterior !== null &&
+            anterior.trim() !== '' &&
+            linea !== '' &&
+            // Lo que empieza por marca no continúa nada: abre algo nuevo.
+            !EMPIEZA_ALGO.test(linea) &&
+            // Y un título ocupa su renglón entero: nada se le pega detrás.
+            !/^#{1,6}\s/.test(anterior.trim());
+
+        if (continua) {
+            salida[salida.length - 1] = `${anterior.replace(/\s+$/, '')} ${linea}`;
+        } else {
+            salida.push(cruda);
+        }
+    }
+
+    return salida;
+}
+
+/**
+ * Da forma a un changelog escrito en Markdown.
+ *
+ * Se admite lo justo, que es lo que dice AGENTS.md §8.2 que se escribe: un `#`
+ * con el nombre de la herramienta, un `##` por versión, la fecha en cursiva,
+ * `###` por apartado y puntos con `-`. Ni enlaces, ni imágenes, ni tablas: un
+ * changelog que necesita una tabla es un changelog mal escrito.
+ *
+ * @param {string} texto
+ * @returns {string} HTML
+ */
+function formatearMarkdown(texto) {
+    const lineas = unirLosRenglonesPartidos(texto.split('\n'));
+    const partes = [];
+    let listaAbierta = false;
+
+    const cerrarLista = () => {
+        if (listaAbierta) {
+            partes.push('</ul>');
+            listaAbierta = false;
+        }
+    };
+
+    for (const cruda of lineas) {
+        const linea = cruda.trim();
+        if (!linea) continue;
+
+        const titulo = linea.match(/^(#{1,6})\s+(.*)$/);
+        if (titulo) {
+            cerrarLista();
+            const nivel = titulo[1].length;
+            // El `#` de arriba es el nombre de la herramienta. En la ventana
+            // sobra: ya lo dice el botón que la ha abierto.
+            if (nivel === 1) continue;
+            const clase = nivel === 2 ? 'cl-version' : 'cl-seccion';
+            const etiqueta = nivel === 2 ? 'h3' : 'h4';
+            partes.push(`<${etiqueta} class="${clase}">${comoHtml(titulo[2])}</${etiqueta}>`);
+            continue;
+        }
+
+        // Una línea entera en cursiva es la fecha de la versión.
+        const fecha = linea.match(/^\*([^*]+)\*$/);
+        if (fecha) {
+            cerrarLista();
+            partes.push(`<p class="cl-fecha">${comoHtml(fecha[1])}</p>`);
+            continue;
+        }
+
+        // Los puntos, con guion o numerados. Los numerados se pintan como los
+        // demás: la ventana los enseña con su propia viñeta, y el número sirve
+        // sobre todo al leer el archivo en GitHub.
+        const punto = linea.match(/^(?:[-*+]|\d+[.)])\s+(.*)$/);
+        if (punto) {
+            if (!listaAbierta) {
+                partes.push('<ul class="cl-lista">');
+                listaAbierta = true;
+            }
+            partes.push(`<li>${comoHtml(punto[1])}</li>`);
+            continue;
+        }
+
+        cerrarLista();
+        partes.push(`<p class="cl-entradilla">${comoHtml(linea)}</p>`);
+    }
+
+    cerrarLista();
+    return partes.join('\n');
 }
 
 /**
  * Convierte el texto del changelog en HTML con títulos, secciones y listas.
  *
- * @param {string} texto Contenido del CHANGELOG.md.
+ * Entiende los dos: el Markdown de los changelogs nuevos y el texto plano con
+ * rayas de los de siempre. Lo segundo se podrá retirar cuando no quede ningún
+ * `.txt` (ver AGENTS.md §8.3).
+ *
+ * @param {string} texto Contenido del changelog.
  * @returns {string} HTML listo para meter en la ventana.
  */
 export function formatearChangelog(texto) {
     if (!texto || !texto.trim()) return '';
+    if (esMarkdown(texto)) return formatearMarkdown(texto);
 
     const lineas = desenvolverParrafos(texto).split('\n');
     const partes = [];

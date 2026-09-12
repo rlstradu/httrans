@@ -7,18 +7,18 @@
 // writes into every exported TMX header, see js/tmx.js). The changelog
 // TEXT itself is intentionally NOT bundled with the app: the modal fetches
 // it live from CHANGELOG_URL every time it's opened, so publishing an
-// updated pandoria.txt at that address is enough to update what users see
+// updated pandoria.md at that address is enough to update what users see
 // here — no code change or new Pandoria release needed for that part.
 //
-// Note: fetching a remote URL from a page opened via file:// (double-click)
-// sends the request with Origin: null. That only succeeds if the server
-// hosting CHANGELOG_URL responds with a permissive CORS header
-// (Access-Control-Allow-Origin: * or one that allows null) for this file.
-// If the request is blocked, the modal shows a short error plus a direct
-// "open in a new tab" link instead of leaving the textarea empty.
+// The address is relative on purpose. It used to be written out in full,
+// pointing at httrans.org: with the domain baked into the code, these links
+// break the day the hosting or the GitHub username changes, and reading a file
+// from the site itself needed a permissive CORS header to work at all. A
+// relative path needs neither. If the request still fails (offline, 404), the
+// modal shows a short error plus the "open in a new tab" link.
 
 const PANDORIA_VERSION = '1.3.0';
-const CHANGELOG_URL = 'https://httrans.org/changelog/pandoria.txt';
+const CHANGELOG_URL = '../changelog/pandoria.md';
 
 /**
  * Sets the version button's label and the changelog link's href. Called

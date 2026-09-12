@@ -76,10 +76,32 @@ test.describe('el idioma', () => {
         await page.locator('#versionToggle').click();
 
         await expect(page.locator('#changelogModal')).toBeVisible();
-        // Y trae el historial de verdad, no un mensaje de error.
-        await expect(page.locator('#changelogContent')).toContainText('subpandaTM v');
+        // Y trae el historial de verdad, no un mensaje de error: con títulos de
+        // versión y apartados, o sea que el Markdown se ha interpretado.
+        await expect(page.locator('#changelogContent .cl-version').first()).toBeVisible();
+        await expect(page.locator('#changelogContent .cl-seccion').first()).toBeVisible();
         await page.locator('#changelogCloseBtn').click();
         await expect(page.locator('#changelogModal')).toBeHidden();
+    });
+
+    test('y lo primero que enseña es la versión que dice el botón', async ({ page }) => {
+        // Esta es la prueba que faltaba. El botón decía v2.0.0 y el historial
+        // publicado se quedaba en la v1.1.6 de hacía nueve meses, porque el
+        // archivo que lee nunca llegó a subirse. Nada lo cantaba.
+        const enElBoton = (await page.locator('#versionToggle').textContent()).trim();
+
+        await page.locator('#versionToggle').click();
+        const primera = await page.locator('#changelogContent .cl-version').first().textContent();
+
+        expect(primera).toContain(enElBoton);
+    });
+
+    test('el changelog no enseña las marcas del Markdown en crudo', async ({ page }) => {
+        await page.locator('#versionToggle').click();
+
+        const texto = await page.locator('#changelogContent').textContent();
+        expect(texto).not.toMatch(/^#{1,6}\s/m);
+        expect(texto).not.toContain('**');
     });
 
     test('importar y exportar están los dos en el menú Archivo', async ({ page }) => {

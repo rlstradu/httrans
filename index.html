@@ -1198,25 +1198,45 @@
             const changelogModal = document.getElementById('changelog-modal');
             const changelogGrid = document.getElementById('changelog-grid');
             
-            addSafeListener('changelog-trigger', 'click', (e) => {
+            // Dónde vive el changelog de una herramienta.
+            //
+            // Se están pasando todos de .txt a .md (AGENTS.md §8.3), y no a la
+            // vez: se pregunta por el .md y, si esa herramienta todavía no está
+            // migrada, se deja el .txt de siempre. Cuando no quede ninguno,
+            // esto vuelve a ser una sola línea.
+            //
+            // La dirección va en relativo a propósito. Antes estaba escrita
+            // entera, apuntando a rlstradu.github.io: con el dominio metido
+            // dentro del código, el día que cambie el alojamiento o el nombre
+            // de usuario de GitHub, estos enlaces dejan de funcionar.
+            const dondeEstaElChangelog = async (id) => {
+                try {
+                    const respuesta = await fetch(`changelog/${id}.md`, { method: 'HEAD' });
+                    if (respuesta.ok) return `changelog/${id}.md`;
+                } catch (error) {
+                    // Sin red no se puede preguntar; se deja el de siempre.
+                }
+                return `changelog/${id}.txt`;
+            };
+
+            addSafeListener('changelog-trigger', 'click', async (e) => {
                 e.preventDefault();
+                if (changelogModal) changelogModal.style.display = 'flex';
                 if (changelogGrid) {
                     changelogGrid.innerHTML = '';
-                    tools.forEach(tool => {
-                        if (!tool.isMystery) {
-                            const item = document.createElement('div');
-                            item.className = 'changelog-item';
-                            const changelogUrl = `https://rlstradu.github.io/httrans/changelog/${tool.id}.txt`;
-                            item.innerHTML = `
+                    const visibles = tools.filter(tool => !tool.isMystery);
+                    const rutas = await Promise.all(visibles.map(tool => dondeEstaElChangelog(tool.id)));
+                    visibles.forEach((tool, i) => {
+                        const item = document.createElement('div');
+                        item.className = 'changelog-item';
+                        item.innerHTML = `
                                 <img src="${tool.icon}" alt="${tool.id} Logo">
-                                <a href="${changelogUrl}" target="_blank" rel="noopener" data-key="changelogView"></a>
+                                <a href="${rutas[i]}" target="_blank" rel="noopener" data-key="changelogView"></a>
                             `;
-                            changelogGrid.appendChild(item);
-                        }
+                        changelogGrid.appendChild(item);
                     });
                     updateText(currentLang);
                 }
-                if (changelogModal) changelogModal.style.display = 'flex';
             });
             addSafeListener('modal-close-btn', 'click', () => { if(changelogModal) changelogModal.style.display = 'none'; });
             addSafeListener('changelog-modal', 'click', (e) => { if (e.target === changelogModal) changelogModal.style.display = 'none'; });

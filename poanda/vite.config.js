@@ -74,7 +74,7 @@ function servirArchivosDelSitio() {
 
                 // Se busca en el mismo orden en el que resolvería el navegador
                 // en producción, donde la página vive en httrans.org/poanda/:
-                // primero la carpeta de la herramienta (ahí está CHANGELOG.md),
+                // primero la carpeta de la herramienta,
                 // después la raíz del sitio (ahí están el logo y los iconos).
                 for (const base of [AQUI, RAIZ_DEL_SITIO]) {
                     const archivo = path.join(base, ruta);
@@ -114,6 +114,14 @@ export default defineConfig({
 
     plugins: [servirArchivosDelSitio(), avisarArchivoGenerado()],
 
+    resolve: {
+        // `@core` es la carpeta compartida de la raíz del repositorio. Vive
+        // fuera de `src/`, que es la raíz que ve Vite, así que hace falta el
+        // atajo. Ver panda-core/README.md: un cambio ahí se prueba en todas
+        // las herramientas que la importan.
+        alias: { '@core': path.resolve(AQUI, '..', 'panda-core') },
+    },
+
     build: {
         // Se compila a una carpeta propia y desechable. Después, el script
         // "postbuild" mueve el resultado a poanda/, que es lo que publica
@@ -129,5 +137,8 @@ export default defineConfig({
     server: {
         port: 5173,
         strictPort: true,
+        // Sin esto el servidor de desarrollo se niega a servir `panda-core/`,
+        // que está por encima de la raíz que Vite tiene configurada.
+        fs: { allow: [AQUI, RAIZ_DEL_SITIO] },
     },
 });

@@ -93,7 +93,7 @@ Top-right, next to the language switcher, there's a small `vX.Y.Z` button
 (`js/changelog.js`). Clicking it opens a modal with a read-only text box
 showing the changelog, fetched **live** from:
 
-    https://httrans.org/changelog/pandaterm.txt
+    https://httrans.org/changelog/pandaterm.md
 
 Nothing about the changelog's text is bundled into the app — publishing an
 updated `pandaterm.txt` at that address is enough to change what the modal

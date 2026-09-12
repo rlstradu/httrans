@@ -36,7 +36,9 @@ test.describe('arranque', () => {
         });
         await page.reload();
         await page.locator('#versionToggle').click();
-        await expect(page.locator('#changelogContent')).toContainText('Poanda v');
+        // Con esto se comprueba de paso que changelog/poanda.md, que vive en la
+        // raíz del sitio y no en esta carpeta, se pide y se encuentra.
+        await expect(page.locator('#changelogContent .cl-version').first()).toBeVisible();
         expect(fallos).toEqual([]);
     });
 
@@ -118,9 +120,21 @@ test.describe('idioma e interfaz', () => {
     test('el botón de versión abre el changelog y lo carga', async ({ page }) => {
         await page.locator('#versionToggle').click();
         await expect(page.locator('#changelogModal')).toBeVisible();
-        await expect(page.locator('#changelogContent')).toContainText('Poanda v');
+        await expect(page.locator('#changelogContent .cl-version').first()).toBeVisible();
         await page.locator('#changelogCloseBtn').click();
         await expect(page.locator('#changelogModal')).toBeHidden();
+    });
+
+    test('y lo primero que enseña es la versión que dice el botón', async ({ page }) => {
+        // En subpandaTM pasó: el botón decía una versión y el historial
+        // publicado se había quedado nueve meses atrás, porque el archivo que
+        // lee no llegó a subirse. Nada lo cantaba.
+        const enElBoton = (await page.locator('#versionToggle').textContent()).trim();
+
+        await page.locator('#versionToggle').click();
+        const primera = await page.locator('#changelogContent .cl-version').first().textContent();
+
+        expect(primera).toContain(enElBoton);
     });
 
     test('el changelog se ve ordenado, no como un muro de texto', async ({ page }) => {
@@ -128,12 +142,15 @@ test.describe('idioma e interfaz', () => {
         const ventana = page.locator('#changelogContent');
 
         // Título de versión, fecha aparte, secciones y novedades en lista.
-        await expect(ventana.locator('h3.cl-version').first()).toContainText('Poanda v');
+        await expect(ventana.locator('h3.cl-version').first()).toContainText('v2.');
         await expect(ventana.locator('p.cl-fecha').first()).toContainText(/\d{4}/);
         await expect(ventana.locator('h4.cl-seccion').first()).toBeVisible();
         expect(await ventana.locator('li').count()).toBeGreaterThan(5);
 
-        // Y las rayas de iguales del archivo no llegan a verse.
+        // Y ni las rayas del formato antiguo ni las marcas del Markdown llegan
+        // a verse: el archivo se interpreta antes de pintarlo.
         await expect(ventana).not.toContainText('=====');
+        await expect(ventana).not.toContainText('##');
+        await expect(ventana).not.toContainText('**');
     });
 });

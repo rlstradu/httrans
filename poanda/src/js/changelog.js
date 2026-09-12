@@ -2,7 +2,9 @@
  * Modal de changelog de Poanda.
  *
  * El botón de versión de la cabecera abre una ventana con el historial de
- * cambios, que se descarga en vivo del CHANGELOG.md de esta misma carpeta.
+ * cambios, que se descarga en vivo de changelog/poanda.md, en la raíz del
+ * sitio. Es el mismo archivo que lee la portada: una sola copia por
+ * herramienta, que no se puede quedar atrasada (AGENTS.md §8.1).
  * Así el historial vive junto al código de la herramienta, igual que en
  * PandaTerm y Pandoria.
  *
@@ -12,7 +14,7 @@
  * siguiente. Antes de enseñarlo se le da forma (ver core/changelog-formato.js):
  * títulos de versión, secciones y una lista de puntos.
  */
-import { formatearChangelog } from './core/changelog-formato.js';
+import { formatearChangelog } from '@core/changelog-formato.js';
 import { state } from './state.js';
 import { translations } from './translations.js';
 
@@ -33,7 +35,7 @@ export function initChangelog() {
             changelogModal.classList.remove('hidden');
             try {
                 // Se añade el timestamp a la URL para evitar que el navegador guarde el txt en caché
-                const response = await fetch(`CHANGELOG.md?t=${new Date().getTime()}`);
+                const response = await fetch(`../changelog/poanda.md?t=${new Date().getTime()}`);
                 if (response.ok) {
                     const text = await response.text();
                     // formatearChangelog escapa lo que venga del archivo, así
